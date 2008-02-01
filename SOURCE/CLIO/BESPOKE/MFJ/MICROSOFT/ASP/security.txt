@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFJ Planning Database Reporting Security -->
+<!-- -->
+<systemSecurity connectionString="Provider=MSDAORA;User Id=pld_rep_app;Password=pldrepappsecret;Data Source=ap0024p.ap.mars;">
+
+   <!-- -->
+   <!-- Authorised users -->
+   <!-- -->
+   <User identifier="masoncra"/>
+   <User identifier="kiryumas"/>
+   <User identifier="iharakao"/>
+   <User identifier="shigymay"/>
+   <User identifier="guest"/>
+
+</systemSecurity>

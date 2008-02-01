@@ -1,0 +1,20 @@
+
+delete from lads_del_add where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_adl where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_det where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_dtp where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_dtx where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_erf where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_hdr where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_htp where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_htx where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_huc where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_huh where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_int where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_irf where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_nod where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_pod where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_rte where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_stg where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_del_tim where vbeln in (select vbeln from lads_del_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+commit;

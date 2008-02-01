@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Planning Menu -->
+<!-- -->
+<menu text="MFJ Planning Menu">
+
+   <node text="CLIO Forecasting">
+      <option text="CLIO Forecast Maintenance" script="ics_fcst_maintenance.asp?Mode=SELECT"/>
+      <option text="CLIO Forecast Loading" script="ics_fcst_loading.asp?Mode=SELECT"/>
+   </node>
+
+</menu>

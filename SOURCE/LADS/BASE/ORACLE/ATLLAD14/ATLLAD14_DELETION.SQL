@@ -1,0 +1,25 @@
+
+delete from lads_shp_dad where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_das where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dbt where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_ded where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dhi where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dhu where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dib where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dit where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dlv where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_dng where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_drf where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_drs where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_had where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_har where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hct where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hda where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hdr where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hsd where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hsi where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hsp where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_hst where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_htg where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+delete from lads_shp_htx where tknum in (select tknum from lads_shp_hdr where trunc(lads_date) > to_date('20070608','yyyymmdd'));
+commit;

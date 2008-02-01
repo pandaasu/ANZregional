@@ -1,0 +1,220 @@
+'//////////////////////////////////////////////////////////////////
+'// System  : ICS - Interface Control System                     //
+'// Script  : ics_style.css                                      //
+'// Author  : Steve Gregan                                       //
+'// Date    : February 2004                                      //
+'// Text    : Intranet site cascading style sheet                //
+'//////////////////////////////////////////////////////////////////
+body {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;}
+.clsBody01 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#ffffff;
+            MARGIN:0px;}
+.clsBody02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#dedfe2;
+            MARGIN:0px;}
+.clsBody03 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#fdffb9;
+            MARGIN:8px;}
+.clsSite {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+          BACKGROUND-COLOR:#708090;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          MARGIN:0px;
+          PADDING-BOTTOM:0px;PADDING-LEFT:0px;PADDING-RIGHT:0px;PADDING-TOP:0px;}
+.clsInner {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+           BACKGROUND-COLOR:#708090;
+           BORDER-STYLE:none;
+           MARGIN:0px;
+           PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsSheet {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+           BACKGROUND-COLOR:#808080;
+           BORDER-STYLE:none;
+           MARGIN:0px;
+           PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsPanel {BACKGROUND-COLOR:transparent;
+           BORDER-STYLE:none;
+           MARGIN:0px;}
+.clsHeader {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+            BACKGROUND-COLOR:#708090;COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;
+            PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsFooter {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#708090;COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;
+            PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsGrid01 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;}
+.clsGrid02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#dedfe2;
+            BORDER-BOTTOM:#dedfe2 4px solid;BORDER-LEFT:#dedfe2 4px solid;BORDER-RIGHT:#dedfe2 4px solid;BORDER-TOP:#dedfe2 4px solid;
+            MARGIN:0px;}
+.clsScroll {HEIGHT=100%;
+            WIDTH=100%;
+            OVERFLOW:scroll;
+            BACKGROUND-COLOR:#708090;
+            BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:none;}
+.clsScrollFrame {HEIGHT=100%;
+                 WIDTH=100%;
+                 OVERFLOW:auto;
+                 BACKGROUND-COLOR:#ffffff;
+                 BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:#40414c 2px solid;}
+.clsFixed {WIDTH=100%;
+           OVERFLOW:hidden;
+           BACKGROUND-COLOR:#40414c;
+           BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:#40414c 2px solid;}
+.clsTable01 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#40414c;
+             BORDER-BOTTOM:#40414c 1px solid;BORDER-LEFT:#40414c 1px solid;BORDER-RIGHT:#40414c 1px solid;BORDER-TOP:#40414c 1px solid;
+             PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;
+             MARGIN:0px;}
+.clsTable02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#708090;
+             BORDER-STYLE:none;
+             MARGIN:0px;}
+.clsTableContainer {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+                    BACKGROUND-COLOR:#40414c;
+                    BORDER-STYLE:none;
+                    MARGIN:0px;}
+.clsTableHead {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#b0e0e6;
+               BORDER-STYLE:none;
+               PADDING-BOTTOM:1px;PADDING-LEFT:1px;PADDING-RIGHT:1px;PADDING-TOP:1px;
+               MARGIN:0px;}
+.clsTableBody {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#708090;
+               BORDER-STYLE:none;
+               PADDING-BOTTOM:1px;PADDING-LEFT:1px;PADDING-RIGHT:1px;PADDING-TOP:1px;
+               MARGIN:0px;}
+.clsImagePush {BACKGROUND-COLOR:transparent;
+               BORDER-STYLE:none;
+               CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsLabelUL {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;
+             BORDER-BOTTOM:#708090 2px solid;
+             PADDING-BOTTOM:6px;}
+.clsLabelHB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#40414c;COLOR:#ffffff;
+             BORDER-STYLE:none;}
+.clsLabelHC {FONT-FAMILY:Courier,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#40414c;COLOR:#ffffff;
+             BORDER-STYLE:none;}
+.clsLabelFB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;}
+.clsLabelFN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsLabelFG {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#80ff80;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsLabelFR {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#ffb6c1;COLOR:#000000;
+             BORDER-STYLE:none;CURSOR:pointer;}
+.clsLabelFS {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#808080;
+             BORDER-STYLE:none;CURSOR:pointer;}
+.clsLabelBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsLabelBN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsLabelWB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#ffffff;}
+.clsLabelWN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+             BORDER-STYLE:none;}
+.clsInputCN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;}
+.clsInputNN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+             TEXT-ALIGN:left;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;}
+.clsInputFN {FONT-FAMILY:Courier,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+             TEXT-ALIGN:left;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;}
+.clsInputBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsInputBN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsLabelLB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;}
+.clsLabelLN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;}
+.clsLabelPB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffff00;COLOR:#000000;}
+.clsSelect {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:transparent;COLOR:#0000ff;
+            CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsSelectX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#0000ff;
+             CURSOR:pointer;TEXT-DECORATION:underline;TEXT-TRANSFORM:none;}
+.clsSelectLBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsSelectLNB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+               CURSOR:pointer;TEXT-DECORATION:underline;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsSelectLNX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsTitle {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:14pt;FONT-WEIGHT:bold;
+           BACKGROUND-COLOR:transparent;COLOR:#ffffff;}
+.clsBade {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:11pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:#ffff00;COLOR:#000000;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsDevp {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:11pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:#ff0000;COLOR:#ffffff;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsTest {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:11pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:#00c000;COLOR:#ffffff;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsProd {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:11pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:#0000ff;COLOR:#ffffff;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsTemp {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:11pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsHome {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:12pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsStatus {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+            PADDING-LEFT:4px;PADDING-RIGHT:4px}
+.clsButton {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+            BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+            CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+            BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+            PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsButtonD {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+             TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+             BORDER-BOTTOM:#40414c 1px solid;BORDER-LEFT:#40414c 1px solid;BORDER-RIGHT:#40414c 1px solid;BORDER-TOP:#40414c 1px solid;
+             PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsButtonX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#ffff00;
+             CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+             BORDER-BOTTOM:#ffff00 1px solid;BORDER-LEFT:#ffff00 1px solid;BORDER-RIGHT:#ffff00 1px solid;BORDER-TOP:#ffff00 1px solid;
+             PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsHeading {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsSubHeading {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsNormal {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsError {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;BACKGROUND-COLOR:transparent;COLOR:#ff0000;}
+.clsWorking {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;BACKGROUND-COLOR:transparent;COLOR:#0000ff;}
+.clsErrorFix {FONT-FAMILY:Courier,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+              BACKGROUND-COLOR:#ffffff;COLOR:#ff0000;BORDER-STYLE:none;
+              CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsWorkingFix {FONT-FAMILY:Courier,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+                BACKGROUND-COLOR:#ffffff;COLOR:#0000ff;BORDER-STYLE:none;}
+.clsNormalFix {FONT-FAMILY:Courier,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;BORDER-STYLE:none;}

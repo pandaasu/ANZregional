@@ -1,0 +1,110 @@
+'//////////////////////////////////////////////////////////////////
+'// System  : Masterfoods Japan Planning Reporting               //
+'// Script  : mfjpln_style.css                                   //
+'// Author  : Softstep Pty Ltd                                   //
+'// Date    : September 2003                                     //
+'// Text    : Web site cascading style sheet                     //
+'//////////////////////////////////////////////////////////////////
+body {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;}
+.clsBody01 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#ffffff;
+            MARGIN:0px;}
+.clsBody02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#dedfe2;
+            MARGIN:0px;}
+.clsSite {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+          BACKGROUND-COLOR:#708090;
+          BORDER-BOTTOM:#b0e0e6 1px solid;BORDER-LEFT:#b0e0e6 1px solid;BORDER-RIGHT:#b0e0e6 1px solid;BORDER-TOP:#b0e0e6 1px solid;
+          MARGIN:0px;
+          PADDING-BOTTOM:0px;PADDING-LEFT:0px;PADDING-RIGHT:0px;PADDING-TOP:0px;}
+.clsInner {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+           BACKGROUND-COLOR:#708090;
+           BORDER-STYLE:none;
+           MARGIN:0px;
+           PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsHeader {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+            BACKGROUND-COLOR:#708090;COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;
+            PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsFooter {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#708090;COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;
+            PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;}
+.clsGrid01 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#ffffff;
+            BORDER-STYLE:none;
+            MARGIN:0px;}
+.clsGrid02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:#dedfe2;
+            BORDER-STYLE:none;
+            MARGIN:0px;}
+.clsTable02 {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#ffffff;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;
+             PADDING-BOTTOM:2px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:2px;
+             MARGIN:0px;}
+.clsImagePush {BACKGROUND-COLOR:transparent;
+               BORDER-STYLE:none;
+               CURSOR:hand;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsLabelUL {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;
+             BORDER-BOTTOM:#708090 2px solid;}
+.clsLabelHB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#708090;COLOR:#ffffff;
+             BORDER-BOTTOM:#708090 3px solid;BORDER-LEFT:#708090 3px solid;BORDER-RIGHT:#708090 3px solid;BORDER-TOP:#708090 3px solid;}
+.clsLabelBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsLabelBN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#transparent;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsInputCN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;}
+.clsInputNN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+             TEXT-ALIGN:right;
+             BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;}
+.clsInputBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsInputBN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:transparent;COLOR:#000000;
+             BORDER-STYLE:none;}
+.clsLabelLB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;}
+.clsLabelLN {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+             BACKGROUND-COLOR:#ffffff;COLOR:#000000;}
+.clsSelectLB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+             CURSOR:hand;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+             PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsSelectLBX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+               BACKGROUND-COLOR:transparent;COLOR:#ffff00;
+               CURSOR:hand;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsSelectLBB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsSelectLNB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+               BACKGROUND-COLOR:#ffffff;COLOR:#000000;
+               CURSOR:hand;
+               PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsTitle {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:14pt;FONT-WEIGHT:bold;
+           BACKGROUND-COLOR:transparent;COLOR:#ffffff;}
+.clsHome {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:12pt;FONT-WEIGHT:bold;
+          BACKGROUND-COLOR:transparent;COLOR:#000000;}
+.clsStatus {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:normal;
+            BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+            PADDING-LEFT:4px;PADDING-RIGHT:4px}
+.clsButton {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+            BACKGROUND-COLOR:transparent;COLOR:#ffffff;
+            CURSOR:hand;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+            BORDER-BOTTOM:#708090 1px solid;BORDER-LEFT:#708090 1px solid;BORDER-RIGHT:#708090 1px solid;BORDER-TOP:#708090 1px solid;
+            PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}
+.clsButtonX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+             BACKGROUND-COLOR:transparent;COLOR:#ffff00;
+             CURSOR:hand;TEXT-DECORATION:none;TEXT-TRANSFORM:none;
+             BORDER-BOTTOM:#ffff00 1px solid;BORDER-LEFT:#ffff00 1px solid;BORDER-RIGHT:#ffff00 1px solid;BORDER-TOP:#ffff00 1px solid;
+             PADDING-BOTTOM:0px;PADDING-LEFT:2px;PADDING-RIGHT:2px;PADDING-TOP:0px;}

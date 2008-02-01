@@ -1,0 +1,1349 @@
+CONNECTING (LICS) ...
+Connected.
+CREATING LICS TABLES ...
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create table lics_data
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_data_pk primary key (dat_header, dat_dta_seq)
+                               *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_data for lics.lics_data
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_dta_message
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_dta_message_pk primary key (dam_header, dam_hdr_trace, dam_dta_seq, dam_msg_seq)
+                                      *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_dta_message for lics.lics_dta_message
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_event
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_event_pk primary key (eve_sequence)
+                                *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_event for lics.lics_event
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create table lics_hdr_message
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_hdr_message_pk primary key (hem_header, hem_hdr_trace, hem_msg_seq)
+                                      *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_hdr_message for lics.lics_hdr_message
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create table lics_hdr_trace
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_hdr_trace_pk primary key (het_header, het_hdr_trace)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_hdr_trace for lics.lics_hdr_trace
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_header
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+comment on column lics_header.hea_msg_name is 'Header - message name'
+                              *
+ERROR at line 1:
+ORA-00904: "HEA_MSG_NAME": invalid identifier 
+
+
+
+Comment created.
+
+   add constraint lics_header_pk primary key (hea_header)
+                                 *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create table lics_interface
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+comment on column lics_interface.int_search is 'Interface - search procedure'
+                                 *
+ERROR at line 1:
+ORA-00904: "INT_SEARCH": invalid identifier 
+
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_interface_pk primary key (int_interface)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create table lics_int_sequence
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_int_sequence_pk primary key (ins_interface)
+                                       *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_int_sequence for lics.lics_int_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_job
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_job_pk primary key (job_job)
+                              *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_job for lics.lics_job
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_job_trace
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_job_trace_pk primary key (jot_execution)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_job_trace for lics.lics_job_trace
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_lock
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_lock_pk primary key (loc_lock)
+                               *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_lock for lics.lics_lock
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_log
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_log_pk primary key (log_sequence, log_trace)
+                              *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_log for lics.lics_log
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_pro_check
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_pro_check_pk primary key (prc_group, prc_process)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_pro_check for lics.lics_pro_check
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_pro_group
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_pro_group_pk primary key (prg_group)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_pro_group for lics.lics_pro_group
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_pro_process
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_pro_process_pk primary key (prp_process)
+                                      *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_pro_process for lics.lics_pro_process
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_pro_trace
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_pro_trace_pk primary key (prt_process, prt_date)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_pro_trace for lics.lics_pro_trace
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_routing
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_routing_pk primary key (rou_source)
+                                  *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_routing for lics.lics_routing
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_rtg_detail
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_rtg_detail_pk primary key (rde_source, rde_prefix)
+                                     *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_rtg_detail for lics.lics_rtg_detail
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+
+Table created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Table altered.
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+create sequence lics_header_sequence
+                *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create sequence lics_execution_sequence
+                *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create sequence lics_triggered_sequence
+                *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create sequence lics_event_sequence
+                *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create sequence lics_log_sequence
+                *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+create public synonym lics_header_sequence for lics.lics_header_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create public synonym lics_execution_sequence for lics.lics_execution_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create public synonym lics_triggered_sequence for lics.lics_triggered_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create public synonym lics_event_sequence for lics.lics_event_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create public synonym lics_log_sequence for lics.lics_log_sequence
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_setting
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_setting_pk primary key (set_group, set_code)
+                                  *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+create public synonym lics_setting for lics.lics_setting
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create global temporary table lics_temp
+                              *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Grant succeeded.
+
+create public synonym lics_temp for lics.lics_temp
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create table lics_triggered
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+
+Comment created.
+
+   add constraint lics_triggered_pk primary key (tri_sequence)
+                                    *
+ERROR at line 2:
+ORA-02260: table can have only one primary key 
+
+
+
+Grant succeeded.
+
+
+Synonym created.
+
+CREATING LICS CONSTRAINTS ...
+   add constraint lics_data_fk01 foreign key (dat_header)
+                                 *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_dta_message_fk01 foreign key (dam_header, dam_dta_seq)
+                                        *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_dta_message_fk02 foreign key (dam_header, dam_hdr_trace)
+                                        *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+
+Table altered.
+
+   add constraint lics_hdr_message_fk01 foreign key (hem_header, hem_hdr_trace)
+                                        *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+
+Table altered.
+
+   add constraint lics_hdr_trace_fk01 foreign key (het_header)
+                                      *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_hdr_trace_fk02 foreign key (het_execution)
+                                      *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_header_fk01 foreign key (hea_interface)
+                                   *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+
+Table altered.
+
+   add constraint lics_int_sequence_fk01 foreign key (ins_interface)
+                                         *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_job_trace_fk01 foreign key (jot_job)
+                                      *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_rtg_detail_fk01 foreign key (rde_source)
+                                       *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+   add constraint lics_rtg_detail_fk02 foreign key (rde_interface)
+                                       *
+ERROR at line 2:
+ORA-02275: such a referential constraint already exists in the table 
+
+
+CREATING LICS INDEXES ...
+create index lics_job_trace_ix01 on lics_job_trace
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create index lics_header_ix01 on lics_header
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create index lics_header_ix02 on lics_header
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create index lics_hdr_trace_ix01 on lics_hdr_trace
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+create index lics_dta_message_ix01 on lics_dta_message
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+

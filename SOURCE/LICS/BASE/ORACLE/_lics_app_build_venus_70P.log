@@ -1,0 +1,615 @@
+CONNECTING (LICS_APP) ...
+Connected.
+CREATING LICS_APP PROCEDURES ...
+
+Package created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+create public synonym lics_parameter for lics_app.lics_parameter
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+create or replace type lics_datastore_object as object
+*
+ERROR at line 1:
+ORA-02303: cannot drop or replace a type with type or table dependents 
+
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+create or replace type lics_security_object as object
+*
+ERROR at line 1:
+ORA-02303: cannot drop or replace a type with type or table dependents 
+
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+

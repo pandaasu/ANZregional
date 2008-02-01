@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Security -->
+<!-- -->
+<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=acorn23;Data Source=ap0064p.ap.mars;">
+
+   <!-- -->
+   <!-- Authorised users -->
+   <!-- -->
+   <User identifier="*guest" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_guest.txt"/>
+   <User identifier="gregaste" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="hendemeg" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="haynebri" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="stonemic" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="blackjam" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="bonacfra" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_gsm.txt"/>
+   <User identifier="glenlin" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_menu.txt"/>
+   <User identifier="dixonbra" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="muratton" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="bullison" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="zachekri" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="foleyfio" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="luhder" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="jewelmar" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="willinoe" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="cuencger" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="josepbla" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="zhongcis" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="jinrob" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_xrefmaint.txt"/>
+   <User identifier="mitchala" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_grd.txt"/>
+   <User identifier="wilsodan" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_grd.txt"/>
+   <User identifier="donemic" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_grd.txt"/>
+   <User identifier="pflaujoh" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_outbound.txt"/>
+   <User identifier="zoukai" menu="d:\Inetpub\IISWebs\mfanz-lad.ap.mars\ics_outbound.txt"/>
+
+</security>

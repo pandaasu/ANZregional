@@ -1,0 +1,612 @@
+CONNECTING (LICS_APP) ...
+Connected.
+CREATING LICS_APP PROCEDURES ...
+
+Package created.
+
+create public synonym lics_constant for lics_app.lics_constant
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+create public synonym lics_parameter for lics_app.lics_parameter
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_pipe for lics_app.lics_pipe
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_file for lics_app.lics_file
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_notification for lics_app.lics_notification
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_locking for lics_app.lics_locking
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_logging for lics_app.lics_logging
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_inbound_utility for lics_app.lics_inbound_utility
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_daemon_processor for lics_app.lics_daemon_processor
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_job_processor for lics_app.lics_job_processor
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_interface_process for lics_app.lics_interface_process
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_interface_view for lics_app.lics_interface_view
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_job_configuration for lics_app.lics_job_configuration
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_processing for lics_app.lics_processing
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_remote_loader for lics_app.lics_remote_loader
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_router for lics_app.lics_router
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_routing_configuration for lics_app.lics_routing_configuration
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+create public synonym lics_setting_configuration for lics_app.lics_setting_configuration
+                      *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+

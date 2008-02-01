@@ -1,0 +1,564 @@
+CONNECTING (LICS_APP) ...
+Connected.
+CREATING LICS_APP PROCEDURES ...
+
+Package created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+grant execute on lics_pipe to ics_app
+                              *
+ERROR at line 1:
+ORA-01917: user or role 'ICS_APP' does not exist 
+
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+grant execute on lics_security_configuration to ics_app
+                                                *
+ERROR at line 1:
+ORA-01917: user or role 'ICS_APP' does not exist 
+
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Package created.
+
+
+Warning: Package Body created with compilation errors.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+

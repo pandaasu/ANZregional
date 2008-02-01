@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Menu -->
+<!-- -->
+<menu text="MFANZ Interface Control System Menu">
+
+   <node text="Monitoring">
+      <option text="Job Monitoring" script="ics_job_monitor.asp?Mode=SEARCH"/>
+      <option text="Interface Monitoring" script="ics_int_monitor.asp?Mode=SEARCH"/>
+      <option text="Event Monitoring" script="ics_eve_monitor.asp?Mode=SEARCH"/>
+      <option text="Log Monitoring" script="ics_log_monitor.asp?Mode=SEARCH"/>
+   </node>
+
+   <node text="Configuration">
+      <option text="Job Control" script="ics_job_control.asp"/>
+   </node>
+
+   <node text="Enquiry">
+      <option text="Consignment Note Enquiry" script="ics_con_note.asp"/>
+   </node>
+
+</menu>

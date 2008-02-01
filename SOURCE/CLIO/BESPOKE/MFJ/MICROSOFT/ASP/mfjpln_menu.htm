@@ -1,0 +1,49 @@
+<html>
+<script language="javascript">
+<!--
+   function setLocation(strValue) {
+      parent.setLocation(strValue);
+   }
+   function document.onmouseover() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButton') {
+         objElement.className = 'clsButtonX';
+      }
+   }
+   function document.onmouseout() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButtonX') {
+         objElement.className = 'clsButton';
+      }
+   }
+   function setActions(strHTML) {
+      document.all.Header.innerHTML = strHTML;
+   }
+   function doAction(strAction) {
+      var objFrame = eval('fraContent');
+      objFrame.doAction(strAction);
+      objFrame = null;
+   }
+// -->
+</script>
+<head>
+   <meta http-equiv="content-type" content="text/html;charset=Shift-JIS">
+   <link rel="stylesheet" type="text/css" href="mfjpln_style.css">
+</head>
+<body class="clsSite" scroll="no">
+<table class="clsSite" cols=1 width="100%" height="100%" cellspacing="0">
+   <tr>
+      <td nowrap colspan=1 class="clsHeader">
+         <table cols=1 width="100%" cellspacing="0">
+            <tr>
+               <td class="clsHeader" id="Header" width=100% align=left valign=center nowrap><nobr>&nbsp;</nobr></td>
+            </tr>
+         </table>
+      </td>
+   </tr>
+   <tr><td nowrap colspan=1 height=100% width=100% class="clsInner">
+      <iframe id="fraContent" scrolling=no frameborder=no bgcolor=#ffffff width=100% height=100% src="mfjpln_menu.asp"></iframe>
+   </td></tr>
+</table>
+</body>
+</html>

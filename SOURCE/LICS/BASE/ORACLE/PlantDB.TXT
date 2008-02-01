@@ -1,0 +1,49 @@
+-test-
+
+ap0126d = mcalx002 (Ballarat) 
+ap0132d = scolx002 (Scoresby) 
+bth005 = bthlx002 (Bathurst) 
+wod023 = aplx001 (Wodonga) 
+AP0068T = wgilx002? (Wanganui) 
+mfa002 = mfalx002 (wyong) 
+
+
+-prod-
+
+bth001 - BTHLX001 
+wod013 - wodlx001 
+ap0065p - wgilx001 
+mfa005 - mfalx001 
+db0720p - scolx001
+db0719p - mcalx001
+
+bth001
+wod013
+ap0065p
+mfa005
+db0720p
+db0719p
+
+
+http://plant.mca.ap.mars/
+http://plant.sco.ap.mars/
+
+
+C:\Program Files\Java\jdk1.6.0_01\bin\jar -c -v -f c:\isi_wip\JavaUtility.jar -0 C:\ISI_REPOSITORY\SOURCE\ISI_JAVA\ICS_General\build\classes\com\isi\utility\ExternalProcess.class
+
+
+Example 1: to archive two class files into an archive called classes.jar:
+       jar cvf c:\isi_wip\JavaUtility.jar C:\ISI_REPOSITORY\SOURCE\ISI_JAVA\ICS_General\build\classes\com\isi\utility\ExternalProcess.class
+Example 2: use an existing manifest file 'mymanifest' and archive all the
+           files in the foo/ directory into 'classes.jar':
+       jar cvfm classes.jar mymanifest -C foo/ .
+
+
+
+insert into lics_interface values('LADPDB01.1','LADS to Wyong Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.1',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0055T /ics/test/inbound','1');
+insert into lics_interface values('LADPDB01.2','LADS to Wanganui Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.2',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XXXXXXX /ics/test/inbound','1');
+insert into lics_interface values('LADPDB01.3','LADS to Wodonga Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.3',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 APQM003T /ics/test/inbound','1');
+insert into lics_interface values('LADPDB01.4','LADS to Bathurst Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.4',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 APQM004T /ics/test/inbound','1');
+insert into lics_interface values('LADPDB01.5','LADS to Ballarat Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.5',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0077T /ics/test/inbound','1');
+insert into lics_interface values('LADPDB01.6','LADS to Scoresby Plant Database - Process Orders','*OUTBOUND','OB_NORM',1,5,5,'ICS_OUTBOUND','LADPDB01.6',15,'DAT',null,'jeff.phillipson@esosn1',null,'/ics/lad/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0076T /ics/test/inbound','1');
+commit;

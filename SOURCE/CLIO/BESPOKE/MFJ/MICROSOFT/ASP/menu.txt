@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFJ Planning Database Reporting Menu -->
+<!-- -->
+<menu text="Masterfoods Japan Planning Report Menu">
+
+   <node text="*STATIC*MFJ Planning &amp; Management Reports"></node>
+
+   <node text="Petcare">
+      <node text="Period Reports">
+         <option text="Order Variant Report" script="mfjpln_ord_variant.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Variant Report" script="mfjpln_for_variant.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Variant Brand Report" script="mfjpln_for_variant_brand.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Variant Source Unit Report" script="mfjpln_for_variant_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Material Report" script="mfjpln_for_accuracy_material.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Category Report" script="mfjpln_for_accuracy_category.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Source Unit Report" script="mfjpln_for_accuracy_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=PRD"/>
+      </node>
+      <node text="Month Reports">
+         <option text="Forecast Variant Report" script="mfjpln_for_variant.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+         <option text="Forecast Variant Brand Report" script="mfjpln_for_variant_brand.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+         <option text="Forecast Variant Source Unit Report" script="mfjpln_for_variant_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+         <option text="Forecast Accuracy Material Report" script="mfjpln_for_accuracy_material.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+         <option text="Forecast Accuracy Category Report" script="mfjpln_for_accuracy_category.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+         <option text="Forecast Accuracy Source Unit Report" script="mfjpln_for_accuracy_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=05&amp;ForType=MTH"/>
+      </node>
+   </node>
+
+   <node text="Snackfood">
+      <node text="Period Reports">
+         <option text="Order Variant Report" script="mfjpln_ord_variant.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Variant Report" script="mfjpln_for_variant.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Variant Brand Report" script="mfjpln_for_variant_brand.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Variant Source Unit Report" script="mfjpln_for_variant_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Material Report" script="mfjpln_for_accuracy_material.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Category Report" script="mfjpln_for_accuracy_category.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Source Unit Report" script="mfjpln_for_accuracy_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=01&amp;ForType=PRD"/>
+      </node>
+   </node>
+
+   <node text="Food">
+      <node text="Period Reports">
+         <option text="Order Variant Report" script="mfjpln_ord_variant.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Variant Report" script="mfjpln_for_variant.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Variant Brand Report" script="mfjpln_for_variant_brand.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Variant Source Unit Report" script="mfjpln_for_variant_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Material Report" script="mfjpln_for_accuracy_material.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Category Report" script="mfjpln_for_accuracy_category.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+         <option text="Forecast Accuracy Source Unit Report" script="mfjpln_for_accuracy_sourceunit.asp?Mode=PROMPT&amp;BusSgmnt=02&amp;ForType=PRD"/>
+      </node>
+   </node>
+
+</menu>

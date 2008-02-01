@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Menu -->
+<!-- -->
+<menu text="MFANZ Interface Control System Menu">
+
+   <node text="Monitoring">
+      <option text="Job Monitoring" script="ics_job_monitor.asp?Mode=SEARCH"/>
+      <option text="Interface Monitoring" script="ics_int_monitor.asp?Mode=SEARCH"/>
+      <option text="Event Monitoring" script="ics_eve_monitor.asp?Mode=SEARCH"/>
+      <option text="Log Monitoring" script="ics_log_monitor.asp?Mode=SEARCH"/>
+      <option text="Lock Monitoring" script="ics_loc_monitor.asp?Mode=SELECT"/>
+   </node>
+
+   <node text="Configuration">
+      <option text="Job Control" script="ics_job_control.asp"/>
+      <option text="Job Configuration" script="ics_job_configuration.asp?Mode=SELECT"/>
+      <option text="Interface Configuration" script="ics_int_configuration.asp?Mode=SELECT"/>
+      <option text="Routing Configuration" script="ics_rou_configuration.asp?Mode=SELECT"/>
+      <option text="Setting Configuration" script="ics_set_configuration.asp?Mode=SELECT"/>
+      <option text="Process Interface" script="ics_int_process.asp?Mode=SELECT"/>
+   </node>
+
+   <node text="Validation">
+      <option text="Group Configuration" script="ics_val_grp.asp?Mode=SELECT"/>
+      <option text="Rule Configuration" script="ics_val_rul.asp?Mode=SELECT"/>
+      <option text="Classification Configuration" script="ics_val_cla.asp?Mode=SELECT"/>
+      <option text="Type Configuration" script="ics_val_typ.asp?Mode=SELECT"/>
+      <option text="Filter Configuration" script="ics_val_fil.asp?Mode=SELECT"/>
+      <option text="Validation Execution - Single" script="ics_val_exe.asp?Mode=SELECT"/>
+      <option text="Validation Execution - Batch" script="ics_val_sbm.asp?Mode=SELECT"/>
+      <option text="Validation Statistics - Batch" script="ics_val_sta.asp?Mode=SELECT"/>
+      <option text="Message Enquiry" script="ics_val_mes.asp?Mode=SELECT"/>
+   </node>
+
+   <node text="Cross Reference Maintenance">
+      <option text="MFANZ Vendor Cross Reference" script="ics_xrf_maintenance01.asp?Mode=SEARCH"/>
+      <option text="MFANZ Customer Cross Reference" script="ics_xrf_maintenance02.asp?Mode=SEARCH"/>
+      <option text="MFGPRO Account Cross Reference" script="ics_xrf_maintenance03.asp?Mode=SEARCH"/>
+      <option text="MFGPRO Credit Terms Cross Reference" script="ics_xrf_maintenance04.asp?Mode=SEARCH"/>
+      <option text="NZ Customer Transport Zone to Region Cross Reference" script="ics_xrf_maintenance05.asp?Mode=SEARCH"/>
+      <option text="NZ Customer Cross Reference" script="ics_xrf_maintenance06.asp?Mode=SEARCH"/>
+      <option text="NZ Vendor Cross Reference" script="ics_xrf_maintenance07.asp?Mode=SEARCH"/>
+   </node>
+
+   <node text="Enquiry">
+      <option text="Consignment Note Enquiry" script="ics_con_note.asp"/>
+      <option text="LADS Validation Enquiry" script="ics_val_enq.asp"/>
+      <option text="LADS View Enquiry" script="ics_view_documentation.asp?Mode=VIEW&amp;SRC_Owner=LADS"/>
+   </node>
+
+   <node text="Documentation">
+      <option text="GRD Documentation" script="grd_01.htm"/>
+      <option text="LADS Validation PowerPoint" script="grd_validation.htm"/>
+   </node>
+
+</menu>
