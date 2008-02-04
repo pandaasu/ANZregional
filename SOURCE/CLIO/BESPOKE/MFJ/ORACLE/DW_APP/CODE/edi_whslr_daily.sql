@@ -906,15 +906,11 @@ create or replace package body edi_whslr_daily as
                   /* Set the EDI values
                   /*-*/
                   if rcd_whslr_dly_inv_det.edi_rsu_per_tdu = 0 then
-                     rcd_whslr_dly_inv_det.edi_unit_price := rcd_whslr_dly_inv_det.sap_unit_price * 100;
+                     rcd_whslr_dly_inv_det.edi_unit_price := trunc(rcd_whslr_dly_inv_det.sap_unit_price*100,0);
                   else
-                     rcd_whslr_dly_inv_det.edi_unit_price := (rcd_whslr_dly_inv_det.sap_unit_price * 100) / rcd_whslr_dly_inv_det.edi_rsu_per_tdu;
+                     rcd_whslr_dly_inv_det.edi_unit_price := trunc((rcd_whslr_dly_inv_det.sap_unit_price*100)/rcd_whslr_dly_inv_det.edi_rsu_per_tdu,0);
                   end if;
-                  if rcd_whslr_dly_inv_det.edi_case_qty = 0 then
-                     rcd_whslr_dly_inv_det.edi_amount := rcd_whslr_dly_inv_det.sap_unit_price;
-                  else
-                     rcd_whslr_dly_inv_det.edi_amount := rcd_whslr_dly_inv_det.sap_unit_price * rcd_whslr_dly_inv_det.edi_case_qty;
-                  end if;
+                  rcd_whslr_dly_inv_det.edi_amount := (rcd_whslr_dly_inv_det.edi_unit_price * rcd_whslr_dly_inv_det.edi_delivered_qty) / 100;
 
                   /*-*/
                   /* Accumulate the EDI total values
@@ -1444,7 +1440,7 @@ create or replace package body edi_whslr_daily as
             var_l1_order_qty := substr(overpunch_zoned(0,'000000000000000'),17-6,6);
             var_l1_paid_qty := substr(overpunch_zoned(rcd_whslr_dly_inv_det.edi_delivered_qty,'000000000000000'),17-6,6);
             var_l1_free_qty := substr(overpunch_zoned(0,'000000000000000'),17-4,4);
-            var_l1_unit_price := substr(to_char(nvl(rcd_whslr_dly_inv_det.edi_unit_price,0),'0000000000000V00'),17-10,10);
+            var_l1_unit_price := substr(to_char(nvl(rcd_whslr_dly_inv_det.edi_unit_price,0),'000000000000000'),17-10,10);
             var_l1_price_unit := lads_right_pad(' ',1,' ');
             var_l1_amount := substr(overpunch_zoned(rcd_whslr_dly_inv_det.edi_amount,'000000000000000'),17-9,9);
             var_l1_type_of_set_package := lads_right_pad('0',1,' ');
