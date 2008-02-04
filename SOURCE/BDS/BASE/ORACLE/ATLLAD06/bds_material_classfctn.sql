@@ -15,6 +15,7 @@
  -------   ------         -----------
  2006/11   Linden Glen    Created
  2006/11   Linden Glen    Added Raws and Packs classification columns
+ 2008/01   Linden Glen    Added Z_APCHAR10 to 13
 
 *******************************************************************************/
 
@@ -71,7 +72,11 @@ create table bds_material_classfctn
     sap_animal_parts_code            varchar2(30 char)     null,
     sap_physical_condtn_code         varchar2(30 char)     null,
     sap_pack_family_code             varchar2(30 char)     null,
-    sap_pack_sub_family_code         varchar2(30 char)     null);
+    sap_pack_sub_family_code         varchar2(30 char)     null,
+    sap_china_abc_indctr_code        varchar2(30 char)     null,
+    sap_nz_promotional_grp_code      varchar2(30 char)     null,
+    sap_nz_sop_business_code         varchar2(30 char)     null,
+    sap_nz_must_win_ctgry_code       varchar2(30 char)     null);
 
 
 /**/
@@ -137,6 +142,10 @@ comment on column bds_material_classfctn.sap_animal_parts_code is 'SAP Animal Pa
 comment on column bds_material_classfctn.sap_physical_condtn_code is 'SAP Physical Condition - LADS_CLA_CHR.ATWRT - CLFROH05';
 comment on column bds_material_classfctn.sap_pack_family_code is 'SAP Pack Family - LADS_CLA_CHR.ATWRT - CLFVERP01';
 comment on column bds_material_classfctn.sap_pack_sub_family_code is 'SAP Packs Sub Family - LADS_CLA_CHR.ATWRT - CLFVERP02';
+comment on column bds_material_classfctn.sap_china_abc_indctr_code is 'SAP China ABC Indicator - LADS_CLA_CHR.ATWRT - Z_APCHAR10';
+comment on column bds_material_classfctn.sap_nz_promotional_grp_code is 'SAP NZ Promotional Group - LADS_CLA_CHR.ATWRT - Z_APCHAR11';
+comment on column bds_material_classfctn.sap_nz_sop_business_code  is 'SAP NZ SandOP Business - LADS_CLA_CHR.ATWRT - Z_APCHAR12';
+comment on column bds_material_classfctn.sap_nz_must_win_ctgry_code is 'SAP NZ Must Win Category - LADS_CLA_CHR.ATWRT - Z_APCHAR13';
 
 
 /**/
