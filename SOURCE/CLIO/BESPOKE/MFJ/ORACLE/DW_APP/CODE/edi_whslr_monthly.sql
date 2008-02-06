@@ -497,6 +497,7 @@ create or replace package body edi_whslr_monthly as
             rcd_whslr_mly_inv_det.edi_tran_code := rcd_whslr_dly_inv_hdr.edi_tran_code;
             rcd_whslr_mly_inv_det.edi_ship_to_type := rcd_whslr_dly_inv_hdr.edi_ship_to_type;
             rcd_whslr_mly_inv_det.edi_order_number := rcd_whslr_dly_inv_hdr.edi_order_number;
+            rcd_whslr_mly_inv_det.edi_order_date := rcd_whslr_dly_inv_hdr.edi_order_date;
             rcd_whslr_mly_inv_det.edi_amount := rcd_whslr_dly_inv_hdr.edi_amount;
             rcd_whslr_mly_inv_det.edi_discount := rcd_whslr_dly_inv_hdr.edi_discount;
             rcd_whslr_mly_inv_det.edi_balance := rcd_whslr_dly_inv_hdr.edi_balance;
@@ -958,7 +959,7 @@ create or replace package body edi_whslr_monthly as
                var_l1_bill_branch_code := lads_right_pad(substr(rcd_whslr_mly_inv_bch.edi_brnch_code,1,8),8,' ');
                var_l1_sold_to_party_code := lads_right_pad(substr(rcd_whslr_mly_inv_det.edi_sldto_code,1,8),8,' ');
                var_l1_deal_type := lads_right_pad(substr(rcd_whslr_mly_inv_det.edi_tran_code,1,2),2,' ');
-               var_l1_order_date := lads_right_pad(' ',6,' ');
+               var_l1_order_date := lads_right_pad(substr(rcd_whslr_mly_inv_det.edi_order_date,3,6),6,' ');
                var_l1_ship_to_type := lads_right_pad(substr(rcd_whslr_mly_inv_det.edi_ship_to_type,1,1),1,' ');
                var_l1_order_number := lads_right_pad(substr(rcd_whslr_mly_inv_det.edi_order_number,1,8),8,' ');
                var_l1_classification_code := lads_right_pad(' ',6,' ');

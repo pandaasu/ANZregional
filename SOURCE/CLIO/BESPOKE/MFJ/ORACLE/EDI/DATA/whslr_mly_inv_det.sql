@@ -29,6 +29,7 @@ create table edi.whslr_mly_inv_det
     edi_tran_code                   varchar2(10 char)             null,
     edi_ship_to_type                varchar2(30 char)             null,
     edi_order_number                varchar2(35 char)             null,
+    edi_order_date                  varchar2(8 char)              null,
     edi_amount                      number                        null,
     edi_discount                    number                        null,
     edi_balance                     number                        null,
