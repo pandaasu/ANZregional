@@ -35,6 +35,7 @@ create or replace package edi_whslr_monthly as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/12   Steve Gregan   Created
+    2008/02   Steve Gregan   Changed date selection to the requested delivery date
 
    *******************************************************************************/
 
@@ -318,8 +319,8 @@ create or replace package body edi_whslr_monthly as
            from whslr_dly_inv_hdr t01
           where t01.sap_company_code = par_company
             and t01.edi_sndto_code = rcd_whslr_mly_inv_hdr.edi_sndto_code
-            and (t01.sap_creatn_date >= rcd_whslr_mly_inv_hdr.edi_bilto_str_date and
-                 t01.sap_creatn_date <= rcd_whslr_mly_inv_hdr.edi_bilto_end_date)
+            and (t01.edi_invoice_date >= rcd_whslr_mly_inv_hdr.edi_bilto_str_date and
+                 t01.edi_invoice_date <= rcd_whslr_mly_inv_hdr.edi_bilto_end_date)
           order by t01.edi_brnch_code asc,
                    t01.sap_invoice_number asc;
       rcd_whslr_dly_inv_hdr csr_whslr_dly_inv_hdr%rowtype;
