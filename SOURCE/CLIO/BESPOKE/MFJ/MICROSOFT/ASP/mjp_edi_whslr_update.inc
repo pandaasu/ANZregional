@@ -49,28 +49,33 @@
       var strMessage = '';
       if (document.main.INP_EdiWhslrCode.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'EDI wholesaler code must be entered';
+         strMessage = strMessage + 'Wholesaler code must be entered';
       }
       if (document.main.INP_EdiWhslrName.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'EDI wholesaler name must be entered';
+         strMessage = strMessage + 'Wholesaler name must be entered';
       }
       if (document.main.INP_EdiDiscCode.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'EDI discount code must be selected';
+         strMessage = strMessage + 'Discount code must be selected';
       }
       if (document.main.INP_EdiEmailGroup.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'EDI email group must be entered';
+         strMessage = strMessage + 'Email group must be entered';
       }
       if (document.main.INP_EdiGentoDay.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'EDI generate billing data must be entered';
+         strMessage = strMessage + 'Generate billing events must be selected';
       }
       if (document.main.INP_EdiGentoDay.value != '*NONE') {
          if (document.main.INP_EdiGentoYear.value < '2000') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'EDI generate billing year must be entered';
+            strMessage = strMessage + 'Generate billing year must be entered and greater than 2000';
+         }
+      } else {
+         if (document.main.INP_EdiGentoYear.value != '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Generate billing year must not be entered';
          }
       }
       if (strMessage != '') {
@@ -97,12 +102,12 @@
    function setSelect(objInput) {
       objInput.select();
    }
-   function selectDisCode(objSelect) {
+   function selectDiscCode(objSelect) {
       document.main.INP_EdiDiscCode.value = objSelect.options[objSelect.selectedIndex].value;
    }
    function selectGentoDay(objSelect) {
       document.main.INP_EdiGentoDay.value = objSelect.options[objSelect.selectedIndex].value;
-   
+   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -153,7 +158,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Generate Monthly Billing Events:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="sltEdiDiscCode" onChange="selectDiscCode(this);">
+            <select class="clsInputBN" name="sltEdiGentoDay" onChange="selectGentoDay(this);">
                <option value="*NONE"<%if objForm.Fields("DTA_EdiGentoDay").Value = "*NONE" then%> selected<%end if%>>No generation
                <option value="*LAST">Last day of the month
                <option value="01">Day 1 of the month
@@ -190,7 +195,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Generate Monthly Billing Events End Year:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_EdiGentoYear" size="4" maxlength="4" value="<%=objForm.Fields("DTA_EdiGentoYear").Value%>" onFocus="setSelect(this); onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="INP_EdiGentoYear" size="4" maxlength="4" value="<%=objForm.Fields("DTA_EdiGentoYear").Value%>" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

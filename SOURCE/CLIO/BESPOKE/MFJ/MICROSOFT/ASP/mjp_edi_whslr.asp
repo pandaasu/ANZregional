@@ -242,7 +242,7 @@ sub ProcessUpdateLoad()
    strQuery = strQuery & " t01.edi_disc_code,"
    strQuery = strQuery & " t01.edi_email_group,"
    strQuery = strQuery & " to_char(to_date(t02.edi_bilto_end_date,'yyyymmdd'),'yyyy/mm/dd')"
-   strQuery = strQuery & " from whslr t01, (select edi_sndto_code, max(edi_bilto_end_date) as edi_bilto_year from whslr_billing where edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "' group by edi_sndto_code"
+   strQuery = strQuery & " from whslr t01, (select edi_sndto_code, max(edi_bilto_end_date) as edi_bilto_end_date from whslr_billing where edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "' group by edi_sndto_code) t02"
    strQuery = strQuery & " where t01.edi_sndto_code = t02.edi_sndto_code(+)"
    strQuery = strQuery & " and t01.edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -294,7 +294,7 @@ sub ProcessUpdateAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiDiscCode").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiEmailGroup").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiGentoDay").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiGentoYear").Value) & "',""
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiGentoYear").Value) & "',"
    strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
