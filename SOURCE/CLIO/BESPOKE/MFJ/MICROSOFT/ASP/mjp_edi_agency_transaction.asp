@@ -256,8 +256,6 @@ end sub
 sub ProcessUpdateAccept()
 
    dim strStatement
-   dim lngCount
-   dim lnglink
 
    '//
    '// Create the function object
