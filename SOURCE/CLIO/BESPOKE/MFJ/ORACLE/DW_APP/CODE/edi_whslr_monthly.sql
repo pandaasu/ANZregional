@@ -1305,14 +1305,14 @@ create or replace package body edi_whslr_monthly as
          /*-*/
          lics_mailer.append_data('<tr>');
          lics_mailer.append_data('<td></td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_amount||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_disc_noreturn||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_disc_volume||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_disc_earlypay||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_discount||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_balance||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_tax||'</td>');
-         lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_hdr.edi_value||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_amount,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_disc_noreturn,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_disc_volume,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_disc_earlypay,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_discount,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_balance,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_tax,'fm999g999g999g999g999')||'</td>');
+         lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_hdr.edi_value,'fm999g999g999g999g999')||'</td>');
          lics_mailer.append_data('</tr>');
 
          /*-*/
@@ -1356,14 +1356,14 @@ create or replace package body edi_whslr_monthly as
             /*-*/
             lics_mailer.append_data('<tr>');
             lics_mailer.append_data('<td align=left>'||rcd_whslr_mly_inv_bch.edi_brnch_code||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_amount||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_disc_noreturn||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_disc_volume||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_disc_earlypay||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_discount||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_balance||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_tax||'</td>');
-            lics_mailer.append_data('<td align=right>'||rcd_whslr_mly_inv_bch.edi_value||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_amount,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_disc_noreturn,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_disc_volume,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_disc_earlypay,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_discount,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_balance,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_tax,'fm999g999g999g999g999')||'</td>');
+            lics_mailer.append_data('<td align=right>'||to_char(rcd_whslr_mly_inv_bch.edi_value,'fm999g999g999g999g999')||'</td>');
             lics_mailer.append_data('</tr>');
 
          end loop;
