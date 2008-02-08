@@ -20,6 +20,7 @@ create or replace package ods_atlods09 as
     -------   ------         -----------
     2004      ISI            Created
     2007/10   Steve Gregan   Included SAP_STO_PO_TRACE table
+    2008/02   Steve Gregan   Added source plant to SAP_STO_PO_TRACE table
 
    *******************************************************************************/
 
@@ -2657,8 +2658,7 @@ create or replace package body ods_atlods09 as
                 t03.purch_order_type_code,
                 t03.purchg_company_code,
                 t04.vendor_code,
-                t04.vendor_reference,
-                t04.sold_to_reference,
+                t04.source_plant_code,
                 t04.sales_org_code,
                 t04.distbn_chnl_code,
                 t04.division_code,
@@ -2732,13 +2732,12 @@ create or replace package body ods_atlods09 as
                        t01.vendor_code,
                        t01.vendor_reference,
                        t01.sold_to_reference,
+                       t03.source_plant_code,
                        t03.sales_org_code,
                        t03.distbn_chnl_code,
                        t03.division_code
                   from (select t01.belnr,
-                               max(case when t01.parvw = 'LF' then t01.partn end) as vendor_code,
-                               max(case when t01.parvw = 'LF' then t01.ihrez end) as vendor_reference,
-                               max(case when t01.parvw = 'AG' then t01.ihrez end) as sold_to_reference
+                               max(case when t01.parvw = 'LF' then t01.partn end) as vendor_code
                           from sap_sto_po_pnr t01
                          where t01.belnr = par_belnr
                            and t01.parvw in ('LF','AG')
@@ -2747,7 +2746,8 @@ create or replace package body ods_atlods09 as
                                max(t01.kunnr) as kunnr
                           from sap_cus_hdr t01
                          group by t01.lifnr) t02,
-                       (select trim(substr(t01.z_data,42,10)) as cust_code,
+                       (select trim(substr(t01.z_data,4,4)) as source_plant_code,
+                               trim(substr(t01.z_data,42,10)) as cust_code,
                                trim(substr(t01.z_data,173,3)) as sales_org_code,
                                trim(substr(t01.z_data,223,2)) as distbn_chnl_code,
                                trim(substr(t01.z_data,225,2)) as division_code
@@ -2892,6 +2892,7 @@ create or replace package body ods_atlods09 as
          rcd_sap_sto_po_trace.purch_order_type_code := rcd_ods_data.purch_order_type_code;
          rcd_sap_sto_po_trace.purchg_company_code := rcd_ods_data.purchg_company_code;
          rcd_sap_sto_po_trace.vendor_code := rcd_ods_data.vendor_code;
+         rcd_sap_sto_po_trace.source_plant_code := rcd_ods_data.source_plant_code;
          rcd_sap_sto_po_trace.sales_org_code := rcd_ods_data.sales_org_code;
          rcd_sap_sto_po_trace.distbn_chnl_code := rcd_ods_data.distbn_chnl_code;
          rcd_sap_sto_po_trace.division_code := rcd_ods_data.division_code;

@@ -35,6 +35,7 @@ create or replace package dw_scheduled_aggregation as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/08   Steve Gregan   Created
+    2008/02   Steve Gregan   Added stock sales aggregation
 
    *******************************************************************************/
 
@@ -61,6 +62,7 @@ create or replace package body dw_scheduled_aggregation as
    /* Private declarations
    /*-*/
    procedure purch_order_fact_load;
+   procedure stock_base_load;
    procedure order_fact_load;
    procedure dlvry_fact_load;
 
@@ -71,6 +73,7 @@ create or replace package body dw_scheduled_aggregation as
    pkg_company_currcy company.company_currcy%type;
    pkg_date date;
    pkg_pur_fact_max_seqn number;
+   pkg_stk_fact_max_seqn number;
    pkg_ord_fact_max_seqn number;
    pkg_del_fact_max_seqn number;
 
@@ -110,6 +113,12 @@ create or replace package body dw_scheduled_aggregation as
            from dw_purch_base t01
           where t01.company_code = par_company;
       rcd_pur_fact csr_pur_fact%rowtype;
+
+      cursor csr_stk_fact is
+         select nvl(max(t01.purch_order_trace_seqn),0) as max_trace_seqn
+           from dw_stock_base t01
+          where t01.company_code = par_company;
+      rcd_stk_fact csr_stk_fact%rowtype;
 
       cursor csr_ord_fact is
          select nvl(max(t01.order_trace_seqn),0) as max_trace_seqn
@@ -202,6 +211,17 @@ create or replace package body dw_scheduled_aggregation as
          close csr_pur_fact;
 
          /*-*/
+         /* STOCK_FACT maximum trace
+         /*-*/
+         pkg_stk_fact_max_seqn := 0;
+         open csr_stk_fact;
+         fetch csr_stk_fact into rcd_stk_fact;
+         if csr_stk_fact%found then
+            pkg_stk_fact_max_seqn := rcd_stk_fact.max_trace_seqn;
+         end if;
+         close csr_stk_fact;
+
+         /*-*/
          /* ORDER_FACT maximum trace
          /*-*/
          pkg_ord_fact_max_seqn := 0;
@@ -224,27 +244,37 @@ create or replace package body dw_scheduled_aggregation as
          close csr_del_fact;
 
          /*-*/
-         /* PURCH_ORDER_FACT load
+         /* PURCH_BASE load
+         /*-*/
+     --    begin
+     --       purch_order_fact_load;
+     --    exception
+     --       when others then
+     --          var_errors := true;
+     --    end;
+
+         /*-*/
+         /* STOCK_BASE load
          /*-*/
          begin
-            purch_order_fact_load;
+            stock_base_load;
          exception
             when others then
                var_errors := true;
          end;
 
          /*-*/
-         /* ORDER_FACT load
+         /* ORDER_BASE load
          /*-*/
-      --   begin
-      --      order_fact_load;
-      --   exception
-      --      when others then
-      --         var_errors := true;
-      --   end;
+     --    begin
+     --       order_fact_load;
+     --    exception
+     --       when others then
+     --          var_errors := true;
+     --    end;
 
          /*-*/
-         /* DLVRY_FACT load
+         /* DLVRY_BASE load
          /*-*/
      --    begin
      --       dlvry_fact_load;
@@ -717,6 +747,438 @@ create or replace package body dw_scheduled_aggregation as
    /* End routine */
    /*-------------*/
    end purch_order_fact_load;
+
+   /*******************************************************/
+   /* This procedure performs the stock base load routine */
+   /*******************************************************/
+   procedure stock_base_load is
+
+      /*-*/
+      /* Local variables
+      /*-*/
+      rcd_stock_base dw_stock_base%rowtype;
+      var_stock_trnfr_factor number;
+      var_stock_trnfr_price number;
+      var_gsv_value number;
+      var_process boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_trace is
+         select t01.*,
+                t02.atwrt as mat_bus_sgmnt_code
+           from sap_sto_po_trace t01,
+                sap_cla_chr t02
+          where t01.trace_seqn in (select max(t01.trace_seqn)
+                                     from sap_sto_po_trace t01
+                                    where t01.company_code = pkg_company_code
+                                      and trunc(t01.trace_date) <= trunc(pkg_date)
+                                      and t01.trace_seqn > pkg_stk_base_max_seqn
+                                    group by t01.purch_order_doc_num)
+            and not(t01.purch_order_doc_line_num is null)
+            and t01.purch_order_type_code = 'ZUB'
+            and t01.trace_status = '*ACTIVE'
+            and t01.matl_code = t02.objek(+)
+            and t02.obtab = 'MARA'
+            and t02.klart = '001'
+            and t02.atnam = 'CLFFERT01'
+          order by t01.purch_order_doc_num asc,
+                   t01.purch_order_doc_line_num asc;
+      rcd_trace csr_trace%rowtype;
+
+      cursor csr_pricing is
+         select t02.kbetr
+           from lads_prc_lst_hdr t01,
+                lads_prc_lst_det t02
+          where t01.vakey = t02.vakey
+            and t01.kschl = t02.kschl
+            and t01.datab = t02.datab
+            and t01.knumh = t02.knumh
+            and t01.lads_status = '1'
+            and t01.kschl = 'ZV01'
+            and t01.kotabnr = '969'
+            and t01.vakey = lpad(nvl('0000010882','0'),10,'0')||rpad(rcd_purch_order_fact.ods_matl_code,18,' ')||'0'
+            and (t01.datab <= to_char(rcd_purch_order_fact.purch_order_eff_date,'yyyymmdd') and
+                 t01.datbi >= to_char(rcd_purch_order_fact.purch_order_eff_date,'yyyymmdd'))
+            and t02.detseq = 1
+            and t02.loevm_ko is null;
+      rcd_pricing csr_pricing%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - STOCK_BASE Load');
+
+      /*-*/
+      /* STEP #1
+      /*
+      /* Delete any existing stock base rows 
+      /* **notes** 1. Delete all stock transfers that have changed within the window
+      /*              regardless of their eligibility for inclusion in this process
+      /*-*/
+      delete from dw_stock_base
+       where (purch_order_doc_num) in (select distinct(t01.purch_order_doc_num)
+                                         from sap_sto_po_trace t01
+                                        where t01.company_code = pkg_company_code
+                                          and trunc(t01.trace_date) <= trunc(pkg_date)
+                                          and t01.trace_seqn > pkg_stk_base_max_seqn);
+
+      /*-*/
+      /* STEP #2
+      /*
+      /* Load the stock base rows from the ODS trace data
+      /* **notes** 1. Select all stock transfers that have changed within the window
+      /*           2. Only stock transfers (ZUB) are selected
+      /*           3. Only valid stock transfers are selected (TRACE_STATUS = *ACTIVE)
+      /*-*/
+      open csr_trace;
+      loop
+         fetch csr_trace into rcd_trace;
+         if csr_trace%notfound then
+            exit;
+         end if;
+
+         /* Only process required stock transfers
+         /*
+         /* **notes**
+         /* 1. Reset the process indicator
+         /* 2. Retrieve the required stock transfers to record as sales
+         /*    (ie. where stock ownership has changed within the same company)
+         /*-*/
+         var_process := false;
+         if (t01.source_plant_code = 'NZ01' and
+             t01.plant_code = 'NZ11' and
+             t01.matl_type_code = 'FERT' and
+             t01.bus_sgmnt_code = '05' and
+             t01.cnsmr_pack_frmt_code = '51') then
+            var_stock_trnfr_code := 'DOG_ROLL';
+            var_stock_trnfr_factor := 1;
+            var_process := true;
+         end if;
+         if (t01.source_plant_code = 'NZ11' and
+             t01.plant_code = 'NZ01' and
+             t01.matl_type_code = 'FERT' and
+             t01.bus_sgmnt_code = '05' and
+             t01.cnsmr_pack_frmt_code = '51') then
+            var_stock_trnfr_code := 'DOG_ROLL';
+            var_stock_trnfr_factor := -1;
+            var_process := true;
+         end if;
+         if (t01.source_plant_code in ('NZ01','NZ11') and
+             t01.plant_code in ('NZ13','NZ14') and
+             t01.matl_type_code = 'FERT' and
+             t01.bus_sgmnt_code = '05' and
+             t01.cnsmr_pack_frmt_code = '45') then
+            var_stock_trnfr_code := 'POUCH';
+            var_stock_trnfr_factor := 1;
+            var_process := true;
+         end if;
+         if (t01.source_plant_code in ('NZ13','NZ14') and
+             t01.plant_code in ('NZ01','NZ11') and
+             t01.matl_type_code = 'FERT' and
+             t01.bus_sgmnt_code = '05' and
+             t01.cnsmr_pack_frmt_code = '45') then
+            var_stock_trnfr_code := 'POUCH';
+            var_stock_trnfr_factor := -1;
+            var_process := true;
+         end if;
+
+
+         /*-*/
+         /* Process the ODS data when required
+         /*-*/
+         if var_process = true then
+
+            /*---------------------------*/
+            /* STOCK_BASE Initialisation */
+            /*---------------------------*/
+
+            /*-*/
+            /* Initialise the stock base row
+            /*-*/
+            rcd_purch_order_fact.purch_order_doc_num := rcd_trace.purch_order_doc_num;
+            rcd_purch_order_fact.purch_order_doc_line_num := rcd_trace.purch_order_doc_line_num;
+            rcd_purch_order_fact.purch_order_line_status := '*OUTSTANDING';
+            rcd_purch_order_fact.purch_order_trace_seqn := rcd_trace.trace_seqn;
+            rcd_purch_order_fact.creatn_date := rcd_trace.creatn_date;
+            rcd_purch_order_fact.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
+            rcd_purch_order_fact.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
+            rcd_purch_order_fact.creatn_yyyypp := rcd_trace.creatn_yyyypp;
+            rcd_purch_order_fact.creatn_yyyymm := rcd_trace.creatn_yyyymm;
+            rcd_purch_order_fact.purch_order_eff_date := rcd_trace.purch_order_eff_date;
+            rcd_purch_order_fact.purch_order_eff_yyyyppdd := rcd_trace.purch_order_eff_yyyyppdd;
+            rcd_purch_order_fact.purch_order_eff_yyyyppw := rcd_trace.purch_order_eff_yyyyppw;
+            rcd_purch_order_fact.purch_order_eff_yyyypp := rcd_trace.purch_order_eff_yyyypp;
+            rcd_purch_order_fact.purch_order_eff_yyyymm := rcd_trace.purch_order_eff_yyyymm;
+            rcd_purch_order_fact.confirmed_date := rcd_trace.confirmed_date;
+            rcd_purch_order_fact.confirmed_yyyyppdd := rcd_trace.confirmed_yyyyppdd;
+            rcd_purch_order_fact.confirmed_yyyyppw := rcd_trace.confirmed_yyyyppw;
+            rcd_purch_order_fact.confirmed_yyyypp := rcd_trace.confirmed_yyyypp;
+            rcd_purch_order_fact.confirmed_yyyymm := rcd_trace.confirmed_yyyymm;
+            rcd_purch_order_fact.company_code := rcd_trace.company_code;
+            rcd_purch_order_fact.sales_org_code := rcd_trace.sales_org_code;
+            rcd_purch_order_fact.distbn_chnl_code := rcd_trace.distbn_chnl_code;
+            rcd_purch_order_fact.division_code := rcd_trace.division_code;
+            rcd_purch_order_fact.doc_currcy_code := rcd_trace.currcy_code;
+            rcd_purch_order_fact.company_currcy_code := pkg_company_currcy;
+            rcd_purch_order_fact.exch_rate := rcd_trace.exch_rate;
+            rcd_purch_order_fact.purchg_company_code := rcd_trace.purchg_company_code;
+            rcd_purch_order_fact.purch_order_type_code := rcd_trace.purch_order_type_code;
+            rcd_purch_order_fact.purch_order_reasn_code := rcd_trace.purch_order_reasn_code;
+            rcd_purch_order_fact.purch_order_usage_code := rcd_trace.purch_order_usage_code;
+            rcd_purch_order_fact.vendor_code := rcd_trace.vendor_code;
+            rcd_purch_order_fact.cust_code := rcd_trace.cust_code;
+            rcd_purch_order_fact.matl_code := dw_trim_code(rcd_trace.matl_code);
+            rcd_purch_order_fact.ods_matl_code := rcd_trace.matl_code;
+            rcd_purch_order_fact.plant_code := rcd_trace.plant_code;
+            rcd_purch_order_fact.storage_locn_code := rcd_trace.storage_locn_code;
+            rcd_purch_order_fact.purch_order_weight_unit := rcd_trace.purch_order_weight_unit;
+            rcd_purch_order_fact.purch_order_gross_weight := rcd_trace.purch_order_gross_weight;
+            rcd_purch_order_fact.purch_order_net_weight := rcd_trace.purch_order_net_weight;
+            rcd_purch_order_fact.purch_order_uom_code := rcd_trace.purch_order_uom_code;
+            rcd_purch_order_fact.purch_order_base_uom_code := null;
+            rcd_purch_order_fact.ord_qty := 0;
+            rcd_purch_order_fact.ord_qty_base_uom := 0;
+            rcd_purch_order_fact.ord_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.ord_qty_net_tonnes := 0;
+            rcd_purch_order_fact.ord_gsv := 0;
+            rcd_purch_order_fact.ord_gsv_xactn := 0;
+            rcd_purch_order_fact.ord_gsv_aud := 0;
+            rcd_purch_order_fact.ord_gsv_usd := 0;
+            rcd_purch_order_fact.ord_gsv_eur := 0;
+            rcd_purch_order_fact.con_qty := 0;
+            rcd_purch_order_fact.con_qty_base_uom := 0;
+            rcd_purch_order_fact.con_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.con_qty_net_tonnes := 0;
+            rcd_purch_order_fact.con_gsv := 0;
+            rcd_purch_order_fact.con_gsv_xactn := 0;
+            rcd_purch_order_fact.con_gsv_aud := 0;
+            rcd_purch_order_fact.con_gsv_usd := 0;
+            rcd_purch_order_fact.con_gsv_eur := 0;
+            rcd_purch_order_fact.req_qty := 0;
+            rcd_purch_order_fact.req_qty_base_uom := 0;
+            rcd_purch_order_fact.req_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.req_qty_net_tonnes := 0;
+            rcd_purch_order_fact.req_gsv := 0;
+            rcd_purch_order_fact.req_gsv_xactn := 0;
+            rcd_purch_order_fact.req_gsv_aud := 0;
+            rcd_purch_order_fact.req_gsv_usd := 0;
+            rcd_purch_order_fact.req_gsv_eur := 0;
+            rcd_purch_order_fact.del_qty := 0;
+            rcd_purch_order_fact.del_qty_base_uom := 0;
+            rcd_purch_order_fact.del_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.del_qty_net_tonnes := 0;
+            rcd_purch_order_fact.del_gsv := 0;
+            rcd_purch_order_fact.del_gsv_xactn := 0;
+            rcd_purch_order_fact.del_gsv_aud := 0;
+            rcd_purch_order_fact.del_gsv_usd := 0;
+            rcd_purch_order_fact.del_gsv_eur := 0;
+            rcd_purch_order_fact.inv_qty := 0;
+            rcd_purch_order_fact.inv_qty_base_uom := 0;
+            rcd_purch_order_fact.inv_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.inv_qty_net_tonnes := 0;
+            rcd_purch_order_fact.inv_gsv := 0;
+            rcd_purch_order_fact.inv_gsv_xactn := 0;
+            rcd_purch_order_fact.inv_gsv_aud := 0;
+            rcd_purch_order_fact.inv_gsv_usd := 0;
+            rcd_purch_order_fact.inv_gsv_eur := 0;
+            rcd_purch_order_fact.out_qty := 0;
+            rcd_purch_order_fact.out_qty_base_uom := 0;
+            rcd_purch_order_fact.out_qty_gross_tonnes := 0;
+            rcd_purch_order_fact.out_qty_net_tonnes := 0;
+            rcd_purch_order_fact.out_gsv := 0;
+            rcd_purch_order_fact.out_gsv_xactn := 0;
+            rcd_purch_order_fact.out_gsv_aud := 0;
+            rcd_purch_order_fact.out_gsv_usd := 0;
+            rcd_purch_order_fact.out_gsv_eur := 0;
+            rcd_purch_order_fact.mfanz_icb_flag := 'N';
+            rcd_purch_order_fact.demand_plng_grp_division_code := rcd_trace.division_code;
+            if rcd_purch_order_fact.demand_plng_grp_division_code = '57' then
+               if rcd_trace.mat_bus_sgmnt_code = '05' then
+                  rcd_purch_order_fact.demand_plng_grp_division_code := '56';
+               end if;
+            end if;
+
+            /*-*/
+            /* Retrieve the stock transfer pricing data
+            /*-*/
+            var_stock_trnfr_price := 0;
+            open csr_pricing;
+            fetch csr_pricing into rcd_pricing;
+            if csr_purch_order_type%found then
+               var_stock_trnfr_price := rcd_pricing.kbetr;
+            end if;
+            close csr_pricing;
+
+            /*-------------------------*/
+            /* STOCK_BASE Calculations */
+            /*-------------------------*/
+
+            /*-*/
+            /* Calculate the purchase order quantity values from the material GRD data
+            /* **notes** 1. Recalculation from the material GRD data allows the fact tables to be rebuilt from the ODS when GRD data errors are corrected.
+            /*           2. Ensures consistency when reducing outstanding quantity and weight from delivery and invoice.
+            /*           3. Is the only way to reduce the order quantity with the delivery quantity (different material or UOM).
+            /*-*/
+            rcd_purch_order_fact.ord_qty := var_purch_order_type_factor * rcd_trace.purch_order_qty;
+            dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_order_fact.ods_matl_code;
+            dw_utility.pkg_qty_fact.uom_code := rcd_purch_order_fact.purch_order_uom_code;
+            dw_utility.pkg_qty_fact.uom_qty := rcd_purch_order_fact.ord_qty;
+            dw_utility.calculate_quantity;
+            rcd_purch_order_fact.purch_order_base_uom_code := dw_utility.pkg_qty_fact.base_uom_code;
+            rcd_purch_order_fact.ord_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
+            rcd_purch_order_fact.ord_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
+            rcd_purch_order_fact.ord_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
+
+            /*-*/
+            /* Calculate the purchase order GSV values
+            /*-*/
+            rcd_purch_order_fact.ord_gsv_xactn := round(var_purch_order_type_factor * rcd_trace.purch_order_gsv, 2);
+            var_gsv_value := var_purch_order_type_factor * rcd_trace.purch_order_gsv;
+            rcd_purch_order_fact.ord_gsv := round(
+                                               ods_app.currcy_conv(
+                                                  var_gsv_value,
+                                                  rcd_purch_order_fact.doc_currcy_code,
+                                                  rcd_purch_order_fact.company_currcy_code,
+                                                  rcd_purch_order_fact.creatn_date,
+                                                  'USDX'), 2);
+            rcd_purch_order_fact.ord_gsv_aud := round(
+                                                   ods_app.currcy_conv(
+                                                      ods_app.currcy_conv(
+                                                         var_gsv_value,
+                                                         rcd_purch_order_fact.doc_currcy_code,
+                                                         rcd_purch_order_fact.company_currcy_code,
+                                                         rcd_purch_order_fact.creatn_date,
+                                                         'USDX'),
+                                                      rcd_purch_order_fact.company_currcy_code,
+                                                      'AUD',
+                                                      rcd_purch_order_fact.creatn_date,
+                                                      'MPPR'), 2);
+            rcd_purch_order_fact.ord_gsv_usd := round(
+                                                   ods_app.currcy_conv(
+                                                      ods_app.currcy_conv(
+                                                         var_gsv_value,
+                                                         rcd_purch_order_fact.doc_currcy_code,
+                                                         rcd_purch_order_fact.company_currcy_code,
+                                                         rcd_purch_order_fact.creatn_date,
+                                                         'USDX'),
+                                                      rcd_purch_order_fact.company_currcy_code,
+                                                      'USD',
+                                                      rcd_purch_order_fact.creatn_date,
+                                                      'MPPR'), 2);
+            rcd_purch_order_fact.ord_gsv_eur := round(
+                                                   ods_app.currcy_conv(
+                                                      ods_app.currcy_conv(
+                                                         var_gsv_value,
+                                                         rcd_purch_order_fact.doc_currcy_code,
+                                                         rcd_purch_order_fact.company_currcy_code,
+                                                         rcd_purch_order_fact.creatn_date,
+                                                         'USDX'),
+                                                      rcd_purch_order_fact.company_currcy_code,
+                                                      'EUR',
+                                                      rcd_purch_order_fact.creatn_date,
+                                                      'MPPR'), 2);
+
+            /*-*/
+            /* Calculate the confirmed quantity values
+            /*-*/
+            rcd_purch_order_fact.con_qty := var_purch_order_type_factor * rcd_trace.confirmed_qty;
+            dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_order_fact.ods_matl_code;
+            dw_utility.pkg_qty_fact.uom_code := rcd_purch_order_fact.purch_order_uom_code;
+            dw_utility.pkg_qty_fact.uom_qty := rcd_purch_order_fact.con_qty;
+            dw_utility.calculate_quantity;
+            rcd_purch_order_fact.con_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
+            rcd_purch_order_fact.con_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
+            rcd_purch_order_fact.con_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
+
+            /*-*/
+            /* Calculate the confirmed GSV values
+            /*-*/
+            if rcd_purch_order_fact.ord_qty = 0 then
+               rcd_purch_order_fact.con_gsv := rcd_purch_order_fact.ord_gsv;
+               rcd_purch_order_fact.con_gsv_xactn := rcd_purch_order_fact.ord_gsv_xactn;
+               rcd_purch_order_fact.con_gsv_aud := rcd_purch_order_fact.ord_gsv_aud;
+               rcd_purch_order_fact.con_gsv_usd := rcd_purch_order_fact.ord_gsv_usd;
+               rcd_purch_order_fact.con_gsv_eur := rcd_purch_order_fact.ord_gsv_eur;
+            else
+               rcd_purch_order_fact.con_gsv := round((rcd_purch_order_fact.ord_gsv / rcd_purch_order_fact.ord_qty) * rcd_purch_order_fact.con_qty, 2);
+               rcd_purch_order_fact.con_gsv_xactn := round((rcd_purch_order_fact.ord_gsv_xactn / rcd_purch_order_fact.ord_qty) * rcd_purch_order_fact.con_qty, 2);
+               rcd_purch_order_fact.con_gsv_aud := round((rcd_purch_order_fact.ord_gsv_aud / rcd_purch_order_fact.ord_qty) * rcd_purch_order_fact.con_qty, 2);
+               rcd_purch_order_fact.con_gsv_usd := round((rcd_purch_order_fact.ord_gsv_usd / rcd_purch_order_fact.ord_qty) * rcd_purch_order_fact.con_qty, 2);
+               rcd_purch_order_fact.con_gsv_eur := round((rcd_purch_order_fact.ord_gsv_eur / rcd_purch_order_fact.ord_qty) * rcd_purch_order_fact.con_qty, 2);
+            end if;
+
+            /*---------------------*/
+            /* STOCK_BASE Creation */
+            /*---------------------*/
+
+            /*-*/
+            /* Insert the purchase order fact row
+            /*-*/
+            insert into dw_purch_base values rcd_purch_order_fact;
+
+            /*-------------------*/
+            /* STOCK_BASE Status */
+            /*-------------------*/
+
+            /*-*/
+            /* Update the stock base status
+            /*-*/
+            dw_utility.purch_order_fact_status(rcd_purch_order_fact.purch_order_doc_num, rcd_purch_order_fact.purch_order_doc_line_num);
+
+         end if;
+
+      end loop;
+      close csr_trace;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - STOCK_BASE Load');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**ERROR** - STOCK_BASE Load - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - STOCK_BASE Load');
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**ERROR**');
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end stock_base_load;
 
    /*******************************************************/
    /* This procedure performs the order fact load routine */

@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2007/10   Steve Gregan   Created
+ 2008/02   Steve Gregan   Added source plant code
 
 *******************************************************************************/
 
@@ -42,6 +43,7 @@ create table sap_sto_po_trace
     purch_order_type_code                    varchar2(10 char)      null,
     purchg_company_code                      varchar2(10 char)      null,
     vendor_code                              varchar2(10 char)      null,
+    source_plant_code                        varchar2(10 char)      null,
     sales_org_code                           varchar2(10 char)      null,
     distbn_chnl_code                         varchar2(10 char)      null,
     division_code                            varchar2(10 char)      null,
