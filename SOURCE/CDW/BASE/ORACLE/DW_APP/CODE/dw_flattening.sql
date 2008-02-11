@@ -1,14 +1,14 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dds_flattening as
+create or replace package dw_flattening as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Object : dds_flattening
-    Owner  : dds_app
+    Object : dw_flattening
+    Owner  : dw_app
 
     Description
     -----------
@@ -34,7 +34,7 @@ create or replace package dds_flattening as
     1. The internal FLATTEN_TABLE procedure is a generic routine where the source and target
        tables must have the same column names and the target table must have a primary key constraint.
 
-    2. A web log is produced under the search value DDS_FLATTENING where all errors are logged.
+    2. A web log is produced under the search value DW_FLATTENING where all errors are logged.
 
     3. All errors will raise an exception to the calling application so that an alert can
        be raised.
@@ -43,7 +43,8 @@ create or replace package dds_flattening as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2007/08   Steve Gregan   Created
+    2005/01   Steve Gregan   Created 
+    2008/02   Trevor Keon    Modified for VENUS environment 
 
    *******************************************************************************/
 
@@ -52,13 +53,13 @@ create or replace package dds_flattening as
    /*-*/
    procedure execute(par_action in varchar2, par_table in varchar2);
 
-end dds_flattening;
+end dw_flattening;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dds_flattening as
+create or replace package body dw_flattening as
 
    /*-*/
    /* Private exceptions
@@ -97,9 +98,9 @@ create or replace package body dds_flattening as
       /* Local constants
       /*-*/
       con_function constant varchar2(128) := 'DW GRD Flattening';
-      con_alt_group constant varchar2(32) := 'DDS_ALERT';
+      con_alt_group constant varchar2(32) := 'DW_ALERT';
       con_alt_code constant varchar2(32) := 'GRD_FLATTENING';
-      con_ema_group constant varchar2(32) := 'DDS_EMAIL_GROUP';
+      con_ema_group constant varchar2(32) := 'DW_EMAIL_GROUP';
       con_ema_code constant varchar2(32) := 'GRD_FLATTENING';
 
    /*-------------*/
@@ -110,9 +111,9 @@ create or replace package body dds_flattening as
       /*-*/
       /* Initialise the log/lock variables
       /*-*/
-      var_log_prefix := 'DW - DDS_FLATTENING';
-      var_log_search := 'DDS_FLATTENING';
-      var_loc_string := 'DDS_FLATTENING';
+      var_log_prefix := 'CLIO - DW_FLATTENING';
+      var_log_search := 'DW_FLATTENING';
+      var_loc_string := 'DW_FLATTENING';
       var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
       var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
       var_errors := false;
@@ -125,51 +126,106 @@ create or replace package body dds_flattening as
          raise_application_error(-20000, 'Action parameter must be *UPDATE or *REBUILD');
       end if;
       if upper(par_table) != '*ALL' and
+         upper(par_table) != 'ACCT_ASSGNMNT_GRP_DIM' and
+         upper(par_table) != 'BANNER_DIM' and
+         upper(par_table) != 'BOM_DIM' and
          upper(par_table) != 'COMPANY_DIM' and
-         upper(par_table) != 'CURRENCY_DIM' and
+         upper(par_table) != 'CNTRY_DIM' and
+         upper(par_table) != 'CURRCY_DIM' and
+         upper(par_table) != 'CUST_BUYING_GRP_DIM' and
          upper(par_table) != 'CUST_DIM' and
+         upper(par_table) != 'CUSTOMER_SALES_AREA_DIM' and
+         upper(par_table) != 'DLVRY_TYPE_DIM' and
          upper(par_table) != 'DISTBN_CHNL_DIM' and
-         upper(par_table) != 'DIVISION_DIM' and
+         upper(par_table) != 'DISTBN_ROUTE_DIM' and
+         upper(par_table) != 'DEMAND_PLNG_GRP_DIM' and
+         upper(par_table) != 'DEMAND_PLNG_GRP_MATL_DIV_DIM' and
+         upper(par_table) != 'DEMAND_PLNG_GRP_SALES_AREA_DIM' and
+         upper(par_table) != 'DOC_XACTN_TYPE_DIM' and
+         upper(par_table) != 'EXCH_RATE_DIM' and
+         upper(par_table) != 'GRD_MATL_DIM' and
+         upper(par_table) != 'INV_TYPE_DIM' and
          upper(par_table) != 'INVC_TYPE_DIM' and
+         upper(par_table) != 'LOCAL_MATL_CLASSN_DIM' and
+         upper(par_table) != 'MARS_DATE_DIM' and
          upper(par_table) != 'MARS_DATE_MONTH_DIM' and
          upper(par_table) != 'MARS_DATE_PERIOD_DIM' and
-         upper(par_table) != 'MATERIAL_BF_BSF_DIM' and
-         upper(par_table) != 'MATERIAL_DIM' and
-         upper(par_table) != 'MATERIAL_DIVISION_DIM' and
-         upper(par_table) != 'MATERIAL_MS_BF_BSF_DIM' and
+         upper(par_table) != 'MARS_DATE_WEEK_DIM' and
+         upper(par_table) != 'MARS_DATE_PERIOD_DIM' and
+         upper(par_table) != 'MATL_DIM' and
+         upper(par_table) != 'MATL_PLANT_DIM' and
+         upper(par_table) != 'MULTI_MKT_ACCT_DIM' and
          upper(par_table) != 'ORDER_REASN_DIM' and
          upper(par_table) != 'ORDER_TYPE_DIM' and
          upper(par_table) != 'ORDER_USAGE_DIM' and
          upper(par_table) != 'PLANT_DIM' and
+         upper(par_table) != 'PMX_ACCT_MGR_DIM' and
+         upper(par_table) != 'PMX_CLAIM_TYPE_DIM' and
+         upper(par_table) != 'PMX_CUST_DIM' and
+         upper(par_table) != 'PMX_FUND_TYPE_DIM' and
+         upper(par_table) != 'PMX_PROM_ATTRB_DIM' and
+         upper(par_table) != 'PMX_PROM_STATUS_DIM' and
+         upper(par_table) != 'PMX_PROM_TYPE_DIM' and
+         upper(par_table) != 'POS_FORMAT_GRPG_DIM' and
+         upper(par_table) != 'PURCH_ORDER_TYPE_DIM' and
+         upper(par_table) != 'REGION_DIM' and
          upper(par_table) != 'SALES_ORG_DIM' and
-         upper(par_table) != 'SHIPG_TYPE_DIM' and
          upper(par_table) != 'STORAGE_LOCN_DIM' and
+         upper(par_table) != 'TRANSPORT_MODEL_DIM' and
          upper(par_table) != 'UOM_DIM' and
+         upper(par_table) != 'VENDOR_DIM' and
          upper(par_table) != 'SALES_FORCE_GEO_HIER' and
          upper(par_table) != 'SALES_OFFICE_HIER' and
          upper(par_table) != 'SHIP_TO_HIER' and
          upper(par_table) != 'STD_HIER' then
          raise_application_error(-20000, 'Table parameter must be *ALL or ' ||
+                                         'ACCT_ASSGNMNT_GRP_DIM, ' ||
+                                         'BANNER_DIM, ' ||
+                                         'BOM_DIM, ' ||
                                          'COMPANY_DIM, ' ||
-                                         'CURRENCY_DIM, ' ||
+                                         'CNTRY_DIM, ' ||
+                                         'CURRCY_DIM, ' ||
+                                         'CUST_BUYING_GRP_DIM, ' ||
                                          'CUST_DIM, ' ||
+                                         'CUSTOMER_SALES_AREA_DIM, ' ||
+                                         'DLVRY_TYPE_DIM, ' ||
                                          'DISTBN_CHNL_DIM, ' ||
-                                         'DIVISION_DIM, ' ||
+                                         'DISTBN_ROUTE_DIM, ' ||
+                                         'DEMAND_PLNG_GRP_DIM, ' ||
+                                         'DEMAND_PLNG_GRP_MATL_DIV_DIM, ' ||
+                                         'DEMAND_PLNG_GRP_SALES_AREA_DIM, ' ||
+                                         'DOC_XACTN_TYPE_DIM, ' ||
+                                         'EXCH_RATE_DIM, ' ||
+                                         'GRD_MATL_DIM, ' ||
+                                         'INV_TYPE_DIM, ' ||
                                          'INVC_TYPE_DIM, ' ||
+                                         'LOCAL_MATL_CLASSN_DIM, ' ||
+                                         'MARS_DATE_DIM, ' ||
                                          'MARS_DATE_MONTH_DIM, ' ||
                                          'MARS_DATE_PERIOD_DIM, ' ||
-                                         'MATERIAL_BF_BSF_DIM, ' ||
-                                         'MATERIAL_DIM, ' ||
-                                         'MATERIAL_DIVISION_DIM, ' ||
-                                         'MATERIAL_MS_BF_BSF_DIM, ' ||
+                                         'MARS_DATE_WEEK_DIM, ' ||
+                                         'MATL_DIM, ' ||
+                                         'MATL_PLANT_DIM, ' ||
+                                         'MULTI_MKT_ACCT_DIM, ' ||
                                          'ORDER_REASN_DIM, ' ||
                                          'ORDER_TYPE_DIM, ' ||
                                          'ORDER_USAGE_DIM, ' ||
                                          'PLANT_DIM, ' ||
+                                         'PMX_ACCT_MGR_DIM, ' ||
+                                         'PMX_CLAIM_TYPE_DIM, ' ||
+                                         'PMX_CUST_DIM, ' ||
+                                         'PMX_FUND_TYPE_DIM, ' ||
+                                         'PMX_PROM_ATTRB_DIM, ' ||
+                                         'PMX_PROM_STATUS_DIM, ' ||
+                                         'PMX_PROM_TYPE_DIM, ' ||
+                                         'POS_FORMAT_GRPG_DIM, ' ||
+                                         'PURCH_ORDER_TYPE_DIM, ' ||
+                                         'REGION_DIM, ' ||
                                          'SALES_ORG_DIM, ' ||
-                                         'SHIPG_TYPE_DIM, ' ||
                                          'STORAGE_LOCN_DIM, ' ||
+                                         'TRANSPORT_MODEL_DIM, ' ||
                                          'UOM_DIM, ' ||
+                                         'VENDOR_DIM, ' ||
                                          'SALES_FORCE_GEO_HIER, ' ||
                                          'SALES_OFFICE_HIER, ' ||
                                          'SHIP_TO_HIER, ' ||
@@ -215,18 +271,63 @@ create or replace package body dds_flattening as
          /* Execute the flattening procedures (dimension)
          /* **note** 1. There is NO dependancy OR sequence
          /*-*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'COMPANY_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'ACCT_ASSGNMNT_GRP_DIM' then
             begin
-               flatten_table('dd','company_dim','od_app','company_dim_view',var_replace);
+               flatten_table('dds','acct_assgnmnt_grp_dim','ods_app','acct_assgnmnt_grp_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
          /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'CURRENCY_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'BANNER_DIM' then
             begin
-               flatten_table('dd','currency_dim','od_app','currency_dim_view',var_replace);
+               flatten_table('dds','banner_dim','ods_app','banner_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'BOM_DIM' then
+            begin
+               flatten_table('dds','bom_dim','ods_app','bom_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'COMPANY_DIM' then
+            begin
+               flatten_table('dds','company_dim','ods_app','company_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'CNTRY_DIM' then
+            begin
+               flatten_table('dds','cntry_dim','ods_app','country_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'CURRCY_DIM' then
+            begin
+               flatten_table('dds','currcy_dim','ods_app','currency_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'CUST_BUYING_GRP_DIM' then
+            begin
+               flatten_table('dds','cust_buying_grp_dim','ods_app','cust_buying_grp_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -235,7 +336,25 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'CUST_DIM' then
             begin
-               flatten_table('dd','cust_dim','od_app','cust_dim_view',var_replace);
+               flatten_table('dds','cust_dim','ods_app','cust_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'CUSTOMER_SALES_AREA_DIM' then
+            begin
+               flatten_table('dds','cust_sales_area_dim','ods_app','customer_sales_area_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DLVRY_TYPE_DIM' then
+            begin
+               flatten_table('dds','dlvry_type_dim','ods_app','delivery_type_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -244,7 +363,16 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'DISTBN_CHNL_DIM' then
             begin
-               flatten_table('dd','distbn_chnl_dim','od_app','distbn_chnl_dim_view',var_replace);
+               flatten_table('dds','distbn_chnl_dim','ods_app','distribution_chnl_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DISTBN_ROUTE_DIM' then
+            begin
+               flatten_table('dds','distbn_route_dim','ods_app','distribution_route_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -253,7 +381,79 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'DIVISION_DIM' then
             begin
-               flatten_table('dd','division_dim','od_app','division_dim_view',var_replace);
+               flatten_table('dds','division_dim','ods_app','division_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DEMAND_PLNG_GRP_DIM' then
+            begin
+               flatten_table('dds','demand_plng_grp_dim','ods_app','dmd_plng_grp_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DEMAND_PLNG_GRP_MATL_DIV_DIM' then
+            begin
+               flatten_table('dds','demand_plng_grp_matl_div_dim','ods_app','dmd_plng_grp_matl_div_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DEMAND_PLNG_GRP_SALES_AREA_DIM' then
+            begin
+               flatten_table('dds','demand_plng_grp_sales_area_dim','ods_app','dmd_plng_grp_sales_area_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'DOC_XACTN_TYPE_DIM' then
+            begin
+               flatten_table('dds','doc_xactn_type_dim','ods_app','doc_xactn_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'EXCH_RATE_DIM' then
+            begin
+               flatten_table('dds','exch_rate_dim','ods_app','exchange_rate_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'FCST_TYPE_DIM' then
+            begin
+               flatten_table('dds','fcst_type_dim','ods_app','forecast_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'GRD_MATL_DIM' then
+            begin
+               flatten_table('dds','grd_matl_dim','ods_app','grd_matl_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'INV_TYPE_DIM' then
+            begin
+               flatten_table('dds','inv_type_dim','ods_app','inventory_type_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -262,7 +462,25 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'INVC_TYPE_DIM' then
             begin
-               flatten_table('dd','invc_type_dim','od_app','invc_type_dim_view',var_replace);
+               flatten_table('dds','invc_type_dim','ods_app','invoice_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'LOCAL_MATL_CLASSN_DIM' then
+            begin
+               flatten_table('dds','local_matl_classn_dim','ods_app','local_matl_classn_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'MARS_DATE_DIM' then
+            begin
+               flatten_table('dds','mars_date_dim','ods_app','mars_date_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -271,7 +489,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'MARS_DATE_MONTH_DIM' then
             begin
-               flatten_table('dd','mars_date_month_dim','od_app','mars_date_month_dim_view',var_replace);
+               flatten_table('dds','mars_date_month_dim','ods_app','mars_date_month_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -280,43 +498,43 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'MARS_DATE_PERIOD_DIM' then
             begin
-               flatten_table('dd','mars_date_period_dim','od_app','mars_date_period_dim_view',var_replace);
+               flatten_table('dds','mars_date_period_dim','ods_app','mars_date_period_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
          /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'MATERIAL_BF_BSF_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'MARS_DATE_WEEK_DIM' then
             begin
-               flatten_table('dd','material_bf_bsf_dim','od_app','material_bf_bsf_dim_view',var_replace);
+               flatten_table('dds','mars_date_week_dim','ods_app','mars_date_week_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
          /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'MATERIAL_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'MATL_DIM' then
             begin
-               flatten_table('dd','material_dim','od_app','material_dim_view',var_replace);
+               flatten_table('dds','test_matl_dim','ods_app','matl_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
          /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'MATERIAL_DIVISION_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'MATL_PLANT_DIM' then
             begin
-               flatten_table('dd','material_division_dim','od_app','material_division_dim_view',var_replace);
+               flatten_table('dds','matl_plant_dim','ods_app','matl_plant_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
          /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'MATERIAL_MS_BF_BSF_DIM' then
+         if upper(par_table) = '*ALL' or upper(par_table) = 'MULTI_MKT_ACCT_DIM' then
             begin
-               flatten_table('dd','material_ms_bf_bsf_dim','od_app','material_ms_bf_bsf_dim_view',var_replace);
+               flatten_table('dds','multi_mkt_acct_dim','ods_app','multi_mkt_account_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -325,7 +543,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'ORDER_REASN_DIM' then
             begin
-               flatten_table('dd','order_reasn_dim','od_app','order_reasn_dim_view',var_replace);
+               flatten_table('dds','order_reasn_dim','ods_app','order_reason_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -334,7 +552,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'ORDER_TYPE_DIM' then
             begin
-               flatten_table('dd','order_type_dim','od_app','order_type_dim_view',var_replace);
+               flatten_table('dds','order_type_dim','ods_app','order_type_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -343,7 +561,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'ORDER_USAGE_DIM' then
             begin
-               flatten_table('dd','order_usage_dim','od_app','order_usage_dim_view',var_replace);
+               flatten_table('dds','order_usage_dim','ods_app','order_usage_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -352,7 +570,97 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'PLANT_DIM' then
             begin
-               flatten_table('dd','plant_dim','od_app','plant_dim_view',var_replace);
+               flatten_table('dds','plant_dim','ods_app','plant_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_ACCT_MGR_DIM' then
+            begin
+               flatten_table('dds','acct_mgr_dim','ods_app','pmx_acct_mgr_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;         
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_CLAIM_TYPE_DIM' then
+            begin
+               flatten_table('dds','claim_type_dim','ods_app','pmx_claim_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_CUST_DIM' then
+            begin
+               flatten_table('dds','pmx_cust_dim','ods_app','pmx_cust_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_FUND_TYPE_DIM' then
+            begin
+               flatten_table('dds','prom_fund_type_dim','ods_app','pmx_fund_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_PROM_ATTRB_DIM' then
+            begin
+               flatten_table('dds','prom_attrb_dim','ods_app','pmx_prom_attrb_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_PROM_STATUS_DIM' then
+            begin
+               flatten_table('dds','prom_status_dim','ods_app','pmx_prom_status_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PMX_PROM_TYPE_DIM' then
+            begin
+               flatten_table('dds','prom_type_dim','ods_app','pmx_prom_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'POS_FORMAT_GRPG_DIM' then
+            begin
+               flatten_table('dds','pos_format_grpg_dim','ods_app','pos_format_grouping_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'PURCH_ORDER_TYPE_DIM' then
+            begin
+               flatten_table('dds','purch_order_type_dim','ods_app','purch_order_type_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'REGION_DIM' then
+            begin
+               flatten_table('dds','region_dim','ods_app','region_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -361,16 +669,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'SALES_ORG_DIM' then
             begin
-               flatten_table('dd','sales_org_dim','od_app','sales_org_dim_view',var_replace);
-            exception
-               when others then
-                  var_errors := true;
-            end;
-         end if;
-         /*----*/
-         if upper(par_table) = '*ALL' or upper(par_table) = 'SHIPG_TYPE_DIM' then
-            begin
-               flatten_table('dd','shipg_type_dim','od_app','shipg_type_dim_view',var_replace);
+               flatten_table('dds','sales_org_dim','ods_app','sales_org_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -379,7 +678,16 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'STORAGE_LOCN_DIM' then
             begin
-               flatten_table('dd','storage_locn_dim','od_app','storage_locn_dim_view',var_replace);
+               flatten_table('dds','storage_locn_dim','ods_app','storage_location_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'TRANSPORT_MODEL_DIM' then
+            begin
+               flatten_table('dds','transport_model_dim','ods_app','transport_model_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
@@ -388,13 +696,22 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'UOM_DIM' then
             begin
-               flatten_table('dd','uom_dim','od_app','uom_dim_view',var_replace);
+               flatten_table('dds','uom_dim','ods_app','uom_dim_view',var_replace);
             exception
                when others then
                   var_errors := true;
             end;
          end if;
-
+         /*----*/
+         if upper(par_table) = '*ALL' or upper(par_table) = 'VENDOR_DIM' then
+            begin
+               flatten_table('dds','vendor_dim','ods_app','vendor_dim_view',var_replace);
+            exception
+               when others then
+                  var_errors := true;
+            end;
+         end if;
+         
          /*-*/
          /* Execute the flattening procedures (hierarchy)
          /* **note** 1. There is NO dependancy OR sequence
@@ -402,7 +719,7 @@ create or replace package body dds_flattening as
          /*-*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'SALES_FORCE_GEO_HIER' then
             begin
-               flatten_table('dd','sales_force_geo_hier','od_app','sales_force_geo_hier_view','Y');
+               flatten_table('dds','sales_force_geo_hier','ods_app','sales_force_hier_view','Y');
             exception
                when others then
                   var_errors := true;
@@ -411,7 +728,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'SALES_OFFICE_HIER' then
             begin
-               flatten_table('dd','sales_office_hier','od_app','sales_office_hier_view','Y');
+               flatten_table('dds','sales_office_hier','ods_app','sales_office_hier_view','Y');
             exception
                when others then
                   var_errors := true;
@@ -420,7 +737,7 @@ create or replace package body dds_flattening as
          /*----*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'SHIP_TO_HIER' then
             begin
-               flatten_table('dd','ship_to_hier','od_app','ship_to_hier_view','Y');
+               flatten_table('dds','ship_to_hier','ods_app','ship_to_hier_view','Y');
             exception
                when others then
                   var_errors := true;
@@ -429,7 +746,7 @@ create or replace package body dds_flattening as
          /*----*/
         if upper(par_table) = '*ALL' or upper(par_table) = 'STD_HIER' then
             begin
-               flatten_table('dd','std_hier','od_app','std_hier_view','Y');
+               flatten_table('dds','std_hier','ods_app','standard_hier_view','Y');
             exception
                when others then
                   var_errors := true;
@@ -465,7 +782,7 @@ create or replace package body dds_flattening as
                                          lads_parameter.system_unit,
                                          lads_parameter.system_environment,
                                          con_function,
-                                         'DDS_FLATTENING',
+                                         'DW_FLATTENING',
                                          var_email,
                                          'One or more errors occurred during the GRD flattening execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
@@ -512,7 +829,7 @@ create or replace package body dds_flattening as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - CDW - DDS_FLATTENING - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - CLIO - DW_FLATTENING - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -822,11 +1139,11 @@ create or replace package body dds_flattening as
    /*-------------*/
    end flatten_table;
 
-end dds_flattening;
+end dw_flattening;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create public synonym dds_flattening for dds_app.dds_flattening;
-grant execute on dds_flattening to public;
+create or replace public synonym dw_flattening for dw_app.dw_flattening;
+grant execute on dw_flattening to public;
