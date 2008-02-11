@@ -23,10 +23,10 @@ create or replace package ods_converter as
    /**/
    /* Public declarations
    /**/
-   procedure execute_purch_order_trace(fr_yyyypp in varchar2);
-   procedure execute_order_trace(fr_yyyypp in varchar2);
-   procedure execute_dlvry_trace(fr_yyyypp in varchar2);
-   procedure execute_sales_trace(fr_yyyypp in varchar2);
+   procedure execute_purch_order_trace(fr_yyyymmdd in varchar2);
+   procedure execute_order_trace(fr_yyyymmdd in varchar2);
+   procedure execute_dlvry_trace(fr_yyyymmdd in varchar2);
+   procedure execute_sales_trace(fr_yyyymmdd in varchar2);
 
 end ods_converter;
 /
@@ -45,7 +45,7 @@ create or replace package body ods_converter as
    /********************************************************************/
    /* This procedure performs the execute purchase order trace routine */
    /********************************************************************/
-   procedure execute_purch_order_trace(fr_yyyypp in varchar2) is
+   procedure execute_purch_order_trace(fr_yyyymmdd in varchar2) is
 
       /*-*/
       /* Local variables
@@ -59,9 +59,9 @@ create or replace package body ods_converter as
       cursor csr_ods_list is
          select t01.belnr
            from sap_sto_po_hdr t01,
-                (select belnr from sap_sto_po_dat where iddat = '012' and datum >= fr_yyyypp) t02
+               (select belnr, orgid from sap_sto_po_org where qualf = '013') t02
           where t01.belnr = t02.belnr
-          order by t01.belnr;
+            and ((t02.orgid = 'ZNB' and to_char(t01.sap_sto_po_hdr_lupdt,'yyyymmdd') >= fr_yyyymmdd) or t02.orgid != 'ZNB');
       rcd_ods_list csr_ods_list%rowtype;
 
       cursor csr_ods_data is
@@ -377,7 +377,7 @@ create or replace package body ods_converter as
    /***********************************************************/
    /* This procedure performs the execute order trace routine */
    /***********************************************************/
-   procedure execute_order_trace(fr_yyyypp in varchar2) is
+   procedure execute_order_trace(fr_yyyymmdd in varchar2) is
 
       /*-*/
       /* Local variables
@@ -391,9 +391,9 @@ create or replace package body ods_converter as
       cursor csr_ods_list is
          select t01.belnr
            from sap_sal_ord_hdr t01,
-                (select belnr from sap_sal_ord_dat where iddat = '002' and datum >= fr_yyyypp) t02
+                (select belnr from sap_sal_ord_dat where iddat = '002' and datum >= fr_yyyymmdd) t02
           where t01.belnr = t02.belnr
-          order by t01.belnr;
+            and t01.belnr not in (select order_doc_num from sap_sal_ord_trace);
       rcd_ods_list csr_ods_list%rowtype;
 
       cursor csr_ods_data is
@@ -740,7 +740,7 @@ create or replace package body ods_converter as
    /**************************************************************/
    /* This procedure performs the execute delivery trace routine */
    /**************************************************************/
-   procedure execute_dlvry_trace(fr_yyyypp in varchar2) is
+   procedure execute_dlvry_trace(fr_yyyymmdd in varchar2) is
 
       /*-*/
       /* Local variables
@@ -754,9 +754,9 @@ create or replace package body ods_converter as
       cursor csr_ods_list is
          select t01.vbeln
            from sap_del_hdr t01,
-                (select vbeln from sap_del_tim where qualf = '007' and nvl(ltrim(isdd,'0'),ltrim(ntanf,'0')) >= fr_yyyypp) t02
+                (select vbeln from sap_del_tim where qualf = '007' and nvl(ltrim(isdd,'0'),ltrim(ntanf,'0')) >= fr_yyyymmdd) t02
           where t01.vbeln = t02.vbeln
-          order by t01.vbeln;
+            and t01.vbeln not in (select dlvry_doc_num from sap_del_trace);
       rcd_ods_list csr_ods_list%rowtype;
 
       cursor csr_ods_data is
@@ -1047,7 +1047,7 @@ create or replace package body ods_converter as
    /***********************************************************/
    /* This procedure performs the execute sales trace routine */
    /***********************************************************/
-   procedure execute_sales_trace(fr_yyyypp in varchar2) is
+   procedure execute_sales_trace(fr_yyyymmdd in varchar2) is
 
       /*-*/
       /* Local variables
@@ -1061,9 +1061,9 @@ create or replace package body ods_converter as
       cursor csr_ods_list is
          select t01.belnr
            from sap_inv_hdr t01,
-                (select belnr from sap_inv_dat where iddat = '026' and datum >= fr_yyyypp) t02
+                (select belnr from sap_inv_dat where iddat = '026' and datum >= fr_yyyymmdd) t02
           where t01.belnr = t02.belnr
-          order by t01.belnr;
+            and t01.belnr not in (select billing_doc_num from sap_inv_trace);
       rcd_ods_list csr_ods_list%rowtype;
 
       cursor csr_ods_data is

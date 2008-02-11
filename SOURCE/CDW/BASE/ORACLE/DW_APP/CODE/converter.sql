@@ -54,6 +54,7 @@ create or replace package body converter as
       /*-*/
       /* Local variables
       /*-*/
+      var_sequence number;
       rcd_sap_sto_po_trace sap_sto_po_trace%rowtype;
 
       /*-*/
@@ -61,7 +62,9 @@ create or replace package body converter as
       /*-*/
       cursor csr_ods_list is
          select t01.belnr
-           from sap_sto_po_hdr t01
+           from sap_sto_po_hdr t01,
+                (select belnr from sap_sto_po_dat where iddat = '012' and datum >= '20080101') t02
+          where t01.belnr = t02.belnr
           order by t01.belnr;
       rcd_ods_list csr_ods_list%rowtype;
 
@@ -85,6 +88,7 @@ create or replace package body converter as
                 t04.vendor_code,
                 t04.vendor_reference,
                 t04.sold_to_reference,
+                t04.source_plant_code,
                 t04.sales_org_code,
                 t04.distbn_chnl_code,
                 t04.division_code,
@@ -115,7 +119,7 @@ create or replace package body converter as
                        nvl(dw_to_number(t01.wkurs),1) as exch_rate,
                        t01.augru as purch_order_reasn_code
                   from sap_sto_po_hdr t01
-                 where t01.belnr = rcd_ods_list.belnr) t01,
+                 where t01.belnr = par_belnr) t01,
                --
                -- Purchase order date information
                --
@@ -134,7 +138,7 @@ create or replace package body converter as
                                max(case when t01.iddat = '012' then dw_to_date(t01.datum,'yyyymmdd') end) as purch_order_eff_date,
                                max(case when t01.iddat = '011' then dw_to_date(t01.datum,'yyyymmdd') end) as creatn_date
                           from sap_sto_po_dat t01
-                         where t01.belnr = rcd_ods_list.belnr
+                         where t01.belnr = par_belnr
                            and t01.iddat in ('012','011')
                          group by t01.belnr) t01,
                        mars_date t02,
@@ -148,7 +152,7 @@ create or replace package body converter as
                        max(case when t01.qualf = '013' then t01.orgid end) as purch_order_type_code,
                        max(case when t01.qualf = '011' then t01.orgid end) as purchg_company_code
                   from sap_sto_po_org t01
-                 where t01.belnr = rcd_ods_list.belnr
+                 where t01.belnr = par_belnr
                    and t01.qualf in ('013','011')
                  group by t01.belnr) t03,
                --
@@ -158,6 +162,7 @@ create or replace package body converter as
                        t01.vendor_code,
                        t01.vendor_reference,
                        t01.sold_to_reference,
+                       t03.source_plant_code,
                        t03.sales_org_code,
                        t03.distbn_chnl_code,
                        t03.division_code
@@ -166,14 +171,15 @@ create or replace package body converter as
                                max(case when t01.parvw = 'LF' then t01.ihrez end) as vendor_reference,
                                max(case when t01.parvw = 'AG' then t01.ihrez end) as sold_to_reference
                           from sap_sto_po_pnr t01
-                         where t01.belnr = rcd_ods_list.belnr
+                         where t01.belnr = par_belnr
                            and t01.parvw in ('LF','AG')
                          group by t01.belnr) t01,
                        (select lifnr,
                                max(t01.kunnr) as kunnr
                           from sap_cus_hdr t01
                          group by t01.lifnr) t02,
-                       (select trim(substr(t01.z_data,42,10)) as cust_code,
+                       (select trim(substr(t01.z_data,4,4)) as source_plant_code,
+                               trim(substr(t01.z_data,42,10)) as cust_code,
                                trim(substr(t01.z_data,173,3)) as sales_org_code,
                                trim(substr(t01.z_data,223,2)) as distbn_chnl_code,
                                trim(substr(t01.z_data,225,2)) as division_code
@@ -210,7 +216,7 @@ create or replace package body converter as
                                nvl(dw_to_number(t01.ntgew),0) as purch_order_net_weight,
                                t01.gewei as purch_order_weight_unit
                           from sap_sto_po_gen t01
-                         where t01.belnr = rcd_ods_list.belnr) t01,
+                         where t01.belnr = par_belnr) t01,
                        (select trim(substr(t01.z_data,4,4)) as plant_code,
                                trim(substr(t01.z_data,42,10)) as cust_code
                           from sap_ref_dat t01
@@ -223,7 +229,7 @@ create or replace package body converter as
                        t01.genseq,
                        max(case when t01.qualf = '001' then t01.idtnr end) as matl_code
                   from sap_sto_po_oid t01
-                 where t01.belnr = rcd_ods_list.belnr
+                 where t01.belnr = par_belnr
                    and t01.qualf in ('001')
                  group by t01.belnr, t01.genseq) t06,
                --
@@ -275,9 +281,14 @@ create or replace package body converter as
          end if;
 
          /*-*/
-         /* Initialise the purchase order trace data (converted data has a zero sequence)
+         /* Initialise the sequence for current stream action
          /*-*/
-         rcd_sap_sto_po_trace.trace_seqn := 0;
+         select sap_trace_sequence.nextval into var_sequence from dual;
+
+         /*-*/
+         /* Initialise the purchase order trace data
+         /*-*/
+         rcd_sap_sto_po_trace.trace_seqn := var_sequence;
          rcd_sap_sto_po_trace.trace_date := sysdate;
          rcd_sap_sto_po_trace.trace_status := '*ACTIVE';
 
@@ -323,6 +334,7 @@ create or replace package body converter as
             rcd_sap_sto_po_trace.purch_order_type_code := rcd_ods_data.purch_order_type_code;
             rcd_sap_sto_po_trace.purchg_company_code := rcd_ods_data.purchg_company_code;
             rcd_sap_sto_po_trace.vendor_code := rcd_ods_data.vendor_code;
+            rcd_sap_sto_po_trace.source_plant_code := rcd_ods_data.source_plant_code;
             rcd_sap_sto_po_trace.sales_org_code := rcd_ods_data.sales_org_code;
             rcd_sap_sto_po_trace.distbn_chnl_code := rcd_ods_data.distbn_chnl_code;
             rcd_sap_sto_po_trace.division_code := rcd_ods_data.division_code;

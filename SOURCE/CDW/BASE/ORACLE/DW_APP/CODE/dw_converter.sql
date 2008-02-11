@@ -71,9 +71,10 @@ create or replace package body dw_converter as
                 mars_date t03
           where t01.creatn_date = t02.calendar_date(+)
             and t01.purch_order_eff_date = t03.calendar_date(+)
-            and substr(t01.creatn_yyyyppdd,1,6) >= fr_yyyypp
-            and substr(t01.creatn_yyyyppdd,1,6) <= to_yyyypp
-          order by t01.creatn_yyyyppdd asc;
+            and substr(t01.purch_order_eff_yyyyppdd,1,6) >= fr_yyyypp
+            and substr(t01.purch_order_eff_yyyyppdd,1,6) <= to_yyyypp
+            and t01.purch_order_doc_num not in (select purch_order_doc_num from dw_purch_base)
+          order by t01.purch_order_eff_yyyyppdd asc;
       rcd_source csr_source%rowtype;
 
    /*-------------*/

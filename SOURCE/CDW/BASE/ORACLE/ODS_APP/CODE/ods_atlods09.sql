@@ -2658,6 +2658,8 @@ create or replace package body ods_atlods09 as
                 t03.purch_order_type_code,
                 t03.purchg_company_code,
                 t04.vendor_code,
+                t04.vendor_reference,
+                t04.sold_to_reference,
                 t04.source_plant_code,
                 t04.sales_org_code,
                 t04.distbn_chnl_code,
@@ -2737,7 +2739,9 @@ create or replace package body ods_atlods09 as
                        t03.distbn_chnl_code,
                        t03.division_code
                   from (select t01.belnr,
-                               max(case when t01.parvw = 'LF' then t01.partn end) as vendor_code
+                               max(case when t01.parvw = 'LF' then t01.partn end) as vendor_code,
+                               max(case when t01.parvw = 'LF' then t01.ihrez end) as vendor_reference,
+                               max(case when t01.parvw = 'AG' then t01.ihrez end) as sold_to_reference
                           from sap_sto_po_pnr t01
                          where t01.belnr = par_belnr
                            and t01.parvw in ('LF','AG')
