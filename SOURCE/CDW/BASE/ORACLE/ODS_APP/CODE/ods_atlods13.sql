@@ -3228,7 +3228,7 @@ create or replace package body ods_atlods13 as
                        (t03.year_num * 100) + t03.month_num as creatn_yyyymm
                   from (select t01.belnr as belnr,
                                max(case when t01.iddat = '002' then dw_to_date(t01.datum,'yyyymmdd') end) as order_eff_date,
-                               max(case when t01.iddat = '025' then trunc(dw_to_timezone(dw_to_date(t01.datum||t01.uzeit,'yyyymmddhh24miss'),'Australia/Victoria','America/New_York')) end) as creatn_date
+                               max(case when t01.iddat = '025' then trunc(dw_to_timezone(dw_to_date(t01.datum||t01.uzeit,'yyyymmddhh24miss'),'Australia/NSW','America/New_York')) end) as creatn_date
                           from sap_sal_ord_dat t01
                          where t01.belnr = par_belnr
                            and t01.iddat in ('002','025')
