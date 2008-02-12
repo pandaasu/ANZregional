@@ -135,7 +135,7 @@ create or replace package body cdwpdb01_allocated_stock as
                  (SELECT to_char(mars_week)
                     FROM mars_date_dim
                    WHERE TRUNC (SYSDATE, 'DD') = calendar_date) AS mars_week,
-                 to_char(SYSDATE,'yyyymmdd') AS TIMESTAMP
+                 to_char(SYSDATE,'yyyymmddhh24miss') AS TIMESTAMP
             FROM (
                   -- Select Australia Snack Sales Orders and Purchase Orders that are Outstanding (i.e. No Delivery created).
                   -- Note: This query does not include Sales Orders and Purchase Orders created today.
@@ -209,7 +209,7 @@ create or replace package body cdwpdb01_allocated_stock as
                                           rpad(to_char(nvl(rec_allocated_stock.matl_desc,' ')),40, ' ') ||  
                                           rpad(to_char(nvl(rec_allocated_stock.confirmed_qty,' ')),16, ' ') ||   
                                           rpad(to_char(nvl(rec_allocated_stock.mars_week,' ')),7, ' ') ||  
-                                          rpad(to_char(nvl(rec_allocated_stock.timestamp,' ')),8, ' '));   
+                                          rpad(to_char(nvl(rec_allocated_stock.timestamp,' ')),16, ' '));   
       end loop;
       close csr_allocated_stock;
 
