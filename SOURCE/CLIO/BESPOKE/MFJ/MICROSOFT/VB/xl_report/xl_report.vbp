@@ -1,8 +1,8 @@
 Type=OleDll
-Reference=*\G{00020813-0000-0000-C000-000000000046}#1.4#0#..\..\..\Program Files\Microsoft Office\Office10\EXCEL.EXE#Microsoft Excel 10.0 Object Library
-Reference=*\G{00000205-0000-0010-8000-00AA006D2EA4}#2.5#0#..\..\..\Program Files\Common Files\system\ado\msado25.tlb#Microsoft ActiveX Data Objects 2.5 Library
-Reference=*\G{D63E0CE2-A0A2-11D0-9C02-00C04FC99C8E}#2.0#0#..\..\..\WINDOWS\system32\msxml.dll#Microsoft XML, version 2.0
+Reference=*\G{00020813-0000-0000-C000-000000000046}#1.4#0#..\..\..\..\..\..\..\..\..\Program Files\Microsoft Office\Office10\EXCEL.EXE#Microsoft Excel 10.0 Object Library
+Reference=*\G{D63E0CE2-A0A2-11D0-9C02-00C04FC99C8E}#2.0#0#..\..\..\..\..\..\..\..\..\WINDOWS\system32\msxml.dll#Microsoft XML, version 2.0
 Reference=*\G{FE5E8E5C-3418-4A51-B3EB-AD2B02102365}#1.0#0#..\bin\XL_ftp.dll#MFJ Report - FTP
+Reference=*\G{00000205-0000-0010-8000-00AA006D2EA4}#2.5#0#..\..\..\..\..\..\..\..\..\Program Files\Common Files\system\ado\msado25.tlb#Microsoft ActiveX Data Objects 2.5 Library
 Class=Object; xl_report_object.cls
 Startup="(None)"
 HelpFile=""

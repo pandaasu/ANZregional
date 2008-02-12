@@ -238,62 +238,62 @@ Private Sub ProcessBatchNode(objNode As MSXML.IXMLDOMNode)
         Case "BATCHSTREAM"
             ReDim Preserve caryBatches(clngBatchCount)
             caryBatches(clngBatchCount).Action = "BATCHSTREAM"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "TEXT"
-                        caryBatches(clngBatchCount).Value01 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value01 = objNode.attributes(j).Text
                     Case "LOGDIRECTORY"
-                        caryBatches(clngBatchCount).Value02 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value02 = objNode.attributes(j).Text
                     Case "LOGNAME"
-                        caryBatches(clngBatchCount).Value03 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value03 = objNode.attributes(j).Text
                     Case "CONNECTIONSTRING"
-                        caryBatches(clngBatchCount).Value04 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value04 = objNode.attributes(j).Text
                     Case "TARGETSERVER"
-                        caryBatches(clngBatchCount).Value05 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value05 = objNode.attributes(j).Text
                     Case "TARGETUSER"
-                        caryBatches(clngBatchCount).Value06 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value06 = objNode.attributes(j).Text
                     Case "TARGETPASSWORD"
-                        caryBatches(clngBatchCount).Value07 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value07 = objNode.attributes(j).Text
                     Case "TARGETDIRECTORY"
-                        caryBatches(clngBatchCount).Value08 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value08 = objNode.attributes(j).Text
                     Case "TARGETFILES"
-                        caryBatches(clngBatchCount).Value09 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value09 = objNode.attributes(j).Text
                     Case "TARGETSHELL"
-                        caryBatches(clngBatchCount).Value10 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value10 = objNode.attributes(j).Text
                 End Select
             Next
             clngBatchCount = clngBatchCount + 1
         Case "BATCHJOB"
             ReDim Preserve caryBatches(clngBatchCount)
             caryBatches(clngBatchCount).Action = "BATCHJOB"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "TEXT"
-                        caryBatches(clngBatchCount).Value01 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value01 = objNode.attributes(j).Text
                     Case "JOBSTREAM"
-                        caryBatches(clngBatchCount).Value02 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value02 = objNode.attributes(j).Text
                     Case "MONDAY"
-                        caryBatches(clngBatchCount).Value03 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value03 = objNode.attributes(j).Text
                     Case "TUESDAY"
-                        caryBatches(clngBatchCount).Value04 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value04 = objNode.attributes(j).Text
                     Case "WEDNESDAY"
-                        caryBatches(clngBatchCount).Value05 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value05 = objNode.attributes(j).Text
                     Case "THURSDAY"
-                        caryBatches(clngBatchCount).Value06 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value06 = objNode.attributes(j).Text
                     Case "FRIDAY"
-                        caryBatches(clngBatchCount).Value07 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value07 = objNode.attributes(j).Text
                     Case "SATURDAY"
-                        caryBatches(clngBatchCount).Value08 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value08 = objNode.attributes(j).Text
                     Case "SUNDAY"
-                        caryBatches(clngBatchCount).Value09 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value09 = objNode.attributes(j).Text
                     Case "PERIODEND"
-                        caryBatches(clngBatchCount).Value10 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value10 = objNode.attributes(j).Text
                     Case "PERIODYEAREND"
-                        caryBatches(clngBatchCount).Value11 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value11 = objNode.attributes(j).Text
                     Case "MONTHEND"
-                        caryBatches(clngBatchCount).Value12 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value12 = objNode.attributes(j).Text
                     Case "MONTHYEAREND"
-                        caryBatches(clngBatchCount).Value13 = objNode.Attributes(j).Text
+                        caryBatches(clngBatchCount).Value13 = objNode.attributes(j).Text
                 End Select
             Next
             clngBatchCount = clngBatchCount + 1
@@ -320,162 +320,162 @@ Private Sub ProcessOutputNode(objNode As MSXML.IXMLDOMNode)
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "ADDSHEET"
             clngSheetCount = clngSheetCount + 1
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S1"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGE"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "P3"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                     Case "P4"
-                        caryInstructions(clngInstructionCount).Parm04 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm04 = objNode.attributes(j).Text
                     Case "P5"
-                        caryInstructions(clngInstructionCount).Parm05 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm05 = objNode.attributes(j).Text
                     Case "P6"
-                        caryInstructions(clngInstructionCount).Parm06 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm06 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S2"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGEARRAY"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "P3"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                     Case "P4"
-                        caryInstructions(clngInstructionCount).Parm04 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm04 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "SL"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGELINE"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "P3"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                     Case "P4"
-                        caryInstructions(clngInstructionCount).Parm04 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm04 = objNode.attributes(j).Text
                     Case "P5"
-                        caryInstructions(clngInstructionCount).Parm05 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm05 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S3"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGEBORDER"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S4"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGETYPE"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S5"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETRANGEFORMAT"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S6"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETHEADINGBORDER"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S7"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETROWGROUP"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S8"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETFREEZECELL"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "S9"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETPRINTDATA"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "P3"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                     Case "P4"
-                        caryInstructions(clngInstructionCount).Parm04 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm04 = objNode.attributes(j).Text
                     Case "P5"
-                        caryInstructions(clngInstructionCount).Parm05 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm05 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "SETPRINTOVERRIDE"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "SETPRINTOVERRIDE"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "ORIENTATION"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "FITWIDTHPAGES"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "ZOOM"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
@@ -483,32 +483,32 @@ Private Sub ProcessOutputNode(objNode As MSXML.IXMLDOMNode)
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "ADDCHART"
             clngChartCount = clngChartCount + 1
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                     Case "P3"
-                        caryInstructions(clngInstructionCount).Parm03 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm03 = objNode.attributes(j).Text
                     Case "P4"
-                        caryInstructions(clngInstructionCount).Parm04 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm04 = objNode.attributes(j).Text
                     Case "P5"
-                        caryInstructions(clngInstructionCount).Parm05 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm05 = objNode.attributes(j).Text
                     Case "P6"
-                        caryInstructions(clngInstructionCount).Parm06 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm06 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
         Case "C1"
             ReDim Preserve caryInstructions(clngInstructionCount)
             caryInstructions(clngInstructionCount).Action = "ADDCHARTSERIES"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "P1"
-                        caryInstructions(clngInstructionCount).Parm01 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm01 = objNode.attributes(j).Text
                     Case "P2"
-                        caryInstructions(clngInstructionCount).Parm02 = objNode.Attributes(j).Text
+                        caryInstructions(clngInstructionCount).Parm02 = objNode.attributes(j).Text
                 End Select
             Next
             clngInstructionCount = clngInstructionCount + 1
@@ -536,60 +536,60 @@ Private Sub ProcessActionNode(objNode As MSXML.IXMLDOMNode)
         Case "REPORTSTREAM"
             ReDim Preserve caryActions(clngActionCount)
             caryActions(clngActionCount).Action = "REPORTSTREAM"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "TEXT"
-                        caryActions(clngActionCount).Value01 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value01 = objNode.attributes(j).Text
                     Case "LOGDIRECTORY"
-                        caryActions(clngActionCount).Value02 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value02 = objNode.attributes(j).Text
                     Case "LOGNAME"
-                        caryActions(clngActionCount).Value03 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value03 = objNode.attributes(j).Text
                     Case "OUTPUTDIRECTORY"
-                        caryActions(clngActionCount).Value04 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value04 = objNode.attributes(j).Text
                     Case "OUTPUTINITIALISATION"
-                        caryActions(clngActionCount).Value05 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value05 = objNode.attributes(j).Text
                     Case "CONNECTIONSTRING"
-                        caryActions(clngActionCount).Value06 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value06 = objNode.attributes(j).Text
                     Case "TARGETSERVER"
-                        caryActions(clngActionCount).Value07 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value07 = objNode.attributes(j).Text
                     Case "TARGETUSER"
-                        caryActions(clngActionCount).Value08 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value08 = objNode.attributes(j).Text
                     Case "TARGETPASSWORD"
-                        caryActions(clngActionCount).Value09 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value09 = objNode.attributes(j).Text
                     Case "TARGETDIRECTORY"
-                        caryActions(clngActionCount).Value10 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value10 = objNode.attributes(j).Text
                     Case "TARGETINITIALISATION"
-                        caryActions(clngActionCount).Value11 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value11 = objNode.attributes(j).Text
                     Case "TARGETSHELL"
-                        caryActions(clngActionCount).Value12 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value12 = objNode.attributes(j).Text
                 End Select
             Next
             clngActionCount = clngActionCount + 1
         Case "REPORTEXTRACT"
             ReDim Preserve caryActions(clngActionCount)
             caryActions(clngActionCount).Action = "REPORTEXTRACT"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "TEXT"
-                        caryActions(clngActionCount).Value01 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value01 = objNode.attributes(j).Text
                     Case "EXTRACTPROCEDURE"
-                        caryActions(clngActionCount).Value02 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value02 = objNode.attributes(j).Text
                 End Select
             Next
             clngActionCount = clngActionCount + 1
         Case "REPORTOUTPUT"
             ReDim Preserve caryActions(clngActionCount)
             caryActions(clngActionCount).Action = "REPORTOUTPUT"
-            For j = 0 To objNode.Attributes.Length - 1
-                Select Case UCase(objNode.Attributes(j).nodeName)
+            For j = 0 To objNode.attributes.Length - 1
+                Select Case UCase(objNode.attributes(j).nodeName)
                     Case "TEXT"
-                        caryActions(clngActionCount).Value01 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value01 = objNode.attributes(j).Text
                     Case "OUTPUTPROCEDURE"
-                        caryActions(clngActionCount).Value02 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value02 = objNode.attributes(j).Text
                     Case "OUTPUTNAME"
-                        caryActions(clngActionCount).Value03 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value03 = objNode.attributes(j).Text
                     Case "OUTPUTDATEPREFIX"
-                        caryActions(clngActionCount).Value04 = objNode.Attributes(j).Text
+                        caryActions(clngActionCount).Value04 = objNode.attributes(j).Text
                 End Select
             Next
             clngActionCount = clngActionCount + 1

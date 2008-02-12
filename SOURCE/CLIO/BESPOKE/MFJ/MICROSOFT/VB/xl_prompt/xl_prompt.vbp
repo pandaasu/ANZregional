@@ -1,6 +1,6 @@
 Type=Exe
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\WINDOWS\System32\stdole2.tlb#OLE Automation
-Reference=*\G{D63E0CE2-A0A2-11D0-9C02-00C04FC99C8E}#2.0#0#..\..\..\WINDOWS\System32\msxml.dll#Microsoft XML, version 2.0
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\..\..\..\..\WINDOWS\system32\stdole2.tlb#OLE Automation
+Reference=*\G{D63E0CE2-A0A2-11D0-9C02-00C04FC99C8E}#2.0#0#..\..\..\..\..\..\..\..\..\WINDOWS\system32\msxml.dll#Microsoft XML, version 2.0
 Reference=*\G{FD68C21E-55C2-4008-BC16-375E8FF428C4}#1.0#0#..\bin\xl_report.dll#MFJ Excel Report Generator
 Form=frmMain.frm
 Module=modMain; modmain.bas
