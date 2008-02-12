@@ -505,6 +505,7 @@ create or replace package body hk_sal_format11_excel02 as
       var_sap_material_code varchar2(18 char);
       var_material_desc_en varchar2(40 char);
       var_sort_desc varchar2(60 char);
+      var_tracking_percent number;
       var_wrk_string varchar2(2048 char);
       var_wrk_array varchar2(4000 char);
       var_dynamic_sql varchar2(32767 char);
@@ -633,7 +634,8 @@ create or replace package body hk_sal_format11_excel02 as
                                          var_prdct_pack_size_desc,
                                          var_sap_material_code,
                                          var_material_desc_en,
-                                         var_sort_desc;
+                                         var_sort_desc,
+                                         var_tracking_percent;
          if pld_sal_format11_c01%notfound then
             exit;
          end if;
