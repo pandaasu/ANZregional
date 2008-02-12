@@ -131,7 +131,7 @@ create or replace package body cdwpdb01_allocated_stock as
                  plant_code, 
                  matl_code, 
                  matl_desc,
-                 to_char(SUM(confirmed_qty),'fm0000000000.000') AS confirmed_qty,
+                 to_char(SUM(confirmed_qty),'fm0000000000.00000') AS confirmed_qty,
                  (SELECT to_char(mars_week)
                     FROM mars_date_dim
                    WHERE TRUNC (SYSDATE, 'DD') = calendar_date) AS mars_week,
