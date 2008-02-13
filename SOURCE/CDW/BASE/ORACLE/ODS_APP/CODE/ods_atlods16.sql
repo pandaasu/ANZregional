@@ -2405,6 +2405,19 @@ create or replace package body ods_atlods16 as
          end if;
 
          /*-*/
+         /* Set the trace status
+         /*-*/
+         rcd_sap_del_trace.trace_status := '*ACTIVE';
+
+         /*-*/
+         /* Deleted delivery line
+         /* **notes** no delivery lines found
+         /*-*/
+         if rcd_ods_data.dlvry_doc_line_num is null then
+            rcd_sap_del_trace.trace_status := '*DELETED';
+         end if;
+
+         /*-*/
          /* Initialise the delivery trace row
          /*-*/
          rcd_sap_del_trace.company_code := rcd_ods_data.sales_org_code;

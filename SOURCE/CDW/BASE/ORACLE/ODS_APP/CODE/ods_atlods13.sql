@@ -3278,8 +3278,7 @@ create or replace package body ods_atlods13 as
                        t01.gewei as order_weight_unit
                   from sap_sal_ord_gen t01
                  where t01.belnr = par_belnr
-                   and not(t01.pstyv in ('ZAPS','ZAPA'))
-                   and nvl(dw_to_number(t01.menge),0) != 0) t05,
+                   and not(t01.pstyv in ('ZAPS','ZAPA'))) t05,
                --
                -- Sales order line reference information
                --
@@ -3408,6 +3407,31 @@ create or replace package body ods_atlods13 as
          fetch csr_ods_data into rcd_ods_data;
          if csr_ods_data%notfound then
             exit;
+         end if;
+
+         /*-*/
+         /* Set the trace status
+         /*-*/
+         rcd_sap_sal_ord_trace.trace_status := '*ACTIVE';
+
+         /*-*/
+         /* Deleted sales order line
+         /* **notes** no order lines found
+         /*              OR
+         /*           reason code is not null
+         /*           reason code is not equal 'ZA'
+         /*              OR
+         /*           quantity ordered equal zero
+         /*-*/
+         if rcd_ods_data.order_doc_line_num is null then
+            rcd_sap_sal_ord_trace.trace_status := '*DELETED';
+         end if;
+         if (not(rcd_ods_data.order_line_rejectn_code is null) and
+             rcd_ods_data.order_line_rejectn_code != 'ZA') then
+            rcd_sap_sal_ord_trace.trace_status := '*DELETED';
+         end if;
+         if (rcd_sap_sal_ord_gen.order_qty = 0) then
+            rcd_sap_sal_ord_trace.trace_status := '*DELETED';
          end if;
 
          /*-*/
