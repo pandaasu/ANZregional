@@ -2868,11 +2868,25 @@ create or replace package body ods_atlods09 as
          /* Set the trace status
          /*-*/
          rcd_sap_sto_po_trace.trace_status := '*ACTIVE';
-         if not(rcd_ods_data.vendor_reference is null) then
-            rcd_sap_sto_po_trace.trace_status := '*EXCLUDED';
+
+         /*-*/
+         /* Deleted/Excluded purchase order line
+         /* **notes** no purchase order lines found
+         /*              OR
+         /*           sold to reference equal '*DELETED'
+         /*              OR
+         /*           vendor reference equal '*EXCLUDED'
+         /*-*/
+         if rcd_ods_data.purch_order_doc_line_num is null then
+            rcd_sap_sto_po_trace.trace_status := '*DELETED';
          end if;
          if upper(rcd_ods_data.sold_to_reference) = '*DELETED' then
             rcd_sap_sto_po_trace.trace_status := '*DELETED';
+         end if;
+         if rcd_sap_sto_po_trace.trace_status = '*ACTIVE' then
+            if not(rcd_ods_data.vendor_reference is null) then
+               rcd_sap_sto_po_trace.trace_status := '*EXCLUDED';
+            end if;
          end if;
 
          /*-*/
