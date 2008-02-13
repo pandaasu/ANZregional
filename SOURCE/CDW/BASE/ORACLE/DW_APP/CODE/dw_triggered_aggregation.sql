@@ -83,7 +83,7 @@ create or replace package body dw_triggered_aggregation as
                              par_yyyypp in number,
                              par_company in varchar2,
                              par_range in varchar2);
-   procedure sales_fact_load(par_date in date, par_company in varchar2, par_currency in varchar2);
+   procedure sales_base_load(par_date in date, par_company in varchar2, par_currency in varchar2);
    procedure sales_month_01_aggregation(par_yyyymm in number, par_company in varchar2);
    procedure sales_period_01_aggregation(par_yyyypp in number, par_company in varchar2);
 
@@ -169,16 +169,16 @@ create or replace package body dw_triggered_aggregation as
          raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *DATE or *REBUILD');
       end if;
       if upper(par_table) != '*ALL' and
-         upper(par_table) != 'SALES_FACT' and
+         upper(par_table) != 'SALES_BASE' and
          upper(par_table) != 'SALES_MONTH_01_FACT' and
          upper(par_table) != 'SALES_PERIOD_01_FACT' then
          raise_application_error(-20000, 'Table parameter (' || par_table || ') must be *ALL or ' ||
-                                         'SALES_FACT, ' ||
+                                         'SALES_BASE, ' ||
                                          'SALES_MONTH_01_FACT, ' ||
                                          'SALES_PERIOD_01_FACT');
       end if;
-      if upper(par_action) = '*DATE' and (upper(par_table) != '*ALL' and upper(par_table) != 'SALES_FACT') then
-         raise_application_error(-20000, 'Table parameter must be *ALL or SALES_FACT for action *DATE');
+      if upper(par_action) = '*DATE' and (upper(par_table) != '*ALL' and upper(par_table) != 'SALES_BASE') then
+         raise_application_error(-20000, 'Table parameter must be *ALL or SALES_BASE for action *DATE');
       end if;
       if upper(par_action) = '*DATE' then
          if par_date is null then
@@ -260,32 +260,32 @@ create or replace package body dw_triggered_aggregation as
          /* Execute the load and aggregation procedures as required
          /* **note** 1. Dependancy as follows
          /*
-         /*             sales_fact
+         /*             sales_base
          /*                ==> sales_month_01_fact
          /*                ==> sales_period_01_fact
          /*
          /*          2. Processed as follows
          /*
-         /*             sales_fact
+         /*             sales_base
          /*                ==> sales_month_01_fact
          /*                ==> sales_period_01_fact
          /*
-         /*          3. Sales fact must always and only be loaded when
+         /*          3. Sales base must always and only be loaded when
          /*                PAR_ACTION = *DATE
          /*
          /*-*/
 
          /*-*/
-         /* SALES_FACT aggregation - based on invoice creation date
+         /* SALES_BASE aggregation - based on invoice creation date
          /*
-         /* 1. Extract distinct time dimensions from old SALES_FACT rows for the creation date
-         /* 2. Replace existing SALES_FACT rows for the creation date
-         /* 3. Extract distinct time dimensions from new SALES_FACT rows for the creation date
+         /* 1. Extract distinct time dimensions from old SALES_BASE rows for the creation date
+         /* 2. Replace existing SALES_BASE rows for the creation date
+         /* 3. Extract distinct time dimensions from new SALES_BASE rows for the creation date
          /*-*/
          if upper(par_action) = '*DATE' then
             begin
                load_time_range(var_date, var_yyyymm, var_yyyypp, var_company_code, 'OLD');
-               sales_fact_load(var_date, var_company_code, var_company_currcy);
+               sales_base_load(var_date, var_company_code, var_company_currcy);
                load_time_range(var_date, var_yyyymm, var_yyyypp, var_company_code, 'NEW');
             exception
                when others then
@@ -294,7 +294,7 @@ create or replace package body dw_triggered_aggregation as
          end if;
 
          /*-*/
-         /* Perform SALES_FACT dependant aggregations when no errors 
+         /* Perform SALES_BASE dependant aggregations when no errors 
          /*-*/
          if var_errors = false then
 
@@ -668,14 +668,14 @@ create or replace package body dw_triggered_aggregation as
    end load_time_range;
 
    /*******************************************************/
-   /* This procedure performs the sales fact load routine */
+   /* This procedure performs the sales base load routine */
    /*******************************************************/
-   procedure sales_fact_load(par_date in date, par_company in varchar2, par_currency in varchar2) is
+   procedure sales_base_load(par_date in date, par_company in varchar2, par_currency in varchar2) is
 
       /*-*/
       /* Local variables
       /*-*/
-      rcd_sales_fact dw_sales_base%rowtype;
+      rcd_sales_base dw_sales_base%rowtype;
       var_order_usage_gsv_flag order_usage.order_usage_gsv_flag%type;
       var_invoice_type_factor number;
       var_gsv_value number;
@@ -705,19 +705,19 @@ create or replace package body dw_triggered_aggregation as
       cursor csr_invc_type is
          select decode(t01.invc_type_sign,'-',-1,1) as invoice_type_factor
            from invc_type t01
-          where t01.invc_type_code = rcd_sales_fact.invc_type_code;
+          where t01.invc_type_code = rcd_sales_base.invc_type_code;
       rcd_invc_type csr_invc_type%rowtype;
 
       cursor csr_order_usage is
          select t01.order_usage_gsv_flag as order_usage_gsv_flag
            from order_usage t01
-          where t01.order_usage_code = rcd_sales_fact.order_usage_code;
+          where t01.order_usage_code = rcd_sales_base.order_usage_code;
       rcd_order_usage csr_order_usage%rowtype;
 
       cursor csr_icb_flag is
          select 'Y' as icb_flag
-           from table(lics_datastore.retrieve_value('CDW','ICB_FLAG',rcd_sales_fact.company_code)) t01
-          where t01.dsv_value = rcd_sales_fact.ship_to_cust_code;
+           from table(lics_datastore.retrieve_value('CDW','ICB_FLAG',rcd_sales_base.company_code)) t01
+          where t01.dsv_value = rcd_sales_base.ship_to_cust_code;
       rcd_icb_flag csr_icb_flag%rowtype;
 
    /*-------------*/
@@ -728,13 +728,13 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SALES_FACT Load - Parameters(' || to_char(par_date,'yyyy/mm/dd') || ' + ' || par_company || ')');
+      lics_logging.write_log('Begin - SALES_BASE Load - Parameters(' || to_char(par_date,'yyyy/mm/dd') || ' + ' || par_company || ')');
 
       /*-*/
       /* STEP #1
       /*
-      /* Delete any existing sales fact rows 
-      /* **notes** 1. Delete all sales fact rows for the company and creation date.
+      /* Delete any existing sales base rows 
+      /* **notes** 1. Delete all sales base rows for the company and creation date.
       /*-*/
       delete from dw_sales_base
        where trunc(creatn_date) = trunc(par_date)
@@ -743,8 +743,8 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* STEP #2
       /*
-      /* Load the sales fact fact rows from the ODS trace data
-      /* **notes** 1. Select all sales fact rows for the company and creation date.
+      /* Load the sales base fact rows from the ODS trace data
+      /* **notes** 1. Select all sales base rows for the company and creation date.
       /*-*/
       open csr_trace;
       loop
@@ -754,74 +754,74 @@ create or replace package body dw_triggered_aggregation as
          end if;
 
          /*---------------------------*/
-         /* SALES_FACT Initialisation */
+         /* SALES_BASE Initialisation */
          /*---------------------------*/
 
          /*-*/
-         /* Initialise the sales fact row
+         /* Initialise the sales base row
          /*-*/
-         rcd_sales_fact.billing_doc_num := rcd_trace.billing_doc_num;
-         rcd_sales_fact.billing_doc_line_num := rcd_trace.billing_doc_line_num;
-         rcd_sales_fact.billing_trace_seqn := rcd_trace.trace_seqn;
-         rcd_sales_fact.creatn_date := rcd_trace.creatn_date;
-         rcd_sales_fact.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
-         rcd_sales_fact.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
-         rcd_sales_fact.creatn_yyyypp := rcd_trace.creatn_yyyypp;
-         rcd_sales_fact.creatn_yyyymm := rcd_trace.creatn_yyyymm;
-         rcd_sales_fact.billing_eff_date := rcd_trace.billing_eff_date;
-         rcd_sales_fact.billing_eff_yyyyppdd := rcd_trace.billing_eff_yyyyppdd;
-         rcd_sales_fact.billing_eff_yyyyppw := rcd_trace.billing_eff_yyyyppw;
-         rcd_sales_fact.billing_eff_yyyypp := rcd_trace.billing_eff_yyyypp;
-         rcd_sales_fact.billing_eff_yyyymm := rcd_trace.billing_eff_yyyymm;
-         rcd_sales_fact.order_doc_num := rcd_trace.order_doc_num;
-         rcd_sales_fact.order_doc_line_num := rcd_trace.order_doc_line_num;
-         rcd_sales_fact.purch_order_doc_num := rcd_trace.purch_order_doc_num;
-         rcd_sales_fact.purch_order_doc_line_num := rcd_trace.purch_order_doc_line_num;
-         rcd_sales_fact.dlvry_doc_num := rcd_trace.dlvry_doc_num;
-         rcd_sales_fact.dlvry_doc_line_num := rcd_trace.dlvry_doc_line_num;
-         rcd_sales_fact.company_code := rcd_trace.company_code;
-         rcd_sales_fact.hdr_sales_org_code := rcd_trace.hdr_sales_org_code;
-         rcd_sales_fact.hdr_distbn_chnl_code := rcd_trace.hdr_distbn_chnl_code;
-         rcd_sales_fact.hdr_division_code := rcd_trace.hdr_division_code;
-         rcd_sales_fact.gen_sales_org_code := rcd_trace.gen_sales_org_code;
-         rcd_sales_fact.gen_distbn_chnl_code := rcd_trace.gen_distbn_chnl_code;
-         rcd_sales_fact.gen_division_code := rcd_trace.gen_division_code;
-         rcd_sales_fact.doc_currcy_code := rcd_trace.doc_currcy_code;
-         rcd_sales_fact.company_currcy_code := par_currency;
-         rcd_sales_fact.exch_rate := rcd_trace.exch_rate;
-         rcd_sales_fact.invc_type_code := rcd_trace.invc_type_code;
-         rcd_sales_fact.order_type_code := rcd_trace.order_type_code;
-         rcd_sales_fact.order_reasn_code := rcd_trace.order_reasn_code;
-         rcd_sales_fact.order_usage_code := rcd_trace.order_usage_code;
-         rcd_sales_fact.sold_to_cust_code := nvl(rcd_trace.gen_sold_to_cust_code, rcd_trace.hdr_sold_to_cust_code);
-         rcd_sales_fact.bill_to_cust_code := nvl(rcd_trace.gen_bill_to_cust_code, rcd_trace.hdr_bill_to_cust_code);
-         rcd_sales_fact.payer_cust_code := nvl(rcd_trace.gen_payer_cust_code, rcd_trace.hdr_payer_cust_code);
-         rcd_sales_fact.ship_to_cust_code := nvl(rcd_trace.gen_ship_to_cust_code, rcd_trace.hdr_ship_to_cust_code);
-         rcd_sales_fact.matl_code := dw_trim_code(rcd_trace.matl_code);
-         rcd_sales_fact.ods_matl_code := rcd_trace.matl_code;
-         rcd_sales_fact.matl_entd := dw_trim_code(rcd_trace.matl_entd);
-         rcd_sales_fact.plant_code := rcd_trace.plant_code;
-         rcd_sales_fact.storage_locn_code := rcd_trace.storage_locn_code;
-         rcd_sales_fact.order_qty := 0;
-         rcd_sales_fact.billed_weight_unit := rcd_trace.billed_weight_unit;
-         rcd_sales_fact.billed_gross_weight := rcd_trace.billed_gross_weight;
-         rcd_sales_fact.billed_net_weight := rcd_trace.billed_net_weight;
-         rcd_sales_fact.billed_uom_code := rcd_trace.billed_uom_code;
-         rcd_sales_fact.billed_base_uom_code := null;
-         rcd_sales_fact.billed_qty := 0;
-         rcd_sales_fact.billed_qty_base_uom := 0;
-         rcd_sales_fact.billed_qty_gross_tonnes := 0;
-         rcd_sales_fact.billed_qty_net_tonnes := 0;
-         rcd_sales_fact.billed_gsv := 0;
-         rcd_sales_fact.billed_gsv_xactn := 0;
-         rcd_sales_fact.billed_gsv_aud := 0;
-         rcd_sales_fact.billed_gsv_usd := 0;
-         rcd_sales_fact.billed_gsv_eur := 0;
-         rcd_sales_fact.mfanz_icb_flag := 'N';
-         rcd_sales_fact.demand_plng_grp_division_code := rcd_trace.hdr_division_code;
-         if rcd_sales_fact.demand_plng_grp_division_code = '57' then
+         rcd_sales_base.billing_doc_num := rcd_trace.billing_doc_num;
+         rcd_sales_base.billing_doc_line_num := rcd_trace.billing_doc_line_num;
+         rcd_sales_base.billing_trace_seqn := rcd_trace.trace_seqn;
+         rcd_sales_base.creatn_date := rcd_trace.creatn_date;
+         rcd_sales_base.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
+         rcd_sales_base.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
+         rcd_sales_base.creatn_yyyypp := rcd_trace.creatn_yyyypp;
+         rcd_sales_base.creatn_yyyymm := rcd_trace.creatn_yyyymm;
+         rcd_sales_base.billing_eff_date := rcd_trace.billing_eff_date;
+         rcd_sales_base.billing_eff_yyyyppdd := rcd_trace.billing_eff_yyyyppdd;
+         rcd_sales_base.billing_eff_yyyyppw := rcd_trace.billing_eff_yyyyppw;
+         rcd_sales_base.billing_eff_yyyypp := rcd_trace.billing_eff_yyyypp;
+         rcd_sales_base.billing_eff_yyyymm := rcd_trace.billing_eff_yyyymm;
+         rcd_sales_base.order_doc_num := rcd_trace.order_doc_num;
+         rcd_sales_base.order_doc_line_num := rcd_trace.order_doc_line_num;
+         rcd_sales_base.purch_order_doc_num := rcd_trace.purch_order_doc_num;
+         rcd_sales_base.purch_order_doc_line_num := rcd_trace.purch_order_doc_line_num;
+         rcd_sales_base.dlvry_doc_num := rcd_trace.dlvry_doc_num;
+         rcd_sales_base.dlvry_doc_line_num := rcd_trace.dlvry_doc_line_num;
+         rcd_sales_base.company_code := rcd_trace.company_code;
+         rcd_sales_base.hdr_sales_org_code := rcd_trace.hdr_sales_org_code;
+         rcd_sales_base.hdr_distbn_chnl_code := rcd_trace.hdr_distbn_chnl_code;
+         rcd_sales_base.hdr_division_code := rcd_trace.hdr_division_code;
+         rcd_sales_base.gen_sales_org_code := rcd_trace.gen_sales_org_code;
+         rcd_sales_base.gen_distbn_chnl_code := rcd_trace.gen_distbn_chnl_code;
+         rcd_sales_base.gen_division_code := rcd_trace.gen_division_code;
+         rcd_sales_base.doc_currcy_code := rcd_trace.doc_currcy_code;
+         rcd_sales_base.company_currcy_code := par_currency;
+         rcd_sales_base.exch_rate := rcd_trace.exch_rate;
+         rcd_sales_base.invc_type_code := rcd_trace.invc_type_code;
+         rcd_sales_base.order_type_code := rcd_trace.order_type_code;
+         rcd_sales_base.order_reasn_code := rcd_trace.order_reasn_code;
+         rcd_sales_base.order_usage_code := rcd_trace.order_usage_code;
+         rcd_sales_base.sold_to_cust_code := nvl(rcd_trace.gen_sold_to_cust_code, rcd_trace.hdr_sold_to_cust_code);
+         rcd_sales_base.bill_to_cust_code := nvl(rcd_trace.gen_bill_to_cust_code, rcd_trace.hdr_bill_to_cust_code);
+         rcd_sales_base.payer_cust_code := nvl(rcd_trace.gen_payer_cust_code, rcd_trace.hdr_payer_cust_code);
+         rcd_sales_base.ship_to_cust_code := nvl(rcd_trace.gen_ship_to_cust_code, rcd_trace.hdr_ship_to_cust_code);
+         rcd_sales_base.matl_code := dw_trim_code(rcd_trace.matl_code);
+         rcd_sales_base.ods_matl_code := rcd_trace.matl_code;
+         rcd_sales_base.matl_entd := dw_trim_code(rcd_trace.matl_entd);
+         rcd_sales_base.plant_code := rcd_trace.plant_code;
+         rcd_sales_base.storage_locn_code := rcd_trace.storage_locn_code;
+         rcd_sales_base.order_qty := 0;
+         rcd_sales_base.billed_weight_unit := rcd_trace.billed_weight_unit;
+         rcd_sales_base.billed_gross_weight := rcd_trace.billed_gross_weight;
+         rcd_sales_base.billed_net_weight := rcd_trace.billed_net_weight;
+         rcd_sales_base.billed_uom_code := rcd_trace.billed_uom_code;
+         rcd_sales_base.billed_base_uom_code := null;
+         rcd_sales_base.billed_qty := 0;
+         rcd_sales_base.billed_qty_base_uom := 0;
+         rcd_sales_base.billed_qty_gross_tonnes := 0;
+         rcd_sales_base.billed_qty_net_tonnes := 0;
+         rcd_sales_base.billed_gsv := 0;
+         rcd_sales_base.billed_gsv_xactn := 0;
+         rcd_sales_base.billed_gsv_aud := 0;
+         rcd_sales_base.billed_gsv_usd := 0;
+         rcd_sales_base.billed_gsv_eur := 0;
+         rcd_sales_base.mfanz_icb_flag := 'N';
+         rcd_sales_base.demand_plng_grp_division_code := rcd_trace.hdr_division_code;
+         if rcd_sales_base.demand_plng_grp_division_code = '57' then
             if rcd_trace.mat_bus_sgmnt_code = '05' then
-               rcd_sales_fact.demand_plng_grp_division_code := '56';
+               rcd_sales_base.demand_plng_grp_division_code := '56';
             end if;
          end if;
 
@@ -830,7 +830,7 @@ create or replace package body dw_triggered_aggregation as
          /*
          /* **note**
          /* 1. The invoice type factor defaults to 1 for unrecognised invoice type codes
-         /*    and will therefore be loaded into the sales fact table as a positive
+         /*    and will therefore be loaded into the sales base table as a positive
          /*-*/
          var_invoice_type_factor := 1;
          open csr_invc_type;
@@ -845,7 +845,7 @@ create or replace package body dw_triggered_aggregation as
          /*
          /* **note**
          /* 1. The order usage GSV flag defaults to 'GSV' for unrecognised order usage codes
-         /*    and will therefore always be loaded into the sales fact table
+         /*    and will therefore always be loaded into the sales base table
          /*-*/
          var_order_usage_gsv_flag := 'GSV';
          open csr_order_usage;
@@ -862,121 +862,121 @@ create or replace package body dw_triggered_aggregation as
          /* 1. The ICB flag is set to 'Y' only when the ship to customer
          /*    exists in the data store with 'CDW' - 'ICB_FLAG' - company code
          /*-*/
-         rcd_sales_fact.mfanz_icb_flag := 'N';
+         rcd_sales_base.mfanz_icb_flag := 'N';
          open csr_icb_flag;
          fetch csr_icb_flag into rcd_icb_flag;
          if csr_icb_flag%found then
-            rcd_sales_fact.mfanz_icb_flag := 'Y';
+            rcd_sales_base.mfanz_icb_flag := 'Y';
          end if;
          close csr_icb_flag;
 
          /*-*/
-         /* Only load the sales fact row when order usage 'GSV'
+         /* Only load the sales base row when order usage 'GSV'
          /*-*/
          if var_order_usage_gsv_flag = 'GSV' then
 
             /*-------------------------*/
-            /* SALES_FACT Calculations */
+            /* SALES_BASE Calculations */
             /*-------------------------*/
 
             /*-*/
             /* Calculate the sales quantity values from the material GRD data
-            /* **notes** 1. Recalculation from the material GRD data allows the fact tables to be rebuilt from the ODS when GRD data errors are corrected.
+            /* **notes** 1. Recalculation from the material GRD data allows the base tables to be rebuilt from the ODS when GRD data errors are corrected.
             /*           2. Ensures consistency when reducing outstanding quantity and weight from delivery and invoice.
             /*           3. Is the only way to reduce the order quantity with the delivery quantity (different material or UOM).
             /*-*/
-            rcd_sales_fact.billed_qty := var_invoice_type_factor * rcd_trace.billed_qty;
-            dw_utility.pkg_qty_fact.ods_matl_code := rcd_sales_fact.ods_matl_code;
-            dw_utility.pkg_qty_fact.uom_code := rcd_sales_fact.billed_uom_code;
-            dw_utility.pkg_qty_fact.uom_qty := rcd_sales_fact.billed_qty;
+            rcd_sales_base.billed_qty := var_invoice_type_factor * rcd_trace.billed_qty;
+            dw_utility.pkg_qty_fact.ods_matl_code := rcd_sales_base.ods_matl_code;
+            dw_utility.pkg_qty_fact.uom_code := rcd_sales_base.billed_uom_code;
+            dw_utility.pkg_qty_fact.uom_qty := rcd_sales_base.billed_qty;
             dw_utility.calculate_quantity;
-            rcd_sales_fact.billed_base_uom_code := dw_utility.pkg_qty_fact.base_uom_code;
-            rcd_sales_fact.billed_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-            rcd_sales_fact.billed_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-            rcd_sales_fact.billed_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
+            rcd_sales_base.billed_base_uom_code := dw_utility.pkg_qty_fact.base_uom_code;
+            rcd_sales_base.billed_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
+            rcd_sales_base.billed_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
+            rcd_sales_base.billed_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
             /*-*/
             /* Calculate the sales GSV values
             /*-*/
-            rcd_sales_fact.billed_gsv_xactn := round(var_invoice_type_factor * rcd_trace.billed_gsv, 2);
+            rcd_sales_base.billed_gsv_xactn := round(var_invoice_type_factor * rcd_trace.billed_gsv, 2);
             var_gsv_value := (var_invoice_type_factor / ods_app.exch_rate_factor('ICB',
-                                                                                 rcd_sales_fact.doc_currcy_code,
-                                                                                 rcd_sales_fact.company_currcy_code,
-                                                                                 rcd_sales_fact.creatn_date))
-                             * (rcd_trace.billed_gsv * rcd_sales_fact.exch_rate);
-            rcd_sales_fact.billed_gsv := round(var_gsv_value, 2);
-            rcd_sales_fact.billed_gsv_aud := round(
+                                                                                 rcd_sales_base.doc_currcy_code,
+                                                                                 rcd_sales_base.company_currcy_code,
+                                                                                 rcd_sales_base.creatn_date))
+                             * (rcd_trace.billed_gsv * rcd_sales_base.exch_rate);
+            rcd_sales_base.billed_gsv := round(var_gsv_value, 2);
+            rcd_sales_base.billed_gsv_aud := round(
                                                 ods_app.currcy_conv(
                                                    var_gsv_value,
-                                                   rcd_sales_fact.company_currcy_code,
+                                                   rcd_sales_base.company_currcy_code,
                                                    'AUD',
-                                                   rcd_sales_fact.creatn_date,
+                                                   rcd_sales_base.creatn_date,
                                                    'MPPR'), 2);
-            rcd_sales_fact.billed_gsv_usd := round(
+            rcd_sales_base.billed_gsv_usd := round(
                                                 ods_app.currcy_conv(
                                                    var_gsv_value,
-                                                   rcd_sales_fact.company_currcy_code,
+                                                   rcd_sales_base.company_currcy_code,
                                                    'USD',
-                                                   rcd_sales_fact.creatn_date,
+                                                   rcd_sales_base.creatn_date,
                                                    'MPPR'), 2);
-            rcd_sales_fact.billed_gsv_eur := round(
+            rcd_sales_base.billed_gsv_eur := round(
                                                 ods_app.currcy_conv(
                                                    var_gsv_value,
-                                                   rcd_sales_fact.company_currcy_code,
+                                                   rcd_sales_base.company_currcy_code,
                                                    'EUR',
-                                                   rcd_sales_fact.creatn_date,
+                                                   rcd_sales_base.creatn_date,
                                                    'MPPR'), 2);
 
             /*---------------------*/
-            /* SALES_FACT Creation */
+            /* SALES_BASE Creation */
             /*---------------------*/
 
             /*-*/
             /* Insert the sales fact row
             /*-*/
-            insert into dw_sales_base values rcd_sales_fact;
+            insert into dw_sales_base values rcd_sales_base;
 
             /*-------------------*/
-            /* DLVRY_FACT Status */
+            /* DLVRY_BASE Status */
             /*-------------------*/
 
             /*-*/
-            /* Update the delivery fact status
+            /* Update the delivery base status
             /* **notes**
             /* 1. A deadly embrace with scheduled aggregation is avoided by both
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            dw_utility.dlvry_fact_status(rcd_sales_fact.dlvry_doc_num, rcd_sales_fact.dlvry_doc_line_num);
+            dw_utility.dlvry_base_status(rcd_sales_base.dlvry_doc_num, rcd_sales_base.dlvry_doc_line_num);
 
             /*-------------------*/
-            /* ORDER_FACT Status */
+            /* ORDER_BASE Status */
             /*-------------------*/
 
             /*-*/
-            /* Update the order fact status when required
+            /* Update the order base status when required
             /* **notes**
             /* 1. A deadly embrace with scheduled aggregation is avoided by both
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            if not(rcd_sales_fact.order_doc_num is null) then
-               dw_utility.order_fact_status(rcd_sales_fact.order_doc_num, rcd_sales_fact.order_doc_line_num);
+            if not(rcd_sales_base.order_doc_num is null) then
+               dw_utility.order_base_status(rcd_sales_base.order_doc_num, rcd_sales_base.order_doc_line_num);
             end if;
 
-            /*-------------------------*/
-            /* PURCH_ORDER_FACT Status */
-            /*-------------------------*/
+            /*-------------------*/
+            /* PURCH_BASE Status */
+            /*-------------------*/
 
             /*-*/
-            /* Update the purchase order fact status when required
+            /* Update the purchase base status when required
             /* **notes**
             /* 1. A deadly embrace with scheduled aggregation is avoided by both
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            if not(rcd_sales_fact.purch_order_doc_num is null) then
-               dw_utility.purch_order_fact_status(rcd_sales_fact.purch_order_doc_num, rcd_sales_fact.purch_order_doc_line_num);
+            if not(rcd_sales_base.purch_order_doc_num is null) then
+               dw_utility.purch_base_status(rcd_sales_base.purch_order_doc_num, rcd_sales_base.purch_order_doc_line_num);
             end if;
 
          end if;
@@ -992,7 +992,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - SALES_FACT Load');
+      lics_logging.write_log('End - SALES_BASE Load');
 
    /*-------------------*/
    /* Exception handler */
@@ -1013,8 +1013,8 @@ create or replace package body dw_triggered_aggregation as
          /* Log error
          /*-*/
          if lics_logging.is_created = true then
-            lics_logging.write_log('**ERROR** - SALES_FACT Load - ' || substr(SQLERRM, 1, 1024));
-            lics_logging.write_log('End - SALES_FACT Load');
+            lics_logging.write_log('**ERROR** - SALES_BASE Load - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - SALES_BASE Load');
          end if;
 
          /*-*/
@@ -1025,7 +1025,7 @@ create or replace package body dw_triggered_aggregation as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end sales_fact_load;
+   end sales_base_load;
 
    /******************************************************************/
    /* This procedure performs the sales month 01 aggregation routine */
