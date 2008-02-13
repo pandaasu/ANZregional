@@ -141,7 +141,7 @@ create or replace package body dw_scheduled_aggregation as
       /* Initialise the log/lock variables
       /*-*/
       var_log_prefix := 'DW - SCHEDULED_AGGREGATION';
-      var_log_search := lics_stream_processor.callback_event;
+      var_log_search := 'DW_SCHEDULED_AGGREGATION' || '_' || lics_stream_processor.callback_event;
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
@@ -1642,13 +1642,12 @@ create or replace package body dw_scheduled_aggregation as
 
       cursor csr_pricing is
          select t02.kbetr
-           from lads_prc_lst_hdr t01,
-                lads_prc_lst_det t02
+           from sap_prc_lst_hdr t01,
+                sap_prc_lst_det t02
           where t01.vakey = t02.vakey
             and t01.kschl = t02.kschl
             and t01.datab = t02.datab
             and t01.knumh = t02.knumh
-            and t01.lads_status = '1'
             and t01.kschl = 'ZV01'
             and t01.kotabnr = '969'
             and t01.vakey = lpad(nvl('0000010882','0'),10,'0')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
@@ -1671,8 +1670,8 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* Retrieve the NZ market vendor and customer codes
       /*-*/
-      var_nzmkt_vendor_code := lics_setting_configuration.retrieve_setting('NVMKT_SALES, 'VENDOR_CODE');
-      var_nzmkt_cust_code := lics_setting_configuration.retrieve_setting('NVMKT_SALES, 'CUSTOMER_CODE');
+      var_nzmkt_vendor_code := lics_setting_configuration.retrieve_setting('NVMKT_SALES', 'VENDOR_CODE');
+      var_nzmkt_cust_code := lics_setting_configuration.retrieve_setting('NVMKT_SALES', 'CUSTOMER_CODE');
 
       /*-*/
       /* STEP #1
@@ -1711,38 +1710,38 @@ create or replace package body dw_scheduled_aggregation as
          /*    (ie. where stock ownership has changed within the same company)
          /*-*/
          var_process := false;
-         if (t01.source_plant_code = 'NZ01' and
-             t01.plant_code = 'NZ11' and
-             t01.mat_type_code = 'FERT' and
-             t01.mat_bus_sgmnt_code = '05' and
-             t01.mat_cnsmr_pack_frmt_code = '51') then
+         if (rcd_trace.source_plant_code = 'NZ01' and
+             rcd_trace.plant_code = 'NZ11' and
+             rcd_trace.mat_type_code = 'FERT' and
+             rcd_trace.mat_bus_sgmnt_code = '05' and
+             rcd_trace.mat_cnsmr_pack_frmt_code = '51') then
             var_nzmkt_matl_group := 'DOG_ROLL';
             var_nzmkt_factor := 1;
             var_process := true;
          end if;
-         if (t01.source_plant_code = 'NZ11' and
-             t01.plant_code = 'NZ01' and
-             t01.mat_type_code = 'FERT' and
-             t01.mat_bus_sgmnt_code = '05' and
-             t01.mat_cnsmr_pack_frmt_code = '51') then
+         if (rcd_trace.source_plant_code = 'NZ11' and
+             rcd_trace.plant_code = 'NZ01' and
+             rcd_trace.mat_type_code = 'FERT' and
+             rcd_trace.mat_bus_sgmnt_code = '05' and
+             rcd_trace.mat_cnsmr_pack_frmt_code = '51') then
             var_nzmkt_matl_group := 'DOG_ROLL';
             var_nzmkt_factor := -1;
             var_process := true;
          end if;
-         if (t01.source_plant_code in ('NZ01','NZ11') and
-             t01.plant_code in ('NZ13','NZ14') and
-             t01.mat_type_code = 'FERT' and
-             t01.mat_bus_sgmnt_code = '05' and
-             t01.mat_cnsmr_pack_frmt_code = '45') then
+         if (rcd_trace.source_plant_code in ('NZ01','NZ11') and
+             rcd_trace.plant_code in ('NZ13','NZ14') and
+             rcd_trace.mat_type_code = 'FERT' and
+             rcd_trace.mat_bus_sgmnt_code = '05' and
+             rcd_trace.mat_cnsmr_pack_frmt_code = '45') then
             var_nzmkt_matl_group := 'POUCH';
             var_nzmkt_factor := 1;
             var_process := true;
          end if;
-         if (t01.source_plant_code in ('NZ13','NZ14') and
-             t01.plant_code in ('NZ01','NZ11') and
-             t01.mat_type_code = 'FERT' and
-             t01.mat_bus_sgmnt_code = '05' and
-             t01.mat_cnsmr_pack_frmt_code = '45') then
+         if (rcd_trace.source_plant_code in ('NZ13','NZ14') and
+             rcd_trace.plant_code in ('NZ01','NZ11') and
+             rcd_trace.mat_type_code = 'FERT' and
+             rcd_trace.mat_bus_sgmnt_code = '05' and
+             rcd_trace.mat_cnsmr_pack_frmt_code = '45') then
             var_nzmkt_matl_group := 'POUCH';
             var_nzmkt_factor := -1;
             var_process := true;
@@ -1835,7 +1834,7 @@ create or replace package body dw_scheduled_aggregation as
             var_nzmkt_price := 0;
             open csr_pricing;
             fetch csr_pricing into rcd_pricing;
-            if csr_purch_order_type%found then
+            if csr_pricing%found then
                var_nzmkt_price := rcd_pricing.kbetr;
             end if;
             close csr_pricing;

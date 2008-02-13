@@ -87,7 +87,7 @@ create or replace package body dw_mart_aggregation as
       var_errors := false;
       var_locked := false;
       if var_loc_string is null then
-         raise_application_error(-20000, 'Stream code not returned - must be executed from the ICS Stream Processor');
+         raise_application_error(-20000, 'Stream lock not returned - must be executed from the ICS Stream Processor');
       end if;
 
       /*-*/
