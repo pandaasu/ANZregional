@@ -21,8 +21,9 @@ create or replace package lads_atllad04_monitor as
 
  YYYY/MM   Author         Description
  -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2006/11   Linden Glen    Included LADS FLATTENING callout
+ 2004/01   Steve Gregan   Created 
+ 2006/11   Linden Glen    Included LADS FLATTENING callout 
+ 2008/02   Trevor Keon    Added triggered procedure call 
 
 *******************************************************************************/
 
