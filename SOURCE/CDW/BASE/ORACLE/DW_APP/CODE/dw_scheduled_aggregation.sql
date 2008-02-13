@@ -1650,7 +1650,7 @@ create or replace package body dw_scheduled_aggregation as
             and t01.knumh = t02.knumh
             and t01.kschl = 'ZV01'
             and t01.kotabnr = '969'
-            and t01.vakey = lpad(nvl('0000010882','0'),10,'0')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
+            and t01.vakey = lpad(nvl(var_nzmkt_vendor_code,'0'),10,'0')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
             and (t01.datab <= to_char(rcd_nzmkt_base.purch_order_eff_date,'yyyymmdd') and
                  t01.datbi >= to_char(rcd_nzmkt_base.purch_order_eff_date,'yyyymmdd'))
             and t02.detseq = 1
@@ -1795,6 +1795,7 @@ create or replace package body dw_scheduled_aggregation as
             rcd_nzmkt_base.cust_code := rcd_trace.cust_code;
             rcd_nzmkt_base.matl_code := dw_trim_code(rcd_trace.matl_code);
             rcd_nzmkt_base.ods_matl_code := rcd_trace.matl_code;
+            rcd_nzmkt_base.source_plant_code := rcd_trace.source_plant_code;
             rcd_nzmkt_base.plant_code := rcd_trace.plant_code;
             rcd_nzmkt_base.storage_locn_code := rcd_trace.storage_locn_code;
             rcd_nzmkt_base.purch_order_weight_unit := rcd_trace.purch_order_weight_unit;

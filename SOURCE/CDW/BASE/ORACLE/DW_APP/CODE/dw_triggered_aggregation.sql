@@ -152,14 +152,14 @@ create or replace package body dw_triggered_aggregation as
       /* Initialise the procedure
       /*-*/
       var_log_prefix := 'DW - TRIGGERED_AGGREGATION';
-      var_log_search := lics_stream_processor.callback_event;
+      var_log_search := 'DW_TRIGGERED_AGGREGATION' || '_' || lics_stream_processor.callback_event;
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
       var_errors := false;
       var_locked := false;
       if var_loc_string is null then
-         raise_application_error(-20000, 'Stream code not returned - must be executed from the ICS Stream Processor');
+         raise_application_error(-20000, 'Stream lock not returned - must be executed from the ICS Stream Processor');
       end if;
 
       /*-*/

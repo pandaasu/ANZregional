@@ -26,7 +26,7 @@ create or replace package dw_sales_01_mart as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure extract(par_company_code in varchar2);
+   procedure refresh(par_company_code in varchar2);
 
 end dw_sales_01_mart;
 /
@@ -60,9 +60,9 @@ create or replace package body dw_sales_01_mart as
    var_current_yyyyppw number(7,0);
 
    /***********************************************/
-   /* This procedure performs the extract routine */
+   /* This procedure performs the refresh routine */
    /***********************************************/
-   procedure extract(par_company_code in varchar2) is
+   procedure refresh(par_company_code in varchar2) is
 
       /*-*/
       /* Local definitions
