@@ -1,21 +1,21 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dw_sales_01_mart as
+create or replace package dw_mart_sales01 as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : dw_sales_01_mart
+    Package : dw_mart_sales01
     Owner   : dw_app
     Author  : Steve Gregan
 
     DESCRIPTION
     -----------
-    Dimensional Data Store - Sales Mart 01 Extract
+    Dimensional Data Store - Mart Sales 01 Refresh
 
-    The package extracts the data mart for the sales 01 data mart. The package exposes
+    The package refreshes the data mart for the sales 01 data mart. The package exposes
     one procedure REFRESH that performs the data mart refresh based on the following parameters:
 
     1. PAR_COMPANY_CODE (company code) (MANDATORY)
@@ -45,13 +45,13 @@ create or replace package dw_sales_01_mart as
    /*-*/
    procedure refresh(par_company_code in varchar2, par_build in varchar2);
 
-end dw_sales_01_mart;
+end dw_mart_sales01;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_sales_01_mart as
+create or replace package body dw_mart_sales01 as
 
    /*-*/
    /* Private exceptions
@@ -2740,11 +2740,11 @@ create or replace package body dw_sales_01_mart as
    /*-------------*/
    end create_detail;
 
-end dw_sales_01_mart;
+end dw_mart_sales01;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym dw_sales_01_mart for dw_app.dw_sales_01_mart;
-grant execute on dw_sales_01_mart to public;
+create or replace public synonym dw_mart_sales01 for dw_app.dw_mart_sales01;
+grant execute on dw_mart_sales01 to public;

@@ -14,38 +14,24 @@ create or replace package dw_mart_control as
     -----------
     Dimensional Data Store - Mart Control
 
-    This package contain the data mart control functionality. The package exposes
-    one procedure RETRIEVE that retrieves the control data based on the following parameters:
-
-    1. PAR_PROCEDURE (procedure string) (MANDATORY)
-
-       The data mart refresh procedure
+    This package contain the data mart control functionality.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2007/09   Steve Gregan   Created
+    2008/02   Steve Gregan   Created
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure retrieve(par_company_code in varchar2,
-                      par_dimension in varchar2,
-                      par_date in date,
-                      par_work_day in boolean,
-                      par_work_date out date,
-                      par_YYYYPP out number,
+   procedure retrieve(par_date in date,
+                      par_yyyypp out number,
                       par_prd_asofdays out varchar2,
                       par_prd_percent out number,
-                      par_YYYYMM out number,
+                      par_yyyymm out number,
                       par_mth_asofdays out varchar2,
-                      par_mth_percent out number,
-                      par_extract_status out varchar2,
-                      par_inventory_date out date,
-                      par_inventory_status out varchar2,
-                      par_sales_date out date,
-                      par_sales_status out varchar2);
+                      par_mth_percent out number);
 
 end dw_mart_control;
 /
@@ -58,29 +44,19 @@ create or replace package body dw_mart_control as
    /********************************************/
    /* This procedure performs the main routine */
    /********************************************/
-   procedure retrieve(par_company_code in varchar2,
-                      par_dimension in varchar2,
-                      par_date in date,
-                      par_work_day in boolean,
-                      par_work_date out date,
-                      par_YYYYPP out number,
+   procedure retrieve(par_date in date,
+                      par_yyyypp out number,
                       par_prd_asofdays out varchar2,
                       par_prd_percent out number,
-                      par_YYYYMM out number,
+                      par_yyyymm out number,
                       par_mth_asofdays out varchar2,
-                      par_mth_percent out number,
-                      par_extract_status out varchar2,
-                      par_inventory_date out date,
-                      par_inventory_status out varchar2,
-                      par_sales_date out date,
-                      par_sales_status out varchar2) is
+                      par_mth_percent out number) is
 
       /*-*/
       /* Variable definitions
       /*-*/
-      var_work_date date;
-      var_current_YYYYPP number(6,0);
-      var_current_YYYYMM number(6,0);
+      var_current_yyyypp number(6,0);
+      var_current_yyyypp number(6,0);
       var_period_bus_day_num number(2,0);
       var_prd_wrk_days number(5,0);
       var_prd_hol_days number(5,0);
@@ -91,11 +67,6 @@ create or replace package body dw_mart_control as
       var_prd_percent number(5,2);
       var_mth_asofdays varchar2(128 char);
       var_mth_percent number(5,2);
-      var_extract_status varchar2(256 char);
-      var_inventory_date date;
-      var_inventory_status varchar2(1024 char);
-      var_sales_date date;
-      var_sales_status varchar2(1024 char);
       var_found boolean;
 
       /*-*/
@@ -108,48 +79,34 @@ create or replace package body dw_mart_control as
            from mars_date
           where to_char(calendar_date,'YYYYMMDD') = to_char(var_work_date,'YYYYMMDD');
 
+      cursor csr_mars_date_dim is
+         select t01.mars_year,
+                t01.mars_period,
+                t01.mars_week,
+                t01.period_num,
+                t01.mars_week_of_year,
+                t01.mars_week_of_period
+           from mars_date_dim t01
+          where trunc(t01.calendar_date) = trunc(par_date);
+      rcd_mars_date_dim csr_mars_date_dim%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
       /*-*/
-      /* Adjust the date for last working day when required
-      /* 1. Invoice - move the date back to Friday when Saturday or Sunday
-      /* 2. Billed - move the date back to Saturday when Sunday
-      /* **NOTE** Day 1 = Sunday
-      /*-*/
-      var_work_date := par_date;
-      if par_work_day = true then
-         if upper(par_dimension) = '*INV' then
-            if to_number(to_char(par_date,'d')) = 1 then
-               var_work_date := var_work_date - 2;
-            end if;
-            if to_number(to_char(par_date,'d')) = 7 then
-               var_work_date := var_work_date - 1;
-            end if;
-         else
-            if to_number(to_char(par_date,'d')) = 1 then
-               var_work_date := var_work_date - 1;
-            end if;
-         end if;
-      end if;
-
-      /*-*/
       /* Retrieve the current period and month information date
-      /* **NOTE** based on adjusted parameter date
       /*-*/
       var_found := true;
-      open mars_date_c01;
-      fetch mars_date_c01 into var_current_YYYYPP,
-                               var_current_YYYYMM,
-                               var_period_bus_day_num;
-      if mars_date_c01%notfound then
+      open csr_mars_date_dim;
+      fetch csr_mars_date_dim into rcd_mars_date_dim;
+      if csr_mars_date_dim%notfound then
          var_found := false;
       end if;
-      close mars_date_c01;
+      close csr_mars_date_dim;
       if var_found = false then
-         raise_application_error(-20000, 'No mars date found');
+         raise_application_error(-20000, 'No mars date found for ' || to_char(trunc(par_date),'yyyy/mm/dd')');
       end if;
 
       /*-*/
@@ -157,28 +114,10 @@ create or replace package body dw_mart_control as
       /* 1. Invoice - use MARS_DATE calendar (20 working days)
       /* 2. Billed - calculate based on 24 working days
       /*-*/
-      if upper(par_dimension) = '*INV' then
-         select max(period_bus_day_num) into var_prd_wrk_days
-            from mars_date
-            where mars_period = var_current_YYYYPP;
-      else
-         select count(*) into var_period_bus_day_num 
-            from mars_date
-            where mars_period = var_current_YYYYPP
-              and to_char(calendar_date,'YYYYMMDD') <= to_char(var_work_date,'YYYYMMDD')
-              and to_number(to_char(calendar_date,'d')) in (2,3,4,5,6,7);
-         select count(*) into var_prd_wrk_days
-            from mars_date
-            where mars_period = var_current_YYYYPP
-              and to_number(to_char(calendar_date,'d')) in (2,3,4,5,6,7);
-      end if;
-      select count(*) into var_prd_hol_days
-         from mars_holiday
-         where moe_code = 'HK'
-           and calendar_date in 
-            (select calendar_date from mars_date
-                where mars_period = var_current_YYYYPP);
-      var_prd_percent := round((var_period_bus_day_num / (var_prd_wrk_days - var_prd_hol_days)) * 100, 2);
+      select max(period_bus_day_num) into var_prd_wrk_days
+        from mars_date
+       where mars_period = var_current_YYYYPP;
+      var_prd_percent := round((var_period_bus_day_num / var_prd_wrk_days) * 100, 2);
 
       /*-*/
       /* Retrieve the month percentage
@@ -206,56 +145,30 @@ create or replace package body dw_mart_control as
             where to_char(calendar_date,'YYYYMM') = var_current_YYYYMM
               and to_number(to_char(calendar_date,'d')) in (2,3,4,5,6,7);
       end if;
-      select count(*) into var_mth_hol_days
-         from mars_holiday
-         where moe_code = 'HK'
-           and calendar_date in 
-            (select calendar_date from mars_date
-                where (year_num * 100) + month_num = var_current_YYYYMM);
-      var_mth_percent := round((var_mth_day_num / (var_mth_wrk_days - var_mth_hol_days)) * 100, 2);
+
+      var_mth_percent := round((var_mth_day_num / var_mth_wrk_days) * 100, 2);
 
       /*-*/
       /* Retrieve the as of days literals
       /*-*/
-      var_prd_asofdays := 'Current Period: ' || substr(to_char(var_current_YYYYPP,'FM099999'),1,4) || '/' || substr(to_char(var_current_YYYYPP,'FM099999'),5,2) ||
+      var_prd_asofdays := 'Current Period: ' || substr(to_char(var_current_YYYYPP,'fm000000'),1,4) || '/' || substr(to_char(var_current_YYYYPP,'fm000000'),5,2) ||
                           ' Current Date: ' || to_char(var_work_date,'DD/MM/YYYY') ||
-                          ' Working Day: ' || to_char(var_period_bus_day_num,'FM99') || ' of ' || to_char(var_prd_wrk_days,'FM99') ||
-                          ' (' || to_char(var_prd_percent,'FM990.00') || '%)';
-      var_mth_asofdays := 'Current Month: ' || substr(to_char(var_current_YYYYMM,'FM099999'),1,4) || '/' || substr(to_char(var_current_YYYYMM,'FM099999'),5,2) ||
+                          ' Working Day: ' || to_char(var_period_bus_day_num,'fm99') || ' of ' || to_char(var_prd_wrk_days,'fm99') ||
+                          ' (' || to_char(var_prd_percent,'fm990.00') || '%)';
+      var_mth_asofdays := 'Current Month: ' || substr(to_char(var_current_YYYYMM,'fm000000'),1,4) || '/' || substr(to_char(var_current_YYYYMM,'fm000000'),5,2) ||
                           ' Current Date: ' || to_char(var_work_date,'DD/MM/YYYY') ||
-                          ' Working Day: ' || to_char(var_mth_day_num,'FM99') || ' of ' || to_char(var_mth_wrk_days,'FM99') ||
-                          ' (' || to_char(var_mth_percent,'FM990.00') || '%)';
-
-      /*-*/
-      /* Set the extract status
-      /*-*/
-      var_extract_status := 'Creation Date: ' || to_char(sysdate,'YYYY/MM/DD') || ' As Of Date: ' || to_char(var_work_date,'YYYY/MM/DD');
-
-      /*-*/
-      /* Retrieve the inventory status
-      /*-*/
-      dw_reconciliation.inventory_status(par_company_code, var_inventory_date, var_inventory_status);
-
-      /*-*/
-      /* Retrieve the sales status
-      /*-*/
-      dw_reconciliation.sales_status(par_company_code, var_sales_date, var_sales_status);
+                          ' Working Day: ' || to_char(var_mth_day_num,'fm99') || ' of ' || to_char(var_mth_wrk_days,'fm99') ||
+                          ' (' || to_char(var_mth_percent,'fm990.00') || '%)';
 
       /*-*/
       /* Set the return parameters
       /*-*/
-      par_work_date := var_work_date;
-      par_YYYYPP := var_current_YYYYPP;
+      par_yyyypp := var_current_yyyypp;
       par_prd_asofdays := var_prd_asofdays;
       par_prd_percent := var_prd_percent;
-      par_YYYYMM := var_current_YYYYMM;
+      par_yyyypp := var_current_yyyypp;
       par_mth_asofdays := var_mth_asofdays;
       par_mth_percent := var_mth_percent;
-      par_extract_status := var_extract_status;
-      par_inventory_date := var_inventory_date;
-      par_inventory_status := substr(var_inventory_status,1,256);
-      par_sales_date := var_sales_date;
-      par_sales_status := substr(var_sales_status,1,256);
 
    /*-------------*/
    /* End routine */
