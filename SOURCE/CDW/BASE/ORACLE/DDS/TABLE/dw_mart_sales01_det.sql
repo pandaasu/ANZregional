@@ -122,7 +122,7 @@ comment on column dw_mart_sales01_det.p27_value is 'P27 value';
 /* Primary Key Constraint
 /**/
 alter table dw_mart_sales01_det
-   add constraint dw_mart_sales01_det_pk primary key (company_code, segment_code, matl_group, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, data_type);
+   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, data_type);
 
 /**/
 /* Authority
