@@ -43,7 +43,7 @@ create or replace package dw_mart_sales01 as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure refresh(par_company_code in varchar2, par_build in varchar2);
+   procedure refresh(par_company_code in varchar2, par_action in varchar2);
 
 end dw_mart_sales01;
 /
@@ -63,10 +63,10 @@ create or replace package body dw_mart_sales01 as
    /* Private declarations
    /*-*/
    procedure extract_header(par_company_code in varchar2);
-   procedure extract_sale(par_company_code in varchar2, par_data segment in varchar2);
-   procedure extract_forecast(par_company_code in varchar2, par_data segment in varchar2);
-   procedure extract_nzmkt_sale(par_company_code in varchar2, par_data segment in varchar2);
-   procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data segment in varchar2);
+   procedure extract_sale(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_forecast(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_nzmkt_sale(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data_segment in varchar2);
    procedure create_detail(par_company_code in varchar2,
                            par_data_segment in varchar2,
                            par_matl_group in varchar2,
@@ -187,15 +187,6 @@ create or replace package body dw_mart_sales01 as
       end if;
 
       /*-*/
-      /* Calculate the data mart detail variances
-      /*-*/
-      update dw_mart_sales01_det
-         set cyr_maa_inv_value = cyr_mat_inv_value / 52,
-             cyr_yee_variance = cyr_yee_inv_fcst_value - cyr_yee_inv_br_value,
-             nyr_yee_variance = nyr_yte_fcst_value - nyr_yte_br_value
-       where company_code = rcd_header.company_code;
-
-      /*-*/
       /* Update the header data
       /*-*/
       update dw_mart_sales01_hdr
@@ -242,7 +233,7 @@ create or replace package body dw_mart_sales01 as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end extract;
+   end refresh;
 
    /***************************************************/
    /* This procedure performs the header data routine */
@@ -534,7 +525,7 @@ create or replace package body dw_mart_sales01 as
    /**************************************************/
    /* This procedure performs the sales data routine */
    /**************************************************/
-   procedure extract_sale(par_company_code in varchar2, par_data segment in varchar2) is
+   procedure extract_sale(par_company_code in varchar2, par_data_segment in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -621,7 +612,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as p11_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as p12_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
-           from sales_period_01_fact t01,
+           from dw_sales_period01 t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03
           where t01.ship_to_cust_code = t02.cust_code(+)
@@ -688,7 +679,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as p11_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as p12_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
-           from sales_fact t01,
+           from dw_sales_base t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03
           where t01.ship_to_cust_code = t02.cust_code(+)
@@ -756,7 +747,8 @@ create or replace package body dw_mart_sales01 as
          /*-*/
          /* Create the data mart detail
          /*-*/
-         create_detail(par_company_code,
+         create_detail(rcd_sales_extract_01.company_code,
+                       par_data_segment,
                        '*ALL',
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
@@ -786,7 +778,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_qty,
                 p13_value = p13_value + rcd_sales_extract_01.p13_qty
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -817,7 +809,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_gsv,
                 p13_value = p13_value + rcd_sales_extract_01.p13_gsv
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -848,7 +840,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_ton,
                 p13_value = p13_value + rcd_sales_extract_01.p13_ton
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -874,6 +866,7 @@ create or replace package body dw_mart_sales01 as
             /* Create the data mart detail
             /*-*/
             create_detail(rcd_sales_extract_02.company_code,
+                          par_data_segment,
                           '*ALL',
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
@@ -899,7 +892,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_qty,
                    p13_value = p13_value + rcd_sales_extract_02.p13_qty
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = '*ALL'
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -926,7 +919,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_gsv,
                    p13_value = p13_value + rcd_sales_extract_02.p13_gsv
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = '*ALL'
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -953,7 +946,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_ton,
                    p13_value = p13_value + rcd_sales_extract_02.p13_ton
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = '*ALL'
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -973,7 +966,7 @@ create or replace package body dw_mart_sales01 as
    /*****************************************************/
    /* This procedure performs the forecast data routine */
    /*****************************************************/
-   procedure extract_forecast(par_company_code in varchar2, par_data segment in varchar2) is
+   procedure extract_forecast(par_company_code in varchar2, par_data_segment in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1018,7 +1011,7 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       cursor csr_fcst_extract_01 is 
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
@@ -1031,14 +1024,14 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_type_code = 'OP'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
 
       cursor csr_fcst_extract_02 is 
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
@@ -1051,14 +1044,14 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_type_code = 'ROB'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_02 csr_fcst_extract_02%rowtype;
 
       cursor csr_fcst_extract_03 is 
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
@@ -1074,14 +1067,14 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_type_code = 'BR'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_03 csr_fcst_extract_03%rowtype;
 
       cursor csr_fcst_extract_04 is 
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyyppw >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_cyr_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
@@ -1176,7 +1169,7 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_type_code = 'FCST'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_04 csr_fcst_extract_04%rowtype;
@@ -1238,8 +1231,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
                        '*ALL',
-                       rcd_fcst_extract_01.matl_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_01.demand_plng_grp_code);
 
@@ -1249,9 +1243,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_qty
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*QTY';
@@ -1262,9 +1256,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_gsv
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*GSV';
@@ -1275,9 +1269,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_ton
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*TON';
@@ -1299,8 +1293,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_02.company_code,
+                       par_data_segment,
                        '*ALL',
-                       rcd_fcst_extract_02.matl_code,
+                       rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_02.demand_plng_grp_code);
 
@@ -1310,9 +1305,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_qty
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*QTY';
@@ -1323,9 +1318,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_gsv
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*GSV';
@@ -1336,9 +1331,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_ton
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*TON';
@@ -1360,8 +1355,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_03.company_code,
+                       par_data_segment,
                        '*ALL',
-                       rcd_fcst_extract_03.matl_code,
+                       rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_03.demand_plng_grp_code);
 
@@ -1373,9 +1369,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_qty,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_qty
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*QTY';
@@ -1388,9 +1384,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_gsv,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_gsv
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*GSV';
@@ -1403,9 +1399,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_ton,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_ton
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*TON';
@@ -1427,8 +1423,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_04.company_code,
+                       par_data_segment,
                        '*ALL',
-                       rcd_fcst_extract_04.matl_code,
+                       rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_04.demand_plng_grp_code);
 
@@ -1466,9 +1463,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_qty,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_qty
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*QTY';
@@ -1507,9 +1504,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_gsv,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_gsv
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*GSV';
@@ -1548,9 +1545,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_ton,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_ton
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = '*ALL'
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*TON';
@@ -1566,7 +1563,7 @@ create or replace package body dw_mart_sales01 as
    /********************************************************/
    /* This procedure performs the NZMKT sales data routine */
    /********************************************************/
-   procedure extract_nzmkt_sale(par_company_code in varchar2, par_data segment in varchar2) is
+   procedure extract_nzmkt_sale(par_company_code in varchar2, par_data_segment in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1606,65 +1603,65 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_qty_base_uom end),0) as lyr_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_gsv end),0) as lyr_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_qty_net_tonnes end),0) as lyr_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytd_str_yyyypp and t01.billing_eff_yyyypp <= var_ytd_end_yyyypp then t01.billed_qty_base_uom end),0) as ytd_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytd_str_yyyypp and t01.billing_eff_yyyypp <= var_ytd_end_yyyypp then t01.billed_gsv end),0) as ytd_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytd_str_yyyypp and t01.billing_eff_yyyypp <= var_ytd_end_yyyypp then t01.billed_qty_net_tonnes end),0) as ytd_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_qty_base_uom end),0) as mat_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_gsv end),0) as mat_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_qty_net_tonnes end),0) as mat_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_base_uom end),0) as p01_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_base_uom end),0) as p02_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_base_uom end),0) as p03_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_base_uom end),0) as p04_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_base_uom end),0) as p05_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_base_uom end),0) as p06_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_base_uom end),0) as p07_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_base_uom end),0) as p08_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_base_uom end),0) as p09_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_base_uom end),0) as p10_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_base_uom end),0) as p11_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_base_uom end),0) as p12_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_base_uom end),0) as p13_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_gsv end),0) as p01_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_gsv end),0) as p02_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_gsv end),0) as p03_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_gsv end),0) as p04_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_gsv end),0) as p05_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_gsv end),0) as p06_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_gsv end),0) as p07_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_gsv end),0) as p08_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_gsv end),0) as p09_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_gsv end),0) as p10_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_gsv end),0) as p11_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_gsv end),0) as p12_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_gsv end),0) as p13_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_base_uom end),0) as lyr_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_gsv end),0) as lyr_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_net_tonnes end),0) as lyr_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytd_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytd_end_yyyypp then t01.ord_qty_base_uom end),0) as ytd_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytd_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytd_end_yyyypp then t01.ord_gsv end),0) as ytd_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytd_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytd_end_yyyypp then t01.ord_qty_net_tonnes end),0) as ytd_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_qty_base_uom end),0) as mat_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_gsv end),0) as mat_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_qty_net_tonnes end),0) as mat_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_base_uom end),0) as p01_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_base_uom end),0) as p02_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_base_uom end),0) as p03_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_base_uom end),0) as p04_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_base_uom end),0) as p05_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_base_uom end),0) as p06_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_base_uom end),0) as p07_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_base_uom end),0) as p08_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_base_uom end),0) as p09_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_base_uom end),0) as p10_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_base_uom end),0) as p11_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_base_uom end),0) as p12_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_base_uom end),0) as p13_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_gsv end),0) as p01_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_gsv end),0) as p02_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_gsv end),0) as p03_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_gsv end),0) as p04_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_gsv end),0) as p05_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_gsv end),0) as p06_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_gsv end),0) as p07_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_gsv end),0) as p08_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_gsv end),0) as p09_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_gsv end),0) as p10_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_gsv end),0) as p11_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_gsv end),0) as p12_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_gsv end),0) as p13_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as p13_ton
            from dw_nzmkt_base t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03
-          where t01.ship_to_cust_code = t02.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
+          where t01.nzmkt_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
-            and t01.hdr_sales_org_code = t02.sales_org_code(+)
-            and t01.sold_to_cust_code = t03.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
-            and t01.hdr_division_code = t03.division_code(+) 
-            and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.nzmkt_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
             and t01.company_code = par_company_code
             and t01.purch_order_eff_yyyypp >= var_str_yyyypp
             and t01.purch_order_eff_yyyypp <= var_end_yyyypp
@@ -1681,59 +1678,59 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(t01.billed_qty_base_uom),0) as ytw_qty,
-                nvl(sum(t01.billed_gsv),0) as ytw_gsv,
-                nvl(sum(t01.billed_qty_net_tonnes),0) as ytw_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_base_uom end),0) as p01_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_base_uom end),0) as p02_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_base_uom end),0) as p03_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_base_uom end),0) as p04_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_base_uom end),0) as p05_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_base_uom end),0) as p06_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_base_uom end),0) as p07_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_base_uom end),0) as p08_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_base_uom end),0) as p09_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_base_uom end),0) as p10_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_base_uom end),0) as p11_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_base_uom end),0) as p12_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_base_uom end),0) as p13_qty,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_gsv end),0) as p01_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_gsv end),0) as p02_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_gsv end),0) as p03_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_gsv end),0) as p04_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_gsv end),0) as p05_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_gsv end),0) as p06_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_gsv end),0) as p07_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_gsv end),0) as p08_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_gsv end),0) as p09_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_gsv end),0) as p10_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_gsv end),0) as p11_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_gsv end),0) as p12_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_gsv end),0) as p13_gsv,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
+                nvl(sum(t01.ord_qty_base_uom),0) as ytw_qty,
+                nvl(sum(t01.ord_gsv),0) as ytw_gsv,
+                nvl(sum(t01.ord_qty_net_tonnes),0) as ytw_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_base_uom end),0) as p01_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_base_uom end),0) as p02_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_base_uom end),0) as p03_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_base_uom end),0) as p04_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_base_uom end),0) as p05_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_base_uom end),0) as p06_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_base_uom end),0) as p07_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_base_uom end),0) as p08_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_base_uom end),0) as p09_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_base_uom end),0) as p10_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_base_uom end),0) as p11_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_base_uom end),0) as p12_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_base_uom end),0) as p13_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_gsv end),0) as p01_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_gsv end),0) as p02_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_gsv end),0) as p03_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_gsv end),0) as p04_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_gsv end),0) as p05_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_gsv end),0) as p06_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_gsv end),0) as p07_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_gsv end),0) as p08_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_gsv end),0) as p09_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_gsv end),0) as p10_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_gsv end),0) as p11_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_gsv end),0) as p12_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_gsv end),0) as p13_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as p13_ton
            from dw_nzmkt_base t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03
-          where t01.ship_to_cust_code = t02.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
+          where t01.nzmkt_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
-            and t01.hdr_sales_org_code = t02.sales_org_code(+)
-            and t01.sold_to_cust_code = t03.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
-            and t01.hdr_division_code = t03.division_code(+) 
-            and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.nzmkt_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
             and t01.company_code = par_company_code
             and t01.purch_order_eff_yyyypp = var_cpd_yyyypp
             and t01.purch_order_eff_yyyyppw >= var_cpd_str_yyyyppw
@@ -1792,8 +1789,8 @@ create or replace package body dw_mart_sales01 as
          /*-*/
          /* Create the data mart detail
          /*-*/
-         create_detail(par_company_code,
-                       par_data segment,
+         create_detail(rcd_sales_extract_01.company_code,
+                       par_data_segment,
                        rcd_sales_extract_01.nzmkt_matl_group,
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
@@ -1823,7 +1820,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_qty,
                 p13_value = p13_value + rcd_sales_extract_01.p13_qty
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -1854,7 +1851,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_gsv,
                 p13_value = p13_value + rcd_sales_extract_01.p13_gsv
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -1885,7 +1882,7 @@ create or replace package body dw_mart_sales01 as
                 p12_value = p12_value + rcd_sales_extract_01.p12_ton,
                 p13_value = p13_value + rcd_sales_extract_01.p13_ton
           where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
@@ -1911,7 +1908,8 @@ create or replace package body dw_mart_sales01 as
             /* Create the data mart detail
             /*-*/
             create_detail(rcd_sales_extract_02.company_code,
-                          rcd_sales_extract_01.nzmkt_matl_group,
+                          par_data_segment,
+                          rcd_sales_extract_02.nzmkt_matl_group,
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
                           rcd_sales_extract_02.demand_plng_grp_code);
@@ -1936,7 +1934,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_qty,
                    p13_value = p13_value + rcd_sales_extract_02.p13_qty
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = rcd_sales_extract_01.nzmkt_matl_group
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -1963,7 +1961,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_gsv,
                    p13_value = p13_value + rcd_sales_extract_02.p13_gsv
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = rcd_sales_extract_01.nzmkt_matl_group
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -1990,7 +1988,7 @@ create or replace package body dw_mart_sales01 as
                    p12_value = p12_value + rcd_sales_extract_02.p12_ton,
                    p13_value = p13_value + rcd_sales_extract_02.p13_ton
              where company_code = rcd_sales_extract_02.company_code
-               and data_segment = par_data segment
+               and data_segment = par_data_segment
                and matl_group = rcd_sales_extract_01.nzmkt_matl_group
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
@@ -2010,7 +2008,7 @@ create or replace package body dw_mart_sales01 as
    /***********************************************************/
    /* This procedure performs the NZMKT forecast data routine */
    /***********************************************************/
-   procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data segment in varchar2) is
+   procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data_segment in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -2056,7 +2054,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_01 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
@@ -2064,7 +2062,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(t01.fcst_qty_net_tonnes),0) as yee_ton
            from fcst_fact t01,
                 matl_dim t02
-          where t01.matl_code = t02.matl_code(+)
+          where t01.matl_zrep_code = t02.matl_code(+)
             and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
@@ -2074,7 +2072,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
@@ -2082,7 +2080,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_02 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
@@ -2090,7 +2088,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(t01.fcst_qty_net_tonnes),0) as yee_ton
            from fcst_fact t01,
                 matl_dim t02
-          where t01.matl_code = t02.matl_code(+)
+          where t01.matl_zrep_code = t02.matl_code(+)
             and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
@@ -2100,7 +2098,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_02 csr_fcst_extract_02%rowtype;
@@ -2108,7 +2106,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_03 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
@@ -2119,7 +2117,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton
            from fcst_fact t01,
                 matl_dim t02
-          where t01.matl_code = t02.matl_code(+)
+          where t01.matl_zrep_code = t02.matl_code(+)
             and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
@@ -2129,7 +2127,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_03 csr_fcst_extract_03%rowtype;
@@ -2137,7 +2135,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_04 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyyppw >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_cyr_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
@@ -2226,7 +2224,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p27_ton
            from fcst_fact t01,
                 matl_dim t02
-          where t01.matl_code = t02.matl_code(+)
+          where t01.matl_zrep_code = t02.matl_code(+)
             and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
@@ -2237,7 +2235,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_04 csr_fcst_extract_04%rowtype;
@@ -2299,8 +2297,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
                        rcd_fcst_extract_01.nzmkt_matl_group,
-                       rcd_fcst_extract_01.matl_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_01.demand_plng_grp_code);
 
@@ -2310,9 +2309,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_qty
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*QTY';
@@ -2323,9 +2322,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_gsv
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*GSV';
@@ -2336,9 +2335,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_ton
           where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = '*TON';
@@ -2360,8 +2359,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_02.company_code,
+                       par_data_segment,
                        rcd_fcst_extract_02.nzmkt_matl_group,
-                       rcd_fcst_extract_02.matl_code,
+                       rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_02.demand_plng_grp_code);
 
@@ -2371,9 +2371,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_qty
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*QTY';
@@ -2384,9 +2384,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_gsv
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*GSV';
@@ -2397,9 +2397,9 @@ create or replace package body dw_mart_sales01 as
          update dw_mart_sales01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_ton
           where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = '*TON';
@@ -2421,8 +2421,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_03.company_code,
+                       par_data_segment,
                        rcd_fcst_extract_03.nzmkt_matl_group,
-                       rcd_fcst_extract_03.matl_code,
+                       rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_03.demand_plng_grp_code);
 
@@ -2434,9 +2435,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_qty,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_qty
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*QTY';
@@ -2449,9 +2450,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_gsv,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_gsv
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*GSV';
@@ -2464,9 +2465,9 @@ create or replace package body dw_mart_sales01 as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_ton,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_ton
           where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = '*TON';
@@ -2488,8 +2489,9 @@ create or replace package body dw_mart_sales01 as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_04.company_code,
+                       par_data_segment,
                        rcd_fcst_extract_04.nzmkt_matl_group,
-                       rcd_fcst_extract_04.matl_code,
+                       rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_04.demand_plng_grp_code);
 
@@ -2527,9 +2529,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_qty,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_qty
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*QTY';
@@ -2568,9 +2570,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_gsv,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_gsv
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*GSV';
@@ -2609,9 +2611,9 @@ create or replace package body dw_mart_sales01 as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_ton,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_ton
           where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data segment
+            and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = '*TON';
