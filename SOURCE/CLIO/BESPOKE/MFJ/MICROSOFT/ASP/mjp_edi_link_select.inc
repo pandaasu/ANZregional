@@ -34,18 +34,20 @@
       document.main.Mode.value = 'INSERT_LOAD';
       document.main.submit();
    }
-   function doUpdate(strCode) {
+   function doUpdate(strType,strCode) {
       if (!processForm()) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'UPDATE_LOAD';
-      document.main.DTA_SapPayerCode.value = strCode;
+      document.main.DTA_SapCustType.value = strType;
+      document.main.DTA_SapCustCode.value = strCode;
       document.main.submit();
    }
-   function doDelete(strCode) {
+   function doDelete(strType,strCode) {
       if (!processForm()) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'DELETE_LOAD';
-      document.main.DTA_SapPayerCode.value = strCode;
+      document.main.DTA_SapCustType.value = strType;
+      document.main.DTA_SapCustCode.value = strCode;
       document.main.submit();
    }
    function processForm() {
@@ -63,7 +65,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mjp_edi_payer_select_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mjp_edi_link_select_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
@@ -72,7 +74,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh List&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doInsert();">&nbsp;Insert Payer&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doInsert();">&nbsp;Insert Link&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -83,10 +85,11 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=4 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=5 cellpadding="0" cellspacing="1">
                         <tr>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Action&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;SAP Payer&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;SAP Type&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;SAP Customer&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;EDI Link&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
@@ -97,12 +100,13 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=3 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=3 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=4 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=4 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doUpdate('<%=objSelection.ListValue01("LIST",i)%>');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doUpdate('<%=objSelection.ListValue01("LIST",i)%>','<%=objSelection.ListValue02("LIST",i)%>');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>','<%=objSelection.ListValue02("LIST",i)%>');">Delete</a></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>
@@ -113,7 +117,8 @@
       </tr>
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
-   <input type="hidden" name="DTA_SapPayerCode" value="">
+   <input type="hidden" name="DTA_SapCustType" value="">
+   <input type="hidden" name="DTA_SapCustCode" value="">
 </form>
 </body>
 </html>

@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : mjp_edi_payer.asp                                  //
+'// Script  : mjp_edi_link.asp                                   //
 '// Author  : Steve Gregan                                       //
 '// Date    : February 2008                                      //
-'// Text    : This script implements the EDI Payer               //
+'// Text    : This script implements the EDI Link                //
 '//           configuration functionality                        //
 '//////////////////////////////////////////////////////////////////
 
@@ -36,8 +36,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "mjp_edi_payer.asp"
-   strHeading = "EDI Payer Configuration"
+   strTarget = "mjp_edi_link.asp"
+   strHeading = "EDI LInk Configuration"
    strError = ""
 
    '//
@@ -58,7 +58,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("MJP_EDI_PAYER_CONFIG")
+   strReturn = GetSecurityCheck("MJP_EDI_LINK_CONFIG")
    if strReturn <> "*OK" then
       strMode = "FATAL"
    else
@@ -133,14 +133,15 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the payer list
+   '// Retrieve the link list
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " t01.sap_payer_code,"
+   strQuery = strQuery & " t01.sap_cust_type,"
+   strQuery = strQuery & " t01.sap_cust_code,"
    strQuery = strQuery & " t01.edi_link_type||' - '||t01.edi_link_code"
-   strQuery = strQuery & " from payer_link t01"
-   strQuery = strQuery & " order by t01.sap_payer_code asc"
+   strQuery = strQuery & " from edi_link t01"
+   strQuery = strQuery & " order by t01.sap_cust_type asc, t01.sap_cust_code asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -175,7 +176,7 @@ sub ProcessInsertLoad()
    strQuery = strQuery & " 'Wholesaler: '||t01.edi_whslr_name as name"
    strQuery = strQuery & " from whslr t01"
    strQuery = strQuery & ") order by code asc"
-   strReturn = objSelection.Execute("PAYERLINK", strQuery, 0)
+   strReturn = objSelection.Execute("EDILINK", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -186,8 +187,9 @@ sub ProcessInsertLoad()
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_SapPayerCode", "")
-   call objForm.AddField("DTA_PayerLink", "")
+   call objForm.AddField("DTA_SapCustType", "")
+   call objForm.AddField("DTA_SapCustCode", "")
+   call objForm.AddField("DTA_EdiLink", "")
 
    '//
    '// Set the mode
@@ -212,10 +214,11 @@ sub ProcessInsertAccept()
    '//
    '// Insert the payer
    '//
-   strStatement = "edi_configuration.insert_payer("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapPayerCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(trim(mid(objForm.Fields("DTA_PayerLink").Value,1,10))) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(mid(objForm.Fields("DTA_PayerLink").Value,11)) & "'"
+   strStatement = "edi_configuration.insert_link("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustType").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustCode").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(trim(mid(objForm.Fields("DTA_EdiLink").Value,1,10))) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(mid(objForm.Fields("DTA_EdiLink").Value,11)) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -248,14 +251,16 @@ sub ProcessUpdateLoad()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the payer data
+   '// Retrieve the EDI link data
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " t01.sap_payer_code,"
+   strQuery = strQuery & " t01.sap_cust_type,"
+   strQuery = strQuery & " t01.sap_cust_code,"
    strQuery = strQuery & " rpad(t01.edi_link_type,10,' ')||t01.edi_link_code"
-   strQuery = strQuery & " from payer_link t01"
-   strQuery = strQuery & " where t01.sap_payer_code = '" & objForm.Fields("DTA_SapPayerCode").Value & "'"
+   strQuery = strQuery & " from edi_link t01"
+   strQuery = strQuery & " where t01.sap_cust_type = '" & objForm.Fields("DTA_SapCustType").Value & "'"
+   strQuery = strQuery & " and t01.sap_cust_code = '" & objForm.Fields("DTA_SapCustCode").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -277,7 +282,7 @@ sub ProcessUpdateLoad()
    strQuery = strQuery & " 'Wholesaler: '||t01.edi_whslr_name as name"
    strQuery = strQuery & " from whslr t01"
    strQuery = strQuery & ") order by code asc"
-   strReturn = objSelection.Execute("PAYERLINK", strQuery, 0)
+   strReturn = objSelection.Execute("EDILINK", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -288,7 +293,7 @@ sub ProcessUpdateLoad()
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_PayerLink", objSelection.ListValue02("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_EdiLink", objSelection.ListValue03("LIST",objSelection.ListLower("LIST")))
 
    '//
    '// Set the mode
@@ -311,12 +316,13 @@ sub ProcessUpdateAccept()
    set objFunction.Security = objSecurity
 
    '//
-   '// Update the payer
+   '// Update the link
    '//
-   strStatement = "edi_configuration.update_payer("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapPayerCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(trim(mid(objForm.Fields("DTA_PayerLink").Value,1,10))) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(mid(objForm.Fields("DTA_PayerLink").Value,11)) & "'"
+   strStatement = "edi_configuration.update_link("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustType").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustCode").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(trim(mid(objForm.Fields("DTA_EdiLink").Value,1,10))) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(mid(objForm.Fields("DTA_EdiLink").Value,11)) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -349,13 +355,15 @@ sub ProcessDeleteLoad()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the payer data
+   '// Retrieve the EDI link data
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " t01.sap_payer_code"
-   strQuery = strQuery & " from payer_link t01"
-   strQuery = strQuery & " where t01.sap_payer_code = '" & objForm.Fields("DTA_SapPayerCode").Value & "'"
+   strQuery = strQuery & " t01.sap_cust_type,"
+   strQuery = strQuery & " t01.sap_cust_code"
+   strQuery = strQuery & " from edi_link t01"
+   strQuery = strQuery & " where t01.sap_cust_type = '" & objForm.Fields("DTA_SapCustType").Value & "'"
+   strQuery = strQuery & " and t01.sap_cust_code = '" & objForm.Fields("DTA_SapCustCode").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -385,10 +393,11 @@ sub ProcessDeleteAccept()
    set objFunction.Security = objSecurity
 
    '//
-   '// Delete the payer
+   '// Delete the link
    '//
-   strStatement = "edi_configuration.delete_payer("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapPayerCode").Value) & "'"
+   strStatement = "edi_configuration.delete_link("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustType").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SapCustCode").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -417,27 +426,27 @@ sub PaintFatal()%>
 '// Paint prompt routine //
 '//////////////////////////
 sub PaintSelect()%>
-<!--#include file="mjp_edi_payer_select.inc"-->
+<!--#include file="mjp_edi_link_select.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint insert routine //
 '//////////////////////////
 sub PaintInsert()%>
-<!--#include file="mjp_edi_payer_insert.inc"-->
+<!--#include file="mjp_edi_link_insert.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint update routine //
 '//////////////////////////
 sub PaintUpdate()%>
-<!--#include file="mjp_edi_payer_update.inc"-->
+<!--#include file="mjp_edi_link_update.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint delete routine //
 '//////////////////////////
 sub PaintDelete()%>
-<!--#include file="mjp_edi_payer_delete.inc"-->
+<!--#include file="mjp_edi_link_delete.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->
