@@ -7,7 +7,7 @@
 
  Description
  -----------
- Operational Data Store - Wholesaler Monthly Invoice Detail Table
+ Electronic Data Interchange - Wholesaler Monthly Invoice Detail Table
 
  YYYY/MM   Author         Description
  -------   ------         -----------
