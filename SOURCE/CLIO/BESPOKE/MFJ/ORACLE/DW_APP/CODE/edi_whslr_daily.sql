@@ -35,7 +35,8 @@ create or replace package edi_whslr_daily as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/12   Steve Gregan   Created
-    2008/02   Steve Gregan   Modified the quantity and value logic to store naturally signed numbers
+    2008/02   Steve Gregan   Modified the quantity and value logic to store naturaly signed numbers
+    2008/02   Steve Gregan   Added sold to selection to EDI link logic
 
    *******************************************************************************/
 
@@ -276,6 +277,10 @@ create or replace package body edi_whslr_daily as
       /* Local definitions
       /*-*/
       var_exception varchar2(4000);
+      var_sndto_code varchar2(30);
+      var_link_type varchar2(30);
+      var_cust_type varchar2(30);
+      var_cust_code varchar2(30);
       var_invc_count number;
       var_qualf varchar2(30 char);
       var_parvw varchar2(30 char);
@@ -435,13 +440,17 @@ create or replace package body edi_whslr_daily as
           where t01.sap_invc_type_code = rcd_whslr_dly_inv_hdr.sap_invoice_type;
       rcd_invc_type csr_invc_type%rowtype;
 
+      cursor csr_edi_link is
+         select t01.*
+           from edi_link t01
+          where upper(t01.sap_cust_type) = var_cust_type
+            and t01.sap_cust_code = var_cust_code;
+      rcd_edi_link csr_edi_link%rowtype;
+
       cursor csr_whslr is
-         select t02.*
-           from payer_link t01,
-                whslr t02
-          where t01.sap_payer_code = lads_trim_code(rcd_whslr_dly_inv_hdr.sap_payer_code)
-            and upper(t01.edi_link_type) = '*WHSLR'
-            and t01.edi_link_code = t02.edi_sndto_code;
+         select t01.*
+           from whslr t01
+          where t01.edi_sndto_code = var_sndto_code;
       rcd_whslr csr_whslr%rowtype;
 
       cursor csr_whslr_transaction is
@@ -561,430 +570,459 @@ create or replace package body edi_whslr_daily as
          close csr_lads_inv_pnr;
 
          /*-*/
-         /* Only process wholesler invoices
-         /* **notes** 1. The payer customer must exist in the payer link table (*WHSLR)
+         /* Retrieve the invoice sold to partner data (AG)
          /*-*/
-         open csr_whslr;
-         fetch csr_whslr into rcd_whslr;
-         if csr_whslr%found then
+         var_parvw := 'AG';
+         open csr_lads_inv_pnr;
+         fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
+         if csr_lads_inv_pnr%found then
+            rcd_whslr_dly_inv_hdr.sap_prmry_code := rcd_lads_inv_pnr.partn;
+         end if;
+         close csr_lads_inv_pnr;
 
-            /*-*/
-            /* Increment the invoice count
-            /*-*/
-            var_invc_count := var_invc_count + 1;
-
-            /*-*/
-            /* Set the wholesaler values
-            /*-*/
-            rcd_whslr_dly_inv_hdr.edi_sndto_code := rcd_whslr.edi_sndto_code;
-            rcd_whslr_dly_inv_hdr.edi_whslr_code := rcd_whslr.edi_whslr_code;
-            rcd_whslr_dly_inv_hdr.edi_disc_code := rcd_whslr.edi_disc_code;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (012)
-            /*-*/
-            var_qualf := '012';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_whslr_dly_inv_hdr.sap_order_type := rcd_lads_inv_org.orgid;
+         /*-*/
+         /* Retrieve the wholesaler send to code
+         /* **notes** 1. The sold to or payer customer must exist in the EDI link table (*WHSLR)
+         /*           2. Sold to code overrides payer code
+         /*-*/
+         var_sndto_code := null;
+         var_link_type := null;
+         var_cust_type := '*SOLDTO';
+         var_cust_code := lads_trim_code(rcd_whslr_dly_inv_hdr.sap_prmry_code);
+         open csr_edi_link;
+         fetch csr_edi_link into rcd_edi_link;
+         if csr_edi_link%found then
+            var_link_type := rcd_edi_link.edi_link_type;
+            if upper(rcd_edi_link.edi_link_type) = '*WHSLR' then
+               var_sndto_code := rcd_edi_link.edi_link_code;
             end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (015)
-            /*-*/
-            var_qualf := '015';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_whslr_dly_inv_hdr.sap_invoice_type := rcd_lads_inv_org.orgid;
-            end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice partner data (AG)
-            /*-*/
-            var_parvw := 'AG';
-            open csr_lads_inv_pnr;
-            fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
-            if csr_lads_inv_pnr%found then
-
-               /*-*/
-               /* Set the values
-               /*-*/
-               rcd_whslr_dly_inv_hdr.sap_prmry_code := rcd_lads_inv_pnr.partn;
-
-            end if;
-            close csr_lads_inv_pnr;
-
-            /*-*/
-            /* Retrieve the invoice partner data (Z5)
-            /*-*/
-            var_parvw := 'Z5';
-            open csr_lads_inv_pnr;
-            fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
-            if csr_lads_inv_pnr%found then
-
-               /*-*/
-               /* Set the values
-               /*-*/
-               rcd_whslr_dly_inv_hdr.sap_scdry_code := rcd_lads_inv_pnr.partn;
-               rcd_whslr_dly_inv_hdr.edi_sldto_code := substr(rcd_lads_inv_pnr.knref,5,8);
-
-               /*-*/
-               /* Retrieve the invoice partner address data (Z5/Z3)
-               /*-*/
-               var_langu := 'Z3';
-               open csr_lads_inv_adj;
-               fetch csr_lads_inv_adj into rcd_lads_inv_adj;
-               if csr_lads_inv_adj%found then
-                  rcd_whslr_dly_inv_hdr.edi_sldto_name := substr(rcd_lads_inv_adj.name1,1,30);
+         end if;
+         if var_link_type is null then
+            var_cust_type := '*PAYER';
+            var_cust_code := lads_trim_code(rcd_whslr_dly_inv_hdr.sap_payer_code);
+            open csr_edi_link;
+            fetch csr_edi_link into rcd_edi_link;
+            if csr_edi_link%found then
+               if upper(rcd_edi_link.edi_link_type) = '*WHSLR' then
+                  var_sndto_code := rcd_edi_link.edi_link_code;
                end if;
-               close csr_lads_inv_adj;
-
             end if;
-            close csr_lads_inv_pnr;
+         end if;
+
+         /*-*/
+         /* Only process wholesaler invoices
+         /*-*/
+         if not(var_sndto_code is null) then
 
             /*-*/
-            /* Retrieve data from the first invoice line
+            /* Retrieve the wholesaler data
             /*-*/
-            open csr_lads_inv_gen;
-            fetch csr_lads_inv_gen into rcd_lads_inv_gen;
-            if csr_lads_inv_gen%found then
+            open csr_whslr;
+            fetch csr_whslr into rcd_whslr;
+            if csr_whslr%found then
 
                /*-*/
-               /* Retrieve the invoice item partner data (WE)
+               /* Increment the invoice count
                /*-*/
-               var_parvw := 'WE';
-               open csr_lads_inv_ipn;
-               fetch csr_lads_inv_ipn into rcd_lads_inv_ipn;
-               if csr_lads_inv_ipn%found then
+               var_invc_count := var_invc_count + 1;
+
+               /*-*/
+               /* Set the wholesaler values
+               /*-*/
+               rcd_whslr_dly_inv_hdr.edi_sndto_code := rcd_whslr.edi_sndto_code;
+               rcd_whslr_dly_inv_hdr.edi_whslr_code := rcd_whslr.edi_whslr_code;
+               rcd_whslr_dly_inv_hdr.edi_disc_code := rcd_whslr.edi_disc_code;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (012)
+               /*-*/
+               var_qualf := '012';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_whslr_dly_inv_hdr.sap_order_type := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (015)
+               /*-*/
+               var_qualf := '015';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_whslr_dly_inv_hdr.sap_invoice_type := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice partner data (Z5)
+               /*-*/
+               var_parvw := 'Z5';
+               open csr_lads_inv_pnr;
+               fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
+               if csr_lads_inv_pnr%found then
 
                   /*-*/
-                  /* Set the ship to data
+                  /* Set the values
                   /*-*/
-                  rcd_whslr_dly_inv_hdr.sap_shpto_code := rcd_lads_inv_ipn.partn;
-                  rcd_whslr_dly_inv_hdr.edi_shpto_code := substr(rcd_lads_inv_ipn.ilnnr,5,8);
-                  rcd_whslr_dly_inv_hdr.edi_shpto_pcde := substr(rcd_lads_inv_ipn.pstlz,1,7);
+                  rcd_whslr_dly_inv_hdr.sap_scdry_code := rcd_lads_inv_pnr.partn;
+                  rcd_whslr_dly_inv_hdr.edi_sldto_code := substr(rcd_lads_inv_pnr.knref,5,8);
 
                   /*-*/
-                  /* Retrieve the invoice item partner address data (WE/Z3)
+                  /* Retrieve the invoice partner address data (Z5/Z3)
                   /*-*/
                   var_langu := 'Z3';
-                  open csr_lads_inv_iaj;
-                  fetch csr_lads_inv_iaj into rcd_lads_inv_iaj;
-                  if csr_lads_inv_iaj%found then
-                     rcd_whslr_dly_inv_hdr.edi_shpto_name := substr(rcd_lads_inv_iaj.name1,1,40);
-                     rcd_whslr_dly_inv_hdr.edi_shpto_addr := substr(rcd_lads_inv_iaj.street||' '||rcd_lads_inv_iaj.city1,1,50);
+                  open csr_lads_inv_adj;
+                  fetch csr_lads_inv_adj into rcd_lads_inv_adj;
+                  if csr_lads_inv_adj%found then
+                     rcd_whslr_dly_inv_hdr.edi_sldto_name := substr(rcd_lads_inv_adj.name1,1,30);
                   end if;
-                  close csr_lads_inv_iaj;
+                  close csr_lads_inv_adj;
 
                end if;
-               close csr_lads_inv_ipn;
+               close csr_lads_inv_pnr;
 
-            end if;
-            close csr_lads_inv_gen;
-
-            /*-*/
-            /* Retrieve the invoice date data (024)
-            /*-*/
-            var_iddat := '024';
-            open csr_lads_inv_dat;
-            fetch csr_lads_inv_dat into rcd_lads_inv_dat;
-            if csr_lads_inv_dat%found then
-               rcd_whslr_dly_inv_hdr.edi_invoice_date := rcd_lads_inv_dat.datum;
-            end if;
-            close csr_lads_inv_dat;
-
-            /*-*/
-            /* Retrieve the invoice reference data (001)
-            /*-*/
-            var_qualf := '001';
-            open csr_lads_inv_ref;
-            fetch csr_lads_inv_ref into rcd_lads_inv_ref;
-            if csr_lads_inv_ref%found then
-               rcd_whslr_dly_inv_hdr.edi_order_number := rcd_lads_inv_ref.refnr;
-               rcd_whslr_dly_inv_hdr.edi_order_date := rcd_lads_inv_ref.datum;
-            end if;
-            close csr_lads_inv_ref;
-
-            /*-*/
-            /* Retrieve the invoice reference data (012)
-            /*-*/
-            var_qualf := '012';
-            open csr_lads_inv_ref;
-            fetch csr_lads_inv_ref into rcd_lads_inv_ref;
-            if csr_lads_inv_ref%found then
-               rcd_whslr_dly_inv_hdr.sap_refnr_number := rcd_lads_inv_ref.refnr;
-            end if;
-            close csr_lads_inv_ref;
-
-            /*-*/
-            /* Retrieve the invoice condition data (MWST)
-            /*-*/
-            var_kschl := 'MWST';
-            open csr_lads_inv_con;
-            fetch csr_lads_inv_con into rcd_lads_inv_con;
-            if csr_lads_inv_con%found then
-               rcd_whslr_dly_inv_hdr.edi_tax := nvl(rcd_lads_inv_con.kwert,0) * 100;
-            end if;
-            close csr_lads_inv_con;
-
-            /*-*/
-            /* Retrieve the wholesaler branch name
-            /*-*/
-            open csr_lads_adr_hdr;
-            fetch csr_lads_adr_hdr into rcd_lads_adr_hdr;
-            if csr_lads_adr_hdr%found then
-               rcd_whslr_dly_inv_hdr.edi_brnch_name := rcd_lads_adr_hdr.sort1;
-            end if;
-            close csr_lads_adr_hdr;
-
-            /*-*/
-            /* Retrieve the EDI delivery number
-            /*-*/
-            if rcd_whslr_dly_inv_hdr.sap_invoice_type = 'ZS1' or
-               rcd_whslr_dly_inv_hdr.sap_invoice_type = 'ZS2' then
-               rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_invoice_number;
-            elsif not(trim(rcd_whslr_dly_inv_hdr.sap_refnr_number) is null) then
-               rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_refnr_number;
-            else
-               rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_invoice_number;
-            end if;
-            if substr(rcd_whslr_dly_inv_hdr.edi_invoice_number,1,2) = '70' then
-               rcd_whslr_dly_inv_hdr.edi_invoice_number := substr(rcd_whslr_dly_inv_hdr.edi_invoice_number,3);
-               rcd_whslr_dly_inv_hdr.edi_invoice_number := substr(rpad(' ',10,' ')||rcd_whslr_dly_inv_hdr.edi_invoice_number,length(rcd_whslr_dly_inv_hdr.edi_invoice_number)+1,10);
-            end if;
-
-            /*-*/
-            /* Retrieve the EDI ship to type
-            /*-*/
-            if not(rcd_whslr_dly_inv_hdr.sap_scdry_code is null) and
-               rcd_whslr_dly_inv_hdr.sap_scdry_code = rcd_whslr_dly_inv_hdr.sap_shpto_code then
-               rcd_whslr_dly_inv_hdr.edi_ship_to_type := '2';
-            else
-               open csr_lads_inv_cus;
-               fetch csr_lads_inv_cus into rcd_lads_inv_cus;
-               if csr_lads_inv_cus%found then
-                  rcd_whslr_dly_inv_hdr.edi_ship_to_type := rcd_lads_inv_cus.atwrt;
-               end if;
-               close csr_lads_inv_cus;
-            end if;
-
-            /*-*/
-            /* Retrieve the invoice type sign and factor
-            /*-*/
-            open csr_invc_type;
-            fetch csr_invc_type into rcd_invc_type;
-            if csr_invc_type%notfound then
-               rcd_invc_type.invc_type_sign := '+';
-            end if;
-            close csr_invc_type;
-            var_invoice_type_factor := 1;
-	    if rcd_invc_type.invc_type_sign = '-' then
-	       var_invoice_type_factor := -1;
-            end if;
-
-            /*-*/
-            /* Retrieve the EDI transaction code
-            /*-*/
-            open csr_whslr_transaction;
-            fetch csr_whslr_transaction into rcd_whslr_transaction;
-            if csr_whslr_transaction%found then
-               rcd_whslr_dly_inv_hdr.edi_tran_code := rcd_whslr_transaction.edi_tran_code;
-            end if;
-            close csr_whslr_transaction;
-
-            /*-*/
-            /* Convert the EDI ship to type
-            /*-*/
-            if rcd_whslr_dly_inv_hdr.edi_ship_to_type = '1' then
-               rcd_whslr_dly_inv_hdr.edi_ship_to_type := '1';
-            elsif rcd_whslr_dly_inv_hdr.edi_ship_to_type = '2' then
-               rcd_whslr_dly_inv_hdr.edi_ship_to_type := '3';
-            elsif rcd_whslr_dly_inv_hdr.edi_ship_to_type = '3' then
-               rcd_whslr_dly_inv_hdr.edi_ship_to_type := '2';
-            end if;
-
-            /*-*/
-            /* Insert the wholesaler invoice header row
-            /*-*/
-            insert into whslr_dly_inv_hdr values rcd_whslr_dly_inv_hdr;
-
-            /*-*/
-            /* Retrieve the invoice line data
-            /*-*/
-            open csr_lads_inv_gen;
-            loop
+               /*-*/
+               /* Retrieve data from the first invoice line
+               /*-*/
+               open csr_lads_inv_gen;
                fetch csr_lads_inv_gen into rcd_lads_inv_gen;
-               if csr_lads_inv_gen%notfound then
-                  exit;
+               if csr_lads_inv_gen%found then
+
+                  /*-*/
+                  /* Retrieve the invoice item partner data (WE)
+                  /*-*/
+                  var_parvw := 'WE';
+                  open csr_lads_inv_ipn;
+                  fetch csr_lads_inv_ipn into rcd_lads_inv_ipn;
+                  if csr_lads_inv_ipn%found then
+
+                     /*-*/
+                     /* Set the ship to data
+                     /*-*/
+                     rcd_whslr_dly_inv_hdr.sap_shpto_code := rcd_lads_inv_ipn.partn;
+                     rcd_whslr_dly_inv_hdr.edi_shpto_code := substr(rcd_lads_inv_ipn.ilnnr,5,8);
+                     rcd_whslr_dly_inv_hdr.edi_shpto_pcde := substr(rcd_lads_inv_ipn.pstlz,1,7);
+
+                     /*-*/
+                     /* Retrieve the invoice item partner address data (WE/Z3)
+                     /*-*/
+                     var_langu := 'Z3';
+                     open csr_lads_inv_iaj;
+                     fetch csr_lads_inv_iaj into rcd_lads_inv_iaj;
+                     if csr_lads_inv_iaj%found then
+                        rcd_whslr_dly_inv_hdr.edi_shpto_name := substr(rcd_lads_inv_iaj.name1,1,40);
+                        rcd_whslr_dly_inv_hdr.edi_shpto_addr := substr(rcd_lads_inv_iaj.street||' '||rcd_lads_inv_iaj.city1,1,50);
+                     end if;
+                     close csr_lads_inv_iaj;
+
+                  end if;
+                  close csr_lads_inv_ipn;
+
+               end if;
+               close csr_lads_inv_gen;
+
+               /*-*/
+               /* Retrieve the invoice date data (024)
+               /*-*/
+               var_iddat := '024';
+               open csr_lads_inv_dat;
+               fetch csr_lads_inv_dat into rcd_lads_inv_dat;
+               if csr_lads_inv_dat%found then
+                  rcd_whslr_dly_inv_hdr.edi_invoice_date := rcd_lads_inv_dat.datum;
+               end if;
+               close csr_lads_inv_dat;
+
+               /*-*/
+               /* Retrieve the invoice reference data (001)
+               /*-*/
+               var_qualf := '001';
+               open csr_lads_inv_ref;
+               fetch csr_lads_inv_ref into rcd_lads_inv_ref;
+               if csr_lads_inv_ref%found then
+                  rcd_whslr_dly_inv_hdr.edi_order_number := rcd_lads_inv_ref.refnr;
+                  rcd_whslr_dly_inv_hdr.edi_order_date := rcd_lads_inv_ref.datum;
+               end if;
+               close csr_lads_inv_ref;
+
+               /*-*/
+               /* Retrieve the invoice reference data (012)
+               /*-*/
+               var_qualf := '012';
+               open csr_lads_inv_ref;
+               fetch csr_lads_inv_ref into rcd_lads_inv_ref;
+               if csr_lads_inv_ref%found then
+                  rcd_whslr_dly_inv_hdr.sap_refnr_number := rcd_lads_inv_ref.refnr;
+               end if;
+               close csr_lads_inv_ref;
+
+               /*-*/
+               /* Retrieve the invoice condition data (MWST)
+               /*-*/
+               var_kschl := 'MWST';
+               open csr_lads_inv_con;
+               fetch csr_lads_inv_con into rcd_lads_inv_con;
+               if csr_lads_inv_con%found then
+                  rcd_whslr_dly_inv_hdr.edi_tax := nvl(rcd_lads_inv_con.kwert,0) * 100;
+               end if;
+               close csr_lads_inv_con;
+
+               /*-*/
+               /* Retrieve the wholesaler branch name
+               /*-*/
+               open csr_lads_adr_hdr;
+               fetch csr_lads_adr_hdr into rcd_lads_adr_hdr;
+               if csr_lads_adr_hdr%found then
+                  rcd_whslr_dly_inv_hdr.edi_brnch_name := rcd_lads_adr_hdr.sort1;
+               end if;
+               close csr_lads_adr_hdr;
+
+               /*-*/
+               /* Retrieve the EDI delivery number
+               /*-*/
+               if rcd_whslr_dly_inv_hdr.sap_invoice_type = 'ZS1' or
+                  rcd_whslr_dly_inv_hdr.sap_invoice_type = 'ZS2' then
+                  rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_invoice_number;
+               elsif not(trim(rcd_whslr_dly_inv_hdr.sap_refnr_number) is null) then
+                  rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_refnr_number;
+               else
+                  rcd_whslr_dly_inv_hdr.edi_invoice_number := rcd_whslr_dly_inv_hdr.sap_invoice_number;
+               end if;
+               if substr(rcd_whslr_dly_inv_hdr.edi_invoice_number,1,2) = '70' then
+                  rcd_whslr_dly_inv_hdr.edi_invoice_number := substr(rcd_whslr_dly_inv_hdr.edi_invoice_number,3);
+                  rcd_whslr_dly_inv_hdr.edi_invoice_number := substr(rpad(' ',10,' ')||rcd_whslr_dly_inv_hdr.edi_invoice_number,length(rcd_whslr_dly_inv_hdr.edi_invoice_number)+1,10);
                end if;
 
                /*-*/
-               /* Only process non-zero lines
+               /* Retrieve the EDI ship to type
                /*-*/
-               if nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') != 0 then
+               if not(rcd_whslr_dly_inv_hdr.sap_scdry_code is null) and
+                  rcd_whslr_dly_inv_hdr.sap_scdry_code = rcd_whslr_dly_inv_hdr.sap_shpto_code then
+                  rcd_whslr_dly_inv_hdr.edi_ship_to_type := '2';
+               else
+                  open csr_lads_inv_cus;
+                  fetch csr_lads_inv_cus into rcd_lads_inv_cus;
+                  if csr_lads_inv_cus%found then
+                     rcd_whslr_dly_inv_hdr.edi_ship_to_type := rcd_lads_inv_cus.atwrt;
+                  end if;
+                  close csr_lads_inv_cus;
+               end if;
 
-                  /*-*/
-                  /* Initialise the wholesaler invoice detail
-                  /*-*/
-                  rcd_whslr_dly_inv_det.sap_company_code := par_company;
-                  rcd_whslr_dly_inv_det.sap_creatn_date := par_date;
-                  rcd_whslr_dly_inv_det.sap_invoice_number := rcd_lads_inv_gen.belnr;
-                  rcd_whslr_dly_inv_det.sap_invoice_line := rcd_lads_inv_gen.genseq;
-                  rcd_whslr_dly_inv_det.sap_unit_price := 0;
-                  rcd_whslr_dly_inv_det.sap_amount := 0;
-                  rcd_whslr_dly_inv_det.sap_disc_volume_pct := 0;
-                  rcd_whslr_dly_inv_det.sap_disc_volume := 0;
-                  rcd_whslr_dly_inv_det.sap_disc_noreturn := 0;
-                  rcd_whslr_dly_inv_det.sap_disc_earlypay := 0;
-                  rcd_whslr_dly_inv_det.edi_material_code := null;
-                  rcd_whslr_dly_inv_det.edi_material_name := null;
-                  rcd_whslr_dly_inv_det.edi_rsu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_tdu),'0');
-                  rcd_whslr_dly_inv_det.edi_case_qty := 0;
-                  rcd_whslr_dly_inv_det.edi_delivered_qty := 0;
-                  rcd_whslr_dly_inv_det.edi_unit_price := 0;
-                  rcd_whslr_dly_inv_det.edi_amount := 0;
-                  if trim(rcd_lads_inv_gen.menee) = 'CS' then
-                     rcd_whslr_dly_inv_det.edi_case_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
-                     rcd_whslr_dly_inv_det.edi_delivered_qty := rcd_whslr_dly_inv_det.edi_rsu_per_tdu * rcd_whslr_dly_inv_det.edi_case_qty;
-                  else
-                     rcd_whslr_dly_inv_det.edi_delivered_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
+               /*-*/
+               /* Retrieve the invoice type sign and factor
+               /*-*/
+               open csr_invc_type;
+               fetch csr_invc_type into rcd_invc_type;
+               if csr_invc_type%notfound then
+                  rcd_invc_type.invc_type_sign := '+';
+               end if;
+               close csr_invc_type;
+               var_invoice_type_factor := 1;
+	       if rcd_invc_type.invc_type_sign = '-' then
+	          var_invoice_type_factor := -1;
+               end if;
+
+               /*-*/
+               /* Retrieve the EDI transaction code
+               /*-*/
+               open csr_whslr_transaction;
+               fetch csr_whslr_transaction into rcd_whslr_transaction;
+               if csr_whslr_transaction%found then
+                  rcd_whslr_dly_inv_hdr.edi_tran_code := rcd_whslr_transaction.edi_tran_code;
+               end if;
+               close csr_whslr_transaction;
+
+               /*-*/
+               /* Convert the EDI ship to type
+               /*-*/
+               if rcd_whslr_dly_inv_hdr.edi_ship_to_type = '1' then
+                  rcd_whslr_dly_inv_hdr.edi_ship_to_type := '1';
+               elsif rcd_whslr_dly_inv_hdr.edi_ship_to_type = '2' then
+                  rcd_whslr_dly_inv_hdr.edi_ship_to_type := '3';
+               elsif rcd_whslr_dly_inv_hdr.edi_ship_to_type = '3' then
+                  rcd_whslr_dly_inv_hdr.edi_ship_to_type := '2';
+               end if;
+
+               /*-*/
+               /* Insert the wholesaler invoice header row
+               /*-*/
+               insert into whslr_dly_inv_hdr values rcd_whslr_dly_inv_hdr;
+
+               /*-*/
+               /* Retrieve the invoice line data
+               /*-*/
+               open csr_lads_inv_gen;
+               loop
+                  fetch csr_lads_inv_gen into rcd_lads_inv_gen;
+                  if csr_lads_inv_gen%notfound then
+                     exit;
                   end if;
 
                   /*-*/
-                  /* Retrieve the invoice line object identification data (R01)
+                  /* Only process non-zero lines
                   /*-*/
-                  var_qualf := 'R01';
-                  open csr_lads_inv_iob;
-                  fetch csr_lads_inv_iob into rcd_lads_inv_iob;
-                  if csr_lads_inv_iob%found then
-                     rcd_whslr_dly_inv_det.edi_material_code := rcd_lads_inv_iob.idtnr;
-                  end if;
-                  close csr_lads_inv_iob;
+                  if nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') != 0 then
 
-                  /*-*/
-                  /* Retrieve the invoice line object identification data (003) when required
-                  /*-*/
-                  if rcd_whslr_dly_inv_det.edi_material_code is null then
-                     var_qualf := '003';
+                     /*-*/
+                     /* Initialise the wholesaler invoice detail
+                     /*-*/
+                     rcd_whslr_dly_inv_det.sap_company_code := par_company;
+                     rcd_whslr_dly_inv_det.sap_creatn_date := par_date;
+                     rcd_whslr_dly_inv_det.sap_invoice_number := rcd_lads_inv_gen.belnr;
+                     rcd_whslr_dly_inv_det.sap_invoice_line := rcd_lads_inv_gen.genseq;
+                     rcd_whslr_dly_inv_det.sap_unit_price := 0;
+                     rcd_whslr_dly_inv_det.sap_amount := 0;
+                     rcd_whslr_dly_inv_det.sap_disc_volume_pct := 0;
+                     rcd_whslr_dly_inv_det.sap_disc_volume := 0;
+                     rcd_whslr_dly_inv_det.sap_disc_noreturn := 0;
+                     rcd_whslr_dly_inv_det.sap_disc_earlypay := 0;
+                     rcd_whslr_dly_inv_det.edi_material_code := null;
+                     rcd_whslr_dly_inv_det.edi_material_name := null;
+                     rcd_whslr_dly_inv_det.edi_rsu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_tdu),'0');
+                     rcd_whslr_dly_inv_det.edi_case_qty := 0;
+                     rcd_whslr_dly_inv_det.edi_delivered_qty := 0;
+                     rcd_whslr_dly_inv_det.edi_unit_price := 0;
+                     rcd_whslr_dly_inv_det.edi_amount := 0;
+                     if trim(rcd_lads_inv_gen.menee) = 'CS' then
+                        rcd_whslr_dly_inv_det.edi_case_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
+                        rcd_whslr_dly_inv_det.edi_delivered_qty := rcd_whslr_dly_inv_det.edi_rsu_per_tdu * rcd_whslr_dly_inv_det.edi_case_qty;
+                     else
+                        rcd_whslr_dly_inv_det.edi_delivered_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
+                     end if;
+
+                     /*-*/
+                     /* Retrieve the invoice line object identification data (R01)
+                     /*-*/
+                     var_qualf := 'R01';
                      open csr_lads_inv_iob;
                      fetch csr_lads_inv_iob into rcd_lads_inv_iob;
                      if csr_lads_inv_iob%found then
-                        rcd_whslr_dly_inv_det.edi_material_code := substr(rcd_lads_inv_iob.idtnr,1,35);
+                        rcd_whslr_dly_inv_det.edi_material_code := rcd_lads_inv_iob.idtnr;
                      end if;
                      close csr_lads_inv_iob;
-                  end if;
 
-                  /*-*/
-                  /* Retrieve the invoice line material data (JA)
-                  /*-*/
-                  var_langu := 'JA';
-                  open csr_lads_inv_mat;
-                  fetch csr_lads_inv_mat into rcd_lads_inv_mat;
-                  if csr_lads_inv_mat%found then
-                     rcd_whslr_dly_inv_det.edi_material_name := substr(rcd_lads_inv_mat.maktx,1,40);
-                  end if;
-                  close csr_lads_inv_mat;
-
-                  /*-*/
-                  /* Retrieve the invoice line item amount (901)
-                  /*-*/
-                  var_qualf := '901';
-                  open csr_lads_inv_ias;
-                  fetch csr_lads_inv_ias into rcd_lads_inv_ias;
-                  if csr_lads_inv_ias%found then
-                     rcd_whslr_dly_inv_det.sap_unit_price := nvl(lads_to_number(rcd_lads_inv_ias.krate),0);
-                     rcd_whslr_dly_inv_det.sap_amount := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0) * var_invoice_type_factor;
-                  end if;
-                  close csr_lads_inv_ias;
-
-                  /*-*/
-                  /* Retrieve the invoice item condition data
-                  /*-*/
-                  var_zcrp_count := 0;
-                  open csr_lads_inv_icn;
-                  loop
-                     fetch csr_lads_inv_icn into rcd_lads_inv_icn;
-                     if csr_lads_inv_icn%notfound then
-                        exit;
+                     /*-*/
+                     /* Retrieve the invoice line object identification data (003) when required
+                     /*-*/
+                     if rcd_whslr_dly_inv_det.edi_material_code is null then
+                        var_qualf := '003';
+                        open csr_lads_inv_iob;
+                        fetch csr_lads_inv_iob into rcd_lads_inv_iob;
+                        if csr_lads_inv_iob%found then
+                           rcd_whslr_dly_inv_det.edi_material_code := substr(rcd_lads_inv_iob.idtnr,1,35);
+                        end if;
+                        close csr_lads_inv_iob;
                      end if;
 
-                     var_price_record_factor := 1;
-                     if rcd_lads_inv_icn.alckz = '-' then
-                        var_price_record_factor := -1;
+                     /*-*/
+                     /* Retrieve the invoice line material data (JA)
+                     /*-*/
+                     var_langu := 'JA';
+                     open csr_lads_inv_mat;
+                     fetch csr_lads_inv_mat into rcd_lads_inv_mat;
+                     if csr_lads_inv_mat%found then
+                        rcd_whslr_dly_inv_det.edi_material_name := substr(rcd_lads_inv_mat.maktx,1,40);
                      end if;
-                     if rcd_lads_inv_icn.kschl = 'ZCRP' then
-                        var_zcrp_count := 1;
-                        rcd_whslr_dly_inv_det.sap_disc_volume_pct := nvl(lads_to_number(rcd_lads_inv_icn.kperc),0);
-                        rcd_whslr_dly_inv_det.sap_disc_volume := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
-                     end if;
-                     if rcd_lads_inv_icn.kschl = 'ZK25' then
-                        rcd_whslr_dly_inv_det.sap_disc_noreturn := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
-                     end if;
-                     if rcd_lads_inv_icn.kschl = 'ZK60' then
-                        rcd_whslr_dly_inv_det.sap_disc_earlypay := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
-                     end if;
-                  end loop;
-                  close csr_lads_inv_icn;
+                     close csr_lads_inv_mat;
 
-                  /*-*/
-                  /* Set the EDI values
-                  /*-*/
-                  if rcd_whslr_dly_inv_det.edi_rsu_per_tdu = 0 then
-                     rcd_whslr_dly_inv_det.edi_unit_price := trunc(rcd_whslr_dly_inv_det.sap_unit_price*100,0);
-                  else
-                     rcd_whslr_dly_inv_det.edi_unit_price := trunc((rcd_whslr_dly_inv_det.sap_unit_price*100)/rcd_whslr_dly_inv_det.edi_rsu_per_tdu,0);
+                     /*-*/
+                     /* Retrieve the invoice line item amount (901)
+                     /*-*/
+                     var_qualf := '901';
+                     open csr_lads_inv_ias;
+                     fetch csr_lads_inv_ias into rcd_lads_inv_ias;
+                     if csr_lads_inv_ias%found then
+                        rcd_whslr_dly_inv_det.sap_unit_price := nvl(lads_to_number(rcd_lads_inv_ias.krate),0);
+                        rcd_whslr_dly_inv_det.sap_amount := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0) * var_invoice_type_factor;
+                     end if;
+                     close csr_lads_inv_ias;
+
+                     /*-*/
+                     /* Retrieve the invoice item condition data
+                     /*-*/
+                     var_zcrp_count := 0;
+                     open csr_lads_inv_icn;
+                     loop
+                        fetch csr_lads_inv_icn into rcd_lads_inv_icn;
+                        if csr_lads_inv_icn%notfound then
+                           exit;
+                        end if;
+                        var_price_record_factor := 1;
+                        if rcd_lads_inv_icn.alckz = '-' then
+                           var_price_record_factor := -1;
+                        end if;
+                        if rcd_lads_inv_icn.kschl = 'ZCRP' then
+                           var_zcrp_count := 1;
+                           rcd_whslr_dly_inv_det.sap_disc_volume_pct := nvl(lads_to_number(rcd_lads_inv_icn.kperc),0);
+                           rcd_whslr_dly_inv_det.sap_disc_volume := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
+                        end if;
+                        if rcd_lads_inv_icn.kschl = 'ZK25' then
+                           rcd_whslr_dly_inv_det.sap_disc_noreturn := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
+                        end if;
+                        if rcd_lads_inv_icn.kschl = 'ZK60' then
+                           rcd_whslr_dly_inv_det.sap_disc_earlypay := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
+                        end if;
+                     end loop;
+                     close csr_lads_inv_icn;
+
+                     /*-*/
+                     /* Set the EDI values
+                     /*-*/
+                     if rcd_whslr_dly_inv_det.edi_rsu_per_tdu = 0 then
+                        rcd_whslr_dly_inv_det.edi_unit_price := trunc(rcd_whslr_dly_inv_det.sap_unit_price*100,0);
+                     else
+                        rcd_whslr_dly_inv_det.edi_unit_price := trunc((rcd_whslr_dly_inv_det.sap_unit_price*100)/rcd_whslr_dly_inv_det.edi_rsu_per_tdu,0);
+                     end if;
+                     rcd_whslr_dly_inv_det.edi_amount := (rcd_whslr_dly_inv_det.edi_unit_price * rcd_whslr_dly_inv_det.edi_delivered_qty) / 100;
+
+                     /*-*/
+                     /* Accumulate the EDI total values
+                     /*-*/
+                     rcd_whslr_dly_inv_hdr.edi_case_qty := rcd_whslr_dly_inv_hdr.edi_case_qty + rcd_whslr_dly_inv_det.edi_case_qty;
+                     rcd_whslr_dly_inv_hdr.edi_amount := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_det.edi_amount;
+                     rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt := rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt + var_zcrp_count;
+                     rcd_whslr_dly_inv_hdr.edi_disc_volume_pct := rcd_whslr_dly_inv_hdr.edi_disc_volume_pct + abs(rcd_whslr_dly_inv_det.sap_disc_volume_pct);
+                     rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume - rcd_whslr_dly_inv_det.sap_disc_volume;
+                     if rcd_whslr_dly_inv_hdr.edi_disc_code = 'A' then
+                        rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn - rcd_whslr_dly_inv_det.sap_disc_noreturn;
+                        rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay - rcd_whslr_dly_inv_det.sap_disc_earlypay;
+                     end if;
+
+                     /*-*/
+                     /* Insert the wholesaler invoice detail row
+                     /*-*/
+                     insert into whslr_dly_inv_det values rcd_whslr_dly_inv_det;
+
                   end if;
-                  rcd_whslr_dly_inv_det.edi_amount := (rcd_whslr_dly_inv_det.edi_unit_price * rcd_whslr_dly_inv_det.edi_delivered_qty) / 100;
 
-                  /*-*/
-                  /* Accumulate the EDI total values
-                  /*-*/
-                  rcd_whslr_dly_inv_hdr.edi_case_qty := rcd_whslr_dly_inv_hdr.edi_case_qty + rcd_whslr_dly_inv_det.edi_case_qty;
-                  rcd_whslr_dly_inv_hdr.edi_amount := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_det.edi_amount;
-                  rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt := rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt + var_zcrp_count;
-                  rcd_whslr_dly_inv_hdr.edi_disc_volume_pct := rcd_whslr_dly_inv_hdr.edi_disc_volume_pct + abs(rcd_whslr_dly_inv_det.sap_disc_volume_pct);
-                  rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume - rcd_whslr_dly_inv_det.sap_disc_volume;
-                  if rcd_whslr_dly_inv_hdr.edi_disc_code = 'A' then
-                     rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn - rcd_whslr_dly_inv_det.sap_disc_noreturn;
-                     rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay - rcd_whslr_dly_inv_det.sap_disc_earlypay;
-                  end if;
+               end loop;
+               close csr_lads_inv_gen;
 
-                  /*-*/
-                  /* Insert the wholesaler invoice detail row
-                  /*-*/
-                  insert into whslr_dly_inv_det values rcd_whslr_dly_inv_det;
+               /*-*/
+               /* Update the wholesaler invoice header row
+               /*-*/
+               rcd_whslr_dly_inv_hdr.edi_discount := rcd_whslr_dly_inv_hdr.edi_disc_volume + rcd_whslr_dly_inv_hdr.edi_disc_earlypay + rcd_whslr_dly_inv_hdr.edi_disc_noreturn;
+               rcd_whslr_dly_inv_hdr.edi_balance := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_hdr.edi_discount;
+               rcd_whslr_dly_inv_hdr.edi_value := rcd_whslr_dly_inv_hdr.edi_balance + rcd_whslr_dly_inv_hdr.edi_tax;
+               update whslr_dly_inv_hdr
+                  set edi_case_qty = rcd_whslr_dly_inv_hdr.edi_case_qty,
+                      edi_amount = rcd_whslr_dly_inv_hdr.edi_amount,
+                      edi_discount = rcd_whslr_dly_inv_hdr.edi_discount,
+                      edi_balance = rcd_whslr_dly_inv_hdr.edi_balance,
+                      edi_tax = rcd_whslr_dly_inv_hdr.edi_tax,
+                      edi_value = rcd_whslr_dly_inv_hdr.edi_value,
+                      edi_disc_volume_cnt = rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt,
+                      edi_disc_volume_pct = rcd_whslr_dly_inv_hdr.edi_disc_volume_pct,
+                      edi_disc_volume = rcd_whslr_dly_inv_hdr.edi_disc_volume,
+                      edi_disc_noreturn = rcd_whslr_dly_inv_hdr.edi_disc_noreturn,
+                      edi_disc_earlypay = rcd_whslr_dly_inv_hdr.edi_disc_earlypay
+                where sap_invoice_number = rcd_whslr_dly_inv_hdr.sap_invoice_number;
 
-               end if;
-
-            end loop;
-            close csr_lads_inv_gen;
-
-            /*-*/
-            /* Update the wholesaler invoice header row
-            /*-*/
-            rcd_whslr_dly_inv_hdr.edi_discount := rcd_whslr_dly_inv_hdr.edi_disc_volume + rcd_whslr_dly_inv_hdr.edi_disc_earlypay + rcd_whslr_dly_inv_hdr.edi_disc_noreturn;
-            rcd_whslr_dly_inv_hdr.edi_balance := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_hdr.edi_discount;
-            rcd_whslr_dly_inv_hdr.edi_value := rcd_whslr_dly_inv_hdr.edi_balance + rcd_whslr_dly_inv_hdr.edi_tax;
-            update whslr_dly_inv_hdr
-               set edi_case_qty = rcd_whslr_dly_inv_hdr.edi_case_qty,
-                   edi_amount = rcd_whslr_dly_inv_hdr.edi_amount,
-                   edi_discount = rcd_whslr_dly_inv_hdr.edi_discount,
-                   edi_balance = rcd_whslr_dly_inv_hdr.edi_balance,
-                   edi_tax = rcd_whslr_dly_inv_hdr.edi_tax,
-                   edi_value = rcd_whslr_dly_inv_hdr.edi_value,
-                   edi_disc_volume_cnt = rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt,
-                   edi_disc_volume_pct = rcd_whslr_dly_inv_hdr.edi_disc_volume_pct,
-                   edi_disc_volume = rcd_whslr_dly_inv_hdr.edi_disc_volume,
-                   edi_disc_noreturn = rcd_whslr_dly_inv_hdr.edi_disc_noreturn,
-                   edi_disc_earlypay = rcd_whslr_dly_inv_hdr.edi_disc_earlypay
-             where sap_invoice_number = rcd_whslr_dly_inv_hdr.sap_invoice_number;
+            end if;
+            close csr_whslr;
 
          end if;
-         close csr_whslr;
 
       end loop;
       close csr_lads_inv_hdr;

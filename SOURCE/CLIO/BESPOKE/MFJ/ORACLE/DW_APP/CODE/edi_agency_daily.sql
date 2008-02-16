@@ -35,6 +35,7 @@ create or replace package edi_agency_daily as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/12   Steve Gregan   Created
+    2008/02   Steve Gregan   Added sold to selection to EDI link logic
 
    *******************************************************************************/
 
@@ -274,6 +275,10 @@ create or replace package body edi_agency_daily as
       /* Local definitions
       /*-*/
       var_exception varchar2(4000);
+      var_agency_code varchar2(30);
+      var_link_type varchar2(30);
+      var_cust_type varchar2(30);
+      var_cust_code varchar2(30);
       var_invc_count number;
       var_qualf varchar2(30);
       var_parvw varchar2(30);
@@ -421,13 +426,17 @@ create or replace package body edi_agency_daily as
           order by t01.icnseq;
       rcd_lads_inv_icn csr_lads_inv_icn%rowtype;
 
+      cursor csr_edi_link is
+         select t01.*
+           from edi_link t01
+          where upper(t01.sap_cust_type) = var_cust_type
+            and t01.sap_cust_code = var_cust_code;
+      rcd_edi_link csr_edi_link%rowtype;
+
       cursor csr_agency is
-         select t02.*
-           from payer_link t01,
-                agency t02
-          where t01.sap_payer_code = lads_trim_code(rcd_agency_dly_inv_hdr.pnr_rg_partn)
-            and upper(t01.edi_link_type) = '*AGENCY'
-            and t01.edi_link_code = t02.edi_agency_code;
+         select t01.*
+           from agency t01
+          where t01.edi_agency_code = var_agency_code;
       rcd_agency csr_agency%rowtype;
 
       cursor csr_agency_interface is
@@ -560,488 +569,520 @@ create or replace package body edi_agency_daily as
          close csr_lads_inv_pnr;
 
          /*-*/
-         /* Only process collection agency invoices
-         /* **notes** 1. The payer customer must exist in the payer link table (*AGENCY)
+         /* Retrieve the invoice sold to partner data (AG)
          /*-*/
-         open csr_agency;
-         fetch csr_agency into rcd_agency;
-         if csr_agency%found then
+         var_parvw := 'AG';
+         open csr_lads_inv_pnr;
+         fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
+         if csr_lads_inv_pnr%found then
+            rcd_agency_dly_inv_hdr.pnr_ag_partn := rcd_lads_inv_pnr.partn;
+         end if;
+         close csr_lads_inv_pnr;
 
-            /*-*/
-            /* Set the agency values
-            /*-*/
-            rcd_agency_dly_inv_hdr.edi_agency_code := rcd_agency.edi_agency_code;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (006)
-            /*-*/
-            var_qualf := '006';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_agency_dly_inv_hdr.org_006_orgid := rcd_lads_inv_org.orgid;
+         /*-*/
+         /* Retrieve the collection agency code
+         /* **notes** 1. The sold to or payer customer must exist in the EDI link table (*AGENCY)
+         /*           2. Sold to code overrides payer code
+         /*-*/
+         var_agency_code := null;
+         var_link_type := null;
+         var_cust_type := '*SOLDTO';
+         var_cust_code := lads_trim_code(rcd_agency_dly_inv_hdr.pnr_ag_partn);
+         open csr_edi_link;
+         fetch csr_edi_link into rcd_edi_link;
+         if csr_edi_link%found then
+            var_link_type := rcd_edi_link.edi_link_type;
+            if upper(rcd_edi_link.edi_link_type) = '*AGENCY' then
+               var_agency_code := rcd_edi_link.edi_link_code;
             end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (007)
-            /*-*/
-            var_qualf := '007';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_agency_dly_inv_hdr.org_007_orgid := rcd_lads_inv_org.orgid;
-            end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (008)
-            /*-*/
-            var_qualf := '008';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_agency_dly_inv_hdr.org_008_orgid := rcd_lads_inv_org.orgid;
-            end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (012)
-            /*-*/
-            var_qualf := '012';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_agency_dly_inv_hdr.org_012_orgid := rcd_lads_inv_org.orgid;
-            end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the invoice organisation data (015)
-            /*-*/
-            var_qualf := '015';
-            open csr_lads_inv_org;
-            fetch csr_lads_inv_org into rcd_lads_inv_org;
-            if csr_lads_inv_org%found then
-               rcd_agency_dly_inv_hdr.org_015_orgid := rcd_lads_inv_org.orgid;
-            end if;
-            close csr_lads_inv_org;
-
-            /*-*/
-            /* Retrieve the agency interface
-            /*-*/
-            open csr_agency_interface;
-            fetch csr_agency_interface into rcd_agency_interface;
-            if csr_agency_interface%found then
-               rcd_agency_dly_inv_hdr.edi_interface := rcd_agency_interface.edi_interface;
-            end if;
-            close csr_agency_interface;
-
-            /*-*/
-            /* Only process when agency interface found
-            /*-*/
-            if not(rcd_agency_dly_inv_hdr.edi_interface is null) then
-
-               /*-*/
-               /* Increment the invoice count
-               /*-*/
-               var_invc_count := var_invc_count + 1;
-
-               /*-*/
-               /* Determine the Mars division
-               /*-*/
-               var_snackfood := false;
-               var_petcare := false;
-               if rcd_agency_dly_inv_hdr.org_008_orgid = '131' and
-                  rcd_agency_dly_inv_hdr.org_006_orgid = '51' then
-                  if rcd_agency_dly_inv_hdr.org_007_orgid = '10' then
-                     var_snackfood := true;
-                  end if;
-                  if rcd_agency_dly_inv_hdr.org_007_orgid = '11' or
-                     rcd_agency_dly_inv_hdr.org_007_orgid = '20' then
-                     var_petcare := true;
-                  end if;
+         end if;
+         if var_link_type is null then
+            var_cust_type := '*PAYER';
+            var_cust_code := lads_trim_code(rcd_agency_dly_inv_hdr.pnr_rg_partn);
+            open csr_edi_link;
+            fetch csr_edi_link into rcd_edi_link;
+            if csr_edi_link%found then
+               if upper(rcd_edi_link.edi_link_type) = '*AGENCY' then
+                  var_agency_code := rcd_edi_link.edi_link_code;
                end if;
+            end if;
+         end if;
+
+         /*-*/
+         /* Only process collection agency invoices
+         /*-*/
+         if not(var_agency_code is null) then
+
+            /*-*/
+            /* Retrieve the collection agency data
+            /*-*/
+            open csr_agency;
+            fetch csr_agency into rcd_agency;
+            if csr_agency%found then
+         
+               /*-*/
+               /* Set the agency values
+               /*-*/
+               rcd_agency_dly_inv_hdr.edi_agency_code := rcd_agency.edi_agency_code;
 
                /*-*/
-               /* Retrieve the invoice partner data (AG)
+               /* Retrieve the invoice organisation data (006)
                /*-*/
-               var_parvw := 'AG';
-               open csr_lads_inv_pnr;
-               fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
-               if csr_lads_inv_pnr%found then
+               var_qualf := '006';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_agency_dly_inv_hdr.org_006_orgid := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (007)
+               /*-*/
+               var_qualf := '007';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_agency_dly_inv_hdr.org_007_orgid := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (008)
+               /*-*/
+               var_qualf := '008';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_agency_dly_inv_hdr.org_008_orgid := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (012)
+               /*-*/
+               var_qualf := '012';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_agency_dly_inv_hdr.org_012_orgid := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the invoice organisation data (015)
+               /*-*/
+               var_qualf := '015';
+               open csr_lads_inv_org;
+               fetch csr_lads_inv_org into rcd_lads_inv_org;
+               if csr_lads_inv_org%found then
+                  rcd_agency_dly_inv_hdr.org_015_orgid := rcd_lads_inv_org.orgid;
+               end if;
+               close csr_lads_inv_org;
+
+               /*-*/
+               /* Retrieve the agency interface
+               /*-*/
+               open csr_agency_interface;
+               fetch csr_agency_interface into rcd_agency_interface;
+               if csr_agency_interface%found then
+                  rcd_agency_dly_inv_hdr.edi_interface := rcd_agency_interface.edi_interface;
+               end if;
+               close csr_agency_interface;
+
+               /*-*/
+               /* Only process when agency interface found
+               /*-*/
+               if not(rcd_agency_dly_inv_hdr.edi_interface is null) then
 
                   /*-*/
-                  /* Set the values
+                  /* Increment the invoice count
                   /*-*/
-                  rcd_agency_dly_inv_hdr.pnr_ag_partn := rcd_lads_inv_pnr.partn;
+                  var_invc_count := var_invc_count + 1;
+
+                  /*-*/
+                  /* Determine the Mars division
+                  /*-*/
+                  var_snackfood := false;
+                  var_petcare := false;
+                  if rcd_agency_dly_inv_hdr.org_008_orgid = '131' and
+                     rcd_agency_dly_inv_hdr.org_006_orgid = '51' then
+                     if rcd_agency_dly_inv_hdr.org_007_orgid = '10' then
+                        var_snackfood := true;
+                     end if;
+                     if rcd_agency_dly_inv_hdr.org_007_orgid = '11' or
+                        rcd_agency_dly_inv_hdr.org_007_orgid = '20' then
+                        var_petcare := true;
+                     end if;
+                  end if;
 
                   /*-*/
                   /* Retrieve the invoice partner address data (AG/Z3)
                   /*-*/
-                  var_langu := 'Z3';
-                  open csr_lads_inv_adj;
-                  fetch csr_lads_inv_adj into rcd_lads_inv_adj;
-                  if csr_lads_inv_adj%found then
-                     rcd_agency_dly_inv_hdr.adj_ag_z3_name1 := rcd_lads_inv_adj.name1;
-                     rcd_agency_dly_inv_hdr.adj_ag_z3_street := rcd_lads_inv_adj.street;
-                     rcd_agency_dly_inv_hdr.adj_ag_z3_city1 := rcd_lads_inv_adj.city1;
+                  if not(rcd_agency_dly_inv_hdr.pnr_ag_partn is null) then
+                     var_langu := 'Z3';
+                     open csr_lads_inv_adj;
+                     fetch csr_lads_inv_adj into rcd_lads_inv_adj;
+                     if csr_lads_inv_adj%found then
+                        rcd_agency_dly_inv_hdr.adj_ag_z3_name1 := rcd_lads_inv_adj.name1;
+                        rcd_agency_dly_inv_hdr.adj_ag_z3_street := rcd_lads_inv_adj.street;
+                        rcd_agency_dly_inv_hdr.adj_ag_z3_city1 := rcd_lads_inv_adj.city1;
+                     end if;
+                     close csr_lads_inv_adj;
                   end if;
-                  close csr_lads_inv_adj;
-
-               end if;
-               close csr_lads_inv_pnr;
-
-               /*-*/
-               /* Retrieve the invoice partner data (Z5)
-               /*-*/
-               var_parvw := 'Z5';
-               open csr_lads_inv_pnr;
-               fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
-               if csr_lads_inv_pnr%found then
 
                   /*-*/
-                  /* Set the values
+                  /* Retrieve the invoice partner data (Z5)
                   /*-*/
-                  rcd_agency_dly_inv_hdr.pnr_z5_partn := rcd_lads_inv_pnr.partn;
-                  rcd_agency_dly_inv_hdr.pnr_z5_knref := rcd_lads_inv_pnr.knref;
-
-                  /*-*/
-                  /* Retrieve the invoice partner address data (Z5/Z3)
-                  /*-*/
-                  var_langu := 'Z3';
-                  open csr_lads_inv_adj;
-                  fetch csr_lads_inv_adj into rcd_lads_inv_adj;
-                  if csr_lads_inv_adj%found then
-                     rcd_agency_dly_inv_hdr.adj_z5_z3_name1 := rcd_lads_inv_adj.name1;
-                     rcd_agency_dly_inv_hdr.adj_z5_z3_street := rcd_lads_inv_adj.street;
-                     rcd_agency_dly_inv_hdr.adj_z5_z3_city1 := rcd_lads_inv_adj.city1;
-                  end if;
-                  close csr_lads_inv_adj;
-
-               end if;
-               close csr_lads_inv_pnr;
-
-               /*-*/
-               /* Retrieve data from the first invoice line
-               /*-*/
-               open csr_lads_inv_gen;
-               fetch csr_lads_inv_gen into rcd_lads_inv_gen;
-               if csr_lads_inv_gen%found then
-
-                  /*-*/
-                  /* Set the header data from the first invoice line
-                  /*-*/
-                  rcd_agency_dly_inv_hdr.gen_vsart := rcd_lads_inv_gen.vsart;
-                  rcd_agency_dly_inv_hdr.gen_werks := rcd_lads_inv_gen.werks;
-                  rcd_agency_dly_inv_hdr.gen_knref := rcd_lads_inv_gen.knref;
-                  rcd_agency_dly_inv_hdr.gen_org_dlvnr := rcd_lads_inv_gen.org_dlvnr;
-                  rcd_agency_dly_inv_hdr.gen_org_dlvdt := rcd_lads_inv_gen.org_dlvdt;
-                  rcd_agency_dly_inv_hdr.gen_zztarif := rcd_lads_inv_gen.zztarif;
-
-                  /*-*/
-                  /* Retrieve the invoice item partner data (WE)
-                  /*-*/
-                  var_parvw := 'WE';
-                  open csr_lads_inv_ipn;
-                  fetch csr_lads_inv_ipn into rcd_lads_inv_ipn;
-                  if csr_lads_inv_ipn%found then
+                  var_parvw := 'Z5';
+                  open csr_lads_inv_pnr;
+                  fetch csr_lads_inv_pnr into rcd_lads_inv_pnr;
+                  if csr_lads_inv_pnr%found then
 
                      /*-*/
-                     /* Set the ship to data
+                     /* Set the values
                      /*-*/
-                     rcd_agency_dly_inv_hdr.ipn_we_partn := rcd_lads_inv_ipn.partn;
+                     rcd_agency_dly_inv_hdr.pnr_z5_partn := rcd_lads_inv_pnr.partn;
+                     rcd_agency_dly_inv_hdr.pnr_z5_knref := rcd_lads_inv_pnr.knref;
 
                      /*-*/
-                     /* Retrieve the invoice item partner address data (WE/Z3)
+                     /* Retrieve the invoice partner address data (Z5/Z3)
                      /*-*/
                      var_langu := 'Z3';
-                     open csr_lads_inv_iaj;
-                     fetch csr_lads_inv_iaj into rcd_lads_inv_iaj;
-                     if csr_lads_inv_iaj%found then
-                        rcd_agency_dly_inv_hdr.iaj_we_z3_name1 := rcd_lads_inv_iaj.name1;
-                        rcd_agency_dly_inv_hdr.iaj_we_z3_street := rcd_lads_inv_iaj.street;
-                        rcd_agency_dly_inv_hdr.iaj_we_z3_city1 := rcd_lads_inv_iaj.city1;
+                     open csr_lads_inv_adj;
+                     fetch csr_lads_inv_adj into rcd_lads_inv_adj;
+                     if csr_lads_inv_adj%found then
+                        rcd_agency_dly_inv_hdr.adj_z5_z3_name1 := rcd_lads_inv_adj.name1;
+                        rcd_agency_dly_inv_hdr.adj_z5_z3_street := rcd_lads_inv_adj.street;
+                        rcd_agency_dly_inv_hdr.adj_z5_z3_city1 := rcd_lads_inv_adj.city1;
                      end if;
-                     close csr_lads_inv_iaj;
+                     close csr_lads_inv_adj;
 
                   end if;
-                  close csr_lads_inv_ipn;
+                  close csr_lads_inv_pnr;
 
-               end if;
-               close csr_lads_inv_gen;
-
-               /*-*/
-               /* Retrieve the invoice date data (024)
-               /*-*/
-               var_iddat := '024';
-               open csr_lads_inv_dat;
-               fetch csr_lads_inv_dat into rcd_lads_inv_dat;
-               if csr_lads_inv_dat%found then
-                  rcd_agency_dly_inv_hdr.dat_024_datum := rcd_lads_inv_dat.datum;
-               end if;
-               close csr_lads_inv_dat;
-
-               /*-*/
-               /* Retrieve the invoice reference data (001)
-               /*-*/
-               var_qualf := '001';
-               open csr_lads_inv_ref;
-               fetch csr_lads_inv_ref into rcd_lads_inv_ref;
-               if csr_lads_inv_ref%found then
-                  rcd_agency_dly_inv_hdr.ref_001_refnr := rcd_lads_inv_ref.refnr;
-               end if;
-               close csr_lads_inv_ref;
-
-               /*-*/
-               /* Retrieve the invoice reference data (012)
-               /*-*/
-               var_qualf := '012';
-               open csr_lads_inv_ref;
-               fetch csr_lads_inv_ref into rcd_lads_inv_ref;
-               if csr_lads_inv_ref%found then
-                  rcd_agency_dly_inv_hdr.ref_012_refnr := rcd_lads_inv_ref.refnr;
-               end if;
-               close csr_lads_inv_ref;
-
-               /*-*/
-               /* Retrieve the invoice text data
-               /*-*/
-               open csr_lads_inv_txt;
-               fetch csr_lads_inv_txt into rcd_lads_inv_txt;
-               if csr_lads_inv_txt%found then
-                  rcd_agency_dly_inv_hdr.txt_ja_tdline := rcd_lads_inv_txt.tdline;
-               end if;
-               close csr_lads_inv_txt;
-
-               /*-*/
-               /* Retrieve the EDI denpyo/sub denpyo data
-               /*-*/
-               var_dlvry_flag := false;
-               var_refnr_flag := false;
-               var_dlvry_number := rcd_agency_dly_inv_hdr.hdr_belnr;
-               var_refnr_number := null;
-               if rcd_agency_dly_inv_hdr.org_015_orgid = 'ZS1' or
-                  rcd_agency_dly_inv_hdr.org_015_orgid = 'ZS2' then
-                  var_dlvry_flag := true;
-               end if;
-               if not(rcd_agency_dly_inv_hdr.ref_012_refnr is null) then
-                  var_dlvry_number := rcd_agency_dly_inv_hdr.ref_012_refnr;
-                  var_refnr_number := rcd_agency_dly_inv_hdr.ref_012_refnr;
-                  var_refnr_flag := true;
-               end if;
-               rcd_agency_dly_inv_hdr.edi_denpyo_number := substr(var_dlvry_number,3,35);
-               if var_dlvry_flag = true then
-                  rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := substr(var_refnr_number,3,35);
-                  if var_refnr_flag = true then
-                     rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := substr(rcd_agency_dly_inv_hdr.dat_024_datum,3,6);
-                  end if;
-               else
-                  if rcd_agency_dly_inv_hdr.gen_org_dlvnr = var_dlvry_number then
-                     rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := null;
-                     rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := null;
-                  else
-                     rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := substr(rcd_agency_dly_inv_hdr.gen_org_dlvnr,3,35);
-                     if not(rcd_agency_dly_inv_hdr.gen_org_dlvdt is null) then
-                        rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := substr(rcd_agency_dly_inv_hdr.gen_org_dlvdt,3,6);
-                     end if;
-                  end if;
-               end if;
-
-               /*-*/
-               /* Retrieve the EDI ship to type
-               /*-*/
-               if not(rcd_agency_dly_inv_hdr.pnr_z5_partn is null) and
-                  rcd_agency_dly_inv_hdr.pnr_z5_partn = rcd_agency_dly_inv_hdr.ipn_we_partn then
-                  rcd_agency_dly_inv_hdr.edi_ship_to_type := '2';
-               else
-                  open csr_lads_inv_cus;
-                  fetch csr_lads_inv_cus into rcd_lads_inv_cus;
-                  if csr_lads_inv_cus%found then
-                     rcd_agency_dly_inv_hdr.edi_ship_to_type := rcd_lads_inv_cus.atwrt;
-                  end if;
-                  close csr_lads_inv_cus;
-               end if;
-
-               /*-*/
-               /* Retrieve the EDI transaction code
-               /*-*/
-               open csr_agency_transaction;
-               fetch csr_agency_transaction into rcd_agency_transaction;
-               if csr_agency_transaction%found then
-                  rcd_agency_dly_inv_hdr.edi_tran_code := rcd_agency_transaction.edi_tran_code;
-               end if;
-               close csr_agency_transaction;
-
-               /*-*/
-               /* Retrieve the EDI discount code and name when required
-               /*-*/
-               if var_petcare = true then
-                  if not(rcd_agency_dly_inv_hdr.hdr_crpc_version is null) and
-                     not(rcd_agency_dly_inv_hdr.gen_zztarif is null) then
-                     rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.hdr_crpc_version || rcd_agency_dly_inv_hdr.gen_zztarif;
-                  else
-                     if not(rcd_agency_dly_inv_hdr.hdr_crpc_version is null) then
-                        rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.hdr_crpc_version;
-                     end if;
-                     if not(rcd_agency_dly_inv_hdr.gen_zztarif is null) then
-                        rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.gen_zztarif;
-                     end if;
-                  end if;
-                  open csr_agency_discount;
-                  fetch csr_agency_discount into rcd_agency_discount;
-                  if csr_agency_discount%found then
-                     rcd_agency_dly_inv_hdr.edi_disc_name := rcd_agency_discount.edi_disc_name;
-                  end if;
-                  close csr_agency_discount;
-               end if;
-
-               /*-*/
-               /* Insert the collection agency invoice header row
-               /*-*/
-               insert into agency_dly_inv_hdr values rcd_agency_dly_inv_hdr;
-
-               /*-*/
-               /* Retrieve the invoice line data
-               /*-*/
-               open csr_lads_inv_gen;
-               loop
+                  /*-*/
+                  /* Retrieve data from the first invoice line
+                  /*-*/
+                  open csr_lads_inv_gen;
                   fetch csr_lads_inv_gen into rcd_lads_inv_gen;
-                  if csr_lads_inv_gen%notfound then
-                     exit;
+                  if csr_lads_inv_gen%found then
+
+                     /*-*/
+                     /* Set the header data from the first invoice line
+                     /*-*/
+                     rcd_agency_dly_inv_hdr.gen_vsart := rcd_lads_inv_gen.vsart;
+                     rcd_agency_dly_inv_hdr.gen_werks := rcd_lads_inv_gen.werks;
+                     rcd_agency_dly_inv_hdr.gen_knref := rcd_lads_inv_gen.knref;
+                     rcd_agency_dly_inv_hdr.gen_org_dlvnr := rcd_lads_inv_gen.org_dlvnr;
+                     rcd_agency_dly_inv_hdr.gen_org_dlvdt := rcd_lads_inv_gen.org_dlvdt;
+                     rcd_agency_dly_inv_hdr.gen_zztarif := rcd_lads_inv_gen.zztarif;
+
+                     /*-*/
+                     /* Retrieve the invoice item partner data (WE)
+                     /*-*/
+                     var_parvw := 'WE';
+                     open csr_lads_inv_ipn;
+                     fetch csr_lads_inv_ipn into rcd_lads_inv_ipn;
+                     if csr_lads_inv_ipn%found then
+
+                        /*-*/
+                        /* Set the ship to data
+                        /*-*/
+                        rcd_agency_dly_inv_hdr.ipn_we_partn := rcd_lads_inv_ipn.partn;
+
+                        /*-*/
+                        /* Retrieve the invoice item partner address data (WE/Z3)
+                        /*-*/
+                        var_langu := 'Z3';
+                        open csr_lads_inv_iaj;
+                        fetch csr_lads_inv_iaj into rcd_lads_inv_iaj;
+                        if csr_lads_inv_iaj%found then
+                           rcd_agency_dly_inv_hdr.iaj_we_z3_name1 := rcd_lads_inv_iaj.name1;
+                           rcd_agency_dly_inv_hdr.iaj_we_z3_street := rcd_lads_inv_iaj.street;
+                           rcd_agency_dly_inv_hdr.iaj_we_z3_city1 := rcd_lads_inv_iaj.city1;
+                        end if;
+                        close csr_lads_inv_iaj;
+
+                     end if;
+                     close csr_lads_inv_ipn;
+
+                  end if;
+                  close csr_lads_inv_gen;
+
+                  /*-*/
+                  /* Retrieve the invoice date data (024)
+                  /*-*/
+                  var_iddat := '024';
+                  open csr_lads_inv_dat;
+                  fetch csr_lads_inv_dat into rcd_lads_inv_dat;
+                  if csr_lads_inv_dat%found then
+                     rcd_agency_dly_inv_hdr.dat_024_datum := rcd_lads_inv_dat.datum;
+                  end if;
+                  close csr_lads_inv_dat;
+
+                  /*-*/
+                  /* Retrieve the invoice reference data (001)
+                  /*-*/
+                  var_qualf := '001';
+                  open csr_lads_inv_ref;
+                  fetch csr_lads_inv_ref into rcd_lads_inv_ref;
+                  if csr_lads_inv_ref%found then
+                     rcd_agency_dly_inv_hdr.ref_001_refnr := rcd_lads_inv_ref.refnr;
+                  end if;
+                  close csr_lads_inv_ref;
+
+                  /*-*/
+                  /* Retrieve the invoice reference data (012)
+                  /*-*/
+                  var_qualf := '012';
+                  open csr_lads_inv_ref;
+                  fetch csr_lads_inv_ref into rcd_lads_inv_ref;
+                  if csr_lads_inv_ref%found then
+                     rcd_agency_dly_inv_hdr.ref_012_refnr := rcd_lads_inv_ref.refnr;
+                  end if;
+                  close csr_lads_inv_ref;
+
+                  /*-*/
+                  /* Retrieve the invoice text data
+                  /*-*/
+                  open csr_lads_inv_txt;
+                  fetch csr_lads_inv_txt into rcd_lads_inv_txt;
+                  if csr_lads_inv_txt%found then
+                     rcd_agency_dly_inv_hdr.txt_ja_tdline := rcd_lads_inv_txt.tdline;
+                  end if;
+                  close csr_lads_inv_txt;
+
+                  /*-*/
+                  /* Retrieve the EDI denpyo/sub denpyo data
+                  /*-*/
+                  var_dlvry_flag := false;
+                  var_refnr_flag := false;
+                  var_dlvry_number := rcd_agency_dly_inv_hdr.hdr_belnr;
+                  var_refnr_number := null;
+                  if rcd_agency_dly_inv_hdr.org_015_orgid = 'ZS1' or
+                     rcd_agency_dly_inv_hdr.org_015_orgid = 'ZS2' then
+                     var_dlvry_flag := true;
+                  end if;
+                  if not(rcd_agency_dly_inv_hdr.ref_012_refnr is null) then
+                     var_dlvry_number := rcd_agency_dly_inv_hdr.ref_012_refnr;
+                     var_refnr_number := rcd_agency_dly_inv_hdr.ref_012_refnr;
+                     var_refnr_flag := true;
+                  end if;
+                  rcd_agency_dly_inv_hdr.edi_denpyo_number := substr(var_dlvry_number,3,35);
+                  if var_dlvry_flag = true then
+                     rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := substr(var_refnr_number,3,35);
+                     if var_refnr_flag = true then
+                        rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := substr(rcd_agency_dly_inv_hdr.dat_024_datum,3,6);
+                     end if;
+                  else
+                     if rcd_agency_dly_inv_hdr.gen_org_dlvnr = var_dlvry_number then
+                        rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := null;
+                        rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := null;
+                     else
+                        rcd_agency_dly_inv_hdr.edi_sub_denpyo_number := substr(rcd_agency_dly_inv_hdr.gen_org_dlvnr,3,35);
+                        if not(rcd_agency_dly_inv_hdr.gen_org_dlvdt is null) then
+                           rcd_agency_dly_inv_hdr.edi_sub_denpyo_date := substr(rcd_agency_dly_inv_hdr.gen_org_dlvdt,3,6);
+                        end if;
+                     end if;
                   end if;
 
                   /*-*/
-                  /* Only process non-zero lines
+                  /* Retrieve the EDI ship to type
                   /*-*/
-                  if nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') != 0 then
-
-                     /*-*/
-                     /* Initialise the collection agency invoice detail
-                     /*-*/
-                     rcd_agency_dly_inv_det.company_code := par_company;
-                     rcd_agency_dly_inv_det.gen_belnr := rcd_lads_inv_gen.belnr;
-                     rcd_agency_dly_inv_det.gen_genseq := rcd_lads_inv_gen.genseq;
-                     rcd_agency_dly_inv_det.gen_mat_legacy := rcd_lads_inv_gen.mat_legacy;
-                     rcd_agency_dly_inv_det.gen_rsu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_tdu),'1');
-                     rcd_agency_dly_inv_det.gen_rsu_per_mcu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_mcu),'1');
-                     rcd_agency_dly_inv_det.gen_mcu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.mcu_per_tdu),'1');
-                     rcd_agency_dly_inv_det.gen_menge := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0');
-                     rcd_agency_dly_inv_det.gen_menee := rcd_lads_inv_gen.menee;
-                     rcd_agency_dly_inv_det.gen_pstyv := rcd_lads_inv_gen.pstyv;
-                     rcd_agency_dly_inv_det.gen_prod_spart := rcd_lads_inv_gen.prod_spart;
-                     rcd_agency_dly_inv_det.iob_002_idtnr := null;
-                     rcd_agency_dly_inv_det.iob_r01_idtnr := null;
-                     rcd_agency_dly_inv_det.mat_z3_maktx := null;
-                     rcd_agency_dly_inv_det.ias_901_krate := null;
-                     rcd_agency_dly_inv_det.ias_901_betrg := null;
-                     rcd_agency_dly_inv_det.icn_zrsp_krate := null;
-                     rcd_agency_dly_inv_det.icn_pr00_krate := null;
-                     rcd_agency_dly_inv_det.icn_zcrp_kperc := null;
-                     rcd_agency_dly_inv_det.icn_zcrp_betrg := null;
-                     rcd_agency_dly_inv_det.icn_zk25_betrg := null;
-                     rcd_agency_dly_inv_det.icn_zk60_betrg := null;
-
-                     /*-*/
-                     /* Retrieve the invoice line object identification data (002)
-                     /*-*/
-                     var_qualf := '002';
-                     open csr_lads_inv_iob;
-                     fetch csr_lads_inv_iob into rcd_lads_inv_iob;
-                     if csr_lads_inv_iob%found then
-                        rcd_agency_dly_inv_det.iob_002_idtnr := rcd_lads_inv_iob.idtnr;
+                  if not(rcd_agency_dly_inv_hdr.pnr_z5_partn is null) and
+                     rcd_agency_dly_inv_hdr.pnr_z5_partn = rcd_agency_dly_inv_hdr.ipn_we_partn then
+                     rcd_agency_dly_inv_hdr.edi_ship_to_type := '2';
+                  else
+                     open csr_lads_inv_cus;
+                     fetch csr_lads_inv_cus into rcd_lads_inv_cus;
+                     if csr_lads_inv_cus%found then
+                        rcd_agency_dly_inv_hdr.edi_ship_to_type := rcd_lads_inv_cus.atwrt;
                      end if;
-                     close csr_lads_inv_iob;
+                     close csr_lads_inv_cus;
+                  end if;
 
-                     /*-*/
-                     /* Retrieve the invoice line object identification data (R01)
-                     /*-*/
-                     var_qualf := 'R01';
-                     open csr_lads_inv_iob;
-                     fetch csr_lads_inv_iob into rcd_lads_inv_iob;
-                     if csr_lads_inv_iob%found then
-                        rcd_agency_dly_inv_det.iob_r01_idtnr := rcd_lads_inv_iob.idtnr;
+                  /*-*/
+                  /* Retrieve the EDI transaction code
+                  /*-*/
+                  open csr_agency_transaction;
+                  fetch csr_agency_transaction into rcd_agency_transaction;
+                  if csr_agency_transaction%found then
+                     rcd_agency_dly_inv_hdr.edi_tran_code := rcd_agency_transaction.edi_tran_code;
+                  end if;
+                  close csr_agency_transaction;
+
+                  /*-*/
+                  /* Retrieve the EDI discount code and name when required
+                  /*-*/
+                  if var_petcare = true then
+                     if not(rcd_agency_dly_inv_hdr.hdr_crpc_version is null) and
+                        not(rcd_agency_dly_inv_hdr.gen_zztarif is null) then
+                        rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.hdr_crpc_version || rcd_agency_dly_inv_hdr.gen_zztarif;
+                     else
+                        if not(rcd_agency_dly_inv_hdr.hdr_crpc_version is null) then
+                           rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.hdr_crpc_version;
+                        end if;
+                        if not(rcd_agency_dly_inv_hdr.gen_zztarif is null) then
+                           rcd_agency_dly_inv_hdr.edi_disc_code := rcd_agency_dly_inv_hdr.gen_zztarif;
+                        end if;
                      end if;
-                     close csr_lads_inv_iob;
+                     open csr_agency_discount;
+                     fetch csr_agency_discount into rcd_agency_discount;
+                     if csr_agency_discount%found then
+                        rcd_agency_dly_inv_hdr.edi_disc_name := rcd_agency_discount.edi_disc_name;
+                     end if;
+                     close csr_agency_discount;
+                  end if;
+
+                  /*-*/
+                  /* Insert the collection agency invoice header row
+                  /*-*/
+                  insert into agency_dly_inv_hdr values rcd_agency_dly_inv_hdr;
+
+                  /*-*/
+                  /* Retrieve the invoice line data
+                  /*-*/
+                  open csr_lads_inv_gen;
+                  loop
+                     fetch csr_lads_inv_gen into rcd_lads_inv_gen;
+                     if csr_lads_inv_gen%notfound then
+                        exit;
+                     end if;
 
                      /*-*/
-                     /* Retrieve the invoice line object identification data (003) when required
+                     /* Only process non-zero lines
                      /*-*/
-                     if rcd_agency_dly_inv_det.iob_r01_idtnr is null then
-                        var_qualf := '003';
+                     if nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') != 0 then
+
+                        /*-*/
+                        /* Initialise the collection agency invoice detail
+                        /*-*/
+                        rcd_agency_dly_inv_det.company_code := par_company;
+                        rcd_agency_dly_inv_det.gen_belnr := rcd_lads_inv_gen.belnr;
+                        rcd_agency_dly_inv_det.gen_genseq := rcd_lads_inv_gen.genseq;
+                        rcd_agency_dly_inv_det.gen_mat_legacy := rcd_lads_inv_gen.mat_legacy;
+                        rcd_agency_dly_inv_det.gen_rsu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_tdu),'1');
+                        rcd_agency_dly_inv_det.gen_rsu_per_mcu := nvl(lads_to_number(rcd_lads_inv_gen.rsu_per_mcu),'1');
+                        rcd_agency_dly_inv_det.gen_mcu_per_tdu := nvl(lads_to_number(rcd_lads_inv_gen.mcu_per_tdu),'1');
+                        rcd_agency_dly_inv_det.gen_menge := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0');
+                        rcd_agency_dly_inv_det.gen_menee := rcd_lads_inv_gen.menee;
+                        rcd_agency_dly_inv_det.gen_pstyv := rcd_lads_inv_gen.pstyv;
+                        rcd_agency_dly_inv_det.gen_prod_spart := rcd_lads_inv_gen.prod_spart;
+                        rcd_agency_dly_inv_det.iob_002_idtnr := null;
+                        rcd_agency_dly_inv_det.iob_r01_idtnr := null;
+                        rcd_agency_dly_inv_det.mat_z3_maktx := null;
+                        rcd_agency_dly_inv_det.ias_901_krate := null;
+                        rcd_agency_dly_inv_det.ias_901_betrg := null;
+                        rcd_agency_dly_inv_det.icn_zrsp_krate := null;
+                        rcd_agency_dly_inv_det.icn_pr00_krate := null;
+                        rcd_agency_dly_inv_det.icn_zcrp_kperc := null;
+                        rcd_agency_dly_inv_det.icn_zcrp_betrg := null;
+                        rcd_agency_dly_inv_det.icn_zk25_betrg := null;
+                        rcd_agency_dly_inv_det.icn_zk60_betrg := null;
+
+                        /*-*/
+                        /* Retrieve the invoice line object identification data (002)
+                        /*-*/
+                        var_qualf := '002';
+                        open csr_lads_inv_iob;
+                        fetch csr_lads_inv_iob into rcd_lads_inv_iob;
+                        if csr_lads_inv_iob%found then
+                           rcd_agency_dly_inv_det.iob_002_idtnr := rcd_lads_inv_iob.idtnr;
+                        end if;
+                        close csr_lads_inv_iob;
+
+                        /*-*/
+                        /* Retrieve the invoice line object identification data (R01)
+                        /*-*/
+                        var_qualf := 'R01';
                         open csr_lads_inv_iob;
                         fetch csr_lads_inv_iob into rcd_lads_inv_iob;
                         if csr_lads_inv_iob%found then
                            rcd_agency_dly_inv_det.iob_r01_idtnr := rcd_lads_inv_iob.idtnr;
                         end if;
                         close csr_lads_inv_iob;
+
+                        /*-*/
+                        /* Retrieve the invoice line object identification data (003) when required
+                        /*-*/
+                        if rcd_agency_dly_inv_det.iob_r01_idtnr is null then
+                           var_qualf := '003';
+                           open csr_lads_inv_iob;
+                           fetch csr_lads_inv_iob into rcd_lads_inv_iob;
+                           if csr_lads_inv_iob%found then
+                              rcd_agency_dly_inv_det.iob_r01_idtnr := rcd_lads_inv_iob.idtnr;
+                           end if;
+                           close csr_lads_inv_iob;
+                        end if;
+
+                        /*-*/
+                        /* Retrieve the invoice line material data (Z3)
+                        /*-*/
+                        var_langu := 'Z3';
+                        open csr_lads_inv_mat;
+                        fetch csr_lads_inv_mat into rcd_lads_inv_mat;
+                        if csr_lads_inv_mat%found then
+                           rcd_agency_dly_inv_det.mat_z3_maktx := rcd_lads_inv_mat.maktx;
+                        end if;
+                        close csr_lads_inv_mat;
+
+                        /*-*/
+                        /* Retrieve the invoice line item amount (901)
+                        /*-*/
+                        var_qualf := '901';
+                        open csr_lads_inv_ias;
+                        fetch csr_lads_inv_ias into rcd_lads_inv_ias;
+                        if csr_lads_inv_ias%found then
+                           rcd_agency_dly_inv_det.ias_901_krate := nvl(lads_to_number(rcd_lads_inv_ias.krate),0);
+                           rcd_agency_dly_inv_det.ias_901_betrg := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0);
+                        end if;
+                        close csr_lads_inv_ias;
+
+                        /*-*/
+                        /* Retrieve the invoice item condition data
+                        /*-*/
+                        open csr_lads_inv_icn;
+                        loop
+                           fetch csr_lads_inv_icn into rcd_lads_inv_icn;
+                           if csr_lads_inv_icn%notfound then
+                              exit;
+                           end if;
+                           if rcd_lads_inv_icn.kschl = 'ZRSP' then
+                              rcd_agency_dly_inv_det.icn_zrsp_krate := nvl(lads_to_number(rcd_lads_inv_icn.krate),0);
+                           end if;
+                           if rcd_lads_inv_icn.kschl = 'PR00' then
+                              rcd_agency_dly_inv_det.icn_pr00_krate := nvl(lads_to_number(rcd_lads_inv_icn.krate),0);
+                           end if;
+                           if rcd_lads_inv_icn.kschl = 'ZCRP' then
+                              rcd_agency_dly_inv_det.icn_zcrp_kperc := nvl(lads_to_number(rcd_lads_inv_icn.kperc),0);
+                              rcd_agency_dly_inv_det.icn_zcrp_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                           end if;
+                           if rcd_lads_inv_icn.kschl = 'ZK25' then
+                              rcd_agency_dly_inv_det.icn_zk25_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                           end if;
+                           if rcd_lads_inv_icn.kschl = 'ZK60' then
+                              rcd_agency_dly_inv_det.icn_zk60_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                           end if;
+                        end loop;
+                        close csr_lads_inv_icn;
+
+                        /*-*/
+                        /* Insert the wholesaler invoice detail row
+                        /*-*/
+                        insert into agency_dly_inv_det values rcd_agency_dly_inv_det;
+
                      end if;
 
-                     /*-*/
-                     /* Retrieve the invoice line material data (Z3)
-                     /*-*/
-                     var_langu := 'Z3';
-                     open csr_lads_inv_mat;
-                     fetch csr_lads_inv_mat into rcd_lads_inv_mat;
-                     if csr_lads_inv_mat%found then
-                        rcd_agency_dly_inv_det.mat_z3_maktx := rcd_lads_inv_mat.maktx;
-                     end if;
-                     close csr_lads_inv_mat;
+                  end loop;
+                  close csr_lads_inv_gen;
 
-                     /*-*/
-                     /* Retrieve the invoice line item amount (901)
-                     /*-*/
-                     var_qualf := '901';
-                     open csr_lads_inv_ias;
-                     fetch csr_lads_inv_ias into rcd_lads_inv_ias;
-                     if csr_lads_inv_ias%found then
-                        rcd_agency_dly_inv_det.ias_901_krate := nvl(lads_to_number(rcd_lads_inv_ias.krate),0);
-                        rcd_agency_dly_inv_det.ias_901_betrg := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0);
-                     end if;
-                     close csr_lads_inv_ias;
-
-                     /*-*/
-                     /* Retrieve the invoice item condition data
-                     /*-*/
-                     open csr_lads_inv_icn;
-                     loop
-                        fetch csr_lads_inv_icn into rcd_lads_inv_icn;
-                        if csr_lads_inv_icn%notfound then
-                           exit;
-                        end if;
-                        if rcd_lads_inv_icn.kschl = 'ZRSP' then
-                           rcd_agency_dly_inv_det.icn_zrsp_krate := nvl(lads_to_number(rcd_lads_inv_icn.krate),0);
-                        end if;
-                        if rcd_lads_inv_icn.kschl = 'PR00' then
-                           rcd_agency_dly_inv_det.icn_pr00_krate := nvl(lads_to_number(rcd_lads_inv_icn.krate),0);
-                        end if;
-                        if rcd_lads_inv_icn.kschl = 'ZCRP' then
-                           rcd_agency_dly_inv_det.icn_zcrp_kperc := nvl(lads_to_number(rcd_lads_inv_icn.kperc),0);
-                           rcd_agency_dly_inv_det.icn_zcrp_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
-                        end if;
-                        if rcd_lads_inv_icn.kschl = 'ZK25' then
-                           rcd_agency_dly_inv_det.icn_zk25_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
-                        end if;
-                        if rcd_lads_inv_icn.kschl = 'ZK60' then
-                           rcd_agency_dly_inv_det.icn_zk60_betrg := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
-                        end if;
-                     end loop;
-                     close csr_lads_inv_icn;
-
-                     /*-*/
-                     /* Insert the wholesaler invoice detail row
-                     /*-*/
-                     insert into agency_dly_inv_det values rcd_agency_dly_inv_det;
-
-                  end if;
-
-               end loop;
-               close csr_lads_inv_gen;
+               end if;
 
             end if;
+            close csr_agency;
 
          end if;
-         close csr_agency;
 
       end loop;
       close csr_lads_inv_hdr;
