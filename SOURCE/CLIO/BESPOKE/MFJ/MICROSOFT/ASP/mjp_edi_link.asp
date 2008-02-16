@@ -37,7 +37,7 @@
    '// Initialise the script
    '//
    strTarget = "mjp_edi_link.asp"
-   strHeading = "EDI LInk Configuration"
+   strHeading = "EDI Link Configuration"
    strError = ""
 
    '//

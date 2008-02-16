@@ -309,7 +309,7 @@ sub ProcessDeleteLoad()
    strQuery = strQuery & " t01.sap_invoice_type,"
    strQuery = strQuery & " t01.sap_order_type,"
    strQuery = strQuery & " t01.edi_tran_code"
-   strQuery = strQuery & " from whslr_transaction t01"
+   strQuery = strQuery & " from agency_transaction t01"
    strQuery = strQuery & " where t01.sap_invoice_type = '" & objForm.Fields("DTA_SapInvoiceType").Value & "'"
    strQuery = strQuery & " and t01.sap_order_type = '" & objForm.Fields("DTA_SapOrderType").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
