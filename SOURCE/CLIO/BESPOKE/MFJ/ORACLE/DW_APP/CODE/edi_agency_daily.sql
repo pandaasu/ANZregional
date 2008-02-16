@@ -965,6 +965,19 @@ create or replace package body edi_agency_daily as
                      close csr_lads_inv_iob;
 
                      /*-*/
+                     /* Retrieve the invoice line object identification data (003) when required
+                     /*-*/
+                     if rcd_agency_dly_inv_det.iob_r01_idtnr is null then
+                        var_qualf := '003';
+                        open csr_lads_inv_iob;
+                        fetch csr_lads_inv_iob into rcd_lads_inv_iob;
+                        if csr_lads_inv_iob%found then
+                           rcd_agency_dly_inv_det.iob_r01_idtnr := rcd_lads_inv_iob.idtnr;
+                        end if;
+                        close csr_lads_inv_iob;
+                     end if;
+
+                     /*-*/
                      /* Retrieve the invoice line material data (Z3)
                      /*-*/
                      var_langu := 'Z3';

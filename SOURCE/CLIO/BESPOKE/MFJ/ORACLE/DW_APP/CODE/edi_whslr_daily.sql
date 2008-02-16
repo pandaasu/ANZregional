@@ -35,6 +35,7 @@ create or replace package edi_whslr_daily as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/12   Steve Gregan   Created
+    2008/02   Steve Gregan   Modified the quantity and value logic to store naturally signed numbers
 
    *******************************************************************************/
 
@@ -282,6 +283,8 @@ create or replace package body edi_whslr_daily as
       var_iddat varchar2(30 char);
       var_kschl varchar2(30 char);
       var_zcrp_count number;
+      var_invoice_type_factor number;
+      var_price_record_factor number;
       rcd_whslr_dly_inv_hdr whslr_dly_inv_hdr%rowtype;
       rcd_whslr_dly_inv_det whslr_dly_inv_det%rowtype;
 
@@ -425,6 +428,12 @@ create or replace package body edi_whslr_daily as
             and t02.addr_vers = 'K'
             and t01.obj_id = (select kunnr from lads_cus_pfr where substr(knref,5,7) = rcd_whslr_dly_inv_hdr.edi_brnch_code);
       rcd_lads_adr_hdr csr_lads_adr_hdr%rowtype;
+
+      cursor csr_invc_type is
+         select t01.invc_type_sign as invc_type_sign
+           from invc_type t01
+          where t01.sap_invc_type_code = rcd_whslr_dly_inv_hdr.sap_invoice_type;
+      rcd_invc_type csr_invc_type%rowtype;
 
       cursor csr_whslr is
          select t02.*
@@ -764,6 +773,20 @@ create or replace package body edi_whslr_daily as
             end if;
 
             /*-*/
+            /* Retrieve the invoice type sign and factor
+            /*-*/
+            open csr_invc_type;
+            fetch csr_invc_type into rcd_invc_type;
+            if csr_invc_type%notfound then
+               rcd_invc_type.invc_type_sign := '+';
+            end if;
+            close csr_invc_type;
+            var_invoice_type_factor := 1;
+	    if rcd_invc_type.invc_type_sign = '-' then
+	       var_invoice_type_factor := -1;
+            end if;
+
+            /*-*/
             /* Retrieve the EDI transaction code
             /*-*/
             open csr_whslr_transaction;
@@ -825,10 +848,10 @@ create or replace package body edi_whslr_daily as
                   rcd_whslr_dly_inv_det.edi_unit_price := 0;
                   rcd_whslr_dly_inv_det.edi_amount := 0;
                   if trim(rcd_lads_inv_gen.menee) = 'CS' then
-                     rcd_whslr_dly_inv_det.edi_case_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0');
+                     rcd_whslr_dly_inv_det.edi_case_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
                      rcd_whslr_dly_inv_det.edi_delivered_qty := rcd_whslr_dly_inv_det.edi_rsu_per_tdu * rcd_whslr_dly_inv_det.edi_case_qty;
                   else
-                     rcd_whslr_dly_inv_det.edi_delivered_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0');
+                     rcd_whslr_dly_inv_det.edi_delivered_qty := nvl(lads_to_number(rcd_lads_inv_gen.menge),'0') * var_invoice_type_factor;
                   end if;
 
                   /*-*/
@@ -874,7 +897,7 @@ create or replace package body edi_whslr_daily as
                   fetch csr_lads_inv_ias into rcd_lads_inv_ias;
                   if csr_lads_inv_ias%found then
                      rcd_whslr_dly_inv_det.sap_unit_price := nvl(lads_to_number(rcd_lads_inv_ias.krate),0);
-                     rcd_whslr_dly_inv_det.sap_amount := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0);
+                     rcd_whslr_dly_inv_det.sap_amount := nvl(lads_to_number(rcd_lads_inv_ias.betrg),0) * var_invoice_type_factor;
                   end if;
                   close csr_lads_inv_ias;
 
@@ -888,16 +911,21 @@ create or replace package body edi_whslr_daily as
                      if csr_lads_inv_icn%notfound then
                         exit;
                      end if;
+
+                     var_price_record_factor := 1;
+                     if rcd_lads_inv_icn.alckz = '-' then
+                        var_price_record_factor := -1;
+                     end if;
                      if rcd_lads_inv_icn.kschl = 'ZCRP' then
                         var_zcrp_count := 1;
                         rcd_whslr_dly_inv_det.sap_disc_volume_pct := nvl(lads_to_number(rcd_lads_inv_icn.kperc),0);
-                        rcd_whslr_dly_inv_det.sap_disc_volume := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                        rcd_whslr_dly_inv_det.sap_disc_volume := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
                      end if;
                      if rcd_lads_inv_icn.kschl = 'ZK25' then
-                        rcd_whslr_dly_inv_det.sap_disc_noreturn := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                        rcd_whslr_dly_inv_det.sap_disc_noreturn := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
                      end if;
                      if rcd_lads_inv_icn.kschl = 'ZK60' then
-                        rcd_whslr_dly_inv_det.sap_disc_earlypay := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0);
+                        rcd_whslr_dly_inv_det.sap_disc_earlypay := nvl(lads_to_number(rcd_lads_inv_icn.betrg),0) * var_invoice_type_factor * var_price_record_factor;
                      end if;
                   end loop;
                   close csr_lads_inv_icn;
