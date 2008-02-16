@@ -129,13 +129,13 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Send To Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_EdiSndtoCode" size="20" maxlength="20" value="<%=objForm.Fields("DTA_EdiSndtoCode").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_EdiSndtoCode" size="20" maxlength="20" value="<%=objForm.Fields("DTA_EdiSndtoCode").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Wholesaler Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_EdiWhslrCode" size="20" maxlength="20" value="<%=objForm.Fields("DTA_EdiWhslrCode").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_EdiWhslrCode" size="20" maxlength="20" value="<%=objForm.Fields("DTA_EdiWhslrCode").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
