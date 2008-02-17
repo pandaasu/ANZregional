@@ -104,17 +104,23 @@ create or replace package body edi_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_daily is
+      cursor csr_agency_daily is
+         select t01.*
+           from agency_dly_inv_hdr t01
+          where t01.creatn_date < to_char(sysdate-90,'yyyymmdd');
+      rcd_agency_daily csr_agency_daily%rowtype;
+
+      cursor csr_whslr_daily is
          select t01.*
            from whslr_dly_inv_hdr t01
-          where t01.sap_creatn_date < to_char(sysdate-180,'yyyymmdd');
-      rcd_daily csr_daily%rowtype;
+          where t01.sap_creatn_date < to_char(sysdate-90,'yyyymmdd');
+      rcd_whslr_daily csr_whslr_daily%rowtype;
 
-      cursor csr_monthly is
+      cursor csr_whslr_monthly is
          select t01.*
            from whslr_mly_inv_hdr t01
-          where t01.edi_bilto_date < to_char(sysdate-180,'yyyymmdd');
-      rcd_monthly csr_monthly%rowtype;
+          where t01.edi_bilto_date < to_char(sysdate-90,'yyyymmdd');
+      rcd_whslr_monthly csr_whslr_monthly%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -122,21 +128,21 @@ create or replace package body edi_purging as
    begin
 
       /*-*/
-      /* Purge the daily data
+      /* Purge the collection agency daily data
       /*-*/
       var_count := 0;
-      open csr_daily;
+      open csr_agency_daily;
       loop
          if var_count >= cnt_process_count then
-            if csr_daily%isopen then
-               close csr_daily;
+            if csr_agency_daily%isopen then
+               close csr_agency_daily;
             end if;
             commit;
-            open csr_daily;
+            open csr_agency_daily;
             var_count := 0;
          end if;
-         fetch csr_daily into rcd_daily;
-         if csr_daily%notfound then
+         fetch csr_agency_daily into rcd_agency_daily;
+         if csr_agency_daily%notfound then
             exit;
          end if;
 
@@ -148,11 +154,11 @@ create or replace package body edi_purging as
          /*-*/
          /* Delete the header and related data
          /*-*/
-         delete from whslr_dly_inv_det where sap_invoice_number = rcd_daily.sap_invoice_number;
-         delete from whslr_dly_inv_hdr where sap_invoice_number = rcd_daily.sap_invoice_number;
+         delete from agency_dly_inv_det where gen_belnr = rcd_agency_daily.hdr_belnr;
+         delete from agency_dly_inv_hdr where hdr_belnr = rcd_agency_daily.hdr_belnr;
 
       end loop;
-      close csr_daily;
+      close csr_agency_daily;
 
       /*-*/
       /* Commit the database
@@ -160,21 +166,21 @@ create or replace package body edi_purging as
       commit;
 
       /*-*/
-      /* Purge the monthly data
+      /* Purge the wholesaler daily data
       /*-*/
       var_count := 0;
-      open csr_monthly;
+      open csr_whslr_daily;
       loop
          if var_count >= cnt_process_count then
-            if csr_monthly%isopen then
-               close csr_monthly;
+            if csr_whslr_daily%isopen then
+               close csr_whslr_daily;
             end if;
             commit;
-            open csr_monthly;
+            open csr_whslr_daily;
             var_count := 0;
          end if;
-         fetch csr_monthly into rcd_monthly;
-         if csr_monthly%notfound then
+         fetch csr_whslr_daily into rcd_whslr_daily;
+         if csr_whslr_daily%notfound then
             exit;
          end if;
 
@@ -186,9 +192,47 @@ create or replace package body edi_purging as
          /*-*/
          /* Delete the header and related data
          /*-*/
-         delete from whslr_mly_inv_det where sap_company_code = rcd_monthly.sap_company_code and edi_sndto_code = rcd_monthly.edi_sndto_code and edi_bilto_date = rcd_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_bch where sap_company_code = rcd_monthly.sap_company_code and edi_sndto_code = rcd_monthly.edi_sndto_code and edi_bilto_date = rcd_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_hdr where sap_company_code = rcd_monthly.sap_company_code and edi_sndto_code = rcd_monthly.edi_sndto_code and edi_bilto_date = rcd_monthly.edi_bilto_date;
+         delete from whslr_dly_inv_det where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
+         delete from whslr_dly_inv_hdr where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
+
+      end loop;
+      close csr_whslr_daily;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Purge the wholesaler monthly data
+      /*-*/
+      var_count := 0;
+      open csr_whslr_monthly;
+      loop
+         if var_count >= cnt_process_count then
+            if csr_whslr_monthly%isopen then
+               close csr_whslr_monthly;
+            end if;
+            commit;
+            open csr_whslr_monthly;
+            var_count := 0;
+         end if;
+         fetch csr_whslr_monthly into rcd_whslr_monthly;
+         if csr_whslr_monthly%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Increment the count
+         /*-*/
+         var_count := var_count + 1;
+
+         /*-*/
+         /* Delete the header and related data
+         /*-*/
+         delete from whslr_mly_inv_det where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
+         delete from whslr_mly_inv_bch where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
+         delete from whslr_mly_inv_hdr where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
 
       end loop;
       close csr_monthly;
