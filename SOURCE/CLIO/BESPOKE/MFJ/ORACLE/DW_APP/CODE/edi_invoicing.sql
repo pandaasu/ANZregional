@@ -233,6 +233,7 @@ create or replace package body edi_invoicing as
             begin
                create_whslr_monthly(var_date);
                send_whslr_monthly(var_date);
+               email_whslr_monthly(var_date);
             exception
                when others then
                   var_errors := true;
@@ -647,6 +648,7 @@ create or replace package body edi_invoicing as
                var_agency_code := rcd_edi_link.edi_link_code;
             end if;
          end if;
+         close csr_edi_link;
          if var_link_type is null then
             var_cust_type := '*PAYER';
             var_cust_code := lads_trim_code(rcd_agency_dly_inv_hdr.pnr_rg_partn);
@@ -657,6 +659,7 @@ create or replace package body edi_invoicing as
                   var_agency_code := rcd_edi_link.edi_link_code;
                end if;
             end if;
+            close csr_edi_link;
          end if;
 
          /*-*/
@@ -2271,6 +2274,7 @@ create or replace package body edi_invoicing as
                var_sndto_code := rcd_edi_link.edi_link_code;
             end if;
          end if;
+         close csr_edi_link;
          if var_link_type is null then
             var_cust_type := '*PAYER';
             var_cust_code := lads_trim_code(rcd_whslr_dly_inv_hdr.sap_payer_code);
@@ -2281,6 +2285,7 @@ create or replace package body edi_invoicing as
                   var_sndto_code := rcd_edi_link.edi_link_code;
                end if;
             end if;
+            close csr_edi_link;
          end if;
 
          /*-*/
@@ -2668,10 +2673,10 @@ create or replace package body edi_invoicing as
                      rcd_whslr_dly_inv_hdr.edi_amount := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_det.edi_amount;
                      rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt := rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt + var_zcrp_count;
                      rcd_whslr_dly_inv_hdr.edi_disc_volume_pct := rcd_whslr_dly_inv_hdr.edi_disc_volume_pct + abs(rcd_whslr_dly_inv_det.sap_disc_volume_pct);
-                     rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume - rcd_whslr_dly_inv_det.sap_disc_volume;
+                     rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume + rcd_whslr_dly_inv_det.sap_disc_volume;
                      if rcd_whslr_dly_inv_hdr.edi_disc_code = 'A' then
-                        rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn - rcd_whslr_dly_inv_det.sap_disc_noreturn;
-                        rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay - rcd_whslr_dly_inv_det.sap_disc_earlypay;
+                        rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn + rcd_whslr_dly_inv_det.sap_disc_noreturn;
+                        rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay + rcd_whslr_dly_inv_det.sap_disc_earlypay;
                      end if;
 
                      /*-*/
