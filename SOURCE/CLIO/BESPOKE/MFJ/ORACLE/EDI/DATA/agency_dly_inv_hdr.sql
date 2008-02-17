@@ -77,6 +77,11 @@ alter table edi.agency_dly_inv_hdr
    add constraint agency_dly_inv_hdr_pk primary key (hdr_belnr);
 
 /**/
+/* Indexes
+/**/
+create index agency_dly_inv_hdr_ix01 on agency_dly_inv_hdr (creatn_date);
+
+/**/
 /* Authority
 /**/
 grant select, insert, update, delete on edi.agency_dly_inv_hdr to dw_app;

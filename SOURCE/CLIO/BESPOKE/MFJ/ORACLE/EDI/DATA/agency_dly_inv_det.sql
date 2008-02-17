@@ -20,6 +20,7 @@
 /**/
 create table edi.agency_dly_inv_det
    (company_code                    varchar2(10 char)             not null,
+    creatn_date                     varchar2(10 char)             not null,
     gen_belnr                       varchar2(35 char)             not null,
     gen_genseq                      number                        not null,
     gen_mat_legacy                  varchar2(5 char)              null,
@@ -52,6 +53,11 @@ comment on table edi.agency_dly_inv_det is 'Collection Agency Daily Invoice Deta
 /**/
 alter table edi.agency_dly_inv_det
    add constraint agency_dly_inv_det_pk primary key (gen_belnr, gen_genseq);
+
+/**/
+/* Indexes
+/**/
+create index agency_dly_inv_det_ix01 on agency_dly_inv_det (creatn_date);
 
 /**/
 /* Authority

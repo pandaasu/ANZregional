@@ -73,6 +73,11 @@ alter table edi.whslr_dly_inv_hdr
    add constraint whslr_dly_inv_hdr_pk primary key (sap_invoice_number);
 
 /**/
+/* Indexes
+/**/
+create index whslr_dly_inv_hdr_ix01 on whslr_dly_inv_hdr (sap_creatn_date);
+
+/**/
 /* Authority
 /**/
 grant select, insert, update, delete on edi.whslr_dly_inv_hdr to dw_app;

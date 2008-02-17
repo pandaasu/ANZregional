@@ -49,6 +49,11 @@ alter table edi.whslr_dly_inv_det
    add constraint whslr_dly_inv_det_pk primary key (sap_invoice_number, sap_invoice_line);
 
 /**/
+/* Indexes
+/**/
+create index whslr_dly_inv_det_ix01 on whslr_dly_inv_det (sap_creatn_date);
+
+/**/
 /* Authority
 /**/
 grant select, insert, update, delete on edi.whslr_dly_inv_det to dw_app;

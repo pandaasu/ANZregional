@@ -19,8 +19,7 @@
 /* Table creation
 /**/
 create table edi.whslr_mly_inv_det
-   (sap_company_code                varchar2(10 char)             not null,
-    edi_sndto_code                  varchar2(20 char)             not null,
+   (edi_sndto_code                  varchar2(20 char)             not null,
     edi_bilto_date                  varchar2(8 char)              not null,
     edi_brnch_code                  varchar2(20 char)             not null,
     edi_invoice_number              varchar2(35 char)             not null,
@@ -48,7 +47,7 @@ comment on table edi.whslr_mly_inv_det is 'Wholesaler Monthly Invoice Detail Tab
 /* Primary Key Constraint
 /**/
 alter table edi.whslr_mly_inv_det
-   add constraint whslr_mly_inv_det_pk primary key (sap_company_code, edi_sndto_code, edi_bilto_date, edi_brnch_code, edi_invoice_number);
+   add constraint whslr_mly_inv_det_pk primary key (edi_sndto_code, edi_bilto_date, edi_brnch_code, edi_invoice_number);
 
 /**/
 /* Authority
