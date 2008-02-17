@@ -49,7 +49,7 @@ create or replace package edi_invoicing as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_date in date);
+   procedure execute(par_action in varchar2, par_date in date);
 
 end edi_invoicing;
 /
@@ -86,7 +86,7 @@ create or replace package body edi_invoicing as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_date in date) is
+   procedure execute(par_action in varchar2, par_date in date) is
 
       /*-*/
       /* Local definitions
@@ -186,89 +186,57 @@ create or replace package body edi_invoicing as
          /*-*/
          /* Execute the collection agency daily invoices
          /*-*/
-         if upper(par_action) != '*ALL' or
-            upper(par_action) != '*AGENCY_DAILY' then
+         if upper(par_action) = '*ALL' or
+            upper(par_action) = '*AGENCY_DAILY' then
 
             /*-*/
-            /* Execute the collection agency daily create procedure
+            /* Execute the collection agency daily procedures
             /*-*/
             begin
                create_agency_daily(var_date);
+               send_agency_daily(var_date);
             exception
                when others then
                   var_errors := true;
             end;
-
-            /*-*/
-            /* Execute the collection agency daily send procedure when required
-            /*-*/
-            if var_errors = false then
-               begin
-                  send_agency_daily(var_date);
-               exception
-                  when others then
-                     var_errors := true;
-               end;
-            end if;
 
          end if;
 
          /*-*/
          /* Execute the wholesaler daily invoices
          /*-*/
-         if upper(par_action) != '*ALL' or
+         if upper(par_action) = '*ALL' or
+            upper(par_action) = '*WHSLR_DAILY' then
 
             /*-*/
-            /* Execute the wholesaler daily create procedure
+            /* Execute the wholesaler daily procedures
             /*-*/
             begin
                create_whslr_daily(var_date);
+               send_whslr_daily(var_date);
             exception
                when others then
                   var_errors := true;
             end;
-
-            /*-*/
-            /* Execute the wholesaler daily send procedure when required
-            /*-*/
-            if var_errors = false then
-               begin
-                  send_whslr_daily(var_date);
-               exception
-                  when others then
-                     var_errors := true;
-               end;
-            end if;
 
          end if;
 
          /*-*/
          /* Execute the wholesaler monthly invoices
          /*-*/
-         if upper(par_action) != '*ALL' or
-            upper(par_action) != '*WHSLR_MONTHLY' then
+         if upper(par_action) = '*ALL' or
+            upper(par_action) = '*WHSLR_MONTHLY' then
 
             /*-*/
-            /* Execute the wholesaler monthly create procedure
+            /* Execute the wholesaler monthly procedures
             /*-*/
             begin
                create_whslr_monthly(var_date);
+               send_whslr_monthly(var_date);
             exception
                when others then
                   var_errors := true;
             end;
-
-            /*-*/
-            /* Execute the wholesaler monthly send procedure when required
-            /*-*/
-            if var_errors = false then
-               begin
-                  send_whslr_monthly(var_date);
-               exception
-                  when others then
-                     var_errors := true;
-               end;
-            end if;
 
          end if;
 

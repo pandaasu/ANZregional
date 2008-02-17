@@ -235,7 +235,7 @@ create or replace package body edi_purging as
          delete from whslr_mly_inv_hdr where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
 
       end loop;
-      close csr_monthly;
+      close csr_whslr_monthly;
 
       /*-*/
       /* Commit the database
