@@ -22,7 +22,7 @@
    '//
    server.scriptTimeout = 600
    set objSecurity = Server.CreateObject("ICS_SECURITY.Object")
-   strReturn = objSecurity.PasswordEncrypt("licsgold")
+   strReturn = objSecurity.PasswordEncrypt("licsapp0218p")
    PaintResponse
  
    '//
@@ -36,7 +36,7 @@
 sub PaintResponse()%>
 <html>
 <head>
-   <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
+   <meta http-equiv="content-type" content="text/html;">
 </head>
 <body>
 <%=strReturn%>
