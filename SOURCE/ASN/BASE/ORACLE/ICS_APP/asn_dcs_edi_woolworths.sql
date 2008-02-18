@@ -35,6 +35,7 @@ create or replace package asn_dcs_edi_woolworths as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/11   Steve Gregan   Created
+    2008/02   Steve Gregan   Changed the interface file name
 
    *******************************************************************************/
 
@@ -361,7 +362,7 @@ create or replace package body asn_dcs_edi_woolworths as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ASNEDI02');
+      var_instance := lics_outbound_loader.create_interface('ASNEDI02',null,'ASNWOOLWORTHS'||to_char(sysdate,'yyyymmddhh24miss')||'.xml');
 
       /*-*/
       /* Append the interface data
