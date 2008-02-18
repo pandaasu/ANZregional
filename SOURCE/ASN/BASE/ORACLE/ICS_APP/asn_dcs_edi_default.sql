@@ -152,7 +152,7 @@ create or replace package body asn_dcs_edi_default as
       tbl_outbound(tbl_outbound.count+1) := '      <EDIDOCNUM/>';
       tbl_outbound(tbl_outbound.count+1) := '      <RECID>000</RECID>';
       tbl_outbound(tbl_outbound.count+1) := '      <SENDERID>' || rcd_asn_dcs_hdr.dch_trn_mars_iid || '</SENDERID>';
-      tbl_outbound(tbl_outbound.count+1) := '      <RECEIVERID>' || var_cust_iid || '</RECEIVERID>';
+      tbl_outbound(tbl_outbound.count+1) := '      <RECEIVERID>' || rcd_asn_dcs_hdr.dch_trn_ship_iid || '</RECEIVERID>';
       tbl_outbound(tbl_outbound.count+1) := '      <INTNUM>' || to_char(rcd_asn_dcs_hdr.dch_smsg_nbr,'fm99999999999999999990') || '</INTNUM>';
       tbl_outbound(tbl_outbound.count+1) := '      <INTDATE>' || to_char(sysdate,'yyyymmdd') || '</INTDATE>';
       tbl_outbound(tbl_outbound.count+1) := '      <INTTIME>' || to_char(sysdate,'hh24mi') || '</INTTIME>';
@@ -195,7 +195,7 @@ create or replace package body asn_dcs_edi_default as
       tbl_outbound(tbl_outbound.count+1) := '      <SUPPLIERNAM>' || rcd_asn_dcs_hdr.dch_splr_nam || '</SUPPLIERNAM>';
       tbl_outbound(tbl_outbound.count+1) := '      <BILLTOID>' || rcd_asn_dcs_hdr.dch_trn_ship_iid || '</BILLTOID>';
       tbl_outbound(tbl_outbound.count+1) := '      <BILLTONAM>' || rcd_asn_dcs_hdr.dch_trn_ship_nam || '</BILLTONAM>';
-      tbl_outbound(tbl_outbound.count+1) := '      <SHIPTOID>' || rcd_asn_dcs_hdr.dch_trn_ship_iid || '</SHIPTOID>';
+      tbl_outbound(tbl_outbound.count+1) := '      <SHIPTOID>' || var_cust_iid || '</SHIPTOID>';
       tbl_outbound(tbl_outbound.count+1) := '      <SHIPTONAM>' || rcd_asn_dcs_hdr.dch_trn_ship_nam || '</SHIPTONAM>';
       tbl_outbound(tbl_outbound.count+1) := '      <DELIVLOC>' || rcd_asn_dcs_hdr.dch_trn_dock_nbr || '</DELIVLOC>';
       tbl_outbound(tbl_outbound.count+1) := '      <PALLETFOOT>' || to_char(nvl(rcd_asn_dcs_hdr.dch_whs_palt_spc,0),'fm000.0') || '</PALLETFOOT>';
@@ -302,11 +302,10 @@ create or replace package body asn_dcs_edi_default as
             tbl_outbound(tbl_outbound.count+1) := '         <EDIDOCNUM/>';
             tbl_outbound(tbl_outbound.count+1) := '         <RECID>030</RECID>';
             tbl_outbound(tbl_outbound.count+1) := '         <GTIN>' || rcd_asn_dcs_det.dcd_whs_gtin || '</GTIN>';
-            tbl_outbound(tbl_outbound.count+1) := '         <BBDATE>' || rcd_asn_dcs_det.dcd_whs_btch || '</BBDATE>';
-            tbl_outbound(tbl_outbound.count+1) := '         <BATCHCODE>' || rcd_asn_dcs_det.dcd_whs_bbdt || '</BATCHCODE>';
+            tbl_outbound(tbl_outbound.count+1) := '         <BBDATE>' || rcd_asn_dcs_det.dcd_whs_bbdt || '</BBDATE>';
+            tbl_outbound(tbl_outbound.count+1) := '         <BATCHCODE>' || rcd_asn_dcs_det.dcd_whs_btch || '</BATCHCODE>';
             tbl_outbound(tbl_outbound.count+1) := '         <QTYONPAL>' || to_char(nvl(rcd_asn_dcs_det.dcd_whs_palt_qty,0),'fm99990') || '</QTYONPAL>';
             var_030idx := tbl_outbound.count;
-            tbl_outbound(tbl_outbound.count+1) := '      </REC030>';
 
             /*-*/
             /* Set the "030" level variables
