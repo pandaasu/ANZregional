@@ -24,7 +24,7 @@
    dim strMode
    dim objForm
    dim objSecurity
-   dim objFunction
+   dim objProcedure
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -100,12 +100,12 @@
    '//
    set objForm = nothing
    set objSecurity = nothing
-   set objFunction = nothing
+   set objProcedure = nothing
 
 '////////////////////////////
 '// Process select routine //
 '////////////////////////////
-sub ProcessSelect)
+sub ProcessSelect()
 
    '//
    '// Initialise the data fields
@@ -128,10 +128,10 @@ sub ProcessAccept()
    dim strStatement
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Retrieve the gold tax data
@@ -145,7 +145,7 @@ sub ProcessAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate01").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate02").Value) & "'"
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"

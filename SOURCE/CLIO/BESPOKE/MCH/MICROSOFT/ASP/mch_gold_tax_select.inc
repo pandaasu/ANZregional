@@ -23,13 +23,13 @@
          alert(strMessage);
          return;
       }
-      document.main.DTA_TaxClass01.value = document.main.INP_TaxClass01.value;
-      document.main.DTA_TaxClass02.value = document.main.INP_TaxClass02.value;
-      document.main.DTA_SupplyPlant.value = document.main.INP_SupplyPlant.value;
-      document.main.DTA_SupplyLocation.value = document.main.INP_SupplyLocation.value;
-      document.main.DTA_ReceivingPlant.value = document.main.INP_ReceivingPlant.value;
-      document.main.DTA_GIDate01.value = document.main.INP_GIDate01.value;
-      document.main.DTA_GIDate02.value = document.main.INP_GIDate02.value;
+      document.main.DTA_TaxClass01.value = document.main.INP_TaxClass01.value.replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_TaxClass02.value = document.main.INP_TaxClass02.value.replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_SupplyPlant.value = document.main.INP_SupplyPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_SupplyLocation.value = document.main.INP_SupplyLocation.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_ReceivingPlant.value = document.main.INP_ReceivingPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_GIDate01.value = document.main.INP_GIDate01.value.replace(/\'/g,'').replace(/ /g,'');
+      document.main.DTA_GIDate02.value = document.main.INP_GIDate02.value.replace(/\'/g,'').replace(/ /g,'');
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'ACCEPT';
       document.main.submit();
@@ -104,11 +104,11 @@
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_TaxClass01" value="<%=objForm.Fields("DTA_TaxClass01").Value%>">
    <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_TaxClass02").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_SupplyPlant").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_SupplyLocation").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_ReceivingPlant").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_GIDate01").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_GIDate02").Value%>">
+   <input type="hidden" name="DTA_SupplyPlant" value="<%=objForm.Fields("DTA_SupplyPlant").Value%>">
+   <input type="hidden" name="DTA_SupplyLocation" value="<%=objForm.Fields("DTA_SupplyLocation").Value%>">
+   <input type="hidden" name="DTA_ReceivingPlant" value="<%=objForm.Fields("DTA_ReceivingPlant").Value%>">
+   <input type="hidden" name="DTA_GIDate01" value="<%=objForm.Fields("DTA_GIDate01").Value%>">
+   <input type="hidden" name="DTA_GIDate02" value="<%=objForm.Fields("DTA_GIDate02").Value%>">
 </form>
 </body>
 </html>

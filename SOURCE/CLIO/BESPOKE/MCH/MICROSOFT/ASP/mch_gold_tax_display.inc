@@ -63,7 +63,7 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=1 cellpadding="0" cellspacing="1"><%if clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')")) = 0 then%>
                         <tr><td class="clsLabelFB" align=left colspan=1 nowrap><nobr>&nbsp;NO DATA FOUND&nbsp</nobr></td></tr><%else%>
                         <tr>
-                           <td class="clsNormalFix" align=left colspan=1><pre><%for i = clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')"))%>
+                           <td class="clsNormalFix" align=left colspan=1><pre><%for i = 1 to clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')"))%>
 <font class="clsNormalFix"><%=replace(replace(objFunction.Execute("lics_form.get_array('TAX_FILE'," & i & ")"), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1)%></font><%next%></pre></td>
                         </tr><%end if%>
                      </table>
