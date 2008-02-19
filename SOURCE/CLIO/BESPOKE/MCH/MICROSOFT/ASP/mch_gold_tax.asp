@@ -146,7 +146,7 @@ sub ProcessAccept()
    '//
    strStatement = "dw_tax_reporting.gold_tax_file("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass01").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass01").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass02").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyPlant").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyLocation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReceivingPlant").Value) & "',"
