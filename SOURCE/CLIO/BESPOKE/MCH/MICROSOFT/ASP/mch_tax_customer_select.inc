@@ -72,7 +72,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh List&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doInsert();">&nbsp;Insert Discount&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doInsert();">&nbsp;Insert Customer&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
