@@ -41,7 +41,7 @@
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_gold_tax_display_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
+   <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
@@ -61,10 +61,11 @@
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
                      <table class="clsTableBody" id="tabBody" align=left cols=1 cellpadding="0" cellspacing="1"><%if clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')")) = 0 then%>
-                        <tr><td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;NO DATA FOUND&nbsp</nobr></td></tr><%else%><%for i = 1 to clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')"))%>
+                        <tr><td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;NO DATA FOUND&nbsp</nobr></td></tr><%else%>
                         <tr>
-                           <td class="clsLabelBN" align=left colspan=1><%=replace(replace(replace(objFunction.Execute("lics_form.get_array('TAX_FILE'," & i & ")"), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1), """", "&#34;", 1, -1, 1)%></td>
-                        </tr><%next%><%end if%>
+                           <td class="clsNormalFix" align=left colspan=1><pre><%for i = 1 to clng(objFunction.Execute("lics_form.get_array_count('TAX_FILE')"))%>
+<font class="clsNormalFix"><%=replace(replace(replace(objFunction.Execute("lics_form.get_array('TAX_FILE'," & i & ")"), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1), """", "&#34;", 1, -1, 1)%></font><%next%></pre></td>
+                        </tr><%end if%>
                      </table>
                      </div>
                   </nobr></td>
