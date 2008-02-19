@@ -1,3 +1,9 @@
+/*****************/
+/* Package Types */
+/*****************/
+create or replace type dw_tax_reporting_table as table of varchar2(2000 char);
+/
+
 /******************/
 /* Package Header */
 /******************/
@@ -41,13 +47,13 @@ create or replace package dw_tax_reporting as
                             par_pddate_02 in varchar2,
                             par_ord_type in varchar2);
 
-   procedure gold_tax_file(par_tax_01 in varchar2,
-                           par_tax_02 in varchar2,
-                           par_sup_plant in varchar2,
-                           par_sup_locn in varchar2,
-                           par_rcv_plant in varchar2,
-                           par_gidate_01 in varchar2,
-                           par_gidate_02 in varchar2);
+   function gold_tax_file(par_tax_01 in varchar2,
+                          par_tax_02 in varchar2,
+                          par_sup_plant in varchar2,
+                          par_sup_locn in varchar2,
+                          par_rcv_plant in varchar2,
+                          par_gidate_01 in varchar2,
+                          par_gidate_02 in varchar2) return dw_tax_reporting_table;
 
 end dw_tax_reporting;
 /
@@ -1003,16 +1009,16 @@ create or replace package body dw_tax_reporting as
    /*-------------*/
    end sample_pricing;
 
-   /*****************************************************/
-   /* This procedure performs the gold tax file routine */
-   /*****************************************************/
-   procedure gold_tax_file(par_tax_01 in varchar2,
-                           par_tax_02 in varchar2,
-                           par_sup_plant in varchar2,
-                           par_sup_locn in varchar2,
-                           par_rcv_plant in varchar2,
-                           par_gidate_01 in varchar2,
-                           par_gidate_02 in varchar2) is
+   /****************************************************/
+   /* This function performs the gold tax file routine */
+   /****************************************************/
+   function gold_tax_file(par_tax_01 in varchar2,
+                          par_tax_02 in varchar2,
+                          par_sup_plant in varchar2,
+                          par_sup_locn in varchar2,
+                          par_rcv_plant in varchar2,
+                          par_gidate_01 in varchar2,
+                          par_gidate_02 in varchar2) return dw_tax_reporting_table is
 
       /*-*/
       /* Local definitions
@@ -1022,6 +1028,7 @@ create or replace package body dw_tax_reporting as
       var_tidx number;
       var_query varchar2(32767 char);
       var_wrk_string varchar2(4000 char);
+      var_wrk_output varchar2(2000 char);
       var_hdr_idx number;
       var_hdr_ord_number varchar2(256 char);
       var_hdr_lin_count number;
@@ -1041,6 +1048,7 @@ create or replace package body dw_tax_reporting as
       sav_sup_plant varchar2(256 char);
       sav_rcv_plant varchar2(256 char);
       sav_tax_eye varchar2(256 char);
+      var_vir_table dw_tax_reporting_table := dw_tax_reporting_table();
       type typ_record is record(qry_ord_number varchar2(256 char),
                                 qry_ord_line varchar2(256 char),
                                 qry_gi_date date,
@@ -1062,12 +1070,9 @@ create or replace package body dw_tax_reporting as
                                 qry_cust_addr varchar2(256 char),
                                 qry_cust_bank varchar2(256 char),
                                 qry_tax_code varchar2(256 char));
-
-
-
       type typ_table is table of typ_record index by binary_integer;
       tbl_report typ_table;
-      type typ_work is table of varchar2(1000) index by binary_integer;
+      type typ_work is table of varchar2(2000 char) index by binary_integer;
       tbl_work typ_work;
       type typ_cursor is ref cursor;
       csr_report typ_cursor;
@@ -1143,7 +1148,7 @@ create or replace package body dw_tax_reporting as
                                    nvl(t02.werks2,''NONE'') as qry_rcv_plant,
                                    lads_trim_code(t01.matnr) as qry_matl_code,
                                    nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
-                                   t01.lfimg,0 as qry_ord_qty,
+                                   t01.lfimg as qry_ord_qty,
                                    t01.vrkme as qry_ord_uom,
                                    t05.kbetr as qry_dsp_price,
                                    t05.kbetr * decode(t01.vrkme, ''EA'', nvl(lads_to_number(t01.lfimg),0)*nvl(cs_each,1),
@@ -1271,8 +1276,8 @@ create or replace package body dw_tax_reporting as
                                     nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
                                     t01.lfimg as qry_ord_qty,
                                     t01.vrkme as qry_ord_uom,
-                                    0 as qry_dsp_price,
-                                    0 as qry_dsp_value,
+                                    null as qry_dsp_price,
+                                    null as qry_dsp_value,
                                     decode(t04.taxm1, 0, 0,
                                                       1, 0.17,
                                                       2, 0.13,
@@ -1445,9 +1450,9 @@ create or replace package body dw_tax_reporting as
          var_wrk_string := '"' || tbl_report(idx).qry_matl_desc || '"';
          var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_ord_uom || '"';
          var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_pack_frmt || '"';
-         var_wrk_string := var_wrk_string || ' ' || to_char(tbl_report(idx).qry_ord_qty);
-         var_wrk_string := var_wrk_string || ' ' || to_char(tbl_report(idx).qry_dsp_value);
-         var_wrk_string := var_wrk_string || ' ' || to_char(tbl_report(idx).qry_tax_rate);
+         var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_ord_qty,0));
+         var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_dsp_value,0));
+         var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_tax_rate,0));
          var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_tax_eye || '"';
          var_wrk_string := var_wrk_string || ' 0';
          tbl_work(tbl_work.count+1) := var_wrk_string;
@@ -1491,10 +1496,12 @@ create or replace package body dw_tax_reporting as
       /*-*/
       /* Output the file data
       /*-*/
-      lics_form.clear_form;
       for idx in 1..tbl_work.count loop
-         lics_form.set_value('TAX_FILE',tbl_work(idx));
+         var_wrk_output := tbl_work(idx);
+         var_vir_table.extend;
+         var_vir_table(var_vir_table.last) := var_wrk_output;
       end loop;
+      return var_vir_table;
 
    /*-------------------*/
    /* Exception handler */
@@ -1505,11 +1512,6 @@ create or replace package body dw_tax_reporting as
       /* Exception trap
       /**/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
 
          /*-*/
          /* Raise an exception to the calling application
