@@ -1235,8 +1235,8 @@ create or replace package body dw_tax_reporting as
                                                 and t51.spras_iso = ''ZH''
                                               group by t51.matnr)
                                       group by matnr) t09,
-                                    material_dim 10,
-                                    china_tax_customer 11
+                                    material_dim t10,
+                                    china_tax_customer t11
                               where t01.vbeln = t02.vbeln(+)
                                 and (t01.hievw is null or t01.hievw = ''5'')
                                 and t02.lads_status = ''1''
@@ -1315,8 +1315,8 @@ create or replace package body dw_tax_reporting as
                                                 and t51.spras_iso = ''ZH''
                                               group by t51.matnr)
                                       group by matnr) t09,
-                                    material_dim 10,
-                                    china_tax_customer 11
+                                    material_dim t10,
+                                    china_tax_customer t11
                               where t01.vbeln = t02.vbeln(+)
                                 and (t01.hievw is null or t01.hievw = ''5'')
                                 and t02.lads_status = ''1''
