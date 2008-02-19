@@ -16,7 +16,7 @@
          objElement.className = 'clsButton';
       }
    }
-   function doSelect() {
+   function doBack() {
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'SELECT';
       document.main.submit();
@@ -50,7 +50,7 @@
                      <div class="clsFixed" id="conHead">
                      <table class="clsTableHead" id="tabHead" align=left cols=2 cellpadding="0" cellspacing="1">
                         <tr>
-                           <td class="clsLabelHC" align=left colspan=1 nowrap><nobr>Gold Tax File</nobr></td>
+                           <td class="clsLabelHC" align=center colspan=1 nowrap><nobr>Gold Tax Report</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
                      </table>
@@ -80,7 +80,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doSelect();">&nbsp;Select&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doBack();">&nbsp;Back&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
