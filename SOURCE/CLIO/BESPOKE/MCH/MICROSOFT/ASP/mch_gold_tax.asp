@@ -36,7 +36,7 @@
    '// Initialise the script
    '//
    strTarget = "mch_gold_tax.asp"
-   strHeading = "Gold Tax Report"
+   strHeading = "Stock Transfer Gold Tax Report"
    strError = ""
 
    '//
