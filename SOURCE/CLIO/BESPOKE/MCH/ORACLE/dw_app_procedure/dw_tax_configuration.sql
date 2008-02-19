@@ -78,11 +78,11 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_agency_discount_01 is 
+      cursor csr_china_tax_customer_01 is 
          select *
-           from agency_discount t01
-          where t01.edi_disc_code = rcd_agency_discount.edi_disc_code;
-      rcd_agency_discount_01 csr_agency_discount_01%rowtype;
+           from china_tax_customer t01
+          where t01.cust_code = rcd_china_tax_customer.cust_code;
+      rcd_china_tax_customer_01 csr_china_tax_customer_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -92,34 +92,46 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Initialise the message
       /*-*/
-      var_title := 'Electronic Data Interchange - Configuration - Insert Collection Agency Discount';
+      var_title := 'China Local - Configuration - Insert Tax Customer';
       var_message := null;
 
       /*-*/
       /* Set the private variables
       /**/
-      rcd_agency_discount.edi_disc_code := upper(par_edi_disc_code);
-      rcd_agency_discount.edi_disc_name := par_edi_disc_name;
+      rcd_china_tax_customer.cust_code := upper(par_cust_code);
+      rcd_china_tax_customer.cust_name := par_cust_name;
+      rcd_china_tax_customer.cust_addr := par_cust_addr;
+      rcd_china_tax_customer.cust_bank := par_cust_bank;
+      rcd_china_tax_customer.tax_code := par_tax_code;
 
       /*-*/
       /* Validate the parameter values
       /*-*/
-      if rcd_agency_discount.edi_disc_code is null then
-         var_message := var_message || chr(13) || 'Agency discount code must be specified';
+      if rcd_china_tax_customer.cust_code is null then
+         var_message := var_message || chr(13) || 'Customer code must be specified';
       end if;
-      if rcd_agency_discount.edi_disc_name is null then
-         var_message := var_message || chr(13) || 'Agency discount name must be specified';
+      if rcd_china_tax_customer.cust_name is null then
+         var_message := var_message || chr(13) || 'Customer name must be specified';
+      end if;
+      if rcd_china_tax_customer.cust_addr is null then
+         var_message := var_message || chr(13) || 'Customer address must be specified';
+      end if;
+      if rcd_china_tax_customer.cust_bank is null then
+         var_message := var_message || chr(13) || 'Customer bank account must be specified';
+      end if;
+      if rcd_china_tax_customer.tax_code is null then
+         var_message := var_message || chr(13) || 'Tac code must be specified';
       end if;
 
       /*-*/
-      /* Agency discount must not already exist
+      /* Tax customer must not already exist
       /*-*/
-      open csr_agency_discount_01;
-      fetch csr_agency_discount_01 into rcd_agency_discount_01;
-      if csr_agency_discount_01%found then
-         var_message := var_message || chr(13) || 'Collection agency discount (' || rcd_agency_discount.edi_disc_code || ') already exists';
+      open csr_china_tax_customer_01;
+      fetch csr_china_tax_customer_01 into rcd_china_tax_customer_01;
+      if csr_china_tax_customer_01%found then
+         var_message := var_message || chr(13) || 'Tax customer (' || rcd_china_tax_customer.cust_code || ') already exists';
       end if;
-      close csr_agency_discount_01;
+      close csr_china_tax_customer_01;
 
       /*-*/
       /* Return the message when required
@@ -129,9 +141,9 @@ create or replace package body dw_tax_configuration as
       end if;
 
       /*-*/
-      /* Create the new agency discount
+      /* Create the new tax customer
       /*-*/
-      insert into agency_discount values rcd_agency_discount;
+      insert into china_tax_customer values rcd_china_tax_customer;
 
       /*-*/
       /* Commit the database
@@ -186,11 +198,11 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_agency_discount_01 is 
+      cursor csr_china_tax_customer_01 is 
          select *
-           from agency_discount t01
-          where t01.edi_disc_code = rcd_agency_discount.edi_disc_code;
-      rcd_agency_discount_01 csr_agency_discount_01%rowtype;
+           from china_tax_customer t01
+          where t01.cust_code = rcd_china_tax_customer.cust_code;
+      rcd_china_tax_customer_01 csr_china_tax_customer_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -200,34 +212,46 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Initialise the message
       /*-*/
-      var_title := 'Electronic Data Interchange - Configuration - Update Collection Agency Discount';
+      var_title := 'China Local - Configuration - Update Tax Customer';
       var_message := null;
 
       /*-*/
       /* Set the private variables
       /**/
-      rcd_agency_discount.edi_disc_code := upper(par_edi_disc_code);
-      rcd_agency_discount.edi_disc_name := par_edi_disc_name;
+      rcd_china_tax_customer.cust_code := upper(par_cust_code);
+      rcd_china_tax_customer.cust_name := par_cust_name;
+      rcd_china_tax_customer.cust_addr := par_cust_addr;
+      rcd_china_tax_customer.cust_bank := par_cust_bank;
+      rcd_china_tax_customer.tax_code := par_tax_code;
 
       /*-*/
       /* Validate the parameter values
       /*-*/
-      if rcd_agency_discount.edi_disc_code is null then
-         var_message := var_message || chr(13) || 'Agency discount code must be specified';
+      if rcd_china_tax_customer.cust_code is null then
+         var_message := var_message || chr(13) || 'Customer code must be specified';
       end if;
-      if rcd_agency_discount.edi_disc_name is null then
-         var_message := var_message || chr(13) || 'Agency discount name must be specified';
+      if rcd_china_tax_customer.cust_name is null then
+         var_message := var_message || chr(13) || 'Customer name must be specified';
+      end if;
+      if rcd_china_tax_customer.cust_addr is null then
+         var_message := var_message || chr(13) || 'Customer address must be specified';
+      end if;
+      if rcd_china_tax_customer.cust_bank is null then
+         var_message := var_message || chr(13) || 'Customer bank account must be specified';
+      end if;
+      if rcd_china_tax_customer.tax_code is null then
+         var_message := var_message || chr(13) || 'Tac code must be specified';
       end if;
 
       /*-*/
-      /* Agency discount must already exist
+      /* Tax customer must already exist
       /*-*/
-      open csr_agency_discount_01;
-      fetch csr_agency_discount_01 into rcd_agency_discount_01;
-      if csr_agency_discount_01%notfound then
-         var_message := var_message || chr(13) || 'Collection agency discount (' || rcd_agency_discount.edi_disc_code || ') does not exist';
+      open csr_china_tax_customer_01;
+      fetch csr_china_tax_customer_01 into rcd_china_tax_customer_01;
+      if csr_china_tax_customer_01%notfound then
+         var_message := var_message || chr(13) || 'Tax customer (' || rcd_china_tax_customer.cust_code || ') does not exist';
       end if;
-      close csr_agency_discount_01;
+      close csr_china_tax_customer_01;
 
       /*-*/
       /* Return the message when required
@@ -237,11 +261,14 @@ create or replace package body dw_tax_configuration as
       end if;
 
       /*-*/
-      /* Update the existing agency discount
+      /* Update the existing tax customer
       /*-*/
-      update agency_discount
-         set edi_disc_name = rcd_agency_discount.edi_disc_name
-         where edi_disc_code = rcd_agency_discount.edi_disc_code;
+      update china_tax_customer
+         set cust_name = rcd_china_tax_customer.cust_name,
+             cust_addr = rcd_china_tax_customer.cust_addr,
+             cust_bank = rcd_china_tax_customer.cust_bank,
+             tax_code = rcd_china_tax_customer.tax_code
+         where cust_code = rcd_china_tax_customer.cust_code;
 
       /*-*/
       /* Commit the database
@@ -292,11 +319,11 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_agency_discount_01 is 
+      cursor csr_china_tax_customer_01 is 
          select *
-           from agency_discount t01
-          where t01.edi_disc_code = rcd_agency_discount.edi_disc_code;
-      rcd_agency_discount_01 csr_agency_discount_01%rowtype;
+           from china_tax_customer t01
+          where t01.cust_code = rcd_china_tax_customer.cust_code;
+      rcd_china_tax_customer_01 csr_china_tax_customer_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -306,30 +333,30 @@ create or replace package body dw_tax_configuration as
       /*-*/
       /* Initialise the message
       /*-*/
-      var_title := 'Electronic Data Interchange - Configuration - Delete Collection Agency Discount';
+      var_title := 'China Local - Configuration - Delete Tax Customer';
       var_message := null;
 
       /*-*/
       /* Set the private variables
       /**/
-      rcd_agency_discount.edi_disc_code := upper(par_edi_disc_code);
+      rcd_china_tax_customer.cust_code := upper(par_cust_code);
 
       /*-*/
       /* Validate the parameter values
       /*-*/
-      if rcd_agency_discount.edi_disc_code is null then
-         var_message := var_message || chr(13) || 'Agency discount code must be specified';
+      if rcd_china_tax_customer.cust_code is null then
+         var_message := var_message || chr(13) || 'Customer code must be specified';
       end if;
 
       /*-*/
-      /* Agency discount must already exist
+      /* Tax customer must already exist
       /*-*/
-      open csr_agency_discount_01;
-      fetch csr_agency_discount_01 into rcd_agency_discount_01;
-      if csr_agency_discount_01%notfound then
-         var_message := var_message || chr(13) || 'Collection agency discount (' || rcd_agency_discount.edi_disc_code || ') does not exist';
+      open csr_china_tax_customer_01;
+      fetch csr_china_tax_customer_01 into rcd_china_tax_customer_01;
+      if csr_china_tax_customer_01%notfound then
+         var_message := var_message || chr(13) || 'Tax customer (' || rcd_china_tax_customer.cust_code || ') does not exist';
       end if;
-      close csr_agency_discount_01;
+      close csr_china_tax_customer_01;
 
       /*-*/
       /* Return the message when required
@@ -339,9 +366,9 @@ create or replace package body dw_tax_configuration as
       end if;
 
       /*-*/
-      /* Delete the existing agency discount
+      /* Delete the existing tax customer
       /*-*/
-      delete from agency_discount where edi_disc_code = rcd_agency_discount.edi_disc_code;
+      delete from china_tax_customer where cust_code = rcd_china_tax_customer.cust_code;
 
       /*-*/
       /* Commit the database
