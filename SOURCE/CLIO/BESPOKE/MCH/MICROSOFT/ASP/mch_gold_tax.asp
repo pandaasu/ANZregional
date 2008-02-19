@@ -25,6 +25,7 @@
    dim objForm
    dim objSecurity
    dim objProcedure
+   dim objFunction
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -101,6 +102,7 @@
    set objForm = nothing
    set objSecurity = nothing
    set objProcedure = nothing
+   set objFunction = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -132,6 +134,12 @@ sub ProcessAccept()
    '//
    set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
    set objProcedure.Security = objSecurity
+
+   '//
+   '// Create the function object
+   '//
+   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
+   set objFunction.Security = objSecurity
 
    '//
    '// Retrieve the gold tax data

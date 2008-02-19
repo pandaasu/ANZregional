@@ -39,7 +39,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_gold_tax_display_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();showError();setScrollable('Head','Body','horizontal');">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_gold_tax_display_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
       <tr height=100%>
@@ -50,7 +50,7 @@
                      <div class="clsFixed" id="conHead">
                      <table class="clsTableHead" id="tabHead" align=left cols=2 cellpadding="0" cellspacing="1">
                         <tr>
-                           <td class="clsLabelHC" align=left colspan=1 nowrap><nobr>Gols Tax File</nobr></td>
+                           <td class="clsLabelHC" align=left colspan=1 nowrap><nobr>Gold Tax File</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
                      </table>
