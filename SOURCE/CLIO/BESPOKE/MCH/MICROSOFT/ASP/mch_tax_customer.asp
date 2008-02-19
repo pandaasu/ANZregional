@@ -185,7 +185,7 @@ sub ProcessInsertAccept()
    '//
    '// Insert the tax customer data
    '//
-   strStatement = "edi_configuration.insert_tax_customer("
+   strStatement = "dw_tax_configuration.insert_tax_customer("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustCode").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustName").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustAddr").Value) & "',"
@@ -273,7 +273,7 @@ sub ProcessUpdateAccept()
    '//
    '// Update the tax customer data
    '//
-   strStatement = "edi_configuration.update_tax_customer("
+   strStatement = "dw_tax_configuration.update_tax_customer("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustCode").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustName").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustAddr").Value) & "',"
@@ -355,7 +355,7 @@ sub ProcessDeleteAccept()
    '//
    '// Delete the tax customer data
    '//
-   strStatement = "edi_configuration.delete_tax_customer("
+   strStatement = "dw_tax_configuration.delete_tax_customer("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CustCode").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)

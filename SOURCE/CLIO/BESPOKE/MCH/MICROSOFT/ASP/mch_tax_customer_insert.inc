@@ -125,7 +125,7 @@
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Tac Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Tax Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_TaxCode" size="15" maxlength="15" value="<%=objForm.Fields("DTA_TaxCode").Value%>" onFocus="setSelect(this);">
          </nobr></td>
