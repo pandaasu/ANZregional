@@ -24,8 +24,7 @@
    dim strMode
    dim objForm
    dim objSecurity
-   dim objProcedure
-   dim objFunction
+   dim objSelection
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -101,8 +100,7 @@
    '//
    set objForm = nothing
    set objSecurity = nothing
-   set objProcedure = nothing
-   set objFunction = nothing
+   set objSelection = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -127,33 +125,29 @@ end sub
 '////////////////////////////
 sub ProcessAccept()
 
-   dim strStatement
+   dim strQuery
+   dim lngSize
 
    '//
-   '// Create the procedure object
+   '// Create the selection object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
-
-   '//
-   '// Create the function object
-   '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
 
    '//
    '// Retrieve the gold tax data
    '//
-   strStatement = "dw_tax_reporting.gold_tax_file("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass01").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass02").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyPlant").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyLocation").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReceivingPlant").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate01").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate02").Value) & "'"
-   strStatement = strStatement & ")"
-   strReturn = objProcedure.Execute(strStatement)
+   lngSize = 0
+   strQuery = "select * from table(dw_tax_reporting.gold_tax_file("
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass01").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass02").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyPlant").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyLocation").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_ReceivingPlant").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate01").Value) & "',"
+   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate02").Value) & "'"
+   strQuery = strQuery & "))"
+   strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
