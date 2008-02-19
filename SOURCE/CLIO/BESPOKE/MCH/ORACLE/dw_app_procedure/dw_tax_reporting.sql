@@ -1170,10 +1170,10 @@ create or replace package body dw_tax_reporting as
                                                                                                                        1) as qry_tot_value,
                                    decode(t10.sap_bus_sgmnt_code,''01'',''0303'',''05'',''0301'',''NONE'') as qry_tax_eye,
                                    t10.trad_unit_config_abbrd_desc as qry_pack_frmt,
-                                   t11.cust_name as qry_cust_name,
-                                   t11.cust_addr as qry_cust_addr,
-                                   t11.cust_bank as qry_cust_bank,
-                                   t11.tax_code as qry_tax_code
+                                   nvl(t11.cust_name,''UNKNOWN'') as qry_cust_name,
+                                   nvl(t11.cust_addr,''UNKNOWN'') as qry_cust_addr,
+                                   nvl(t11.cust_bank,''UNKNOWN'') as qry_cust_bank,
+                                   nvl(t11.tax_code,''UNKNOWN'') as qry_tax_code
                               from lads_del_det t01,
                                    lads_del_hdr t02,
                                    lads_del_tim t03,
@@ -1281,10 +1281,10 @@ create or replace package body dw_tax_reporting as
                                     null as qry_tot_value,
                                     decode(t10.sap_bus_sgmnt_code,''01'',''0303'',''05'',''0301'',''NONE'') as qry_tax_eye,
                                     t10.trad_unit_config_abbrd_desc as qry_pack_frmt,
-                                    t11.cust_name as qry_cust_name,
-                                    t11.cust_addr as qry_cust_addr,
-                                    t11.cust_bank as qry_cust_bank,
-                                    t11.tax_code as qry_tax_code
+                                    nvl(t11.cust_name,''UNKNOWN'') as qry_cust_name,
+                                    nvl(t11.cust_addr,''UNKNOWN'') as qry_cust_addr,
+                                    nvl(t11.cust_bank,''UNKNOWN'') as qry_cust_bank,
+                                    nvl(t11.tax_code,''UNKNOWN'') as qry_tax_code
                                from lads_del_det t01,
                                     lads_del_hdr t02,
                                     lads_del_tim t03,
