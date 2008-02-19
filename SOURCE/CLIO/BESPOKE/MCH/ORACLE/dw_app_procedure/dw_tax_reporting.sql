@@ -1143,7 +1143,7 @@ create or replace package body dw_tax_reporting as
                                    nvl(t02.werks2,''NONE'') as qry_rcv_plant,
                                    lads_trim_code(t01.matnr) as qry_matl_code,
                                    nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
-                                   t01.lfimg as qry_ord_qty,
+                                   t01.lfimg,0 as qry_ord_qty,
                                    t01.vrkme as qry_ord_uom,
                                    t05.kbetr as qry_dsp_price,
                                    t05.kbetr * decode(t01.vrkme, ''EA'', nvl(lads_to_number(t01.lfimg),0)*nvl(cs_each,1),
@@ -1331,7 +1331,7 @@ create or replace package body dw_tax_reporting as
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
-                                and lads_trim_code(t01.matnr) = t09.sap_material_code (+)
+                                and lads_trim_code(t01.matnr) = t09.sap_material_code(+)
                                 and lads_trim_code(t01.matnr) = t10.sap_material_code(+)
                                 and t02.werks2 = t11.cust_code(+)
                                 and not exists (select t12.kbetr
