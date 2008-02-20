@@ -415,7 +415,7 @@ set_date()
 # --------------------------------------------------------------------------
 set_ics_path()
 {
-    export PATH="${PATH}:/usr/local/bin:/usr/contrib/bin:/usr/bin:/bin:/etc"
+    export PATH="/usr/local/bin:/usr/contrib/bin:/usr/bin:/bin:/etc"
     SCRIPT_PATH=`dirname ${1}`
     
     if [[ -z $SCRIPT_PATH ]] ; then
