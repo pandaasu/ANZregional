@@ -61,8 +61,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurity()
-   '//strReturn = GetSecurityCheck("CLIO_FCST_MAINTENANCE")
+   strReturn = GetSecurityCheck("CLIO_FCST_MAINTENANCE")
    if strReturn <> "*OK" then
       strMode = "FATAL"
    else
