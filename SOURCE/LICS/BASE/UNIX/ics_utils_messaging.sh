@@ -330,7 +330,7 @@ process_inbound_sap()
     load_file $LOAD_FILE_INBOUND "${INTERFACE_ID}" "${OUT_FILE}"
 
     # Load file onto queue for CDW if param is not equal to *NONE
-    if [[ ${FORWARD_Q} -ne "*NONE" ]] ; then
+    if [[ ${FORWARD_Q} != "*NONE" ]] ; then
         log_file "INFO: [process_inbound_sap] Executing command [cat ${OUT_FILE} | ${MQIF} -p -q ${FORWARD_Q} -r 0 -o ${OUT_FILE}]" "HARMLESS"      
         MQIFRC=`cat ${OUT_FILE} | ${MQIF} -p -q ${FORWARD_Q} -r 0 -o ${OUT_FILE} 2>&1`
         rc=$?
@@ -361,7 +361,7 @@ process_inbound_vds()
     # call oracle proc to load file
     load_file $LOAD_FILE_INBOUND "${INTERFACE_ID}" "${OUT_FILE}"   
 
-    archive_File"${OUT_FILE}"
+    archive_file"${OUT_FILE}"
 }
 
 # --------------------------------------------------------------------------

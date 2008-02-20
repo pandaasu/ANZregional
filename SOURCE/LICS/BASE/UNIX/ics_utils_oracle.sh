@@ -106,7 +106,7 @@ load_file()
     esac
     
     # Execute procedure
-    sqlplus ${USERNAME}/${PASSWORD}@${DATABASE} @${SQL_FILE} > ${SQL_OUT} 2>&1
+    sqlplus -L ${USERNAME}/${PASSWORD}@${DATABASE} @${SQL_FILE} > ${SQL_OUT} 2>&1
     if [[ $? -ne 0 ]] ; then
         error_exit "ERROR: [load_file] SQLPlus Call Failed: See Oracle error file [${SQL_OUT}]"
     fi

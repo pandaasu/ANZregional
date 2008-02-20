@@ -43,6 +43,7 @@ setup_config()
     # initialise the utlities script
     initialise_utilities $1
     
+    OUT_FILE="${INBOUND_PATH}/${INTERFACE_ID}_${NOW}_${PRC_ID}.DAT"
     SAP_CFG="${CONFIG_PATH}/sap_interface_config.xml"
 }
 

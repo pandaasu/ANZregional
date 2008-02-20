@@ -44,6 +44,7 @@ setup_config()
     # initialise the utlities script
     initialise_utilities $1
     
+    OUT_FILE="${INBOUND_PATH}/${INTERFACE_ID}_${NOW}_${PRC_ID}.DAT"
     VDS_CFG="${CONFIG_PATH}/vds_interface_config.xml"
 }
 
