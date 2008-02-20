@@ -150,6 +150,7 @@
             <select class="clsInputBN" name="sltEdiDiscCode" onChange="selectDiscCode(this);">
                <option value="A"<%if objForm.Fields("DTA_EdiDiscCode").Value = "A" then%> selected<%end if%>>All
                <option value="V"<%if objForm.Fields("DTA_EdiDiscCode").Value = "V" then%> selected<%end if%>>Volume only
+               <option value="N"<%if objForm.Fields("DTA_EdiDiscCode").Value = "N" then%> selected<%end if%>>None
             </select>
          </nobr></td>
       </tr>
