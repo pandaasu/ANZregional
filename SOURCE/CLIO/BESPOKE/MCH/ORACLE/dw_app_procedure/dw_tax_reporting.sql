@@ -1028,7 +1028,6 @@ create or replace package body dw_tax_reporting as
       var_tidx number;
       var_query varchar2(32767 char);
       var_wrk_string varchar2(4000 char);
-      var_wrk_output varchar2(2000 char);
       var_hdr_idx number;
       var_hdr_ord_number varchar2(256 char);
       var_hdr_lin_count number;
@@ -1383,12 +1382,14 @@ create or replace package body dw_tax_reporting as
       tbl_work.delete;
 
       /*-*/
-      /* Output the title data
+      /* Output the title data when required
       /*-*/
-      var_wrk_string := '"' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE01') || '"';
-      var_wrk_string := var_wrk_string || ' "' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE02') || '"';
-      var_wrk_string := var_wrk_string || ' "' || to_char(lics_time.get_tz_time(sysdate,'Asia/Shanghai'),'yyyymmddhh24miss') || '"';
-      tbl_work(tbl_work.count+1) := var_wrk_string;
+      if tbl_report.count != 0 then
+         var_wrk_string := '"' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE01') || '"';
+         var_wrk_string := var_wrk_string || ' "' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE02') || '"';
+         var_wrk_string := var_wrk_string || ' "' || to_char(lics_time.get_tz_time(sysdate,'Asia/Shanghai'),'yyyymmddhh24miss') || '"';
+         tbl_work(tbl_work.count+1) := var_wrk_string;
+      end if;
 
       /*-*/
       /* Retrieve the report data
@@ -1453,7 +1454,11 @@ create or replace package body dw_tax_reporting as
          var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_ord_qty,0));
          var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_dsp_value,0));
          var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_tax_rate,0));
-         var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_tax_eye || '"';
+         if tbl_report(idx).qry_tax_eye = '0301' and tbl_report(idx).qry_tax_rate = 0.17 then
+            var_wrk_string := var_wrk_string || ' "0309"';
+         else
+            var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_tax_eye || '"';
+         end if;
          var_wrk_string := var_wrk_string || ' 0';
          tbl_work(tbl_work.count+1) := var_wrk_string;
 
@@ -1497,9 +1502,8 @@ create or replace package body dw_tax_reporting as
       /* Output the file data
       /*-*/
       for idx in 1..tbl_work.count loop
-         var_wrk_output := tbl_work(idx);
          var_vir_table.extend;
-         var_vir_table(var_vir_table.last) := var_wrk_output;
+         var_vir_table(var_vir_table.last) := tbl_work(idx);
       end loop;
       return var_vir_table;
 
