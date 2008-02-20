@@ -43,6 +43,7 @@ create or replace package edi_invoicing as
     2008/02   Steve Gregan   Changed wholesaler monthly date selection to the requested delivery date
     2008/02   Steve Gregan   Modified the wholesaler daily quantity and value logic to store naturaly signed numbers
     2008/02   Steve Gregan   Added sold to selection to EDI link logic
+    2008/02   Steve Gregan   Added wholesaler discount none option
 
    *******************************************************************************/
 
@@ -2346,6 +2347,20 @@ create or replace package body edi_invoicing as
                close csr_lads_inv_org;
 
                /*-*/
+               /* Retrieve the invoice type sign and factor
+               /*-*/
+               open csr_invc_type;
+               fetch csr_invc_type into rcd_invc_type;
+               if csr_invc_type%notfound then
+                  rcd_invc_type.invc_type_sign := '+';
+               end if;
+               close csr_invc_type;
+               var_invoice_type_factor := 1;
+	       if rcd_invc_type.invc_type_sign = '-' then
+	          var_invoice_type_factor := -1;
+               end if;
+
+               /*-*/
                /* Retrieve the invoice partner data (Z5)
                /*-*/
                var_parvw := 'Z5';
@@ -2454,7 +2469,9 @@ create or replace package body edi_invoicing as
                open csr_lads_inv_con;
                fetch csr_lads_inv_con into rcd_lads_inv_con;
                if csr_lads_inv_con%found then
-                  rcd_whslr_dly_inv_hdr.edi_tax := nvl(rcd_lads_inv_con.kwert,0) * 100;
+                  if rcd_whslr_dly_inv_hdr.edi_disc_code != 'N' then
+                     rcd_whslr_dly_inv_hdr.edi_tax := nvl(rcd_lads_inv_con.kwert,0) * 100 * var_invoice_type_factor;
+                  end if;
                end if;
                close csr_lads_inv_con;
 
@@ -2497,20 +2514,6 @@ create or replace package body edi_invoicing as
                      rcd_whslr_dly_inv_hdr.edi_ship_to_type := rcd_lads_inv_cus.atwrt;
                   end if;
                   close csr_lads_inv_cus;
-               end if;
-
-               /*-*/
-               /* Retrieve the invoice type sign and factor
-               /*-*/
-               open csr_invc_type;
-               fetch csr_invc_type into rcd_invc_type;
-               if csr_invc_type%notfound then
-                  rcd_invc_type.invc_type_sign := '+';
-               end if;
-               close csr_invc_type;
-               var_invoice_type_factor := 1;
-	       if rcd_invc_type.invc_type_sign = '-' then
-	          var_invoice_type_factor := -1;
                end if;
 
                /*-*/
@@ -2671,12 +2674,14 @@ create or replace package body edi_invoicing as
                      /*-*/
                      rcd_whslr_dly_inv_hdr.edi_case_qty := rcd_whslr_dly_inv_hdr.edi_case_qty + rcd_whslr_dly_inv_det.edi_case_qty;
                      rcd_whslr_dly_inv_hdr.edi_amount := rcd_whslr_dly_inv_hdr.edi_amount + rcd_whslr_dly_inv_det.edi_amount;
-                     rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt := rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt + var_zcrp_count;
-                     rcd_whslr_dly_inv_hdr.edi_disc_volume_pct := rcd_whslr_dly_inv_hdr.edi_disc_volume_pct + abs(rcd_whslr_dly_inv_det.sap_disc_volume_pct);
-                     rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume + rcd_whslr_dly_inv_det.sap_disc_volume;
-                     if rcd_whslr_dly_inv_hdr.edi_disc_code = 'A' then
-                        rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn + rcd_whslr_dly_inv_det.sap_disc_noreturn;
-                        rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay + rcd_whslr_dly_inv_det.sap_disc_earlypay;
+                     if rcd_whslr_dly_inv_hdr.edi_disc_code != 'N' then
+                        rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt := rcd_whslr_dly_inv_hdr.edi_disc_volume_cnt + var_zcrp_count;
+                        rcd_whslr_dly_inv_hdr.edi_disc_volume_pct := rcd_whslr_dly_inv_hdr.edi_disc_volume_pct + abs(rcd_whslr_dly_inv_det.sap_disc_volume_pct);
+                        rcd_whslr_dly_inv_hdr.edi_disc_volume := rcd_whslr_dly_inv_hdr.edi_disc_volume + rcd_whslr_dly_inv_det.sap_disc_volume;
+                        if rcd_whslr_dly_inv_hdr.edi_disc_code = 'A' then
+                           rcd_whslr_dly_inv_hdr.edi_disc_noreturn := rcd_whslr_dly_inv_hdr.edi_disc_noreturn + rcd_whslr_dly_inv_det.sap_disc_noreturn;
+                           rcd_whslr_dly_inv_hdr.edi_disc_earlypay := rcd_whslr_dly_inv_hdr.edi_disc_earlypay + rcd_whslr_dly_inv_det.sap_disc_earlypay;
+                        end if;
                      end if;
 
                      /*-*/

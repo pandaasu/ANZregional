@@ -1904,8 +1904,8 @@ create or replace package body edi_configuration as
       if rcd_whslr.edi_whslr_name is null then
          var_message := var_message || chr(13) || 'Wholesaler name must be specified';
       end if;
-      if rcd_whslr.edi_disc_code != 'A' and rcd_whslr.edi_disc_code != 'V' then
-         var_message := var_message || chr(13) || 'Discount code must be A(All) or V(Volume only)';
+      if rcd_whslr.edi_disc_code != 'A' and rcd_whslr.edi_disc_code != 'V' and rcd_whslr.edi_disc_code != 'N' then
+         var_message := var_message || chr(13) || 'Discount code must be A(All), V(Volume only) or N(None)';
       end if;
       if rcd_whslr.edi_email_group is null then
          var_message := var_message || chr(13) || 'Email group must be specified';
@@ -2090,8 +2090,8 @@ create or replace package body edi_configuration as
       if rcd_whslr.edi_whslr_name is null then
          var_message := var_message || chr(13) || 'Wholesaler name must be specified';
       end if;
-      if rcd_whslr.edi_disc_code != 'A' and rcd_whslr.edi_disc_code != 'V' then
-         var_message := var_message || chr(13) || 'Discount code must be A(All) or V(Volume only)';
+      if rcd_whslr.edi_disc_code != 'A' and rcd_whslr.edi_disc_code != 'V' and rcd_whslr.edi_disc_code != 'N' then
+         var_message := var_message || chr(13) || 'Discount code must be A(All), V(Volume only) or N(None)';
       end if;
       if rcd_whslr.edi_email_group is null then
          var_message := var_message || chr(13) || 'Email group must be specified';
