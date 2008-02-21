@@ -16,6 +16,8 @@
  2006/11   Linden Glen    Created
  2007/04   Steve Gregan   Changed sap_pos_frmt_code definition
  2007/09   Linden Glen    Added ZZAUCUST01 to process_customer
+ 2008/01   Linden Glen    Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
+                                ZZCNCUST05, ZZAUCUST01, ZZAUCUST02
 
 *******************************************************************************/
 
@@ -42,7 +44,14 @@ create table bds_customer_classfctn
     sap_dstrbtn_route_code                varchar2(30 char)     null,
     sap_prim_route_to_cnsmr_code          varchar2(30 char)     null,
     sap_operation_bus_model_code          varchar2(30 char)     null,
-    sap_fundrsng_sales_trrtry_code        varchar2(30 char)     null);
+    sap_fundrsng_sales_trrtry_code        varchar2(30 char)     null,
+    sap_fundrsng_grp_type_code            varchar2(30 char)     null,
+    sap_ap_cust_grp_food_code             varchar2(30 char)     null,
+    sap_cn_sales_team_code                varchar2(30 char)     null,
+    sap_petcare_city_tier_code            varchar2(30 char)     null,
+    sap_snackfood_city_tier_code          varchar2(30 char)     null,
+    sap_channel_code                      varchar2(30 char)     null,
+    sap_sub_channel_code                  varchar2(30 char)     null);
     
 /**/
 /* Primary Key Constraint
@@ -77,7 +86,13 @@ comment on column bds_customer_classfctn.sap_dstrbtn_route_code is 'SAP Distribu
 comment on column bds_customer_classfctn.sap_prim_route_to_cnsmr_code is 'SAP Primary Route to Consumer  - LADS_CLA_CHR.ATWRT - CLFFERT107';
 comment on column bds_customer_classfctn.sap_operation_bus_model_code is 'SAP Operational Business Model  - LADS_CLA_CHR.ATWRT - CLFFERT108';
 comment on column bds_customer_classfctn.sap_fundrsng_sales_trrtry_code is 'SAP Fundraising Sales Territory  - LADS_CLA_CHR.ATWRT - ZZAUCUST01';
-
+comment on column bds_customer_classfctn.sap_fundrsng_grp_type_code is 'SAP Fundraising Group Type  - LADS_CLA_CHR.ATWRT - ZZAUCUST02';
+comment on column bds_customer_classfctn.sap_ap_cust_grp_food_code is 'SAP AP Customer Group MFANZ Food  - LADS_CLA_CHR.ATWRT - CLFFERT109';
+comment on column bds_customer_classfctn.sap_cn_sales_team_code is 'SAP CN Sales Team  - LADS_CLA_CHR.ATWRT - ZZCNCUST01';
+comment on column bds_customer_classfctn.sap_petcare_city_tier_code is 'SAP Petcare City Tier  - LADS_CLA_CHR.ATWRT - ZZCNCUST02';
+comment on column bds_customer_classfctn.sap_snackfood_city_tier_code  is 'SAP Snackfood City Tier  - LADS_CLA_CHR.ATWRT - ZZCNCUST03';
+comment on column bds_customer_classfctn.sap_channel_code is 'SAP Channel  - LADS_CLA_CHR.ATWRT - ZZCNCUST04';
+comment on column bds_customer_classfctn.sap_sub_channel_code is 'SAP Sub Channel  - LADS_CLA_CHR.ATWRT - ZZCNCUST05';
 
 
 /**/

@@ -42,6 +42,9 @@ create or replace package bds_atllad06_flatten as
  2006/12   Linden Glen    Removed ltrim of '0' from material code
  2007/04   Steve Gregan   Removed ltrim of '0' from customer code
  2007/09   Linden Glen    Added ZZAUCUST01 to process_customer
+ 2008/01   Linden Glen    Added Z_APCHAR10 to 13 to process_material
+                          Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
+                                ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 to process_customer
 
 *******************************************************************************/
 
@@ -238,15 +241,19 @@ create or replace package body bds_atllad06_flatten as
                 max(case when t02.atnam = 'CLFFERT25' then t02.atwrt end) as sap_cnsmr_pack_frmt_code,
                 max(case when t02.atnam = 'CLFFERT40' then t02.atwrt end) as sap_cuisine_code,
                 max(case when t02.atnam = 'CLFFERT38' then t02.atwrt end) as sap_fpps_minor_pack_code,
-                max(case when t02.atnam = 'Z_APCHAR6' then t02.atwrt end) as sap_fighting_unit_code,
-                max(case when t02.atnam = 'Z_APCHAR7' then t02.atwrt end) as sap_china_bdt_code,
                 max(case when t02.atnam = 'Z_APCHAR1' then t02.atwrt end) as sap_mrkt_ctgry_code,
                 max(case when t02.atnam = 'Z_APCHAR2' then t02.atwrt end) as sap_mrkt_sub_ctgry_code,
                 max(case when t02.atnam = 'Z_APCHAR3' then t02.atwrt end) as sap_mrkt_sub_ctgry_grp_code,
                 max(case when t02.atnam = 'Z_APCHAR4' then t02.atwrt end) as sap_sop_bus_code,
                 max(case when t02.atnam = 'Z_APCHAR5' then t02.atwrt end) as sap_prodctn_line_code,
+                max(case when t02.atnam = 'Z_APCHAR6' then t02.atwrt end) as sap_fighting_unit_code,
+                max(case when t02.atnam = 'Z_APCHAR7' then t02.atwrt end) as sap_china_bdt_code,
                 max(case when t02.atnam = 'Z_APCHAR8' then t02.atwrt end) as sap_planning_src_code,
                 max(case when t02.atnam = 'Z_APCHAR9' then t02.atwrt end) as sap_sub_fighting_unit_code,
+                max(case when t02.atnam = 'Z_APCHAR10' then t02.atwrt end) as sap_china_abc_indctr_code,
+                max(case when t02.atnam = 'Z_APCHAR11' then t02.atwrt end) as sap_nz_promotional_grp_code,
+                max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as sap_nz_sop_business_code,
+                max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as sap_nz_must_win_ctgry_code,
                 max(case when t02.atnam = 'CLFROH01' then t02.atwrt end) as sap_raw_family_code,
                 max(case when t02.atnam = 'CLFROH02' then t02.atwrt end) as sap_raw_sub_family_code,
                 max(case when t02.atnam = 'CLFROH03' then t02.atwrt end) as sap_raw_group_code,
@@ -336,7 +343,10 @@ create or replace package body bds_atllad06_flatten as
       rcd_bds_material_classfctn.sap_physical_condtn_code := rcd_lads_mat_classfctn.sap_physical_condtn_code;
       rcd_bds_material_classfctn.sap_pack_family_code := rcd_lads_mat_classfctn.sap_pack_family_code;
       rcd_bds_material_classfctn.sap_pack_sub_family_code := rcd_lads_mat_classfctn.sap_pack_sub_family_code;
-
+      rcd_bds_material_classfctn.sap_china_abc_indctr_code := rcd_lads_mat_classfctn.sap_china_abc_indctr_code;
+      rcd_bds_material_classfctn.sap_nz_promotional_grp_code := rcd_lads_mat_classfctn.sap_nz_promotional_grp_code;
+      rcd_bds_material_classfctn.sap_nz_sop_business_code := rcd_lads_mat_classfctn.sap_nz_sop_business_code;
+      rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code := rcd_lads_mat_classfctn.sap_nz_must_win_ctgry_code;
 
       /*-*/
       /* UPDATE BDS, INSERT when new record
@@ -388,7 +398,11 @@ create or replace package body bds_atllad06_flatten as
              sap_animal_parts_code = rcd_bds_material_classfctn.sap_animal_parts_code,
              sap_physical_condtn_code = rcd_bds_material_classfctn.sap_physical_condtn_code,
              sap_pack_family_code = rcd_bds_material_classfctn.sap_pack_family_code,
-             sap_pack_sub_family_code = rcd_bds_material_classfctn.sap_pack_sub_family_code
+             sap_pack_sub_family_code = rcd_bds_material_classfctn.sap_pack_sub_family_code,
+             sap_china_abc_indctr_code = rcd_bds_material_classfctn.sap_china_abc_indctr_code,
+             sap_nz_promotional_grp_code = rcd_bds_material_classfctn.sap_nz_promotional_grp_code,
+             sap_nz_sop_business_code = rcd_bds_material_classfctn.sap_nz_sop_business_code,
+             sap_nz_must_win_ctgry_code = rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code
          where sap_material_code = rcd_bds_material_classfctn.sap_material_code;
       if (sql%notfound) then
          insert into bds_material_classfctn
@@ -439,7 +453,11 @@ create or replace package body bds_atllad06_flatten as
              sap_animal_parts_code,
              sap_physical_condtn_code,
              sap_pack_family_code,
-             sap_pack_sub_family_code)
+             sap_pack_sub_family_code,
+             sap_china_abc_indctr_code,
+             sap_nz_promotional_grp_code,
+             sap_nz_sop_business_code,
+             sap_nz_must_win_ctgry_code)
            values
             (rcd_bds_material_classfctn.sap_material_code,
              rcd_bds_material_classfctn.sap_idoc_name,
@@ -488,7 +506,11 @@ create or replace package body bds_atllad06_flatten as
              rcd_bds_material_classfctn.sap_animal_parts_code,
              rcd_bds_material_classfctn.sap_physical_condtn_code,
              rcd_bds_material_classfctn.sap_pack_family_code,
-             rcd_bds_material_classfctn.sap_pack_sub_family_code);
+             rcd_bds_material_classfctn.sap_pack_sub_family_code,
+             rcd_bds_material_classfctn.sap_china_abc_indctr_code,
+             rcd_bds_material_classfctn.sap_nz_promotional_grp_code,
+             rcd_bds_material_classfctn.sap_nz_sop_business_code,
+             rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code);
       end if;
 
 
@@ -528,18 +550,25 @@ create or replace package body bds_atllad06_flatten as
       /*-*/
       cursor csr_lads_cus_classfctn is
          select t01.objek as sap_customer_code,
-                max(case when t02.atnam = 'CLFFERT101' then t02.atwrt end) as sap_pos_frmt_code,
+                max(case when t02.atnam = 'CLFFERT36' then t02.atwrt end) as sap_cust_buying_grp_code,
+                max(case when t02.atnam = 'CLFFERT37' then t02.atwrt end) as sap_multi_mrkt_acct_code,
                 max(case when t02.atnam = 'CLFFERT41' then t02.atwrt end) as sap_pos_frmt_grp_code,
+                max(case when t02.atnam = 'CLFFERT101' then t02.atwrt end) as sap_pos_frmt_code,
                 max(case when t02.atnam = 'CLFFERT102' then t02.atwrt end) as sap_pos_frmt_size_code,
                 max(case when t02.atnam = 'CLFFERT103' then t02.atwrt end) as sap_pos_place_code,
                 max(case when t02.atnam = 'CLFFERT104' then t02.atwrt end) as sap_banner_code,
                 max(case when t02.atnam = 'CLFFERT105' then t02.atwrt end) as sap_ultmt_prnt_acct_code,
-                max(case when t02.atnam = 'CLFFERT37' then t02.atwrt end) as sap_multi_mrkt_acct_code,
-                max(case when t02.atnam = 'CLFFERT36' then t02.atwrt end) as sap_cust_buying_grp_code,
                 max(case when t02.atnam = 'CLFFERT106' then t02.atwrt end) as sap_dstrbtn_route_code,
                 max(case when t02.atnam = 'CLFFERT107' then t02.atwrt end) as sap_prim_route_to_cnsmr_code,
                 max(case when t02.atnam = 'CLFFERT108' then t02.atwrt end) as sap_operation_bus_model_code,
+                max(case when t02.atnam = 'CLFFERT109' then t02.atwrt end) as sap_ap_cust_grp_food_code,
                 max(case when t02.atnam = 'ZZAUCUST01' then t02.atwrt end) as sap_fundrsng_sales_trrtry_code,
+                max(case when t02.atnam = 'ZZAUCUST02' then t02.atwrt end) as sap_fundrsng_grp_type_code,
+                max(case when t02.atnam = 'ZZCNCUST01' then t02.atwrt end) as sap_cn_sales_team_code,
+                max(case when t02.atnam = 'ZZCNCUST02' then t02.atwrt end) as sap_petcare_city_tier_code,
+                max(case when t02.atnam = 'ZZCNCUST03' then t02.atwrt end) as sap_snackfood_city_tier_code,
+                max(case when t02.atnam = 'ZZCNCUST04' then t02.atwrt end) as sap_channel_code,
+                max(case when t02.atnam = 'ZZCNCUST05' then t02.atwrt end) as sap_sub_channel_code,
                 max(t01.idoc_name) as sap_idoc_name,
                 max(t01.idoc_number) as sap_idoc_number,
                 max(t01.idoc_timestamp) as sap_idoc_timestamp,
@@ -593,6 +622,13 @@ create or replace package body bds_atllad06_flatten as
       rcd_bds_customer_classfctn.sap_prim_route_to_cnsmr_code := rcd_lads_cus_classfctn.sap_prim_route_to_cnsmr_code;
       rcd_bds_customer_classfctn.sap_operation_bus_model_code := rcd_lads_cus_classfctn.sap_operation_bus_model_code;
       rcd_bds_customer_classfctn.sap_fundrsng_sales_trrtry_code := rcd_lads_cus_classfctn.sap_fundrsng_sales_trrtry_code;
+      rcd_bds_customer_classfctn.sap_fundrsng_grp_type_code := rcd_lads_cus_classfctn.sap_fundrsng_grp_type_code;
+      rcd_bds_customer_classfctn.sap_ap_cust_grp_food_code := rcd_lads_cus_classfctn.sap_ap_cust_grp_food_code;
+      rcd_bds_customer_classfctn.sap_cn_sales_team_code := rcd_lads_cus_classfctn.sap_cn_sales_team_code;
+      rcd_bds_customer_classfctn.sap_petcare_city_tier_code := rcd_lads_cus_classfctn.sap_petcare_city_tier_code;
+      rcd_bds_customer_classfctn.sap_snackfood_city_tier_code := rcd_lads_cus_classfctn.sap_snackfood_city_tier_code;
+      rcd_bds_customer_classfctn.sap_channel_code := rcd_lads_cus_classfctn.sap_channel_code;
+      rcd_bds_customer_classfctn.sap_sub_channel_code := rcd_lads_cus_classfctn.sap_sub_channel_code;
 
 
       /*-*/
@@ -615,7 +651,14 @@ create or replace package body bds_atllad06_flatten as
              sap_dstrbtn_route_code = rcd_bds_customer_classfctn.sap_dstrbtn_route_code,
              sap_prim_route_to_cnsmr_code = rcd_bds_customer_classfctn.sap_prim_route_to_cnsmr_code,
              sap_operation_bus_model_code = rcd_bds_customer_classfctn.sap_operation_bus_model_code,
-             sap_fundrsng_sales_trrtry_code = rcd_bds_customer_classfctn.sap_fundrsng_sales_trrtry_code
+             sap_fundrsng_sales_trrtry_code = rcd_bds_customer_classfctn.sap_fundrsng_sales_trrtry_code,
+             sap_fundrsng_grp_type_code = rcd_bds_customer_classfctn.sap_fundrsng_grp_type_code,
+             sap_ap_cust_grp_food_code = rcd_bds_customer_classfctn.sap_ap_cust_grp_food_code,
+             sap_cn_sales_team_code = rcd_bds_customer_classfctn.sap_cn_sales_team_code,
+             sap_petcare_city_tier_code = rcd_bds_customer_classfctn.sap_petcare_city_tier_code,
+             sap_snackfood_city_tier_code = rcd_bds_customer_classfctn.sap_snackfood_city_tier_code,
+             sap_channel_code = rcd_bds_customer_classfctn.sap_channel_code,
+             sap_sub_channel_code = rcd_bds_customer_classfctn.sap_sub_channel_code
          where sap_customer_code = rcd_bds_customer_classfctn.sap_customer_code;
       if (sql%notfound) then
          insert into bds_customer_classfctn
@@ -636,7 +679,14 @@ create or replace package body bds_atllad06_flatten as
              sap_dstrbtn_route_code,
              sap_prim_route_to_cnsmr_code,
              sap_operation_bus_model_code,
-             sap_fundrsng_sales_trrtry_code)
+             sap_fundrsng_sales_trrtry_code,
+             sap_fundrsng_grp_type_code,
+             sap_ap_cust_grp_food_code,
+             sap_cn_sales_team_code,
+             sap_petcare_city_tier_code,
+             sap_snackfood_city_tier_code,
+             sap_channel_code,
+             sap_sub_channel_code)
           values
             (rcd_bds_customer_classfctn.sap_customer_code,
              rcd_bds_customer_classfctn.sap_idoc_name,
@@ -655,7 +705,14 @@ create or replace package body bds_atllad06_flatten as
              rcd_bds_customer_classfctn.sap_dstrbtn_route_code,
              rcd_bds_customer_classfctn.sap_prim_route_to_cnsmr_code,
              rcd_bds_customer_classfctn.sap_operation_bus_model_code,
-             rcd_bds_customer_classfctn.sap_fundrsng_sales_trrtry_code);
+             rcd_bds_customer_classfctn.sap_fundrsng_sales_trrtry_code,
+             rcd_bds_customer_classfctn.sap_fundrsng_grp_type_code,
+             rcd_bds_customer_classfctn.sap_ap_cust_grp_food_code,
+             rcd_bds_customer_classfctn.sap_cn_sales_team_code,
+             rcd_bds_customer_classfctn.sap_petcare_city_tier_code,
+             rcd_bds_customer_classfctn.sap_snackfood_city_tier_code,
+             rcd_bds_customer_classfctn.sap_channel_code,
+             rcd_bds_customer_classfctn.sap_sub_channel_code);
       end if;
 
    /*-------------------*/

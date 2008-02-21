@@ -16,6 +16,7 @@
  2006/11   Linden Glen    Created
  2006/12   Linden Glen    Included bds_material_hdr join for material_type
  2007/01   Linden Glen    Included ROH01, 02, 03, 04, 05 and VERP01, 02 classifications
+ 2008/01   Linden Glen    Added Z_APCHAR10 to 13
 
 *******************************************************************************/
 
@@ -136,7 +137,15 @@ create or replace view bds_material_classfctn_en as
           t01.sap_animal_parts_code as sap_animal_parts_code,
           t43.sap_charistic_value_long_desc as sap_animal_parts_lng_dsc,
           t01.sap_physical_condtn_code as sap_physical_condtn_code,
-          t44.sap_charistic_value_long_desc as sap_physical_condtn_lng_dsc
+          t44.sap_charistic_value_long_desc as sap_physical_condtn_lng_dsc,
+          t01.sap_china_abc_indctr_code as sap_china_abc_indctr_code,
+          t45.sap_charistic_value_desc as sap_china_abc_indctr_desc,
+          t01.sap_nz_promotional_grp_code as sap_nz_promotional_grp_code,
+          t46.sap_charistic_value_desc as sap_nz_promotional_grp_desc,
+          t01.sap_nz_sop_business_code as sap_nz_sop_business_code,
+          t47.sap_charistic_value_desc as sap_nz_sop_business_desc,
+          t01.sap_nz_must_win_ctgry_code as sap_nz_must_win_ctgry_code,
+          t48.sap_charistic_value_desc as sap_nz_must_win_ctgry_desc
    from bds_material_classfctn t01,
         (select a.sap_charistic_value_code,
                 a.sap_charistic_value_shrt_desc,
@@ -332,7 +341,23 @@ create or replace view bds_material_classfctn_en as
         (select a.sap_charistic_value_code,
                 a.sap_charistic_value_long_desc
          from bds_refrnc_charistic a
-         where sap_charistic_code = '/MARS/MD_ROH05') t44
+         where sap_charistic_code = '/MARS/MD_ROH05') t44,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'Z_APCHAR10') t45,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'Z_APCHAR11') t46,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'Z_APCHAR12') t47,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'Z_APCHAR13') t48
    where t01.sap_bus_sgmnt_code = t02.sap_charistic_value_code(+)
      and t01.sap_mrkt_sgmnt_code = t03.sap_charistic_value_code(+)
      and t01.sap_brand_flag_code = t04.sap_charistic_value_code(+)
@@ -375,7 +400,11 @@ create or replace view bds_material_classfctn_en as
      and t01.sap_raw_sub_family_code = t41.sap_charistic_value_code(+)
      and t01.sap_raw_group_code = t42.sap_charistic_value_code(+)
      and t01.sap_animal_parts_code = t43.sap_charistic_value_code(+)
-     and t01.sap_physical_condtn_code = t44.sap_charistic_value_code(+);
+     and t01.sap_physical_condtn_code = t44.sap_charistic_value_code(+)
+     and t01.sap_china_abc_indctr_code = t45.sap_charistic_value_code(+)
+     and t01.sap_nz_promotional_grp_code = t46.sap_charistic_value_code(+)
+     and t01.sap_nz_sop_business_code = t47.sap_charistic_value_code(+)
+     and t01.sap_nz_must_win_ctgry_code = t48.sap_charistic_value_code(+);
 /
 
 /**/
@@ -387,3 +416,4 @@ create or replace public synonym bds_material_classfctn_en for bds.bds_material_
 /**/
 /* Authority
 /**/
+grant select on bds_material_classfctn_en to public;

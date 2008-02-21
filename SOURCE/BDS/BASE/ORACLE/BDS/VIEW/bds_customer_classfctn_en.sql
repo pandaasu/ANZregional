@@ -15,6 +15,9 @@
  -------   ------         -----------
  2006/11   Linden Glen    Created
  2007/09   Linden Glen    Added ZZAUCUST01
+ 2008/01   Linden Glen    Added Z_APCHAR10 to 13 to process_material
+                          Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
+                                ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 
 
 *******************************************************************************/
 
@@ -22,7 +25,6 @@
 /**/
 /* Table creation
 /**/
-
 create or replace view bds_customer_classfctn_en as  
    select t01.sap_customer_code as sap_customer_code,
           t01.sap_pos_frmt_grp_code as sap_pos_frmt_grp_code,
@@ -48,7 +50,21 @@ create or replace view bds_customer_classfctn_en as
           t01.sap_operation_bus_model_code as sap_operation_bus_model_code,
           t12.sap_charistic_value_desc as sap_operation_bus_model_desc,
           t01.sap_fundrsng_sales_trrtry_code as sap_fundrsng_sales_trrtry_code,
-          t13.sap_charistic_value_desc as sap_fundrsng_sales_trrtry_desc
+          t13.sap_charistic_value_desc as sap_fundrsng_sales_trrtry_desc,
+          t01.sap_fundrsng_grp_type_code as sap_fundrsng_grp_type_code,
+          t14.sap_charistic_value_desc as sap_fundrsng_grp_type_desc,
+          t01.sap_cn_sales_team_code as sap_cn_sales_team_code,
+          t15.sap_charistic_value_desc as sap_cn_sales_team_desc,
+          t01.sap_petcare_city_tier_code as sap_petcare_city_tier_code,
+          t16.sap_charistic_value_desc as sap_petcare_city_tier_desc,
+          t01.sap_snackfood_city_tier_code as sap_snackfood_city_tier_code,
+          t17.sap_charistic_value_desc as sap_snackfood_city_tier_desc,
+          t01.sap_channel_code as sap_channel_code,
+          t18.sap_charistic_value_desc as sap_channel_desc,
+          t01.sap_sub_channel_code as sap_sub_channel_code,
+          t19.sap_charistic_value_desc as sap_sub_channel_desc,
+          t01.sap_ap_cust_grp_food_code as sap_ap_cust_grp_food_code,
+          t20.sap_charistic_value_desc as sap_ap_cust_grp_food_desc
    from bds_customer_classfctn t01,
         (select a.sap_charistic_value_code,
                 a.sap_charistic_value_desc
@@ -97,7 +113,35 @@ create or replace view bds_customer_classfctn_en as
         (select a.sap_charistic_value_code,
                 a.sap_charistic_value_desc
          from bds_charistic_value_en a
-         where sap_charistic_code = 'ZZAUCUST01') t13
+         where sap_charistic_code = 'ZZAUCUST01') t13,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZAUCUST02') t14,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZCNCUST01') t15,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZCNCUST02') t16,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZCNCUST03') t17,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZCNCUST04') t18,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'ZZCNCUST05') t19,
+        (select a.sap_charistic_value_code,
+                a.sap_charistic_value_desc
+         from bds_charistic_value_en a
+         where sap_charistic_code = 'CLFFERT109') t20
    where t01.sap_pos_frmt_grp_code = t02.sap_charistic_value_code(+)
      and t01.sap_pos_frmt_code = t03.sap_charistic_value_code(+)
      and t01.sap_pos_frmt_size_code = t04.sap_charistic_value_code(+)
@@ -109,7 +153,14 @@ create or replace view bds_customer_classfctn_en as
      and t01.sap_dstrbtn_route_code = t10.sap_charistic_value_code(+)
      and t01.sap_prim_route_to_cnsmr_code = t11.sap_charistic_value_code(+)
      and t01.sap_operation_bus_model_code = t12.sap_charistic_value_code(+)
-     and t01.sap_fundrsng_sales_trrtry_code = t13.sap_charistic_value_code(+);
+     and t01.sap_fundrsng_sales_trrtry_code = t13.sap_charistic_value_code(+)
+     and t01.sap_fundrsng_grp_type_code = t14.sap_charistic_value_code(+)
+     and t01.sap_cn_sales_team_code = t15.sap_charistic_value_code(+)
+     and t01.sap_petcare_city_tier_code = t16.sap_charistic_value_code(+)
+     and t01.sap_snackfood_city_tier_code = t17.sap_charistic_value_code(+)
+     and t01.sap_channel_code = t18.sap_charistic_value_code(+)
+     and t01.sap_sub_channel_code = t19.sap_charistic_value_code(+)
+     and t01.sap_ap_cust_grp_food_code = t20.sap_charistic_value_code(+);
 /
 
 /**/
