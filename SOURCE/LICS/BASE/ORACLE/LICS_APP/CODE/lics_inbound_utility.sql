@@ -63,6 +63,7 @@ create or replace package lics_inbound_utility as
     -------   ------         -----------
     2004/01   Steve Gregan   Created
     2006/02   Linden Glen    ADD: CSV processing
+    2008/02   Steve Gregan   ADD: CSV parser with text qualifier
 
    *******************************************************************************/
 
@@ -80,6 +81,7 @@ create or replace package lics_inbound_utility as
    function get_date(par_column in varchar2, par_format in varchar2) return date;
    procedure set_csv_definition(par_column in varchar2, par_position in integer);
    procedure parse_csv_record(par_record in varchar2, par_delimiter in varchar2);
+   procedure parse_csv_record(par_record in varchar2, par_delimiter in varchar2, par_text_qualifier in varchar2);
 
 end lics_inbound_utility;
 /
@@ -460,6 +462,75 @@ create or replace package body lics_inbound_utility as
          end if;
 
       end loop;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end parse_csv_record;
+
+   /********************************************************/
+   /* This procedure performs the parse CSV record routine */
+   /********************************************************/
+   procedure parse_csv_record(par_record in varchar2, par_delimiter in varchar2, par_text_qualifier in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_index number(5,0);
+      var_value varchar2(4000);
+      var_text boolean;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the routine
+      /*-*/
+      var_error := false;
+      var_group := con_csv_group;
+      tbl_value.delete;
+      if not(tbl_group.exists(upper(var_group))) then
+         return;
+      end if;
+
+      /*-*/
+      /* Parse the record
+      /*-*/
+      var_index := tbl_group(upper(var_group)).str_index;
+      var_value := null;
+      var_text := false;
+      for idx in 1..length(par_record) loop
+         if var_text = true then
+            if substr(par_record,idx,1) = par_text_qualifier then
+               var_text := false;
+            else
+               var_value := var_value||substr(par_record,idx,1);
+            end if;
+         else
+            if substr(par_record,idx,1) = par_text_qualifier then
+               var_text := true;
+            elsif substr(par_record,idx,1) = par_delimiter then
+               for idy in tbl_group(upper(var_group)).str_index..tbl_group(upper(var_group)).end_index loop
+                  if tbl_definition(idy).length = var_index then
+                     tbl_value(tbl_definition(idy).column) := var_value;
+                  end if;
+               end loop;
+               var_index := var_index + 1;
+               var_value := null;
+            else
+               var_value := var_value||substr(par_record,idx,1);
+            end if;
+         end if;
+      end loop;
+      if var_text = false then
+         for idy in tbl_group(upper(var_group)).str_index..tbl_group(upper(var_group)).end_index loop
+            if tbl_definition(idy).length = var_index then
+               tbl_value(tbl_definition(idy).column) := var_value;
+            end if;
+         end loop;
+      end if;
 
    /*-------------*/
    /* End routine */
