@@ -23,6 +23,7 @@
 create table sap_inv_trace
    (trace_seqn                               number                 not null,
     trace_date                               date                   not null,
+    trace_status                             varchar2(10 char)      not null,
     company_code                             varchar2(10 char)      not null,
     billing_doc_num                          varchar2(10 char)      not null,
     doc_currcy_code                          varchar2(10 char)      null,
