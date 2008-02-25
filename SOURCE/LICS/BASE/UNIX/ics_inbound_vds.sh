@@ -46,6 +46,7 @@ setup_config()
     
     OUT_FILE="${INBOUND_PATH}/${INTERFACE_ID}_${NOW}_${PRC_ID}.DAT"
     VDS_CFG="${CONFIG_PATH}/vds_interface_config.xml"
+    DATA_FLOW_TYPE=$INBOUND
 }
 
 # --------------------------------------------------------------------------

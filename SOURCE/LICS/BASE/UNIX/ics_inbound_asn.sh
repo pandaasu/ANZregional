@@ -41,6 +41,8 @@ setup_config()
 {
     # initialise the utlities script
     initialise_utilities $1
+    
+    DATA_FLOW_TYPE=$INBOUND
 }
 
 # --------------------------------------------------------------------------

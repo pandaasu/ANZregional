@@ -46,6 +46,10 @@ DATE_FORMAT_FILE=0          # Format: 20071029_123305
 DATE_FORMAT_FILE_SHORT=1    # Format: 200710291233
 DATE_FORMAT_READABLE=2      # Format: 2007-10-29_12:33:05
 
+INBOUND=0
+OUTBOUND=1
+PASSTHRU=2
+
 # add any additional operating system to support here
 HP_UNIX_OS="HP-UX"
 LINUX_OS="Linux"
@@ -125,10 +129,13 @@ clean_up()
 {
     clean_up_file $SQL_FILE
     clean_up_file $SQL_OUT
-    clean_up_file $Q_FILE
     clean_up_file $TMP_OUT
     clean_up_file $COMPRESS_FILE_NAME
     clean_up_file $DECOMPRESS_FILE_NAME
+    
+    if [[ $DATA_FLOW_TYPE -ne $PASSTHRU ]] ; then
+        clean_up_file $Q_FILE
+    fi
 }
 
 # ---------------------------------------------------------------------------

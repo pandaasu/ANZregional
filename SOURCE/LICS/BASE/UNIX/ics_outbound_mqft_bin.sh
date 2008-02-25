@@ -44,6 +44,7 @@ setup_config()
     
     # set the file permissions (chmod 777)
     set_permissions $S_FILE_NAME
+    DATA_FLOW_TYPE=$OUTBOUND
 }
 
 # --------------------------------------------------------------------------

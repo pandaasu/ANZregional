@@ -45,6 +45,7 @@ setup_config()
     
     OUT_FILE="${INBOUND_PATH}/${INTERFACE_ID}_${NOW}_${PRC_ID}.DAT"
     SAP_CFG="${CONFIG_PATH}/sap_interface_config.xml"
+    DATA_FLOW_TYPE=$INBOUND
 }
 
 # --------------------------------------------------------------------------

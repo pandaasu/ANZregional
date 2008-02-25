@@ -47,6 +47,7 @@ setup_config()
     
     # Declare Files & temp variables
     TARG_FILE="${FORWARD_Q}.DAT"   # TARGET FILE NAME
+    DATA_FLOW_TYPE=$INBOUND
 }
 
 # --------------------------------------------------------------------------
