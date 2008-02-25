@@ -603,6 +603,24 @@ create or replace package body ods_atlods18 as
       end if;
 
       /*-*/
+      /* Update GEN lines for ZRK invoice when required
+      /*-*/
+      if var_trn_ignore = false and
+         var_trn_error = false then
+         if (rcd_sap_inv_hdr.auart = 'ZRK') then
+            update sap_inv_gen
+               set menge = nvl(menge,0)*-1,
+                   ntgew = nvl(ntgew,0)*-1,
+                   brgew = nvl(brgew,0)*-1,
+                   volum = nvl(volum,0)*-1,
+                   fklmg = nvl(fklmg,0)*-1,
+                   kwmeng = nvl(kwmeng,0)*-1
+             where belnr = rcd_sap_inv_hdr.belnr
+               and pstyv = 'ZCR2';
+         end if;
+      end if;
+
+      /*-*/
       /* Load the transaction trace when required
       /*-*/
       if var_trn_ignore = false and
@@ -3343,18 +3361,6 @@ create or replace package body ods_atlods18 as
             and t05.genseq = t09.genseq(+);
       rcd_ods_data csr_ods_data%rowtype;
 
-      cursor csr_ods_lookup is
-         select t01.dlvry_doc_num,
-                t01.dlvry_doc_line_num
-           from sap_del_trace t01
-          where t01.dlvry_doc_num = (select refnr from sap_inv_ref
-                                      where belnr = rcd_sap_inv_trace.billing_doc_num
-                                        and qualf = '012')
-            and t01.order_doc_num = rcd_sap_inv_trace.order_doc_num
-            and t01.order_doc_line_num = rcd_sap_inv_trace.order_doc_line_num
-          order by t01.trace_seqn desc;
-      rcd_ods_lookup csr_ods_lookup%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -3370,6 +3376,7 @@ create or replace package body ods_atlods18 as
       /*-*/
       rcd_sap_inv_trace.trace_seqn := var_sequence;
       rcd_sap_inv_trace.trace_date := sysdate;
+      rcd_sap_inv_trace.trace_status := '*ACTIVE';
 
       /*-*/
       /* Retrieve the invoice trace detail
@@ -3379,6 +3386,19 @@ create or replace package body ods_atlods18 as
          fetch csr_ods_data into rcd_ods_data;
          if csr_ods_data%notfound then
             exit;
+         end if;
+
+         /*-*/
+         /* Set the trace status
+         /*-*/
+         rcd_sap_inv_trace.trace_status := '*ACTIVE';
+
+         /*-*/
+         /* Deleted invoice line
+         /* **notes** no invoice lines found
+         /*-*/
+         if rcd_ods_data.billing_doc_num is null then
+            rcd_sap_inv_trace.trace_status := '*DELETED';
          end if;
 
          /*-*/
@@ -3442,19 +3462,6 @@ create or replace package body ods_atlods18 as
          else
             rcd_sap_inv_trace.order_doc_num := rcd_ods_data.order_doc_num;
             rcd_sap_inv_trace.order_doc_line_num := rcd_ods_data.order_doc_line_num;
-         end if;
-
-         /*-*/
-         /* Lookup the delivery line from the delivery trace when required
-         /*-*/
-         if rcd_sap_inv_trace.dlvry_doc_num = rcd_sap_inv_trace.order_doc_num then
-            open csr_ods_lookup;
-            fetch csr_ods_lookup into rcd_ods_lookup;
-            if csr_ods_lookup%found then
-               rcd_sap_inv_trace.dlvry_doc_num := rcd_ods_lookup.dlvry_doc_num;
-               rcd_sap_inv_trace.dlvry_doc_line_num := rcd_ods_lookup.dlvry_doc_line_num;
-            end if;
-            close csr_ods_lookup;
          end if;
 
          /*-*/

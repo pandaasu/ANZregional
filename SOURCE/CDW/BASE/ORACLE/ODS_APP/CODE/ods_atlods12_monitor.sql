@@ -1,31 +1,31 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : ods
- Package : ods_atlods12_monitor
- Owner   : ods_app
- Author  : Steve Gregan
-
- Description
- -----------
- Operational Data Store - atlods12 - Inbound Invoice Summary Monitor
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2007/10   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package ods_atlods12_monitor as
 
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : ods
+    Package : ods_atlods12_monitor
+    Owner   : ods_app
+    Author  : Steve Gregan
+
+    Description
+    -----------
+    Operational Data Store - atlods12 - Inbound Invoice Summary Monitor
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2007/10   Steve Gregan   Created
+
+   *******************************************************************************/
+
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2);
+   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2, par_hdrseq in number);
 
 end ods_atlods12_monitor;
 /
@@ -53,7 +53,7 @@ create or replace package body ods_atlods12_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2) is
+   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2, par_hdrseq in number) is
 
       /*-*/
       /* Local definitions
@@ -77,7 +77,7 @@ create or replace package body ods_atlods12_monitor as
       /*-*/
       var_alert := lics_setting_configuration.retrieve_setting(con_rec_alt_group, con_rec_alt_code);
       var_email := lics_setting_configuration.retrieve_setting(con_rec_ema_group, con_rec_ema_code);
-      var_rec_return := dw_app.dw_reconciliation.reconcile_sales(par_fkdat, par_bukrs, var_rec_message);
+      var_rec_return := dw_app.dw_reconciliation.reconcile_sales(par_fkdat, par_bukrs, par_hdrseq, var_rec_message);
       if var_rec_return != '*OK' then
          if var_rec_return != '*VAR_ACCEPT' then
             if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
@@ -100,7 +100,7 @@ create or replace package body ods_atlods12_monitor as
       /*-*/
       if var_rec_return = '*OK' or 
          var_rec_return = '*VAR_ACCEPT' then
-         lics_stream_loader.execute('TRIGGERED_AGGREGATION_'||par_bukrs,
+         lics_stream_loader.execute('TRIGGERED_STREAM_'||par_bukrs,
                                     'dw_app.dw_triggered_aggregation.execute(''*DATE'',''*ALL'','''||par_fkdat||''','''||par_bukrs||''')');
       end if;
 
