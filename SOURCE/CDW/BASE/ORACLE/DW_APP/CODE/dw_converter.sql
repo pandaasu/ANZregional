@@ -26,7 +26,7 @@ create or replace package dw_converter as
    procedure execute_purch_order_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
    procedure execute_order_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
    procedure execute_dlvry_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
-   procedure execute_sales_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
+   procedure execute_sales_fact(fr_yyyyppdd in varchar2);
 
 end dw_converter;
 /
@@ -767,7 +767,7 @@ create or replace package body dw_converter as
    /**********************************************************/
    /* This procedure performs the execute sales fact routine */
    /**********************************************************/
-   procedure execute_sales_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2) is
+   procedure execute_sales_fact(fr_yyyyppdd in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -789,9 +789,7 @@ create or replace package body dw_converter as
            from sales_fact t01,
                 mars_date t02
           where t01.creatn_date = t02.calendar_date(+)
-            and substr(t01.creatn_yyyyppdd,1,6) >= fr_yyyypp
-            and substr(t01.creatn_yyyyppdd,1,6) <= to_yyyypp
-          order by t01.creatn_yyyyppdd asc;
+            and t01.creatn_yyyyppdd >= to_number(fr_yyyyppdd);
       rcd_source csr_source%rowtype;
 
    /*-------------*/
