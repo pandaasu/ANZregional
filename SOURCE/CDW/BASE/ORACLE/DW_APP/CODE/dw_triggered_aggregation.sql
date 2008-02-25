@@ -693,7 +693,7 @@ create or replace package body dw_triggered_aggregation as
                                     where t01.company_code = par_company
                                       and trunc(t01.creatn_date) = trunc(par_date)
                                     group by t01.billing_doc_num)
-            and not(t01.billing_doc_line_num is null)
+            and t01.trace_status = '*ACTIVE'
             and t01.matl_code = t02.objek(+)
             and t02.obtab = 'MARA'
             and t02.klart = '001'
@@ -701,6 +701,14 @@ create or replace package body dw_triggered_aggregation as
           order by t01.billing_doc_num asc,
                    t01.billing_doc_line_num asc;
       rcd_trace csr_trace%rowtype;
+
+  --    cursor csr_dlvry_base is
+  --       select t01.dlvry_doc_num,
+  --              t01.dlvry_doc_line_num
+  --         from dw_dlvry_base t01
+  --        where t01.order_doc_num = rcd_sales_base.order_doc_num
+  --          and t01.order_doc_line_num = rcd_sales_base.order_doc_line_num;
+  --    rcd_dlvry_base csr_dlvry_base%rowtype;
 
       cursor csr_invc_type is
          select decode(t01.invc_type_sign,'-',-1,1) as invoice_type_factor
@@ -745,6 +753,7 @@ create or replace package body dw_triggered_aggregation as
       /*
       /* Load the sales base fact rows from the ODS trace data
       /* **notes** 1. Select all sales base rows for the company and creation date.
+      /*           2. Only valid invoices are selected (TRACE_STATUS = *ACTIVE)
       /*-*/
       open csr_trace;
       loop
@@ -824,6 +833,22 @@ create or replace package body dw_triggered_aggregation as
                rcd_sales_base.demand_plng_grp_division_code := '56';
             end if;
          end if;
+
+    --     /*-*/
+    --     /* Lookup the delivery line from DLVRY_BASE when required
+    --     /* **note** delivery number is not stored on the sap_inv_irf table for a return invoice
+    --     /*-*/
+    --     if not(rcd_sales_base.order_doc_num is null) then
+    --        if rcd_sales_base.dlvry_doc_num = rcd_sales_base.order_doc_num then
+    --           open csr_dlvry_base;
+    --           fetch csr_dlvry_base into rcd_dlvry_base;
+    --           if csr_dlvry_base%found then
+    --              rcd_sales_base.dlvry_doc_num := rcd_dlvry_base.dlvry_doc_num;
+    --              rcd_sales_base.dlvry_doc_line_num := rcd_dlvry_base.dlvry_doc_line_num;
+    --           end if;
+    --           close csr_dlvry_base;
+    --        end if;
+    --     end if;
 
          /*-*/
          /* Retrieve the invoice type factor
@@ -947,7 +972,7 @@ create or replace package body dw_triggered_aggregation as
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            dw_utility.dlvry_base_status(rcd_sales_base.dlvry_doc_num, rcd_sales_base.dlvry_doc_line_num);
+        --    dw_utility.dlvry_base_status(rcd_sales_base.dlvry_doc_num, rcd_sales_base.dlvry_doc_line_num);
 
             /*-------------------*/
             /* ORDER_BASE Status */
@@ -960,9 +985,9 @@ create or replace package body dw_triggered_aggregation as
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            if not(rcd_sales_base.order_doc_num is null) then
-               dw_utility.order_base_status(rcd_sales_base.order_doc_num, rcd_sales_base.order_doc_line_num);
-            end if;
+        --    if not(rcd_sales_base.order_doc_num is null) then
+        --       dw_utility.order_base_status(rcd_sales_base.order_doc_num, rcd_sales_base.order_doc_line_num);
+        --    end if;
 
             /*-------------------*/
             /* PURCH_BASE Status */
@@ -975,9 +1000,9 @@ create or replace package body dw_triggered_aggregation as
             /*    triggered and scheduled aggregation using the same process isolation locking
             /*    string and sharing the same ICS stream code
             /*-*/
-            if not(rcd_sales_base.purch_order_doc_num is null) then
-               dw_utility.purch_base_status(rcd_sales_base.purch_order_doc_num, rcd_sales_base.purch_order_doc_line_num);
-            end if;
+        --    if not(rcd_sales_base.purch_order_doc_num is null) then
+        --       dw_utility.purch_base_status(rcd_sales_base.purch_order_doc_num, rcd_sales_base.purch_order_doc_line_num);
+        --    end if;
 
          end if;
 
