@@ -51,7 +51,7 @@ create or replace package dw_reconciliation as
    /*-*/
    /* Public declarations
    /*-*/
-   function reconcile_sales(par_fkdat in varchar2, par_bukrs in varchar2, par_message out varchar2) return varchar2;
+   function reconcile_sales(par_fkdat in varchar2, par_bukrs in varchar2, par_hdrseq in number, par_message out varchar2) return varchar2;
    function check_sales(par_message out varchar2, par_warning out varchar2, par_today out varchar2) return varchar2;
 
 end dw_reconciliation;
@@ -73,6 +73,7 @@ create or replace package body dw_reconciliation as
    /******************************************************/
    function reconcile_sales(par_fkdat in varchar2,
                             par_bukrs in varchar2,
+                            par_hdrseq in number,
                             par_message out varchar2) return varchar2 is
 
       /*-*/
@@ -105,18 +106,23 @@ create or replace package body dw_reconciliation as
            from sap_inv_sum_hdr t1,
                 (select t21.fkdat as fkdat,
                         t21.vkorg as bukrs,
+                        t21.hdrseq as hdrseq,
                         sum(t21.znumiv) as znumiv,
                         sum(t21.znumps) as znumps,
                         sum(decode(t21.fkart,'ZRG',0,t21.netwr)) as netwr
                    from sap_inv_sum_det t21
                   where t21.fkdat = par_fkdat
                     and t21.vkorg = par_bukrs
+                    and t21.hdrseq = par_hdrseq
                   group by t21.fkdat,
-                           t21.vkorg) t2
+                           t21.vkorg,
+                           t21.hdrseq) t2
           where t1.fkdat = t2.fkdat(+)
             and t1.bukrs = t2.bukrs(+)
+            and t1.hdrseq = t2.hdrseq(+)
             and t1.fkdat = par_fkdat
-            and t1.bukrs = par_bukrs;
+            and t1.bukrs = par_bukrs
+            and t1.hdrseq = par_hdrseq;
       rcd_summary csr_summary%rowtype;
 
       cursor csr_detail is
