@@ -44,6 +44,7 @@ create or replace package lics_outbound_loader as
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added search functionality
  2006/08   Steve Gregan   Added message name functionality
+ 2008/03   Steve Gregan   Added append raw functionality
 
 *******************************************************************************/
 
@@ -54,6 +55,7 @@ create or replace package lics_outbound_loader as
    function create_interface(par_interface in varchar2, par_fil_name in varchar2) return number;
    function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2) return number;
    procedure append_data(par_record in varchar2);
+   procedure append_raw(par_record in raw);
    procedure add_exception(par_exception in varchar2);
    procedure add_search(par_tag in varchar2, par_value in varchar2);
    procedure finalise_interface;
@@ -478,6 +480,85 @@ create or replace package body lics_outbound_loader as
    /* End routine */
    /*-------------*/
    end append_data;
+
+   /**************************************************/
+   /* This procedure performs the append raw routine */
+   /**************************************************/
+   procedure append_raw(par_record in raw) is
+
+      /*-*/
+      /* Autonomous transaction
+      /*-*/
+      pragma autonomous_transaction;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Existing header must exist
+      /* notes - header control must not be null
+      /*-*/
+      if var_hdr_control is null then
+         raise_application_error(-20000, 'Append Raw - Interface has not been created');
+      end if;
+
+      /*-*/
+      /* Write the outbound interface file line
+      /*-*/
+      utl_file.put_raw(var_fil_handle, par_record);
+      utl_file.new_line(var_fil_handle);
+      utl_file.fflush(var_fil_handle);
+
+      /*-*/
+      /* Commit the database
+      /* note - isolated commit (autonomous transaction)
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Log the event fatal
+         /*-*/
+         begin
+            lics_notification.log_fatal(lics_constant.job_loader,
+                                        null,
+                                        lics_constant.type_outbound,
+                                        rcd_lics_interface.int_group,
+                                        null,
+                                        rcd_lics_interface.int_interface,
+                                        rcd_lics_header.hea_header,
+                                        rcd_lics_hdr_trace.het_hdr_trace,
+                                        'OUTBOUND LOADER FAILED - ' ||  substr(SQLERRM, 1, 512));
+         exception
+            when others then
+               null;
+         end;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Interface Control System - Outbound Loader - ' || substr(SQLERRM, 1, 512));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end append_raw;
 
    /*****************************************************/
    /* This procedure performs the add exception routine */
