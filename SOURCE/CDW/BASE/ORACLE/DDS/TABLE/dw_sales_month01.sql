@@ -66,7 +66,7 @@ create table dds.dw_sales_month01
 /**/
 /* Indexes
 /**/
---create index dds.dw_sales_month01_ix01 on dds.dw_sales_month01 (company_code, billing_eff_yyyymm);
+create index dds.dw_sales_month01_ix01 on dds.dw_sales_month01 (company_code, billing_eff_yyyymm) local;
 
 /**/
 /* Authority

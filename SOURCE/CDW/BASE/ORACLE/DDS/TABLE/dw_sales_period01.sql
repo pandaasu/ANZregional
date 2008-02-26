@@ -57,16 +57,16 @@ create table dds.dw_sales_period01
     mfanz_icb_flag                    varchar2(1)          not null,
     demand_plng_grp_division_code     varchar2(2 char)     null)
    partition by range (billing_eff_yyyypp)
+      subpartition by list (company_code)
       subpartition template (subpartition C147 VALUES ('147'),
                              subpartition C149 VALUES ('149'),
                              subpartition the_rest values (default))
-      subpartition by list (company_code)
       (partition the_rest values less than (maxvalue));
 
 /**/
 /* Indexes
 /**/
---create index dds.dw_sales_period01_ix01 on dds.dw_sales_period01 (company_code, billing_eff_yyyypp);
+create index dds.dw_sales_period01_ix01 on dds.dw_sales_period01 (company_code, billing_eff_yyyypp) local;
 
 /**/
 /* Authority
