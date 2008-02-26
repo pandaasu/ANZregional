@@ -507,9 +507,7 @@ create or replace package body lics_outbound_loader as
       /*-*/
       /* Write the outbound interface file line
       /*-*/
-      utl_file.put_raw(var_fil_handle, par_record);
-      utl_file.new_line(var_fil_handle);
-      utl_file.fflush(var_fil_handle);
+      utl_file.put_raw(var_fil_handle, par_record, true);
 
       /*-*/
       /* Commit the database
