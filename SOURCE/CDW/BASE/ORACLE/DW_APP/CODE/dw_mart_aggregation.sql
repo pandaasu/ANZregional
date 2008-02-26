@@ -140,6 +140,7 @@ create or replace package body dw_mart_aggregation as
          lics_locking.release(var_loc_string);
 
       end if;
+      var_locked := false;
 
       /*-*/
       /* End procedure
@@ -172,6 +173,11 @@ create or replace package body dw_mart_aggregation as
                                          'One or more errors occurred during the Mart Aggregation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
 
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
+
       end if;
 
    /*-------------------*/
@@ -183,7 +189,6 @@ create or replace package body dw_mart_aggregation as
       /* Exception trap
       /**/
       when others then
-
 
          /*-*/
          /* Rollback the database
@@ -226,5 +231,5 @@ end dw_mart_aggregation;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym cdw_mart_aggregation for dw_app.dw_mart_aggregation;
+create or replace public synonym dw_mart_aggregation for dw_app.dw_mart_aggregation;
 grant execute on dw_mart_aggregation to public;

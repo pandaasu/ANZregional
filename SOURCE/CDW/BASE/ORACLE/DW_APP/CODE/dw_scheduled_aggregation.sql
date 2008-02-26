@@ -289,6 +289,7 @@ create or replace package body dw_scheduled_aggregation as
          lics_locking.release(var_loc_string);
 
       end if;
+      var_locked := false;
 
       /*-*/
       /* End procedure
@@ -320,6 +321,11 @@ create or replace package body dw_scheduled_aggregation as
                                          var_email,
                                          'One or more errors occurred during the Scheduled Aggregation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
 
       end if;
 

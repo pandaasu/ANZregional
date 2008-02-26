@@ -334,6 +334,7 @@ create or replace package body dw_triggered_aggregation as
          lics_locking.release(var_loc_string);
 
       end if;
+      var_locked := false;
 
       /*-*/
       /* End procedure
@@ -385,6 +386,11 @@ create or replace package body dw_triggered_aggregation as
                                          var_email,
                                          'One or more errors occurred during the Triggered Aggregation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
 
       end if;
 
@@ -898,7 +904,7 @@ create or replace package body dw_triggered_aggregation as
          /*-*/
          /* Only load the sales base row when order usage 'GSV'
          /*-*/
-         if var_order_usage_gsv_flag = 'GSV' then
+         if var_order_usage_gsv_flag = 'GSV' and not(rcd_sales_base.billed_uom_code is null) then
 
             /*-------------------------*/
             /* SALES_BASE Calculations */
@@ -1076,7 +1082,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SALES_MONTH_01 Aggregation - Parameters(' || to_char(par_yyyymm) || ' + ' || par_company || ')');
+      lics_logging.write_log('Begin - SALES_MONTH01 Aggregation - Parameters(' || to_char(par_yyyymm) || ' + ' || par_company || ')');
 
       /*-*/
       /* Truncate the required partitions
@@ -1084,7 +1090,7 @@ create or replace package body dw_triggered_aggregation as
       /* 1. Partition with data may not have new data so will always be truncated
       /* 2. par_yyyymm = 999999 truncates all partitions
       /*-*/
-      lics_logging.write_log('SALES_MONTH_01 Aggregation - Truncating the partition(s)');
+      lics_logging.write_log('SALES_MONTH01 Aggregation - Truncating the partition(s)');
       dds_partition.truncate('dw_sales_month01',par_yyyymm,par_company,'m');
 
       /*-*/
@@ -1103,13 +1109,13 @@ create or replace package body dw_triggered_aggregation as
          /*-*/
          /* Check that a partition exists for the current month
          /*-*/
-         lics_logging.write_log('SALES_MONTH_01 Aggregation - Check/create partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
+         lics_logging.write_log('SALES_MONTH01 Aggregation - Check/create partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
          dds_partition.check_create('dw_sales_month01',rcd_source.billing_eff_yyyymm,par_company,'m');
 
          /*-*/
          /* Build the partition for the current month 
          /*-*/
-         lics_logging.write_log('SALES_MONTH_01 Aggregation - Building the partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
+         lics_logging.write_log('SALES_MONTH01 Aggregation - Building the partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
          insert into dw_sales_month01
             (company_code,
              order_type_code,
@@ -1226,7 +1232,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - SALES_MONTH_01 Aggregation');
+      lics_logging.write_log('End - SALES_MONTH01 Aggregation');
 
    /*-------------------*/
    /* Exception handler */
@@ -1247,8 +1253,8 @@ create or replace package body dw_triggered_aggregation as
          /* Log error
          /*-*/
          if lics_logging.is_created = true then
-            lics_logging.write_log('**ERROR** - SALES_MONTH_01 Aggregation - ' || substr(SQLERRM, 1, 1024));
-            lics_logging.write_log('End - SALES_MONTH_01 Aggregation');
+            lics_logging.write_log('**ERROR** - SALES_MONTH01 Aggregation - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - SALES_MONTH01 Aggregation');
          end if;
 
          /*-*/
@@ -1285,7 +1291,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SALES_PERIOD_01 Aggregation - Parameters(' || to_char(par_yyyypp) || ' + ' || par_company || ')');
+      lics_logging.write_log('Begin - SALES_PERIOD01 Aggregation - Parameters(' || to_char(par_yyyypp) || ' + ' || par_company || ')');
 
       /*-*/
       /* Truncate the required partitions
@@ -1293,7 +1299,7 @@ create or replace package body dw_triggered_aggregation as
       /* 1. Partition with data may not have new data so will always be truncated
       /* 2. par_yyyypp = 999999 truncates all partitions
       /*-*/
-      lics_logging.write_log('SALES_PERIOD_01 Aggregation - Truncating the partition(s)');
+      lics_logging.write_log('SALES_PERIOD01 Aggregation - Truncating the partition(s)');
       dds_partition.truncate('dw_sales_period01',par_yyyypp,par_company,'p');
 
       /*-*/
@@ -1312,13 +1318,13 @@ create or replace package body dw_triggered_aggregation as
          /*-*/
          /* Check that a partition exists for the current period
          /*-*/
-         lics_logging.write_log('SALES_PERIOD_01 Aggregation - Check/create partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
+         lics_logging.write_log('SALES_PERIOD01 Aggregation - Check/create partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
          dds_partition.check_create('dw_sales_period01',rcd_source.billing_eff_yyyypp,par_company,'p');
 
          /*-*/
          /* Build the partition for the current period
          /*-*/
-         lics_logging.write_log('SALES_PERIOD_01 Aggregation - Building the partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
+         lics_logging.write_log('SALES_PERIOD01 Aggregation - Building the partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
          insert into dw_sales_period01
             (company_code,
              order_type_code,
@@ -1435,7 +1441,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - SALES_PERIOD_01 Aggregation');
+      lics_logging.write_log('End - SALES_PERIOD01 Aggregation');
 
    /*-------------------*/
    /* Exception handler */
@@ -1456,8 +1462,8 @@ create or replace package body dw_triggered_aggregation as
          /* Log error
          /*-*/
          if lics_logging.is_created = true then
-            lics_logging.write_log('**ERROR** - SALES_PERIOD_01 Aggregation - ' || substr(SQLERRM, 1, 1024));
-            lics_logging.write_log('End - SALES_PERIOD_01 Aggregation');
+            lics_logging.write_log('**ERROR** - SALES_PERIOD01 Aggregation - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - SALES_PERIOD01 Aggregation');
          end if;
 
          /*-*/
