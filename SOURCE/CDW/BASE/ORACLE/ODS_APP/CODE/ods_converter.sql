@@ -1061,9 +1061,8 @@ create or replace package body ods_converter as
       cursor csr_ods_list is
          select t01.belnr
            from sap_inv_hdr t01,
-                (select belnr from sap_inv_dat where iddat = '026' and datum >= fr_yyyymmdd) t02
-          where t01.belnr = t02.belnr
-            and t01.belnr not in (select billing_doc_num from sap_inv_trace);
+                (select belnr from sap_inv_dat where iddat = '015' and datum >= fr_yyyymmdd) t02
+          where t01.belnr = t02.belnr;
       rcd_ods_list csr_ods_list%rowtype;
 
       cursor csr_ods_data is
@@ -1288,18 +1287,6 @@ create or replace package body ods_converter as
             and t05.genseq = t09.genseq(+);
       rcd_ods_data csr_ods_data%rowtype;
 
-      cursor csr_ods_lookup is
-         select t01.dlvry_doc_num,
-                t01.dlvry_doc_line_num
-           from sap_del_trace t01
-          where t01.dlvry_doc_num = (select refnr from sap_inv_ref
-                                      where belnr = rcd_sap_inv_trace.billing_doc_num
-                                        and qualf = '012')
-            and t01.order_doc_num = rcd_sap_inv_trace.order_doc_num
-            and t01.order_doc_line_num = rcd_sap_inv_trace.order_doc_line_num
-          order by t01.trace_seqn desc;
-      rcd_ods_lookup csr_ods_lookup%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1325,6 +1312,7 @@ create or replace package body ods_converter as
          /*-*/
          rcd_sap_inv_trace.trace_seqn := var_sequence;
          rcd_sap_inv_trace.trace_date := sysdate;
+         rcd_sap_inv_trace.trace_status := '*ACTIVE';
 
          /*-*/
          /* Retrieve the invoice trace detail
@@ -1334,6 +1322,19 @@ create or replace package body ods_converter as
             fetch csr_ods_data into rcd_ods_data;
             if csr_ods_data%notfound then
                exit;
+            end if;
+
+            /*-*/
+            /* Set the trace status
+            /*-*/
+            rcd_sap_inv_trace.trace_status := '*ACTIVE';
+
+            /*-*/
+            /* Deleted invoice line
+            /* **notes** no invoice lines found
+            /*-*/
+            if rcd_ods_data.billing_doc_num is null then
+               rcd_sap_inv_trace.trace_status := '*DELETED';
             end if;
 
             /*-*/
@@ -1397,19 +1398,6 @@ create or replace package body ods_converter as
             else
                rcd_sap_inv_trace.order_doc_num := rcd_ods_data.order_doc_num;
                rcd_sap_inv_trace.order_doc_line_num := rcd_ods_data.order_doc_line_num;
-            end if;
-
-            /*-*/
-            /* Lookup the delivery line from the delivery trace when required
-            /*-*/
-            if rcd_sap_inv_trace.dlvry_doc_num = rcd_sap_inv_trace.order_doc_num then
-               open csr_ods_lookup;
-               fetch csr_ods_lookup into rcd_ods_lookup;
-               if csr_ods_lookup%found then
-                  rcd_sap_inv_trace.dlvry_doc_num := rcd_ods_lookup.dlvry_doc_num;
-                  rcd_sap_inv_trace.dlvry_doc_line_num := rcd_ods_lookup.dlvry_doc_line_num;
-               end if;
-               close csr_ods_lookup;
             end if;
 
             /*-*/
