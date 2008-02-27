@@ -99,8 +99,8 @@ select t01.material_code,
   t01.prdct_size_grp_code,                      -- SAP Product Size Group Code  
   t26.prdct_size_grp_abbrd_desc,                -- Product Size Group Abbreviated Description   
   t26.prdct_size_grp_desc,                      -- Product Size Group Description 
-  t01.sop_bus_code,                             -- SAP S&OP Business Code 
-  t27.sop_bus_desc,                             -- S&OP Business Description 
+  t01.sop_bus_code,                             -- SAP S and OP Business Code 
+  t27.sop_bus_desc,                             -- S and OP Business Description 
   t01.fighting_unit_code,                       -- SAP Fighting Unit Code 
   t28.fighting_unit_desc,                       -- Fighting Unit Description 
   t01.mkt_ctgry_code,                           -- SAP Market Category Code 
@@ -115,8 +115,8 @@ select t01.material_code,
   t33.prodn_line_desc,                          -- Production Line Description
   t01.nz_promo_grp_code,                        -- NZ Promotional Group Code
   t34.nz_promo_grp_desc,                        -- NZ Promotional Group Description
-  t01.nz_sop_bus_code,                          -- NZ S&OP Business Code
-  t35.nz_sop_bus_desc,                          -- NZ S&OP Business Description
+  t01.nz_sop_bus_code,                          -- NZ S and OP Business Code
+  t35.nz_sop_bus_desc,                          -- NZ S and OP Business Description
   t01.nz_must_win_code,                         -- NZ Must Win Category Code
   t36.nz_must_win_desc                          -- NZ Must Win Category Description
 from (
@@ -148,13 +148,13 @@ from (
             max(case when t02.atnam = 'CLFFERT18' then t02.atwrt end) as prdct_size_grp_code,       -- SAP Product Size Group Code  
             max(case when t02.atnam = 'CLFFERT13' then t02.atwrt end) as prdct_type_code,           -- SAP Product Type Code   
             max(case when t02.atnam = 'Z_APCHAR5' then t02.atwrt end) as prodn_line_code,           -- SAP Production Line Code 
-            max(case when t02.atnam = 'Z_APCHAR4' then t02.atwrt end) as sop_bus_code,              -- SAP S&OP Business Code 
+            max(case when t02.atnam = 'Z_APCHAR4' then t02.atwrt end) as sop_bus_code,              -- SAP S and OP Business Code 
             max(case when t02.atnam = 'CLFFERT05' then t02.atwrt end) as supply_sgmnt_code,         -- SAP Supply Segment Code 
             max(case when t02.atnam = 'CLFFERT21' then t02.atwrt end) as trad_unit_config_code,     -- SAP Traded Unit Configuration Code  
             max(case when t02.atnam = 'CLFFERT20' then t02.atwrt end) as trad_unit_frmt_code,       -- SAP Traded Unit Format Code  
             max(case when t02.atnam = 'CLFFERT08' then t02.atwrt end) as trade_sector_code,         -- SAP Trade Sector Code  
             max(case when t02.atnam = 'Z_APCHAR11' then t02.atwrt end) as nz_promo_grp_code,        -- NZ Promotional Group
-            max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as nz_sop_bus_code,          -- NZ S&OP Business Code
+            max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as nz_sop_bus_code,          -- NZ S and OP Business Code
             max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as nz_must_win_code          -- NZ Must Win Category
         from sap_cla_hdr t01,
             sap_cla_chr t02
@@ -322,7 +322,7 @@ from (
         and t01.valseq = t02.valseq
         and t01.atnam = 'Z_APCHAR4'
         and t02.spras_iso = 'EN'
-    ) t27,  -- S&OP Business 
+    ) t27,  -- S and OP Business 
     ( select trim(t01.atwrt) as fighting_unit_code, 
         trim(t02.atwtb) as fighting_unit_desc 
       from sap_chr_mas_val t01,
@@ -394,7 +394,7 @@ from (
         and t01.valseq = t02.valseq
         and t01.atnam = 'Z_APCHAR12'
         and t02.spras_iso = 'EN'
-    ) t35,   -- NZ S&OP Business Code
+    ) t35,   -- NZ S and OP Business Code
     ( select trim(t01.atwrt) as nz_must_win_code, 
         trim(t02.atwtb) as nz_must_win_desc
       from sap_chr_mas_val t01,

@@ -53,7 +53,7 @@ order by uom_code;
 /*-*/
 /* Authority 
 /*-*/
-grant select on ods.uom to ods_app;
+grant select on ods.uom to ods_app with grant option;
 
 /*-*/
 /* Synonym 
