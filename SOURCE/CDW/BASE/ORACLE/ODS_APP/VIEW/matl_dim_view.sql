@@ -156,7 +156,13 @@ select ltrim(t01.matnr, '0') as matl_code,                    -- SAP Material Co
   v06.plng_srce_code,                                         -- SAP Planning Source Code 
   v06.plng_srce_desc,                                         -- Planning Source Description
   v06.prodn_line_code,                                        -- SAP Production Line Code 
-  v06.prodn_line_desc                                         -- Production Line Description                                                     
+  v06.prodn_line_desc,                                        -- Production Line Description
+  v06.nz_promo_grp_code,                                      -- NZ Promotional Group Code
+  v06.nz_promo_grp_desc,                                      -- NZ Promotional Group Description
+  v06.nz_sop_bus_code,                                        -- NZ S&OP Business Code
+  v06.nz_sop_bus_desc,                                        -- NZ S&OP Business Description
+  v06.nz_must_win_code,                                       -- NZ Must Win Category Code
+  v06.nz_must_win_desc                                        -- NZ Must Win Category Description                                               
 from sap_mat_hdr t01,
   sap_mat_mkt t02,
   matl_grp v01,                                               -- Material Group 

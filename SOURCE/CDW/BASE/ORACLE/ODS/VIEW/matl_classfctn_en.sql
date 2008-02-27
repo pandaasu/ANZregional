@@ -12,6 +12,10 @@
  YYYY/MM   Author             Description 
  -------   ------             ----------- 
  2008/02   Jonathan Girling   Created 
+ 2008/02   Jonathan Girling   Added classification codes and descriptions for:
+                               - Z-APCHAR11 
+                               - Z_APCHAR12 
+                               - Z_APCHAR13
 
 *******************************************************************************/
 
@@ -108,9 +112,15 @@ select t01.material_code,
   t01.plng_srce_code,                           -- SAP Planning Source Code 
   t32.plng_srce_desc,                           -- Planning Source Description 
   t01.prodn_line_code,                          -- SAP Production Line Code 
-  t33.prodn_line_desc                           -- Production Line Description  
+  t33.prodn_line_desc,                          -- Production Line Description
+  t01.nz_promo_grp_code,                        -- NZ Promotional Group Code
+  t34.nz_promo_grp_desc,                        -- NZ Promotional Group Description
+  t01.nz_sop_bus_code,                          -- NZ S&OP Business Code
+  t35.nz_sop_bus_desc,                          -- NZ S&OP Business Description
+  t01.nz_must_win_code,                         -- NZ Must Win Category Code
+  t36.nz_must_win_desc                          -- NZ Must Win Category Description
 from (
-        select t01.objek as material_code,                                                             -- Material Code  
+        select t01.objek as material_code,                                                          -- Material Code  
             max(case when t02.atnam = 'CLFFERT16' then t02.atwrt end) as brand_essnc_code,          -- SAP Brand Essence Code  
             max(case when t02.atnam = 'CLFFERT03' then t02.atwrt end) as brand_flag_code,           -- SAP Brand Flag Code 
             max(case when t02.atnam = 'CLFFERT04' then t02.atwrt end) as brand_sub_flag_code,       -- SAP Brand Sub-Flag Code 
@@ -142,10 +152,10 @@ from (
             max(case when t02.atnam = 'CLFFERT05' then t02.atwrt end) as supply_sgmnt_code,         -- SAP Supply Segment Code 
             max(case when t02.atnam = 'CLFFERT21' then t02.atwrt end) as trad_unit_config_code,     -- SAP Traded Unit Configuration Code  
             max(case when t02.atnam = 'CLFFERT20' then t02.atwrt end) as trad_unit_frmt_code,       -- SAP Traded Unit Format Code  
-            max(case when t02.atnam = 'CLFFERT08' then t02.atwrt end) as trade_sector_code         -- SAP Trade Sector Code  
-            --max(case when t02.atnam = 'Z_APCHAR11' then t02.atwrt end) as nz_promo_grp_code,        -- NZ Promotional Group
-            --max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as nz_sop_bus_code,          -- NZ S&OP Business Code
-            --max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as nz_must_win_code          -- NZ Must Win Category
+            max(case when t02.atnam = 'CLFFERT08' then t02.atwrt end) as trade_sector_code,         -- SAP Trade Sector Code  
+            max(case when t02.atnam = 'Z_APCHAR11' then t02.atwrt end) as nz_promo_grp_code,        -- NZ Promotional Group
+            max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as nz_sop_bus_code,          -- NZ S&OP Business Code
+            max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as nz_must_win_code          -- NZ Must Win Category
         from sap_cla_hdr t01,
             sap_cla_chr t02
         where t01.obtab = t02.obtab(+)
@@ -366,7 +376,34 @@ from (
         and t01.valseq = t02.valseq
         and t01.atnam = 'Z_APCHAR5'
         and t02.spras_iso = 'EN'
-    ) t33   -- Production Line 
+    ) t33,   -- Production Line
+    ( select trim(t01.atwrt) as nz_promo_grp_code, 
+        trim(t02.atwtb) as nz_promo_grp_desc
+      from sap_chr_mas_val t01,
+        sap_chr_mas_dsc t02
+      where t01.atnam = t02.atnam
+        and t01.valseq = t02.valseq
+        and t01.atnam = 'Z_APCHAR11'
+        and t02.spras_iso = 'EN'
+    ) t34,   -- NZ Promotional Group
+    ( select trim(t01.atwrt) as nz_sop_bus_code, 
+        trim(t02.atwtb) as nz_sop_bus_desc
+      from sap_chr_mas_val t01,
+        sap_chr_mas_dsc t02
+      where t01.atnam = t02.atnam
+        and t01.valseq = t02.valseq
+        and t01.atnam = 'Z_APCHAR12'
+        and t02.spras_iso = 'EN'
+    ) t35,   -- NZ S&OP Business Code
+    ( select trim(t01.atwrt) as nz_must_win_code, 
+        trim(t02.atwtb) as nz_must_win_desc
+      from sap_chr_mas_val t01,
+        sap_chr_mas_dsc t02
+      where t01.atnam = t02.atnam
+        and t01.valseq = t02.valseq
+        and t01.atnam = 'Z_APCHAR13'
+        and t02.spras_iso = 'EN'
+    ) t36   -- NZ Must Win Category
 where t01.prdct_type_code = t02.prdct_type_code(+)
   and t01.supply_sgmnt_code = t03.supply_sgmnt_code(+)
   and t01.trad_unit_config_code = t04.trad_unit_config_code(+)
@@ -398,7 +435,10 @@ where t01.prdct_type_code = t02.prdct_type_code(+)
   and t01.mkt_sub_ctgry_code = t30.mkt_sub_ctgry_code(+)
   and t01.mkt_sub_ctgry_grp_code = t31.mkt_sub_ctgry_grp_code(+)
   and t01.plng_srce_code = t32.plng_srce_code(+)   
-  and t01.prodn_line_code = t33.prodn_line_code(+);
+  and t01.prodn_line_code = t33.prodn_line_code(+)
+  and t01.nz_promo_grp_code = t34.nz_promo_grp_code(+)
+  and t01.nz_sop_bus_code = t35.nz_sop_bus_code(+)
+  and t01.nz_must_win_code = t36.nz_must_win_code(+);
 
 /*-*/
 /* Authority
