@@ -18,7 +18,7 @@ create or replace package edi_invoicing as
     one procedure EXECUTE that performs the extract based on the following
     parameters:
 
-    1. PAR_ACTION (*ALL, *AGENCY) (MANDATORY)
+    1. PAR_ACTION (*ALL, *AGENCY_DAILY, *WHSLR_DAILY, *WHSLR_MONTHLY) (MANDATORY)
 
        The EDI invoicing to be performed.
 
@@ -44,6 +44,7 @@ create or replace package edi_invoicing as
     2008/02   Steve Gregan   Modified the wholesaler daily quantity and value logic to store naturaly signed numbers
     2008/02   Steve Gregan   Added sold to selection to EDI link logic
     2008/02   Steve Gregan   Added wholesaler discount none option
+    2008/03   Steve Gregan   Added character set conversion from UTF8 to SHIFTJIS
 
    *******************************************************************************/
 
@@ -1406,7 +1407,7 @@ create or replace package body edi_invoicing as
                if tbl_outbound.count != 0 then
                   var_instance := lics_outbound_loader.create_interface(var_interface_save,var_interface_save||'_'||par_date||'.TXT',var_interface_save||'_'||par_date||'.TXT');
                   for idx in 1..tbl_outbound.count loop
-                     lics_outbound_loader.append_data(tbl_outbound(idx));
+                     lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
                   end loop;
                   lics_outbound_loader.finalise_interface;
                end if;
@@ -1888,7 +1889,7 @@ create or replace package body edi_invoicing as
          if tbl_outbound.count != 0 then
             var_instance := lics_outbound_loader.create_interface(var_interface_save,var_interface_save||'_'||par_date||'.TXT',var_interface_save||'_'||par_date||'.TXT');
             for idx in 1..tbl_outbound.count loop
-               lics_outbound_loader.append_data(tbl_outbound(idx));
+               lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
             end loop;
             lics_outbound_loader.finalise_interface;
          end if;
@@ -3306,7 +3307,7 @@ create or replace package body edi_invoicing as
       if tbl_outbound.count != 0 then
          var_instance := lics_outbound_loader.create_interface('LADEDI02','LADEDI02_'||par_date,'LADEDI02_'||par_date||'.TXT');
          for idx in 1..tbl_outbound.count loop
-            lics_outbound_loader.append_data(tbl_outbound(idx));
+            lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
          end loop;
          lics_outbound_loader.finalise_interface;
       end if;
@@ -4212,7 +4213,7 @@ create or replace package body edi_invoicing as
       if tbl_outbound.count != 0 then
          var_instance := lics_outbound_loader.create_interface('LADEDI03','LADEDI03_'||par_date,'LADEDI03_'||par_date||'.TXT');
          for idx in 1..tbl_outbound.count loop
-            lics_outbound_loader.append_data(tbl_outbound(idx));
+            lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
          end loop;
          lics_outbound_loader.finalise_interface;
       end if;
