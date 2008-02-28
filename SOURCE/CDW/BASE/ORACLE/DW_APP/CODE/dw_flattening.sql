@@ -46,7 +46,8 @@ create or replace package dw_flattening as
     2005/01   Steve Gregan       Created 
     2008/02   Trevor Keon        Modified for VENUS environment 
     2008/02   Linden Glen        Removed un-needed flattening calls - leaving only MATL_DIM
-    2008/02   Jonathan Girling   Modified the Local constants 
+    2008/02   Jonathan Girling   Modified the Local constants
+    2008/02   Jonathan Girling   Modified email notification for VENUS environment
 
    *******************************************************************************/
 
@@ -213,9 +214,9 @@ create or replace package body dw_flattening as
             lics_notification.send_alert(var_alert);
          end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
-            lics_notification.send_email(lads_parameter.system_code,
-                                         lads_parameter.system_unit,
-                                         lads_parameter.system_environment,
+            lics_notification.send_email(dw_parameter.system_code,
+                                         dw_parameter.system_unit,
+                                         dw_parameter.system_environment,
                                          con_function,
                                          'DW_FLATTENING',
                                          var_email,
@@ -404,7 +405,7 @@ create or replace package body dw_flattening as
       if var_replace = 'Y' then
          lics_logging.write_log('Truncating the ' || var_tar_name || ' table');
          begin
-            dd_table.truncate(var_tar_name);
+            dds_table.truncate(var_tar_name);
          exception
             when others then
                raise_application_error(-20000, 'Error truncating table ' || var_tar_owner || '.' || var_tar_name || ' - ' || substr(SQLERRM, 1, 1024));
