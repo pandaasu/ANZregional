@@ -1,0 +1,260 @@
+/******************/
+/* Package Header */
+/******************/
+create or replace package ods_aplods01 as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lads
+    Package : ods_aplods01
+    Owner   : lads_app
+    Author  : Steve Gregan
+
+    Description
+    -----------
+    Operational Data Store - aplods01 - Inbound Apollo Demand Forecast Interface
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2008/02   Steve Gregan   Created
+
+   *******************************************************************************/
+
+   /*-*/
+   /* Public declarations
+   /*-*/
+   procedure on_start;
+   procedure on_data(par_record in varchar2);
+   procedure on_end;
+
+end ods_aplods01;
+/
+
+/****************/
+/* Package Body */
+/****************/
+create or replace package body ods_aplods01 as
+
+   /*-*/
+   /* Private exceptions
+   /*-*/
+   application_exception exception;
+   pragma exception_init(application_exception, -20000);
+
+   /*-*/
+   /* Private definitions
+   /*-*/
+   var_trn_start boolean;
+   var_trn_error boolean;
+   var_rcd_count number;
+   var_cast_date number;
+   rcd_fcst_data fcst_data%rowtype;
+
+   /************************************************/
+   /* This procedure performs the on start routine */
+   /************************************************/
+   procedure on_start is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the transaction variables
+      /*-*/
+      var_trn_start := false;
+      var_trn_error := false;
+      var_rcd_count := 0;
+      var_cast_date := null;
+
+      /*-*/
+      /* Initialise the inbound definitions
+      /*-*/
+      lics_inbound_utility.clear_definition;
+      /*-*/
+      lics_inbound_utility.set_csv_definition('CAST_DATE',1);
+      lics_inbound_utility.set_csv_definition('FCST_LOCN',2);
+      lics_inbound_utility.set_csv_definition('MATL_CODE',3);
+      lics_inbound_utility.set_csv_definition('DMND_GROUP',4);
+      lics_inbound_utility.set_csv_definition('ATLAS_LOCN',5);
+      lics_inbound_utility.set_csv_definition('FCST_DATE',6);
+      lics_inbound_utility.set_csv_definition('FCST_COVER',7);
+      lics_inbound_utility.set_csv_definition('FCST_QTY',8);
+      lics_inbound_utility.set_csv_definition('TRUNC_DMND_GROUP',9);
+      lics_inbound_utility.set_csv_definition('RCD_NUMBER',10);
+      lics_inbound_utility.set_csv_definition('RCD_TOTAL',11);
+      lics_inbound_utility.set_csv_definition('EXTRACT_DATE',12);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_start;
+
+   /***********************************************/
+   /* This procedure performs the on data routine */
+   /***********************************************/
+   procedure on_data(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_csv_record(par_record,',','"');
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      /*-*/
+      /* Retrieve field values
+      /*-*/
+      rcd_fcst_data.cast_yyyymmdd := lics_inbound_utility.get_variable('CAST_DATE');
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('FCST_LOCN');
+      rcd_fcst_data.material_code := lics_inbound_utility.get_variable('MATL_CODE');
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('DMND_GROUP');
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('ATLAS_LOCN');
+      rcd_fcst_data.fcst_yyyymmdd := lics_inbound_utility.get_variable('FCST_DATE');
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('FCST_COVER');
+      rcd_fcst_data.fcst_qty := lics_inbound_utility.get_number('FCST_QTY',null);
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('TRUNC_DMND_GROUP');
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_number('RCD_NUMBER',null);
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_number('RCD_TOTAL',null);
+    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('EXTRACT_DATE');
+
+      /*-*/
+      /* Retrieve exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+      end if;
+
+      /*-*/
+      /* Clear the forecast data (global temporary table)
+      /*-*/
+      if var_trn_start = false then
+         delete from fcst_data;
+         var_cast_date := rcd_fcst_data.cast_yyyymmdd;
+      end if;
+      var_trn_start := true;
+
+      /*-*/
+      /* Validate the interface data
+      /*-*/
+      if rcd_fcst_data.cast_yyyymmdd != var_cast_date then
+         lics_inbound_utility.add_exception('Multiple casting dates found in interface file');
+         var_trn_error := true;
+      end if;
+
+      /*----------------------------------------*/
+      /* ERROR- Bypass the update when required */
+      /*----------------------------------------*/
+
+      if var_trn_error = true then
+         return;
+      end if;
+
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      /*-*/
+      /* Insert the forecast data
+      /*-*/
+      insert into fcst_data
+         (cast_yyyymmdd,
+          fcst_yyyymmdd,
+          fcst_matl_code,
+          fcst_qty)
+         values(rcd_fcst_data.cast_yyyymmdd,
+                rcd_fcst_data.fcst_yyyymmdd,
+                rcd_fcst_data.fcst_matl_code,
+                rcd_fcst_data.fcst_gsv);
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_data;
+
+   /**********************************************/
+   /* This procedure performs the on end routine */
+   /**********************************************/
+   procedure on_end is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* No data processed
+      /*-*/
+      if var_trn_start = false then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Check the record count when no errors
+      /*-*/
+      if var_trn_error = false then
+         if x != y then
+            lics_inbound_utility.add_exception('Total record count does not match the received records');
+            var_trn_error := true;
+         end if;
+      end if;
+
+      /*-*/
+      /* Create the forecast load information when no errors
+      /*-*/
+      if var_trn_error = false then
+         begin
+            dw_forecast_loading.create_planning_load('*DOMESTIC','*PLANNING',var_cast_date);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+               var_trn_error := true;
+         end;
+      end if;
+
+      /*-*/
+      /* Commit/rollback the transaction as required
+      /*-*/
+      if var_trn_error = true then
+         rollback;
+      else
+         commit;
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_end;
+
+end ods_aplods01;
+/
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym ods_aplods01 for lads_app.ods_aplods01;
+grant execute on ods_aplods01 to lics_app;
