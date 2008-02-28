@@ -41,11 +41,12 @@ create or replace package dw_flattening as
 
     4. All requested tables will attempt to be flattened and and errors logged.
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2005/01   Steve Gregan   Created 
-    2008/02   Trevor Keon    Modified for VENUS environment 
-    2008/02   Linden Glen    Removed un-needed flattening calls - leaving only MATL_DIM
+    YYYY/MM   Author             Description
+    -------   ------             -----------
+    2005/01   Steve Gregan       Created 
+    2008/02   Trevor Keon        Modified for VENUS environment 
+    2008/02   Linden Glen        Removed un-needed flattening calls - leaving only MATL_DIM
+    2008/02   Jonathan Girling   Modified the Local constants 
 
    *******************************************************************************/
 
@@ -98,11 +99,11 @@ create or replace package body dw_flattening as
       /*-*/
       /* Local constants
       /*-*/
-      con_function constant varchar2(128) := 'DW GRD Flattening';
+      con_function constant varchar2(128) := 'DW Flattening';
       con_alt_group constant varchar2(32) := 'DW_ALERT';
-      con_alt_code constant varchar2(32) := 'GRD_FLATTENING';
+      con_alt_code constant varchar2(32) := 'FLATTENING';
       con_ema_group constant varchar2(32) := 'DW_EMAIL_GROUP';
-      con_ema_code constant varchar2(32) := 'GRD_FLATTENING';
+      con_ema_code constant varchar2(32) := 'FLATTENING';
 
    /*-------------*/
    /* Begin block */
