@@ -8,7 +8,7 @@ function GetEnvironment()
    '// Returns the environment string
    '// (Devp, Test, Prod)
    '//
-   GetEnvironment = "Prod" 
+   GetEnvironment = "Test" 
 
 end function
 
