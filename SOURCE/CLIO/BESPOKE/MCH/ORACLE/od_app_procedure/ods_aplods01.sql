@@ -49,7 +49,10 @@ create or replace package body ods_aplods01 as
    var_trn_start boolean;
    var_trn_error boolean;
    var_rcd_count number;
-   var_cast_date number;
+   var_rcd_total number;
+   var_cast_date varchar2(8 char);
+   var_fcst_str_date varchar2(8 char);
+   var_fcst_end_date varchar2(8 char);
    rcd_fcst_data fcst_data%rowtype;
 
    /************************************************/
@@ -68,7 +71,10 @@ create or replace package body ods_aplods01 as
       var_trn_start := false;
       var_trn_error := false;
       var_rcd_count := 0;
-      var_cast_date := null;
+      var_rcd_total := 0;
+      var_cast_date := '00000000';
+      var_fcst_str_date := '99999999';
+      var_fcst_end_date := '00000000';
 
       /*-*/
       /* Initialise the inbound definitions
@@ -117,17 +123,18 @@ create or replace package body ods_aplods01 as
       /* Retrieve field values
       /*-*/
       rcd_fcst_data.cast_yyyymmdd := lics_inbound_utility.get_variable('CAST_DATE');
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('FCST_LOCN');
       rcd_fcst_data.material_code := lics_inbound_utility.get_variable('MATL_CODE');
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('DMND_GROUP');
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('ATLAS_LOCN');
+      rcd_fcst_data.plant_code := lics_inbound_utility.get_variable('ATLAS_LOCN');
       rcd_fcst_data.fcst_yyyymmdd := lics_inbound_utility.get_variable('FCST_DATE');
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('FCST_COVER');
       rcd_fcst_data.fcst_qty := lics_inbound_utility.get_number('FCST_QTY',null);
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('TRUNC_DMND_GROUP');
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_number('RCD_NUMBER',null);
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_number('RCD_TOTAL',null);
-    --  rcd_fcst_load_detail.xxxxxxxx := lics_inbound_utility.get_variable('EXTRACT_DATE');
+      var_rcd_total := lics_inbound_utility.get_number('RCD_TOTAL',null);
+      var_rcd_count := var_rcd_count + 1;
+      if rcd_fcst_data.fcst_yyyymmdd < var_fcst_str_date then
+         var_fcst_str_date := rcd_fcst_data.fcst_yyyymmdd;
+      end if;
+      if rcd_fcst_data.fcst_yyyymmdd > var_fcst_end_date then
+         var_fcst_end_date := rcd_fcst_data.fcst_yyyymmdd;
+      end if;
 
       /*-*/
       /* Retrieve exceptions raised
@@ -171,11 +178,13 @@ create or replace package body ods_aplods01 as
       insert into fcst_data
          (cast_yyyymmdd,
           fcst_yyyymmdd,
-          fcst_matl_code,
+          material_code,
+          plant_code,
           fcst_qty)
          values(rcd_fcst_data.cast_yyyymmdd,
                 rcd_fcst_data.fcst_yyyymmdd,
-                rcd_fcst_data.fcst_matl_code,
+                rcd_fcst_data.material_code,
+                rcd_fcst_data.plant_code,
                 rcd_fcst_data.fcst_gsv);
 
    /*-------------------*/
@@ -217,8 +226,8 @@ create or replace package body ods_aplods01 as
       /* Check the record count when no errors
       /*-*/
       if var_trn_error = false then
-         if x != y then
-            lics_inbound_utility.add_exception('Total record count does not match the received records');
+         if var_rcd_count != var_rcd_total then
+            lics_inbound_utility.add_exception('Total record count (' || to_char(var_rcd_total) || ') does not match the received records (' || to_char(var_rcd_count) || ')');
             var_trn_error := true;
          end if;
       end if;
@@ -228,7 +237,7 @@ create or replace package body ods_aplods01 as
       /*-*/
       if var_trn_error = false then
          begin
-            dw_forecast_loading.create_planning_load('*DOMESTIC','*PLANNING',var_cast_date);
+            dw_forecast_loading.create_planning_load(var_cast_date,var_fcst_str_date,var_fcst_end_date);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
