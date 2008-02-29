@@ -28,6 +28,7 @@ create or replace package dw_tax_reporting as
     -------   ------         -----------
     2008/01   Steve Gregan   Created
     2008/02   Steve Gregan   Added gold tax file download
+    2008/03   Steve Gregan   Added chinese UOM description to gold tax file download
 
    *******************************************************************************/
 
@@ -1148,6 +1149,7 @@ create or replace package body dw_tax_reporting as
                                    lads_trim_code(t01.matnr) as qry_matl_code,
                                    nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
                                    t01.lfimg as qry_ord_qty,
+                                  -- nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
                                    t01.vrkme as qry_ord_uom,
                                    t05.kbetr as qry_dsp_price,
                                    t05.kbetr * decode(t01.vrkme, ''EA'', nvl(lads_to_number(t01.lfimg),0)*nvl(cs_each,1),
@@ -1274,6 +1276,7 @@ create or replace package body dw_tax_reporting as
                                     lads_trim_code(t01.matnr) as qry_matl_code,
                                     nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
                                     t01.lfimg as qry_ord_qty,
+                                 --   nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
                                     t01.vrkme as qry_ord_uom,
                                     null as qry_dsp_price,
                                     null as qry_dsp_value,
