@@ -2,18 +2,19 @@
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
- System  : lads
- Package : lads_atllad18
- Owner   : lads_app
- Author  : Steve Gregan
+ System  : lads 
+ Package : lads_atllad18 
+ Owner   : lads_app 
+ Author  : Steve Gregan 
 
  Description
  -----------
- Local Atlas Data Store - atllad18 - Inbound Invoice Interface
+ Local Atlas Data Store - atllad18 - Inbound Invoice Interface 
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
+ YYYY/MM   Author         Description 
+ -------   ------         ----------- 
+ 2004/01   Steve Gregan   Created 
+ 2008/02   Trevor Keon    Added update to GEN lines for ZRK invoices 
 
 *******************************************************************************/
 
@@ -887,6 +888,24 @@ create or replace package body lads_atllad18 as
       if var_trn_start = false then
          rollback;
          return;
+      end if;
+
+      /*-*/
+      /* Update GEN lines for ZRK invoice when required
+      /*-*/
+      if var_trn_ignore = false and
+        var_trn_error = false then
+        if (rcd_lads_inv_hdr.auart = 'ZRK') then
+          update lads_inv_gen
+          set menge = nvl(menge,0)*-1,
+            ntgew = nvl(ntgew,0)*-1,
+            brgew = nvl(brgew,0)*-1,
+            volum = nvl(volum,0)*-1,
+            fklmg = nvl(fklmg,0)*-1,
+            kwmeng = nvl(kwmeng,0)*-1
+          where belnr = rcd_lads_inv_hdr.belnr
+            and pstyv = 'ZCR2';
+        end if;
       end if;
 
       /*-*/
