@@ -929,12 +929,12 @@ create or replace package body dw_triggered_aggregation as
             /*-*/
             /* Calculate the sales GSV values
             /*-*/
-            rcd_sales_base.billed_gsv_xactn := round(var_invoice_type_factor * rcd_trace.billed_gsv, 2);
+            rcd_sales_base.billed_gsv_xactn := round(var_invoice_type_factor * nvl(rcd_trace.billed_gsv,0), 2);
             var_gsv_value := (var_invoice_type_factor / ods_app.exch_rate_factor('ICB',
                                                                                  rcd_sales_base.doc_currcy_code,
                                                                                  rcd_sales_base.company_currcy_code,
                                                                                  rcd_sales_base.creatn_date))
-                             * (rcd_trace.billed_gsv * rcd_sales_base.exch_rate);
+                             * (nvl(rcd_trace.billed_gsv,0) * rcd_sales_base.exch_rate);
             rcd_sales_base.billed_gsv := round(var_gsv_value, 2);
             rcd_sales_base.billed_gsv_aud := round(
                                                 ods_app.currcy_conv(
