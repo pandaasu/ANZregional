@@ -134,17 +134,13 @@ create or replace package body dw_reconciliation as
                         count(*) as trn_count
                    from sap_inv_hdr t11,
                         sap_inv_dat t12,
-                        sap_inv_org t13,
-                        sap_inv_org t14
+                        sap_inv_org t13
                   where t11.belnr = t12.belnr
                     and t11.belnr = t13.belnr
-                    and t11.belnr = t14.belnr
                     and t12.iddat = '015'
                     and t12.datum = par_fkdat
                     and t13.qualf = '008'
                     and t13.orgid = par_bukrs
-                    and t14.qualf = '015'
-                    and t14.orgid <> 'ZRG'
                   group by t12.datum,
                            t13.orgid) t1,
                 (select t22.datum as datum,
@@ -153,18 +149,14 @@ create or replace package body dw_reconciliation as
                    from sap_inv_hdr t21,
                         sap_inv_dat t22,
                         sap_inv_org t23,
-                        sap_inv_gen t24,
-                        sap_inv_org t25
+                        sap_inv_gen t24
                   where t21.belnr = t22.belnr
                     and t21.belnr = t23.belnr
                     and t21.belnr = t24.belnr
-                    and t21.belnr = t25.belnr
                     and t22.iddat = '015'
                     and t22.datum = par_fkdat
                     and t23.qualf = '008'
                     and t23.orgid = par_bukrs
-                    and t25.qualf = '015'
-                    and t25.orgid <> 'ZRG'
                   group by t22.datum,
                            t23.orgid) t2,
                 (select t32.datum as datum,
