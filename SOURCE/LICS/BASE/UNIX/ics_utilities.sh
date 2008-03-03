@@ -16,21 +16,21 @@
 # ---------------------------------------------------------------------------
 # Function Locations (line numbers):
 # ---------------------------------------------------------------------------
-# archive_file -            71
-# clean_up -                114
-# clean_up_file -           133
-# error_exit -              158
-# initialise_ami_tier -     174
-# initialise_utilities -    199
-# load_current_os -         270
-# log_file -                290
-# log_file_temp -           333
-# read_variable -           351
-# set_date -                375
-# set_ics_path -            408
-# set_permissions -         434
-# toggle_file_compression - 457
-# validate_file -           503
+# archive_file -            77
+# clean_up -                129
+# clean_up_file -           151
+# error_exit -              174
+# initialise_ami_tier -     190
+# initialise_utilities -    215
+# load_current_os -         286
+# log_file -                306
+# log_file_temp -           349
+# read_variable -           367
+# set_date -                391
+# set_ics_path -            424
+# set_permissions -         450
+# toggle_file_compression - 473
+# validate_file -           519
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -49,6 +49,7 @@ DATE_FORMAT_READABLE=2      # Format: 2007-10-29_12:33:05
 INBOUND=0
 OUTBOUND=1
 PASSTHRU=2
+ROUTE=3
 
 # add any additional operating system to support here
 HP_UNIX_OS="HP-UX"

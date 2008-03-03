@@ -19,25 +19,25 @@
 # ---------------------------------------------------------------------------
 # Function Locations (line numbers):
 # ---------------------------------------------------------------------------
-# check_FTP_log -               70
-# get_file_from_dj -            110
-# get_file_from_sap -           147
-# get_mq_message -              193
-# process_inbound -             228
-# process_inbound_dj -          274
-# process_inbound_mqft -        301
-# process_inbound_sap -         325
-# process_inbound_vds -         357
-# process_outbound -            377
-# process_outbound_ftp -        441
-# process_passthru_dj -         484
-# process_passthru_mq -         498
-# process_passthru_mqft -       511
-# queue_depth -                 531
-# send_file_via_mqft_to_CDW -   566
-# send_file_via_mqft_to_HK -    586
-# trigger_queue -               607
-# validate_dequeue_file -       634
+# check_FTP_log -               71
+# get_file_from_dj -            111
+# get_file_from_sap -           148
+# get_mq_message -              194
+# process_inbound -             229
+# process_inbound_dj -          275
+# process_inbound_mqft -        302
+# process_inbound_sap -         339
+# process_inbound_vds -         371
+# process_outbound -            391
+# process_outbound_ftp -        456
+# process_passthru_dj -         499
+# process_passthru_mq -         513
+# process_passthru_mqft -       526
+# queue_depth -                 546
+# send_file_via_mqft_to_CDW -   581
+# send_file_via_mqft_to_HK -    601
+# trigger_queue -               622
+# validate_dequeue_file -       649
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -57,6 +57,7 @@ MQFT_BIN=4
 MQFT_TRG=5
 MQFT_LITE=6
 MQIF_PASSTHRU=7
+MQFT_ROUTE=8
 
 # --------------------------------------------------------------------------
 #
@@ -303,13 +304,26 @@ process_inbound_mqft()
     FILE_INT=$1
     log_file "INFO: [process_inbound_mqft] Processing file [${FILE_INT}]" "HARMLESS"
 
+    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+        toggle_file_compression ${FILE_INT} 1 
+        
+        # set the file to the correct name after decompressing
+        FILE_INT=$DECOMPRESS_FILE_NAME
+    fi
+    
     # validate file
     validate_file "${FILE_INT}"
     set_permissions "${FILE_INT}"
 
     # Call oracle proc to load file
-    load_file $LOAD_FILE_INBOUND "${INTERFACE_ID}" "${FILE_INT}"
-
+    if [[ $DATA_FLOW_TYPE -eq $INBOUND ]] ; then
+        load_file $LOAD_FILE_INBOUND "${INTERFACE_ID}" "${FILE_INT}"
+    elif [[ $DATA_FLOW_TYPE -eq $ROUTE ]] ; then
+        load_file $LOAD_FILE_ROUTER "${INTERFACE_ID}" "${FILE_INT}"
+    else
+        error_exit "ERROR: [process_inbound_mqft] DATA_FLOW_TYPE invalid. [${DATA_FLOW_TYPE}]."
+    fi
+    
     # Archive received file
     archive_file "${FILE_INT}"
 }
