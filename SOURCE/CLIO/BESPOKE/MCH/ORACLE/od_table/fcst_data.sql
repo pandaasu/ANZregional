@@ -21,8 +21,10 @@
 create global temporary table fcst_data
    (cast_yyyymmdd                   varchar2(8 char)        not null,
     material_code                   varchar2(18 char)       not null,
-    plant_code                      varchar2(4 char)        not null,
+    dmnd_group                      varchar2(10 char)       not null,
+    plant_code                      varchar2(10 char)       not null,
     fcst_yyyymmdd                   varchar2(8 char)        not null,
+    fcst_cover                      number                  not null,
     fcst_qty                        number                  not null)
 on commit preserve rows;
 
@@ -31,19 +33,17 @@ on commit preserve rows;
 /**/
 comment on table od.fcst_data is 'Forecast Data Table';
 comment on column od.fcst_data.cast_yyyymmdd is 'Casting date';
-comment on column od.fcst_data.fcst_matl_code is 'Forecast material code';
+comment on column od.fcst_data.material_code is 'Material code';
+comment on column od.fcst_data.dmnd_group is 'Demand group';
+comment on column od.fcst_data.plant_code is 'Plant code';
 comment on column od.fcst_data.fcst_yyyymmdd is 'Forecast date';
-comment on column od.fcst_data.fcst_qty is 'Forecast QTY';
-
-/**/
-/* Primary Key Constraint
-/**/
-alter table od.fcst_data
-   add constraint fcst_data_pk primary key (cast_yyyymmdd, material_code, plant_code, fcst_yyyymmdd);
+comment on column od.fcst_data.fcst_cover is 'Forecast cover days';
+comment on column od.fcst_data.fcst_qty is 'Forecast quantity';
 
 /**/
 /* Authority
 /**/
+grant select, insert, update, delete on od.fcst_data to od_app;
 grant select, insert, update, delete on od.fcst_data to dw_app;
 grant select on od.fcst_data to public;
 

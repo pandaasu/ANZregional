@@ -28,8 +28,6 @@ create table od.fcst_load_selection
 comment on table od.fcst_load_selection is 'Forecast Load Selection Table';
 comment on column od.fcst_load_selection.load_identifier is 'Load identifier';
 comment on column od.fcst_load_selection.fcst_planner is 'Forecast Planner';
-comment on column od.fcst_load_selection.crt_user is 'Creation user identifier';
-comment on column od.fcst_load_selection.crt_date is 'Creation timestamp';
 
 /**/
 /* Primary Key Constraint
