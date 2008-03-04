@@ -6,7 +6,7 @@
 # PARAMS  : 1 - QUEUE NAME (queue to place file on)
 #           2 - INTERFACE TYPE (interface type of file)
 #           3 - Q_FILE (file to be placed on queue)
-#           4 - Q_FILE_NAME (name of file to load onto queue)
+#           4 - T_FILE_NAME (name of target file to load onto queue)
 # ---------------------------------------------------------------------------
 #            F U N C T I O N A L     O V E R V I E W
 # ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ check_params()
         error_exit "ERROR: [check_params] Interface Type Parameter not specified"
     elif [[ -z $Q_FILE ]] ; then
         error_exit "ERROR: [check_params] File to load Parameter not specified"
-    elif [[ -z $Q_FILE_NAME ]] ; then
+    elif [[ -z $T_FILE_NAME ]] ; then
         error_exit "ERROR: [check_params] Name of File to load Parameter not specified"
     else
         log_file "INFO: [check_params] Verified script input parameters" "HARMLESS"
@@ -85,7 +85,7 @@ clean_up_local()
 QUEUE=${1}          # Variable: Queue to place file on
 INTERFACE_ID=${2}   # Variable: Interface id
 Q_FILE=${3}         # Variable: File to place on queue (full path)
-Q_FILE_NAME=${4}    # Varibale: Name of file on queue
+T_FILE_NAME=${4}    # Varibale: Name of target file on queue
 CMP_PARAM=${5}      # Variable: Set whether the file is compressed or not (optional)
 
 setup_config $0     # Function: Setup script variables
@@ -108,7 +108,7 @@ exit 0              # Exit: Exit script with successful flag (0)
 # Version Date        Author        Modification
 # ------- ----------- ------------- --------------------------
 # 1.0     13-APR-2004 M. Henderson  Original
-# 1.1     26-MAY-2004 M. Henderson  Added 4th param Q_FILE_NAME
+# 1.1     26-MAY-2004 M. Henderson  Added 4th param T_FILE_NAME
 # 1.2     12-JUL-2004 M. Henderson  Added archiving
 # 1.3     21-JUL-2004 J. Eitel      Added logic for Maestro flag
 # 2.0     08-DEC-2004 J. Eitel      Tidy up

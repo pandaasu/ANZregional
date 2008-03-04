@@ -29,15 +29,15 @@
 # process_inbound_sap -         339
 # process_inbound_vds -         371
 # process_outbound -            391
-# process_outbound_ftp -        456
-# process_passthru_dj -         499
-# process_passthru_mq -         513
-# process_passthru_mqft -       526
-# queue_depth -                 546
-# send_file_via_mqft_to_CDW -   581
-# send_file_via_mqft_to_HK -    601
-# trigger_queue -               622
-# validate_dequeue_file -       649
+# process_outbound_ftp -        460
+# process_passthru_dj -         503
+# process_passthru_mq -         517
+# process_passthru_mqft -       530
+# queue_depth -                 550
+# send_file_via_mqft_to_CDW -   585
+# send_file_via_mqft_to_HK -    605
+# trigger_queue -               627
+# validate_dequeue_file -       653
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -53,9 +53,6 @@ ASN=0
 DJ=1
 MQIF=2
 MQFT=3
-MQFT_BIN=4
-MQFT_TRG=5
-MQFT_LITE=6
 MQIF_PASSTHRU=7
 MQFT_ROUTE=8
 
@@ -399,29 +396,24 @@ process_outbound()
     if [[ $COMPRESS = $CMP_PARAM ]] ; then
         toggle_file_compression $FILE_INT 0
         FILE_INT=$COMPRESS_FILE_NAME       # set the correct filename to process
+        
+        if [[ ! -z $T_FILE_NAME ]] ; then
+            T_FILE_NAME="${T_FILE_NAME}.gz"
+        fi
     fi
     
     log_file "INFO: [process_outbound] Processing file [${FILE_INT}] for type [${OUTBOUND_TYPE}]" "HARMLESS"
     validate_file "${FILE_INT}"
-    
+
     case $OUTBOUND_TYPE in
         $DJ)
             CMD="${AMI_PATH}/bin/dj/file2msg.sh -queue ${QUEUE} -interface ${INTERFACE_ID} -file ${FILE_INT}"
             ;;
         $MQIF)
-            CMD="cat ${FILE_INT} | ${AMI_PATH}/bin/mq/mqif.pl -p -q ${QUEUE} -r 0 -o ${Q_FILE_NAME}"
+            CMD="cat ${FILE_INT} | ${AMI_PATH}/bin/mq/mqif.pl -p -q ${QUEUE} -r 0 -o ${T_FILE_NAME}"
             ;;
         $MQFT)
-            CMD="${AMI_PATH}/bin/mqft/mqftssnd -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME}"
-            ;;
-        $MQFT_BIN)
-            CMD="${AMI_PATH}/bin/mqft/mqftssnd -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} -bin"
-            ;;
-        $MQFT_TRG)
-            CMD="${AMI_PATH}/bin/mqft/mqftssnd -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} -trigger ${T_PROCESS}"
-            ;;
-        $MQFT_LITE)
-            CMD="${AMI_PATH}/bin/mqft/mqftssndc -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME}"
+            CMD="${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}"
             ;;
         *)
             error_exit "ERROR: [process_outbound] Outbound type is not valid [${OUTBOUND_TYPE}]"

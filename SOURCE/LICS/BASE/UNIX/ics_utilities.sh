@@ -64,6 +64,11 @@ LOG_TYPE=$LOG_TO_MAIN
 COMPRESS="*COMPRESS"
 NOCOMPRESS="*NOCOMPRESS"
 
+TEXT="*TXT"
+BINARY="*BIN"
+LITE="*LITE"
+TRIG="*TRIG"
+
 # ---------------------------------------------------------------------------
 #
 # archive_file Description:

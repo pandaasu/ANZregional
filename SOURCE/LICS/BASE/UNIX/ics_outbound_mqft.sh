@@ -8,6 +8,9 @@
 #           3 - QMGR_S          # Source Queue Manager for MQFT
 #           4 - QMGR_T          # Target Queue Manager for MQFT
 #           5 - DEST_DIR        # Destination file directory on target machine
+#           6 - CMP_PARAM       # Set whether the file is compressed or not (default *NOCOMPRESS)
+#           7 - TRNSFR_TYPE     # The type of transfer (default *TXT)
+#           8 - T_PROCESS       # Process to execute at target
 # ---------------------------------------------------------------------------
 #            F U N C T I O N A L     O V E R V I E W
 # ---------------------------------------------------------------------------
@@ -38,6 +41,7 @@ SCRIPT_PATH=${0%/*}
 setup_config()
 {
     INTERFACE_ID="MQFT"
+    TRNSFR_TYPE=${TRNSFR_TYPE:-$TEXT}
    
     # initialise the utlities script
     initialise_utilities $1
@@ -45,6 +49,30 @@ setup_config()
     # set the file permissions (chmod 777)
     set_permissions $S_FILE_NAME
     DATA_FLOW_TYPE=$OUTBOUND
+    MQFT_SEND_PATH="${AMI_PATH}/bin/mqft/mqftssnd"
+    
+    case $TRNSFR_TYPE in
+        $TEXT)
+            MQFT_SEND_PARAM=""
+            ;;
+        $BINARY)
+            MQFT_SEND_PARAM="-bin"
+            ;;
+        $LITE)
+            MQFT_SEND_PARAM=""
+            MQFT_SEND_PATH="${AMI_PATH}/bin/mqft/mqftssndc"
+            ;;
+        $TRIG)
+            MQFT_SEND_PARAM="-trigger ${T_PROCESS}"
+            ;;
+        *)
+            error_exit "ERROR: [setup_config] MQFT send type is not valid [${TRNSFR_TYPE}]"
+            ;;
+    esac
+    
+    if [[ $COMPRESS = $CMP_PARAM && $BINARY != $TRNSFR_TYPE ]] ; then
+        MQFT_SEND_PARAM="${MQFT_SEND_PARAM} -bin"
+    fi
 }
 
 # --------------------------------------------------------------------------
@@ -94,7 +122,9 @@ T_FILE_NAME=${2}    # Variable: Target file name
 S_QMGR=${3}         # Variable: Source Queue Manager for MQFT
 T_QMGR=${4}         # Variable: Target Queue Manager for MQFT
 DEST_DIR=${5}       # Variable: Destination file dir on target machine
-CMP_PARAM=${6}      # Variable: Set whether the file is compressed or not (optional)
+CMP_PARAM=${6}      # Variable: Set whether the file is compressed or not (default *NOCOMPRESS)
+TRNSFR_TYPE=${7}    # Variable: Set the transfer type (default *TXT)
+T_PROCESS=${8}      # Variable: Process to trigger at target
 
 setup_config $0     # Function: Setup script variables
 
@@ -123,4 +153,6 @@ exit 0              # Exit: Exit script with successful flag (0)
 #                                   common functions and standardised the
 #                                   script code
 # 3.2     10-JAN-2008 T. Keon       Added compression option
+# 3.3     04-MAR-2008 T. Keon       Merged all outbound MQFT files into a
+#                                   single script
 # ---------------------------------------------------------------------------
