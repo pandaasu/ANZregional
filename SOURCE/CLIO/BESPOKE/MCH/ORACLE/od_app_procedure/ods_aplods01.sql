@@ -229,11 +229,11 @@ create or replace package body ods_aplods01 as
       end if;
 
       /*-*/
-      /* Create the forecast load information when no errors
+      /* Create the forecast domestic load information when no errors
       /*-*/
       if var_trn_error = false then
          begin
-            dw_forecast_loading.create_planning_load(var_cast_yyyymmdd);
+            dw_forecast_loading.create_domestic_load(var_cast_yyyymmdd);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(sqlerrm, 1, 512));
