@@ -23,10 +23,10 @@ create table od.fcst_load_header
     load_description                varchar2(128 char)     not null,
     load_status                     varchar2(32 char)      not null,
     load_type                       varchar2(32 char)      not null,
-    load_data                       varchar2(32 char)      not null,
     cast_yyyymmdd                   varchar2(8 char)       not null,
     cast_yyyyppw                    number(7,0)            not null,
     cast_yyyypp                     number(6,0)            not null,
+    fcst_version                    number(6,0)            not null,
     fcst_str_yyyyppw                number(7,0)            not null,
     fcst_str_yyyypp                 number(6,0)            not null,
     fcst_end_yyyyppw                number(7,0)            not null,
@@ -45,12 +45,12 @@ create table od.fcst_load_header
 comment on table od.fcst_load_header is 'Forecast Load Header Table';
 comment on column od.fcst_load_header.load_identifier is 'Load identifier';
 comment on column od.fcst_load_header.load_description is 'Load description';
-comment on column od.fcst_load_header.load_status is 'Load status *CREATING,*VALID,*ERROR,*LOADED';
-comment on column od.fcst_load_header.load_type is 'Load type *BR,*OP,*ROB';
-comment on column od.fcst_load_header.load_data is 'Load data *DOMESTIC,*AFFILIATE';
+comment on column od.fcst_load_header.load_status is 'Load status *VALID or *ERROR';
+comment on column od.fcst_load_header.load_type is 'Load type - *BR_DOMESTIC,*BR_AFFILIATE,*PLAN,*REPLAN,*ROB';
 comment on column od.fcst_load_header.cast_yyyymmdd is 'Casting date';
 comment on column od.fcst_load_header.cast_yyyyppw is 'Casting period week';
 comment on column od.fcst_load_header.cast_yyyypp is 'Casting period';
+comment on column od.fcst_load_header.fcst_version is 'Forecast version';
 comment on column od.fcst_load_header.fcst_str_yyyyppw is 'Forecast start period week';
 comment on column od.fcst_load_header.fcst_str_yyyypp is 'Forecast start period';
 comment on column od.fcst_load_header.fcst_end_yyyyppw is 'Forecast end period week';
