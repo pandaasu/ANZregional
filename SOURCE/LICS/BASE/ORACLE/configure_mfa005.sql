@@ -9,7 +9,7 @@ set define ^;
 /**/
 define database = mfa005.ap.mars
 define datauser = lics_app
-define data_password = acorn23
+define data_password = riddoch96
 
 /**/
 /* Create the configuration data
@@ -31,7 +31,7 @@ commit;
 
 prompt CREATING INBOUND INTERFACE CONFIGURATION ...
 
-insert into lics_interface values('LADPDB01.1','LADS to Wyong Plant Database - Process Orders','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,0,null,null,'jeff.phillipson@esosn1',null,'bds_app.recipe_loader','1');
+insert into lics_interface values('LADPDB01.1','LADS to Wyong Plant Database - Process Orders','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'manu_app.recipe_loader','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...
@@ -40,7 +40,8 @@ insert into lics_sec_user values('*GUEST','Guest','GUEST','1');
 insert into lics_sec_user values('GREGASTE','Steve Gregan','ICS_ADMIN','1');
 insert into lics_sec_user values('HENDEMEG','Megan Henderson','ICS_ADMIN','1');
 insert into lics_sec_user values('GLENLIN','Linden Glen','ICS_ADMIN','1');
-insert into lics_sec_user values('MANDASUN','Sunil Mandalika','ICS_ADMIN','1');
+insert into lics_sec_user values('KEONTRE','Trevor Keon','ICS_ADMIN','1');
+insert into lics_sec_user values('GIRLIJON','Jonathan Girling','ICS_ADMIN','1');
 
 insert into lics_sec_menu values('*SECURITY','Security');
 insert into lics_sec_link values('*SECURITY',1,'*OPT','ICS_USR_CONFIG');

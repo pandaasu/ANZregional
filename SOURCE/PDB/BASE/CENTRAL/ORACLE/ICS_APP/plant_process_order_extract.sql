@@ -1,11 +1,11 @@
-create or replace package ics_app.plant_atllad01_interface
+create or replace package ics_app.plant_process_order_extract
 as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
  System  : Site Application 
- Package : plant_atllad01_interface 
+ Package : plant_process_order_extract 
  Owner   : ics_app 
  Author  : Steve Gregan 
 
@@ -27,10 +27,10 @@ as
    /* Public declarations 
    /*-*/
    procedure execute (par_cntl_rec_id in number);
-end plant_atllad01_interface;
+end plant_process_order_extract;
 /
 
-create or replace package body ics_app.plant_atllad01_interface as
+create or replace package body ics_app.plant_process_order_extract as
 
    /*-*/
    /* Private exceptions
@@ -1936,18 +1936,17 @@ create or replace package body ics_app.plant_atllad01_interface as
    /*-------------*/
    end process_zphbrq1;
 
-end plant_atllad01_interface;
+end plant_process_order_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_atllad01_interface to appsupport;
-grant execute on ics_app.plant_atllad01_interface to ics_reader;
-grant execute on ics_app.plant_atllad01_interface to lads_app;
-grant execute on ics_app.plant_atllad01_interface to lics_app;
+grant execute on ics_app.plant_process_order_extract to appsupport;
+grant execute on ics_app.plant_process_order_extract to lads_app;
+grant execute on ics_app.plant_process_order_extract to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_atllad01_interface for ics_app.plant_atllad01_interface;
+create or replace public synonym plant_process_order_extract for ics_app.plant_process_order_extract;
