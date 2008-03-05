@@ -20,9 +20,7 @@
 /**/
 create table od.fcst_extract_type_load
    (extract_type                    varchar2(32 char)      not null,
-    extract_type_description        varchar2(128 char)     not null,
-    plan_group                      varchar2(32 char)      not null,
-    extract_procedure               varchar2(128 char)     not null);
+    load_type                       varchar2(32 char)      not null);
 
 /**/
 /* Comments
