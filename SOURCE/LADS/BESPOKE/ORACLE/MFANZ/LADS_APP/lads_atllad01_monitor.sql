@@ -117,7 +117,7 @@ create or replace package body lads_atllad01_monitor as
       /* Execute the PLANT interface
       /*-*/
       begin
-         plant_process_order_extract(par_cntl_rec_id);
+         plant_process_order_extract.execute(par_cntl_rec_id);
       exception
          when others then
             if var_exception is null then
