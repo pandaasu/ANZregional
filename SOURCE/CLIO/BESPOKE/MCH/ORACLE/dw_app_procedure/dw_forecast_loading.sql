@@ -49,6 +49,10 @@ create or replace package dw_forecast_loading as
    procedure delete_load(par_load_identifier in varchar2);
    procedure delete_extract(par_extract_identifier in varchar2);
    procedure create_domestic_load(par_cast_date in varchar2);
+   procedure create_affiliate_load(par_cast_date in varchar2);
+   procedure create_plan_load(par_cast_date in varchar2);
+   procedure create_replan_load(par_cast_date in varchar2);
+   procedure create_rob_load(par_cast_date in varchar2);
    procedure extract_load(par_extract_type in varchar2,
                           par_extract_identifier in varchar2,
                           par_extract_description in varchar2,
@@ -613,6 +617,134 @@ create or replace package body dw_forecast_loading as
    /* End routine */
    /*-------------*/
    end create_domestic_load;
+
+   /************************************************************/
+   /* This procedure performs the create affiliate load routine */
+   /************************************************************/
+   procedure create_affiliate_load(par_cast_date in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_AFFILIATE_LOAD - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_affiliate_load;
+
+   /********************************************************/
+   /* This procedure performs the create plan load routine */
+   /********************************************************/
+   procedure create_plan_load(par_cast_date in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_PLAN_LOAD - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_plan_load;
+
+   /**********************************************************/
+   /* This procedure performs the create replan load routine */
+   /**********************************************************/
+   procedure create_replan_load(par_cast_date in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_REPLAN_LOAD - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_replan_load;
+
+   /*******************************************************/
+   /* This procedure performs the create rob load routine */
+   /*******************************************************/
+   procedure create_rob_load(par_cast_date in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_ROB_LOAD - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_rob_load;
 
    /****************************************************/
    /* This procedure performs the extract load routine */
