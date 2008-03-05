@@ -77,17 +77,17 @@ create or replace package body dw_forecast_loading as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure validate_load(par_identifier in varchar2);
+   procedure validate_load(par_load_identifier in varchar2);
 
    /***************************************************/
    /* This procedure performs the delete load routine */
    /***************************************************/
-   procedure delete_load(par_identifier in varchar2) is
+   procedure delete_load(par_load_identifier in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
-      var_identifier fcst_load_header.load_identifier%type;
+      var_load_identifier fcst_load_header.load_identifier%type;
       var_available boolean;
 
       /*-*/
@@ -96,7 +96,7 @@ create or replace package body dw_forecast_loading as
       cursor csr_fcst_load_header is 
          select *
            from fcst_load_header t01
-          where t01.load_identifier = var_identifier
+          where t01.load_identifier = var_load_identifier
             for update nowait;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
@@ -108,13 +108,13 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Validate the parameter values
       /*-*/
-      var_identifier := upper(par_identifier);
-      if var_identifier is null then
+      var_load_identifier := upper(par_load_identifier);
+      if var_load_identifier is null then
          raise_application_error(-20000, 'Forecast load identifier must be specified');
       end if;
 
       /*-*/
-      /* Attempt to lock the forecast header row
+      /* Attempt to lock the forecast load header row
       /* notes - must still exist
       /*         must not be locked
       /*-*/
@@ -139,7 +139,7 @@ create or replace package body dw_forecast_loading as
       /* 2. Cursor close does not release row locks
       /*-*/
       if var_available = false then
-         raise_application_error(-20000, 'Forecast load (' || var_identifier || ') does not exist or is already locked');
+         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') does not exist or is already locked');
       end if;
 
       /*-*/
@@ -183,6 +183,117 @@ create or replace package body dw_forecast_loading as
    /* End routine */
    /*-------------*/
    end delete_load;
+
+   /******************************************************/
+   /* This procedure performs the delete extract routine */
+   /******************************************************/
+   procedure delete_extract(par_extract_identifier in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_extract_identifier fcst_extract_header.extract_identifier%type;
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_header is 
+         select *
+           from fcst_extract_header t01
+          where t01.extract_identifier = var_extract_identifier
+            for update nowait;
+      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_extract_identifier := upper(par_extract_identifier);
+      if var_extract_identifier is null then
+         raise_application_error(-20000, 'Forecast extract identifier must be specified');
+      end if;
+
+      /*-*/
+      /* Attempt to lock the forecast extract header row
+      /* notes - must still exist
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_fcst_extract_header;
+         fetch csr_fcst_extract_header into rcd_fcst_extract_header;
+         if csr_fcst_extract_header%notfound then
+            var_available := false;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_fcst_extract_header%isopen then
+         close csr_fcst_extract_header;
+      end if;
+
+      /*-*/
+      /* Release the header lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist or is already locked');
+      end if;
+
+      /*-*/
+      /* Delete the forecast extract detail
+      /*-*/
+      delete from fcst_extract_detail
+       where extract_identifier = rcd_fcst_extract_header.extract_identifier;
+
+      /*-*/
+      /* Delete the forecast extract load
+      /*-*/
+      delete from fcst_extract_load
+       where extract_identifier = rcd_fcst_extract_header.extract_identifier;
+
+      /*-*/
+      /* Delete the forecast extract header
+      /*-*/
+      delete from fcst_extract_header
+       where extract_identifier = rcd_fcst_extract_header.extract_identifier;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - DELETE_EXTRACT - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end delete_extract;
 
    /************************************************************/
    /* This procedure performs the create domestic load routine */
@@ -284,7 +395,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       rcd_fcst_load_header.load_identifier := 'BR_DOMESTIC_'||var_cast_yyyymmdd;
       rcd_fcst_load_header.load_description := 'Business Review Domestic Forecasts';
-      rcd_fcst_load_header.load_status := '*CREATING';
+      rcd_fcst_load_header.load_status := '*NONE';
       rcd_fcst_load_header.load_type := '*BR_DOMESTIC';
       rcd_fcst_load_header.cast_yyyymmdd := var_cast_yyyymmdd;
       rcd_fcst_load_header.cast_yyyyppw := var_cast_yyyyppw;
@@ -521,10 +632,16 @@ create or replace package body dw_forecast_loading as
       var_extract_identifier fcst_extract_header.extract_identifier%type;
       var_extract_description fcst_extract_header.extract_description%type;
       var_load_identifier fcst_load_header.load_identifier%type;
+      var_work_identifier fcst_load_header.load_identifier%type;
       var_user fcst_load_header.crt_user%type;
+      var_found boolean;
       var_value varchar2(256);
-      type typ_value is table of varchar2(256) index by binary_integer;
-      tbl_value typ_value;
+      type rcd_load is record(load_identifier varchar2(256), load_type varchar2(32));
+      type typ_load is table of rcd_load index by binary_integer;
+      tbl_load typ_load;
+      type rcd_extract is record(load_type varchar2(32), select_count number);
+      type typ_extract is table of rcd_extract index by binary_integer;
+      tbl_extract typ_extract;
 
       /*-*/
       /* Local cursors
@@ -541,16 +658,10 @@ create or replace package body dw_forecast_loading as
           where t01.extract_type = rcd_fcst_extract_type.extract_type;
       rcd_fcst_extract_type_load csr_fcst_extract_type_load%rowtype;
 
-      cursor csr_fcst_extract_header is 
-         select t01.*
-           from fcst_extract_header t01
-          where t01.extract_identifier = var_extract_identifier;
-      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
-
       cursor csr_fcst_load_header is 
          select t01.*
            from fcst_load_header t01
-          where t01.load_identifier = tbl_value(idx);
+          where t01.load_identifier = var_work_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_mars_date is
@@ -591,12 +702,13 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Extract the load identifiers
       /*-*/
-      tbl_value.delete;
+      tbl_load.delete;
       var_value := null;
       for idx in 1..length(var_load_identifier) loop
          if substr(var_load_identifier,idx,1) = ',' then
             if not(var_value is null) then
-               tbl_value(tbl_value.count+1) := var_value;
+               tbl_load(tbl_load.count+1).load_identifier := var_value;
+               tbl_load(tbl_load.count).load_type := '*NONE';
             end if;
             var_value := null;
          else
@@ -604,7 +716,8 @@ create or replace package body dw_forecast_loading as
          end if;
       end loop;
       if not(var_value is null) then
-         tbl_value(tbl_value.count+1) := var_value;
+         tbl_load(tbl_load.count+1).load_identifier := var_value;
+         tbl_load(tbl_load.count).load_type := '*NONE';
       end if;
 
       /*-*/
@@ -618,49 +731,49 @@ create or replace package body dw_forecast_loading as
       close csr_fcst_extract_type;
 
       /*-*/
-      /* Validate the extract type load types
+      /* Extract the extract type load types
       /*-*/
+      tbl_extract.delete;
       open csr_fcst_extract_type_load;
       loop
          fetch csr_fcst_extract_type_load into rcd_fcst_extract_type_load;
          if csr_fcst_extract_type_load%notfound then
             exit;
          end if;
-
+         tbl_extract(tbl_extract.count+1).load_type := rcd_fcst_extract_type_load.load_type;
+         tbl_extract(tbl_extract.count).select_count := 0;
       end loop;
-
-      /*-*/
-      /* Validate the extract header
-      /*-*/
-      open csr_fcst_extract_header;
-      fetch csr_fcst_extract_header into rcd_fcst_extract_header;
-      if csr_fcst_extract_header%found then
-         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') already exists');
-      end if;
-      close csr_fcst_extract_header;
 
       /*-*/
       /* Validate the load identifiers
       /*-*/
-      for idx in 1..tbl_value.count loop
+      for idx in 1..tbl_load.count loop
 
          /*-*/
          /* Forecast load must exist
          /*-*/
+         var_work_identifier := tbl_load(idx).load_identifier;
          open csr_fcst_load_header;
          fetch csr_fcst_load_header into rcd_fcst_load_header;
          if csr_fcst_load_header%notfound then
-            raise_application_error(-20000, 'Forecast load (' || tbl_value(idx) || ') does not exist');
+            raise_application_error(-20000, 'Forecast load (' || var_work_identifier || ') does not exist');
          end if;
          close csr_fcst_load_header;
+         tbl_load(idx).load_type := rcd_fcst_load_header.load_type;
 
          /*-*/
-         /* Forecast load type must match the extract load type
+         /* Forecast load type must match the extract load types
          /*-*/
---must match extract type load list and extract type load list must be fullfilled
-      ---   if rcd_fcst_load_header.load_type != rcd_fcst_extract_type.load_type then
-      ---      raise_application_error(-20000, 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') type ( || rcd_fcst_load_header.load_type ||') does not match the extract load type( || rcd_fcst_extract_type.load_type ||')');
-      ---   end if;
+         var_found := false;
+         for idy in 1..tbl_extract.count loop
+            if tbl_extract(idy).load_type = rcd_fcst_load_header.load_type then
+               tbl_extract(idy).select_count := tbl_extract(idy).select_count + 1;
+               var_found := true;
+            end if;
+         end loop;
+         if var_found = false then
+            raise_application_error(-20000, 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') type (' || rcd_fcst_load_header.load_type || ') does not exist in extract load types');
+         end if;
 
          /*-*/
          /* Forecast load must be *VALID
@@ -678,12 +791,24 @@ create or replace package body dw_forecast_loading as
             raise_application_error(-20000, 'Mars date (' || to_char(sysdate,'yyyy/mm/dd') || ') does not exist');
          end if;
          close csr_mars_date;
-         if rcd_fcst_load_header.fcst_type = '*BR' then
-            if rcd_fcst_load_header.fcst_cast_yyyypp < (rcd_mars_date.mars_period - 1) then
-               raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyypp)||') must not be less than previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
+         if rcd_fcst_load_header.load_type = '*BR_DOMESTIC' then
+            if rcd_fcst_load_header.cast_yyyypp < (rcd_mars_date.mars_period - 1) then
+               raise_application_error(-20000, 'Business review casting period ('||to_char(rcd_fcst_load_header.cast_yyyypp)||') must not be less than previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
             end if;
          end if;
 
+      end loop;
+
+      /*-*/
+      /* Forecast extract load types must be selected
+      /*-*/
+      for idx in 1..tbl_extract.count loop
+         if tbl_extract(idx).select_count = 0 then
+            raise_application_error(-20000, 'Forecast extract load type (' || tbl_extract(idx).load_type || ') has no forecast load selected');
+         end if;
+         if tbl_extract(idx).select_count > 1 then
+            raise_application_error(-20000, 'Forecast extract load type (' || tbl_extract(idx).load_type || ') has more than one forecast load specified');
+         end if;
       end loop;
 
       /*-*/
@@ -700,19 +825,19 @@ create or replace package body dw_forecast_loading as
       /* Insert the forecast extract header
       /*-*/
       begin
-      insert into fcst_extract_header
-         (extract_identifier,
-          extract_description,
-          extract_type,
-          plan_group,
-          crt_user,
-          crt_date)
-         values(rcd_fcst_extract_header.extract_identifier,
-                rcd_fcst_extract_header.extract_description,
-                rcd_fcst_extract_header.extract_type,
-                rcd_fcst_extract_header.plan_group,
-                rcd_fcst_extract_header.crt_user,
-                rcd_fcst_extract_header.crt_date);
+         insert into fcst_extract_header
+            (extract_identifier,
+             extract_description,
+             extract_type,
+             plan_group,
+             crt_user,
+             crt_date)
+            values(rcd_fcst_extract_header.extract_identifier,
+                   rcd_fcst_extract_header.extract_description,
+                   rcd_fcst_extract_header.extract_type,
+                   rcd_fcst_extract_header.plan_group,
+                   rcd_fcst_extract_header.crt_user,
+                   rcd_fcst_extract_header.crt_date);
       exception
          when dup_val_on_index then
             raise_application_error(-20000, 'Forecast extract identifier (' || var_extract_identifier || ') already exists');
@@ -722,8 +847,8 @@ create or replace package body dw_forecast_loading as
       /* Insert the forecast extract loads
       /*-*/
       rcd_fcst_extract_load.extract_identifier := rcd_fcst_extract_header.extract_identifier;
-      for idx in 1..tbl_value.count loop
-         rcd_fcst_extract_load.load_identifier := tbl_value(idx);
+      for idx in 1..tbl_load.count loop
+         rcd_fcst_extract_load.load_identifier := tbl_load(idx).load_identifier;
          insert into fcst_extract_load
             (extract_identifier,
              load_identifier)
@@ -771,285 +896,10 @@ create or replace package body dw_forecast_loading as
    /*-------------*/
    end extract_load;
 
-   /*************************************************************/
-   /* This procedure performs the report planning load routine */
-   /*************************************************************/
-   procedure report_planning_load(par_cast_period in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_available boolean;
-      var_wrk_count number;
-      var_wrk_yyyypp number;
-      var_query varchar2(32767 char);
-      type typ_cursor is ref cursor;
-      csr_extract typ_cursor;
-
-      type typ_record is record(qry_ord_number varchar2(256 char),
-                                qry_ord_line varchar2(256 char),
-                                qry_gi_date date,
-                                qry_sup_plant varchar2(256 char),
-                                qry_sup_locn varchar2(256 char),
-                                qry_rcv_plant varchar2(256 char),
-                                qry_matl_code varchar2(256 char),
-                                qry_matl_desc varchar2(256 char),
-                                qry_ord_qty number,
-                                qry_ord_uom varchar2(256 char),
-                                qry_dsp_price number,
-                                qry_dsp_value number,
-                                qry_tax_rate number,
-                                qry_tax_value number,
-                                qry_tot_value number,
-                                qry_tax_eye varchar2(256 char),
-                                qry_pack_frmt varchar2(256 char),
-                                qry_cust_name varchar2(256 char),
-                                qry_cust_addr varchar2(256 char),
-                                qry_cust_bank varchar2(256 char),
-                                qry_tax_code varchar2(256 char));
-
-
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_mars_date is
-         select *
-           from mars_date t01
-          where to_char(t01.calendar_date,'yyyymmdd') = to_char(sysdate,'yyyymmdd');
-      rcd_mars_date csr_mars_date%rowtype;
-
-      cursor csr_fcst_load_header is 
-         select *
-           from fcst_load_header t01
-          where t01.load_identifier = var_identifier
-            for update nowait;
-      rcd_fcst_load_header csr_fcst_load_header%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Validate the parameter values
-      /*-*/
-      var_identifier := upper(par_identifier);
-      if var_identifier is null then
-         raise_application_error(-20000, 'Forecast load identifier must be specified');
-      end if;
-      var_user := upper(par_user);
-      if var_user is null then
-         var_user := user;
-      end if;
-
-      /*-*/
-      /* Attempt to lock the forecast header row
-      /* notes - must still exist
-      /*         must not be locked
-      /*-*/
-      var_available := true;
-      begin
-         open csr_fcst_load_header;
-         fetch csr_fcst_load_header into rcd_fcst_load_header;
-         if csr_fcst_load_header%notfound then
-            var_available := false;
-         end if;
-      exception
-         when others then
-            var_available := false;
-      end;
-      if csr_fcst_load_header%isopen then
-         close csr_fcst_load_header;
-      end if;
-
-      /*-*/
-      /* Release the header lock when not available
-      /* 1. Cursor row locks are not released until commit or rollback
-      /* 2. Cursor close does not release row locks
-      /*-*/
-      if var_available = false then
-         raise_application_error(-20000, 'Forecast load (' || var_identifier || ') does not exist or is already locked');
-      end if;
-
-      /*-*/
-      /* Forecast load must be *VALID
-      /*-*/
-      if rcd_fcst_load_header.load_status != '*VALID' then
-         raise_application_error(-20000, 'Forecast load (' || var_identifier || ') must be *VALID status');
-      end if;
-
-      /*-*/
-      /* Forecast load must be a period load
-      /*-*/
-      if rcd_fcst_load_header.fcst_time != '*PRD' then
-         raise_application_error(-20000, 'Forecast load (' || var_identifier || ') must be period load');
-      end if;
-
-      /*-*/
-      /* Forecast load casting period must match CLIO
-      /*-*/
-      open csr_mars_date;
-      fetch csr_mars_date into rcd_mars_date;
-      if csr_mars_date%notfound then
-         raise_application_error(-20000, 'Mars date (' || to_char(sysdate,'yyyy/mm/dd') || ') does not exist');
-      end if;
-      close csr_mars_date;
-      if rcd_fcst_load_header.fcst_type = '*BR' then
-         if rcd_fcst_load_header.fcst_cast_yyyynn < (rcd_mars_date.mars_period - 1) then
-            raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') must not be less than CLIO previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
-         end if;
-      end if;
-      if rcd_fcst_load_header.fcst_type = '*OP1' then
-         if rcd_fcst_load_header.fcst_cast_yyyynn != rcd_mars_date.mars_year*100 then
-            raise_application_error(-20000, 'Operating plan (this year) casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') does not match CLIO casting period ('||to_char(rcd_mars_date.mars_year*100)||'00)');
-         end if;
-      end if;
-      if rcd_fcst_load_header.fcst_type = '*OP2' then
-         if rcd_fcst_load_header.fcst_cast_yyyynn != (rcd_mars_date.mars_year+1)*100 then
-            raise_application_error(-20000, 'Operating plan (next year) casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') does not match CLIO casting period ('||to_char((rcd_mars_date.mars_year+1)*100)||'00)');
-         end if;
-      end if;
-
-      /*-*/
-      /* Update the forecast load header
-      /*-*/
-      update fcst_load_header
-         set load_status = '*LOADED',
-             upd_user = var_user,
-             upd_date = sysdate
-       where load_identifier = rcd_fcst_load_header.load_identifier;
-
-      /*-*/
-      /* Set the forecast type variable
-      /*-*/
-      if rcd_fcst_load_header.fcst_time = '*PRD' then
-         if rcd_fcst_load_header.fcst_type = '*BR' then
-            var_fcst_type_code := 3;
-         end if;
-         if rcd_fcst_load_header.fcst_type = '*OP1' then
-            var_fcst_type_code := 4;
-         end if;
-         if rcd_fcst_load_header.fcst_type = '*OP2' then
-            var_fcst_type_code := 4;
-         end if;
-      end if;
-
-      /*-*/
-      /* Load the query statement
-      /*-*/
-      var_query := 'select t01.material_code material_code,
-                           nvl(sum(case when t01.fcst_yyyypp = <P01> then fcst_qty end),0) q01_qty,
-                           nvl(sum(case when t01.fcst_yyyypp = <P02> then fcst_qty end),0) q02_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P03> then fcst_qty end),0) q03_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P04> then fcst_qty end),0) q04_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P05> then fcst_qty end),0) q05_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P06> then fcst_qty end),0) q06_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P07> then fcst_qty end),0) q07_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P08> then fcst_qty end),0) q08_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P09> then fcst_qty end),0) q09_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P10> then fcst_qty end),0) q10_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P11> then fcst_qty end),0) q11_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P12> then fcst_qty end),0) q12_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P13> then fcst_qty end),0) q13_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P14> then fcst_qty end),0) q14_qty,
-                           nvl(sum(case when t01.fcst_yyyypp = <P15> then fcst_qty end),0) q15_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P16> then fcst_qty end),0) q16_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P17> then fcst_qty end),0) q17_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P18> then fcst_qty end),0) q18_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P19> then fcst_qty end),0) q19_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P20> then fcst_qty end),0) q20_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P21> then fcst_qty end),0) q21_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P22> then fcst_qty end),0) q22_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P23> then fcst_qty end),0) q23_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P24> then fcst_qty end),0) q24_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P25> then fcst_qty end),0) q25_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P26> then fcst_qty end),0) q26_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P27> then fcst_qty end),0) q27_qty,
-                           nvl(sum(case when t01.fcst_yyyypp = <P28> then fcst_qty end),0) q28_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P29> then fcst_qty end),0) q29_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P30> then fcst_qty end),0) q30_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P31> then fcst_qty end),0) q31_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P32> then fcst_qty end),0) q32_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P33> then fcst_qty end),0) q33_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P34> then fcst_qty end),0) q34_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P35> then fcst_qty end),0) q35_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P36> then fcst_qty end),0) q36_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P37> then fcst_qty end),0) q37_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P38> then fcst_qty end),0) q38_val,
-                           nvl(sum(case when t01.fcst_yyyypp = <P39> then fcst_qty end),0) q39_val
-                      from fcst_load_detail t01
-                     where t01.load_identifier = '<LOADID>'
-                     group by t01.material_code
-                     order by material_code';
-      var_query := replace(var_query,'<LOADID>',var_tax_01);
-
-      /*-*/
-      /* Set the forecast periods
-      /*-*/
-      var_wrk_count := 1;
-      var_wrk_yyyypp := rcd_fcst_load_header.fcst_str_yyyypp;
-      loop
-         if var_wrk_yyyypp > rcd_fcst_load_header.fcst_end_yyyypp then
-            exit;
-         end if;
-         var_query := replace(var_query,'<P'||to_char(var_wrk_count,'fm00')||'>',to_char(var_wrk_yyyypp,'fm000000'));
-         var_wrk_count := var_wrk_count + 1;
-         if substr(to_char(var_wrk_yyyypp,'fm000000'),5,2) = '13' then
-            var_wrk_yyyypp := var_wrk_yyyypp + 88;
-         else
-            var_wrk_yyyypp := var_wrk_yyyypp + 1;
-         end if;
-      end loop;
-
-      /*-*/
-      /* Retrieve the extract data
-      /*-*/
-      /*-*/
-      tbl_report.delete;
-      open csr_extract for var_query;
-      loop
-         fetch csr_extract into rcd_extract;
-         if csr_extract%notfound then
-            exit;
-         end if;
-      end loop;
-      close csr_extract;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - REPORT_PLANNING_LOAD - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end report_planning_load;
-
    /*****************************************************/
    /* This procedure performs the validate load routine */
    /*****************************************************/
-   procedure validate_load(par_identifier in varchar2) is
+   procedure validate_load(par_load_identifier in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1067,7 +917,7 @@ create or replace package body dw_forecast_loading as
       cursor csr_fcst_load_header is 
          select t01.*
            from fcst_load_header t01
-          where t01.load_identifier = par_identifier;
+          where t01.load_identifier = par_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_fcst_load_detail is
@@ -1134,7 +984,7 @@ create or replace package body dw_forecast_loading as
       open csr_fcst_load_header;
       fetch csr_fcst_load_header into rcd_fcst_load_header;
       if csr_fcst_load_header%notfound then
-         raise_application_error(-20000, 'Forecast load (' || par_identifier || ') does not exist');
+         raise_application_error(-20000, 'Forecast load (' || par_load_identifier || ') does not exist');
       end if;
       close csr_fcst_load_header;
 
