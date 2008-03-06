@@ -238,7 +238,7 @@ create or replace package body ics_app.plant_process_order_extract as
       close csr_lads_ctl_rec_hpi_01;
 
       /*-*/
-      /* Initialise the ZorDINE indicators
+      /* Initialise the ZORDINE indicators
       /*-*/
       var_zordine := false;
 
@@ -273,7 +273,7 @@ create or replace package body ics_app.plant_process_order_extract as
       close csr_lads_ctl_rec_tpi_01;
 
       /*-*/
-      /* Control recipe must have one ZorDINE process instruction
+      /* Control recipe must have one ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Execute - Control recipe id (' || to_char(rcd_lads_ctl_rec_hpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
@@ -285,22 +285,31 @@ create or replace package body ics_app.plant_process_order_extract as
       var_ignore := false;
       if rcd_lads_ctl_rec_hpi.plant = 'AU10' then
          var_interface := 'LADPDB01.1';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'NZ01' then
          var_interface := 'LADPDB01.2';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU20' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU21' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU22' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU23' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU24' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU25' then
          var_interface := 'LADPDB01.3';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU30' then
          var_interface := 'LADPDB01.4';
+         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU40' then
          var_interface := 'LADPDB01.5';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU45' then
@@ -492,7 +501,7 @@ create or replace package body ics_app.plant_process_order_extract as
    end execute;
 
    /*******************************************************/
-   /* This procedure performs the process ZorDINE routine */
+   /* This procedure performs the process ZORDINE routine */
    /*******************************************************/
    procedure process_zordine is
 
@@ -533,7 +542,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe can only have one ZorDINE process instruction
+      /* Control recipe can only have one ZORDINE process instruction
       /*-*/
       if var_zordine = true then
          raise_application_error(-20000, 'Process ZORDINE - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') has multiple ZORDINE process instructions on LADS_CTL_REC_TPI');
@@ -541,7 +550,7 @@ create or replace package body ics_app.plant_process_order_extract as
       var_zordine := true;
 
       /*-*/
-      /* Retrieve the ZorDINE data (LADS schema)
+      /* Retrieve the ZORDINE data (LADS schema)
       /*-*/
       open csr_lads_ctl_rec_vpi_01;
       fetch csr_lads_ctl_rec_vpi_01 into rcd_lads_ctl_rec_vpi;
@@ -710,7 +719,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe must have a ZorDINE process instruction
+      /* Control recipe must have a ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Process ZBFBRQ1 (ZATLAS) - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
@@ -920,7 +929,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe must have a ZorDINE process instruction
+      /* Control recipe must have a ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Process ZACBRQ1 (ZATLASA) - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
@@ -1145,7 +1154,7 @@ create or replace package body ics_app.plant_process_order_extract as
           where t01.cntl_rec_id = rcd_lads_ctl_rec_tpi.cntl_rec_id
             and t01.proc_instr_number = rcd_lads_ctl_rec_tpi.proc_instr_number
             and t01.char_line_number = rcd_lads_ctl_rec_vpi.x_src_description
-       orDER BY t01.arrival_sequence;
+       order by t01.arrival_sequence;
       rcd_lads_ctl_rec_txt_01 csr_lads_ctl_rec_txt_01%rowtype;
 
       cursor csr_lads_ctl_rec_txt_02 is
@@ -1155,7 +1164,7 @@ create or replace package body ics_app.plant_process_order_extract as
           where t01.cntl_rec_id = rcd_lads_ctl_rec_tpi.cntl_rec_id
             and t01.proc_instr_number = rcd_lads_ctl_rec_tpi.proc_instr_number
             and t01.char_line_number = rcd_lads_ctl_rec_vpi.x_src_long_text
-       orDER BY t01.arrival_sequence;
+       order by t01.arrival_sequence;
       rcd_lads_ctl_rec_txt_02 csr_lads_ctl_rec_txt_02%rowtype;
 
    /*-------------*/
@@ -1164,7 +1173,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe must have a ZorDINE process instruction
+      /* Control recipe must have a ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Process ZMESSRC - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
@@ -1574,7 +1583,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe must have a ZorDINE process instruction
+      /* Control recipe must have a ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Process ZBFBRQ1 (ZATLAS) - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
@@ -1767,7 +1776,7 @@ create or replace package body ics_app.plant_process_order_extract as
    begin
 
       /*-*/
-      /* Control recipe must have a ZorDINE process instruction
+      /* Control recipe must have a ZORDINE process instruction
       /*-*/
       if var_zordine = false then
          raise_application_error(-20000, 'Process ZPHBRQ1 - Control recipe id (' || to_char(rcd_lads_ctl_rec_tpi.cntl_rec_id) || ') does not have a ZORDINE process instruction on LADS_CTL_REC_TPI');
