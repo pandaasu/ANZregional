@@ -70,7 +70,7 @@ setup_config()
             ;;
     esac
     
-    if [[ $COMPRESS = $CMP_PARAM && $BINARY != $TRNSFR_TYPE ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 && $BINARY != $TRNSFR_TYPE ]] ; then
         MQFT_SEND_PARAM="${MQFT_SEND_PARAM} -bin"
     fi
 }

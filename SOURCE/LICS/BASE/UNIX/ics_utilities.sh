@@ -61,8 +61,13 @@ LOG_TO_TEMP=1
 IGNORE_LOG=0
 LOG_TYPE=$LOG_TO_MAIN
 
+COMPRESS_ZIP="*COMPRESS_ZIP"
+COMPRESS_GZ="*COMPRESS_GZ"
+COMPRESS_Z="*COMPRESS_Z"
 COMPRESS="*COMPRESS"
 NOCOMPRESS="*NOCOMPRESS"
+
+IS_COMPRESSED=0
 
 TEXT="*TXT"
 BINARY="*BIN"
@@ -272,6 +277,12 @@ initialise_utilities()
     
     # set the compression option if it has not been specified already
     CMP_PARAM=${CMP_PARAM:-$NOCOMPRESS}
+    
+    # set global is compressed value so we dont need to check if CMP_PARAM matches
+    # any of the compress options
+    if [[ $NOCOMPRESS = $CMP_PARAM ]] ; then
+        IS_COMPRESSED=1
+    fi
     
     echo "INFO: Creating working log file [${TMP_OUT}]" >> $TMP_OUT
     
@@ -490,13 +501,27 @@ toggle_file_compression()
         
         # get the files extension so we can handle .zip or other different file extensions so gunzip can 
         # decompress the files successfully using the -S option
-        FILE_EXT=${FILE_INT##*.}
+        FILE_EXT=".${FILE_INT##*.}"
         DECOMPRESS_FILE_NAME=${FILE_INT%.*}
         
-        if [[ -z $FILE_EXT ]] ; then
+        if [[ "." = $FILE_EXT ]] ; then
             CMD="gunzip -f $FILE_INT"
         else
-            CMD="gunzip -f -S $FILE_EXT $FILE_INT"
+            if [[ "zip" = $FILE_EXT || "gz" = $FILE_EXT || "Z" = $FILE_EXT ]] ; then
+                CMD="gunzip -f -S $FILE_EXT $FILE_INT"
+            else
+                DECOMPRESS_FILE_NAME=$FILE_INT
+                
+                if [[ $COMPRESS_ZIP = $CMP_PARAM ]] ; then
+                    CMD="gunzip -f -S .zip ${FILE_INT}.zip"
+                elif [[ $COMPRESS_GZ = $CMP_PARAM ]] ; then
+                    CMD="gunzip -f -S .gz ${FILE_INT}.gz"
+                elif [[ $COMPRESS_Z = $CMP_PARAM ]] ; then
+                    CMD="gunzip -f -S .Z ${FILE_INT}.Z"
+                else
+                    error_exit "ERROR: [toggle_file_compression] Compress command [${CMP_PARAM}] is not valid."
+                fi
+            fi
         fi
     else
         error_exit "ERROR: [toggle_file_compression] Specified compression type [${CMP_TYPE}] is not valid."        

@@ -119,7 +119,7 @@ get_file_from_dj()
         log_file "INFO: [get_file_from_dj] Processing msg2file successful" "HARMLESS"
     fi
     
-    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression ${Q_FILE} 1 
         
         # set the file to the correct name after decompressing
@@ -165,7 +165,7 @@ get_file_from_sap()
         log_file "INFO: [get_file_from_sap] Processing ${JAVA_PATH} successful" "HARMLESS"
     fi
 
-    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression ${OUT_FILE} 1 
         
         # set the file to the correct name after decompressing
@@ -205,7 +205,7 @@ get_mq_message()
         error_exit "ERROR: [get_mq_message] MQIF command failed. MQIF returned: [${MQIF_RC}]."
     fi
     
-    if [[ $1 -eq 0 && $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $1 -eq 0 && $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression ${Q_FILE} 1 
         
         # set the file to the correct name after decompressing
@@ -301,7 +301,7 @@ process_inbound_mqft()
     FILE_INT=$1
     log_file "INFO: [process_inbound_mqft] Processing file [${FILE_INT}]" "HARMLESS"
 
-    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression ${FILE_INT} 1 
         
         # set the file to the correct name after decompressing
@@ -393,7 +393,7 @@ process_outbound()
     log_file "INFO: [process_outbound] CMP_PARAM = ${CMP_PARAM}" "HARMLESS"
     log_file "INFO: [process_outbound] COMPRESS = ${COMPRESS}" "HARMLESS"
     
-    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression $FILE_INT 0
         FILE_INT=$COMPRESS_FILE_NAME       # set the correct filename to process
         
@@ -430,7 +430,7 @@ process_outbound()
     
     log_file "INFO: [process_outbound] Processing file2msg successful" "HARMLESS" 
     
-    if [[ $COMPRESS = $CMP_PARAM ]] ; then
+    if [[ $IS_COMPRESSED -eq 1 ]] ; then
         archive_file "${FILE_INT}" 1
     else
         archive_file "${FILE_INT}" 0

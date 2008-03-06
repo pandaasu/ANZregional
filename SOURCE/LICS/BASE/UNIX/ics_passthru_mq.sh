@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/ksh
 # ---------------------------------------------------------------------------
 # SCRIPT  : ics_passthru_mq.sh
 # AUTHOR  : Megan Henderson
