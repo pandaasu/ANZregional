@@ -10,6 +10,7 @@
 # Date          Who         Change History
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
+# 03-MAR-2008   L. Glen     Modified function call for ROUTER_MQFT
 #
 # ---------------------------------------------------------------------------
 
@@ -93,7 +94,9 @@ load_file()
             print "exit;" >> $SQL_FILE
             ;;
         $LOAD_FILE_ROUTER)
-            print "execute lics_router.execute('${ID_INT}','${LOAD_FILE}');" > $SQL_FILE
+            print "var return_var varchar2(4000)" > $SQL_FILE
+            print "execute :return_var := lics_router.execute('${ID_INT}','${LOAD_FILE}');" >> $SQL_FILE
+            print "print return_var;" >> $SQL_FILE 
             print "exit;" >> $SQL_FILE
             ;;
         $LOAD_FILE_RESTART)
