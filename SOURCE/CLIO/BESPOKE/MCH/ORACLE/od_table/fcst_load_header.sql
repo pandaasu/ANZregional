@@ -23,14 +23,11 @@ create table od.fcst_load_header
     load_description                varchar2(128 char)     not null,
     load_status                     varchar2(32 char)      not null,
     load_type                       varchar2(32 char)      not null,
-    cast_yyyymmdd                   varchar2(8 char)       not null,
-    cast_yyyyppw                    number(7,0)            not null,
-    cast_yyyypp                     number(6,0)            not null,
-    fcst_version                    number(6,0)            not null,
-    fcst_str_yyyyppw                number(7,0)            not null,
-    fcst_str_yyyypp                 number(6,0)            not null,
-    fcst_end_yyyyppw                number(7,0)            not null,
-    fcst_end_yyyypp                 number(6,0)            not null,
+    load_data_type                  varchar2(32 char)      not null,
+    load_data_version               number                 not null,
+    load_data_range                 number                 not null,
+    load_str_yyyypp                 number(6,0)            not null,
+    load_end_yyyypp                 number(6,0)            not null,
     sales_org_code                  varchar2(4 char)       not null,
     distbn_chnl_code                varchar2(2 char)       not null,
     division_code                   varchar2(2 char)       not null,
@@ -47,14 +44,11 @@ comment on column od.fcst_load_header.load_identifier is 'Load identifier';
 comment on column od.fcst_load_header.load_description is 'Load description';
 comment on column od.fcst_load_header.load_status is 'Load status *VALID or *ERROR';
 comment on column od.fcst_load_header.load_type is 'Load type - *BR_DOMESTIC,*BR_AFFILIATE,*PLAN,*REPLAN,*ROB';
-comment on column od.fcst_load_header.cast_yyyymmdd is 'Casting date';
-comment on column od.fcst_load_header.cast_yyyyppw is 'Casting period week';
-comment on column od.fcst_load_header.cast_yyyypp is 'Casting period';
-comment on column od.fcst_load_header.fcst_version is 'Forecast version';
-comment on column od.fcst_load_header.fcst_str_yyyyppw is 'Forecast start period week';
-comment on column od.fcst_load_header.fcst_str_yyyypp is 'Forecast start period';
-comment on column od.fcst_load_header.fcst_end_yyyyppw is 'Forecast end period week';
-comment on column od.fcst_load_header.fcst_end_yyyypp is 'Forecast end period';
+comment on column od.fcst_load_header.load_data_type is 'Load data type - *QTY_ONLY,*QTY_GSV';
+comment on column od.fcst_load_header.load_data_version is 'Load data version - *BR(YYYYPP),*PLAN(YYYY),*REPLAN(YYYY),*ROB(YYYY)';
+comment on column od.fcst_load_header.load_data_range is 'Load data range - number of periods';
+comment on column od.fcst_load_header.load_str_yyyypp is 'Forecast start period';
+comment on column od.fcst_load_header.load_end_yyyypp is 'Forecast end period';
 comment on column od.fcst_load_header.sales_org_code is 'Sales organisation code';
 comment on column od.fcst_load_header.distbn_chnl_code is 'Distribution channel code';
 comment on column od.fcst_load_header.division_code is 'Division code';

@@ -20,7 +20,8 @@
 /**/
 create table od.fcst_load_type
    (load_type                             varchar2(32 char)      not null,
-    load_type_description                 varchar2(128 char)     not null);
+    load_type_description                 varchar2(128 char)     not null,
+    load_type_version                     varchar2(32 char)      not null);
 
 /**/
 /* Comments
@@ -28,6 +29,7 @@ create table od.fcst_load_type
 comment on table od.fcst_load_type is 'Forecast Load Type Table';
 comment on column od.fcst_load_type.load_type is 'Load type';
 comment on column od.fcst_load_type.load_type_description is 'Load type description';
+comment on column od.fcst_load_type.load_type_version is 'Load type version - *PERIOD or *YEAR';
 
 /**/
 /* Primary Key Constraint
