@@ -50,6 +50,7 @@ create or replace package body ods_aplods01 as
    var_trn_error boolean;
    var_rcd_count number;
    var_rcd_total number;
+   var_work_yyyymmdd varchar2(8 char);
    var_cast_yyyymmdd varchar2(8 char);
    rcd_fcst_data fcst_data%rowtype;
 
@@ -118,13 +119,17 @@ create or replace package body ods_aplods01 as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_fcst_data.cast_yyyymmdd := to_char(lics_inbound_utility.get_date('CAST_DATE','dd/mm/yyyy'),'yyyymmdd');
+      var_work_yyyymmdd := to_char(lics_inbound_utility.get_date('CAST_DATE','dd/mm/yyyy'),'yyyymmdd');
       rcd_fcst_data.material_code := lics_inbound_utility.get_variable('MATL_CODE');
       rcd_fcst_data.dmnd_group := lics_inbound_utility.get_variable('DMND_GROUP');
       rcd_fcst_data.plant_code := lics_inbound_utility.get_variable('ATLAS_LOCN');
       rcd_fcst_data.fcst_yyyymmdd := lics_inbound_utility.get_variable('FCST_DATE');
+      rcd_fcst_data.fcst_yyyyppw := 0;
+      rcd_fcst_data.fcst_yyyypp := 0;
       rcd_fcst_data.fcst_cover := lics_inbound_utility.get_number('FCST_COVER',null);
       rcd_fcst_data.fcst_qty := lics_inbound_utility.get_number('FCST_QTY',null);
+      rcd_fcst_data.fcst_prc := 0;
+      rcd_fcst_data.fcst_gsv := 0;
       var_rcd_total := lics_inbound_utility.get_number('RCD_TOTAL',null);
       var_rcd_count := var_rcd_count + 1;
 
@@ -140,14 +145,14 @@ create or replace package body ods_aplods01 as
       /*-*/
       if var_trn_start = false then
          delete from fcst_data;
-         var_cast_yyyymmdd := rcd_fcst_data.cast_yyyymmdd;
+         var_cast_yyyymmdd := var_work_yyyymmdd;
       end if;
       var_trn_start := true;
 
       /*-*/
       /* Validate the interface data
       /*-*/
-      if rcd_fcst_data.cast_yyyymmdd != var_cast_yyyymmdd then
+      if var_work_yyyymmdd != var_cast_yyyymmdd then
          lics_inbound_utility.add_exception('Multiple casting dates found in interface file');
          var_trn_error := true;
       end if;
@@ -168,20 +173,26 @@ create or replace package body ods_aplods01 as
       /* Insert the forecast data
       /*-*/
       insert into fcst_data
-         (cast_yyyymmdd,
-          material_code,
+         (material_code,
           dmnd_group,
           plant_code,
           fcst_yyyymmdd,
+          fcst_yyyyppw,
+          fcst_yyyypp,
           fcst_cover,
-          fcst_qty)
-         values(rcd_fcst_data.cast_yyyymmdd,
-                rcd_fcst_data.material_code,
+          fcst_qty,
+          fcst_prc,
+          fcst_gsv)
+         values(rcd_fcst_data.material_code,
                 rcd_fcst_data.dmnd_group,
                 rcd_fcst_data.plant_code,
                 rcd_fcst_data.fcst_yyyymmdd,
+                rcd_fcst_data.fcst_yyyyppw,
+                rcd_fcst_data.fcst_yyyypp,
                 rcd_fcst_data.fcst_cover,
-                rcd_fcst_data.fcst_qty);
+                rcd_fcst_data.fcst_qty,
+                rcd_fcst_data.fcst_prc,
+                rcd_fcst_data.fcst_gsv);
 
    /*-------------------*/
    /* Exception handler */
@@ -229,11 +240,11 @@ create or replace package body ods_aplods01 as
       end if;
 
       /*-*/
-      /* Create the forecast domestic load information when no errors
+      /* Create the forecast apollo load information when no errors
       /*-*/
       if var_trn_error = false then
          begin
-            dw_forecast_loading.create_domestic_load(var_cast_yyyymmdd);
+            dw_forecast_loading.create_apollo_load(var_cast_yyyymmdd);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(sqlerrm, 1, 512));
