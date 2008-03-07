@@ -48,16 +48,19 @@ create or replace package dw_forecast_loading as
    /*-*/
    procedure delete_load(par_load_identifier in varchar2);
    procedure delete_extract(par_extract_identifier in varchar2);
-   procedure create_domestic_load(par_cast_date in varchar2);
-   procedure create_affiliate_load(par_cast_date in varchar2);
-   procedure create_plan_load(par_cast_date in varchar2);
-   procedure create_replan_load(par_cast_date in varchar2);
-   procedure create_rob_load(par_cast_date in varchar2);
-   procedure extract_load(par_extract_type in varchar2,
-                          par_extract_identifier in varchar2,
-                          par_extract_description in varchar2,
-                          par_load_identifier in varchar2,
-                          par_user in varchar2);
+   procedure create_apollo_load(par_cast_date in varchar2);
+   procedure create_stream_load(par_load_type in varchar2,
+                                par_load_identifier in varchar2,
+                                par_load_description in varchar2,
+                                par_load_data_type in varchar2,
+                                par_load_data_version in number,
+                                par_load_data_range in number,
+                                par_user in varchar2);
+   procedure create_extract(par_extract_type in varchar2,
+                            par_extract_identifier in varchar2,
+                            par_extract_description in varchar2,
+                            par_load_identifier in varchar2,
+                            par_user in varchar2);
 
 end dw_forecast_loading;
 /
@@ -82,6 +85,16 @@ create or replace package body dw_forecast_loading as
    /* Private declarations
    /*-*/
    procedure validate_load(par_load_identifier in varchar2);
+   procedure read_xml_stream(par_type_version in varchar2,
+                             par_data_type in varchar2,
+                             par_data_version in number,
+                             par_data_range in number,
+                             par_stream in clob);
+   procedure read_xml_child(par_type_version in varchar2,
+                            par_data_type in varchar2,
+                            par_data_version in number,
+                            par_data_range in number,
+                            par_xml_node in xmlDom.domNode);
 
    /***************************************************/
    /* This procedure performs the delete load routine */
@@ -299,10 +312,10 @@ create or replace package body dw_forecast_loading as
    /*-------------*/
    end delete_extract;
 
-   /************************************************************/
-   /* This procedure performs the create domestic load routine */
-   /************************************************************/
-   procedure create_domestic_load(par_cast_date in varchar2) is
+   /**********************************************************/
+   /* This procedure performs the create apollo load routine */
+   /**********************************************************/
+   procedure create_apollo_load(par_cast_date in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -315,10 +328,8 @@ create or replace package body dw_forecast_loading as
       var_work_qty number;
       var_work_date date;
       var_cast_date date;
-      var_cast_yyyymmdd rcd_fcst_load_header.cast_yyyymmdd%type;
-      var_cast_yyyyppw rcd_fcst_load_header.cast_yyyyppw%type;
-      var_cast_yyyypp rcd_fcst_load_header.cast_yyyypp%type;
-      var_fcst_version rcd_fcst_load_header.fcst_version%type;
+      var_load_data_version rcd_fcst_load_header.load_data_version%type;
+      var_load_data_range rcd_fcst_load_header.load_data_range%type;
 
       /*-*/
       /* Local cursors
@@ -332,8 +343,8 @@ create or replace package body dw_forecast_loading as
 
       cursor csr_fcst_data is
          select t01.*,
-                nvl(t02.mars_period,99999999) as fcst_yyyypp,
-                nvl(t02.mars_week,9999999) as fcst_yyyyppw
+                nvl(t02.mars_period,99999999) as mars_yyyypp,
+                nvl(t02.mars_week,9999999) as mars_yyyyppw
            from fcst_data t01,
                 mars_date t02
           where to_date(t01.fcst_yyyymmdd,'yyyymmdd') = t02.calendar_date(+)
@@ -384,31 +395,25 @@ create or replace package body dw_forecast_loading as
          raise_application_error(-20000, 'Casting date (' || to_char(var_cast_date,'yyyy/mm/dd') || ') does not exist in Mars Date Table');
       end if;
       close csr_mars_date;
-      var_cast_yyyymmdd := to_char(var_cast_date,'yyyymmdd');
-      var_cast_yyyyppw := rcd_mars_date.mars_week;
-      var_cast_yyyypp := rcd_mars_date.mars_period;
-      var_fcst_version := rcd_mars_date.mars_period;
-      if substr(to_char(var_fcst_version,'fm000000'),5,2) = '13' then
-         var_fcst_version := var_fcst_version + 88;
+      var_load_data_version := rcd_mars_date.mars_period;
+      if substr(to_char(var_load_data_version,'fm000000'),5,2) = '13' then
+         var_load_data_version := var_load_data_version + 88;
       else
-         var_fcst_version := var_fcst_version + 1;
+         var_load_data_version := var_load_data_version + 1;
       end if;
 
       /*-*/
       /* Initialise the forecast load header
       /*-*/
-      rcd_fcst_load_header.load_identifier := 'BR_DOMESTIC_'||var_cast_yyyymmdd;
-      rcd_fcst_load_header.load_description := 'Business Review Domestic Forecasts';
+      rcd_fcst_load_header.load_identifier := 'BR_APOLLO_'||par_cast_date;
+      rcd_fcst_load_header.load_description := 'Apollo Domestic Forecasts';
       rcd_fcst_load_header.load_status := '*NONE';
       rcd_fcst_load_header.load_type := '*BR_DOMESTIC';
-      rcd_fcst_load_header.cast_yyyymmdd := var_cast_yyyymmdd;
-      rcd_fcst_load_header.cast_yyyyppw := var_cast_yyyyppw;
-      rcd_fcst_load_header.cast_yyyypp := var_cast_yyyypp;
-      rcd_fcst_load_header.fcst_version := var_fcst_version;
-      rcd_fcst_load_header.fcst_str_yyyyppw := 9999999;
-      rcd_fcst_load_header.fcst_str_yyyypp := 999999;
-      rcd_fcst_load_header.fcst_end_yyyyppw := 0;
-      rcd_fcst_load_header.fcst_end_yyyypp := 0;
+      rcd_fcst_load_header.load_data_type := '*QTY_ONLY';
+      rcd_fcst_load_header.load_data_version := var_load_data_version;
+      rcd_fcst_load_header.load_data_range := 0;
+      rcd_fcst_load_header.load_str_yyyypp := 999999;
+      rcd_fcst_load_header.load_end_yyyypp := 0;
       rcd_fcst_load_header.sales_org_code := '135';
       rcd_fcst_load_header.distbn_chnl_code := '10';
       rcd_fcst_load_header.division_code := '51';
@@ -431,14 +436,11 @@ create or replace package body dw_forecast_loading as
           load_description,
           load_status,
           load_type,
-          cast_yyyymmdd,
-          cast_yyyyppw,
-          cast_yyyypp,
-          fcst_version,
-          fcst_str_yyyyppw,
-          fcst_str_yyyypp,
-          fcst_end_yyyyppw,
-          fcst_end_yyyypp,
+          load_data_type,
+          load_data_version,
+          load_data_range,
+          load_str_yyyypp,
+          load_end_yyyypp,
           sales_org_code,
           distbn_chnl_code,
           division_code,
@@ -450,14 +452,11 @@ create or replace package body dw_forecast_loading as
                 rcd_fcst_load_header.load_description,
                 rcd_fcst_load_header.load_status,
                 rcd_fcst_load_header.load_type,
-                rcd_fcst_load_header.cast_yyyymmdd,
-                rcd_fcst_load_header.cast_yyyyppw,
-                rcd_fcst_load_header.cast_yyyypp,
-                rcd_fcst_load_header.fcst_version,
-                rcd_fcst_load_header.fcst_str_yyyyppw,
-                rcd_fcst_load_header.fcst_str_yyyypp,
-                rcd_fcst_load_header.fcst_end_yyyyppw,
-                rcd_fcst_load_header.fcst_end_yyyypp,
+                rcd_fcst_load_header.load_data_type,
+                rcd_fcst_load_header.load_data_version,
+                rcd_fcst_load_header.load_data_range,
+                rcd_fcst_load_header.load_str_yyyypp,
+                rcd_fcst_load_header.load_end_yyyypp,
                 rcd_fcst_load_header.sales_org_code,
                 rcd_fcst_load_header.distbn_chnl_code,
                 rcd_fcst_load_header.division_code,
@@ -498,8 +497,8 @@ create or replace package body dw_forecast_loading as
          /*-*/
          /* Process the weeks covered by the forecast
          /*-*/
-         var_work_yyyyppw := rcd_fcst_data.fcst_yyyyppw;
-         var_work_yyyypp := rcd_fcst_data.fcst_yyyypp;
+         var_work_yyyyppw := rcd_fcst_data.mars_yyyyppw;
+         var_work_yyyypp := rcd_fcst_data.mars_yyyypp;
          var_work_count := round(rcd_fcst_load_detail.cover_day/7,0);
          var_work_qty := rcd_fcst_load_detail.cover_qty / var_work_count;
          for idx in 1..var_work_count loop
@@ -507,17 +506,11 @@ create or replace package body dw_forecast_loading as
             /*-*/
             /* Update the header forecast range
             /*-*/
-            if var_work_yyyyppw < rcd_fcst_load_header.fcst_str_yyyyppw then
-               rcd_fcst_load_header.fcst_str_yyyyppw := var_work_yyyyppw;
+            if var_work_yyyypp < rcd_fcst_load_header.load_str_yyyypp then
+               rcd_fcst_load_header.load_str_yyyypp := var_work_yyyypp;
             end if;
-            if var_work_yyyypp < rcd_fcst_load_header.fcst_str_yyyypp then
-               rcd_fcst_load_header.fcst_str_yyyypp := var_work_yyyypp;
-            end if;
-            if var_work_yyyyppw > rcd_fcst_load_header.fcst_end_yyyyppw then
-               rcd_fcst_load_header.fcst_end_yyyyppw := var_work_yyyyppw;
-            end if;
-            if var_work_yyyypp > rcd_fcst_load_header.fcst_end_yyyypp then
-               rcd_fcst_load_header.fcst_end_yyyypp := var_work_yyyypp;
+            if var_work_yyyypp > rcd_fcst_load_header.load_end_yyyypp then
+               rcd_fcst_load_header.load_end_yyyypp := var_work_yyyypp;
             end if;
 
             /*-*/
@@ -579,13 +572,28 @@ create or replace package body dw_forecast_loading as
       close csr_fcst_data;
 
       /*-*/
+      /* Calculate the load data range
+      /*-*/
+      var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
+      loop
+         if var_work_yyyypp > rcd_fcst_load_header.load_end_yyyypp then
+            exit;
+         end if;
+         rcd_fcst_load_header.load_data_range := rcd_fcst_load_header.load_data_range + 1;
+         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+            var_work_yyyypp := var_work_yyyypp + 88;
+         else
+            var_work_yyyypp := var_work_yyyypp + 1;
+         end if;
+      end loop;
+
+      /*-*/
       /* Update the forecast load header
       /*-*/
       update fcst_load_header
-         set fcst_str_yyyyppw = rcd_fcst_load_header.fcst_str_yyyyppw,
-             fcst_str_yyyypp = rcd_fcst_load_header.fcst_str_yyyypp,
-             fcst_end_yyyyppw = rcd_fcst_load_header.fcst_end_yyyyppw,
-             fcst_end_yyyypp = rcd_fcst_load_header.fcst_end_yyyypp
+         set load_data_range = rcd_fcst_load_header.load_data_range,
+             load_str_yyyypp = rcd_fcst_load_header.load_str_yyyypp,
+             load_end_yyyypp = rcd_fcst_load_header.load_end_yyyypp
        where load_identifier = rcd_fcst_load_header.load_identifier;
 
       /*-*/
@@ -611,88 +619,301 @@ create or replace package body dw_forecast_loading as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_DOMESTIC_LOAD - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_APOLLO_LOAD - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end create_domestic_load;
-
-   /************************************************************/
-   /* This procedure performs the create affiliate load routine */
-   /************************************************************/
-   procedure create_affiliate_load(par_cast_date in varchar2) is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_AFFILIATE_LOAD - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end create_affiliate_load;
-
-   /********************************************************/
-   /* This procedure performs the create plan load routine */
-   /********************************************************/
-   procedure create_plan_load(par_cast_date in varchar2) is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_PLAN_LOAD - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end create_plan_load;
+   end create_apollo_load;
 
    /**********************************************************/
-   /* This procedure performs the create replan load routine */
+   /* This procedure performs the create stream load routine */
    /**********************************************************/
-   procedure create_replan_load(par_cast_date in varchar2) is
+   procedure create_stream_load(par_load_type in varchar2,
+                                par_load_identifier in varchar2,
+                                par_load_description in varchar2,
+                                par_load_data_type in varchar2,
+                                par_load_data_version in number,
+                                par_load_data_range in number,
+                                par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      rcd_fcst_load_header fcst_load_header%rowtype;
+      rcd_fcst_load_detail fcst_load_detail%rowtype;
+      var_load_type fcst_load_header.load_type%type;
+      var_load_identifier fcst_load_header.load_identifier%type;
+      var_load_description fcst_load_header.load_description%type;
+      var_load_data_type fcst_load_header.load_data_type%type;
+      var_load_data_version fcst_load_header.load_data_version%type;
+      var_load_data_range fcst_load_header.load_data_range%type;
+      var_user fcst_load_header.crt_user%type;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_load_type is 
+         select t01.*
+           from fcst_load_type t01
+          where t01.load_type = var_load_type;
+      rcd_fcst_load_type csr_fcst_load_type%rowtype;
+
+      cursor csr_mars_period is
+         select t01.*
+           from mars_date t01
+          where mars_period = var_load_data_version;
+      rcd_mars_period csr_mars_period%rowtype;
+
+      cursor csr_mars_year is
+         select t01.*
+           from mars_date t01
+          where mars_year = var_load_data_version;
+      rcd_mars_year csr_mars_year%rowtype;
+
+      cursor csr_fcst_data is
+         select t01.*
+           from fcst_data t01
+          order by t01.material_code asc,
+                   t01.dmnd_group asc,
+                   t01.plant_code asc,
+                   t01.fcst_yyyypp asc;
+      rcd_fcst_data csr_fcst_data%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
-      return;
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_load_type := upper(par_load_type);
+      var_load_identifier := upper(par_load_identifier);
+      var_load_description := par_load_description;
+      var_load_data_type := par_load_data_type;
+      var_load_data_version := par_load_data_version;
+      var_load_data_range := par_load_data_range;
+      var_user := upper(par_user);
+      if var_load_type is null then
+         raise_application_error(-20000, 'Forecast load type must be specified');
+      end if;
+      if var_load_identifier is null then
+         raise_application_error(-20000, 'Forecast load identifier must be specified');
+      end if;
+      if var_load_description is null then
+         raise_application_error(-20000, 'Forecast load description must be specified');
+      end if;
+      if var_load_data_type is null then
+         raise_application_error(-20000, 'Forecast load data type must be specified');
+      end if;
+      if var_load_data_version is null then
+         raise_application_error(-20000, 'Forecast load data version must be specified');
+      end if;
+      if var_load_data_range is null then
+         raise_application_error(-20000, 'Forecast load data range must be specified');
+      end if;
+      if var_user is null then
+         var_user := user;
+      end if;
+
+      /*-*/
+      /* Validate the load type
+      /*-*/
+      open csr_fcst_load_type;
+      fetch csr_fcst_load_type into rcd_fcst_load_type;
+      if csr_fcst_load_type%notfound then
+         raise_application_error(-20000, 'Forecast load type (' || var_load_type || ') does not exist');
+      end if;
+      close csr_fcst_load_type;
+
+      /*-*/
+      /* Retrieve the load data version
+      /*-*/
+      if rcd_fcst_load_type.load_type_version = '*PERIOD' then
+         open csr_mars_period;
+         fetch csr_mars_period into rcd_mars_period;
+         if csr_mars_period%notfound then
+            raise_application_error(-20000, 'Forecast load data version (' || to_char(var_load_data_version) || ') does not exist as a Mars period in Mars Date Table');
+         end if;
+         close csr_mars_period;
+      elsif rcd_fcst_load_type.load_type_version = '*YEAR' then
+         open csr_mars_year;
+         fetch csr_mars_year into rcd_mars_year;
+         if csr_mars_year%notfound then
+            raise_application_error(-20000, 'Forecast load data version (' || to_char(var_load_data_version) || ') does not exist as a Mars year in Mars Date Table');
+         end if;
+         close csr_mars_year;
+      else
+         raise_application_error(-20000, 'Forecast load type version (' || rcd_fcst_load_type.load_type_version || ') is not recognised');
+      end if;
+
+      /*-*/
+      /* Retrieve the stream data
+      /*-*/
+      read_xml_stream(rcd_fcst_load_type.load_type_version,var_load_data_type,var_load_data_version,var_load_data_range,lics_form.get_clob('FOR_STREAM'));
+
+      /*-*/
+      /* Initialise the forecast load header
+      /*-*/
+      rcd_fcst_load_header.load_identifier := var_load_identifier;
+      rcd_fcst_load_header.load_description := var_load_description;
+      rcd_fcst_load_header.load_status := '*NONE';
+      rcd_fcst_load_header.load_type := var_load_type;
+      rcd_fcst_load_header.load_data_type := var_load_data_type;
+      rcd_fcst_load_header.load_data_version := var_load_data_version;
+      rcd_fcst_load_header.load_data_range := var_load_data_range;
+      rcd_fcst_load_header.load_str_yyyypp := 999999;
+      rcd_fcst_load_header.load_end_yyyypp := 0;
+      rcd_fcst_load_header.sales_org_code := '135';
+      rcd_fcst_load_header.distbn_chnl_code := '10';
+      rcd_fcst_load_header.division_code := '51';
+      rcd_fcst_load_header.crt_user := user;
+      rcd_fcst_load_header.crt_date := sysdate;
+      rcd_fcst_load_header.upd_user := user;
+      rcd_fcst_load_header.upd_date := sysdate;
+
+      /*-*/
+      /* Insert the forecast load header
+      /*-*/
+      begin
+         insert into fcst_load_header
+            (load_identifier,
+             load_description,
+             load_status,
+             load_type,
+             load_data_type,
+             load_data_version,
+             load_data_range,
+             load_str_yyyypp,
+             load_end_yyyypp,
+             sales_org_code,
+             distbn_chnl_code,
+             division_code,
+             crt_user,
+             crt_date,
+             upd_user,
+             upd_date)
+            values(rcd_fcst_load_header.load_identifier,
+                   rcd_fcst_load_header.load_description,
+                   rcd_fcst_load_header.load_status,
+                   rcd_fcst_load_header.load_type,
+                   rcd_fcst_load_header.load_data_type,
+                   rcd_fcst_load_header.load_data_version,
+                   rcd_fcst_load_header.load_data_range,
+                   rcd_fcst_load_header.load_str_yyyypp,
+                   rcd_fcst_load_header.load_end_yyyypp,
+                   rcd_fcst_load_header.sales_org_code,
+                   rcd_fcst_load_header.distbn_chnl_code,
+                   rcd_fcst_load_header.division_code,
+                   rcd_fcst_load_header.crt_user,
+                   rcd_fcst_load_header.crt_date,
+                   rcd_fcst_load_header.upd_user,
+                   rcd_fcst_load_header.upd_date);
+      exception
+         when dup_val_on_index then
+            raise_application_error(-20000, 'Forecast load identifier (' || var_load_identifier || ') already exists');
+      end;
+
+      /*-*/
+      /* Retrieve the forecast data
+      /*-*/
+      rcd_fcst_load_detail.load_identifier := rcd_fcst_load_header.load_identifier;
+      rcd_fcst_load_detail.load_sequence := 0;
+      open csr_fcst_data;
+      loop
+         fetch csr_fcst_data into rcd_fcst_data;
+         if csr_fcst_data%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Initialise the forecast load detail
+         /*-*/
+         rcd_fcst_load_detail.material_code := rcd_fcst_data.material_code;
+         rcd_fcst_load_detail.dmnd_group := rcd_fcst_data.dmnd_group;
+         rcd_fcst_load_detail.plant_code := rcd_fcst_data.plant_code;
+         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.fcst_yyyymmdd;
+         rcd_fcst_load_detail.cover_day := rcd_fcst_data.fcst_cover;
+         rcd_fcst_load_detail.cover_qty := rcd_fcst_data.fcst_qty;
+         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.fcst_yyyyppw;
+         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp;
+         rcd_fcst_load_detail.fcst_qty := rcd_fcst_data.fcst_qty;
+         rcd_fcst_load_detail.fcst_prc := rcd_fcst_data.fcst_prc;
+         rcd_fcst_load_detail.fcst_gsv := rcd_fcst_data.fcst_gsv;
+         rcd_fcst_load_detail.plan_group := '*NONE';
+         rcd_fcst_load_detail.mesg_text := null;
+
+         /*-*/
+         /* Insert the forecast load detail
+         /*-*/
+         insert into fcst_load_detail
+            (load_identifier,
+             load_sequence,
+             material_code,
+             dmnd_group,
+             plant_code,
+             cover_yyyymmdd,
+             cover_day,
+             cover_qty,
+             fcst_yyyyppw,
+             fcst_yyyypp,
+             fcst_qty,
+             fcst_prc,
+             fcst_gsv,
+             plan_group,
+             mesg_text)
+            values (rcd_fcst_load_detail.load_identifier,
+                    rcd_fcst_load_detail.load_sequence,
+                    rcd_fcst_load_detail.material_code,
+                    rcd_fcst_load_detail.dmnd_group,
+                    rcd_fcst_load_detail.plant_code,
+                    rcd_fcst_load_detail.cover_yyyymmdd,
+                    rcd_fcst_load_detail.cover_day,
+                    rcd_fcst_load_detail.cover_qty,
+                    rcd_fcst_load_detail.fcst_yyyyppw,
+                    rcd_fcst_load_detail.fcst_yyyypp,
+                    rcd_fcst_load_detail.fcst_qty,
+                    rcd_fcst_load_detail.fcst_prc,
+                    rcd_fcst_load_detail.fcst_gsv,
+                    rcd_fcst_load_detail.plan_group,
+                    rcd_fcst_load_detail.mesg_text);
+
+         /*-*/
+         /* Update the header forecast range
+         /*-*/
+         if rcd_fcst_load_detail.fcst_yyyypp < rcd_fcst_load_header.load_str_yyyypp then
+            rcd_fcst_load_header.load_str_yyyypp := rcd_fcst_load_detail.fcst_yyyypp;
+         end if;
+         if rcd_fcst_load_detail.fcst_yyyypp > rcd_fcst_load_header.load_end_yyyypp then
+            rcd_fcst_load_header.load_end_yyyypp := rcd_fcst_load_detail.fcst_yyyypp;
+         end if;
+
+      end loop;
+      close csr_fcst_data;
+
+      /*-*/
+      /* Update the forecast load header
+      /*-*/
+      update fcst_load_header
+         set load_str_yyyypp = rcd_fcst_load_header.load_str_yyyypp,
+             load_end_yyyypp = rcd_fcst_load_header.load_end_yyyypp
+       where load_identifier = rcd_fcst_load_header.load_identifier;
+
+      /*-*/
+      /* Validate the forecast load
+      /*-*/
+      validate_load(rcd_fcst_load_header.load_identifier);
+
+      /*-*/
+      /* Delete the temporary forecast data
+      /*-*/
+      delete from fcst_data;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
 
    /*-------------------*/
    /* Exception handler */
@@ -705,55 +926,28 @@ create or replace package body dw_forecast_loading as
       when others then
 
          /*-*/
-         /* Raise an exception to the calling application
+         /* Rollback the database
          /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_REPLAN_LOAD - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end create_replan_load;
-
-   /*******************************************************/
-   /* This procedure performs the create rob load routine */
-   /*******************************************************/
-   procedure create_rob_load(par_cast_date in varchar2) is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
+         rollback;
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_ROB_LOAD - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'DW_FORECAST_LOADING - CREATE_STREAM_LOAD - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end create_rob_load;
+   end create_stream_load;
 
-   /****************************************************/
-   /* This procedure performs the extract load routine */
-   /****************************************************/
-   procedure extract_load(par_extract_type in varchar2,
-                          par_extract_identifier in varchar2,
-                          par_extract_description in varchar2,
-                          par_load_identifier in varchar2,
-                          par_user in varchar2) is
+   /******************************************************/
+   /* This procedure performs the create extract routine */
+   /******************************************************/
+   procedure create_extract(par_extract_type in varchar2,
+                            par_extract_identifier in varchar2,
+                            par_extract_description in varchar2,
+                            par_load_identifier in varchar2,
+                            par_user in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -923,11 +1117,11 @@ create or replace package body dw_forecast_loading as
             raise_application_error(-20000, 'Mars date (' || to_char(sysdate,'yyyy/mm/dd') || ') does not exist');
          end if;
          close csr_mars_date;
-         if rcd_fcst_load_header.load_type = '*BR_DOMESTIC' then
-            if rcd_fcst_load_header.cast_yyyypp < (rcd_mars_date.mars_period - 1) then
-               raise_application_error(-20000, 'Business review casting period ('||to_char(rcd_fcst_load_header.cast_yyyypp)||') must not be less than previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
-            end if;
-         end if;
+      --   if rcd_fcst_load_header.load_type = '*BR_DOMESTIC' then
+      --      if rcd_fcst_load_header.cast_yyyypp < (rcd_mars_date.mars_period - 1) then
+      --         raise_application_error(-20000, 'Business review casting period ('||to_char(rcd_fcst_load_header.cast_yyyypp)||') must not be less than previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
+      --      end if;
+      --   end if;
 
       end loop;
 
@@ -1021,12 +1215,12 @@ create or replace package body dw_forecast_loading as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - EXTRACT_LOAD - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - CREATE_EXTRACT - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end extract_load;
+   end create_extract;
 
    /*****************************************************/
    /* This procedure performs the validate load routine */
@@ -1101,8 +1295,8 @@ create or replace package body dw_forecast_loading as
             and t02.datab = t04.calendar_date
             and t02.datbi = t05.calendar_date(+)
             and lads_trim_code(t01.matnr) = rcd_fcst_load_detail.material_code
-            and (t04.mars_period <= rcd_fcst_load_header.fcst_str_yyyypp or
-                 (t05.mars_period is null or t05.mars_period >= rcd_fcst_load_header.fcst_end_yyyypp));
+            and (t04.mars_period <= rcd_fcst_load_header.load_str_yyyypp or
+                 (t05.mars_period is null or t05.mars_period >= rcd_fcst_load_header.load_end_yyyypp));
       rcd_material_price csr_material_price%rowtype;
 
    /*-------------*/
@@ -1124,9 +1318,9 @@ create or replace package body dw_forecast_loading as
       /* Load the forecast period array
       /*-*/
       tbl_wrkn.delete;
-      var_wrk_yyyypp := rcd_fcst_load_header.fcst_str_yyyypp;
+      var_wrk_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
       loop
-         if var_wrk_yyyypp > rcd_fcst_load_header.fcst_end_yyyypp then
+         if var_wrk_yyyypp > rcd_fcst_load_header.load_end_yyyypp then
             exit;
          end if;
          tbl_wrkn(tbl_wrkn.count+1).yyyypp := var_wrk_yyyypp;
@@ -1155,40 +1349,44 @@ create or replace package body dw_forecast_loading as
          end if;
 
          /*-*/
-         /* Retrieve the material price data for new material
+         /* Retrieve the material price data when required
          /*-*/
-         if rcd_fcst_load_detail.material_code != var_material_save then
-            for idx in 1..tbl_wrkn.count loop
-               tbl_wrkn(idx).price := 0;
-	    end loop;
-            open csr_material_price;
-            loop
-               fetch csr_material_price into rcd_material_price;
-               if csr_material_price%notfound then
-                  exit;
-               end if;
+         if rcd_fcst_load_header.load_data_type = '*QTY_ONLY' then
+            if rcd_fcst_load_detail.material_code != var_material_save then
                for idx in 1..tbl_wrkn.count loop
-                  if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                     rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                     tbl_wrkn(idx).price := rcd_material_price.material_price;
+                  tbl_wrkn(idx).price := 0;
+	       end loop;
+               open csr_material_price;
+               loop
+                  fetch csr_material_price into rcd_material_price;
+                  if csr_material_price%notfound then
+                     exit;
                   end if;
+                  for idx in 1..tbl_wrkn.count loop
+                     if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                        rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                        tbl_wrkn(idx).price := rcd_material_price.material_price;
+                     end if;
+                  end loop;
                end loop;
-            end loop;
-            close csr_material_price;
-            var_material_save := rcd_fcst_load_detail.material_code;
+               close csr_material_price;
+               var_material_save := rcd_fcst_load_detail.material_code;
+            end if;
          end if;
 
          /*-*/
-         /* Retrieve the detail price and calculate the gsv
+         /* Retrieve the detail price and calculate the gsv for *QTY_ONLY
          /*-*/
-         rcd_fcst_load_detail.fcst_prc := 0;
-         for idx in 1..tbl_wrkn.count loop
-            if tbl_wrkn(idx).yyyypp = rcd_fcst_load_detail.fcst_yyyypp then
-               rcd_fcst_load_detail.fcst_prc := tbl_wrkn(idx).price;
-               exit;
-            end if;
-	 end loop;
-         rcd_fcst_load_detail.fcst_gsv := rcd_fcst_load_detail.fcst_qty * rcd_fcst_load_detail.fcst_prc;
+         if rcd_fcst_load_header.load_data_type = '*QTY_ONLY' then
+            rcd_fcst_load_detail.fcst_prc := 0;
+            for idx in 1..tbl_wrkn.count loop
+               if tbl_wrkn(idx).yyyypp = rcd_fcst_load_detail.fcst_yyyypp then
+                  rcd_fcst_load_detail.fcst_prc := tbl_wrkn(idx).price;
+                  exit;
+               end if;
+	    end loop;
+            rcd_fcst_load_detail.fcst_gsv := rcd_fcst_load_detail.fcst_qty * rcd_fcst_load_detail.fcst_prc;
+         end if;
 
          /*-*/
          /* Set the forecast load detail
@@ -1272,6 +1470,245 @@ create or replace package body dw_forecast_loading as
    /* End routine */
    /*-------------*/
    end validate_load;
+
+   /*******************************************************/
+   /* This procedure performs the read xml stream routine */
+   /*******************************************************/
+   procedure read_xml_stream(par_type_version in varchar2,
+                             par_data_type in varchar2,
+                             par_data_version in number,
+                             par_data_range in number,
+                             par_stream in clob) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_xml_element xmlDom.domElement;
+      obj_xml_node xmlDom.domNode;
+      var_index number;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the forecast data
+      /*-*/
+      delete from fcst_data;
+      commit;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,par_stream);
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+
+      /*-*/
+      /* Retrieve and process the primary node
+      /*-*/
+      var_wrkr := 0;
+      obj_xml_element := xmlDom.getDocumentElement(obj_xml_document);
+      obj_xml_node := xmlDom.makeNode(obj_xml_element);
+      read_xml_child(par_type_version,par_data_type,par_data_version,par_data_range,obj_xml_node);
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end read_xml_stream;
+
+   /******************************************************/
+   /* This procedure performs the read xml child routine */
+   /******************************************************/
+   procedure read_xml_child(par_type_version in varchar2,
+                            par_data_type in varchar2,
+                            par_data_version in number,
+                            par_data_range in number,
+                            par_xml_node in xmlDom.domNode) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_element xmlDom.domElement;
+      obj_xml_node xmlDom.domNode;
+      obj_xml_node_list xmlDom.domNodeList;
+      rcd_fcst_data fcst_data%rowtype;
+      var_string varchar2(32767);
+      var_char varchar2(1);
+      var_value varchar2(4000);
+      var_index number;
+      type typ_wrkw is table of number index by binary_integer;
+      tbl_wrkw typ_wrkw;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Process the attribute node
+      /*-*/
+      case upper(xmlDom.getNodeName(par_xml_node))
+         when 'TXTSTREAM' then
+            null;
+         when 'XR' then
+            var_wrkr := var_wrkr + 1;
+         when '#CDATA-SECTION' then
+            rcd_fcst_data.material_code := '*ROW';
+            rcd_fcst_data.dmnd_group := '*ROW';
+            rcd_fcst_data.plant_code := '*NONE';
+            rcd_fcst_data.fcst_yyyymmdd := '00000000';
+            rcd_fcst_data.fcst_yyyyppw := 0;
+            rcd_fcst_data.fcst_yyyypp := par_data_version;
+            if par_type_version = '*YEAR' then
+               rcd_fcst_data.fcst_yyyypp := (par_data_version * 100) + 1;
+            end if;
+            rcd_fcst_data.fcst_cover := 0;
+            rcd_fcst_data.fcst_qty := 0;
+            rcd_fcst_data.fcst_prc := 0;
+            rcd_fcst_data.fcst_gsv := 0;
+            for idx in 1..par_data_range loop
+               tbl_wrkw(idx) := 0;
+	    end loop;
+            if par_data_type = '*QTY_GSV' then
+               for idx in 1..par_data_range loop
+                  tbl_wrkw(idx+par_data_range) := 0;
+	       end loop;
+            end if;
+            var_string := xmlDom.getNodeValue(par_xml_node);
+            if not(var_string is null) then
+               var_value := null;
+               var_index := 0;
+               for idx in 1..length(var_string) loop
+                  var_char := substr(var_string,idx,1);
+                  if var_char = chr(9) then
+                     if rcd_fcst_data.dmnd_group = '*ROW' then
+                        if length(var_value) > 32 then
+                           raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Demand group ('||var_value||') exceeds maximum length 32');
+                        end if;
+                        rcd_fcst_data.dmnd_group := nvl(var_value,'*NONE');
+                     elsif rcd_fcst_data.material_code = '*ROW' then
+                        if length(var_value) > 18 then
+                           raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Material code ('||var_value||') exceeds maximum length 18');
+                        end if;
+                        rcd_fcst_data.material_code := var_value;
+                     else
+                        var_index := var_index + 1;
+                        begin
+                           if substr(var_value,length(var_value),1) = '-' then
+                              tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
+                           else
+                              tbl_wrkw(var_index) := to_number(var_value);
+                           end if;
+                        exception
+                           when others then
+                              raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
+                        end;
+                     end if;
+                     var_value := null;
+                  else
+                     var_value := var_value||var_char;
+                  end if;
+               end loop;
+               if rcd_fcst_data.dmnd_group = '*ROW' then
+                  if length(var_value) > 32 then
+                     raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Demand group ('||var_value||') exceeds maximum length 32');
+                  end if;
+                  rcd_fcst_data.dmnd_group := nvl(var_value,'*NONE');
+               elsif rcd_fcst_data.material_code = '*ROW' then
+                  if length(var_value) > 18 then
+                     raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Material code ('||var_value||') exceeds maximum length 18');
+                  end if;
+                  rcd_fcst_data.material_code := var_value;
+               else
+                  var_index := var_index + 1;
+                  begin
+                     if substr(var_value,length(var_value),1) = '-' then
+                        tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
+                     else
+                        tbl_wrkw(var_index) := to_number(var_value);
+                     end if;
+                  exception
+                     when others then
+                        raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
+                  end;
+               end if;
+               if par_data_type = '*QTY_ONLY' then
+                  if var_index != par_data_range then
+                     raise_application_error(-20000, 'Text file data (quantity only) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + 2));
+                  end if;
+               end if;
+               if par_data_type = '*QTY_GSV' then
+                  if var_index != par_data_range + par_data_range then
+                     raise_application_error(-20000, 'Text file data (quantity/gsv) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + par_data_range + 2));
+                  end if;
+               end if;
+               for idx in 1..par_data_range loop
+                  rcd_fcst_data.fcst_qty := tbl_wrkw(idx);
+                  rcd_fcst_data.fcst_gsv := tbl_wrkw(idx+par_data_range);
+                  if par_data_type = '*QTY_GSV' then
+                     rcd_fcst_data.fcst_prc := rcd_fcst_data.fcst_gsv / rcd_fcst_data.fcst_qty;
+                  end if;
+                  if rcd_fcst_data.fcst_qty != 0 then
+                     insert into fcst_data
+                        (material_code,
+                         dmnd_group,
+                         plant_code,
+                         fcst_yyyymmdd,
+                         fcst_yyyyppw,
+                         fcst_yyyypp,
+                         fcst_cover,
+                         fcst_qty,
+                         fcst_prc,
+                         fcst_gsv)
+                        values(rcd_fcst_data.material_code,
+                               rcd_fcst_data.dmnd_group,
+                               rcd_fcst_data.plant_code,
+                               rcd_fcst_data.fcst_yyyymmdd,
+                               rcd_fcst_data.fcst_yyyyppw,
+                               rcd_fcst_data.fcst_yyyypp,
+                               rcd_fcst_data.fcst_cover,
+                               rcd_fcst_data.fcst_qty,
+                               rcd_fcst_data.fcst_prc,
+                               rcd_fcst_data.fcst_gsv);
+                  end if;
+                  if substr(to_char(rcd_fcst_data.fcst_yyyypp,'fm000000'),5,2) = '13' then
+                     rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 88;
+                  else
+                     rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 1;
+                  end if;
+               end loop;
+            end if;
+         else raise_application_error(-20000, 'read_xml_stream - Type (' || xmlDom.getNodeName(par_xml_node) || ') not recognised');
+      end case;
+
+      /*-*/
+      /* Process the child nodes
+      /*-*/
+      obj_xml_node_list := xmlDom.getChildNodes(par_xml_node);
+      for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
+         obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
+         read_xml_child(par_type_version,par_data_type,par_data_version,par_data_range,obj_xml_node);
+      end loop;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end read_xml_child;
 
 end dw_forecast_loading;
 /
