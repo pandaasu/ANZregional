@@ -10,6 +10,7 @@
 # Date          Who         Change History
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
+# 07-MAR-2008   L. Glen     Added set_permission call within process_passthru_mqft
 #
 # ---------------------------------------------------------------------------
 
@@ -517,6 +518,9 @@ process_passthru_mq()
 # --------------------------------------------------------------------------
 process_passthru_mqft()
 {
+    log_file "INFO: [process_inbound_mqft] Processing file [${FILENAME}]" "HARMLESS"
+
+    set_permissions "${FILENAME}"
     load_file $LOAD_FILE_PASSTHRU "${INTERFACE_ID}" "${FILENAME}"
 }
 
