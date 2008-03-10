@@ -23,6 +23,7 @@ create table od.fcst_extract_header
     extract_description             varchar2(128 char)     not null,
     extract_type                    varchar2(32 char)      not null,
     plan_group                      varchar2(32 char)      not null,
+    export_count                    number                 not null,
     crt_user                        varchar2(30 char)      not null,
     crt_date                        date                   not null);
 
@@ -34,6 +35,7 @@ comment on column od.fcst_extract_header.extract_identifier is 'Extract identifi
 comment on column od.fcst_extract_header.extract_description is 'Extract description';
 comment on column od.fcst_extract_header.extract_type is 'Extract type';
 comment on column od.fcst_extract_header.plan group is 'Planning group';
+comment on column od.fcst_extract_header.export_count is 'Export count';
 comment on column od.fcst_extract_header.crt_user is 'Creation user identifier';
 comment on column od.fcst_extract_header.crt_date is 'Creation timestamp';
 
