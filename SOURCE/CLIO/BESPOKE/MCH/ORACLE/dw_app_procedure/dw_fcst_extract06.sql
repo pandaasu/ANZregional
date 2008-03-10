@@ -1,20 +1,20 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dw_fcst_extract05 as
+create or replace package dw_fcst_extract06 as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : dw_fcst_extract05
+    Package : dw_fcst_extract06
     Owner   : dw_app
 
     Description
     -----------
-    Dimensional Data Store - Forecast Extract - BW ROB Extract
+    Dimensional Data Store - Forecast Extract - Apollo Affiliate Extract
 
-    This package contains the BW ROB extract procedure.
+    This package contains the Apollo Affiliate procedure.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package dw_fcst_extract05 as
    /*-*/
    function export(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
-end dw_fcst_extract05;
+end dw_fcst_extract06;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_fcst_extract05 as
+create or replace package body dw_fcst_extract06 as
 
    /*-*/
    /* Private exceptions
@@ -342,11 +342,11 @@ create or replace package body dw_fcst_extract05 as
    /*-------------*/
    end export;
 
-end dw_fcst_extract05;
+end dw_fcst_extract06;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym dw_fcst_extract05 for dw_app.dw_fcst_extract05;
-grant execute on dw_fcst_extract05 to public;
+create or replace public synonym dw_fcst_extract06 for dw_app.dw_fcst_extract06;
+grant execute on dw_fcst_extract06 to public;

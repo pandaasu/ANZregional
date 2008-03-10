@@ -59,9 +59,12 @@ create or replace package body dw_fcst_extract02 as
       /* Local cursors
       /*-*/
       cursor csr_fcst_extract_header is 
-         select t01.*
-           from fcst_extract_header t01
-          where t01.extract_identifier = var_extract_identifier;
+         select t01.*,
+                t02.extract_plan_group
+           from fcst_extract_header t01,
+                fcst_extract_type t02
+          where t01.extract_type = var_extract_type(+);
+            and t01.extract_identifier = var_extract_identifier;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
       cursor csr_fcst_extract_load is 
@@ -80,7 +83,8 @@ create or replace package body dw_fcst_extract02 as
          select t01.*
            from fcst_load_detail t01
           where t01.load_identifier = rcd_fcst_extract_load.load_identifier
-            and t01.plan_group = rcd_fcst_extract_header.plan_group
+            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
+                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
           order by t01.fcst_yyyypp asc,
                    t01.material_code asc,
                    t01.plant_code asc;
