@@ -1373,7 +1373,6 @@ create or replace package body dw_tax_reporting as
       /*-*/
       /* Retrieve the report data in to the array
       /*-*/
-      /*-*/
       tbl_report.delete;
       open csr_report for var_query;
       fetch csr_report bulk collect into tbl_report;
