@@ -121,34 +121,34 @@ create or replace package body dw_fcst_extract04 as
       /* Pipe the header row
       /*-*/
       var_output := 'Plan Type';
-      var_output := var_output|| chr(9) || 'Plan Version';
-      var_output := var_output|| chr(9) || 'Plan Id';
-      var_output := var_output|| chr(9) || 'Mars Period';
-      var_output := var_output|| chr(9) || 'Company Code';
-      var_output := var_output|| chr(9) || 'Distribution Channel';
-      var_output := var_output|| chr(9) || 'Division';
-      var_output := var_output|| chr(9) || 'Sales Organisation';
-      var_output := var_output|| chr(9) || 'Plant';
-      var_output := var_output|| chr(9) || 'Ship-to Party';
-      var_output := var_output|| chr(9) || 'Sold-to Party';
-      var_output := var_output|| chr(9) || 'Bill-to Party';
-      var_output := var_output|| chr(9) || 'Material';
-      var_output := var_output|| chr(9) || 'Business Segmnent';
-      var_output := var_output|| chr(9) || 'Pack Sub Family';
-      var_output := var_output|| chr(9) || 'Market Segment';
-      var_output := var_output|| chr(9) || 'Product Category';
-      var_output := var_output|| chr(9) || 'Product Type';
-      var_output := var_output|| chr(9) || 'Brand Flag';
-      var_output := var_output|| chr(9) || 'Representative Item';
-      var_output := var_output|| chr(9) || 'Plan Item';
-      var_output := var_output|| chr(9) || 'Unit for Quantity';
-      var_output := var_output|| chr(9) || 'Planned Quantity';
-      var_output := var_output|| chr(9) || 'Currency';
-      var_output := var_output|| chr(9) || 'Planned GSV';
-      var_output := var_output|| chr(9) || 'Planned NIV';
-      var_output := var_output|| chr(9) || 'Planned COPA1';
-      var_output := var_output|| chr(9) || 'Planned COPA2';
-      var_output := var_output|| chr(9) || 'Planned COPA3';
+      var_output := var_output || chr(9) || 'Plan Version';
+      var_output := var_output || chr(9) || 'Plan Id';
+      var_output := var_output || chr(9) || 'Mars Period';
+      var_output := var_output || chr(9) || 'Company Code';
+      var_output := var_output || chr(9) || 'Distribution Channel';
+      var_output := var_output || chr(9) || 'Division';
+      var_output := var_output || chr(9) || 'Sales Organisation';
+      var_output := var_output || chr(9) || 'Plant';
+      var_output := var_output || chr(9) || 'Ship-to Party';
+      var_output := var_output || chr(9) || 'Sold-to Party';
+      var_output := var_output || chr(9) || 'Bill-to Party';
+      var_output := var_output || chr(9) || 'Material';
+      var_output := var_output || chr(9) || 'Business Segmnent';
+      var_output := var_output || chr(9) || 'Pack Sub Family';
+      var_output := var_output || chr(9) || 'Market Segment';
+      var_output := var_output || chr(9) || 'Product Category';
+      var_output := var_output || chr(9) || 'Product Type';
+      var_output := var_output || chr(9) || 'Brand Flag';
+      var_output := var_output || chr(9) || 'Representative Item';
+      var_output := var_output || chr(9) || 'Plan Item';
+      var_output := var_output || chr(9) || 'Unit for Quantity';
+      var_output := var_output || chr(9) || 'Planned Quantity';
+      var_output := var_output || chr(9) || 'Currency';
+      var_output := var_output || chr(9) || 'Planned GSV';
+      var_output := var_output || chr(9) || 'Planned NIV';
+      var_output := var_output || chr(9) || 'Planned COPA1';
+      var_output := var_output || chr(9) || 'Planned COPA2';
+      var_output := var_output || chr(9) || 'Planned COPA3';
       pipe row(var_output);
 
       /*-*/
@@ -198,34 +198,34 @@ create or replace package body dw_fcst_extract04 as
             /*-*/
             if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
                var_output := var_type;
-               var_output := var_output|| chr(9) || var_version;
-               var_output := var_output|| chr(9) || var_planner;
-               var_output := var_output|| chr(9) || to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000');
-               var_output := var_output|| chr(9) || rcd_fcst_load_header.sales_org_code;
-               var_output := var_output|| chr(9) || rcd_fcst_load_header.distbn_chnl_code;
-               var_output := var_output|| chr(9) || rcd_fcst_load_header.division_code;
-               var_output := var_output|| chr(9) || rcd_fcst_load_header.sales_org_code;
-               var_output := var_output|| chr(9) || rcd_fcst_load_detail.plant_code;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || rcd_fcst_load_detail.material_code;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || 'EA';
-               var_output := var_output|| chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
-               var_output := var_output|| chr(9) || 'RMB';
-               var_output := var_output|| chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
-               var_output := var_output|| chr(9) || null;
+               var_output := var_output || chr(9) || var_version;
+               var_output := var_output || chr(9) || var_planner;
+               var_output := var_output || chr(9) || to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000');
+               var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
+               var_output := var_output || chr(9) || rcd_fcst_load_header.distbn_chnl_code;
+               var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
+               var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
+               var_output := var_output || chr(9) || rcd_fcst_load_detail.plant_code;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || rcd_fcst_load_detail.material_code;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || 'EA';
+               var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
+               var_output := var_output || chr(9) || 'RMB';
+               var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || null;
                pipe row(var_output);
             end if;
 
@@ -281,34 +281,34 @@ create or replace package body dw_fcst_extract04 as
             /* Pipe the detail row
             /*-*/
             var_output := var_type;
-            var_output := var_output|| chr(9) || var_version;
-            var_output := var_output|| chr(9) || var_planner;
-            var_output := var_output|| chr(9) || to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000');
-            var_output := var_output|| chr(9) || rcd_fcst_load_header.sales_org_code;
-            var_output := var_output|| chr(9) || rcd_fcst_load_header.distbn_chnl_code;
-            var_output := var_output|| chr(9) || rcd_fcst_load_header.division_code;
-            var_output := var_output|| chr(9) || rcd_fcst_load_header.sales_org_code;
-            var_output := var_output|| chr(9) || rcd_fcst_load_detail.plant_code;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || rcd_fcst_load_detail.material_code;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || 'EA';
-            var_output := var_output|| chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
-            var_output := var_output|| chr(9) || 'RMB';
-            var_output := var_output|| chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
-            var_output := var_output|| chr(9) || null;
+            var_output := var_output || chr(9) || var_version;
+            var_output := var_output || chr(9) || var_planner;
+            var_output := var_output || chr(9) || to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000');
+            var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
+            var_output := var_output || chr(9) || rcd_fcst_load_header.distbn_chnl_code;
+            var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
+            var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
+            var_output := var_output || chr(9) || rcd_fcst_load_detail.plant_code;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || rcd_fcst_load_detail.material_code;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || 'EA';
+            var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
+            var_output := var_output || chr(9) || 'RMB';
+            var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
+            var_output := var_output || chr(9) || null;
             pipe row(var_output);
 
          end loop;
@@ -335,7 +335,7 @@ create or replace package body dw_fcst_extract04 as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FCST_EXTRACT01 - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - DW_FCST_EXTRACT04 - EXPORT - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
