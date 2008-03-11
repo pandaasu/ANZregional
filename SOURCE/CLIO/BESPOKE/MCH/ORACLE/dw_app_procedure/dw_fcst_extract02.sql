@@ -80,14 +80,21 @@ create or replace package body dw_fcst_extract02 as
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_fcst_load_detail is 
-         select t01.*
+         select t01.fcst_yyyypp,
+                t01.plant_code,
+                t01.material_code,
+                sum(t01.fcst_qty) as fcst_qty,
+                sum(t01.fcst_gsv) as fcst_gsv
            from fcst_load_detail t01
           where t01.load_identifier = rcd_fcst_extract_load.load_identifier
             and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
                  t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
+          group by t01.fcst_yyyypp,
+                   t01.plant_code,
+                   t01.material_code
           order by t01.fcst_yyyypp asc,
-                   t01.material_code asc,
-                   t01.plant_code asc;
+                   t01.plant_code asc,
+                   t01.material_code asc;
       rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
 
    /*-------------*/

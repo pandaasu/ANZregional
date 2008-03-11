@@ -86,9 +86,9 @@ create or replace package body dw_fcst_extract06 as
           where t01.load_identifier = rcd_fcst_extract_load.load_identifier
             and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
                  t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
-          order by t01.fcst_yyyypp asc,
-                   t01.material_code asc,
-                   t01.plant_code asc;
+          order by t01.material_code asc,
+                   t01.plant_code asc,
+                   t01.cover_yyyymmdd asc;
       rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
 
    /*-------------*/
