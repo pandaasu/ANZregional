@@ -64,7 +64,7 @@ create or replace package body dw_fcst_extract06 as
                 t02.extract_plan_group
            from fcst_extract_header t01,
                 fcst_extract_type t02
-          where t01.extract_type = var_extract_type(+);
+          where t01.extract_type = t02.extract_type(+)
             and t01.extract_identifier = var_extract_identifier;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 

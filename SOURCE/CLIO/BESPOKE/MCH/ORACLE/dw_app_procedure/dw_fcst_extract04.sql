@@ -63,7 +63,7 @@ create or replace package body dw_fcst_extract04 as
                 t02.extract_plan_group
            from fcst_extract_header t01,
                 fcst_extract_type t02
-          where t01.extract_type = var_extract_type(+);
+          where t01.extract_type = t02.extract_type(+)
             and t01.extract_identifier = var_extract_identifier;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
@@ -152,7 +152,7 @@ create or replace package body dw_fcst_extract04 as
       pipe row(var_output);
 
       /*-*/
-      /* Retrieve the forecast extract loads (CN_FCS_OFL output)
+      /* Retrieve the forecast extract loads (CN_YEE_OFL output)
       /*-*/
       open csr_fcst_extract_load;
       loop
@@ -184,14 +184,14 @@ create or replace package body dw_fcst_extract04 as
             /*-*/
             /* Set the control data
             /*-*/
-            var_type := 'CN_FCS_OFL';
+            var_type := 'CN_YEE_OFL';
             var_version := substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),1,4)||'P';
             if substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),5,1) = '0' then
                var_version := var_version||substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),6,1);
             else
                var_version := var_version||substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),5,2);
             end if;
-            var_planner := rcd_fcst_extract_header.plan_group;
+            var_planner := rcd_fcst_extract_header.extract_plan_group;
 
             /*-*/
             /* Pipe the detail row when required
@@ -236,7 +236,7 @@ create or replace package body dw_fcst_extract04 as
       close csr_fcst_extract_load;
 
       /*-*/
-      /* Retrieve the forecast extract loads (CN_FCS_HST output)
+      /* Retrieve the forecast extract loads (CN_YEE_HST output)
       /*-*/
       open csr_fcst_extract_load;
       loop
@@ -268,14 +268,9 @@ create or replace package body dw_fcst_extract04 as
             /*-*/
             /* Set the control data
             /*-*/
-            var_type := 'CN_FCS_HST';
-            var_version := substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),1,4)||'P';
-            if substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),5,1) = '0' then
-               var_version := var_version||substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),6,1);
-            else
-               var_version := var_version||substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),5,2);
-            end if;
-            var_planner := rcd_fcst_extract_header.plan_group;
+            var_type := 'CN_YEE_HST';
+            var_version := 'REPLAN'||substr(to_char(rcd_fcst_extract_header.extract_version,'fm0000'),1,4);
+            var_planner := rcd_fcst_extract_header.extract_plan_group;
 
             /*-*/
             /* Pipe the detail row

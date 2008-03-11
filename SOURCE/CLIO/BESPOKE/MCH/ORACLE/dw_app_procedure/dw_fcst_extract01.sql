@@ -63,7 +63,7 @@ create or replace package body dw_fcst_extract01 as
                 t02.extract_plan_group
            from fcst_extract_header t01,
                 fcst_extract_type t02
-          where t01.extract_type = var_extract_type(+);
+          where t01.extract_type = t02.extract_type(+)
             and t01.extract_identifier = var_extract_identifier;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
@@ -98,14 +98,6 @@ create or replace package body dw_fcst_extract01 as
       /*------------------------------------------------*/
       /* NOTE - This procedure must not commit/rollback */
       /*------------------------------------------------*/
-
-      /*-*/
-      /* Load the query statement
-      /*-*/
-      var_query := 'select * from table(<EXTRACT_PROCEDURE>.export(''<EXTRACT_IDENTIFIER>''))';
-      var_query := replace(var_query,'<EXTRACT_PROCEDURE>',rcd_fcst_extract_type.extract_procedure);
-      var_query := replace(var_query,'<EXTRACT_IDENTIFIER>',rcd_fcst_extract_header.extract_identifier);
-
 
       /*-*/
       /* Validate the parameter values
@@ -199,7 +191,7 @@ create or replace package body dw_fcst_extract01 as
             else
                var_version := var_version||substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),5,2);
             end if;
-            var_planner := rcd_fcst_extract_header.plan_group;
+            var_planner := rcd_fcst_extract_header.extract_plan_group;
 
             /*-*/
             /* Pipe the detail row when required
@@ -283,7 +275,7 @@ create or replace package body dw_fcst_extract01 as
             else
                var_version := var_version||substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),5,2);
             end if;
-            var_planner := rcd_fcst_extract_header.plan_group;
+            var_planner := rcd_fcst_extract_header.extract_plan_group;
 
             /*-*/
             /* Pipe the detail row

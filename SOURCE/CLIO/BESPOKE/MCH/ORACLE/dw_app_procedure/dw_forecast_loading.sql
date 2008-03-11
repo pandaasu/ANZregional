@@ -173,7 +173,7 @@ create or replace package body dw_forecast_loading as
       open csr_fcst_extract_load;
       fetch csr_fcst_extract_load into rcd_fcst_extract_load;
       if csr_fcst_extract_load%found then
-         var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') is currently attached to one or more forecast extracts';
+         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') is currently attached to one or more forecast extracts');
       end if;
       close csr_fcst_extract_load;
 
@@ -283,12 +283,6 @@ create or replace package body dw_forecast_loading as
       end if;
 
       /*-*/
-      /* Delete the forecast extract detail
-      /*-*/
-      delete from fcst_extract_detail
-       where extract_identifier = rcd_fcst_extract_header.extract_identifier;
-
-      /*-*/
       /* Delete the forecast extract load
       /*-*/
       delete from fcst_extract_load
@@ -361,7 +355,7 @@ create or replace package body dw_forecast_loading as
 
       cursor csr_fcst_data is
          select t01.*,
-                nvl(t02.mars_period,99999999) as mars_yyyypp,
+                nvl(t02.mars_period,999999) as mars_yyyypp,
                 nvl(t02.mars_week,9999999) as mars_yyyyppw
            from fcst_data t01,
                 mars_date t02
@@ -423,10 +417,10 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Initialise the forecast load header
       /*-*/
-      rcd_fcst_load_header.load_identifier := 'BR_APOLLO_'||par_cast_date;
+      rcd_fcst_load_header.load_identifier := 'FCST_APOLLO_DOMESTIC_'||par_cast_date;
       rcd_fcst_load_header.load_description := 'Apollo Domestic Forecasts';
       rcd_fcst_load_header.load_status := '*NONE';
-      rcd_fcst_load_header.load_type := '*BR_DOMESTIC';
+      rcd_fcst_load_header.load_type := '*FCST_DOMESTIC';
       rcd_fcst_load_header.load_data_type := '*QTY_ONLY';
       rcd_fcst_load_header.load_data_version := var_load_data_version;
       rcd_fcst_load_header.load_data_range := 0;
@@ -692,8 +686,17 @@ create or replace package body dw_forecast_loading as
       rcd_mars_year csr_mars_year%rowtype;
 
       cursor csr_fcst_data is
-         select t01.*
-           from fcst_data t01
+         select t01.*,
+                nvl(t02.mars_yyyymmdd,'99999999') as mars_yyyymmdd,
+                nvl(t02.mars_yyyyppw,9999999) as mars_yyyyppw,
+                nvl(t02.mars_cover,0) as mars_cover
+           from fcst_data t01,
+                (select t01.mars_period,
+                        min(to_char(t01.calendar_date,'yyyymmdd')) as mars_yyyymmdd,
+                        min(t01.mars_week) as mars_yyyyppw,
+                        max(period_day_num) as mars_cover
+                   from mars_date t01) t02
+          where t01.fcst_yyyypp = t02.mars_period(+)
           order by t01.material_code asc,
                    t01.dmnd_group asc,
                    t01.plant_code asc,
@@ -881,10 +884,10 @@ create or replace package body dw_forecast_loading as
          rcd_fcst_load_detail.material_code := rcd_fcst_data.material_code;
          rcd_fcst_load_detail.dmnd_group := rcd_fcst_data.dmnd_group;
          rcd_fcst_load_detail.plant_code := rcd_fcst_data.plant_code;
-         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.fcst_yyyymmdd;
-         rcd_fcst_load_detail.cover_day := rcd_fcst_data.fcst_cover;
+         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.mars_yyyymmdd;
+         rcd_fcst_load_detail.cover_day := rcd_fcst_data.mars_cover;
          rcd_fcst_load_detail.cover_qty := rcd_fcst_data.fcst_qty;
-         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.fcst_yyyyppw;
+         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.mars_yyyyppw;
          rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp;
          rcd_fcst_load_detail.fcst_qty := rcd_fcst_data.fcst_qty;
          rcd_fcst_load_detail.fcst_prc := rcd_fcst_data.fcst_prc;
@@ -1046,12 +1049,6 @@ create or replace package body dw_forecast_loading as
            from fcst_load_header t01
           where t01.load_identifier = var_work_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
-
-      cursor csr_mars_date is
-         select *
-           from mars_date t01
-          where trunc(t01.calendar_date) = trunc(sysdate);
-      rcd_mars_date csr_mars_date%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1282,22 +1279,16 @@ create or replace package body dw_forecast_loading as
    /*-------------*/
    end create_extract;
 
-   /******************************************************/
-   /* This procedure performs the report extract routine */
-   /******************************************************/
-   procedure report_extract(par_extract_identifier in varchar2) is
+   /**********************************************/
+   /* This procedure performs the export routine */
+   /**********************************************/
+   function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined is
 
-      /*-*/
-      /* Local cursors
-      /*-*/
       /*-*/
       /* Local definitions
       /*-*/
       var_extract_identifier fcst_extract_header.extract_identifier%type;
-      var_wrk_string varchar2(4000 char);
-      var_row_count number;
-      var_end_count number;
-      var_fcst_time varchar2(1
+      var_output varchar2(4000 char);
       type typ_select is table of varchar2(32) index by binary_integer;
       tbl_select typ_select;
 
@@ -1309,7 +1300,7 @@ create or replace package body dw_forecast_loading as
                 t02.extract_plan_group
            from fcst_extract_header t01,
                 fcst_extract_type t02
-          where t01.extract_type = var_extract_type(+);
+          where t01.extract_type = t02.extract_type(+)
             and t01.extract_identifier = var_extract_identifier;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
@@ -1331,857 +1322,6 @@ create or replace package body dw_forecast_loading as
           where t01.load_identifier = rcd_fcst_load_header.load_identifier
             and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
                  t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
-          order by material_code asc,
-                   plant_code asc,
-                   fcst_yyyypp asc;
-      rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Validate the parameter values
-      /*-*/
-      var_identifier := upper(par_identifier);
-      if var_identifier is null then
-         raise_application_error(-20000, 'Forecast load identifier must be specified');
-      end if;
-
-      /*-*/
-      /* Forecast load header must exist
-      /*-*/
-      open csr_fcst_load_header;
-      fetch csr_fcst_load_header into rcd_fcst_load_header;
-      if csr_fcst_load_header%notfound then
-         raise_application_error(-20000, 'Forecast load (' || var_identifier || ') does not exist');
-      end if;
-      close csr_fcst_load_header;
-
-      /*-*/
-      /* Set the forecast literals
-      /*-*/
-      var_fcst_time := rcd_fcst_load_header.fcst_time;
-      if rcd_fcst_load_header.fcst_time = '*MTH' then
-         var_fcst_time := 'Month';
-      end if;
-      if rcd_fcst_load_header.fcst_time = '*PRD' then
-         var_fcst_time := 'Period';
-      end if;
-      var_fcst_type := rcd_fcst_load_header.fcst_type;
-      if rcd_fcst_load_header.fcst_type = '*BR' then
-         var_fcst_type := 'Business Review';
-      end if;
-      if rcd_fcst_load_header.fcst_type = '*OP1' then
-         var_fcst_type := 'Operating Plan - This Year';
-      end if;
-      if rcd_fcst_load_header.fcst_type = '*OP2' then
-         var_fcst_type := 'Operating Plan - Next Year';
-      end if;
-      var_fcst_source := rcd_fcst_load_header.fcst_source;
-      var_fcst_material_list := rcd_fcst_load_header.fcst_material_list;
-      if rcd_fcst_load_header.fcst_source = '*PLN' then
-         var_fcst_source := 'Planning System';
-      end if;
-      if rcd_fcst_load_header.fcst_source = '*TXQ' then
-         var_fcst_source := 'Text File (Quantity Only)';
-         var_fcst_material_list := '*FILE';
-      end if;
-      if rcd_fcst_load_header.fcst_source = '*TXV' then
-         var_fcst_source := 'Text File (Quantity and Values)';
-         var_fcst_material_list := '*FILE';
-      end if;
-
-      /*-*/
-      /* Retrieve load detail material count
-      /*-*/
-      open csr_fcst_load_count;
-      fetch csr_fcst_load_count into rcd_fcst_load_count;
-      if csr_fcst_load_count%notfound then
-         rcd_fcst_load_count.material_count := 0;
-      end if;
-      close csr_fcst_load_count;
-
-      /*-*/
-      /* Add the selection sheet
-      /*-*/
-      lics_spreadsheet.addSheet('Selection',false);
-
-      /*-*/
-      /* Set the selection data
-      /*-*/
-      lics_spreadsheet.setRange('A1:A1',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Selections');
-      lics_spreadsheet.setHeadingBorder('A1:A1',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRange('A2:A2',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Identifier: '||rcd_fcst_load_header.load_identifier);
-      lics_spreadsheet.setRange('A3:A3',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Description: '||rcd_fcst_load_header.load_description);
-      lics_spreadsheet.setRange('A4:A4',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Status: '||rcd_fcst_load_header.load_status);
-      lics_spreadsheet.setRange('A5:A5',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Replacement: '||rcd_fcst_load_header.load_replace);
-      lics_spreadsheet.setRange('A6:A6',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Split: '||rcd_fcst_load_header.fcst_split_text);
-      lics_spreadsheet.setRange('A7:A7',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Time: '||var_fcst_time);
-      lics_spreadsheet.setRange('A8:A8',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Type: '||var_fcst_type);
-      lics_spreadsheet.setRange('A9:A9',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Source: '||var_fcst_source);
-      lics_spreadsheet.setRange('A10:A10',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Casting: '||to_char(rcd_fcst_load_header.fcst_cast_yyyynn,'fm000000'));
-      lics_spreadsheet.setRange('A11:A11',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Forecast Materials: '||var_fcst_material_list);
-      lics_spreadsheet.setRange('A12:A12',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Forecast Split Key Information');
-      lics_spreadsheet.setRange('A13:A13',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Organisation: '||rcd_fcst_load_header.sap_sales_org_code||' '||rcd_fcst_load_header.sales_org_desc);
-      lics_spreadsheet.setRange('A14:A14',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Distribution Channel: '||rcd_fcst_load_header.sap_distbn_chnl_code||' '||rcd_fcst_load_header.distbn_chnl_desc);
-      lics_spreadsheet.setRange('A15:A15',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Division: '||rcd_fcst_load_header.sap_division_code||' '||rcd_fcst_load_header.division_desc);
-      lics_spreadsheet.setRange('A16:A16',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Division Customer: '||nvl(rcd_fcst_load_header.sap_sales_div_cust_code,'N/A'));
-      lics_spreadsheet.setRange('A17:A17',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Division Sales Organisation: '||nvl(rcd_fcst_load_header.sap_sales_div_sales_org_code,'N/A'));
-      lics_spreadsheet.setRange('A18:A18',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Division Distribution Channel: '||nvl(rcd_fcst_load_header.sap_sales_div_distbn_chnl_code,'N/A'));
-      lics_spreadsheet.setRange('A19:A19',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Division Division: '||nvl(rcd_fcst_load_header.sap_sales_div_division_code,'N/A'));
-      lics_spreadsheet.setRangeBorder('A2:A19',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Set the legend data
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         lics_spreadsheet.setRange('A21:A21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Forecast Data Values');
-         lics_spreadsheet.setRange('B21:B21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Legend');
-         lics_spreadsheet.setRange('C21:C21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Type');
-         lics_spreadsheet.setHeadingBorder('A21:C21',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRange('A22:A22',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The forecast quantity');
-         lics_spreadsheet.setRange('B22:B22',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'QTY');
-         lics_spreadsheet.setRange('C22:C22',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A23:A23',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The material list price');
-         lics_spreadsheet.setRange('B23:B23',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'PRC');
-         lics_spreadsheet.setRange('C23:C23',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A24:A24',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The base price value = QTY*PRC');
-         lics_spreadsheet.setRange('B24:B24',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'BPS');
-         lics_spreadsheet.setRange('C24:C24',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Calculated');
-         lics_spreadsheet.setRange('A25:A25',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The general discount price (negative number)');
-         lics_spreadsheet.setRange('B25:B25',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'DIS');
-         lics_spreadsheet.setRange('C25:C25',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A26:A26',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The average volume discount % (positive number) (eg. 20% = .20)');
-         lics_spreadsheet.setRange('B26:B26',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'VOL');
-         lics_spreadsheet.setRange('C26:C26',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A27:A27',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The gross sales value = QTY*round((PRC+DIS)-((PRC+DIS)*VOL),0)');
-         lics_spreadsheet.setRange('B27:B27',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'GSV');
-         lics_spreadsheet.setRange('C27:C27',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Calculated');
-         lics_spreadsheet.setRangeBorder('A22:C27',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      else
-         lics_spreadsheet.setRange('A21:A21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Forecast Data Values');
-         lics_spreadsheet.setRange('B21:B21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Legend');
-         lics_spreadsheet.setRange('C21:C21',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Type');
-         lics_spreadsheet.setHeadingBorder('A21:C21',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRange('A22:A22',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The forecast quantity');
-         lics_spreadsheet.setRange('B22:B22',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'QTY');
-         lics_spreadsheet.setRange('C22:C22',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A23:A23',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The base price value');
-         lics_spreadsheet.setRange('B23:B23',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'BPS');
-         lics_spreadsheet.setRange('C23:C23',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRange('A24:A24',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'The gross sales value');
-         lics_spreadsheet.setRange('B24:B24',null,lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'GSV');
-         lics_spreadsheet.setRange('C24:C24',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Data Entry');
-         lics_spreadsheet.setRangeBorder('A22:C24',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      end if;
-
-      /*-*/
-      /* Add the forecast sheet
-      /*-*/
-      lics_spreadsheet.addSheet('Forecasting',false);
-
-      /*-*/
-      /* Set the sheet heading
-      /*-*/
-      lics_spreadsheet.setRange('A1:A1','A1:R1',lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Forecast - '||var_fcst_time||' - '||var_fcst_type||' - Casting Period '||to_char(rcd_fcst_load_header.fcst_cast_yyyynn,'fm000000'));
-
-      /*-*/
-      /* Set the company heading
-      /*-*/
-      lics_spreadsheet.setRange('A2:A2','A2:R2', lics_spreadsheet.getHeadingType(2),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Company: '||rcd_fcst_load_header.company_desc);
-
-      /*-*/
-      /* Set the forecast heading
-      /*-*/
-      var_wrk_string := 'Material'||chr(9)||'Description'||chr(9)||'Data'||chr(9);
-      var_cast_yyyynn := rcd_fcst_load_header.fcst_cast_yyyynn;
-      for idx in 1..13 loop
-         if substr(to_char(var_cast_yyyynn,'fm000000'),5,2) = '13' then
-            var_cast_yyyynn := var_cast_yyyynn + 88;
-         else
-            var_cast_yyyynn := var_cast_yyyynn + 1;
-         end if;
-         var_wrk_string := var_wrk_string||to_char(var_cast_yyyynn,'FM000000')||chr(9);
-      end loop;
-      var_wrk_string := var_wrk_string||'Total'||chr(9)||'Error Message';
-      lics_spreadsheet.setRangeArray('A3:A3','A3:R3',lics_spreadsheet.getHeadingType(7),lics_spreadsheet.FORMAT_CHAR_CENTRE,false,var_wrk_string);
-      lics_spreadsheet.setHeadingBorder('A3:R3',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Initialise the row count
-      /*-*/
-      var_row_count := 3;
-
-      /*-*/
-      /* Exit when no detail lines
-      /*-*/
-      if rcd_fcst_load_count.material_count = 0 then
-         lics_spreadsheet.setRange('A4:A4','A4:R4',lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'NO DETAILS EXIST');
-         lics_spreadsheet.setRangeBorder('A4:R4',lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         return;
-      end if;
-
-      /*-*/
-      /* Set the cell freeze
-      /*-*/
-      lics_spreadsheet.setFreezeCell('D4');
-
-      /*-*/
-      /* Set the data identifier start
-      /*-*/
-      var_row_count := var_row_count + 1;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                'A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),
-                                lics_spreadsheet.TYPE_MARKER,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'<XLSHEET IDENTIFIER="'||rcd_fcst_load_header.load_identifier||'">');
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-
-      /*-*/
-      /* Define the QTY row
-      /*-*/
-      var_row_count := var_row_count + 1;
-      var_wrk_string := '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0'||chr(9)||
-                        '0';
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'QTY');
-      lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                     'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                     lics_spreadsheet.TYPE_DETAIL_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,true,var_wrk_string);
-      lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-      lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-
-      /*-*/
-      /* Define the PRC row when required
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + 1;
-         var_wrk_string := '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0';
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'PRC');
-         lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                        'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                        lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_DECIMAL_0,true,var_wrk_string);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,null);
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      end if;
-
-      /*-*/
-      /* Define the BPS row
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + 1;
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'BPS');
-         lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=D'||to_char(var_row_count-2,'FM999999990')||'*D'||to_char(var_row_count-1,'FM999999990')||'');
-         lics_spreadsheet.setRangeFill('D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.FILL_RIGHT);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      else
-         var_row_count := var_row_count + 1;
-         var_wrk_string := '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0';
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'BPS');
-         lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                        'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                        lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_DECIMAL_0,true,var_wrk_string);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      end if;
-
-      /*-*/
-      /* Define the DIS row when required
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + 1;
-         var_wrk_string := '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0';
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'DIS');
-         lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                        'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                        lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_DECIMAL_0,true,var_wrk_string);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,null);
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      end if;
-
-      /*-*/
-      /* Define the VOL row when required
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + 1;
-         var_wrk_string := '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0';
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'VOL');
-         lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                        'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                        lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_DECIMAL_2,true,var_wrk_string);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_DECIMAL_2,0,false,null);
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      end if;
-
-      /*-*/
-      /* Define the GSV row
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + 1;
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'GSV');
-         lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=D'||to_char(var_row_count-5,'FM999999990')||'*round((D'||to_char(var_row_count-4,'FM999999990')||'+D'||to_char(var_row_count-2,'FM999999990')||')-((D'||to_char(var_row_count-4,'FM999999990')||'+D'||to_char(var_row_count-2,'FM999999990')||')*D'||to_char(var_row_count-1,'FM999999990')||'),0)');
-         lics_spreadsheet.setRangeFill('D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.FILL_RIGHT);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      else
-         var_row_count := var_row_count + 1;
-         var_wrk_string := '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0'||chr(9)||
-                           '0';
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-         lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'GSV');
-         lics_spreadsheet.setRangeArray('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),
-                                        'D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),
-                                        lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_DECIMAL_0,true,var_wrk_string);
-         lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-         lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                   lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      end if;
-
-      /*-*/
-      /* Define the borders
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count-5,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('B'||to_char(var_row_count-5,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('C'||to_char(var_row_count-5,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('R'||to_char(var_row_count-5,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-      else
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count-2,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('B'||to_char(var_row_count-2,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('C'||to_char(var_row_count-2,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('R'||to_char(var_row_count-2,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-      end if;
-
-      /*-*/
-      /* Define the copy
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         lics_spreadsheet.setRangeCopy('A'||to_char(var_row_count-5,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),rcd_fcst_load_count.material_count-1,lics_spreadsheet.COPY_DOWN);
-      else
-         lics_spreadsheet.setRangeCopy('A'||to_char(var_row_count-2,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),rcd_fcst_load_count.material_count-1,lics_spreadsheet.COPY_DOWN);
-      end if;
-
-      /*-*/
-      /* Set the data identifier end 
-      /*-*/
-      if rcd_fcst_load_header.fcst_source != '*TXV' then
-         var_row_count := var_row_count + ((rcd_fcst_load_count.material_count-1)*6) + 1;
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                   'A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),
-                                   lics_spreadsheet.TYPE_MARKER,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'</XLSHEET>');
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-
-      else
-         var_row_count := var_row_count + ((rcd_fcst_load_count.material_count-1)*3) + 1;
-         lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                   'A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),
-                                   lics_spreadsheet.TYPE_MARKER,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'</XLSHEET>');
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-         lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-      end if;
-      var_end_count := var_row_count;
-
-      /*-*/
-      /* Set the print settings
-      /*-*/
-      lics_spreadsheet.setPrintData('$1:$3','$A:$A',2,1,0);
-
-      /*-*/
-      /* Output the forecast values
-      /*-*/
-      var_row_count := 4;
-
-      /*-*/
-      /* Retrieve the forecast load detail
-      /*-*/
-      open csr_fcst_load_detail;
-      loop
-         fetch csr_fcst_load_detail into rcd_fcst_load_detail;
-         if csr_fcst_load_detail%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Output the QTY row
-         /*-*/
-         var_row_count := var_row_count + 1;
-         var_wrk_string := rcd_fcst_load_detail.sap_material_code||chr(9)||
-                           rcd_fcst_load_detail.material_desc_en||chr(9)||
-                           'QTY'||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_01,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_02,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_03,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_04,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_05,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_06,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_07,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_08,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_09,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_10,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_11,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_12,'fm999999990')||chr(9)||
-                           to_char(rcd_fcst_load_detail.fcst_qty_13,'fm999999990');
-         lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                        null,null,null,false,var_wrk_string);
-         if not(rcd_fcst_load_detail.err_message is null) then
-            lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                      lics_spreadsheet.TYPE_NONE,lics_spreadsheet.FORMAT_NONE,0,false,rcd_fcst_load_detail.err_message);
-         end if;
-
-         /*-*/
-         /* Output the PRC row when required
-         /*-*/
-         if rcd_fcst_load_header.fcst_source != '*TXV' then
-            var_row_count := var_row_count + 1;
-            var_wrk_string := chr(9)||
-                              chr(9)||
-                              'PRC'||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_01,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_02,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_03,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_04,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_05,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_06,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_07,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_08,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_09,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_10,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_11,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_12,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_prc_13,'fm999999990');
-            lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                           null,null,null,false,var_wrk_string);
-         end if;
-
-         /*-*/
-         /* Output the BPS row
-         /*-*/
-         if rcd_fcst_load_header.fcst_source != '*TXV' then
-            var_row_count := var_row_count + 1;
-         else
-            var_row_count := var_row_count + 1;
-            var_wrk_string := chr(9)||
-                              chr(9)||
-                              'BPS'||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_01,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_02,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_03,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_04,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_05,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_06,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_07,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_08,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_09,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_10,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_11,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_12,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_bps_13,'fm999999990');
-            lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                           null,null,null,false,var_wrk_string);
-         end if;
-
-         /*-*/
-         /* Output the DIS row when required
-         /*-*/
-         if rcd_fcst_load_header.fcst_source != '*TXV' then
-            var_row_count := var_row_count + 1;
-            var_wrk_string := chr(9)||
-                              chr(9)||
-                              'DIS'||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_01,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_02,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_03,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_04,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_05,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_06,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_07,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_08,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_09,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_10,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_11,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_12,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_dis_13,'fm999999990');
-            lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                           null,null,null,false,var_wrk_string);
-         end if;
-
-         /*-*/
-         /* Output the VOL row when required
-         /*-*/
-         if rcd_fcst_load_header.fcst_source != '*TXV' then
-            var_row_count := var_row_count + 1;
-            var_wrk_string := chr(9)||
-                              chr(9)||
-                              'VOL'||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_01,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_02,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_03,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_04,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_05,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_06,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_07,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_08,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_09,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_10,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_11,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_12,'fm999999990.00')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_vol_13,'fm999999990.00');
-            lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                           null,null,null,false,var_wrk_string);
-         end if;
-
-         /*-*/
-         /* Output the GSV row
-         /*-*/
-         if rcd_fcst_load_header.fcst_source != '*TXV' then
-            var_row_count := var_row_count + 1;
-         else
-            var_row_count := var_row_count + 1;
-            var_wrk_string := chr(9)||
-                              chr(9)||
-                              'GSV'||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_01,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_02,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_03,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_04,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_05,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_06,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_07,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_08,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_09,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_10,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_11,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_12,'fm999999990')||chr(9)||
-                              to_char(rcd_fcst_load_detail.fcst_gsv_13,'fm999999990');
-            lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                           null,null,null,false,var_wrk_string);
-         end if;
-
-      end loop;
-      close csr_fcst_load_detail;
-
-      /*-*/
-      /* Define the QTY total row
-      /*-*/
-      var_row_count := var_end_count + 1;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                'A'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_RIGHT,0,false,'Grand Totals:');
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'QTY');
-      lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",D4:D'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('E'||to_char(var_row_count,'FM999999990')||':E'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",E4:E'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('F'||to_char(var_row_count,'FM999999990')||':F'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",F4:F'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('G'||to_char(var_row_count,'FM999999990')||':G'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",G4:G'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('H'||to_char(var_row_count,'FM999999990')||':H'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",H4:H'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('I'||to_char(var_row_count,'FM999999990')||':I'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",I4:I'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('J'||to_char(var_row_count,'FM999999990')||':J'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",J4:J'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':K'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",K4:K'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('L'||to_char(var_row_count,'FM999999990')||':L'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",L4:L'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('M'||to_char(var_row_count,'FM999999990')||':M'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",M4:M'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('N'||to_char(var_row_count,'FM999999990')||':N'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",N4:N'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('O'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",O4:O'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('P'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=QTY",P4:P'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-      lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-
-      /*-*/
-      /* Define the BPS total row
-      /*-*/
-      var_row_count := var_row_count + 1;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                'A'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'BPS');
-      lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",D4:D'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('E'||to_char(var_row_count,'FM999999990')||':E'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",E4:E'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('F'||to_char(var_row_count,'FM999999990')||':F'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",F4:F'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('G'||to_char(var_row_count,'FM999999990')||':G'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",G4:G'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('H'||to_char(var_row_count,'FM999999990')||':H'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",H4:H'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('I'||to_char(var_row_count,'FM999999990')||':I'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",I4:I'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('J'||to_char(var_row_count,'FM999999990')||':J'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",J4:J'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':K'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",K4:K'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('L'||to_char(var_row_count,'FM999999990')||':L'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",L4:L'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('M'||to_char(var_row_count,'FM999999990')||':M'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",M4:M'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('N'||to_char(var_row_count,'FM999999990')||':N'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",N4:N'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('O'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",O4:O'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('P'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=BPS",P4:P'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-      lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-
-      /*-*/
-      /* Define the GSV total row
-      /*-*/
-      var_row_count := var_row_count + 1;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                'A'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'GSV');
-      lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",D4:D'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('E'||to_char(var_row_count,'FM999999990')||':E'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",E4:E'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('F'||to_char(var_row_count,'FM999999990')||':F'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",F4:F'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('G'||to_char(var_row_count,'FM999999990')||':G'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",G4:G'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('H'||to_char(var_row_count,'FM999999990')||':H'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",H4:H'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('I'||to_char(var_row_count,'FM999999990')||':I'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",I4:I'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('J'||to_char(var_row_count,'FM999999990')||':J'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",J4:J'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':K'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",K4:K'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('L'||to_char(var_row_count,'FM999999990')||':L'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",L4:L'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('M'||to_char(var_row_count,'FM999999990')||':M'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",M4:M'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('N'||to_char(var_row_count,'FM999999990')||':N'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",N4:N'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('O'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",O4:O'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('P'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sumif(C4:C'||to_char(var_end_count-1,'FM999999990')||',"=GSV",P4:P'||to_char(var_end_count-1,'FM999999990')||')');
-      lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT_BOLD,lics_spreadsheet.FORMAT_DECIMAL_0,0,false,'=sum(D'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990')||')');
-      lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_PROTECT,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      /*-*/
-      /* Define the total borders
-      /*-*/
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count-2,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRangeBorder('C'||to_char(var_row_count-2,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRangeBorder('R'||to_char(var_row_count-2,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_BOTTOM,lics_spreadsheet.BORDER_WEIGHT_MEDIUM);
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - REPORT_EXTRACT - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end report_extract;
-
-   /**********************************************/
-   /* This procedure performs the export routine */
-   /**********************************************/
-   function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_extract_identifier fcst_extract_header.extract_identifier%type;
-      var_output varchar2(4000 char);
-      type typ_select is table of varchar2(32) index by binary_integer;
-      tbl_select typ_select;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_fcst_extract_header is 
-         select t01.*
-           from fcst_extract_header t01
-          where t01.extract_identifier = var_extract_identifier;
-      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
-
-      cursor csr_fcst_extract_load is 
-         select t01.*
-           from fcst_extract_load t01
-          where t01.extract_identifier = rcd_fcst_extract_header.extract_identifier;
-      rcd_fcst_extract_load csr_fcst_extract_load%rowtype;
-
-      cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = rcd_fcst_extract_load.load_identifier;
-      rcd_fcst_load_header csr_fcst_load_header%rowtype;
-
-      cursor csr_fcst_load_detail is 
-         select t01.*
-           from fcst_load_detail t01
-          where t01.load_identifier = rcd_fcst_load_header.load_identifier
-            and (rcd_fcst_extract_header.plan_group = '*NONE' or
-                 t01.plan_group = rcd_fcst_extract_header.plan_group)
           order by material_code asc,
                    plant_code asc,
                    fcst_yyyypp asc;
@@ -2217,7 +1357,10 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Start the report
       /*-*/
-      var_output := '<TABLE>';
+      var_output := '<table border=1 cellpadding="0" cellspacing="0">';
+      var_output := var_output || '<tr>';
+    --  var_output := var_output || '<td align=center colspan=9 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Monthly Invoice Data / '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_str_date,'yyyymmdd'),'yyyy.mm.dd')||' - '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_end_date,'yyyymmdd'),'yyyy.mm.dd')||' / xxxxxxxxxxxxxxxxxx</td>'
+      pipe row(var_output);
 
       /*-*/
       /* Retrieve the forecast extract loads
@@ -2264,7 +1407,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* End the report
       /*-*/
-      var_output := '</TABLE>';
+      var_output := '</table>';
       pipe row(var_output);
 
       /*-*/
@@ -2557,7 +1700,6 @@ create or replace package body dw_forecast_loading as
       obj_xml_document xmlDom.domDocument;
       obj_xml_element xmlDom.domElement;
       obj_xml_node xmlDom.domNode;
-      var_index number;
 
    /*-------------*/
    /* Begin block */
