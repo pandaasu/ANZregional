@@ -67,7 +67,7 @@ COMPRESS_Z="*COMPRESS_Z"
 COMPRESS="*COMPRESS"
 NOCOMPRESS="*NOCOMPRESS"
 
-IS_COMPRESSED=0
+IS_COMPRESSED=1
 
 TEXT="*TXT"
 BINARY="*BIN"
@@ -281,7 +281,7 @@ initialise_utilities()
     # set global is compressed value so we dont need to check if CMP_PARAM matches
     # any of the compress options
     if [[ $NOCOMPRESS = $CMP_PARAM ]] ; then
-        IS_COMPRESSED=1
+        IS_COMPRESSED=0
     fi
     
     echo "INFO: Creating working log file [${TMP_OUT}]" >> $TMP_OUT

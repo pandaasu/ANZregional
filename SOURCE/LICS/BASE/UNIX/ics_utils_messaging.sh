@@ -391,8 +391,7 @@ process_outbound()
     FILE_INT=$1
     OUTBOUND_TYPE=$2
     
-    log_file "INFO: [process_outbound] CMP_PARAM = ${CMP_PARAM}" "HARMLESS"
-    log_file "INFO: [process_outbound] COMPRESS = ${COMPRESS}" "HARMLESS"
+    log_file "INFO: [process_outbound] IS_COMPRESSED = ${IS_COMPRESSED}" "HARMLESS"
     
     if [[ $IS_COMPRESSED -eq 1 ]] ; then
         toggle_file_compression $FILE_INT 0

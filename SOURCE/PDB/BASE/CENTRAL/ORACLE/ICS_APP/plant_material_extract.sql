@@ -1,4 +1,4 @@
-create or replace package plant_material_extract 
+create or replace package ics_app.plant_material_extract 
 as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
@@ -50,12 +50,12 @@ as
   /* Public declarations 
   /* par_material either null or a material code 
   /*-*/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default null);
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_material_extract;
 /
 
-create or replace package body plant_material_extract
+create or replace package body ics_app.plant_material_extract
 as
 /******************************************************************************
    NAME: plant_material_extract 
@@ -73,8 +73,11 @@ as
   function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
   procedure execute_send(par_interface in varchar2);
   
+  /*-*/
+  /* Global variables 
+  /*-*/
   var_interface varchar2(32 char);
-  var_output    varchar2(4000); 
+  var_output    varchar2(4000);
       
   /*-*/
   /* Private declarations 
@@ -84,10 +87,10 @@ as
      
   tbl_definition typ_definition;
 
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default null) is
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
-    /* Local definitions
+    /* Local variables 
     /*-*/
     var_exception varchar2(4000);
     var_action    varchar2(10);
@@ -97,8 +100,8 @@ as
          
   begin
   
-    var_action := upper(nvl(trim(par_action), 'x'));
-    var_data := nvl(trim(par_data), 'x');
+    var_action := upper(nvl(trim(par_action), con_null));
+    var_data := trim(par_data);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
@@ -108,8 +111,7 @@ as
     /*-*/
     if ( var_action != '*ALL'
         and var_action != '*MATERIAL'
-        and var_action != '*HISTORY' )
-    then
+        and var_action != '*HISTORY' ) then
       raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL, *MATERIAL or *HISTORY');
     end if;
     
@@ -118,16 +120,13 @@ as
         and var_site != '*SCO'
         and var_site != '*WOD'
         and var_site != '*MFA'
-        and var_site != '*WGI' )
-    then
+        and var_site != '*WGI' ) then
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI or NULL');
     end if;
     
-    if ( var_action = '*MATERIAL' and var_data = 'x' ) 
-    then
+    if ( var_action = '*MATERIAL' and var_data is null ) then
       raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *MATERIAL actions.');
-    elsif ( var_action = '*HISTORY' and (var_data = 'x' or to_number(var_data) <= 0) ) 
-    then
+    elsif ( var_action = '*HISTORY' and (var_data is null or to_number(var_data) <= 0) ) then
       raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null and must be greater than 1 for *HISTORY actions.');
     end if;
     
@@ -137,30 +136,23 @@ as
     /* ensure data was returned in the cursor before creating interfaces 
     /* to send to the specified site(s) 
     /*-*/ 
-    if ( var_start = true )
-    then    
-      if (par_site = '*ALL' or '*MFA') 
-      then
+    if ( var_start = true ) then    
+      if (par_site = '*ALL' or '*MFA') then
         execute_send('LADPDB02.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') 
-      then
+      if (par_site = '*ALL' or '*WGI') then
         execute_send('LADPDB02.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') 
-      then
+      if (par_site = '*ALL' or '*WOD') then
         execute_send('LADPDB02.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') 
-      then
+      if (par_site = '*ALL' or '*BTH') then
         execute_send('LADPDB02.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') 
-      then
+      if (par_site = '*ALL' or '*MCA') then
         execute_send('LADPDB02.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') 
-      then
+      if (par_site = '*ALL' or '*SCO') then
         execute_send('LADPDB02.6');   
       end if;
     end if; 
@@ -188,8 +180,7 @@ as
     /*-*/
     /* Finalise the outbound loader when required 
     /*-*/
-    if ( lics_outbound_loader.is_created = true )
-    then
+    if ( lics_outbound_loader.is_created = true ) then
       lics_outbound_loader.add_exception(var_exception);
       lics_outbound_loader.finalise_interface;
     end if;
@@ -207,7 +198,7 @@ as
   function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
   
     /*-*/
-    /* Local definitions 
+    /* Local variables 
     /*-*/
     var_index number(5,0);
     var_result boolean;
@@ -400,7 +391,7 @@ as
       var_index := tbl_definition.count + 1;
       var_result := false;
               
-      var_output := 'HDR'
+      tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.sap_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.plant_code,' ')),4,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.bds_material_desc_en,' ')),40,' ')
@@ -459,9 +450,7 @@ as
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.max_storage_prd,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.max_storage_prd_unit,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.issue_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.planned_delivery_days,'0')),38,' ');
-        
-      tbl_definition(var_index).value := var_output; 
+        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.planned_delivery_days,'0')),38,' ');        
       
       -- include the sales text in a seperate child record if it contains data 
       if ( rcd_bds_material_plant_mfanz.sales_text_147 is not null
@@ -523,7 +512,7 @@ as
       end if;
            
       /*-*/
-      /* save code so that only one packaging record is assembled against the material code
+      /* save code so that only one packaging record is assembled against the material code 
       /*-*/
       var_material_code := rcd_bds_material_plant_mfanz.sap_material_code;
            
@@ -537,7 +526,7 @@ as
   procedure execute_send(par_interface in varchar2) is
   
     /*-*/
-    /* Local definitions 
+    /* Local variables 
     /*-*/
     var_instance number(15,0);
     
@@ -563,4 +552,15 @@ as
 end plant_material_extract;
 /
 
+/*-*/
+/* Authority 
+/*-*/
+grant execute on ics_app.plant_material_extract to appsupport;
+grant execute on ics_app.plant_material_extract to lads_app;
+grant execute on ics_app.plant_material_extract to lics_app;
+grant execute on ics_app.plant_material_extract to ics_executor;
 
+/*-*/
+/* Synonym 
+/*-*/
+create or replace public synonym plant_material_extract for ics_app.plant_material_extract;

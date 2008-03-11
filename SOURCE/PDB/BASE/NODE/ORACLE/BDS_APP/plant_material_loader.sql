@@ -20,12 +20,12 @@ as
   06-Mar-2008  Trevor Keon       Altered to support changes to plant_material_extract 
 *******************************************************************************/
 
-/*-*/
-/* Public declarations 
-/*-*/
-procedure on_start;
-procedure on_data (par_record in varchar2);
-procedure on_end;
+  /*-*/
+  /* Public declarations 
+  /*-*/
+  procedure on_start;
+  procedure on_data (par_record in varchar2);
+  procedure on_end;
    
 end plant_material_loader; 
 /
@@ -33,13 +33,13 @@ end plant_material_loader;
 create or replace package body bds_app.plant_material_loader as
 
   /*-*/
-  /* Private exceptions */
+  /* Private exceptions 
   /*-*/
   application_exception exception;
   pragma exception_init(application_exception, -20000);
 
   /*-*/
-  /* Private declarations */
+  /* Private declarations 
   /*-*/
   procedure complete_transaction;
   procedure process_record_hdr(par_record in varchar2);
@@ -48,7 +48,7 @@ create or replace package body bds_app.plant_material_loader as
 
 
   /*-*/
-  /* Private definitions */
+  /* Private definitions 
   /*-*/
   var_trn_start   boolean;
   var_trn_ignore  boolean;
@@ -144,6 +144,7 @@ create or replace package body bds_app.plant_material_loader as
     lics_inbound_utility.set_definition('HDR','PLANNED_DELIVERY_DAYS', 38); 
     
     /*-*/
+    lics_inbound_utility.set_definition('STX','ID',3);
     lics_inbound_utility.set_definition('STX','COUNTRY_CODE',3);
     lics_inbound_utility.set_definition('STX','SALES_TEXT',2000);
      
@@ -199,7 +200,6 @@ create or replace package body bds_app.plant_material_loader as
       when 'HDR' then process_record_hdr(par_record);
       when 'STX' then process_record_stx(par_record);
       when 'PKG' then process_record_pkg(par_record);
-      when 'PLA' then process_record_hdr(par_record);
       when lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
 
@@ -296,12 +296,12 @@ create or replace package body bds_app.plant_material_loader as
   begin
 
     /*-*/
-    /* Complete the previous transactions */
+    /* Complete the previous transactions 
     /*-*/
     complete_transaction;
 
     /*-*/
-    /* Reset transaction variables */
+    /* Reset transaction variables 
     /*-*/
     var_trn_start := true;
     var_trn_ignore := false;
@@ -466,10 +466,10 @@ create or replace package body bds_app.plant_material_loader as
           bds_unit_cost = rcd_hdr.bds_unit_cost,
           future_planned_price_1 = rcd_hdr.future_planned_price_1,
           vltn_class = rcd_hdr.vltn_class,
-          bds_pce_factor_from_base_uom = round(rcd_hdr.bds_pce_factor_from_base_uom,6),
+          bds_pce_factor_from_base_uom = rcd_hdr.bds_pce_factor_from_base_uom,
           mars_pce_item_code = rcd_hdr.mars_pce_item_code,
           mars_pce_interntl_article_no = rcd_hdr.mars_pce_interntl_article_no,
-          bds_sb_factor_from_base_uom = decode(rcd_hdr.bds_sb_factor_from_base_uom, 0, null, rcd_hdr.bds_sb_factor_from_base_uom),
+          bds_sb_factor_from_base_uom = rcd_hdr.bds_sb_factor_from_base_uom,
           mars_sb_item_code = rcd_hdr.mars_sb_item_code,
           discontinuation_indctr = rcd_hdr.discontinuation_indctr,
           followup_material = rcd_hdr.followup_material,
@@ -596,10 +596,10 @@ create or replace package body bds_app.plant_material_loader as
         rcd_hdr.bds_unit_cost,
         rcd_hdr.future_planned_price_1,
         rcd_hdr.vltn_class,
-        round(rcd_hdr.bds_pce_factor_from_base_uom,6),
+        rcd_hdr.bds_pce_factor_from_base_uom,
         rcd_hdr.mars_pce_item_code,
         rcd_hdr.mars_pce_interntl_article_no,
-        decode(rcd_hdr.bds_sb_factor_from_base_uom, 0, null, rcd_hdr.bds_sb_factor_from_base_uom),
+        rcd_hdr.bds_sb_factor_from_base_uom,
         rcd_hdr.mars_sb_item_code,
         rcd_hdr.discontinuation_indctr,
         rcd_hdr.followup_material,
@@ -703,204 +703,211 @@ create or replace package body bds_app.plant_material_loader as
   /*-------------*/
   end process_record_stx;  
 
-   /**************************************************/
-   /* This procedure performs the record PKG routine */
-   /**************************************************/
-   PROCEDURE process_record_pkg(par_record IN VARCHAR2) IS
+  /**************************************************/
+  /* This procedure performs the record PKG routine */
+  /**************************************************/
+  procedure process_record_pkg(par_record in varchar2) is
 
-      /*-*/
-      /* Local definitions */
-      /*-*/
-      --var_idoc_timestamp rcd_hdr.idoc_timestamp%TYPE;
-      var_count NUMBER;
+    /*-*/
+    /* Local definitions 
+    /*-*/
+    --var_idoc_timestamp rcd_hdr.idoc_timestamp%TYPE;
+    var_count number;
                          
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   BEGIN
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin
 
-      /*-*/
-      /* Complete the previous transactions */
-      /*-*/
-      complete_transaction;
+    /*-*/
+    /* Complete the previous transactions 
+    /*-*/
+    complete_transaction;
 
-      /*-*/
-      /* Reset transaction variables */
-      /*-*/
-      var_trn_start := TRUE;
-      var_trn_ignore := FALSE;
-      var_trn_error := FALSE;
+    /*-*/
+    /* Reset transaction variables 
+    /*-*/
+    var_trn_start := true;
+    var_trn_ignore := false;
+    var_trn_error := false;
 
-      /*-------------------------------*/
-      /* PARSE - Parse the data record */
-      /*-------------------------------*/
-      lics_inbound_utility.parse_record('PKG', par_record);
+    /*-------------------------------*/
+    /* PARSE - Parse the data record */
+    /*-------------------------------*/
+    lics_inbound_utility.parse_record('PKG', par_record);    
+      
+    /*--------------------------------------*/
+    /* RETRIEVE - Retrieve the field values */  
+    /*--------------------------------------*/
+    rcd_pkg.pkg_instr_table_usage := lics_inbound_utility.get_variable('PKG_INSTR_TABLE_USAGE');
+    rcd_pkg.pkg_instr_table := lics_inbound_utility.get_variable('PKG_INSTR_TABLE');
+    rcd_pkg.pkg_instr_type := lics_inbound_utility.get_variable('PKG_INSTR_TYPE');
+    rcd_pkg.pkg_instr_application := lics_inbound_utility.get_variable('PKG_INSTR_APPLICATION');
+    rcd_pkg.item_ctgry := lics_inbound_utility.get_variable('ITEM_CTGRY');
+    rcd_pkg.sales_organisation := lics_inbound_utility.get_variable('SALES_ORGANISATION');
+    rcd_pkg.component := lics_inbound_utility.get_variable('COMPONENT');
+    rcd_pkg.pkg_instr_start_date := lics_inbound_utility.get_date('PKG_INSTR_START_DATE','yyyymmddhh24miss');
+    rcd_pkg.pkg_instr_end_date := lics_inbound_utility.get_date('PKG_INSTR_END_DATE','yyyymmddhh24miss');
+    rcd_pkg.variable_key := lics_inbound_utility.get_variable('VARIABLE_KEY');
+    rcd_pkg.height := lics_inbound_utility.get_number('HEIGHT',null);
+    rcd_pkg.width := lics_inbound_utility.get_number('WIDTH',null);
+    rcd_pkg.length := lics_inbound_utility.get_number('LENGTH',null);
+    rcd_pkg.hu_total_weight := lics_inbound_utility.get_number('HU_TOTAL_WEIGHT',null);
+    rcd_pkg.hu_total_volume := lics_inbound_utility.get_number('HU_TOTAL_VOLUME',null);
+    rcd_pkg.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');
+    rcd_pkg.weight_unit := lics_inbound_utility.get_variable('WEIGHT_UNIT');
+    rcd_pkg.volume_unit := lics_inbound_utility.get_variable('VOLUME_UNIT');
+    rcd_pkg.target_qty := lics_inbound_utility.get_number('TARGET_QTY',null);
+    rcd_pkg.rounding_qty := lics_inbound_utility.get_number('ROUNDING_QTY',null);
+    rcd_pkg.uom := lics_inbound_utility.get_variable('UOM');     
+
+    /*-*/
+    /* Retrieve exceptions raised 
+    /*-*/
+    if ( lics_inbound_utility.has_errors = true )
+    then
+      var_trn_error := true;
+    end if;
+
+    /*----------------------------------------*/
+    /* VALIDATION - Validate the field values */
+    /*----------------------------------------*/
+
+    /*-*/
+    /* Validate the primary keys 
+    /*-*/
+    if ( rcd_hdr.sap_material_code is null )
+    then
+       lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_MATERIAL_CODE');
+       var_trn_error := TRUE;
+    end if;
+    if ( rcd_hdr.plant_code is null )
+    then
+       lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_CODE');
+       var_trn_error := TRUE;
+    end if;
     
+    /*--------------------------------------------*/
+    /* IGNORE - Ignore the data row when required */
+    /*--------------------------------------------*/
+    if ( var_trn_ignore = true )
+    then
+      return;
+    end if;
+          
+    /*----------------------------------------*/
+    /* ERROR- Bypass the update when required */
+    /*----------------------------------------*/
+    if ( var_trn_error = true )
+    then
+       return;
+    end if;
+
+    /*----------------------------------------*/
+    /* LOCK- Lock the interface transaction   */
+    /*----------------------------------------*/
+
+    /*-*/
+    /* Lock the transaction 
+    /* NOTE - attempt to lock the transaction header row (oracle default wait behaviour) 
+    /*          - insert/insert (not exists) - first holds lock and second fails on first commit with duplicate index 
+    /*          - update/update (exists) - logic goes to update and default wait behaviour 
+    /*      - validate the IDOC sequence when locking row exists 
+    /*      - lock and commit cycle encompasses transaction child procedure execution 
+    /*-*/
+    update bds_material_pkg_instr_det_t
+    set variable_key = rcd_pkg.variable_key,
+      height = rcd_pkg.height,
+      width = rcd_pkg.width,
+      length = rcd_pkg.length,
+      hu_total_weight = rcd_pkg.hu_total_weight,
+      hu_total_volume = rcd_pkg.hu_total_volume,
+      dimension_uom = rcd_pkg.dimension_uom,
+      weight_unit = rcd_pkg.weight_unit,
+      volume_unit = rcd_pkg.volume_unit,
+      target_qty = rcd_pkg.target_qty,
+      rounding_qty = rcd_pkg.rounding_qty,
+      uom = rcd_pkg.uom
+    where sap_material_code = rcd_pkg.sap_material_code
+      and pkg_instr_table_usage = rcd_pkg.pkg_instr_table_usage
+      and pkg_instr_table = rcd_pkg.pkg_instr_table
+      and pkg_instr_type = rcd_pkg.pkg_instr_type
+      and pkg_instr_application = rcd_pkg.pkg_instr_application
+      and item_ctgry = rcd_pkg.item_ctgry
+      and sales_organisation = rcd_pkg.sales_organisation
+      and component = rcd_pkg.component
+      and pkg_instr_start_date = rcd_pkg.pkg_instr_start_date
+      and pkg_instr_end_date = rcd_pkg.pkg_instr_end_date;
       
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */  
-      /*--------------------------------------*/
-      rcd_pkg.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-      rcd_pkg.pkg_instr_table_usage := lics_inbound_utility.get_variable('PKG_INSTR_TABLE_USAGE');
-      rcd_pkg.pkg_instr_table := lics_inbound_utility.get_variable('PKG_INSTR_TABLE');
-      rcd_pkg.pkg_instr_type := lics_inbound_utility.get_variable('PKG_INSTR_TYPE');
-      rcd_pkg.pkg_instr_application := lics_inbound_utility.get_variable('PKG_INSTR_APPLICATION');
-      rcd_pkg.item_ctgry := lics_inbound_utility.get_variable('ITEM_CTGRY');
-      rcd_pkg.sales_organisation := lics_inbound_utility.get_variable('SALES_ORGANISATION');
-      rcd_pkg.component := lics_inbound_utility.get_variable('COMPONENT');
-      rcd_pkg.pkg_instr_start_date := lics_inbound_utility.get_date('PKG_INSTR_START_DATE','yyyymmddhh24miss');
-      rcd_pkg.pkg_instr_end_date := lics_inbound_utility.get_date('PKG_INSTR_END_DATE','yyyymmddhh24miss');
-      rcd_pkg.variable_key := lics_inbound_utility.get_variable('VARIABLE_KEY');
-      rcd_pkg.height := lics_inbound_utility.get_number('HEIGHT',NULL);
-      rcd_pkg.width := lics_inbound_utility.get_number('WIDTH',NULL);
-      rcd_pkg.length := lics_inbound_utility.get_number('LENGTH',NULL);
-      rcd_pkg.hu_total_weight := lics_inbound_utility.get_number('HU_TOTAL_WEIGHT',NULL);
-      rcd_pkg.hu_total_volume := lics_inbound_utility.get_number('HU_TOTAL_VOLUME',NULL);
-      rcd_pkg.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');
-      rcd_pkg.weight_unit := lics_inbound_utility.get_variable('WEIGHT_UNIT');
-      rcd_pkg.volume_unit := lics_inbound_utility.get_variable('VOLUME_UNIT');
-      rcd_pkg.target_qty := lics_inbound_utility.get_number('TARGET_QTY',NULL);
-      rcd_pkg.rounding_qty := lics_inbound_utility.get_number('ROUNDING_QTY',NULL);
-      rcd_pkg.uom := lics_inbound_utility.get_variable('UOM');
-      
-
-      /*-*/
-      /* Retrieve exceptions raised */
-      /*-*/
-      IF lics_inbound_utility.has_errors = TRUE THEN
-         var_trn_error := TRUE;
-      END IF;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Validate the primary keys */
-      /*-*/
-      IF rcd_hdr.sap_material_code IS NULL  THEN
-         lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_MATERIAL_CODE');
-         var_trn_error := TRUE;
-      END IF;
-      IF rcd_hdr.plant_code IS NULL  THEN
-         lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_CODE');
-         var_trn_error := TRUE;
-      END IF;
-      
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-      IF var_trn_error = TRUE THEN
-         RETURN;
-      END IF;
-
-      /*----------------------------------------*/
-      /* LOCK- Lock the interface transaction   */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Lock the transaction */
-      /* **note** - attempt to lock the transaction header row (oracle default wait behaviour) */
-      /*              - insert/insert (not exists) - first holds lock and second fails on first commit with duplicate index */
-      /*              - update/update (exists) - logic goes to update and default wait behaviour */
-      /*          - validate the IDOC sequence when locking row exists */
-      /*          - lock and commit cycle encompasses transaction child procedure execution */
-      /*-*/
-      BEGIN
-         INSERT INTO bds_material_pkg_instr_det_t
-                (sap_material_code,
-                pkg_instr_table_usage,
-                pkg_instr_table,
-                pkg_instr_type,
-                pkg_instr_application,
-                item_ctgry,
-                sales_organisation,
-                component,
-                pkg_instr_start_date,
-                pkg_instr_end_date,
-                variable_key,
-                height,
-                width,
-                length,
-                hu_total_weight,
-                hu_total_volume,
-                dimension_uom,
-                weight_unit,
-                volume_unit,
-                target_qty,
-                rounding_qty,
-                uom)
-         VALUES (rcd_pkg.sap_material_code,
-                rcd_pkg.pkg_instr_table_usage,
-                rcd_pkg.pkg_instr_table,
-                rcd_pkg.pkg_instr_type,
-                rcd_pkg.pkg_instr_application,
-                rcd_pkg.item_ctgry,
-                rcd_pkg.sales_organisation,
-                rcd_pkg.component,
-                rcd_pkg.pkg_instr_start_date,
-                rcd_pkg.pkg_instr_end_date,
-                rcd_pkg.variable_key,
-                rcd_pkg.height,
-                rcd_pkg.width,
-                rcd_pkg.length,
-                rcd_pkg.hu_total_weight,
-                rcd_pkg.hu_total_volume,
-                rcd_pkg.dimension_uom,
-                rcd_pkg.weight_unit,
-                rcd_pkg.volume_unit,
-                rcd_pkg.target_qty,
-                rcd_pkg.rounding_qty,
-                rcd_pkg.uom);
-      EXCEPTION
-         WHEN DUP_VAL_ON_INDEX THEN
-             /*-*/
-             /* duplicate material / plant */
-             /*-*/ 
-             UPDATE bds_material_pkg_instr_det_t
-                SET variable_key = rcd_pkg.variable_key,
-                    height = rcd_pkg.height,
-                    width = rcd_pkg.width,
-                    length = rcd_pkg.length,
-                    hu_total_weight = rcd_pkg.hu_total_weight,
-                    hu_total_volume = rcd_pkg.hu_total_volume,
-                    dimension_uom = rcd_pkg.dimension_uom,
-                    weight_unit = rcd_pkg.weight_unit,
-                    volume_unit = rcd_pkg.volume_unit,
-                    target_qty = rcd_pkg.target_qty,
-                    rounding_qty = rcd_pkg.rounding_qty,
-                    uom = rcd_pkg.uom
-              WHERE sap_material_code = rcd_pkg.sap_material_code
-                AND pkg_instr_table_usage = rcd_pkg.pkg_instr_table_usage
-                AND pkg_instr_table = rcd_pkg.pkg_instr_table
-                AND pkg_instr_type = rcd_pkg.pkg_instr_type
-                AND pkg_instr_application = rcd_pkg.pkg_instr_application
-                AND item_ctgry = rcd_pkg.item_ctgry
-                AND sales_organisation = rcd_pkg.sales_organisation
-                AND component = rcd_pkg.component
-                AND pkg_instr_start_date = rcd_pkg.pkg_instr_start_date
-                AND pkg_instr_end_date = rcd_pkg.pkg_instr_end_date;
-                        
-      END;
-
-      /*--------------------------------------------*/
-      /* IGNORE - Ignore the data row when required */
-      /*--------------------------------------------*/
-
-      IF var_trn_ignore = TRUE THEN
-         RETURN;
-      END IF;
-
-      /*------------------------------*/
-      /* UPDATE - Update the database */
-      /*------------------------------*/
+    if ( sql%notfound = true )
+    then
+      insert into bds_material_pkg_instr_det_t
+      (
+        sap_material_code,
+        pkg_instr_table_usage,
+        pkg_instr_table,
+        pkg_instr_type,
+        pkg_instr_application,
+        item_ctgry,
+        sales_organisation,
+        component,
+        pkg_instr_start_date,
+        pkg_instr_end_date,
+        variable_key,
+        height,
+        width,
+        length,
+        hu_total_weight,
+        hu_total_volume,
+        dimension_uom,
+        weight_unit,
+        volume_unit,
+        target_qty,
+        rounding_qty,
+        uom
+      )
+      values 
+      (
+        rcd_pkg.sap_material_code,
+        rcd_pkg.pkg_instr_table_usage,
+        rcd_pkg.pkg_instr_table,
+        rcd_pkg.pkg_instr_type,
+        rcd_pkg.pkg_instr_application,
+        rcd_pkg.item_ctgry,
+        rcd_pkg.sales_organisation,
+        rcd_pkg.component,
+        rcd_pkg.pkg_instr_start_date,
+        rcd_pkg.pkg_instr_end_date,
+        rcd_pkg.variable_key,
+        rcd_pkg.height,
+        rcd_pkg.width,
+        rcd_pkg.length,
+        rcd_pkg.hu_total_weight,
+        rcd_pkg.hu_total_volume,
+        rcd_pkg.dimension_uom,
+        rcd_pkg.weight_unit,
+        rcd_pkg.volume_unit,
+        rcd_pkg.target_qty,
+        rcd_pkg.rounding_qty,
+        rcd_pkg.uom
+      );
+    end if;
      
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   END process_record_pkg;
-
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end process_record_pkg;
   
-END plant_material_loader; 
+end plant_material_loader; 
 /
 
+/*-*/
+/* Authority 
+/*-*/
+grant execute on bds_app.plant_material_loader to appsupport;
+grant execute on bds_app.plant_material_loader to lics_app;
+
+/*-*/
+/* Synonym 
+/*-*/
+create or replace public synonym plant_material_loader for bds_app.plant_material_loader;
