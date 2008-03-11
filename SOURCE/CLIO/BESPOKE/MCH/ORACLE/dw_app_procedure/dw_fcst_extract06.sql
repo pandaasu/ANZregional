@@ -52,6 +52,7 @@ create or replace package body dw_fcst_extract06 as
       var_extract_identifier fcst_extract_header.extract_identifier%type;
       var_instance number(15,0);
       var_output varchar2(4000);
+      var_tot_count number;
       type typ_outbound is table of varchar2(4000) index by binary_integer;
       tbl_outbound typ_outbound;
 
@@ -114,6 +115,30 @@ create or replace package body dw_fcst_extract06 as
       close csr_fcst_extract_header;
 
       /*-*/
+      /* Retrieve the total record count
+      /*-*/
+      var_tot_count := 0;
+      open csr_fcst_extract_load;
+      loop
+         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
+         if csr_fcst_extract_load%notfound then
+            exit;
+         end if;
+         open csr_fcst_load_detail;
+         loop
+            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
+            if csr_fcst_load_detail%notfound then
+               exit;
+            end if;
+            if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
+               var_tot_count := var_tot_count + 1;
+            end if;
+         end loop;
+         close csr_fcst_load_detail;
+      end loop;
+      close csr_fcst_extract_load;
+
+      /*-*/
       /* Clear the outbound array
       /*-*/
       tbl_outbound.delete;
@@ -148,19 +173,19 @@ create or replace package body dw_fcst_extract06 as
                exit;
             end if;
 
+--- is it always plant CN16 ????
+
             /*-*/
             /* Output the interface data
             /*-*/
             if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
-               var_output := var_type;
-               var_output := var_output || to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000');
-               var_output := var_output || rcd_fcst_load_header.sales_org_code;
-               var_output := var_output || rcd_fcst_load_detail.plant_code;
-               var_output := var_output || rcd_fcst_load_detail.material_code;
-               var_output := var_output || 'EA';
-               var_output := var_output || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
-               var_output := var_output || 'RMB';
-               var_output := var_output || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
+               var_output := '"' || rcd_fcst_load_detail.material_code || '"';
+               var_output := var_output || ',"' || rcd_fcst_load_detail.plant_code || '"';
+               var_output := var_output || ',"' || rcd_fcst_load_detail.cover_yyyymmdd || '"';
+               var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.cover_day) || 'D' || '"';
+               var_output := var_output || ',"' || to_char(tbl_outbound.count+1,'fm000000000') || '"';
+               var_output := var_output || ',"' || to_char(var_tot_count,'fm000000000') || '"';
+               var_output := var_output || ',"' || to_char(sysdate,'yyyymmddhh24miss') || '"';
                tbl_outbound(tbl_outbound.count+1) := var_output;
             end if;
 
