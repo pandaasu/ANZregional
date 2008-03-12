@@ -205,6 +205,7 @@ sub ProcessCreate()
 
    dim strStatement
    dim lngCount
+   dim strLoadIdentifier
 
    '//
    '// Create the procedure object
@@ -221,7 +222,7 @@ sub ProcessCreate()
    '//
    '// Retrieve the extract links
    '//
-   strLoadIdentifier = 
+   strLoadIdentifier = ""
    lngCount = clng(objForm.Fields("DET_ExtractLinkCount").Value)
    for i = 1 to lngCount
       if strLoadIdentifier <> "" then
