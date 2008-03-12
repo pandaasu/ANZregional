@@ -31,15 +31,15 @@
          for (var j=0;j<objExtractTypes.length;j++) {
             if (strExtractType != '' && strExtractVersion != '') {
                if (objExtractTypes[j].extractType == strExtractType && objLinks[i].loadVersion == strExtractVersion && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option('('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
+                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
                }
             } else if (strExtractType != '') {
                if (objExtractTypes[j].extractType == strExtractType && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option('('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
+                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
                }
             } else if (strExtractVersion != '') {
                if (objLinks[i].loadVersion == strExtractVersion && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option('('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
+                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
                }
             }
          }

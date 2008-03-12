@@ -228,28 +228,40 @@
       </tr>
       <tr>
          <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-            <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=1>
                <tr>
                   <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Loads&nbsp;</nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="sltExtractLink" name="sltExtractLink" style="width:800px" multiple size=10></select>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:selectExtractLinks();">&nbsp;Select&nbsp;</a></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=1>
+               <tr>
                   <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Selected&nbsp;</nobr></td>
                </tr>
                <tr>
                   <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="sltExtractLink" name="sltExtractLink" style="width:400px" multiple size=10></select>
-                  </nobr></td>
-                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="sltExtractDetail" name="sltExtractDetail" style="width:400px" multiple size=10></select>
+                     <select class="clsInputBN" id="sltExtractDetail" name="sltExtractDetail" style="width:800px" multiple size=5></select>
                   </nobr></td>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
-                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:selectExtractLinks();">&nbsp;Select >>&nbsp;</a></nobr></td></tr>
-                     </table>
-                  </nobr></td>
-                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
-                     <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
-                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:removeExtractLinks();">&nbsp;<< Remove&nbsp;</a></nobr></td>
+                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:removeExtractLinks();">&nbsp;Remove&nbsp;</a></nobr></td>
                      </table>
                   </nobr></td>
                </tr>
