@@ -4,14 +4,14 @@
    // Extract links script //
    //////////////////////////
    var objExtractTypes = new Array();<%for i = objSelection.ListLower("EXTRACT_LOAD") to objSelection.ListUpper("EXTRACT_LOAD")%>
-   objExtractTypes[<%=i%>] = new clsExtractType('<%=objSelection.ListValue01("EXTRACT_LOAD",i)%>');<%next%>
+   objExtractTypes[<%=i%>] = new clsExtractType('<%=objSelection.ListValue01("EXTRACT_LOAD",i)%>','<%=objSelection.ListValue02("EXTRACT_LOAD",i)%>');<%next%>
    function clsExtractType(strExtractType,strLoadType) {
       this.extractType = strExtractType;
       this.loadType = strLoadType;
       this.selectCount = 0;
    }
    var objLinks = new Array();<%for i = objSelection.ListLower("LOAD") to objSelection.ListUpper("LOAD")%>
-   objLinks[<%=i%>] = new clsLink('<%=objSelection.ListValue01("LOAD",i)%>','<%=replace(objSelection.ListValue02("LOADLINK",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("LOAD",i)%>','<%=objSelection.ListValue04("LOAD",i)%>');<%next%>
+   objLinks[<%=i%>] = new clsLink('<%=objSelection.ListValue01("LOAD",i)%>','<%=replace(objSelection.ListValue02("LOAD",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("LOAD",i)%>','<%=objSelection.ListValue04("LOAD",i)%>');<%next%>
    function clsLink(strIdentifier,strDescription,strLoadType,strLoadVersion) {
       this.identifier = strIdentifier;
       this.description = strDescription;
@@ -66,7 +66,7 @@
          objSltLink.options[i] = objLink[i];
       }
    }
-   function removeEXtractLinks() {
+   function removeExtractLinks() {
       var objSltLink;
       var objSltDetail;
       var objLink = new Array();
@@ -105,7 +105,7 @@
       }
       return 0;
    }
-   function checkExtractLinks) {
+   function checkExtractLinks() {
       var strReturn = '';
       var objHidden = null;
       var objSltDetail = document.getElementById('sltExtractDetail');

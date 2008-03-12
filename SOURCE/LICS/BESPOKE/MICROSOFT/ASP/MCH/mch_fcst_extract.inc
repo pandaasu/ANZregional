@@ -65,12 +65,8 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Extract version must be entered';
       }
-      if (document.main.INP_LoadIdentifier.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Extract loads must be selected';
-      }
       if (document.main.INP_ExtractType.value != '') {
-         strDetail = checkExtractLinks(document.main.INP_ExtractType.value);
+         strDetail = checkExtractLinks();
       }
       if (strDetail != '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -85,7 +81,6 @@
       document.main.DTA_ExtractDescription.value = document.main.INP_ExtractDescription.value;
       document.main.DTA_ExtractType.value = document.main.INP_ExtractType.value
       document.main.DTA_ExtractVersion.value = document.main.INP_ExtractVersion.value;
-      document.main.DTA_LoadIdentifier.value = document.main.INP_LoadIdentifier.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'CREATE';
       document.main.submit();
@@ -108,7 +103,7 @@
    function doExport(strIdentifier) {
       if (!processForm()) {return;}
       doActivityStart(eval('document.body'));
-      doTextDownload(eval('document.body'),'*DISP','dw_fcst_xxxxx.report_extract(\'' + strIdentifier + '\')');
+   //   doTextDownload(eval('document.body'),'*DISP','dw_fcst_xxxxx.report_extract(\'' + strIdentifier + '\')');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -117,8 +112,8 @@
       }
       return true;
    }
-   function selectType(strType) {
-      document.main.INP_ExtractType.value = strType;
+   function selectType(objSelect) {
+      document.main.INP_ExtractType.value = objSelect.options[objSelect.selectedIndex].value;
       loadExtractLinks();
    }
    function setSelect(objInput) {
@@ -221,7 +216,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Extract Version:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_ExtractVersion" size="6" maxlength="6" value="<%=objForm.Fields("DTA_ExtractVersion").Value%>" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);setFileText();" onChange="loadExtractLinks();">
+            <input class="clsInputNN" type="text" name="INP_ExtractVersion" size="6" maxlength="6" value="<%=objForm.Fields("DTA_ExtractVersion").Value%>" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);" onChange="loadExtractLinks();">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -240,10 +235,10 @@
                </tr>
                <tr>
                   <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="sltLink" name="sltExtractLink" style="width:400px" multiple size=10></select>
+                     <select class="clsInputBN" id="sltExtractLink" name="sltExtractLink" style="width:400px" multiple size=10></select>
                   </nobr></td>
                   <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="sltDetail" name="sltExtractDetail" style="width:400px" multiple size=10></select>
+                     <select class="clsInputBN" id="sltExtractDetail" name="sltExtractDetail" style="width:400px" multiple size=10></select>
                   </nobr></td>
                </tr>
                <tr>
