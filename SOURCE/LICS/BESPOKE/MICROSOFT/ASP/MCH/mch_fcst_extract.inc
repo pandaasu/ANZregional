@@ -131,7 +131,7 @@
 <!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_spreadsheet.inc"-->
 <!--#include file="ics_std_activity.inc"-->
-<!--#include file="ics_mch_fcst_extract_links.inc"-->
+<!--#include file="mch_fcst_extract_links.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
