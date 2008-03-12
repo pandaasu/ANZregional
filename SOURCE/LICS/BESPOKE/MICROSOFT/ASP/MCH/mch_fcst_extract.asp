@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : mch_fcst_maintenance.asp                           //
+'// Script  : mch_fcst_extract.asp                               //
 '// Author  : Steve Gregan                                       //
 '// Date    : February 2008                                      //
 '// Text    : This script implements the China forecast          //
-'//           maintenance functionality                          //
+'//           extract functionality                              //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -38,8 +38,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "mch_fcst_maintenance.asp"
-   strHeading = "China Forecast Maintenance"
+   strTarget = "mch_fcst_extract.asp"
+   strHeading = "China Forecast Extract Maintenance"
    strError = ""
 
    '//
@@ -61,7 +61,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("MCH_FCST_MAINTENANCE")
+   strReturn = GetSecurityCheck("MCH_FCST_EXTRACT")
    if strReturn <> "*OK" then
       strMode = "FATAL"
    else
@@ -122,14 +122,46 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the forecast split list
+   '// Retrieve the forecast extract type list
    '//
    lngSize = 0
    strQuery = "select"
+   strQuery = strQuery & " t01.extract_type,"
+   strQuery = strQuery & " t01.extract_type_description"
+   strQuery = strQuery & " from fcst_extract_type t01"
+   strQuery = strQuery & " order by t01.extract_type asc"
+   strReturn = objSelection.Execute("EXTRACT", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the forecast extract type load list
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " t01.extract_type,"
+   strQuery = strQuery & " t01.load_type"
+   strQuery = strQuery & " from fcst_extract_type_load t01"
+   strQuery = strQuery & " order by t01.extract_type asc, t01.load_type asc"
+   strReturn = objSelection.Execute("EXTRACT_LOAD", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the forecastload list
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " t01.load_identifier,"
+   strQuery = strQuery & " t01.load_description,"
    strQuery = strQuery & " t01.load_type,"
-   strQuery = strQuery & " t01.load_type_description"
-   strQuery = strQuery & " from fcst_load_type t01"
-   strQuery = strQuery & " order by t01.load_type asc"
+   strQuery = strQuery & " to_char(t01.load_data_version)"
+   strQuery = strQuery & " from fcst_load_header t01"
+   strQuery = strQuery & " order by t01.load_identifier asc"
    strReturn = objSelection.Execute("LOAD", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -137,19 +169,17 @@ sub ProcessSelect()
    end if
 
    '//
-   '// Retrieve the forecast load list
+   '// Retrieve the forecast extract list
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " t01.load_identifier,"
-   strQuery = strQuery & " t01.load_description,"
-   strQuery = strQuery & " t01.load_status,"
-   strQuery = strQuery & " t01.load_type,"
-   strQuery = strQuery & " t01.load_data_type,"
-   strQuery = strQuery & " to_char(t01.load_data_version),"
-   strQuery = strQuery & " t01.upd_user||' - '||to_char(t01.upd_date,'YYYY/MM/DD HH24:MI:SS')"
-   strQuery = strQuery & " from fcst_load_header t01"
-   strQuery = strQuery & " order by t01.load_identifier asc"
+   strQuery = strQuery & " t01.extract_identifier,"
+   strQuery = strQuery & " t01.extract_description,"
+   strQuery = strQuery & " t01.extract_type,"
+   strQuery = strQuery & " to_char(t01.extract_version),"
+   strQuery = strQuery & " t01.crt_user||' - '||to_char(t01.crt_date,'YYYY/MM/DD HH24:MI:SS')"
+   strQuery = strQuery & " from fcst_extract_header t01"
+   strQuery = strQuery & " order by t01.extract_identifier asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -160,13 +190,10 @@ sub ProcessSelect()
    '// Initialise the fields
    '//
    if strMode = "SELECT" then
-      call objForm.AddField("DTA_LoadType", "*BR_AFFILIATE")
-      call objForm.AddField("DTA_LoadIdentifier", "")
-      call objForm.AddField("DTA_LoadDescription", "")
-      call objForm.AddField("DTA_LoadDataType", "*QTY_GSV")
-      call objForm.AddField("DTA_LoadDataVersion", "")
-      call objForm.AddField("DTA_LoadDataRange", "13")
-      call objForm.AddField("DTA_LoadDataFile", "")
+      call objForm.AddField("DTA_ExtractType", "")
+      call objForm.AddField("DTA_ExtractIdentifier", "")
+      call objForm.AddField("DTA_ExtractDescription", "")
+      call objForm.AddField("DTA_ExtractVersion", "")
    end if
 
 end sub
@@ -177,7 +204,7 @@ end sub
 sub ProcessCreate()
 
    dim strStatement
-   dim lngIndex
+   dim lngCount
 
    '//
    '// Create the procedure object
@@ -192,27 +219,28 @@ sub ProcessCreate()
    set objFunction.Security = objSecurity
 
    '//
-   '// Load the form data
+   '// Retrieve the extract links
    '//
-   call objProcedure.Execute("lics_form.clear_form")
-   lngIndex = 1
-   do while lngIndex <= len(objForm.Fields("DTA_LoadStream").Value)
-      call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(mid(objForm.Fields("DTA_LoadStream").Value,lngIndex,2000)) & "')")
-      lngIndex = lngIndex + 2000
-   loop
+   strLoadIdentifier = 
+   lngCount = clng(objForm.Fields("DET_ExtractLinkCount").Value)
+   for i = 1 to lngCount
+      if strLoadIdentifier <> "" then
+         strLoadIdentifier = strLoadIdentifier & ","
+      end if
+      strLoadIdentifier = strLoadIdentifier & objSecurity.FixString(objForm.Fields("DET_ExtractLink" & i).Value)
+   next
 
    '//
-   '// Execute the forecast load creation
+   '// Execute the forecast extract creation
    '//
    strStatement = "dw_forecast_loading."
-   strStatement = strStatement & "create_stream_load("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadType").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDescription").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDataType").Value)  & "',"
-   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataVersion").Value)  & ","
-   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataRange").Value)  & ","
-   strStatement = strStatement & "'" & strUser  & "')"
+   strStatement = strStatement & "create_extract("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractType").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractDescription").Value) & "',"
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_ExtractVersion").Value  & ","
+   strStatement = strStatement & "'" & strLoadIdentifier & "',"
+   strStatement = strStatement & "'" & strUser & "')"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -241,9 +269,9 @@ sub ProcessDelete()
    set objProcedure.Security = objSecurity
 
    '//
-   '// Execute the forecast load creation
+   '// Execute the forecast extract deletion
    '//
-   strStatement = "dw_forecast_loading.delete_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "')"
+   strStatement = "dw_forecast_loading.delete_extract('" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -268,6 +296,6 @@ sub PaintFatal()%>
 '// Paint response routine //
 '////////////////////////////
 sub PaintResponse()%>
-<!--#include file="mch_fcst_maintenance.inc"-->
+<!--#include file="mch_fcst_extract.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->
