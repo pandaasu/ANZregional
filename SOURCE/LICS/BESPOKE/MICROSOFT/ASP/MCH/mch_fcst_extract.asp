@@ -239,7 +239,7 @@ sub ProcessCreate()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractDescription").Value) & "',"
-   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_ExtractVersion").Value  & ","
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_ExtractVersion").Value)  & ","
    strStatement = strStatement & "'" & strLoadIdentifier & "',"
    strStatement = strStatement & "'" & strUser & "')"
    strReturn = objFunction.Execute(strStatement)
