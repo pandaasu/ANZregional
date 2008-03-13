@@ -130,18 +130,7 @@
       objInput.select();
    }
    function readTextFile(strTextFile) {
-      var objClient;
-      var strReturn;
-      var strStream;
-      objClient = new ActiveXObject('ICS_XLCLIENT.Object');
-      strReturn = objClient.GetTextStream(strTextFile);
-      strStream = objClient.XMLString;
-      objClient = null;
-      if (strReturn != '*OK') {
-         alert(strReturn); 
-         return false;
-      }
-      document.main.INP_LoadStream.value = strStream;
+      document.main.INP_LoadStream.value = loadStreamXML(strTextFile);
       return true;
    }
    function setFileText() {
@@ -160,6 +149,7 @@
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_stream_xml.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
