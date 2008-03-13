@@ -124,16 +124,16 @@
             }
          }
       }
-      for (var i=0;i<objExtractTypes.length;i++) {
-         if (objExtractTypes[i].extractType == strExtractType) {
-            if (objExtractTypes[i].selectCount == 0 ) {
-               strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has no forecast load selected';
-            }
-            if (objExtractTypes[i].selectCount > 1) {
-               strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has more than one forecast load selected';
-            }
-         }
-      }
+   //   for (var i=0;i<objExtractTypes.length;i++) {
+   //      if (objExtractTypes[i].extractType == strExtractType) {
+   //         if (objExtractTypes[i].selectCount == 0 ) {
+   //            strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has no forecast load selected';
+   //         }
+   //         if (objExtractTypes[i].selectCount > 1) {
+   //            strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has more than one forecast load selected';
+   //         }
+   //      }
+   //   }
       if (strReturn == '') {
          for (var i=0;i<objSltDetail.options.length;i++) {
             objHidden = document.createElement('input');

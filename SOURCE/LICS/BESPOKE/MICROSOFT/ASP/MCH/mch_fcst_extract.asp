@@ -177,8 +177,11 @@ sub ProcessSelect()
    strQuery = strQuery & " t01.extract_description,"
    strQuery = strQuery & " t01.extract_type,"
    strQuery = strQuery & " to_char(t01.extract_version),"
-   strQuery = strQuery & " t01.crt_user||' - '||to_char(t01.crt_date,'YYYY/MM/DD HH24:MI:SS')"
-   strQuery = strQuery & " from fcst_extract_header t01"
+   strQuery = strQuery & " t01.crt_user||' - '||to_char(t01.crt_date,'YYYY/MM/DD HH24:MI:SS'),"
+   strQuery = strQuery & " t02.extract_format,"
+   strQuery = strQuery & " t02.extract_procedure"
+   strQuery = strQuery & " from fcst_extract_header t01, fcst_extract_type t02"
+   strQuery = strQuery & " where t01.extract_type = t02.extract_type(+)"
    strQuery = strQuery & " order by t01.extract_identifier asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
@@ -234,7 +237,7 @@ sub ProcessCreate()
    '//
    '// Execute the forecast extract creation
    '//
-   strStatement = "dw_forecast_loading."
+   strStatement = "dw_fcst_maintenance."
    strStatement = strStatement & "create_extract("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "',"
@@ -272,7 +275,7 @@ sub ProcessDelete()
    '//
    '// Execute the forecast extract deletion
    '//
-   strStatement = "dw_forecast_loading.delete_extract('" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "')"
+   strStatement = "dw_fcst_maintenance.delete_extract('" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)

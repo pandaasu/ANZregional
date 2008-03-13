@@ -204,7 +204,7 @@ sub ProcessCreate()
    '//
    '// Execute the forecast load creation
    '//
-   strStatement = "dw_forecast_loading."
+   strStatement = "dw_fcst_maintenance."
    strStatement = strStatement & "create_stream_load("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadType").Value)  & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "',"
@@ -243,7 +243,7 @@ sub ProcessDelete()
    '//
    '// Execute the forecast load deletion
    '//
-   strStatement = "dw_forecast_loading.delete_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "')"
+   strStatement = "dw_fcst_maintenance.delete_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)

@@ -37,6 +37,7 @@
       objList.style.visibility = 'hidden';
       objPanel.style.display = 'block';
       objPanel.style.visibility = 'visible';
+      document.main.INP_ExtractIdentifier.focus();
    }
    function doRefresh() {
       if (!processForm()) {return;}
@@ -97,13 +98,11 @@
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
-      doActivityStart(eval('document.body'));
-      doSpreadsheetDownload(eval('document.body'),'*DISP','dw_fcst_xxxxx.report_extract(\'' + strIdentifier + '\')');
+      doSpreadsheetDownload(eval('document.body'),'*DISP','xxxxxxxxxxxxx(\'' + strIdentifier + '\')');
    }
-   function doExport(strIdentifier) {
-      if (!processForm()) {return;}
-      doActivityStart(eval('document.body'));
-   //   doTextDownload(eval('document.body'),'*DISP','dw_fcst_xxxxx.report_extract(\'' + strIdentifier + '\')');
+   function doExport(strIdentifier,strFormat,strFunction) {
+      if (!processForm()) {return;};
+      doExportOutput(eval('document.body'),strIdentifier,strFormat,'select * from table(' + strFunction + '.export(\'' + strIdentifier + '\'))');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -124,8 +123,7 @@
 <!--#include file="ics_std_input.inc"-->
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
-<!--#include file="ics_std_spreadsheet.inc"-->
-<!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_export.inc"-->
 <!--#include file="mch_fcst_extract_links.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
@@ -171,7 +169,7 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=6 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=12 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>','<%=objSelection.ListValue06("LIST",i)%>','<%=objSelection.ListValue07("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>

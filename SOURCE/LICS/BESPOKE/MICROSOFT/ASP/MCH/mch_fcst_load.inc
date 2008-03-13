@@ -37,6 +37,7 @@
       objList.style.visibility = 'hidden';
       objPanel.style.display = 'block';
       objPanel.style.visibility = 'visible';
+      document.main.INP_LoadIdentifier.focus();
    }
    function doRefresh() {
       if (!processForm()) {return;}
@@ -106,26 +107,10 @@
          document.main.submit();
       }
    }
-   function doDownload(strIdentifier) {
+   function doReport(strIdentifier) {
       if (!processForm()) {return;}
       doActivityStart(eval('document.body'));
       doSpreadsheetDownload(eval('document.body'),'*DISP','dw_forecast_loading.select_load(\'' + strIdentifier + '\')');
-   }
-   function doUpload() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-      if (document.main.INP_Upload.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Forecast load spreadsheet must be selected';
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      if (confirm('Please confirm that you wish to update the forecast load\r\nPress OK to continue or press Cancel')) {
-         doActivityStart(eval('document.body'));
-         doSpreadsheetUpload(eval('document.body'),document.main.INP_Upload.value,'dw_forecast_loading.update_period_load(\'<%=strUser%>\')');
-      }
    }
    function processForm() {
       if (checkInput() == true) {
@@ -174,7 +159,6 @@
 <!--#include file="ics_std_input.inc"-->
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
-<!--#include file="ics_std_spreadsheet.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
@@ -222,7 +206,7 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=8 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=12 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doDownload('<%=objSelection.ListValue01("LIST",i)%>');">Download</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
