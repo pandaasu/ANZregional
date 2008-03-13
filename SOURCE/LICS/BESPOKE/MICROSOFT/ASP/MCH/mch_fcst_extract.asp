@@ -26,7 +26,6 @@
    dim objForm
    dim objSecurity
    dim objSelection
-   dim objProcedure
    dim objFunction
 
    '//
@@ -104,7 +103,6 @@
    set objForm = nothing
    set objSecurity = nothing
    set objSelection = nothing
-   set objProcedure = nothing
    set objFunction = nothing
 
 '////////////////////////////
@@ -211,12 +209,6 @@ sub ProcessCreate()
    dim strLoadIdentifier
 
    '//
-   '// Create the procedure object
-   '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
-
-   '//
    '// Create the function object
    '//
    set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
@@ -267,16 +259,16 @@ sub ProcessDelete()
    dim strStatement
 
    '//
-   '// Create the procedure object
+   '// Create the function object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
+   set objFunction.Security = objSecurity
 
    '//
    '// Execute the forecast extract deletion
    '//
    strStatement = "dw_fcst_maintenance.delete_extract('" & objSecurity.FixString(objForm.Fields("DTA_ExtractIdentifier").Value) & "')"
-   strReturn = objProcedure.Execute(strStatement)
+   strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
    end if
