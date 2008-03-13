@@ -124,7 +124,7 @@ sub ProcessExportPrompt()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
    <title>Export</title>
 </head>
-<body class="clsTable01" scroll="no" onLoad="parent.doExportShow();doExecute();">
+<body class="clsTable02" scroll="no" onLoad="parent.doExportShow();doExecute();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Processing</nobr></td></tr>
@@ -207,7 +207,7 @@ sub ProcessExportFile()
    <link rel="stylesheet" type="text/css" href="ics_style.css">
    <title>Export</title>
 </head>
-<body class="clsTable01" scroll="no">
+<body class="clsTable02" scroll="no">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Export File Creation Failed</nobr></td></tr>
       <tr>
@@ -293,7 +293,7 @@ sub ProcessExportInterface()
    <link rel="stylesheet" type="text/css" href="ics_style.css">
    <title>Export</title>
 </head>
-<body class="clsTable01" scroll="no">
+<body class="clsTable02" scroll="no">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0"><%if strReturn = "*OK" then%>
       <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Interface Created Successfully</nobr></td></tr>
       <tr>
