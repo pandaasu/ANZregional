@@ -28,6 +28,7 @@ create table od.fcst_load_header
     load_data_range                 number                 not null,
     load_str_yyyypp                 number(6,0)            not null,
     load_end_yyyypp                 number(6,0)            not null,
+    load_plan_group                 varchar2(32 char)      not null,
     sales_org_code                  varchar2(4 char)       not null,
     distbn_chnl_code                varchar2(2 char)       not null,
     division_code                   varchar2(2 char)       not null,
@@ -47,8 +48,9 @@ comment on column od.fcst_load_header.load_type is 'Load type - *FCST_DOMESTIC,*
 comment on column od.fcst_load_header.load_data_type is 'Load data type - *QTY_ONLY,*QTY_GSV';
 comment on column od.fcst_load_header.load_data_version is 'Load data version - *FCST(YYYYPP),*PLAN(YYYY),*REPLAN(YYYY),*ROB(YYYYPP)';
 comment on column od.fcst_load_header.load_data_range is 'Load data range - number of periods';
-comment on column od.fcst_load_header.load_str_yyyypp is 'Forecast start period';
-comment on column od.fcst_load_header.load_end_yyyypp is 'Forecast end period';
+comment on column od.fcst_load_header.load_str_yyyypp is 'Load forecast start period';
+comment on column od.fcst_load_header.load_end_yyyypp is 'LOad forecast end period';
+comment on column od.fcst_load_header.load_plan_group is 'Load plan group - *SNACK, *PET or *ALL';
 comment on column od.fcst_load_header.sales_org_code is 'Sales organisation code';
 comment on column od.fcst_load_header.distbn_chnl_code is 'Distribution channel code';
 comment on column od.fcst_load_header.division_code is 'Division code';
