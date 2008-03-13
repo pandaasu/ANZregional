@@ -12,7 +12,7 @@
       while (!objTextStream.AtEndOfStream) {
          strText = strText + '<XR><![CDATA[' + objTextStream.ReadLine() + ']]></XR>';
       }
-      strText = strText & '</TXTSTREAM>';
+      strText = strText + '</TXTSTREAM>';
       objTextStream.Close();
       objTextStream = null;
       objFile = null;
