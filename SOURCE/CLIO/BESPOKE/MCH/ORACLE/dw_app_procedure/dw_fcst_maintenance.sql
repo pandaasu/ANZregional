@@ -1,13 +1,13 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dw_forecast_maintenance as
+create or replace package dw_fcst_maintenance as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : dw_forecast_maintenance
+    Package : dw_fcst_maintenance
     Owner   : dw_app
 
     Description
@@ -65,13 +65,13 @@ create or replace package dw_forecast_maintenance as
    function report_load(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
    function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
-end dw_forecast_maintenance;
+end dw_fcst_maintenance;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_forecast_maintenance as
+create or replace package body dw_fcst_maintenance as
 
    /*-*/
    /* Private exceptions
@@ -2085,11 +2085,11 @@ create or replace package body dw_forecast_maintenance as
    /*-------------*/
    end read_xml_child;
 
-end dw_forecast_maintenance;
+end dw_fcst_maintenance;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym dw_forecast_maintenance for dw_app.dw_forecast_maintenance;
-grant execute on dw_forecast_maintenance to public;
+create or replace public synonym dw_fcst_maintenance for dw_app.dw_fcst_maintenance;
+grant execute on dw_fcst_maintenance to public;
