@@ -126,13 +126,13 @@ sub ProcessExportPrompt()%>
 </head>
 <body class="clsTable01" scroll="no" onLoad="parent.doExportShow();doExecute();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table class="clsSheet" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
-      <tr><td class="clsLabelWB" align=center colspan=2 nowrap><nobr>&nbsp;Export Processing</nobr></td></tr>
+   <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
+      <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Processing</nobr></td></tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -208,13 +208,13 @@ sub ProcessExportFile()
    <title>Export</title>
 </head>
 <body class="clsTable01" scroll="no">
-   <table class="clsSheet" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
-      <tr><td class="clsLabelWB" align=center colspan=1 nowrap><nobr>&nbsp;Export File Creation Failed</nobr></td></tr>
+   <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
+      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Export File Creation Failed</nobr></td></tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -294,13 +294,13 @@ sub ProcessExportInterface()
    <title>Export</title>
 </head>
 <body class="clsTable01" scroll="no">
-   <table class="clsSheet" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0"><%if strReturn = "*OK" then%>
-      <tr><td class="clsLabelWB" align=center colspan=2 nowrap><nobr>&nbsp;Export Interface Created Successfully</nobr></td></tr>
+   <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0"><%if strReturn = "*OK" then%>
+      <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Interface Created Successfully</nobr></td></tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -308,12 +308,12 @@ sub ProcessExportInterface()
             </table>
          </nobr></td>
       </tr><%else%>
-      <tr><td class="clsLabelWB" align=center colspan=1 nowrap><nobr>&nbsp;Export Interface Creation Failed</nobr></td></tr>
+      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Export Interface Creation Failed</nobr></td></tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelWB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
