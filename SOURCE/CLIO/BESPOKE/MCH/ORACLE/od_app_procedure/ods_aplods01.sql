@@ -244,7 +244,7 @@ create or replace package body ods_aplods01 as
       /*-*/
       if var_trn_error = false then
          begin
-            dw_forecast_loading.create_apollo_load(var_cast_yyyymmdd);
+            dw_fcst_maintenance.create_apollo_load(var_cast_yyyymmdd);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(sqlerrm, 1, 512));
