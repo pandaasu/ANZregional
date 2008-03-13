@@ -107,7 +107,7 @@ sub ProcessExportPrompt()%>
          objElement.className = 'clsSelect';
       }
    }
-   function doCancel() {
+   function doClose() {
       parent.doExportClose(false);
    }
    function doExecute() {
@@ -135,7 +135,7 @@ sub ProcessExportPrompt()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -195,7 +195,7 @@ sub ProcessExportFile()
          objElement.className = 'clsSelect';
       }
    }
-   function doCancel() {
+   function doClose() {
       parent.doExportClose(false);
    }
 // -->
@@ -217,7 +217,7 @@ sub ProcessExportFile()
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -282,7 +282,7 @@ sub ProcessExportInterface()
          objElement.className = 'clsSelect';
       }
    }
-   function doCancel() {
+   function doClose() {
       parent.doExportClose(false);
    }
 // -->
@@ -303,7 +303,7 @@ sub ProcessExportInterface()
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -316,7 +316,7 @@ sub ProcessExportInterface()
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
