@@ -123,6 +123,7 @@
 <!--#include file="ics_std_input.inc"-->
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
+<!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_export.inc"-->
 <!--#include file="mch_fcst_extract_links.inc"-->
 <head>
