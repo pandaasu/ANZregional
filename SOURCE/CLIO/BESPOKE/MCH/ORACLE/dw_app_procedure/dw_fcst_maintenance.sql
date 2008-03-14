@@ -14,28 +14,7 @@ create or replace package dw_fcst_maintenance as
     -----------
     Dimensional Data Store - Forecast Maintenance
 
-    This package contain the procedures for forecast maintenance. The package exposes the
-    following procedures.
-
-    1. SELECT_LOAD
-
-       This procedure is used to retrieve the forecast load into an excel spreadsheet.
-
-    2. DELETE_LOAD
-
-       This procedure is used to delete the forecast load.
-
-    3. CREATE_PERIOD_LOAD
-
-       This procedure is used to create a forecast period load data set.
-
-    4. UPDATE_PERIOD_LOAD
-
-       This procedure is used to update the forecast period load from an excel spreadsheet.
-
-    5. EXTRACT_LOAD
-
-       This procedure is used to accept the forecast period load and update the operational data store.
+    This package contain the procedures for forecast maintenance.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -46,8 +25,8 @@ create or replace package dw_fcst_maintenance as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure delete_load(par_load_identifier in varchar2);
-   procedure delete_extract(par_extract_identifier in varchar2);
+   function delete_load(par_load_identifier in varchar2) return varchar2;
+   function delete_extract(par_extract_identifier in varchar2) return varchar2;
    procedure create_apollo_load(par_cast_date in varchar2);
    function create_stream_load(par_load_type in varchar2,
                                par_load_identifier in varchar2,
@@ -55,6 +34,7 @@ create or replace package dw_fcst_maintenance as
                                par_load_data_type in varchar2,
                                par_load_data_version in number,
                                par_load_data_range in number,
+                               par_load_plan_group in varchar2,
                                par_user in varchar2) return varchar2;
    function create_extract(par_extract_type in varchar2,
                            par_extract_identifier in varchar2,
@@ -62,6 +42,7 @@ create or replace package dw_fcst_maintenance as
                            par_extract_version in number,
                            par_load_identifier in varchar2,
                            par_user in varchar2) return varchar2;
+   function retrieve_loads(par_extract_type in varchar2, par_extract_version in number) return dw_fcst_table pipelined;
    function report_load(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
    function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
@@ -102,13 +83,15 @@ create or replace package body dw_fcst_maintenance as
    /***************************************************/
    /* This procedure performs the delete load routine */
    /***************************************************/
-   procedure delete_load(par_load_identifier in varchar2) is
+   function delete_load(par_load_identifier in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_load_identifier fcst_load_header.load_identifier%type;
       var_available boolean;
+      var_title varchar2(128);
+      var_message varchar2(4000);
 
       /*-*/
       /* Local cursors
@@ -132,11 +115,24 @@ create or replace package body dw_fcst_maintenance as
    begin
 
       /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Forecast Maintenance - Delete Forecast Load';
+      var_message := null;
+
+      /*-*/
       /* Validate the parameter values
       /*-*/
       var_load_identifier := upper(par_load_identifier);
       if var_load_identifier is null then
-         raise_application_error(-20000, 'Forecast load identifier must be specified');
+         var_message := var_message || chr(13) || 'Forecast load identifier must be specified';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
       end if;
 
       /*-*/
@@ -165,7 +161,14 @@ create or replace package body dw_fcst_maintenance as
       /* 2. Cursor close does not release row locks
       /*-*/
       if var_available = false then
-         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') does not exist or is already locked');
+         var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') does not exist or is already locked';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
       end if;
 
       /*-*/
@@ -174,7 +177,7 @@ create or replace package body dw_fcst_maintenance as
       open csr_fcst_extract_load;
       fetch csr_fcst_extract_load into rcd_fcst_extract_load;
       if csr_fcst_extract_load%found then
-         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') is currently attached to one or more forecast extracts');
+         var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') is currently attached to one or more forecast extracts';
       end if;
       close csr_fcst_extract_load;
 
@@ -195,6 +198,11 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       commit;
 
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -213,7 +221,7 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - DELETE_LOAD - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -223,13 +231,15 @@ create or replace package body dw_fcst_maintenance as
    /******************************************************/
    /* This procedure performs the delete extract routine */
    /******************************************************/
-   procedure delete_extract(par_extract_identifier in varchar2) is
+   function delete_extract(par_extract_identifier in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_extract_identifier fcst_extract_header.extract_identifier%type;
       var_available boolean;
+      var_title varchar2(128);
+      var_message varchar2(4000);
 
       /*-*/
       /* Local cursors
@@ -247,11 +257,24 @@ create or replace package body dw_fcst_maintenance as
    begin
 
       /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Forecast Maintenance - Delete Forecast Extract';
+      var_message := null;
+
+      /*-*/
       /* Validate the parameter values
       /*-*/
       var_extract_identifier := upper(par_extract_identifier);
       if var_extract_identifier is null then
-         raise_application_error(-20000, 'Forecast extract identifier must be specified');
+         var_message := var_message || chr(13) || 'Forecast extract identifier must be specified';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
       end if;
 
       /*-*/
@@ -280,7 +303,14 @@ create or replace package body dw_fcst_maintenance as
       /* 2. Cursor close does not release row locks
       /*-*/
       if var_available = false then
-         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist or is already locked');
+         var_message := var_message || chr(13) || 'Forecast extract (' || var_extract_identifier || ') does not exist or is already locked';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
       end if;
 
       /*-*/
@@ -300,6 +330,11 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       commit;
 
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -318,7 +353,7 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FORECAST_LOADING - DELETE_EXTRACT - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -427,6 +462,7 @@ create or replace package body dw_fcst_maintenance as
       rcd_fcst_load_header.load_data_range := 0;
       rcd_fcst_load_header.load_str_yyyypp := 999999;
       rcd_fcst_load_header.load_end_yyyypp := 0;
+      rcd_fcst_load_header.load_plan_group := '*ALL';
       rcd_fcst_load_header.sales_org_code := '135';
       rcd_fcst_load_header.distbn_chnl_code := '10';
       rcd_fcst_load_header.division_code := '51';
@@ -454,6 +490,7 @@ create or replace package body dw_fcst_maintenance as
           load_data_range,
           load_str_yyyypp,
           load_end_yyyypp,
+          load_plan_group,
           sales_org_code,
           distbn_chnl_code,
           division_code,
@@ -470,6 +507,7 @@ create or replace package body dw_fcst_maintenance as
                 rcd_fcst_load_header.load_data_range,
                 rcd_fcst_load_header.load_str_yyyypp,
                 rcd_fcst_load_header.load_end_yyyypp,
+                rcd_fcst_load_header.load_plan_group,
                 rcd_fcst_load_header.sales_org_code,
                 rcd_fcst_load_header.distbn_chnl_code,
                 rcd_fcst_load_header.division_code,
@@ -648,6 +686,7 @@ create or replace package body dw_fcst_maintenance as
                                par_load_data_type in varchar2,
                                par_load_data_version in number,
                                par_load_data_range in number,
+                               par_load_plan_group in varchar2,
                                par_user in varchar2) return varchar2 is
 
       /*-*/
@@ -661,6 +700,7 @@ create or replace package body dw_fcst_maintenance as
       var_load_data_type fcst_load_header.load_data_type%type;
       var_load_data_version fcst_load_header.load_data_version%type;
       var_load_data_range fcst_load_header.load_data_range%type;
+      var_load_plan_group fcst_load_header.load_plan_group%type;
       var_user fcst_load_header.crt_user%type;
       var_title varchar2(128);
       var_message varchar2(4000);
@@ -713,7 +753,7 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Initialise the message
       /*-*/
-      var_title := 'Forecast Loading - Create Forecast Load';
+      var_title := 'Forecast Maintenance - Create Forecast Load';
       var_message := null;
 
       /*-*/
@@ -725,6 +765,7 @@ create or replace package body dw_fcst_maintenance as
       var_load_data_type := par_load_data_type;
       var_load_data_version := par_load_data_version;
       var_load_data_range := par_load_data_range;
+      var_load_plan_group := par_load_plan_group;
       var_user := upper(par_user);
       if var_load_type is null then
          var_message := var_message || chr(13) || 'Forecast load type must be specified';
@@ -743,6 +784,12 @@ create or replace package body dw_fcst_maintenance as
       end if;
       if var_load_data_range is null then
          var_message := var_message || chr(13) || 'Forecast load data range must be specified';
+      end if;
+      if var_load_plan_group is null then
+         var_message := var_message || chr(13) || 'Forecast load planning group must be specified';
+      end if;
+      if var_load_plan_group != '*PET' and var_load_plan_group != '*SNACK' and var_load_plan_group != '*ALL' then
+         var_message := var_message || chr(13) || 'Forecast load planning group must be *PET, *SNACK or *ALL';
       end if;
       if var_user is null then
          var_user := user;
@@ -810,6 +857,7 @@ create or replace package body dw_fcst_maintenance as
       rcd_fcst_load_header.load_data_range := var_load_data_range;
       rcd_fcst_load_header.load_str_yyyypp := 999999;
       rcd_fcst_load_header.load_end_yyyypp := 0;
+      rcd_fcst_load_header.load_plan_group := var_load_plan_group;
       rcd_fcst_load_header.sales_org_code := '135';
       rcd_fcst_load_header.distbn_chnl_code := '10';
       rcd_fcst_load_header.division_code := '51';
@@ -832,6 +880,7 @@ create or replace package body dw_fcst_maintenance as
              load_data_range,
              load_str_yyyypp,
              load_end_yyyypp,
+             load_plan_group,
              sales_org_code,
              distbn_chnl_code,
              division_code,
@@ -848,6 +897,7 @@ create or replace package body dw_fcst_maintenance as
                    rcd_fcst_load_header.load_data_range,
                    rcd_fcst_load_header.load_str_yyyypp,
                    rcd_fcst_load_header.load_end_yyyypp,
+                   rcd_fcst_load_header.load_plan_group,
                    rcd_fcst_load_header.sales_org_code,
                    rcd_fcst_load_header.distbn_chnl_code,
                    rcd_fcst_load_header.division_code,
@@ -1052,6 +1102,18 @@ create or replace package body dw_fcst_maintenance as
           where t01.load_identifier = var_work_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
+      cursor csr_mars_period is
+         select t01.*
+           from mars_date t01
+          where mars_period = var_extract_version;
+      rcd_mars_period csr_mars_period%rowtype;
+
+      cursor csr_mars_year is
+         select t01.*
+           from mars_date t01
+          where mars_year = var_extract_version;
+      rcd_mars_year csr_mars_year%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1060,7 +1122,7 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Initialise the message
       /*-*/
-      var_title := 'Forecast Loading - Create Forecast Extract';
+      var_title := 'Forecast Maintenance - Create Forecast Extract';
       var_message := null;
 
       /*-*/
@@ -1128,6 +1190,27 @@ create or replace package body dw_fcst_maintenance as
       close csr_fcst_extract_type;
 
       /*-*/
+      /* Retrieve the extract type data version
+      /*-*/
+      if rcd_fcst_extract_type.extract_type_version = '*PERIOD' then
+         open csr_mars_period;
+         fetch csr_mars_period into rcd_mars_period;
+         if csr_mars_period%notfound then
+            var_message := var_message || chr(13) || 'Forecast extract version (' || to_char(var_extract_version) || ') does not exist as a Mars period in Mars Date Table';
+         end if;
+         close csr_mars_period;
+      elsif rcd_fcst_extract_type.extract_type_version = '*YEAR' then
+         open csr_mars_year;
+         fetch csr_mars_year into rcd_mars_year;
+         if csr_mars_year%notfound then
+            var_message := var_message || chr(13) || 'Forecast extract version (' || to_char(var_extract_version) || ') does not exist as a Mars year in Mars Date Table';
+         end if;
+         close csr_mars_year;
+      else
+         var_message := var_message || chr(13) || 'Forecast extract version (' || rcd_fcst_extract_type.extract_type_version || ') is not recognised';
+      end if;
+
+      /*-*/
       /* Extract the extract type load types
       /*-*/
       tbl_extract.delete;
@@ -1183,6 +1266,21 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          if rcd_fcst_load_header.load_data_version != var_extract_version then
             var_message := var_message || chr(13) || 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') version (' || to_char(rcd_fcst_load_header.load_data_version) || ') does not match the extract version';
+         end if;
+
+         /*-*/
+         /* Forecast load planning group must match the extract planning group
+         /*-*/
+         if rcd_fcst_extract_type.extract_plan_group != '*ALL' then
+            if rcd_fcst_load_header.load_plan_group != '*ALL' then
+               if rcd_fcst_load_header.load_plan_group != rcd_fcst_extract_type.extract_plan_group then
+                  var_message := var_message || chr(13) || 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') planning group (' || to_char(rcd_fcst_load_header.load_plan_group) || ') does not match the extract planning group';
+               end if;
+            end if;
+         else
+            if rcd_fcst_load_header.load_plan_group != '*ALL' then
+               var_message := var_message || chr(13) || 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') planning group (' || to_char(rcd_fcst_load_header.load_plan_group) || ') does not match the extract planning group';
+            end if;
          end if;
 
       end loop;
@@ -1285,6 +1383,135 @@ create or replace package body dw_fcst_maintenance as
    /* End routine */
    /*-------------*/
    end create_extract;
+
+   /******************************************************/
+   /* This procedure performs the retrieve loads routine */
+   /******************************************************/
+   function retrieve_loads(par_extract_type in varchar2, par_extract_version in number) return dw_fcst_table pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_output varchar2(4000 char);
+      var_extract_type fcst_extract_type.extract_type%type;
+      var_extract_version fcst_extract_header.extract_version%type;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_type is 
+         select t01.*
+           from fcst_extract_type t01
+          where t01.extract_type = var_extract_type;
+      rcd_fcst_extract_type csr_fcst_extract_type%rowtype;
+
+      cursor csr_fcst_extract_type_load is 
+         select t01.*
+           from fcst_extract_type_load t01
+          where t01.extract_type = rcd_fcst_extract_type.extract_type;
+      rcd_fcst_extract_type_load csr_fcst_extract_type_load%rowtype;
+
+      cursor csr_fcst_load_header is 
+         select t01.*
+           from fcst_load_header t01
+          where t01.load_type = rcd_fcst_extract_type_load.load_type
+            and t01.load_data_version = var_extract_version
+            and ((rcd_fcst_extract_type.extract_plan_group = '*ALL' and t01.load_plan_group = '*ALL') or
+                 (rcd_fcst_extract_type.extract_plan_group != '*ALL' and (t01.load_plan_group = rcd_fcst_extract_type.extract_plan_group or t01.load_plan_group = '*ALL')))
+            and t01.load_status = '*VALID';
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_extract_type := upper(par_extract_type);
+      var_extract_version := par_extract_version;
+      if var_extract_type is null then
+         raise_application_error(-20000, 'Forecast extract type must be specified');
+      end if;
+      if var_extract_version is null then
+         raise_application_error(-20000, 'Forecast extract version must be specified');
+      end if;
+
+      /*-*/
+      /* Retrieve the extract type
+      /*-*/
+      open csr_fcst_extract_type;
+      fetch csr_fcst_extract_type into rcd_fcst_extract_type;
+      if csr_fcst_extract_type%notfound then
+         raise_application_error(-20000, 'Forecast extract type (' || var_extract_type || ') does not exist');
+      end if;
+      close csr_fcst_extract_type;
+
+      /*-*/
+      /* Retrieve the forecast extract type load typess
+      /*-*/
+      open csr_fcst_extract_type_load;
+      loop
+         fetch csr_fcst_extract_type_load into rcd_fcst_extract_type_load;
+         if csr_fcst_extract_type_load%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Pipe the row
+         /*-*/
+         pipe row('*LOADTYPE'||chr(9)||rcd_fcst_extract_type_load.load_type);
+
+         /*-*/
+         /* Retrieve the forecast load headers
+         /*-*/
+         open csr_fcst_load_header;
+         loop
+            fetch csr_fcst_load_header into rcd_fcst_load_header;
+            if csr_fcst_load_header%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Pipe the row
+            /*-*/
+            pipe row(rcd_fcst_extract_type_load.load_type||'@'||rcd_fcst_load_header.load_identifier||chr(9)||rcd_fcst_load_header.load_description);
+
+         end loop;
+         close csr_fcst_load_header;
+
+      end loop;
+      close csr_fcst_extract_type_load;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - RETRIEVE_LOADS - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_loads;
 
    /***************************************************/
    /* This procedure performs the report load routine */
@@ -1435,7 +1662,7 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - REPORT_LOAD - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - REPORT_LOAD - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -1591,7 +1818,7 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'DW_FORECAST_LOADING - REPORT_EXTRACT - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - REPORT_EXTRACT - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -1786,12 +2013,22 @@ create or replace package body dw_fcst_maintenance as
             rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not active in LADS';
             var_errors := true;
          end if;
-         if rcd_fcst_load_detail.new_plan_group = '*NONE' then
-            if rcd_fcst_load_detail.mesg_text is null then
-               rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+         if not(rcd_fcst_load_detail.matl_code is null) then
+            if rcd_fcst_load_detail.new_plan_group = '*NONE' then
+               if rcd_fcst_load_detail.mesg_text is null then
+                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               end if;
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not a valid planning group (*SNACK or *PET) material';
+               var_errors := true;
+            else
+               if rcd_fcst_load_header.load_plan_group != '*ALL' and rcd_fcst_load_detail.new_plan_group != rcd_fcst_load_header.load_plan_group then
+                  if rcd_fcst_load_detail.mesg_text is null then
+                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  end if;
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not match the loader header planning group ('||rcd_fcst_load_header.load_plan_group||')';
+                  var_errors := true;
+               end if;
             end if;
-            rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not a *SNACK or *PET material';
-            var_errors := true;
          end if;
 
          /*-*/
