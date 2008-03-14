@@ -25,6 +25,7 @@
    function showList() {
       var objList = eval('document.all("tabList")');
       var objPanel = eval('document.all("tabPanel")');
+      var objUpdate = eval('document.all("tabUpdate")')
       objPanel.style.display = 'none';
       objPanel.style.visibility = 'hidden';
       objUpdate.style.display = 'block';
@@ -35,6 +36,7 @@
    function showPanel() {
       var objList = eval('document.all("tabList")');
       var objPanel = eval('document.all("tabPanel")');
+      var objUpdate = eval('document.all("tabUpdate")')
       objList.style.display = 'none';
       objList.style.visibility = 'hidden';
       objUpdate.style.display = 'block';
