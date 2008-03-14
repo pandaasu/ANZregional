@@ -98,6 +98,7 @@
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
+      return;
       doSpreadsheetDownload(eval('document.body'),'*DISP','xxxxxxxxxxxxx(\'' + strIdentifier + '\')');
    }
    function doExport(strIdentifier,strFormat,strFunction) {
@@ -123,6 +124,7 @@
 <!--#include file="ics_std_input.inc"-->
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
+<!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_export.inc"-->
 <!--#include file="mch_fcst_extract_links.inc"-->

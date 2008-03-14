@@ -6,9 +6,9 @@
    function loadExtractLinks() {
       var strExtractType = document.getElementById('INP_ExtractType').value;
       var strExtractVersion = document.getElementById('INP_ExtractVersion').value;
-      if (strExtractType != '' && (strExtractVersion != '' || strExtractVersion != '0')) {
+      if (strExtractType != '' && (strExtractVersion != '' && strExtractVersion != '0')) {
          doActivityStart(document.body);
-         doGetRequest('<%=strBase%>mch_fcst_extract_load.asp?QRY_ExtractType='+strExtractType+'QRY_ExtractVersion='+strExtractVersion,function(strResponse) {displayExtractLinks(strResponse);},true);
+         doGetRequest('<%=strBase%>mch_fcst_extract_load.asp?QRY_ExtractType='+strExtractType+'&QRY_ExtractVersion='+strExtractVersion,function(strResponse) {displayExtractLinks(strResponse);},true);
       }
    }
    function displayExtractLinks(strResponse) {

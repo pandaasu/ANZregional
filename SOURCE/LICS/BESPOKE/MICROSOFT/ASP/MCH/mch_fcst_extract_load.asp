@@ -14,7 +14,6 @@
    '// Declare the variables
    '//
    dim strReturn
-   dim strMode
    dim objForm
    dim objSecurity
    dim objSelection
@@ -40,7 +39,6 @@
       '// Process the form data
       '//
       call ProcessSelect
-      strMode = objForm.Fields("Mode").Value
 
    end if
 
@@ -89,8 +87,8 @@ sub ProcessSelect()
       Response.ContentType = "text/xml"
       Response.AddHeader "Cache-Control", "no-cache"
       Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListLower("LOAD") to objSelection.ListUpper("LOAD")
-         call Response.Write(objSelection.ListValue01("LOAD",intIndex) & chr(10))
+      for intIndex = objSelection.ListLower("LOADS") to objSelection.ListUpper("LOADS")
+         Response.Write(objSelection.ListValue01("LOADS",intIndex) & chr(10))
       next
    end if
 

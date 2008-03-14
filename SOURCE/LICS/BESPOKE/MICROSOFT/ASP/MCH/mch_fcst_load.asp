@@ -80,8 +80,12 @@
             call ProcessSelect
          case "CREATE"
             call ProcessCreate
+         case "UPDATE"
+            call ProcessUpdate
          case "DELETE"
             call ProcessDelete
+         case "VALIDATE"
+            call ProcessValidate
          case else
             strMode = "FATAL"
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
@@ -145,6 +149,7 @@ sub ProcessSelect()
    strQuery = strQuery & " t01.load_description,"
    strQuery = strQuery & " t01.load_status,"
    strQuery = strQuery & " t01.load_type,"
+   strQuery = strQuery & " t01.load_plan_group,"
    strQuery = strQuery & " t01.load_data_type,"
    strQuery = strQuery & " to_char(t01.load_data_version),"
    strQuery = strQuery & " t01.upd_user||' - '||to_char(t01.upd_date,'YYYY/MM/DD HH24:MI:SS')"
@@ -163,10 +168,10 @@ sub ProcessSelect()
       call objForm.AddField("DTA_LoadType", "")
       call objForm.AddField("DTA_LoadIdentifier", "")
       call objForm.AddField("DTA_LoadDescription", "")
+      call objForm.AddField("DTA_LoadPlanGroup", "*ALL")
       call objForm.AddField("DTA_LoadDataType", "*QTY_GSV")
       call objForm.AddField("DTA_LoadDataVersion", "")
       call objForm.AddField("DTA_LoadDataRange", "13")
-      call objForm.AddField("DTA_LoadDataFile", "")
    end if
 
 end sub
@@ -206,12 +211,64 @@ sub ProcessCreate()
    '//
    strStatement = "dw_fcst_maintenance."
    strStatement = strStatement & "create_stream_load("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadType").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDescription").Value)  & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDataType").Value)  & "',"
-   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataVersion").Value)  & ","
-   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataRange").Value)  & ","
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadType").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDescription").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadDataType").Value) & "',"
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataVersion").Value) & ","
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_LoadDataRange").Value) & ","
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadPlanGroup").Value) & "',"
+   strStatement = strStatement & "'" & strUser  & "')"
+   strReturn = objFunction.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+   else
+      strMode = "SELECT"
+   end if
+
+   '//
+   '// Process the select
+   '//
+   call ProcessSelect
+
+end sub
+
+'////////////////////////////
+'// Process update routine //
+'////////////////////////////
+sub ProcessUpdate()
+
+   dim strStatement
+   dim lngIndex
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Create the function object
+   '//
+   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
+   set objFunction.Security = objSecurity
+
+   '//
+   '// Load the form data
+   '//
+   call objProcedure.Execute("lics_form.clear_form")
+   lngIndex = 1
+   do while lngIndex <= len(objForm.Fields("DTA_LoadStream").Value)
+      call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(mid(objForm.Fields("DTA_LoadStream").Value,lngIndex,2000)) & "')")
+      lngIndex = lngIndex + 2000
+   loop
+
+   '//
+   '// Execute the forecast load update
+   '//
+   strStatement = "dw_fcst_maintenance."
+   strStatement = strStatement & "update_stream_load("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value) & "',"
    strStatement = strStatement & "'" & strUser  & "')"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -243,7 +300,37 @@ sub ProcessDelete()
    '//
    '// Execute the forecast load deletion
    '//
-   strStatement = "dw_fcst_maintenance.delete_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value)  & "')"
+   strStatement = "dw_fcst_maintenance.delete_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value) & "')"
+   strReturn = objFunction.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+   end if
+
+   '//
+   '// Process the select
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'//////////////////////////////
+'// Process validate routine //
+'//////////////////////////////
+sub ProcessValidate()
+
+   dim strStatement
+
+   '//
+   '// Create the function object
+   '//
+   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
+   set objFunction.Security = objSecurity
+
+   '//
+   '// Execute the forecast load validation
+   '//
+   strStatement = "dw_fcst_maintenance.validate_load('" & objSecurity.FixString(objForm.Fields("DTA_LoadIdentifier").Value) & "','" & strUser & "')"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
