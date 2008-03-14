@@ -1,5 +1,3 @@
-create or replace package bds_app.plant_material_loader
-as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -13,12 +11,15 @@ as
   ----------- 
   Plant Database - Inbound Material_plant_mfanz Interface 
 
-  dd-mmm-yyyy  Author            Description 
-  -----------  ------            ----------- 
-  18-Nov-2007  Jeff Phillipson   Created
-  04-Mar-2008  Jeff Phillipson   Added pkg instruction table entry 
-  06-Mar-2008  Trevor Keon       Altered to support changes to plant_material_extract 
+  dd-mmm-yyyy  Author           Description 
+  -----------  ------           ----------- 
+  18-Nov-2007  Jeff Phillipson  Created 
+  04-Mar-2008  Jeff Phillipson  Added pkg instruction table entry 
+  06-Mar-2008  Trevor Keon      Altered to support changes to 
+                                plant_material_extract 
 *******************************************************************************/
+
+create or replace package bds_app.plant_material_loader as
 
   /*-*/
   /* Public declarations 
@@ -42,6 +43,7 @@ create or replace package body bds_app.plant_material_loader as
   /* Private declarations 
   /*-*/
   procedure complete_transaction;
+  procedure process_record_ctl(par_record in varchar2);
   procedure process_record_hdr(par_record in varchar2);
   procedure process_record_stx(par_record in varchar2);
   procedure process_record_pkg(par_record in varchar2);
@@ -53,7 +55,7 @@ create or replace package body bds_app.plant_material_loader as
   var_trn_start   boolean;
   var_trn_ignore  boolean;
   var_trn_error   boolean;
-  
+    
   rcd_hdr bds_material_plant_mfanz_test%rowtype;
   rcd_pkg bds_material_pkg_instr_det%rowtype;
 
@@ -82,8 +84,12 @@ create or replace package body bds_app.plant_material_loader as
     lics_inbound_utility.clear_definition;
     
     /*-*/
+    lics_inbound_utility.set_definition('CTL','ID',3);
+    lics_inbound_utility.set_definition('CTL','SAP_MATERIAL_CODE', 18);
+    lics_inbound_utility.set_definition('CTL','MSG_TIMESTAMP', 14);
+    
+    /*-*/
     lics_inbound_utility.set_definition('HDR','ID',3);
-    lics_inbound_utility.set_definition('HDR','SAP_MATERIAL_CODE', 18);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);
     lics_inbound_utility.set_definition('HDR','BDS_MATERIAL_DESC_EN', 40);
     lics_inbound_utility.set_definition('HDR','MATERIAL_TYPE', 4);
@@ -197,12 +203,25 @@ create or replace package body bds_app.plant_material_loader as
     var_record_identifier := substr(par_record,1,3);
     
     case var_record_identifier
+      when 'CTL' then process_record_ctl(par_record);
       when 'HDR' then process_record_hdr(par_record);
       when 'STX' then process_record_stx(par_record);
       when 'PKG' then process_record_pkg(par_record);
-      when lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
+      else lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
 
+  /*-------------------*/
+  /* Exception handler */
+  /*-------------------*/
+  exception
+
+  /*-*/
+  /* Exception trap 
+  /*-*/
+    when others then
+      lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+      var_trn_error := true;
+      
   /*-------------*/
   /* End routine */
   /*-------------*/
@@ -242,8 +261,7 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* No data processed 
     /*-*/
-    if ( var_trn_start = false ) 
-    then
+    if ( var_trn_start = false ) then
       rollback;
       return;
     end if;
@@ -251,15 +269,13 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Commit/rollback the transaction as required 
     /*-*/
-    if ( var_trn_ignore = true )
-    then
+    if ( var_trn_ignore = true ) then
       /*-*/
       /* Rollback the transaction 
       /* NOTE - releases transaction lock 
       /*-*/
       rollback;
-    elsif ( var_trn_error = true )
-    then
+    elsif ( var_trn_error = true ) then
       /*-*/
       /* Rollback the transaction 
       /* NOTE - releases transaction lock 
@@ -278,18 +294,28 @@ create or replace package body bds_app.plant_material_loader as
   /*-------------*/
   end complete_transaction;
 
-
   /**************************************************/
-  /* This procedure performs the record HDR routine */
+  /* This procedure performs the record CTL routine */
   /**************************************************/
-  procedure process_record_hdr(par_record in varchar2) is
-
+  procedure process_record_ctl(par_record in varchar2) is              
+  
     /*-*/
-    /* Local definitions 
+    /* Local definitions
     /*-*/
-    --var_idoc_timestamp rcd_hdr.idoc_timestamp%TYPE;
-    var_count number;
-                           
+    var_exists boolean;
+                     
+    /*-*/
+    /* Local cursors 
+    /*-*/
+    cursor csr_bds_material_plant_mfanz is
+      select t01.sap_material_code as sap_material_code,
+        min(t01.idoc_timestamp) as msg_timestamp
+      from bds_material_plant_mfanz_test t01
+      where t01.sap_material_code = rcd_hdr.sap_material_code
+      group by t01.sap_material_code;
+      
+    rcd_bds_material_plant_mfanz csr_bds_material_plant_mfanz%rowtype;
+    
   /*-------------*/
   /* Begin block */
   /*-------------*/
@@ -306,6 +332,72 @@ create or replace package body bds_app.plant_material_loader as
     var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+
+    /*-*/
+    /* PARSE - Parse the data record 
+    /*-*/    
+    lics_inbound_utility.parse_record('CTL', par_record);
+
+    /*-*/
+    /* RETRIEVE - Retrieve the field values 
+    /*-*/
+    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
+    rcd_hdr.idoc_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
+    
+    /*-*/
+    /* Validate message sequence  
+    /*-*/
+    open csr_bds_material_plant_mfanz;
+    fetch csr_bds_material_plant_mfanz into rcd_bds_material_plant_mfanz;
+    
+    if ( csr_bds_material_plant_mfanz%notfound ) then
+      var_exists := false;
+    end if;
+    
+    close csr_bds_material_plant_mfanz;
+    
+    if ( var_exists = true ) then
+      if ( rcd_hdr.idoc_timestamp > rcd_bds_material_plant_mfanz.msg_timestamp ) then
+        delete from bds_material_pkg_instr_det_t where sap_material_code = rcd_hdr.sap_material_code;
+        delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;
+      else
+        var_trn_ignore := true;
+      end if;
+    end if;    
+    
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end process_record_ctl;
+
+  /**************************************************/
+  /* This procedure performs the record HDR routine */
+  /**************************************************/
+  procedure process_record_hdr(par_record in varchar2) is
+                          
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin
+
+    /*-*/
+    /* Complete the previous transactions 
+    /*-*/
+    complete_transaction;
+
+    /*-*/
+    /* Reset transaction variables 
+    /*-*/
+    var_trn_start := true;
+    var_trn_ignore := false;
+    var_trn_error := false;
+    
+    /*--------------------------------------------*/
+    /* IGNORE - Ignore the data row when required */
+    /*--------------------------------------------*/
+    if ( var_trn_ignore = true ) then
+      return;
+    end if;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -374,13 +466,11 @@ create or replace package body bds_app.plant_material_loader as
     rcd_hdr.issue_unit := lics_inbound_utility.get_variable('ISSUE_UNIT');
     rcd_hdr.planned_delivery_days := lics_inbound_utility.get_number('PLANNED_DELIVERY_DAYS',null);
     rcd_hdr.effective_out_date := lics_inbound_utility.get_date('EFFECTIVE_OUT_DATE','yyyymmddhh24miss'); 
-    rcd_hdr.idoc_timestamp := to_char(sysdate,'yyyymmddhh24miss');
 
     /*-*/
     /* Retrieve exceptions raised 
     /*-*/
-    if ( lics_inbound_utility.has_errors = true )
-    then
+    if ( lics_inbound_utility.has_errors = true ) then
       var_trn_error := true;
     end if;
 
@@ -391,31 +481,20 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Validate the primary keys 
     /*-*/
-    if ( rcd_hdr.sap_material_code is null )
-    then
+    if ( rcd_hdr.sap_material_code is null ) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_MATERIAL_CODE');
       var_trn_error := true;
     end if;
     
-    if ( rcd_hdr.plant_code is null)
-    then
+    if ( rcd_hdr.plant_code is null) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_CODE');
       var_trn_error := true;
     end if;
-          
-    /*--------------------------------------------*/
-    /* IGNORE - Ignore the data row when required */
-    /*--------------------------------------------*/
-    if ( var_trn_ignore = true )
-    then
-      return;
-    end if;
-    
+             
     /*----------------------------------------*/
     /* ERROR- Bypass the update when required */
     /*----------------------------------------*/
-    if ( var_trn_error = true )
-    then
+    if ( var_trn_error = true ) then
       return;
     end if;
     
@@ -423,69 +502,70 @@ create or replace package body bds_app.plant_material_loader as
     /* UPDATE - Update the database */
     /*------------------------------*/        
     update bds_material_plant_mfanz_test
-        set bds_material_desc_en = rcd_hdr.bds_material_desc_en,
-          material_type = rcd_hdr.material_type,
-          material_grp = rcd_hdr.material_grp,
-          base_uom = rcd_hdr.base_uom,
-          order_unit = rcd_hdr.order_unit,
-          gross_weight = rcd_hdr.gross_weight,
-          net_weight = rcd_hdr.net_weight,
-          gross_weight_unit = rcd_hdr.gross_weight_unit,
-          length = rcd_hdr.length,
-          width = rcd_hdr.width,
-          height = rcd_hdr.height,
-          dimension_uom = rcd_hdr.dimension_uom,
-          interntl_article_no = rcd_hdr.interntl_article_no,
-          total_shelf_life = rcd_hdr.total_shelf_life,
-          mars_intrmdt_prdct_compnt_flag = rcd_hdr.mars_intrmdt_prdct_compnt_flag,
-          mars_merchandising_unit_flag = rcd_hdr.mars_merchandising_unit_flag,
-          mars_prmotional_material_flag = rcd_hdr.mars_prmotional_material_flag,
-          mars_retail_sales_unit_flag = rcd_hdr.mars_retail_sales_unit_flag,
-          mars_semi_finished_prdct_flag = rcd_hdr.mars_semi_finished_prdct_flag,
-          mars_rprsnttv_item_flag = rcd_hdr.mars_rprsnttv_item_flag,
-          mars_traded_unit_flag = rcd_hdr.mars_traded_unit_flag,
-          xplant_status = rcd_hdr.xplant_status,
-          xplant_status_valid = rcd_hdr.xplant_status_valid,
-          batch_mngmnt_reqrmnt_indctr = rcd_hdr.batch_mngmnt_reqrmnt_indctr,
-          mars_plant_material_type = rcd_hdr.mars_plant_material_type,
-          procurement_type = rcd_hdr.procurement_type,
-          special_procurement_type = rcd_hdr.special_procurement_type,
-          issue_storage_location = rcd_hdr.issue_storage_location,
-          mrp_controller = rcd_hdr.mrp_controller,
-          plant_specific_status_valid = rcd_hdr.plant_specific_status_valid,
-          deletion_indctr = rcd_hdr.deletion_indctr,
-          plant_specific_status = rcd_hdr.plant_specific_status,
-          assembly_scrap_percntg = rcd_hdr.assembly_scrap_percntg,
-          component_scrap_percntg = rcd_hdr.component_scrap_percntg,
-          backflush_indctr = rcd_hdr.backflush_indctr,
-          mars_rprsnttv_item_code = rcd_hdr.mars_rprsnttv_item_code,
-          regional_code_10 = rcd_hdr.regional_code_10,
-          regional_code_17 = rcd_hdr.regional_code_17,
-          regional_code_18 = rcd_hdr.regional_code_18,
-          regional_code_19 = rcd_hdr.regional_code_19,
-          bds_unit_cost = rcd_hdr.bds_unit_cost,
-          future_planned_price_1 = rcd_hdr.future_planned_price_1,
-          vltn_class = rcd_hdr.vltn_class,
-          bds_pce_factor_from_base_uom = rcd_hdr.bds_pce_factor_from_base_uom,
-          mars_pce_item_code = rcd_hdr.mars_pce_item_code,
-          mars_pce_interntl_article_no = rcd_hdr.mars_pce_interntl_article_no,
-          bds_sb_factor_from_base_uom = rcd_hdr.bds_sb_factor_from_base_uom,
-          mars_sb_item_code = rcd_hdr.mars_sb_item_code,
-          discontinuation_indctr = rcd_hdr.discontinuation_indctr,
-          followup_material = rcd_hdr.followup_material,
-          material_division = rcd_hdr.material_division,
-          mrp_type = rcd_hdr.mrp_type,
-          max_storage_prd = rcd_hdr.max_storage_prd,
-          max_storage_prd_unit = rcd_hdr.max_storage_prd_unit,
-          issue_unit = rcd_hdr.issue_unit,
-          planned_delivery_days = rcd_hdr.planned_delivery_days,
-          effective_out_date = rcd_hdr.effective_out_date,
-          idoc_timestamp = rcd_hdr.idoc_timestamp
-        where sap_material_code = rcd_hdr.sap_material_code
-          and plant_code = rcd_hdr.plant_code;
-          
-    if ( sql%notfound = true )
-    then
+    set bds_material_desc_en = rcd_hdr.bds_material_desc_en,
+      material_type = rcd_hdr.material_type,
+      material_grp = rcd_hdr.material_grp,
+      base_uom = rcd_hdr.base_uom,
+      order_unit = rcd_hdr.order_unit,
+      gross_weight = rcd_hdr.gross_weight,
+      net_weight = rcd_hdr.net_weight,
+      gross_weight_unit = rcd_hdr.gross_weight_unit,
+      length = rcd_hdr.length,
+      width = rcd_hdr.width,
+      height = rcd_hdr.height,
+      dimension_uom = rcd_hdr.dimension_uom,
+      interntl_article_no = rcd_hdr.interntl_article_no,
+      total_shelf_life = rcd_hdr.total_shelf_life,
+      mars_intrmdt_prdct_compnt_flag = rcd_hdr.mars_intrmdt_prdct_compnt_flag,
+      mars_merchandising_unit_flag = rcd_hdr.mars_merchandising_unit_flag,
+      mars_prmotional_material_flag = rcd_hdr.mars_prmotional_material_flag,
+      mars_retail_sales_unit_flag = rcd_hdr.mars_retail_sales_unit_flag,
+      mars_semi_finished_prdct_flag = rcd_hdr.mars_semi_finished_prdct_flag,
+      mars_rprsnttv_item_flag = rcd_hdr.mars_rprsnttv_item_flag,
+      mars_traded_unit_flag = rcd_hdr.mars_traded_unit_flag,
+      xplant_status = rcd_hdr.xplant_status,
+      xplant_status_valid = rcd_hdr.xplant_status_valid,
+      batch_mngmnt_reqrmnt_indctr = rcd_hdr.batch_mngmnt_reqrmnt_indctr,
+      mars_plant_material_type = rcd_hdr.mars_plant_material_type,
+      procurement_type = rcd_hdr.procurement_type,
+      special_procurement_type = rcd_hdr.special_procurement_type,
+      issue_storage_location = rcd_hdr.issue_storage_location,
+      mrp_controller = rcd_hdr.mrp_controller,
+      plant_specific_status_valid = rcd_hdr.plant_specific_status_valid,
+      deletion_indctr = rcd_hdr.deletion_indctr,
+      plant_specific_status = rcd_hdr.plant_specific_status,
+      assembly_scrap_percntg = rcd_hdr.assembly_scrap_percntg,
+      component_scrap_percntg = rcd_hdr.component_scrap_percntg,
+      backflush_indctr = rcd_hdr.backflush_indctr,
+      mars_rprsnttv_item_code = rcd_hdr.mars_rprsnttv_item_code,
+      regional_code_10 = rcd_hdr.regional_code_10,
+      regional_code_17 = rcd_hdr.regional_code_17,
+      regional_code_18 = rcd_hdr.regional_code_18,
+      regional_code_19 = rcd_hdr.regional_code_19,
+      sales_text_147 = '',
+      sales_text_149 = '',
+      bds_unit_cost = rcd_hdr.bds_unit_cost,
+      future_planned_price_1 = rcd_hdr.future_planned_price_1,
+      vltn_class = rcd_hdr.vltn_class,
+      bds_pce_factor_from_base_uom = rcd_hdr.bds_pce_factor_from_base_uom,
+      mars_pce_item_code = rcd_hdr.mars_pce_item_code,
+      mars_pce_interntl_article_no = rcd_hdr.mars_pce_interntl_article_no,
+      bds_sb_factor_from_base_uom = rcd_hdr.bds_sb_factor_from_base_uom,
+      mars_sb_item_code = rcd_hdr.mars_sb_item_code,
+      discontinuation_indctr = rcd_hdr.discontinuation_indctr,
+      followup_material = rcd_hdr.followup_material,
+      material_division = rcd_hdr.material_division,
+      mrp_type = rcd_hdr.mrp_type,
+      max_storage_prd = rcd_hdr.max_storage_prd,
+      max_storage_prd_unit = rcd_hdr.max_storage_prd_unit,
+      issue_unit = rcd_hdr.issue_unit,
+      planned_delivery_days = rcd_hdr.planned_delivery_days,
+      effective_out_date = rcd_hdr.effective_out_date,
+      idoc_timestamp = rcd_hdr.idoc_timestamp
+    where sap_material_code = rcd_hdr.sap_material_code
+      and plant_code = rcd_hdr.plant_code;
+    
+    if ( sql%notfound ) then
       insert into bds_material_plant_mfanz_test
       (
         sap_material_code,
@@ -611,9 +691,9 @@ create or replace package body bds_app.plant_material_loader as
         rcd_hdr.planned_delivery_days,
         rcd_hdr.effective_out_date,
         rcd_hdr.idoc_timestamp
-      );
-    end if; 
-    
+      );      
+    end if;
+
   /*-------------*/
   /* End routine */
   /*-------------*/
@@ -632,13 +712,12 @@ create or replace package body bds_app.plant_material_loader as
   /*-------------*/
   /* Begin block */
   /*-------------*/
-  BEGIN
+  begin
 
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
     /*--------------------------------------------*/
-    if ( var_trn_ignore = true )
-    then
+    if ( var_trn_ignore = true ) then
       return;
     end if;
 
@@ -651,14 +730,11 @@ create or replace package body bds_app.plant_material_loader as
     /* RETRIEVE - Retrieve the field values */
     /*--------------------------------------*/
     
-    var_country_code := lics_inbound_utility.get_number('COUNTRY_CODE', null);
-    var_country_code := nvl(var_country_code,0);
+    var_country_code := nvl(lics_inbound_utility.get_number('COUNTRY_CODE', null), 0);
     
-    if ( var_country_code = 147 )
-    then
+    if ( var_country_code = 147 ) then
       rcd_hdr.sales_text_147 := lics_inbound_utility.get_variable('SALES_TEXT');
-    elsif ( var_country_code = 149 )
-    then
+    elsif ( var_country_code = 149 ) then
       rcd_hdr.sales_text_149 := lics_inbound_utility.get_variable('SALES_TEXT');
     else
       lics_inbound_utility.add_exception('Invalid country code - var_country_code');
@@ -668,30 +744,26 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Retrieve exceptions raised 
     /*-*/
-    if ( lics_inbound_utility.has_errors = true )
-    then
+    if ( lics_inbound_utility.has_errors = true ) then
       var_trn_error := true;
     end if;
 
     /*-------------------------------------------*/
     /* ERROR - Ignore the data row when required */
     /*-------------------------------------------*/
-    if ( var_trn_error = true )
-    then
+    if ( var_trn_error = true ) then
       return;
     end if;
 
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/
-    if ( var_country_code = 147 )
-    then    
+    if ( var_country_code = 147 ) then    
       update bds_material_plant_mfanz_test
       set sales_text_147 = rcd_hdr.sales_text_147
       where sap_material_code = rcd_hdr.sap_material_code
         and plant_code = rcd_hdr.plant_code;
-    elsif ( var_country_code = 149 )
-    then
+    elsif ( var_country_code = 149 ) then
       update bds_material_plant_mfanz_test
       set sales_text_149 = rcd_hdr.sales_text_149
       where sap_material_code = rcd_hdr.sap_material_code
@@ -707,29 +779,19 @@ create or replace package body bds_app.plant_material_loader as
   /* This procedure performs the record PKG routine */
   /**************************************************/
   procedure process_record_pkg(par_record in varchar2) is
-
-    /*-*/
-    /* Local definitions 
-    /*-*/
-    --var_idoc_timestamp rcd_hdr.idoc_timestamp%TYPE;
-    var_count number;
-                         
+                        
   /*-------------*/
   /* Begin block */
   /*-------------*/
   begin
 
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
+    /*--------------------------------------------*/
+    /* IGNORE - Ignore the data row when required */
+    /*--------------------------------------------*/
 
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
+    if var_trn_ignore = true then
+       return;
+    end if;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -764,8 +826,7 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Retrieve exceptions raised 
     /*-*/
-    if ( lics_inbound_utility.has_errors = true )
-    then
+    if ( lics_inbound_utility.has_errors = true ) then
       var_trn_error := true;
     end if;
 
@@ -776,30 +837,19 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Validate the primary keys 
     /*-*/
-    if ( rcd_hdr.sap_material_code is null )
-    then
+    if ( rcd_hdr.sap_material_code is null ) then
        lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_MATERIAL_CODE');
        var_trn_error := TRUE;
     end if;
-    if ( rcd_hdr.plant_code is null )
-    then
+    if ( rcd_hdr.plant_code is null ) then
        lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_CODE');
        var_trn_error := TRUE;
     end if;
-    
-    /*--------------------------------------------*/
-    /* IGNORE - Ignore the data row when required */
-    /*--------------------------------------------*/
-    if ( var_trn_ignore = true )
-    then
-      return;
-    end if;
-          
+            
     /*----------------------------------------*/
     /* ERROR- Bypass the update when required */
     /*----------------------------------------*/
-    if ( var_trn_error = true )
-    then
+    if ( var_trn_error = true ) then
        return;
     end if;
 
@@ -815,83 +865,56 @@ create or replace package body bds_app.plant_material_loader as
     /*      - validate the IDOC sequence when locking row exists 
     /*      - lock and commit cycle encompasses transaction child procedure execution 
     /*-*/
-    update bds_material_pkg_instr_det_t
-    set variable_key = rcd_pkg.variable_key,
-      height = rcd_pkg.height,
-      width = rcd_pkg.width,
-      length = rcd_pkg.length,
-      hu_total_weight = rcd_pkg.hu_total_weight,
-      hu_total_volume = rcd_pkg.hu_total_volume,
-      dimension_uom = rcd_pkg.dimension_uom,
-      weight_unit = rcd_pkg.weight_unit,
-      volume_unit = rcd_pkg.volume_unit,
-      target_qty = rcd_pkg.target_qty,
-      rounding_qty = rcd_pkg.rounding_qty,
-      uom = rcd_pkg.uom
-    where sap_material_code = rcd_pkg.sap_material_code
-      and pkg_instr_table_usage = rcd_pkg.pkg_instr_table_usage
-      and pkg_instr_table = rcd_pkg.pkg_instr_table
-      and pkg_instr_type = rcd_pkg.pkg_instr_type
-      and pkg_instr_application = rcd_pkg.pkg_instr_application
-      and item_ctgry = rcd_pkg.item_ctgry
-      and sales_organisation = rcd_pkg.sales_organisation
-      and component = rcd_pkg.component
-      and pkg_instr_start_date = rcd_pkg.pkg_instr_start_date
-      and pkg_instr_end_date = rcd_pkg.pkg_instr_end_date;
-      
-    if ( sql%notfound = true )
-    then
-      insert into bds_material_pkg_instr_det_t
-      (
-        sap_material_code,
-        pkg_instr_table_usage,
-        pkg_instr_table,
-        pkg_instr_type,
-        pkg_instr_application,
-        item_ctgry,
-        sales_organisation,
-        component,
-        pkg_instr_start_date,
-        pkg_instr_end_date,
-        variable_key,
-        height,
-        width,
-        length,
-        hu_total_weight,
-        hu_total_volume,
-        dimension_uom,
-        weight_unit,
-        volume_unit,
-        target_qty,
-        rounding_qty,
-        uom
-      )
-      values 
-      (
-        rcd_pkg.sap_material_code,
-        rcd_pkg.pkg_instr_table_usage,
-        rcd_pkg.pkg_instr_table,
-        rcd_pkg.pkg_instr_type,
-        rcd_pkg.pkg_instr_application,
-        rcd_pkg.item_ctgry,
-        rcd_pkg.sales_organisation,
-        rcd_pkg.component,
-        rcd_pkg.pkg_instr_start_date,
-        rcd_pkg.pkg_instr_end_date,
-        rcd_pkg.variable_key,
-        rcd_pkg.height,
-        rcd_pkg.width,
-        rcd_pkg.length,
-        rcd_pkg.hu_total_weight,
-        rcd_pkg.hu_total_volume,
-        rcd_pkg.dimension_uom,
-        rcd_pkg.weight_unit,
-        rcd_pkg.volume_unit,
-        rcd_pkg.target_qty,
-        rcd_pkg.rounding_qty,
-        rcd_pkg.uom
-      );
-    end if;
+    insert into bds_material_pkg_instr_det_t
+    (
+      sap_material_code,
+      pkg_instr_table_usage,
+      pkg_instr_table,
+      pkg_instr_type,
+      pkg_instr_application,
+      item_ctgry,
+      sales_organisation,
+      component,
+      pkg_instr_start_date,
+      pkg_instr_end_date,
+      variable_key,
+      height,
+      width,
+      length,
+      hu_total_weight,
+      hu_total_volume,
+      dimension_uom,
+      weight_unit,
+      volume_unit,
+      target_qty,
+      rounding_qty,
+      uom
+    )
+    values 
+    (
+      rcd_pkg.sap_material_code,
+      rcd_pkg.pkg_instr_table_usage,
+      rcd_pkg.pkg_instr_table,
+      rcd_pkg.pkg_instr_type,
+      rcd_pkg.pkg_instr_application,
+      rcd_pkg.item_ctgry,
+      rcd_pkg.sales_organisation,
+      rcd_pkg.component,
+      rcd_pkg.pkg_instr_start_date,
+      rcd_pkg.pkg_instr_end_date,
+      rcd_pkg.variable_key,
+      rcd_pkg.height,
+      rcd_pkg.width,
+      rcd_pkg.length,
+      rcd_pkg.hu_total_weight,
+      rcd_pkg.hu_total_volume,
+      rcd_pkg.dimension_uom,
+      rcd_pkg.weight_unit,
+      rcd_pkg.volume_unit,
+      rcd_pkg.target_qty,
+      rcd_pkg.rounding_qty,
+      rcd_pkg.uom
+    );
      
   /*-------------*/
   /* End routine */

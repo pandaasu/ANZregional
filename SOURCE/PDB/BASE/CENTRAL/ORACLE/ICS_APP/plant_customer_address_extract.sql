@@ -1,31 +1,42 @@
-create or replace package plant_customer_address_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_atllad15_interface 
+  Package : plant_customer_address_extract 
   Owner   : ics_app 
 
   Description 
   ----------- 
   Customer Address Data for Plant databases 
 
-  1. PAR_SITE (MANDATORY) 
+  1. PAR_ACTION (MANDATORY) 
 
-    *ALL - extract and send address customer data to all assigned plant databases 
-    *SNACK - extract and send address customer data to MCA and SCO plant databases 
+    *ALL - send all address data  
+    *CUSTOMER - send address data matching a given customer code 
     
-  2. PAR_CUST_CODE (MANDATORY) 
+  2. PAR_DATA (MANDATORY) 
     
-    Set the customer code to get the address customer data for to send to the 
-  specified plant databases 
-    *ALL - extract all address customer data to the specified plant databases 
+    Data related to the action specified:
+      - *ALL = null 
+      - *CUSTOMER = customer code 
+
+  3. PAR_SITE (OPTIONAL) 
+  
+    Specify the site for the data to be sent to.
+      - *ALL = All sites (DEFAULT) 
+      - *MCA = Ballarat 
+      - *SCO = Scoresby 
+      - *WOD = Wodonga 
+      - *MFA = Wyong 
+      - *WGI = Wanganui 
 
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
 
-*******************************************************************************/ 
+*******************************************************************************/
+
+create or replace package ics_app.plant_customer_address_extract as
 
   /*-*/
   /* Public declarations 
@@ -38,44 +49,104 @@ end plant_customer_address_extract;
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body plant_atllad15_interface as
+create or replace package body ics_app.plant_customer_address_extract as
 
   /*-*/
-  /* Private exceptions
+  /* Private exceptions 
   /*-*/
   application_exception exception;
   pragma exception_init(application_exception, -20000);
 
-  procedure execute_extract(par_interface in varchar2, par_cust_code in varchar2);
+  /*-*/
+  /* Private declarations 
+  /*-*/
+  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
+  procedure execute_send(par_interface in varchar2);
+  
+  /*-*/
+  /* Global variables 
+  /*-*/
+  var_interface varchar2(32 char);
+  var_customer_code bds_addr_customer.customer_code%type;
+  
+  /*-*/
+  /* Private declarations 
+  /*-*/
+  type rcd_definition is record(value varchar2(4000 char));
+  type typ_definition is table of rcd_definition index by binary_integer;
+     
+  tbl_definition typ_definition;
 
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2) is
-  
-  /*-------------*/
-  /* Begin block */
-  /*-------------*/
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
+    
+    /*-*/
+    /* Local variables 
+    /*-*/
+    var_exception varchar2(4000);
+    var_action    varchar2(10);
+    var_data      varchar2(100);
+    var_site      varchar2(10);
+    var_start     boolean;
+         
   begin
-
+  
+    var_action := upper(nvl(trim(par_action), '*NULL'));
+    var_data := trim(par_data);
+    var_site := upper(nvl(trim(par_site), '*ALL'));
+    
+    tbl_definition.delete;
+    
     /*-*/
-    /* Validate the parameters
+    /* validate parameters 
     /*-*/
-    if (upper(par_site) != '*SNACK' and 
-        upper(par_site) != '*ALL') then
-      raise_application_error(-20000, 'Action parameter (' || par_site || ') must be *ALL or *SNACK');
-    elsif not (par_cust_code = '*ALL' or length(par_cust_code) > 0) then
-      raise_application_error(-20000, 'Package: plant_atllad15_interface parameter:' || par_cust_code || ' must be *ALL or a customer code.');
+    if ( var_action != '*ALL'
+        and var_action != '*CUSTOMER' ) then
+      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *CUSTOMER');
     end if;
-
-    /*-*/
-    /* Execute extract routines
-    /*-*/
-    if upper(par_site) = '*ALL' or upper(par_site) = '*SNACK' then
-       execute_extract('LADPDB03.5', par_cust_code); -- MCA/Ballarat 
-       execute_extract('LADPDB03.6', par_cust_code); -- SCO/Scoresby 
+    
+    if ( var_site != '*ALL'
+        and var_site != '*MCA'
+        and var_site != '*SCO'
+        and var_site != '*WOD'
+        and var_site != '*MFA'
+        and var_site != '*WGI' ) then
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI or NULL');
     end if;
-
+    
+    if ( var_action = '*CUSTOMER' and var_data is null ) then
+      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *CUSTOMER actions.');
+    end if;
+    
+    var_start := execute_extract(var_action, var_data);
+    
+    /*-*/
+    /* ensure data was returned in the cursor before creating interfaces 
+    /* to send to the specified site(s) 
+    /*-*/ 
+    if ( var_start = true ) then    
+      if (par_site = '*ALL' or '*MFA') then
+        execute_send('LADPDB02.1');   
+      end if;    
+      if (par_site = '*ALL' or '*WGI') then
+        execute_send('LADPDB02.2');   
+      end if;    
+      if (par_site = '*ALL' or '*WOD') then
+        execute_send('LADPDB02.3');   
+      end if;    
+      if (par_site = '*ALL' or '*BTH') then
+        execute_send('LADPDB02.4');   
+      end if;    
+      if (par_site = '*ALL' or '*MCA') then
+        execute_send('LADPDB02.5');   
+      end if;
+      if (par_site = '*ALL' or '*SCO') then
+        execute_send('LADPDB02.6');   
+      end if;
+    end if; 
+      
   /*-------------------*/
   /* Exception handler */
   /*-------------------*/
@@ -86,258 +157,214 @@ create or replace package body plant_atllad15_interface as
     /**/
     when others then
 
-      /*-*/
-      /* Rollback the database 
-      /*-*/
-      rollback;
+    /*-*/
+    /* Rollback the database 
+    /*-*/
+    rollback;
 
-      /*-*/
-      /* Finalise the outbound loader when required 
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-       lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-       lics_outbound_loader.finalise_interface;
-      end if;
+    /*-*/
+    /* Save the exception 
+    /*-*/
+    var_exception := substr(sqlerrm, 1, 1024);
 
-      /*-*/
-      /* Raise an exception to the calling application 
-      /*-*/
-      raise_application_error(-20000, 'FATAL ERROR - ATLLAD15 Adress Customer - ' || substr(SQLERRM, 1, 1024));
+    /*-*/
+    /* Finalise the outbound loader when required 
+    /*-*/
+    if ( lics_outbound_loader.is_created = true ) then
+      lics_outbound_loader.add_exception(var_exception);
+      lics_outbound_loader.finalise_interface;
+    end if;
 
-  /*-------------*/
-  /* End routine */
-  /*-------------*/
+    /*-*/
+    /* Raise an exception to the calling application 
+    /*-*/
+    raise_application_error(-20000, 'plant_customer_address_extract - ' || 'customer_code: ' || var_customer_code || ' - ' || var_exception);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
   end execute;
   
   
+  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
   
-  procedure execute_extract(par_interface in varchar2, par_cust_code in varchar2) is
     /*-*/
-    /* Local definitions
+    /* Local variables 
     /*-*/
-    var_instance number(15,0);
-    var_start boolean;
-
+    var_index number(5,0);
+    var_result boolean;
+    
     /*-*/
-    /* Local cursors
+    /* Local cursors 
     /*-*/
-    cursor csr_addr_cust is
-      select customer_code, 
-        address_version, 
-        to_char(valid_from_date,'yyyymmdd') as valid_from_date, 
-        to_char(valid_to_date,'yyyymmdd') as valid_to_date,
-        title,
-        name, 
-        name_02, 
-        name_03, 
-        name_04, 
-        city, 
-        district, 
-        city_post_code,
-        po_box_post_code, 
-        company_post_code, 
-        po_box, 
-        po_box_minus_number,
-        po_box_city, 
-        po_box_region, 
-        po_box_country, 
-        po_box_country_iso,
-        transportation_zone, 
-        street,
-        house_number, 
-        location, 
-        building, 
-        floor,
-        room_number, 
-        country, 
-        country_iso, 
-        language, 
-        language_iso, 
-        region_code,
-        search_term_01, 
-        search_term_02, 
-        phone_number, 
-        phone_extension,
-        phone_full_number, 
-        fax_number, 
-        fax_extension, 
-        fax_full_number
+    cursor csr_bds_addr_customer is
+      select t01.customer_code as customer_code, 
+        t01.address_version as address_version, 
+        to_char(t01.valid_from_date,'yyyymmdd') as valid_from_date, 
+        to_char(t01.valid_to_date,'yyyymmdd') as valid_to_date,
+        t01.title as title,
+        t01.name as name, 
+        t01.name_02 as name_02, 
+        t01.name_03 as name_03, 
+        t01.name_04 as name_04, 
+        t01.city as city, 
+        t01.district as district, 
+        t01.city_post_code as city_post_code,
+        t01.po_box_post_code as po_box_post_code, 
+        t01.company_post_code as company_post_code, 
+        t01.po_box as po_box, 
+        t01.po_box_minus_number as po_box_minus_number,
+        t01.po_box_city as po_box_city, 
+        t01.po_box_region as po_box_region, 
+        t01.po_box_country as po_box_country, 
+        t01.po_box_country_iso as po_box_country_iso,
+        t01.transportation_zone as transportation_zone, 
+        t01.street as street,
+        t01.house_number as house_number, 
+        t01.location as location, 
+        t01.building as building, 
+        t01.floor as floor,
+        t01.room_number as room_number, 
+        t01.country as country, 
+        t01.country_iso as country_iso, 
+        t01.language as language, 
+        t01.language_iso as language_iso, 
+        t01.region_code as region_code,
+        t01.search_term_01 as search_term_01, 
+        t01.search_term_02 as search_term_02, 
+        t01.phone_number as phone_number, 
+        t01.phone_extension as phone_extension,
+        t01.phone_full_number as phone_full_number, 
+        t01.fax_number as fax_number, 
+        t01.fax_extension as fax_extension, 
+        t01.fax_full_number as fax_full_number
       from bds_addr_customer t01
-      where (ltrim(t01.customer_code, '0') = ltrim(par_cust_code,'0') or par_cust_code = '*ALL')
-        and exists 
+      where exists 
         (
           select 1
           from bds_cust_sales_area t02
           where t02.sales_org_code in ('147', '149')
             and t02.customer_code = t01.customer_code
+        )
+        and 
+        (
+          par_action = '*ALL'
+          or (par_action = '*CUSTOMER' and ltrim(t01.customer_code,'0') = ltrim(par_data,'0'))
         );
-    rec_addr_cust csr_addr_cust%rowtype;
+    rcd_bds_addr_customer csr_bds_addr_customer%rowtype;
 
  /*-------------*/
  /* Begin block */
  /*-------------*/
- begin
+  begin
 
     /*-*/
-    /* Initialise variables
+    /* Initialise variables 
     /*-*/
-    var_start := true;
+    var_result := true;
 
     /*-*/
-    /* Open Cursor for output
+    /* Open Cursor for output 
     /*-*/
-    open csr_addr_cust;
+    open csr_bds_addr_customer;
     loop
-       fetch csr_addr_cust into rec_addr_cust;
-       if (csr_addr_cust%notfound) then
-          exit;
-       end if;
+    
+      fetch csr_bds_addr_customer into rcd_bds_addr_customer;
+      exit when csr_bds_addr_customer%notfound;
 
-       /*-*/
-       /* Create Outbound Interface if record(s) exist
-       /*-*/
-       if (var_start) then
-
-          var_instance := lics_outbound_loader.create_interface('LADPDB',null,'LADCAD01.dat');
-
-          var_start := false;
-
-       end if;
-
-       /*-*/
-       /* Append Data Lines
-       /*-*/
-       lics_outbound_loader.append_data('HDR' ||
-                                        rpad(to_char(nvl(rec_addr_cust.sap_material_code,' ')),18, ' ') ||
-                                        nvl(rec_addr_cust.material_desc_ch,' ')||rpad(' ',40-length(nvl(rec_addr_cust.material_desc_ch,' ')),' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.material_desc_en,' ')),40, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.mars_rprsnttv_item_code,' ')),18, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.net_weight,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.gross_weight,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.matl_length,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.width,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.height,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.pcs_per_case,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.outers_per_case,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.cases_per_pallet,' ')),16, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_essnc_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_essnc_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_essnc_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_flag_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_flag_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_flag_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_sub_flag_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_sub_flag_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.brand_sub_flag_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bus_sgmnt_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bus_sgmnt_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bus_sgmnt_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.mkt_sgmnt_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.mkt_sgmnt_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.mkt_sgmnt_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_ctgry_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_ctgry_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_ctgry_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_type_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_type_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_type_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.cnsmr_pack_frmt_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.cnsmr_pack_frmt_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.cnsmr_pack_frmt_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.ingred_vrty_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.ingred_vrty_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.ingred_vrty_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_size_grp_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_size_grp_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_size_grp_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_pack_size_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_pack_size_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.prdct_pack_size_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.sales_organisation_135,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.sales_organisation_234,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.base_uom_code,' ')),3, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.material_type_code,' ')),4, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.material_type_desc,' ')),40, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.material_sts_code,' ')),8, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bdt_code,' ')),2, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bdt_desc,' ')),30, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.bdt_abbrd_desc,' ')),12, ' ') ||
-                                        rpad(to_char(nvl(rec_addr_cust.tax_classification,' ')),1, ' '));
-
-
-       /*-*/
-       /* Open Cursor for Inventory Line Output
-       /*-*/
-       open csr_matl_invntry;
-       loop
-          fetch csr_matl_invntry into rec_matl_invntry;
-          if (csr_matl_invntry%notfound) then
-             exit;
-          end if;
-
-          /*-*/
-          /* Append Data Lines
-          /*-*/
-          lics_outbound_loader.append_data('INV' ||
-                                           rpad(to_char(nvl(rec_matl_invntry.sap_company_code,' ')),6, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.sap_plant_code,' ')),4, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.inv_exp_date,' ')),8, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.inv_unreleased_qty,' ')),16, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.inv_reserved_qty,' ')),16, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.inv_class01,' ')),3, ' ') ||
-                                           rpad(to_char(nvl(rec_matl_invntry.inv_class02,' ')),3, ' '));
-
-       end loop;
-       close csr_matl_invntry;
+      var_index := tbl_definition.count + 1;
+      var_result := false;
+      
+      /*-*/
+      /* Store current customer code for error message purposes 
+      /*-*/
+      var_customer_code := rcd_bds_addr_customer.customer_code;
+              
+      tbl_definition(var_index).value := 'HDR'
+        || rpad(to_char(nvl(rcd_bds_addr_customer.customer_code,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.address_version,' ')),5,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.valid_from_date,' ')),14,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.valid_to_date,' ')),14,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.title,' ')),4,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.name,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.name_02,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.name_03,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.name_04,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.city,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.district,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.city_post_code,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_post_code,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.company_post_code,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_minus_number,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_city,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_region,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_country,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_country_iso,' ')),2,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.transportation_zone,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.street,' ')),60,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.house_number,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.location,' ')),40,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.building,' ')),20,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.floor,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.room_number,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.country,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.country_iso,' ')),2,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.language,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.language_iso,' ')),2,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.region_code,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.search_term_01,' ')),20,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.search_term_02,' ')),20,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_number,' ')),30,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_extension,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_full_number,' ')),30,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_number,' ')),30,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_extension,' ')),10,' ')
+        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_full_number,' ')),30,' ');
 
     end loop;
-    close csr_addr_cust;
+    close csr_bds_addr_customer;
 
+    return var_result;
+    
+  end execute_extract;
+  
+  procedure execute_send(par_interface in varchar2) is
+  
     /*-*/
-    /* Finalise Interface
+    /* Local variables 
     /*-*/
-    if lics_outbound_loader.is_created = true then
-       lics_outbound_loader.finalise_interface;
+    var_instance number(15,0);
+    
+  begin
+
+    for idx in 1..tbl_definition.count loop
+      if ( lics_outbound_loader.is_created = false ) then
+        var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+      end if;
+      
+      lics_outbound_loader.append_data(tbl_definition(idx).value);
+    end loop;
+
+    if ( lics_outbound_loader.is_created = true ) then
+      lics_outbound_loader.finalise_interface;
     end if;
 
- /*-------------------*/
- /* Exception handler */
- /*-------------------*/
- exception
+    commit;
+  end execute_send;
 
-    /**/
-    /* Exception trap
-    /**/
-    when others then
-
-       /*-*/
-       /* Rollback the database
-       /*-*/
-       rollback;
-
-       /*-*/
-       /* Finalise the outbound loader when required
-       /*-*/
-       if lics_outbound_loader.is_created = true then
-          lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-          lics_outbound_loader.finalise_interface;
-       end if;
-
-       /*-*/
-       /* Raise an exception to the calling application
-       /*-*/
-       raise_application_error(-20000, 'FATAL ERROR - LADCAD01 MATERIAL - ' || substr(SQLERRM, 1, 1024));
-
- /*-------------*/
- /* End routine */
- /*-------------*/
- end execute;
-
-end plant_atllad15_interface;
+end plant_customer_address_extract;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym plant_atllad15_interface for site_app.plant_atllad15_interface;
-grant execute on plant_atllad15_interface to public;
+/*-*/
+/* Authority 
+/*-*/
+grant execute on ics_app.plant_customer_address_extract to appsupport;
+grant execute on ics_app.plant_customer_address_extract to lads_app;
+grant execute on ics_app.plant_customer_address_extract to lics_app;
+grant execute on ics_app.plant_customer_address_extract to ics_executor;
+
+/*-*/
+/* Synonym 
+/*-*/
+create or replace public synonym plant_customer_address_extract for ics_app.plant_customer_address_extract;

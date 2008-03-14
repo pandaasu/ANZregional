@@ -493,7 +493,7 @@ create or replace package body ics_app.plant_process_order_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PLANT_ATLLAD01_INTERFACE - ' || 'CNTL_REC_ID: ' || to_char(par_cntl_rec_id) || ' - ' || var_exception);
+         raise_application_error(-20000, 'PLANT_PROCESS_ORDER_EXTRACT - ' || 'CNTL_REC_ID: ' || to_char(par_cntl_rec_id) || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */

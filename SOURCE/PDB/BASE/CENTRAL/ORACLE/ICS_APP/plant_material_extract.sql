@@ -1,5 +1,3 @@
-create or replace package ics_app.plant_material_extract 
-as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -46,6 +44,8 @@ as
 
 *******************************************************************************/ 
 
+create or replace package ics_app.plant_material_extract as
+
   /*-*/
   /* Public declarations 
   /* par_material either null or a material code 
@@ -76,8 +76,7 @@ as
   /*-*/
   /* Global variables 
   /*-*/
-  var_interface varchar2(32 char);
-  var_output    varchar2(4000);
+  var_material_code bds_material_hdr.sap_material_code%type;
       
   /*-*/
   /* Private declarations 
@@ -100,7 +99,7 @@ as
          
   begin
   
-    var_action := upper(nvl(trim(par_action), con_null));
+    var_action := upper(nvl(trim(par_action), '*NULL'));
     var_data := trim(par_data);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
@@ -175,7 +174,7 @@ as
     /*-*/
     /* Save the exception 
     /*-*/
-    var_exception := SUBSTR(SQLERRM, 1, 1024);
+    var_exception := substr(sqlerrm, 1, 1024);
 
     /*-*/
     /* Finalise the outbound loader when required 
@@ -200,9 +199,9 @@ as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
-    var_result boolean;
-    var_material_code bds_material_hdr.sap_material_code%type;
+    var_index     number(5,0);        
+    var_result    boolean;
+    var_skip_pkg  boolean; 
   
     /*-*/
     /* Local cursors 
@@ -381,6 +380,7 @@ as
     /* Initialise variables 
     /*-*/
     var_result := true;
+    var_skip_pkg := false;
   
     open csr_bds_material_plant_mfanz;
     loop
@@ -390,9 +390,25 @@ as
            
       var_index := tbl_definition.count + 1;
       var_result := false;
+      
+      if ( var_material_code is null or var_material_code <> rcd_bds_material_plant_mfanz.sap_material_code) then
+      
+        var_material_code := rcd_bds_material_plant_mfanz.sap_material_code;
+        
+        tbl_definition(var_index).value := 'CTL'
+          || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.sap_material_code,' ')),18,' ')
+          || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
+        
+        var_index := tbl_definition.count + 1;
+        var_skip_pkg := false;
+      else
+        /*-*/
+        /* Skip the package load as it was done in the previous loop 
+        /*-*/
+        var_skip_pkg := true;
+      end if;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.sap_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.plant_code,' ')),4,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.bds_material_desc_en,' ')),40,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.material_type,' ')),4,' ')
@@ -454,36 +470,26 @@ as
       
       -- include the sales text in a seperate child record if it contains data 
       if ( rcd_bds_material_plant_mfanz.sales_text_147 is not null
-          and length(trim(rcd_bds_material_plant_mfanz.sales_text_147)) > 0 )
-      then        
+          and length(trim(rcd_bds_material_plant_mfanz.sales_text_147)) > 0 ) then        
         var_index := tbl_definition.count + 1;
-        var_output := 'STX147' || rpad(to_char(rcd_bds_material_plant_mfanz.sales_text_147), 2000, ' ');      
-        tbl_definition(var_index).value := var_output;
+        tbl_definition(var_index).value := 'STX147' || rpad(to_char(rcd_bds_material_plant_mfanz.sales_text_147), 2000, ' ');      
       end if;
       
       if ( rcd_bds_material_plant_mfanz.sales_text_149 is not null
-          and length(trim(rcd_bds_material_plant_mfanz.sales_text_149)) > 0 )
-      then        
+          and length(trim(rcd_bds_material_plant_mfanz.sales_text_149)) > 0 ) then        
         var_index := tbl_definition.count + 1;
-        var_output := 'STX149' || rpad(to_char(rcd_bds_material_plant_mfanz.sales_text_149), 2000, ' ');      
-        tbl_definition(var_index).value := var_output;
+        tbl_definition(var_index).value := 'STX149' || rpad(to_char(rcd_bds_material_plant_mfanz.sales_text_149), 2000, ' ');      
       end if;          
-              
-      /*-*/
-      /* add entries for the associated packaging instructions 
-      /* these are not plant code specific 
-      /*-*/
-      if ( var_material_code <> rcd_bds_material_plant_mfanz.sap_material_code 
-          or var_material_code is null ) 
-      then               
+      
+      if ( var_skip_pkg = false ) then                         
         open csr_bds_material_pkg_instr_det;
         loop
           fetch csr_bds_material_pkg_instr_det into rcd_bds_material_pkg_instr_det;
           exit when csr_bds_material_pkg_instr_det%notfound;
-                             
-          var_index := tbl_definition.count + 1;
                                
-          var_output := 'PKG'
+          var_index := tbl_definition.count + 1;
+                                 
+          tbl_definition(var_index).value := 'PKG'
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_table_usage,' ')),1,' ')
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_table,' ')),64,' ')
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_type,' ')),4,' ')
@@ -505,16 +511,10 @@ as
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.target_qty,'0')),38,' ')
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.rounding_qty,'0')),38,' ') 
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.uom,' ')),3,' ');
-          
-          tbl_definition(var_index).value := var_output; 
+            
         end loop;
-        close csr_bds_material_pkg_instr_det;          
+        close csr_bds_material_pkg_instr_det;                
       end if;
-           
-      /*-*/
-      /* save code so that only one packaging record is assembled against the material code 
-      /*-*/
-      var_material_code := rcd_bds_material_plant_mfanz.sap_material_code;
            
     end loop;
     close csr_bds_material_plant_mfanz;
@@ -533,16 +533,14 @@ as
   begin
 
     for idx in 1..tbl_definition.count loop
-      if ( lics_outbound_loader.is_created = false )
-      then
+      if ( lics_outbound_loader.is_created = false ) then
         var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
       end if;
       
       lics_outbound_loader.append_data(tbl_definition(idx).value);
     end loop;
 
-    if ( lics_outbound_loader.is_created = true ) 
-    then
+    if ( lics_outbound_loader.is_created = true ) then
       lics_outbound_loader.finalise_interface;
     end if;
 

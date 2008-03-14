@@ -212,8 +212,8 @@ log_cleanup "${SCRIPT_PATH}/../archive"     "21" "*.*"
 log_cleanup "${SCRIPT_PATH}/../inbound"     "14" "*.*"
 log_cleanup "${SCRIPT_PATH}/../outbound"    "14" "*.*"
 
-clean_up_file $TMP_OUT
-
 log_file "INFO: [main] Completion of script [${SCRIPT_ID}]"
+
+clean_up_file $TMP_OUT
 
 exit 0
