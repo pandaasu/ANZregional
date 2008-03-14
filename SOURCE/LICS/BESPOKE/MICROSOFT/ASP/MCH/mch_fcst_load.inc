@@ -156,6 +156,10 @@
          document.main.submit();
       }
    }
+   function doExport(strIdentifier) {
+      if (!processForm()) {return;};
+      doExportOutput(eval('document.body'),strIdentifier,'*FILE','select * from table(dw_fcst_maintenance.export_load(\'' + strIdentifier + '\'))');
+   }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
       return;
@@ -202,6 +206,7 @@
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_export.inc"-->
 <!--#include file="ics_std_stream_xml.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
