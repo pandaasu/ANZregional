@@ -125,42 +125,11 @@ sub ProcessSelect()
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " t01.extract_type,"
-   strQuery = strQuery & " t01.extract_type_description"
+   strQuery = strQuery & " t01.extract_type_description,"
+   strQuery = strQuery & " t01.extract_plan_group"
    strQuery = strQuery & " from fcst_extract_type t01"
    strQuery = strQuery & " order by t01.extract_type asc"
    strReturn = objSelection.Execute("EXTRACT", strQuery, lngSize)
-   if strReturn <> "*OK" then
-      strMode = "FATAL"
-      exit sub
-   end if
-
-   '//
-   '// Retrieve the forecast extract type load list
-   '//
-   lngSize = 0
-   strQuery = "select"
-   strQuery = strQuery & " t01.extract_type,"
-   strQuery = strQuery & " t01.load_type"
-   strQuery = strQuery & " from fcst_extract_type_load t01"
-   strQuery = strQuery & " order by t01.extract_type asc, t01.load_type asc"
-   strReturn = objSelection.Execute("EXTRACT_LOAD", strQuery, lngSize)
-   if strReturn <> "*OK" then
-      strMode = "FATAL"
-      exit sub
-   end if
-
-   '//
-   '// Retrieve the forecast load list
-   '//
-   lngSize = 0
-   strQuery = "select"
-   strQuery = strQuery & " t01.load_identifier,"
-   strQuery = strQuery & " t01.load_description,"
-   strQuery = strQuery & " t01.load_type,"
-   strQuery = strQuery & " to_char(t01.load_data_version)"
-   strQuery = strQuery & " from fcst_load_header t01"
-   strQuery = strQuery & " order by t01.load_identifier asc"
-   strReturn = objSelection.Execute("LOAD", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
       exit sub

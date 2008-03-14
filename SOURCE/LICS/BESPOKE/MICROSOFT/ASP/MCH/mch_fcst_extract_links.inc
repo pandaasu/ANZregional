@@ -3,47 +3,39 @@
    //////////////////////////
    // Extract links script //
    //////////////////////////
-   var objExtractTypes = new Array();<%for i = objSelection.ListLower("EXTRACT_LOAD") to objSelection.ListUpper("EXTRACT_LOAD")%>
-   objExtractTypes[<%=i%>] = new clsExtractType('<%=objSelection.ListValue01("EXTRACT_LOAD",i)%>','<%=objSelection.ListValue02("EXTRACT_LOAD",i)%>');<%next%>
-   function clsExtractType(strExtractType,strLoadType) {
-      this.extractType = strExtractType;
-      this.loadType = strLoadType;
-      this.selectCount = 0;
-   }
-   var objLinks = new Array();<%for i = objSelection.ListLower("LOAD") to objSelection.ListUpper("LOAD")%>
-   objLinks[<%=i%>] = new clsLink('<%=objSelection.ListValue01("LOAD",i)%>','<%=replace(objSelection.ListValue02("LOAD",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("LOAD",i)%>','<%=objSelection.ListValue04("LOAD",i)%>');<%next%>
-   function clsLink(strIdentifier,strDescription,strLoadType,strLoadVersion) {
-      this.identifier = strIdentifier;
-      this.description = strDescription;
-      this.loadType = strLoadType;
-      this.loadVersion = strLoadVersion;
-   }
    function loadExtractLinks() {
-      var objSltLink = document.getElementById('sltExtractLink');
-      var objSltDetail = document.getElementById('sltExtractDetail');
       var strExtractType = document.getElementById('INP_ExtractType').value;
       var strExtractVersion = document.getElementById('INP_ExtractVersion').value;
+      if (strExtractType != '' && (strExtractVersion != '' || strExtractVersion != '0')) {
+         doActivityStart(document.body);
+         doGetRequest('<%=strBase%>mch_fcst_extract_load.asp?QRY_ExtractType='+strExtractType+'QRY_ExtractVersion='+strExtractVersion,function(strResponse) {displayExtractLinks(strResponse);},true);
+      }
+   }
+   function displayExtractLinks(strResponse) {
+      var objSltLink = document.getElementById('sltExtractLink');
+      var objSltDetail = document.getElementById('sltExtractDetail');
       objSltLink.options.length = 0;
       objSltLink.selectedIndex = -1;
       objSltDetail.options.length = 0;
       objSltDetail.selectedIndex = -1;
-      for (var i=0;i<objLinks.length;i++) {
-         for (var j=0;j<objExtractTypes.length;j++) {
-            if (strExtractType != '' && strExtractVersion != '') {
-               if (objExtractTypes[j].extractType == strExtractType && objLinks[i].loadVersion == strExtractVersion && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
-               }
-            } else if (strExtractType != '') {
-               if (objExtractTypes[j].extractType == strExtractType && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
-               }
-            } else if (strExtractVersion != '') {
-               if (objLinks[i].loadVersion == strExtractVersion && objExtractTypes[j].loadType == objLinks[i].loadType) {
-                  objSltLink.options[objSltLink.options.length] = new Option(objLinks[i].loadType+' / '+objLinks[i].loadVersion+' / ('+objLinks[i].identifier+') '+objLinks[i].description,objLinks[i].identifier);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var aryReturn = strResponse.substring(3,strResponse.length).split('\n');
+         for (var i=0;i<aryReturn.length;i++) {
+            var intIdx = aryReturn[i].indexOf('\t');
+            if (intIdx != -1) {
+               var strValue = aryReturn[i].substring(0,intIdx);
+               var strText = aryReturn[i].substring(intIdx+1,aryReturn[i].length);
+               if (strValue == '*LOADTYPE') {
+                  objSltLink.options[objSltLink.options.length] = new Option(strText,strText+'@*LOADTYPE');
+               } else {
+                  objSltLink.options[objSltLink.options.length] = new Option('('+strValue.substring(strValue.indexOf('@')+1,strValue.length)+') '+strText,strValue);
                }
             }
          }
       }
+      doActivityStop();
    }
    function selectExtractLinks() {
       var objSltLink;
@@ -53,7 +45,7 @@
       objSltLink = document.getElementById('sltExtractLink');
       objSltDetail = document.getElementById('sltExtractDetail');
       for (var i=0;i<objSltLink.options.length;i++) {
-         if (objSltLink.options[i].selected == true) {
+         if (objSltLink.options[i].selected == true && objSltLink[i].value.substring(objSltLink[i].value.indexOf('@')+1,objSltLink[i].value.length) != '*LOADTYPE') {
             objSltDetail.options[objSltDetail.options.length] = new Option(objSltLink[i].text,objSltLink[i].value);
          } else {
             objLink[intIndex] = objSltLink[i];
@@ -109,41 +101,14 @@
       var strReturn = '';
       var objHidden = null;
       var objSltDetail = document.getElementById('sltExtractDetail');
-      var strExtractType = document.getElementById('INP_ExtractType').value;
-      for (var i=0;i<objExtractTypes.length;i++) {
-         objExtractTypes[i].selectCount = 0;
-         if (objExtractTypes[i].extractType == strExtractType) {
-            for (var j=0;j<objLinks.length;j++) {
-               if (objExtractTypes[i].loadType == objLinks[j].loadType) {
-                  for (var k=0;k<objSltDetail.options.length;k++) {
-                     if (objLinks[j].identifier == objSltDetail.options[k].value) {
-                        objExtractTypes[i].selectCount++;
-                     }
-                  }
-               }
-            }
-         }
+      for (var i=0;i<objSltDetail.options.length;i++) {
+         objHidden = document.createElement('input');
+         objHidden.setAttribute('type','hidden');
+         objHidden.setAttribute('name','DET_ExtractLink'+(i+1));
+         objHidden.setAttribute('value',  objSltDetail.options[i].value.substring(objSltDetail.options[i].value.indexOf('@')+1,objSltDetail.options[i].value.length));
+         document.forms['main'].appendChild(objHidden);
       }
-   //   for (var i=0;i<objExtractTypes.length;i++) {
-   //      if (objExtractTypes[i].extractType == strExtractType) {
-   //         if (objExtractTypes[i].selectCount == 0 ) {
-   //            strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has no forecast load selected';
-   //         }
-   //         if (objExtractTypes[i].selectCount > 1) {
-   //            strReturn = 'Forecast extract load type (' + objExtractTypes[i].loadType + ') has more than one forecast load selected';
-   //         }
-   //      }
-   //   }
-      if (strReturn == '') {
-         for (var i=0;i<objSltDetail.options.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_ExtractLink'+(i+1));
-            objHidden.setAttribute('value',objSltDetail.options[i].value);
-            document.forms['main'].appendChild(objHidden);
-         }
-         document.getElementById('DET_ExtractLinkCount').value = objSltDetail.options.length;
-      }
+      document.getElementById('DET_ExtractLinkCount').value = objSltDetail.options.length;
       return strReturn;
    }
 // -->

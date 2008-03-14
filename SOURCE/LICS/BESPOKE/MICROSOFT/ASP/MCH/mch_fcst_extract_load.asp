@@ -78,7 +78,7 @@ sub ProcessSelect()
    '//
    '// Execute the forecast load selection
    '//
-   strQuery = "select * from table(dw_fcst_maintenance.retrieve_loads('" & objForm.Fields("QRY_EXTRACT_TYPE").Value & "'," & objForm.Fields("QRY_EXTRACT_VERSION").Value & "))"
+   strQuery = "select * from table(dw_fcst_maintenance.retrieve_loads('" & objForm.Fields("QRY_ExtractType").Value & "'," & objForm.Fields("QRY_ExtractVersion").Value & "))"
    strReturn = objSelection.Execute("LOADS", strQuery, 0)
 
    '//
