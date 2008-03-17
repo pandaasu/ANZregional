@@ -24,6 +24,7 @@ create or replace package lads_atllad01_monitor as
     2007/08   Steve Gregan   Removed manu call
                              Added site plant interface execution
     2007/10   Steve Gregan   Permanently removed BDS flattening call
+    2008/03   Trevor Keon    Changed process order extract name 
 
    *******************************************************************************/
 

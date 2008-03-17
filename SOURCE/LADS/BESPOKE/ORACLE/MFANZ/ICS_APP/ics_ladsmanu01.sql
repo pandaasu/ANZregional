@@ -23,6 +23,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 	/*   Added by SG 19 Jun 2007  - included text truncation (max 2000/4000)
 	/*   Added by SG 27 Jul 2007  - included validation process order logic
 	/*   Added by SG 22 Aug 2007  - excluded AU10 and NZ01 from validation process order logic
+  /*   Added by TK 17 Mar 2008  - removed AU10 from validation process order exclusions 
 	/*-*/
 
    /*-*/
@@ -276,11 +277,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
       rcd_cntl_rec.proc_order := rcd_lads_ctl_rec_vpi.pppi_process_order;
       if not(rcd_cntl_rec.proc_order is null) then
          if substr(rcd_cntl_rec.proc_order,1,1) < '0' or substr(rcd_cntl_rec.proc_order,1,1) > '9' then
-            if rcd_lads_ctl_rec_hpi.plant not in ('AU10','NZ01') then
+            if rcd_lads_ctl_rec_hpi.plant != 'NZ01' then
                select manu_recipe_sequence.nextval into var_process_order from dual;
                rcd_cntl_rec.proc_order := substr(rcd_cntl_rec.proc_order,1,1) || to_char(var_process_order,'fm00000000000');
             else
-               raise_application_error(-20000, 'Process ZORDINE - Field - Validation PROC_ORDER - cannot be sent for AU10 and NZ01');
+               raise_application_error(-20000, 'Process ZORDINE - Field - Validation PROC_ORDER - cannot be sent for NZ01');
             end if;
          end if;
       else

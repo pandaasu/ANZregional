@@ -204,7 +204,7 @@ create or replace package body ics_app.plant_bom_extract as
         t01.bom_number as bom_number,
         t01.bom_msg_function as bom_msg_function, 
         t01.bom_usage as bom_usage, 
-        to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date
+        to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
         to_char(t01.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
         t01.bom_base_qty as bom_base_qty, 
         t01.bom_base_uom as bom_base_uom, 
@@ -263,15 +263,15 @@ create or replace package body ics_app.plant_bom_extract as
         || rpad(to_char(nvl(rcd_bds_bom_all.bom_usage,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.bom_eff_from_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.bom_eff_to_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_base_qty,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_all.bom_base_qty,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.bom_base_uom,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.bom_status,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_sequence,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_all.item_sequence,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_number,' ')),4,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_msg_function,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_category,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_base_qty,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_all.item_base_qty,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_base_uom,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_eff_from_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_bom_all.item_eff_to_date,' ')),14,' ');

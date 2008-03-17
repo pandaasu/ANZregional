@@ -250,7 +250,7 @@ create or replace package body ics_app.plant_customer_sales_area_extract as
         t01.agency_business_flag as agency_business_flag, 
         t01.uom_group as uom_group, 
         t01.over_delivery_tolerance as over_delivery_tolerance,
-        t01.under_delivery_tolerance as under_delivery_tolerance,, 
+        t01.under_delivery_tolerance as under_delivery_tolerance, 
         t01.unlimited_over_delivery as unlimited_over_delivery,
         t01.product_proposal_proc as product_proposal_proc, 
         t01.pod_processing as pod_processing, 
