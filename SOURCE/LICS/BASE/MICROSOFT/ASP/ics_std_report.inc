@@ -10,7 +10,7 @@
          return;
       }
       cobjReportParent = objParent;
-      var strURL = '<%=strBase%>ics_report.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Query=' + strQuery;
+      var strURL = '<%=strBase%>ics_report.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Query=' + strQuer;
       cobjReport = document.createElement('iframe');
       cobjReport.src = strURL;
       cobjReport.style.position = 'absolute';
