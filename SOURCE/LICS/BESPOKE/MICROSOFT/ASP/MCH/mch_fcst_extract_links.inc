@@ -30,7 +30,7 @@
                if (strValue == '*LOADTYPE') {
                   objSltLink.options[objSltLink.options.length] = new Option(strText,strText+'@*LOADTYPE');
                } else {
-                  objSltLink.options[objSltLink.options.length] = new Option('('+strValue.substring(strValue.indexOf('@')+1,strValue.length)+') '+strText,strValue);
+                  objSltLink.options[objSltLink.options.length] = new Option('   ('+strValue.substring(strValue.indexOf('@')+1,strValue.length)+') '+strText,strValue);
                }
             }
          }
@@ -46,7 +46,7 @@
       objSltDetail = document.getElementById('sltExtractDetail');
       for (var i=0;i<objSltLink.options.length;i++) {
          if (objSltLink.options[i].selected == true && objSltLink[i].value.substring(objSltLink[i].value.indexOf('@')+1,objSltLink[i].value.length) != '*LOADTYPE') {
-            objSltDetail.options[objSltDetail.options.length] = new Option(objSltLink[i].text,objSltLink[i].value);
+            objSltDetail.options[objSltDetail.options.length] = new Option(objSltLink[i].text.substring(3,objSltLink[i].text.length),objSltLink[i].value);
          } else {
             objLink[intIndex] = objSltLink[i];
             intIndex++;
@@ -71,7 +71,7 @@
       }
       for (var i=0;i<objSltDetail.options.length;i++) {
          if (objSltDetail.options[i].selected == true) {
-            objLink[objLink.length] = new Option(objSltDetail[i].text,objSltDetail[i].value);
+            objLink[objLink.length] = new Option('   '+objSltDetail[i].text,objSltDetail[i].value);
          } else {
             objDetail[intIndex] = objSltDetail[i];
             intIndex++;

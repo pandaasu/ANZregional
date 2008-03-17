@@ -231,9 +231,6 @@
          <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
             <table align=center border=0 cellpadding=0 cellspacing=2 cols=1>
                <tr>
-                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Loads&nbsp;</nobr></td>
-               </tr>
-               <tr>
                   <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
                      <select class="clsInputBN" id="sltExtractLink" name="sltExtractLink" style="width:800px" multiple size=10></select>
                   </nobr></td>
@@ -251,9 +248,6 @@
       <tr>
          <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
             <table align=center border=0 cellpadding=0 cellspacing=2 cols=1>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Selected&nbsp;</nobr></td>
-               </tr>
                <tr>
                   <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
                      <select class="clsInputBN" id="sltExtractDetail" name="sltExtractDetail" style="width:800px" multiple size=5></select>
