@@ -60,7 +60,8 @@ create or replace package body dw_fcst_extract01 as
       /*-*/
       cursor csr_fcst_extract_header is 
          select t01.*,
-                t02.extract_plan_group
+                t02.extract_plan_group,
+                t02.extract_planner
            from fcst_extract_header t01,
                 fcst_extract_type t02
           where t01.extract_type = t02.extract_type(+)
@@ -198,7 +199,7 @@ create or replace package body dw_fcst_extract01 as
             else
                var_version := var_version||substr(to_char(rcd_fcst_load_detail.fcst_yyyypp,'fm000000'),5,2);
             end if;
-            var_planner := rcd_fcst_extract_header.extract_plan_group;
+            var_planner := rcd_fcst_extract_header.extract_planner;
 
             /*-*/
             /* Pipe the detail row when required
@@ -282,7 +283,7 @@ create or replace package body dw_fcst_extract01 as
             else
                var_version := var_version||substr(to_char(rcd_fcst_extract_header.extract_version,'fm000000'),5,2);
             end if;
-            var_planner := rcd_fcst_extract_header.extract_plan_group;
+            var_planner := rcd_fcst_extract_header.extract_planner;
 
             /*-*/
             /* Pipe the detail row

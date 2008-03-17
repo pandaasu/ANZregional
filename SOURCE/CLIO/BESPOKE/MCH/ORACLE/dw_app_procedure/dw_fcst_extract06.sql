@@ -61,7 +61,8 @@ create or replace package body dw_fcst_extract06 as
       /*-*/
       cursor csr_fcst_extract_header is 
          select t01.*,
-                t02.extract_plan_group
+                t02.extract_plan_group,
+                t02.extract_planner
            from fcst_extract_header t01,
                 fcst_extract_type t02
           where t01.extract_type = t02.extract_type(+)
