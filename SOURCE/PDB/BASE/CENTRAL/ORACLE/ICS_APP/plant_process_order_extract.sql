@@ -288,7 +288,7 @@ create or replace package body ics_app.plant_process_order_extract as
          var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'NZ01' then
          var_interface := 'LADPDB01.2';
-         var_ignore := true;
+--         var_ignore := true;
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU20' then
          var_interface := 'LADPDB01.3';
          var_ignore := true;

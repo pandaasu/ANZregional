@@ -2,12 +2,12 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_bom_extract 
+  Package : plant_bom_det_extract 
   Owner   : ics_app 
 
   Description 
   ----------- 
-  Bill of Material Data for Plant databases 
+  Bill of Material Detail Data for Plant databases 
 
   1. PAR_ACTION (MANDATORY) 
 
@@ -36,20 +36,21 @@
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_bom_extract as
+create or replace package ics_app.plant_bom_det_extract as
 
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2);
+  procedure execute(par_site in varchar2 default '*ALL');
+  procedure execute(par_alternative in varchar2, par_material_code in varchar2, par_plant in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_bom_extract;
+end plant_bom_det_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_bom_extract as
+create or replace package body ics_app.plant_bom_det_extract as
 
   /*-*/
   /* Private exceptions 
@@ -60,14 +61,16 @@ create or replace package body ics_app.plant_bom_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
+  function execute_extract(par_alternative in varchar2, par_material_code in varchar2, par_plant in varchar2) return boolean;
   procedure execute_send(par_interface in varchar2);
   
   /*-*/
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
-  var_bom_material_code bds_bom_all.bom_material_code%type;
+  var_material_code bds_bom_det.bom_material_code%type;
+  var_alternative bds_bom_det.bom_alternative%type;
+  var_plant bds_bom_det.bom_plant%type;
   
   /*-*/
   /* Private declarations 
@@ -76,11 +79,19 @@ create or replace package body ics_app.plant_bom_extract as
   type typ_definition is table of rcd_definition index by binary_integer;
      
   tbl_definition typ_definition;
+  
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute(par_site in varchar2 default '*ALL') is
+  begin
+    execute(null, null, null, par_site);
+  end;
 
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
+  procedure execute(par_alternative in varchar2, par_material_code in varchar2, par_plant in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
     /* Local variables 
@@ -93,20 +104,13 @@ create or replace package body ics_app.plant_bom_extract as
          
   begin
   
-    var_action := upper(nvl(trim(par_action), '*NULL'));
-    var_data := trim(par_data);
+    var_material_code := trim(par_material_code);
+    var_alternative := trim(par_alternative);
+    var_plant := trim(par_plant);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
-    
-    /*-*/
-    /* validate parameters 
-    /*-*/
-    if ( var_action != '*ALL'
-        and var_action != '*MATERIAL' ) then
-      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *MATERIAL');
-    end if;
-    
+       
     if ( var_site != '*ALL'
         and var_site != '*MCA'
         and var_site != '*SCO'
@@ -115,12 +119,8 @@ create or replace package body ics_app.plant_bom_extract as
         and var_site != '*WGI' ) then
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI or NULL');
     end if;
-    
-    if ( var_action = '*MATERIAL' and var_data is null ) then
-      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *MATERIAL actions.');
-    end if;
-    
-    var_start := execute_extract(var_action, var_data);
+        
+    var_start := execute_extract(var_alternative, var_material_code, var_plant);
     
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -178,7 +178,7 @@ create or replace package body ics_app.plant_bom_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_bom_extract - ' || 'bom_material_code: ' || var_bom_material_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_bom_det_extract - ' || 'bom_material_code: ' || var_bom_material_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -186,7 +186,7 @@ create or replace package body ics_app.plant_bom_extract as
   end execute;
   
   
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
+  function execute_extract(par_alternative in varchar2, par_material_code in varchar2, par_plant in varchar2) return boolean is
   
     /*-*/
     /* Local variables 
@@ -197,35 +197,33 @@ create or replace package body ics_app.plant_bom_extract as
     /*-*/
     /* Local cursors 
     /*-*/
-    cursor csr_bds_bom_all is
+    cursor csr_bds_bom_det is
       select t01.bom_material_code as bom_material_code, 
         t01.bom_alternative as bom_alternative, 
-        t01.bom_plant as bom_plant, 
-        t01.bom_number as bom_number,
+        t01.bom_plant as bom_plant,
+        t01.bom_number as bom_number, 
         t01.bom_msg_function as bom_msg_function, 
-        t01.bom_usage as bom_usage, 
+        t01.bom_usage as bom_usage,
         to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
-        to_char(t01.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
         t01.bom_base_qty as bom_base_qty, 
-        t01.bom_base_uom as bom_base_uom, 
+        t01.bom_base_uom as bom_base_uom,
         t01.bom_status as bom_status, 
         t01.item_sequence as item_sequence, 
         t01.item_number as item_number,
         t01.item_msg_function as item_msg_function, 
         t01.item_material_code as item_material_code, 
-        t01.item_category as item_category, 
-        t01.item_base_qty as item_base_qty,
+        t01.item_category as item_category,
+        t01.item_base_qty as item_base_qty, 
         t01.item_base_uom as item_base_uom, 
         to_char(t01.item_eff_from_date, 'yyyymmddhh24miss') as item_eff_from_date, 
         to_char(t01.item_eff_to_date, 'yyyymmddhh24miss') as item_eff_to_date
-      from bds_bom_all t01
-      where t01.bom_plant in ('AU40', 'AU42', 'AU45', 'AU82', 'AU83', 'AU84', 'AU85', 'AU86', 'AU87', 'AU88', 'AU89', 'AU90')
-        and 
-        (
-          par_action = '*ALL'
-          or (par_action = '*MATERIAL' and ltrim(t01.bom_material_code,'0') = ltrim(par_data,'0'))
-        );
-    rcd_bds_bom_all csr_bds_bom_all%rowtype;
+      from bds_bom_det t01
+      where t01.bds_lads_status = '1'
+        and (var_alternative is null or t01.bom_alternative = var_alternative)
+        and (var_material_code is null or t01.bom_material_code = var_material_code)
+        and (var_plant is null or t01.bom_plant = var_plant);
+        
+    rcd_bds_bom_det csr_bds_bom_det%rowtype;
 
  /*-------------*/
  /* Begin block */
@@ -240,44 +238,45 @@ create or replace package body ics_app.plant_bom_extract as
     /*-*/
     /* Open Cursor for output 
     /*-*/
-    open csr_bds_bom_all;
+    open csr_bds_bom_det;
     loop
     
-      fetch csr_bds_bom_all into rcd_bds_bom_all;
-      exit when csr_bds_bom_all%notfound;
+      fetch csr_bds_bom_det into rcd_bds_bom_det;
+      exit when csr_bds_bom_det%notfound;
 
       var_index := tbl_definition.count + 1;
       var_result := false;
       
       /*-*/
-      /* Store current customer code for error message purposes 
+      /* Store current record details for error message purposes 
       /*-*/
-      var_bom_material_code := rcd_bds_bom_all.bom_material_code;
+      var_material_code := rcd_bds_bom_det.bom_material_code;
+      var_alternative := rcd_bds_bom_det.bom_alternative;
+      var_plant := rcd_bds_bom_det.bom_plant;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_alternative,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_plant,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_number,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_msg_function,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_eff_from_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_eff_to_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_base_qty,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_base_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.bom_status,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_sequence,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_number,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_msg_function,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_category,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_base_qty,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_base_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_eff_from_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_all.item_eff_to_date,' ')),14,' ');
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_material_code,' ')),18,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_alternative,' ')),2,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_plant,' ')),4,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_number,' ')),8,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_msg_function,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_usage,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_from_date,' ')),14,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_qty,'0')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_uom,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_status,' ')),2,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_sequence,'0')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_number,' ')),4,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_msg_function,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_material_code,' ')),18,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_category,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_base_qty,'0')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_base_uom,' ')),3,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_eff_from_date,' ')),14,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.item_eff_to_date,' ')),14,' ');
 
     end loop;
-    close csr_bds_bom_all;
+    close csr_bds_bom_det;
 
     return var_result;
     
@@ -307,18 +306,18 @@ create or replace package body ics_app.plant_bom_extract as
     commit;
   end execute_send;
 
-end plant_bom_extract;
+end plant_bom_det_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_bom_extract to appsupport;
-grant execute on ics_app.plant_bom_extract to lads_app;
-grant execute on ics_app.plant_bom_extract to lics_app;
-grant execute on ics_app.plant_bom_extract to ics_executor;
+grant execute on ics_app.plant_bom_det_extract to appsupport;
+grant execute on ics_app.plant_bom_det_extract to lads_app;
+grant execute on ics_app.plant_bom_det_extract to lics_app;
+grant execute on ics_app.plant_bom_det_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_bom_extract for ics_app.plant_bom_extract;
+create or replace public synonym plant_bom_det_extract for ics_app.plant_bom_det_extract;
