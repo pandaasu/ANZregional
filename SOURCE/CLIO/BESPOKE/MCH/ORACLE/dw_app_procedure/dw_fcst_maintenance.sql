@@ -27,6 +27,7 @@ create or replace package dw_fcst_maintenance as
    /*-*/
    function delete_load(par_load_identifier in varchar2) return varchar2;
    function delete_extract(par_extract_identifier in varchar2) return varchar2;
+   function validate_load(par_load_identifier in varchar2, par_user in varchar2) return varchar2;
    procedure create_apollo_load(par_cast_date in varchar2);
    function create_stream_load(par_load_type in varchar2,
                                par_load_identifier in varchar2,
@@ -36,6 +37,8 @@ create or replace package dw_fcst_maintenance as
                                par_load_data_range in number,
                                par_load_plan_group in varchar2,
                                par_user in varchar2) return varchar2;
+   function update_stream_load(par_load_identifier in varchar2,
+                               par_user in varchar2) return varchar2;
    function create_extract(par_extract_type in varchar2,
                            par_extract_identifier in varchar2,
                            par_extract_description in varchar2,
@@ -43,7 +46,8 @@ create or replace package dw_fcst_maintenance as
                            par_load_identifier in varchar2,
                            par_user in varchar2) return varchar2;
    function retrieve_loads(par_extract_type in varchar2, par_extract_version in number) return dw_fcst_table pipelined;
-   function report_load(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
+   function export_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
+   function report_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
    function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
 end dw_fcst_maintenance;
@@ -359,6 +363,144 @@ create or replace package body dw_fcst_maintenance as
    /* End routine */
    /*-------------*/
    end delete_extract;
+
+   /*****************************************************/
+   /* This procedure performs the validate load routine */
+   /*****************************************************/
+   function validate_load(par_load_identifier in varchar2, par_user in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_load_identifier fcst_load_header.load_identifier%type;
+      var_user fcst_load_header.crt_user%type;
+      var_available boolean;
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_load_header is 
+         select t01.*
+           from fcst_load_header t01
+          where t01.load_identifier = var_load_identifier
+            for update nowait;
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Forecast Maintenance - Validate Forecast Load';
+      var_message := null;
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_load_identifier := upper(par_load_identifier);
+      var_user := upper(par_user);
+      if var_load_identifier is null then
+         var_message := var_message || chr(13) || 'Forecast load identifier must be specified';
+      end if;
+      if var_user is null then
+         var_user := user;
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Attempt to lock the forecast load header row
+      /* notes - must still exist
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_fcst_load_header;
+         fetch csr_fcst_load_header into rcd_fcst_load_header;
+         if csr_fcst_load_header%notfound then
+            var_available := false;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_fcst_load_header%isopen then
+         close csr_fcst_load_header;
+      end if;
+
+      /*-*/
+      /* Release the header lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+         var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') does not exist or is already locked';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Update the forecast load header
+      /*-*/
+      update fcst_load_header
+         set upd_user = var_user,
+             upd_date = sysdate
+       where load_identifier = rcd_fcst_load_header.load_identifier;
+
+      /*-*/
+      /* Validate the forecast load
+      /*-*/
+      validate_load(rcd_fcst_load_header.load_identifier);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end validate_load;
 
    /**********************************************************/
    /* This procedure performs the create apollo load routine */
@@ -809,6 +951,10 @@ create or replace package body dw_fcst_maintenance as
       fetch csr_fcst_load_type into rcd_fcst_load_type;
       if csr_fcst_load_type%notfound then
          var_message := var_message || chr(13) || 'Forecast load type (' || var_load_type || ') does not exist';
+      else
+         if rcd_fcst_load_type.load_type_updatable != '1' then
+            var_message := var_message || chr(13) || 'Forecast load type (' || rcd_fcst_load_header.load_type || ') is not updatable';
+         end if;
       end if;
       close csr_fcst_load_type;
 
@@ -1047,6 +1193,275 @@ create or replace package body dw_fcst_maintenance as
    /* End routine */
    /*-------------*/
    end create_stream_load;
+
+   /**********************************************************/
+   /* This procedure performs the update stream load routine */
+   /**********************************************************/
+   function update_stream_load(par_load_identifier in varchar2,
+                               par_user in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      rcd_fcst_load_detail fcst_load_detail%rowtype;
+      var_load_identifier fcst_load_header.load_identifier%type;
+      var_user fcst_load_header.crt_user%type;
+      var_available boolean;
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_load_header is 
+         select t01.*
+           from fcst_load_header t01
+          where t01.load_identifier = var_load_identifier
+            for update nowait;
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
+
+      cursor csr_fcst_load_type is 
+         select t01.*
+           from fcst_load_type t01
+          where t01.load_type = rcd_fcst_load_header.load_type;
+      rcd_fcst_load_type csr_fcst_load_type%rowtype;
+
+      cursor csr_fcst_data is
+         select t01.*,
+                nvl(t02.mars_yyyymmdd,'99999999') as mars_yyyymmdd,
+                nvl(t02.mars_yyyyppw,9999999) as mars_yyyyppw,
+                nvl(t02.mars_cover,0) as mars_cover
+           from fcst_data t01,
+                (select t01.mars_period,
+                        min(to_char(t01.calendar_date,'yyyymmdd')) as mars_yyyymmdd,
+                        min(t01.mars_week) as mars_yyyyppw,
+                        max(period_day_num) as mars_cover
+                   from mars_date t01
+                  group by t01.mars_period) t02
+          where t01.fcst_yyyypp = t02.mars_period(+)
+          order by t01.material_code asc,
+                   t01.dmnd_group asc,
+                   t01.plant_code asc,
+                   t01.fcst_yyyypp asc;
+      rcd_fcst_data csr_fcst_data%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Forecast Maintenance - Update Forecast Load';
+      var_message := null;
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_load_identifier := upper(par_load_identifier);
+      var_user := upper(par_user);
+      if var_load_identifier is null then
+         var_message := var_message || chr(13) || 'Forecast load identifier must be specified';
+      end if;
+      if var_user is null then
+         var_user := user;
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Attempt to lock the forecast load header row
+      /* notes - must still exist
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_fcst_load_header;
+         fetch csr_fcst_load_header into rcd_fcst_load_header;
+         if csr_fcst_load_header%notfound then
+            var_available := false;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_fcst_load_header%isopen then
+         close csr_fcst_load_header;
+      end if;
+
+      /*-*/
+      /* Release the header lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+         var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') does not exist or is already locked';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Validate the load type
+      /*-*/
+      open csr_fcst_load_type;
+      fetch csr_fcst_load_type into rcd_fcst_load_type;
+      if csr_fcst_load_type%notfound then
+         var_message := var_message || chr(13) || 'Forecast load type (' || rcd_fcst_load_header.load_type || ') does not exist';
+      else
+         if rcd_fcst_load_type.load_type_updatable != '1' then
+            var_message := var_message || chr(13) || 'Forecast load type (' || rcd_fcst_load_header.load_type || ') is not updatable';
+         end if;
+      end if;
+      close csr_fcst_load_type;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Retrieve the stream data
+      /*-*/
+      read_xml_stream(rcd_fcst_load_type.load_type_version,rcd_fcst_load_header.load_data_type,rcd_fcst_load_header.load_data_version,rcd_fcst_load_header.load_data_range,lics_form.get_clob('LOAD_STREAM'));
+
+      /*-*/
+      /* Delete the existing forecast load detail
+      /*-*/
+      delete from fcst_load_detail where load_identifier = rcd_fcst_load_header.load_identifier;
+
+      /*-*/
+      /* Retrieve the forecast data
+      /*-*/
+      rcd_fcst_load_detail.load_identifier := rcd_fcst_load_header.load_identifier;
+      rcd_fcst_load_detail.load_sequence := 0;
+      open csr_fcst_data;
+      loop
+         fetch csr_fcst_data into rcd_fcst_data;
+         if csr_fcst_data%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Initialise the forecast load detail
+         /*-*/
+         rcd_fcst_load_detail.load_sequence := rcd_fcst_load_detail.load_sequence + 1;
+         rcd_fcst_load_detail.material_code := rcd_fcst_data.material_code;
+         rcd_fcst_load_detail.dmnd_group := rcd_fcst_data.dmnd_group;
+         rcd_fcst_load_detail.plant_code := rcd_fcst_data.plant_code;
+         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.mars_yyyymmdd;
+         rcd_fcst_load_detail.cover_day := rcd_fcst_data.mars_cover;
+         rcd_fcst_load_detail.cover_qty := rcd_fcst_data.fcst_qty;
+         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.mars_yyyyppw;
+         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp;
+         rcd_fcst_load_detail.fcst_qty := rcd_fcst_data.fcst_qty;
+         rcd_fcst_load_detail.fcst_prc := rcd_fcst_data.fcst_prc;
+         rcd_fcst_load_detail.fcst_gsv := rcd_fcst_data.fcst_gsv;
+         rcd_fcst_load_detail.plan_group := '*NONE';
+         rcd_fcst_load_detail.mesg_text := null;
+
+         /*-*/
+         /* Insert the forecast load detail
+         /*-*/
+         insert into fcst_load_detail
+            (load_identifier,
+             load_sequence,
+             material_code,
+             dmnd_group,
+             plant_code,
+             cover_yyyymmdd,
+             cover_day,
+             cover_qty,
+             fcst_yyyyppw,
+             fcst_yyyypp,
+             fcst_qty,
+             fcst_prc,
+             fcst_gsv,
+             plan_group,
+             mesg_text)
+            values (rcd_fcst_load_detail.load_identifier,
+                    rcd_fcst_load_detail.load_sequence,
+                    rcd_fcst_load_detail.material_code,
+                    rcd_fcst_load_detail.dmnd_group,
+                    rcd_fcst_load_detail.plant_code,
+                    rcd_fcst_load_detail.cover_yyyymmdd,
+                    rcd_fcst_load_detail.cover_day,
+                    rcd_fcst_load_detail.cover_qty,
+                    rcd_fcst_load_detail.fcst_yyyyppw,
+                    rcd_fcst_load_detail.fcst_yyyypp,
+                    rcd_fcst_load_detail.fcst_qty,
+                    rcd_fcst_load_detail.fcst_prc,
+                    rcd_fcst_load_detail.fcst_gsv,
+                    rcd_fcst_load_detail.plan_group,
+                    rcd_fcst_load_detail.mesg_text);
+
+      end loop;
+      close csr_fcst_data;
+
+      /*-*/
+      /* Update the forecast load header
+      /*-*/
+      update fcst_load_header
+         set upd_user = var_user,
+             upd_date = sysdate
+       where load_identifier = rcd_fcst_load_header.load_identifier;
+
+      /*-*/
+      /* Validate the forecast load
+      /*-*/
+      validate_load(rcd_fcst_load_header.load_identifier);
+
+      /*-*/
+      /* Delete the temporary forecast data
+      /*-*/
+      delete from fcst_data;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_stream_load;
 
    /******************************************************/
    /* This procedure performs the create extract routine */
@@ -1418,7 +1833,7 @@ create or replace package body dw_fcst_maintenance as
             and t01.load_data_version = var_extract_version
             and ((rcd_fcst_extract_type.extract_plan_group = '*ALL' and t01.load_plan_group = '*ALL') or
                  (rcd_fcst_extract_type.extract_plan_group != '*ALL' and (t01.load_plan_group = rcd_fcst_extract_type.extract_plan_group or t01.load_plan_group = '*ALL')))
-            and t01.load_status = '*VALID';
+            ; -------------------------------------------------------------and t01.load_status = '*VALID';
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
    /*-------------*/
@@ -1514,52 +1929,53 @@ create or replace package body dw_fcst_maintenance as
    end retrieve_loads;
 
    /***************************************************/
-   /* This procedure performs the report load routine */
+   /* This procedure performs the export load routine */
    /***************************************************/
-   function report_load(par_extract_identifier in varchar2) return dw_fcst_table pipelined is
+   function export_load(par_load_identifier in varchar2) return dw_fcst_table pipelined is
 
       /*-*/
       /* Local definitions
       /*-*/
-      var_extract_identifier fcst_extract_header.extract_identifier%type;
+      var_load_identifier fcst_load_header.load_identifier%type;
       var_output varchar2(4000 char);
-      type typ_select is table of varchar2(32) index by binary_integer;
-      tbl_select typ_select;
+      var_work_yyyypp number;
+      type rcd_datv is record(fcst_yyyypp number,
+                              fcst_qty number,
+                              fcst_gsv number);
+      type typ_datv is table of rcd_datv index by binary_integer;
+      tbl_datv typ_datv;
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_extract_header is 
-         select t01.*,
-                t02.extract_plan_group
-           from fcst_extract_header t01,
-                fcst_extract_type t02
-          where t01.extract_type = t02.extract_type(+)
-            and t01.extract_identifier = var_extract_identifier;
-      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
-
-      cursor csr_fcst_extract_load is 
-         select t01.*
-           from fcst_extract_load t01
-          where t01.extract_identifier = rcd_fcst_extract_header.extract_identifier;
-      rcd_fcst_extract_load csr_fcst_extract_load%rowtype;
-
       cursor csr_fcst_load_header is 
          select t01.*
            from fcst_load_header t01
-          where t01.load_identifier = rcd_fcst_extract_load.load_identifier;
+          where t01.load_identifier = var_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
-      cursor csr_fcst_load_detail is 
-         select t01.*
+      cursor csr_fcst_load_row is 
+         select t01.dmnd_group,
+                t01.material_code
            from fcst_load_detail t01
           where t01.load_identifier = rcd_fcst_load_header.load_identifier
-            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
-                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
-          order by material_code asc,
-                   plant_code asc,
-                   fcst_yyyypp asc;
-      rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
+          group by t01.dmnd_group,
+                   t01.material_code
+          order by t01.dmnd_group asc,
+                   t01.material_code asc;
+      rcd_fcst_load_row csr_fcst_load_row%rowtype;
+
+      cursor csr_fcst_load_column is 
+         select t01.fcst_yyyypp,
+                sum(t01.fcst_qty) as fcst_qty,
+                sum(t01.fcst_gsv) as fcst_gsv
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+            and t01.dmnd_group = rcd_fcst_load_row.dmnd_group
+            and t01.material_code = rcd_fcst_load_row.material_code
+          group by t01.fcst_yyyypp
+          order by t01.fcst_yyyypp asc;
+      rcd_fcst_load_column csr_fcst_load_column%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1573,76 +1989,350 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Validate the parameter values
       /*-*/
-      var_extract_identifier := upper(par_extract_identifier);
-      if var_extract_identifier is null then
-         raise_application_error(-20000, 'Forecast extract identifier must be specified');
+      var_load_identifier := upper(par_load_identifier);
+      if var_load_identifier is null then
+         raise_application_error(-20000, 'Forecast load identifier must be specified');
       end if;
 
       /*-*/
-      /* Retrieve the extract header
+      /* Retrieve the load header
       /*-*/
-      open csr_fcst_extract_header;
-      fetch csr_fcst_extract_header into rcd_fcst_extract_header;
-      if csr_fcst_extract_header%notfound then
-         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist');
+      open csr_fcst_load_header;
+      fetch csr_fcst_load_header into rcd_fcst_load_header;
+      if csr_fcst_load_header%notfound then
+         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') does not exist');
       end if;
       close csr_fcst_load_header;
 
       /*-*/
-      /* Start the report
+      /* Initialise the period range
       /*-*/
-      var_output := '<table border=1 cellpadding="0" cellspacing="0">';
-      var_output := var_output || '<tr>';
-    --  var_output := var_output || '<td align=center colspan=9 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Monthly Invoice Data / '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_str_date,'yyyymmdd'),'yyyy.mm.dd')||' - '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_end_date,'yyyymmdd'),'yyyy.mm.dd')||' / xxxxxxxxxxxxxxxxxx</td>'
-      pipe row(var_output);
+      tbl_datv.delete;
+      var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
+      for idx in 1..rcd_fcst_load_header.load_data_range loop
+         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
+         tbl_datv(tbl_datv.count).fcst_qty := 0;
+         tbl_datv(tbl_datv.count).fcst_gsv := 0;
+         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+            var_work_yyyypp := var_work_yyyypp + 88;
+         else
+            var_work_yyyypp := var_work_yyyypp + 1;
+         end if;
+      end loop;
 
       /*-*/
-      /* Retrieve the forecast extract loads
+      /* Retrieve the forecast load rows
       /*-*/
-      open csr_fcst_extract_load;
+      open csr_fcst_load_row;
       loop
-         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
-         if csr_fcst_extract_load%notfound then
+         fetch csr_fcst_load_row into rcd_fcst_load_row;
+         if csr_fcst_load_row%notfound then
             exit;
          end if;
 
          /*-*/
-         /* Retrieve the forecast load header
+         /* Retrieve the forecast columns
          /*-*/
-         open csr_fcst_load_header;
-         fetch csr_fcst_load_header into rcd_fcst_load_header;
-         if csr_fcst_load_header%notfound then
-            raise_application_error(-20000, 'Forecast load (' || rcd_fcst_extract_load.load_identifier || ') does not exist');
-         end if;
-         close csr_fcst_load_header;
-
-         /*-*/
-         /* Retrieve the forecast load detail
-         /*-*/
-         open csr_fcst_load_detail;
+         for idx in 1..tbl_datv.count loop
+            tbl_datv(idx).fcst_qty := 0;
+            tbl_datv(idx).fcst_gsv := 0;
+         end loop;
+         open csr_fcst_load_column;
          loop
-            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
-            if csr_fcst_load_detail%notfound then
+            fetch csr_fcst_load_column into rcd_fcst_load_column;
+            if csr_fcst_load_column%notfound then
                exit;
             end if;
-
-            /*-*/
-            /* Set the output string
-            /*-*/
-            var_output := var_output || 'xxxxxxxxxxxxxxxxxxxxxxxxx';
-            pipe row(var_output);
-
+            for idx in 1..tbl_datv.count loop
+               if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_column.fcst_yyyypp then
+                  tbl_datv(idx).fcst_qty := rcd_fcst_load_column.fcst_qty;
+                  tbl_datv(idx).fcst_gsv := rcd_fcst_load_column.fcst_gsv;
+                  exit;
+               end if;
+            end loop;
          end loop;
-         close csr_fcst_load_detail;
+         close csr_fcst_load_column;
+
+         /*-*/
+         /* Output the row
+         /*-*/
+         var_output := rcd_fcst_load_row.dmnd_group;
+         var_output := var_output||chr(9)||rcd_fcst_load_row.material_code;
+         for idx in 1..tbl_datv.count loop
+            var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_qty);
+         end loop;
+         if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+            for idx in 1..tbl_datv.count loop
+               var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_gsv);
+            end loop;
+         end if;
+
+         /*-*/
+         /* Pipe the output
+         /*-*/
+         pipe row(var_output);
 
       end loop;
-      close csr_fcst_extract_load;
+      close csr_fcst_load_row;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - EXPORT_LOAD - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end export_load;
+
+   /***************************************************/
+   /* This procedure performs the report load routine */
+   /***************************************************/
+   function report_load(par_load_identifier in varchar2) return dw_fcst_table pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_load_identifier fcst_load_header.load_identifier%type;
+      var_output varchar2(4000 char);
+      var_found boolean;
+      var_work_yyyypp number;
+      type rcd_datv is record(fcst_yyyypp number,
+                              fcst_qty number,
+                              fcst_prc number,
+                              fcst_gsv number);
+      type typ_datv is table of rcd_datv index by binary_integer;
+      tbl_datv typ_datv;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_load_header is 
+         select t01.*
+           from fcst_load_header t01
+          where t01.load_identifier = var_load_identifier;
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
+
+      cursor csr_fcst_load_row is 
+         select t01.dmnd_group,
+                t01.material_code,
+                t01.plant_code
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+          group by t01.dmnd_group,
+                   t01.material_code,
+                   t01.plant_code
+          order by t01.dmnd_group asc,
+                   t01.material_code asc,
+                   t01.plant_code asc;
+      rcd_fcst_load_row csr_fcst_load_row%rowtype;
+
+      cursor csr_fcst_load_column is 
+         select t01.fcst_yyyypp,
+                sum(t01.fcst_qty) as fcst_qty,
+                max(t01.fcst_prc) as fcst_prc,
+                sum(t01.fcst_gsv) as fcst_gsv
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+            and t01.dmnd_group = rcd_fcst_load_row.dmnd_group
+            and t01.material_code = rcd_fcst_load_row.material_code
+            and t01.plant_code = rcd_fcst_load_row.plant_code
+          group by t01.fcst_yyyypp
+          order by t01.fcst_yyyypp asc;
+      rcd_fcst_load_column csr_fcst_load_column%rowtype;
+
+      cursor csr_fcst_load_message is 
+         select t01.mesg_text
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+            and t01.dmnd_group = rcd_fcst_load_row.dmnd_group
+            and t01.material_code = rcd_fcst_load_row.material_code
+            and t01.plant_code = rcd_fcst_load_row.plant_code
+            and not(t01.mesg_text is null)
+          group by t01.mesg_text;
+      rcd_fcst_load_message csr_fcst_load_message%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_load_identifier := upper(par_load_identifier);
+      if var_load_identifier is null then
+         raise_application_error(-20000, 'Forecast load identifier must be specified');
+      end if;
+
+      /*-*/
+      /* Retrieve the load header
+      /*-*/
+      open csr_fcst_load_header;
+      fetch csr_fcst_load_header into rcd_fcst_load_header;
+      if csr_fcst_load_header%notfound then
+         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') does not exist');
+      end if;
+      close csr_fcst_load_header;
+
+      /*-*/
+      /* Initialise the period range
+      /*-*/
+      tbl_datv.delete;
+      var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
+      for idx in 1..rcd_fcst_load_header.load_data_range loop
+         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
+         tbl_datv(tbl_datv.count).fcst_qty := 0;
+         tbl_datv(tbl_datv.count).fcst_prc := 0;
+         tbl_datv(tbl_datv.count).fcst_gsv := 0;
+         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+            var_work_yyyypp := var_work_yyyypp + 88;
+         else
+            var_work_yyyypp := var_work_yyyypp + 1;
+         end if;
+      end loop;
+
+      /*-*/
+      /* Start the report
+      /*-*/
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+5)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Demand Group</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Material Code</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Plant</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Data</td>');
+      for idx in 1..tbl_datv.count loop
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">'||to_char(tbl_datv(idx).fcst_yyyypp)||'</td>');
+      end loop;
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Messages</td>');
+      pipe row('</tr>');
+
+      /*-*/
+      /* Retrieve the forecast load rows
+      /*-*/
+      open csr_fcst_load_row;
+      loop
+         fetch csr_fcst_load_row into rcd_fcst_load_row;
+         if csr_fcst_load_row%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Retrieve the forecast columns
+         /*-*/
+         for idx in 1..tbl_datv.count loop
+            tbl_datv(idx).fcst_qty := 0;
+            tbl_datv(idx).fcst_prc := 0;
+            tbl_datv(idx).fcst_gsv := 0;
+         end loop;
+         open csr_fcst_load_column;
+         loop
+            fetch csr_fcst_load_column into rcd_fcst_load_column;
+            if csr_fcst_load_column%notfound then
+               exit;
+            end if;
+            for idx in 1..tbl_datv.count loop
+               if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_column.fcst_yyyypp then
+                  tbl_datv(idx).fcst_qty := rcd_fcst_load_column.fcst_qty;
+                  tbl_datv(idx).fcst_prc := rcd_fcst_load_column.fcst_prc;
+                  tbl_datv(idx).fcst_gsv := rcd_fcst_load_column.fcst_gsv;
+                  exit;
+               end if;
+            end loop;
+         end loop;
+         close csr_fcst_load_column;
+
+         /*-*/
+         /* Quantity row
+         /*-*/
+         pipe row('<tr>');
+         pipe row('<td rowspan=3 valign=top align=left>'||rcd_fcst_load_row.dmnd_group||'</td>');
+         pipe row('<td rowspan=3 valign=top align=left>'||rcd_fcst_load_row.material_code||'</td>');
+         pipe row('<td rowspan=3 valign=top align=left>'||rcd_fcst_load_row.plant_code||'</td>');
+         pipe row('<td align=center>QTY</td>');
+         for idx in 1..tbl_datv.count loop
+            pipe row('<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>');
+         end loop;
+
+         /*-*/
+         /* Retrieve the forecast messages
+         /*-*/
+         var_found := false;
+         open csr_fcst_load_message;
+         loop
+            fetch csr_fcst_load_message into rcd_fcst_load_message;
+            if csr_fcst_load_message%notfound then
+               exit;
+            end if;
+            if var_found = false then
+               var_output := '<td rowspan=3 valign=top align=left>'||rcd_fcst_load_message.mesg_text;
+               var_found := true;
+            else
+               var_output := var_output||chr(13)||chr(10)||rcd_fcst_load_message.mesg_text;
+            end if;
+         end loop;
+         close csr_fcst_load_message;
+         if var_found = true then
+            var_output := var_output||'</td>';
+         else
+            var_output := var_output||'<td rowspan=3 valign=top align=left></td>';
+         end if;
+         pipe row(var_output);
+
+         /*-*/
+         /* Quantity row
+         /*-*/
+         pipe row('</tr>');
+
+         /*-*/
+         /* Price row
+         /*-*/
+         pipe row('<tr>');
+         pipe row('<td align=center>PRICE</td>');
+         for idx in 1..tbl_datv.count loop
+            pipe row('<td align=right>'||to_char(round(tbl_datv(idx).fcst_prc,2))||'</td>');
+         end loop;
+         pipe row('</tr>');
+
+         /*-*/
+         /* GSV row
+         /*-*/
+         pipe row('<tr>');
+         pipe row('<td align=center>GSV</td>');
+         for idx in 1..tbl_datv.count loop
+            pipe row('<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>');
+         end loop;
+         pipe row('</tr>');
+
+      end loop;
+      close csr_fcst_load_row;
 
       /*-*/
       /* End the report
       /*-*/
-      var_output := '</table>';
-      pipe row(var_output);
+      pipe row('</table>');
 
       /*-*/
       /* Return
@@ -1678,16 +2368,24 @@ create or replace package body dw_fcst_maintenance as
       /* Local definitions
       /*-*/
       var_extract_identifier fcst_extract_header.extract_identifier%type;
+      var_load_str_yyyypp fcst_load_header.load_str_yyyypp%type;
+      var_load_end_yyyypp fcst_load_header.load_end_yyyypp%type;
       var_output varchar2(4000 char);
-      type typ_select is table of varchar2(32) index by binary_integer;
-      tbl_select typ_select;
+      var_found boolean;
+      var_work_yyyypp number;
+      type rcd_datv is record(fcst_yyyypp number,
+                              fcst_qty number,
+                              fcst_gsv number);
+      type typ_datv is table of rcd_datv index by binary_integer;
+      tbl_datv typ_datv;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_fcst_extract_header is 
          select t01.*,
-                t02.extract_plan_group
+                t02.extract_plan_group,
+                t02.extract_planner
            from fcst_extract_header t01,
                 fcst_extract_type t02
           where t01.extract_type = t02.extract_type(+)
@@ -1695,27 +2393,40 @@ create or replace package body dw_fcst_maintenance as
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
       cursor csr_fcst_extract_load is 
-         select t01.*
-           from fcst_extract_load t01
-          where t01.extract_identifier = rcd_fcst_extract_header.extract_identifier;
+         select t02.*
+           from fcst_extract_load t01,
+                fcst_load_header t02
+          where t01.load_identifier = t02.load_identifier(+)
+            and t01.extract_identifier = rcd_fcst_extract_header.extract_identifier;
       rcd_fcst_extract_load csr_fcst_extract_load%rowtype;
 
-      cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = rcd_fcst_extract_load.load_identifier;
-      rcd_fcst_load_header csr_fcst_load_header%rowtype;
-
-      cursor csr_fcst_load_detail is 
-         select t01.*
+      cursor csr_fcst_load_row is 
+         select t01.dmnd_group,
+                t01.material_code,
+                t01.plant_code
            from fcst_load_detail t01
-          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+          where t01.load_identifier = rcd_fcst_extract_load.load_identifier
             and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
                  t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
-          order by material_code asc,
-                   plant_code asc,
-                   fcst_yyyypp asc;
-      rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
+          group by t01.material_code,
+                   t01.plant_code
+          order by t01.material_code asc,
+                   t01.plant_code asc;
+      rcd_fcst_load_row csr_fcst_load_row%rowtype;
+
+      cursor csr_fcst_load_column is 
+         select t01.fcst_yyyypp,
+                sum(t01.fcst_qty) as fcst_qty,
+                sum(t01.fcst_gsv) as fcst_gsv
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_extract_load.load_identifier
+            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
+                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
+            and t01.material_code = rcd_fcst_load_row.material_code
+            and t01.plant_code = rcd_fcst_load_row.plant_code
+          group by t01.fcst_yyyypp
+          order by t01.fcst_yyyypp asc;
+      rcd_fcst_load_column csr_fcst_load_column%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1742,15 +2453,62 @@ create or replace package body dw_fcst_maintenance as
       if csr_fcst_extract_header%notfound then
          raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist');
       end if;
-      close csr_fcst_load_header;
+      close csr_fcst_extract_header;
+
+      /*-*/
+      /* Retrieve the forecast extract loads
+      /*-*/
+      var_load_str_yyyypp := 999999;
+      var_load_end_yyyypp := 0;
+      open csr_fcst_extract_load;
+      loop
+         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
+         if csr_fcst_extract_load%notfound then
+            exit;
+         end if;
+         if rcd_fcst_extract_load.load_str_yyyypp < var_load_str_yyyypp then
+            var_load_str_yyyypp := rcd_fcst_extract_load.load_str_yyyypp;
+         end if;
+         if rcd_fcst_extract_load.load_end_yyyypp > var_load_end_yyyypp then
+            var_load_end_yyyypp := rcd_fcst_extract_load.load_end_yyyypp;
+         end if;
+      end loop;
+      close csr_fcst_extract_load;
+
+      /*-*/
+      /* Initialise the period range
+      /*-*/
+      tbl_datv.delete;
+      var_work_yyyypp := var_load_str_yyyypp;
+      loop
+         if var_work_yyyypp > var_load_end_yyyypp then
+            exit;
+         end if;
+         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
+         tbl_datv(tbl_datv.count).fcst_qty := 0;
+         tbl_datv(tbl_datv.count).fcst_gsv := 0;
+         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+            var_work_yyyypp := var_work_yyyypp + 88;
+         else
+            var_work_yyyypp := var_work_yyyypp + 1;
+         end if;
+      end loop;
 
       /*-*/
       /* Start the report
       /*-*/
-      var_output := '<table border=1 cellpadding="0" cellspacing="0">';
-      var_output := var_output || '<tr>';
-    --  var_output := var_output || '<td align=center colspan=9 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Monthly Invoice Data / '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_str_date,'yyyymmdd'),'yyyy.mm.dd')||' - '||to_char(to_date(rcd_whslr_mly_inv_hdr.edi_bilto_end_date,'yyyymmdd'),'yyyy.mm.dd')||' / xxxxxxxxxxxxxxxxxx</td>'
-      pipe row(var_output);
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan='||to_char(tbl_datv.count+3)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Forecast Extract Report - ('||rcd_fcst_extract_header.extract_identifier||') '||rcd_fcst_extract_header.extract_description||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Material Code</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Plant</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Data</td>');
+      for idx in 1..tbl_datv.count loop
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">'||to_char(tbl_datv(idx).fcst_yyyypp)||'</td>');
+      end loop;
+      pipe row('</tr>');
 
       /*-*/
       /* Retrieve the forecast extract loads
@@ -1763,33 +2521,62 @@ create or replace package body dw_fcst_maintenance as
          end if;
 
          /*-*/
-         /* Retrieve the forecast load header
+         /* Retrieve the forecast load rows
          /*-*/
-         open csr_fcst_load_header;
-         fetch csr_fcst_load_header into rcd_fcst_load_header;
-         if csr_fcst_load_header%notfound then
-            raise_application_error(-20000, 'Forecast load (' || rcd_fcst_extract_load.load_identifier || ') does not exist');
-         end if;
-         close csr_fcst_load_header;
-
-         /*-*/
-         /* Retrieve the forecast load detail
-         /*-*/
-         open csr_fcst_load_detail;
+         open csr_fcst_load_row;
          loop
-            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
-            if csr_fcst_load_detail%notfound then
+            fetch csr_fcst_load_row into rcd_fcst_load_row;
+            if csr_fcst_load_row%notfound then
                exit;
             end if;
 
             /*-*/
-            /* Set the output string
+            /* Retrieve the forecast columns
             /*-*/
-            var_output := var_output || 'xxxxxxxxxxxxxxxxxxxxxxxxx';
-            pipe row(var_output);
+            for idx in 1..tbl_datv.count loop
+               tbl_datv(idx).fcst_qty := 0;
+               tbl_datv(idx).fcst_gsv := 0;
+            end loop;
+            open csr_fcst_load_column;
+            loop
+               fetch csr_fcst_load_column into rcd_fcst_load_column;
+               if csr_fcst_load_column%notfound then
+                  exit;
+               end if;
+               for idx in 1..tbl_datv.count loop
+                  if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_column.fcst_yyyypp then
+                     tbl_datv(idx).fcst_qty := rcd_fcst_load_column.fcst_qty;
+                     tbl_datv(idx).fcst_gsv := rcd_fcst_load_column.fcst_gsv;
+                     exit;
+                  end if;
+               end loop;
+            end loop;
+            close csr_fcst_load_column;
+
+            /*-*/
+            /* Quantity row
+            /*-*/
+            pipe row('<tr>');
+            pipe row('<td rowspan=2 valign=top align=left>'||rcd_fcst_load_row.material_code||'</td>');
+            pipe row('<td rowspan=2 valign=top align=left>'||rcd_fcst_load_row.plant_code||'</td>');
+            pipe row('<td align=center>QTY</td>');
+            for idx in 1..tbl_datv.count loop
+               pipe row('<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>');
+            end loop;
+            pipe row('</tr>');
+
+            /*-*/
+            /* GSV row
+            /*-*/
+            pipe row('<tr>');
+            pipe row('<td align=center>GSV</td>');
+            for idx in 1..tbl_datv.count loop
+               pipe row('<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>');
+            end loop;
+            pipe row('</tr>');
 
          end loop;
-         close csr_fcst_load_detail;
+         close csr_fcst_load_row;
 
       end loop;
       close csr_fcst_extract_load;
@@ -1797,8 +2584,7 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* End the report
       /*-*/
-      var_output := '</table>';
-      pipe row(var_output);
+      pipe row('</table>');
 
       /*-*/
       /* Return
