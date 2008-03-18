@@ -96,14 +96,13 @@
          document.main.submit();
       }
    }
-   function doReport(strIdentifier) {
-      if (!processForm()) {return;}
-      return;
-      doSpreadsheetDownload(eval('document.body'),'*DISP','xxxxxxxxxxxxx(\'' + strIdentifier + '\')');
-   }
    function doExport(strIdentifier,strFormat,strFunction) {
       if (!processForm()) {return;};
       doExportOutput(eval('document.body'),strIdentifier,strFormat,'select * from table(' + strFunction + '.export(\'' + strIdentifier + '\'))');
+   }
+   function doReport(strIdentifier) {
+      if (!processForm()) {return;}
+      doReportOutput(eval('document.body'),strIdentifier,'*SPREADSHEET','select * from table(dw_fcst_maintenance.report_extract(\'' + strIdentifier + '\'))');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -127,6 +126,7 @@
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_export.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <!--#include file="mch_fcst_extract_links.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">

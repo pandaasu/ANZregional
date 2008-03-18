@@ -160,14 +160,11 @@
    }
    function doExport(strIdentifier) {
       if (!processForm()) {return;};
-      return;
       doExportOutput(eval('document.body'),strIdentifier,'*FILE','select * from table(dw_fcst_maintenance.export_load(\'' + strIdentifier + '\'))');
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
-      return;
-      doActivityStart(eval('document.body'));
-      doSpreadsheetDownload(eval('document.body'),'*DISP','dw_forecast_loading.select_load(\'' + strIdentifier + '\')');
+      doReportOutput(eval('document.body'),strIdentifier,'*SPREADSHEET','select * from table(dw_fcst_maintenance.report_load(\'' + strIdentifier + '\'))');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -210,6 +207,7 @@
 <!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_export.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <!--#include file="ics_std_stream_xml.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
@@ -257,8 +255,9 @@
                      <div class="clsScroll" id="conBody">
                      <table class="clsTableBody" id="tabBody" align=left cols=9 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=12 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
-                        <tr>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                        <tr><%if objSelection.ListValue09("LIST",i) = "1" then%>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td><%else%>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a></nobr></td><%end if%>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
