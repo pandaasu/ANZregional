@@ -6,7 +6,7 @@
 '// Script  : ics_report.asp                                     //
 '// Author  : Steve Gregan                                       //
 '// Date    : March 2008                                         //
-'// Text    : This script implements the export facility         //
+'// Text    : This script implements the report facility         //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -32,7 +32,7 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "ics_export.asp"
+   strTarget = "ics_report.asp"
 
    '//
    '// Get the base string
@@ -63,11 +63,9 @@
       '//
       select case strMode
          case "PROMPT"
-            call ProcessExportPrompt
-         case "*FILE"
-            call ProcessExportFile
-         case "*INTERFACE"
-            call ProcessExportInterface
+            call ProcessReportPrompt
+         case "*SPREADSHEET"
+            call ProcessReportSpreadsheet
          case else
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
             call PaintFatal
@@ -83,9 +81,9 @@
    set objSelection = nothing
 
 '///////////////////////////////////
-'// Process export prompt routine //
+'// Process report prompt routine //
 '///////////////////////////////////
-sub ProcessExportPrompt()%>
+sub ProcessReportPrompt()%>
 <html>
 <script language="javascript">
 <!--
@@ -108,7 +106,7 @@ sub ProcessExportPrompt()%>
       }
    }
    function doClose() {
-      parent.doExportClose(false);
+      parent.doReportClose();
    }
    function doExecute() {
       document.main.action = '<%=strBase%><%=strTarget%>';
@@ -122,12 +120,12 @@ sub ProcessExportPrompt()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <meta http-equiv="expires" content="0">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
-   <title>Export</title>
+   <title>Report</title>
 </head>
-<body class="clsTable02" scroll="no" onLoad="parent.doExportShow();doExecute();">
+<body class="clsTable02" scroll="no" onLoad="parent.doReportShow();doExecute();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
-      <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Processing</nobr></td></tr>
+      <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Report Processing</nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
@@ -149,10 +147,10 @@ sub ProcessExportPrompt()%>
 </html>
 <%end sub
 
-'/////////////////////////////////
-'// Process export file routine //
-'/////////////////////////////////
-sub ProcessExportFile()
+'////////////////////////////////////////
+'// Process report spreadsheet routine //
+'////////////////////////////////////////
+sub ProcessReportSpreadsheet()
 
    '//
    '// Create the selection object
@@ -161,18 +159,18 @@ sub ProcessExportFile()
    set objSelection.Security = objSecurity
 
    '//
-   '// Execute the export file
+   '// Execute the report spreadsheet
    '//
-   strReturn = objSelection.Execute("EXPORT", objForm.Fields("DTA_Query").Value, 0)
+   strReturn = objSelection.Execute("REPORT", objForm.Fields("DTA_Query").Value, 0)
    if strReturn = "*OK" then
       Response.Buffer = true
-      Response.ContentType = "application/octet-stream"
-      Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("DTA_Name").Value & ".TXT"
-      for i = objSelection.ListLower("EXPORT") to objSelection.ListUpper("EXPORT")
-         if i > objSelection.ListLower("EXPORT") then
+      Response.ContentType = "application/vnd.ms-excel"
+      Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("DTA_Name").Value & ".xls"
+      for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")
+         if i > objSelection.ListLower("REPORT") then
             Response.Write vbNewLine
          end if
-         Response.Write objSelection.ListValue01("EXPORT",i)
+         Response.Write objSelection.ListValue01("REPORT",i)
       next
    else%>
 <script language="javascript">
@@ -196,7 +194,7 @@ sub ProcessExportFile()
       }
    }
    function doClose() {
-      parent.doExportClose(false);
+      parent.doReportClose();
    }
 // -->
 </script>
@@ -205,11 +203,11 @@ sub ProcessExportFile()
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <meta http-equiv="expires" content="0">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
-   <title>Export</title>
+   <title>Report</title>
 </head>
 <body class="clsTable02" scroll="no">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
-      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Export File Creation Failed</nobr></td></tr>
+      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Report Spreadsheet Creation Failed</nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
@@ -245,103 +243,6 @@ sub ProcessExportFile()
    end if
 
 end sub
-
-'//////////////////////////////////////
-'// Process export interface routine //
-'//////////////////////////////////////
-sub ProcessExportInterface()
-
-   '//
-   '// Create the procedure object
-   '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
-
-   '//
-   '// Execute the export interface
-   '//
-   strReturn = objFunction.Execute(objForm.Fields("DTA_Query").Value)%>
-<html>
-<script language="javascript">
-<!--
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
-      if (objElement.className == 'clsButton') {
-         objElement.className = 'clsButtonX';
-      }
-      if (objElement.className == 'clsSelect') {
-         objElement.className = 'clsSelectX';
-      }
-   }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
-      if (objElement.className == 'clsButtonX') {
-         objElement.className = 'clsButton';
-      }
-      if (objElement.className == 'clsSelectX') {
-         objElement.className = 'clsSelect';
-      }
-   }
-   function doClose() {
-      parent.doExportClose(false);
-   }
-// -->
-</script>
-<head>
-   <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
-   <meta http-equiv="expires" content="0">
-   <link rel="stylesheet" type="text/css" href="ics_style.css">
-   <title>Export</title>
-</head>
-<body class="clsTable02" scroll="no">
-   <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0"><%if strReturn = "*OK" then%>
-      <tr><td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Export Interface Created Successfully</nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
-               <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
-               </tr>
-            </table>
-         </nobr></td>
-      </tr><%else%>
-      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Export Interface Creation Failed</nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
-               <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
-               </tr>
-            </table>
-         </nobr></td>
-      </tr>
-      <tr height=100%>
-         <td align=center colspan=2 nowrap><nobr>
-            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
-               <tr height=100%>
-                  <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScrollFrame" id="conBody">
-                     <table class="clsGrid01" id="tabBody" align=left cols=1 cellpadding="0" cellspacing="1">
-                        <tr>
-                           <td class="clsNormalFix" align=left colspan=1><pre><%=strReturn%></pre></td>
-                        </tr>
-                     </table>
-                     </div>
-                  </nobr></td>
-               </tr>
-            </table>
-         </nobr></td>
-      </tr><%end if%>
-    </table>
-</body>
-</html>
-<%end sub
 
 '///////////////////
 '// Fatal routine //

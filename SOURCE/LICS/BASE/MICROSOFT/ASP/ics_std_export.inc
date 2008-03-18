@@ -1,8 +1,8 @@
 <script language="javascript">
 <!--
-   /////////////////////
+   ///////////////////
    // Export script //
-   /////////////////////
+   ///////////////////
    var cobjExport;
    var cobjExportParent;
    function doExportOutput(objParent,strName,strFormat,strQuery) {

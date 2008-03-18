@@ -108,7 +108,7 @@ sub ProcessExportPrompt()%>
       }
    }
    function doClose() {
-      parent.doExportClose(false);
+      parent.doExportClose();
    }
    function doExecute() {
       document.main.action = '<%=strBase%><%=strTarget%>';
@@ -196,7 +196,7 @@ sub ProcessExportFile()
       }
    }
    function doClose() {
-      parent.doExportClose(false);
+      parent.doExportClose();
    }
 // -->
 </script>
@@ -283,7 +283,7 @@ sub ProcessExportInterface()
       }
    }
    function doClose() {
-      parent.doExportClose(false);
+      parent.doExportClose();
    }
 // -->
 </script>

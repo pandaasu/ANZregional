@@ -5,12 +5,12 @@
    ///////////////////
    var cobjReport;
    var cobjReportParent;
-   function doReportOutput(objParent,strName,strQuery) {
+   function doReportOutput(objParent,strName,strFormat,strQuery) {
       if (cobjReport != null) {
          return;
       }
       cobjReportParent = objParent;
-      var strURL = '<%=strBase%>ics_report.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Query=' + strQuer;
+      var strURL = '<%=strBase%>ics_report.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Format=' + strFormat + '&DTA_Query=' + strQuery;
       cobjReport = document.createElement('iframe');
       cobjReport.src = strURL;
       cobjReport.style.position = 'absolute';
