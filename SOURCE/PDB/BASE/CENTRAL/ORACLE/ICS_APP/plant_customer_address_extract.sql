@@ -128,22 +128,22 @@ create or replace package body ics_app.plant_customer_address_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB02.1');   
+        execute_send('LADPDB03.1');   
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB02.2');   
+        execute_send('LADPDB03.2');   
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB02.3');   
+        execute_send('LADPDB03.3');   
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB02.4');   
+        execute_send('LADPDB03.4');   
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
-        execute_send('LADPDB02.5');   
+        execute_send('LADPDB03.5');   
       end if;
       if ( par_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB02.6');   
+        execute_send('LADPDB03.6');   
       end if;
     end if; 
       

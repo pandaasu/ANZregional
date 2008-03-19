@@ -3,20 +3,20 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_bom_loader 
+  Package : plant_bom_det_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
   Description 
   ----------- 
-  Plant Database - Inbound bill of materials loader 
+  Plant Database - Inbound bill of materials detail loader 
 
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   14-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_bom_loader as
+create or replace package bds_app.plant_bom_det_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_bom_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_bom_loader; 
+end plant_bom_det_loader; 
 /
 
-create or replace package body bds_app.plant_bom_loader as
+create or replace package body bds_app.plant_bom_det_loader as
 
   /*-*/
   /* Private exceptions 
@@ -83,7 +83,6 @@ create or replace package body bds_app.plant_bom_loader as
     lics_inbound_utility.set_definition('HDR','BOM_NUMBER', 14);
     lics_inbound_utility.set_definition('HDR','BOM_MSG_FUNCTION', 4);
     lics_inbound_utility.set_definition('HDR','BOM_USAGE', 40);
-    lics_inbound_utility.set_definition('HDR','BOM_EFF_FROM_DATE', 40);
     lics_inbound_utility.set_definition('HDR','BOM_EFF_TO_DATE', 40);
     lics_inbound_utility.set_definition('HDR','BOM_BASE_QTY', 40);
     lics_inbound_utility.set_definition('HDR','BOM_BASE_UOM', 40);
@@ -249,7 +248,6 @@ create or replace package body bds_app.plant_bom_loader as
     rcd_hdr.bom_number := lics_inbound_utility.get_variable('BOM_NUMBER');
     rcd_hdr.bom_msg_function := lics_inbound_utility.get_variable('BOM_MSG_FUNCTION');
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
-    rcd_hdr.bom_eff_from_date := lics_inbound_utility.get_variable('BOM_EFF_FROM_DATE');
     rcd_hdr.bom_eff_to_date := lics_inbound_utility.get_variable('BOM_EFF_TO_DATE');
     rcd_hdr.bom_base_qty := lics_inbound_utility.get_variable('BOM_BASE_QTY');
     rcd_hdr.bom_base_uom := lics_inbound_utility.get_variable('BOM_BASE_UOM');
@@ -315,14 +313,13 @@ create or replace package body bds_app.plant_bom_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_bom_all_test
+    update bds_bom_det
     set bom_material_code = rcd_hdr.bom_material_code,
       bom_alternative = rcd_hdr.bom_alternative,
       bom_plant = rcd_hdr.bom_plant,
       bom_number = rcd_hdr.bom_number,
       bom_msg_function = rcd_hdr.bom_msg_function,
       bom_usage = rcd_hdr.bom_usage,
-      bom_eff_from_date = rcd_hdr.bom_eff_from_date,
       bom_eff_to_date = rcd_hdr.bom_eff_to_date,
       bom_base_qty = rcd_hdr.bom_base_qty,
       bom_base_uom = rcd_hdr.bom_base_uom,
@@ -336,10 +333,13 @@ create or replace package body bds_app.plant_bom_loader as
       item_base_uom = rcd_hdr.item_base_uom,
       item_eff_from_date = rcd_hdr.item_eff_from_date,
       item_eff_to_date = rcd_hdr.item_eff_to_date
-    where bom_material_code = rcd_hdr.bom_material_code;
+    where bom_material_code = rcd_hdr.bom_material_code
+      and bom_alternative = rcd_hdr.bom_alternative
+      and bom_plant = rcd_hdr.bom_plant
+      and item_sequence = rcd_hdr.item_sequence;
     
     if ( sql%notfound ) then    
-      insert into bds_bom_all_test
+      insert into bds_bom_det
       (
         bom_material_code, 
         bom_alternative,
@@ -347,7 +347,6 @@ create or replace package body bds_app.plant_bom_loader as
         bom_number,
         bom_msg_function,
         bom_usage,
-        bom_eff_from_date,
         bom_eff_to_date,
         bom_base_qty,
         bom_base_uom,
@@ -370,7 +369,6 @@ create or replace package body bds_app.plant_bom_loader as
         rcd_hdr.bom_number,
         rcd_hdr.bom_msg_function,
         rcd_hdr.bom_usage,
-        rcd_hdr.bom_eff_from_date,
         rcd_hdr.bom_eff_to_date,
         rcd_hdr.bom_base_qty,
         rcd_hdr.bom_base_uom,
@@ -392,16 +390,16 @@ create or replace package body bds_app.plant_bom_loader as
   /*-------------*/
   end process_record_hdr;
   
-end plant_bom_loader; 
+end plant_bom_det_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_bom_loader to appsupport;
-grant execute on bds_app.plant_bom_loader to lics_app;
+grant execute on bds_app.plant_bom_det_loader to appsupport;
+grant execute on bds_app.plant_bom_det_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_bom_loader for bds_app.plant_bom_loader;
+create or replace public synonym plant_bom_det_loader for bds_app.plant_bom_det_loader;

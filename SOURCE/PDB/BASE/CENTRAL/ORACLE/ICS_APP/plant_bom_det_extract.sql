@@ -97,8 +97,6 @@ create or replace package body ics_app.plant_bom_det_extract as
     /* Local variables 
     /*-*/
     var_exception varchar2(4000);
-    var_action    varchar2(10);
-    var_data      varchar2(100);
     var_site      varchar2(10);
     var_start     boolean;
          
@@ -128,22 +126,22 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB02.1');   
+        execute_send('LADPDB04.1');   
       end if;    
       if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB02.2');   
+        execute_send('LADPDB04.2');   
       end if;    
       if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB02.3');   
+        execute_send('LADPDB04.3');   
       end if;    
       if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB02.4');   
+        execute_send('LADPDB04.4');   
       end if;    
       if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB02.5');   
+        execute_send('LADPDB04.5');   
       end if;
       if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB02.6');   
+        execute_send('LADPDB04.6');   
       end if;
     end if; 
       
@@ -178,7 +176,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_bom_det_extract - ' || 'bom_material_code: ' || var_bom_material_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_bom_det_extract - material_code: ' || var_material_code || ' - alternative_bom: ' || var_alternative || ' - plant_code: ' || var_plant || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -204,7 +202,7 @@ create or replace package body ics_app.plant_bom_det_extract as
         t01.bom_number as bom_number, 
         t01.bom_msg_function as bom_msg_function, 
         t01.bom_usage as bom_usage,
-        to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
+        to_char(t01.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
         t01.bom_base_qty as bom_base_qty, 
         t01.bom_base_uom as bom_base_uom,
         t01.bom_status as bom_status, 
@@ -261,7 +259,7 @@ create or replace package body ics_app.plant_bom_det_extract as
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_number,' ')),8,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_msg_function,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_from_date,' ')),14,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_to_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_qty,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_uom,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_status,' ')),2,' ')
