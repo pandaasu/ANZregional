@@ -174,8 +174,6 @@ create or replace package body dw_fcst_extract06 as
                exit;
             end if;
 
---- is it always plant CN16 ????
-
             /*-*/
             /* Output the interface data
             /*-*/
