@@ -197,7 +197,7 @@ create or replace package body dw_fcst_extract06 as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ODSAPL01');
+      var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'ODSAPL.DAT');
 
       /*-*/
       /* Append the interface data
