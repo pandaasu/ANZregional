@@ -165,7 +165,7 @@
    }
    function doExport(strIdentifier) {
       if (!processForm()) {return;};
-      doExportOutput(eval('document.body'),strIdentifier,'*FILE','select * from table(dw_fcst_maintenance.export_load(\'' + strIdentifier + '\'))');
+      doExportOutput(eval('document.body'),strIdentifier,'*FILE',strFunction + '.export(\'' + strIdentifier + '\')');
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
