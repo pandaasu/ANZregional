@@ -30,7 +30,12 @@
       objList.style.display = 'block';
       objList.style.visibility = 'visible';
    }
-   function showPanel() {
+   function showPanel(bolClear) {
+      if (bolClear) {
+         document.main.INP_ExtractIdentifier.value = '';
+         document.main.INP_ExtractDescription.value = '';
+         document.main.INP_ExtractVersion.value = '';
+      }
       var objList = eval('document.all("tabList")');
       var objPanel = eval('document.all("tabPanel")');
       objList.style.display = 'none';
@@ -38,6 +43,7 @@
       objPanel.style.display = 'block';
       objPanel.style.visibility = 'visible';
       document.main.INP_ExtractIdentifier.focus();
+      loadExtractLinks();
    }
    function doRefresh() {
       if (!processForm()) {return;}
@@ -80,7 +86,7 @@
       doActivityStart(eval('document.body'));
       document.main.DTA_ExtractIdentifier.value = document.main.INP_ExtractIdentifier.value;
       document.main.DTA_ExtractDescription.value = document.main.INP_ExtractDescription.value;
-      document.main.DTA_ExtractType.value = document.main.INP_ExtractType.value
+      document.main.DTA_ExtractType.value = document.main.INP_ExtractType.value;
       document.main.DTA_ExtractVersion.value = document.main.INP_ExtractVersion.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'CREATE';
@@ -98,7 +104,7 @@
    }
    function doExport(strIdentifier,strFormat,strFunction) {
       if (!processForm()) {return;};
-      doExportOutput(eval('document.body'),strIdentifier,strFormat,'select * from table(' + strFunction + '.export(\'' + strIdentifier + '\'))');
+      doExportOutput(eval('document.body'),strIdentifier,strFormat,strFunction + '.export(\'' + strIdentifier + '\')');
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
@@ -132,7 +138,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="no" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_fcst_extract_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');<%if strMode = "CREATE" then%>showPanel();<%end if%>showError();">
+<body class="clsBody02" scroll="no" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_fcst_extract_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');<%if strMode = "CREATE" then%>showPanel(false);<%end if%>showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table id="tabList" style="display:block;visibility:visible" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
@@ -141,7 +147,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:showPanel();">&nbsp;Create&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:showPanel(true);">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

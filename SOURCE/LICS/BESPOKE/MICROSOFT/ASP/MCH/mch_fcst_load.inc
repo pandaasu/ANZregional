@@ -33,7 +33,11 @@
       objList.style.display = 'block';
       objList.style.visibility = 'visible';
    }
-   function showPanel() {
+   function showPanel(bolClear) {
+      if (bolClear) {
+         document.main.INP_LoadIdentifier.value = '';
+         document.main.INP_LoadDescription.value = '';
+      }
       var objList = eval('document.all("tabList")');
       var objPanel = eval('document.all("tabPanel")');
       var objUpdate = eval('document.all("tabUpdate")')
@@ -103,17 +107,18 @@
          alert(strMessage);
          return;
       }
-      if (!readTextFile(document.main.INP_LoadDataFile.value)) {
+      if (!readTextFile(document.main.INP_LoadDataFile.value,document.main.INP_LoadDataHeader.value)) {
          return;
       }
       doActivityStart(eval('document.body'));
       document.main.DTA_LoadIdentifier.value = document.main.INP_LoadIdentifier.value;
       document.main.DTA_LoadDescription.value = document.main.INP_LoadDescription.value;
-      document.main.DTA_LoadType.value = document.main.INP_LoadType.value
-      document.main.DTA_LoadPlanGroup.value = document.main.INP_LoadPlanGroup.value
+      document.main.DTA_LoadType.value = document.main.INP_LoadType.value;
+      document.main.DTA_LoadPlanGroup.value = document.main.INP_LoadPlanGroup.value;
       document.main.DTA_LoadDataType.value = document.main.INP_LoadDataType.value;
       document.main.DTA_LoadDataVersion.value = document.main.INP_LoadDataVersion.value;
       document.main.DTA_LoadDataRange.value = document.main.INP_LoadDataRange.value;
+      document.main.DTA_LoadDataHeader.value = document.main.INP_LoadDataHeader.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'CREATE';
       document.main.submit();
@@ -129,7 +134,7 @@
          alert(strMessage);
          return;
       }
-      if (!readTextFile(document.main.INP_LoadUpdateFile.value)) {
+      if (!readTextFile(document.main.INP_LoadUpdateFile.value,document.main.INP_LoadDataHeader.value)) {
          return;
       }
       doActivityStart(eval('document.body'));
@@ -176,27 +181,30 @@
    function selectType(objSelect) {
       document.main.INP_LoadType.value = objSelect.options[objSelect.selectedIndex].value;
    }
-   function selectPlanGroup(strPlanGroup) {
-      document.main.INP_LoadPlanGroup.value = strPlanGroup;
+   function selectPlanGroup(objSelect) {
+      document.main.INP_LoadPlanGroup.value = objSelect.options[objSelect.selectedIndex].value;
    }
    function selectDataType(strType) {
       document.main.INP_LoadDataType.value = strType;
       setFileText();
    }
+   function selectDataHeader(strHeader) {
+      document.main.INP_LoadDataHeader.value = strHeader;
+   }
    function setSelect(objInput) {
       objInput.select();
    }
-   function readTextFile(strTextFile) {
-      document.main.DTA_LoadStream.value = loadStreamXML(strTextFile);
+   function readTextFile(strTextFile,strHeader) {
+      document.main.DTA_LoadStream.value = loadStreamXML(strTextFile,strHeader);
       return true;
    }
    function setFileText() {
       var strFileText = '';
       if (document.main.INP_LoadDataType.value == '*QTY_ONLY') {
-         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values';
+         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values';
       }
       if (document.main.INP_LoadDataType.value == '*QTY_GSV') {
-         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values, ' + document.main.INP_LoadDataRange.value + ' GSV Values';
+         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values, ' + document.main.INP_LoadDataRange.value + ' GSV Values';
       }
       document.all.fntFileText.innerText = strFileText;
    }
@@ -213,7 +221,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="no" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_fcst_maintenance_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');setFileText();<%if strMode = "CREATE" then%>showPanel();<%end if%>showError();">
+<body class="clsBody02" scroll="no" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('mch_fcst_maintenance_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');setFileText();<%if strMode = "CREATE" then%>showPanel(false);<%end if%>showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table id="tabList" style="display:block;visibility:visible" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
@@ -222,7 +230,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:showPanel();">&nbsp;Create&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:showPanel(true);">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -304,9 +312,11 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Planning Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
-            <input type="radio" name="sltPlanGroup"<%if objForm.Fields("DTA_LoadPlanGroup").Value = "*ALL" then%> checked<%end if%> value="*ALL" onClick="javascript:selectPlanGroup('*ALL');">All Materials&nbsp;
-            <input type="radio" name="sltPlanGroup"<%if objForm.Fields("DTA_LoadPlanGroup").Value = "*PET" then%> checked<%end if%> value="*PET" onClick="javascript:selectPlanGroup('*PET');">Pet Materials Only&nbsp;
-            <input type="radio" name="sltPlanGroup"<%if objForm.Fields("DTA_LoadPlanGroup").Value = "*SNACK" then%> checked<%end if%> value="*SNACK" onClick="javascript:selectPlanGroup('*SNACK');">Snack Materials Only&nbsp;
+            <select class="clsInputBN" name="sltPlanGroup" onChange="selectPlanGroup(this);">
+               <option value=""<%if objForm.Fields("DTA_LoadPlanGroup").Value = "" then%> selected<%end if%>>** select planning group **
+               <option value="*ALL"<%if objForm.Fields("DTA_LoadPlanGroup").Value = "*ALL" then%> selected<%end if%>>(*ALL) All planning groups<%for i = 0 to objSelection.ListCount("PLAN_GROUP") - 1%>
+               <option value="<%=objSelection.ListValue01("PLAN_GROUP",i)%>"<%if objForm.Fields("DTA_LoadPlanGroup").Value = objSelection.ListValue01("PLAN_GROUP",i) then%> selected<%end if%>>(<%=objSelection.ListValue01("PLAN_GROUP",i)%>) <%=objSelection.ListValue02("PLAN_GROUP",i)%><%next%>
+            </select>
          </nobr></td>
       </tr>
       <tr>
@@ -329,6 +339,13 @@
          &nbsp;(number of periods)</nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Forecast Data Header:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <input type="radio" name="sltDataHeader"<%if objForm.Fields("DTA_LoadDataHeader").Value = "*NO" then%> checked<%end if%> value="*NO" onClick="javascript:selectDataHeader('*NO');">File contains no header line (all data lines used)&nbsp;
+            <input type="radio" name="sltDataHeader"<%if objForm.Fields("DTA_LoadDataHeader").Value = "*YES" then%> checked<%end if%> value="*YES" onClick="javascript:selectDataHeader('*YES');">File contains header line (first data line is ignored)&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Forecast Data File:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="file" name="INP_LoadDataFile" size="64" onFocus="setSelect(this);">
@@ -339,7 +356,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
-         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;<font id="fntFileText">The text file must be a tab delimited file - Demand Group, Material Code, Quantity Values</font>&nbsp;</nobr></td>
+         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;<font id="fntFileText">The text file must be a tab delimited file - Demand Group, Material Code, Plant Code, Quantity Values</font>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
@@ -398,10 +415,12 @@
    <input type="hidden" name="DTA_LoadDataType" value="<%=objForm.Fields("DTA_LoadDataType").Value%>">
    <input type="hidden" name="DTA_LoadDataVersion" value="<%=objForm.Fields("DTA_LoadDataVersion").Value%>">
    <input type="hidden" name="DTA_LoadDataRange" value="<%=objForm.Fields("DTA_LoadDataRange").Value%>">
+   <input type="hidden" name="DTA_LoadDataHeader" value="<%=objForm.Fields("DTA_LoadDataHeader").Value%>">
    <input type="hidden" name="DTA_LoadStream" value="">
    <input type="hidden" name="INP_LoadType" value="<%=objForm.Fields("DTA_LoadType").Value%>">
    <input type="hidden" name="INP_LoadPlanGroup" value="<%=objForm.Fields("DTA_LoadPlanGroup").Value%>">
    <input type="hidden" name="INP_LoadDataType" value="<%=objForm.Fields("DTA_LoadDataType").Value%>">
+   <input type="hidden" name="INP_LoadDataHeader" value="<%=objForm.Fields("DTA_LoadDataHeader").Value%>">
 </form>
 </body>
 </html>

@@ -142,6 +142,21 @@ sub ProcessSelect()
    end if
 
    '//
+   '// Retrieve the planning group list
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " t01.plan_group,"
+   strQuery = strQuery & " t01.plan_group_description"
+   strQuery = strQuery & " from fcst_plan_group t01"
+   strQuery = strQuery & " order by t01.plan_group asc"
+   strReturn = objSelection.Execute("PLAN_GROUP", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+      exit sub
+   end if
+
+   '//
    '// Retrieve the forecast load list
    '//
    lngSize = 0
@@ -157,7 +172,7 @@ sub ProcessSelect()
    strQuery = strQuery & " nvl(t02.load_type_updatable,'0')"
    strQuery = strQuery & " from fcst_load_header t01, fcst_load_type t02"
    strQuery = strQuery & " where t01.load_type = t02.load_type(+)"
-   strQuery = strQuery & " order by t01.load_identifier asc"
+   strQuery = strQuery & " order by t01.load_data_version desc, t01.load_identifier desc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -171,10 +186,11 @@ sub ProcessSelect()
       call objForm.AddField("DTA_LoadType", "")
       call objForm.AddField("DTA_LoadIdentifier", "")
       call objForm.AddField("DTA_LoadDescription", "")
-      call objForm.AddField("DTA_LoadPlanGroup", "*ALL")
+      call objForm.AddField("DTA_LoadPlanGroup", "")
       call objForm.AddField("DTA_LoadDataType", "*QTY_GSV")
       call objForm.AddField("DTA_LoadDataVersion", "")
       call objForm.AddField("DTA_LoadDataRange", "13")
+      call objForm.AddField("DTA_LoadDataHeader", "*NO")
    end if
 
 end sub
