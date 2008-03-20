@@ -518,8 +518,11 @@ create or replace package body dw_fcst_maintenance as
       var_work_qty number;
       var_work_date date;
       var_cast_date date;
-      var_load_data_version rcd_fcst_load_header.load_data_version%type;
-      var_load_data_range rcd_fcst_load_header.load_data_range%type;
+      var_sales_org_code fcst_load_header.sales_org_code%type;
+      var_distbn_chnl_code fcst_load_header.distbn_chnl_code%type;
+      var_division_code fcst_load_header.division_code%type;
+      var_load_data_version fcst_load_header.load_data_version%type;
+      var_load_data_range fcst_load_header.load_data_range%type;
 
       /*-*/
       /* Local cursors
@@ -576,6 +579,22 @@ create or replace package body dw_fcst_maintenance as
       end;
 
       /*-*/
+      /* Retrieve the control data
+      /*-*/
+      select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','SALES_ORG_CODE'));
+      select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DISTBN_CHNL_CODE'));
+      select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DIVISION_CODE'));
+      if var_sales_org_code is null then
+         raise_application_error(-20000, 'Forecast sales organisation code not set in the LICS data store');
+      end if;
+      if var_distbn_chnl_code is null then
+         raise_application_error(-20000, 'Forecast distribution channel code not set in the LICS data store');
+      end if;
+      if var_division_code is null then
+         raise_application_error(-20000, 'Forecast division code not set in the LICS data store');
+      end if;
+
+      /*-*/
       /* Retrieve the period and week information
       /*-*/
       var_work_date := var_cast_date;
@@ -605,9 +624,9 @@ create or replace package body dw_fcst_maintenance as
       rcd_fcst_load_header.load_str_yyyypp := 999999;
       rcd_fcst_load_header.load_end_yyyypp := 0;
       rcd_fcst_load_header.load_plan_group := '*ALL';
-      rcd_fcst_load_header.sales_org_code := '135';
-      rcd_fcst_load_header.distbn_chnl_code := '10';
-      rcd_fcst_load_header.division_code := '51';
+      rcd_fcst_load_header.sales_org_code := var_sales_org_code;
+      rcd_fcst_load_header.distbn_chnl_code := var_distbn_chnl_code;
+      rcd_fcst_load_header.division_code := var_division_code;
       rcd_fcst_load_header.crt_user := user;
       rcd_fcst_load_header.crt_date := sysdate;
       rcd_fcst_load_header.upd_user := user;
@@ -844,6 +863,9 @@ create or replace package body dw_fcst_maintenance as
       var_load_data_range fcst_load_header.load_data_range%type;
       var_load_plan_group fcst_load_header.load_plan_group%type;
       var_user fcst_load_header.crt_user%type;
+      var_sales_org_code fcst_load_header.sales_org_code%type;
+      var_distbn_chnl_code fcst_load_header.distbn_chnl_code%type;
+      var_division_code fcst_load_header.division_code%type;
       var_title varchar2(128);
       var_message varchar2(4000);
 
@@ -995,6 +1017,22 @@ create or replace package body dw_fcst_maintenance as
       end if;
 
       /*-*/
+      /* Retrieve the control data
+      /*-*/
+      select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','SALES_ORG_CODE'));
+      select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DISTBN_CHNL_CODE'));
+      select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DIVISION_CODE'));
+      if var_sales_org_code is null then
+         var_message := var_message || chr(13) || 'Forecast sales organisation code not set in the LICS data store';
+      end if;
+      if var_distbn_chnl_code is null then
+         var_message := var_message || chr(13) || 'Forecast distribution channel code not set in the LICS data store';
+      end if;
+      if var_division_code is null then
+         var_message := var_message || chr(13) || 'Forecast division code not set in the LICS data store';
+      end if;
+
+      /*-*/
       /* Return the message when required
       /*-*/
       if not(var_message is null) then
@@ -1019,9 +1057,9 @@ create or replace package body dw_fcst_maintenance as
       rcd_fcst_load_header.load_str_yyyypp := 999999;
       rcd_fcst_load_header.load_end_yyyypp := 0;
       rcd_fcst_load_header.load_plan_group := var_load_plan_group;
-      rcd_fcst_load_header.sales_org_code := '135';
-      rcd_fcst_load_header.distbn_chnl_code := '10';
-      rcd_fcst_load_header.division_code := '51';
+      rcd_fcst_load_header.sales_org_code := var_sales_org_code;
+      rcd_fcst_load_header.distbn_chnl_code := var_distbn_chnl_code;
+      rcd_fcst_load_header.division_code := var_division_code;
       rcd_fcst_load_header.crt_user := var_user;
       rcd_fcst_load_header.crt_date := sysdate;
       rcd_fcst_load_header.upd_user := var_user;
