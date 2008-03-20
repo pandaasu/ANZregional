@@ -50,7 +50,7 @@ create or replace package body dw_fcst_purging as
    /*-*/
    /* Private constants
    /*-*/
-   cnt_process_count constant number(5,0) := 100;
+   cnt_process_count constant number(5,0) := 10;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -110,23 +110,16 @@ create or replace package body dw_fcst_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_agency_daily is
+      cursor csr_fcst_load_header is
          select t01.*
-           from agency_dly_inv_hdr t01
-          where t01.creatn_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_agency_daily csr_agency_daily%rowtype;
-
-      cursor csr_whslr_daily is
-         select t01.*
-           from whslr_dly_inv_hdr t01
-          where t01.sap_creatn_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_whslr_daily csr_whslr_daily%rowtype;
-
-      cursor csr_whslr_monthly is
-         select t01.*
-           from whslr_mly_inv_hdr t01
-          where t01.edi_bilto_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_whslr_monthly csr_whslr_monthly%rowtype;
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type
+            and ((t02.load_type_version = '*PERIOD' and 
+                  t01.load_data_version < (select mars_period from mars_date where calendar_date = trunc(sysdate - 180))) or
+                 (t02.load_type_version = '*YEAR' and 
+                  t01.load_data_version < (select mars_year-1 from mars_date where calendar_date = trunc(sysdate))));
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -134,21 +127,21 @@ create or replace package body dw_fcst_purging as
    begin
 
       /*-*/
-      /* Purge the collection agency daily data
+      /* Purge the forecast load data
       /*-*/
       var_count := 0;
-      open csr_agency_daily;
+      open csr_fcst_load_header;
       loop
          if var_count >= cnt_process_count then
-            if csr_agency_daily%isopen then
-               close csr_agency_daily;
+            if csr_fcst_load_header%isopen then
+               close csr_fcst_load_header;
             end if;
             commit;
-            open csr_agency_daily;
+            open csr_fcst_load_header;
             var_count := 0;
          end if;
-         fetch csr_agency_daily into rcd_agency_daily;
-         if csr_agency_daily%notfound then
+         fetch csr_fcst_load_header into rcd_fcst_load_header;
+         if csr_fcst_load_header%notfound then
             exit;
          end if;
 
@@ -160,88 +153,11 @@ create or replace package body dw_fcst_purging as
          /*-*/
          /* Delete the header and related data
          /*-*/
-         delete from agency_dly_inv_det where gen_belnr = rcd_agency_daily.hdr_belnr;
-         delete from agency_dly_inv_hdr where hdr_belnr = rcd_agency_daily.hdr_belnr;
+         delete from fcst_load_detail where load_identifier = rcd_fcst_load_header.load_identifier;
+         delete from fcst_load_header where load_identifier = rcd_fcst_load_header.load_identifier;
 
       end loop;
-      close csr_agency_daily;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Purge the wholesaler daily data
-      /*-*/
-      var_count := 0;
-      open csr_whslr_daily;
-      loop
-         if var_count >= cnt_process_count then
-            if csr_whslr_daily%isopen then
-               close csr_whslr_daily;
-            end if;
-            commit;
-            open csr_whslr_daily;
-            var_count := 0;
-         end if;
-         fetch csr_whslr_daily into rcd_whslr_daily;
-         if csr_whslr_daily%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Increment the count
-         /*-*/
-         var_count := var_count + 1;
-
-         /*-*/
-         /* Delete the header and related data
-         /*-*/
-         delete from whslr_dly_inv_det where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
-         delete from whslr_dly_inv_hdr where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
-
-      end loop;
-      close csr_whslr_daily;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Purge the wholesaler monthly data
-      /*-*/
-      var_count := 0;
-      open csr_whslr_monthly;
-      loop
-         if var_count >= cnt_process_count then
-            if csr_whslr_monthly%isopen then
-               close csr_whslr_monthly;
-            end if;
-            commit;
-            open csr_whslr_monthly;
-            var_count := 0;
-         end if;
-         fetch csr_whslr_monthly into rcd_whslr_monthly;
-         if csr_whslr_monthly%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Increment the count
-         /*-*/
-         var_count := var_count + 1;
-
-         /*-*/
-         /* Delete the header and related data
-         /*-*/
-         delete from whslr_mly_inv_det where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_bch where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_hdr where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-
-      end loop;
-      close csr_whslr_monthly;
+      close csr_fcst_load_header;
 
       /*-*/
       /* Commit the database
@@ -266,23 +182,16 @@ create or replace package body dw_fcst_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_agency_daily is
+      cursor csr_fcst_extract_header is
          select t01.*
-           from agency_dly_inv_hdr t01
-          where t01.creatn_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_agency_daily csr_agency_daily%rowtype;
-
-      cursor csr_whslr_daily is
-         select t01.*
-           from whslr_dly_inv_hdr t01
-          where t01.sap_creatn_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_whslr_daily csr_whslr_daily%rowtype;
-
-      cursor csr_whslr_monthly is
-         select t01.*
-           from whslr_mly_inv_hdr t01
-          where t01.edi_bilto_date < to_char(sysdate-90,'yyyymmdd');
-      rcd_whslr_monthly csr_whslr_monthly%rowtype;
+           from fcst_extract_header t01,
+                fcst_extract_type t02
+          where t01.extract_type = t02.extract_type
+            and ((t02.extract_type_version = '*PERIOD' and 
+                  t01.extract_version < (select mars_period from mars_date where calendar_date = trunc(sysdate - 180))) or
+                 (t02.extract_type_version = '*YEAR' and 
+                  t01.extract_version < (select mars_year-1 from mars_date where calendar_date = trunc(sysdate))));
+      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -290,21 +199,21 @@ create or replace package body dw_fcst_purging as
    begin
 
       /*-*/
-      /* Purge the collection agency daily data
+      /* Purge the forecast extract data
       /*-*/
       var_count := 0;
-      open csr_agency_daily;
+      open csr_fcst_extract_header;
       loop
          if var_count >= cnt_process_count then
-            if csr_agency_daily%isopen then
-               close csr_agency_daily;
+            if csr_fcst_extract_header%isopen then
+               close csr_fcst_extract_header;
             end if;
             commit;
-            open csr_agency_daily;
+            open csr_fcst_extract_header;
             var_count := 0;
          end if;
-         fetch csr_agency_daily into rcd_agency_daily;
-         if csr_agency_daily%notfound then
+         fetch csr_fcst_extract_header into rcd_fcst_extract_header;
+         if csr_fcst_extract_header%notfound then
             exit;
          end if;
 
@@ -316,88 +225,11 @@ create or replace package body dw_fcst_purging as
          /*-*/
          /* Delete the header and related data
          /*-*/
-         delete from agency_dly_inv_det where gen_belnr = rcd_agency_daily.hdr_belnr;
-         delete from agency_dly_inv_hdr where hdr_belnr = rcd_agency_daily.hdr_belnr;
+         delete from fcst_extract_load where extract_identifier = rcd_fcst_extract_header.extract_identifier;
+         delete from fcst_extract_header where extract_identifier = rcd_fcst_extract_header.extract_identifier;
 
       end loop;
-      close csr_agency_daily;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Purge the wholesaler daily data
-      /*-*/
-      var_count := 0;
-      open csr_whslr_daily;
-      loop
-         if var_count >= cnt_process_count then
-            if csr_whslr_daily%isopen then
-               close csr_whslr_daily;
-            end if;
-            commit;
-            open csr_whslr_daily;
-            var_count := 0;
-         end if;
-         fetch csr_whslr_daily into rcd_whslr_daily;
-         if csr_whslr_daily%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Increment the count
-         /*-*/
-         var_count := var_count + 1;
-
-         /*-*/
-         /* Delete the header and related data
-         /*-*/
-         delete from whslr_dly_inv_det where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
-         delete from whslr_dly_inv_hdr where sap_invoice_number = rcd_whslr_daily.sap_invoice_number;
-
-      end loop;
-      close csr_whslr_daily;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Purge the wholesaler monthly data
-      /*-*/
-      var_count := 0;
-      open csr_whslr_monthly;
-      loop
-         if var_count >= cnt_process_count then
-            if csr_whslr_monthly%isopen then
-               close csr_whslr_monthly;
-            end if;
-            commit;
-            open csr_whslr_monthly;
-            var_count := 0;
-         end if;
-         fetch csr_whslr_monthly into rcd_whslr_monthly;
-         if csr_whslr_monthly%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Increment the count
-         /*-*/
-         var_count := var_count + 1;
-
-         /*-*/
-         /* Delete the header and related data
-         /*-*/
-         delete from whslr_mly_inv_det where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_bch where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-         delete from whslr_mly_inv_hdr where edi_sndto_code = rcd_whslr_monthly.edi_sndto_code and edi_bilto_date = rcd_whslr_monthly.edi_bilto_date;
-
-      end loop;
-      close csr_whslr_monthly;
+      close csr_fcst_extract_header;
 
       /*-*/
       /* Commit the database
