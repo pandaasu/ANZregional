@@ -90,7 +90,7 @@ create or replace package body dw_fcst_purging as
          /*-*/
          /* Raise the exception
          /*-*/
-         raise_application_error(-20000, ''DW_FORECAST_PURGING - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'DW_FORECAST_PURGING - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -118,7 +118,7 @@ create or replace package body dw_fcst_purging as
             and ((t02.load_type_version = '*PERIOD' and 
                   t01.load_data_version < (select mars_period from mars_date where calendar_date = trunc(sysdate - 180))) or
                  (t02.load_type_version = '*YEAR' and 
-                  t01.load_data_version < (select mars_year-1 from mars_date where calendar_date = trunc(sysdate))));
+                  t01.load_data_version < (select mars_year-2 from mars_date where calendar_date = trunc(sysdate))));
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
    /*-------------*/
@@ -190,7 +190,7 @@ create or replace package body dw_fcst_purging as
             and ((t02.extract_type_version = '*PERIOD' and 
                   t01.extract_version < (select mars_period from mars_date where calendar_date = trunc(sysdate - 180))) or
                  (t02.extract_type_version = '*YEAR' and 
-                  t01.extract_version < (select mars_year-1 from mars_date where calendar_date = trunc(sysdate))));
+                  t01.extract_version < (select mars_year-2 from mars_date where calendar_date = trunc(sysdate))));
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
    /*-------------*/
