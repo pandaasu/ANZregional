@@ -167,9 +167,6 @@ sub ProcessReportSpreadsheet()
       Response.ContentType = "application/vnd.ms-excel"
       Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("DTA_Name").Value & ".xls"
       for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")
-         if i > objSelection.ListLower("REPORT") then
-            Response.Write vbNewLine
-         end if
          Response.Write objSelection.ListValue01("REPORT",i)
       next
    else%>

@@ -4,13 +4,22 @@
    ///////////////////////////
    // Generic stream script //
    ///////////////////////////
-   function loadStreamXML(strPath) {
+   function loadStreamXML(strPath,strHeader) {
       var objFileSystem = new ActiveXObject('Scripting.FileSystemObject');
       var objFile = objFileSystem.GetFile(strPath);
       var objTextStream = objFile.OpenAsTextStream(1,-2);
+      var strLine = '';
+      var bolSkip = false;
+      if (strHeader == '*YES') {
+         bolSkip = true;
+      }
       var strText = '<TXTSTREAM>';
       while (!objTextStream.AtEndOfStream) {
-         strText = strText + '<XR><![CDATA[' + objTextStream.ReadLine() + ']]></XR>';
+         strLine = objTextStream.ReadLine();
+         if (!bolSkip) {
+            strText = strText + '<XR><![CDATA[' + strLine + ']]></XR>';
+         }
+         bolSkip = false;
       }
       strText = strText + '</TXTSTREAM>';
       objTextStream.Close();

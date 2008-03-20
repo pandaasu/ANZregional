@@ -22,6 +22,7 @@
    dim objForm
    dim objSecurity
    dim objSelection
+   dim objProcedure
 
    '//
    '// Set the server script timeout to (20 minutes)
@@ -81,6 +82,7 @@
    set objForm = nothing
    set objSecurity = nothing
    set objSelection = nothing
+   set objProcedure = nothing
 
 '///////////////////////////////////
 '// Process export prompt routine //
@@ -163,7 +165,7 @@ sub ProcessExportFile()
    '//
    '// Execute the export file
    '//
-   strReturn = objSelection.Execute("EXPORT", objForm.Fields("DTA_Query").Value, 0)
+   strReturn = objSelection.Execute("EXPORT", "select * from table(" & objForm.Fields("DTA_Query").Value & ")", 0)
    if strReturn = "*OK" then
       Response.Buffer = true
       Response.ContentType = "application/octet-stream"
@@ -260,7 +262,7 @@ sub ProcessExportInterface()
    '//
    '// Execute the export interface
    '//
-   strReturn = objFunction.Execute(objForm.Fields("DTA_Query").Value)%>
+   strReturn = objProcedure.Execute(objForm.Fields("DTA_Query").Value)%>
 <html>
 <script language="javascript">
 <!--
