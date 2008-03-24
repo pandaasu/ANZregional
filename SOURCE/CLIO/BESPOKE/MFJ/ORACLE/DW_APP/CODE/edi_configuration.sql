@@ -1949,7 +1949,7 @@ create or replace package body edi_configuration as
          /*-*/
          /* Set the starting point for the billing events
          /*-*/
-         var_bilto_end_date := to_char(sysdate,'yyyymmdd');
+         var_bilto_end_date := to_char(last_day(to_date(to_char(to_number(substr(to_char(sysdate,'yyyymmdd'),1,4))-1)||'1201','yyyymmdd')),'yyyymmdd');
          open csr_whslr_billing_01;
          fetch csr_whslr_billing_01 into rcd_whslr_billing_01;
          if csr_whslr_billing_01%found then
@@ -2142,7 +2142,7 @@ create or replace package body edi_configuration as
          /*-*/
          /* Set the starting point for the billing events
          /*-*/
-         var_bilto_end_date := to_char(sysdate,'yyyymmdd');
+         var_bilto_end_date := to_char(last_day(to_date(to_char(to_number(substr(to_char(sysdate,'yyyymmdd'),1,4))-1)||'1201','yyyymmdd')),'yyyymmdd');
          open csr_whslr_billing_01;
          fetch csr_whslr_billing_01 into rcd_whslr_billing_01;
          if csr_whslr_billing_01%found then
