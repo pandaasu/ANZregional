@@ -24,7 +24,6 @@
    dim strMode
    dim objForm
    dim objSecurity
-   dim objSelection
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -74,8 +73,6 @@
       select case strMode
          case "SELECT"
             call ProcessSelect
-         case "ACCEPT"
-            call ProcessAccept
          case else
             strMode = "FATAL"
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
@@ -91,8 +88,6 @@
          call PaintFatal
       case "SELECT"
          call PaintSelect
-      case "ACCEPT"
-         call PaintAccept
    end select
  
    '//
@@ -100,7 +95,6 @@
    '//
    set objForm = nothing
    set objSecurity = nothing
-   set objSelection = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -120,42 +114,6 @@ sub ProcessSelect()
 
 end sub
 
-'////////////////////////////
-'// Process accept routine //
-'////////////////////////////
-sub ProcessAccept()
-
-   dim strQuery
-   dim lngSize
-
-   '//
-   '// Create the selection object
-   '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve the gold tax data
-   '//
-   lngSize = 0
-   strQuery = "select * from table(dw_tax_reporting.gold_tax_file("
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass01").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_TaxClass02").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyPlant").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_SupplyLocation").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_ReceivingPlant").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate01").Value) & "',"
-   strQuery = strQuery & "'" & objSecurity.FixString(objForm.Fields("DTA_GIDate02").Value) & "'"
-   strQuery = strQuery & "))"
-   strReturn = objSelection.Execute("LIST", strQuery, lngSize)
-   if strReturn <> "*OK" then
-      strError = FormatError(strReturn)
-      strMode = "SELECT"
-      exit sub
-   end if
-
-end sub
-
 '///////////////////
 '// Fatal routine //
 '///////////////////
@@ -168,12 +126,5 @@ sub PaintFatal()%>
 '//////////////////////////
 sub PaintSelect()%>
 <!--#include file="mch_gold_tax_select.inc"-->
-<%end sub
-
-'//////////////////////////
-'// Paint accept routine //
-'//////////////////////////
-sub PaintAccept()%>
-<!--#include file="mch_gold_tax_display.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->

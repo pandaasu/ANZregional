@@ -16,23 +16,16 @@
          objElement.className = 'clsButton';
       }
    }
-   function doDisplay() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      document.main.DTA_TaxClass01.value = document.main.INP_TaxClass01.value.replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_TaxClass02.value = document.main.INP_TaxClass02.value.replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_SupplyPlant.value = document.main.INP_SupplyPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_SupplyLocation.value = document.main.INP_SupplyLocation.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_ReceivingPlant.value = document.main.INP_ReceivingPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_GIDate01.value = document.main.INP_GIDate01.value.replace(/\'/g,'').replace(/ /g,'');
-      document.main.DTA_GIDate02.value = document.main.INP_GIDate02.value.replace(/\'/g,'').replace(/ /g,'');
-      document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'ACCEPT';
-      document.main.submit();
+   function doExport() {
+      if (!processForm()) {return;};
+      var strFunction = 'dw_tax_reporting.gold_tax_file(\'' + document.main.INP_TaxClass01.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_TaxClass02.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_SupplyPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_SupplyLocation.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_ReceivingPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_GIDate01.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_GIDate02.value.replace(/\'/g,'').replace(/ /g,'') + '\')';
+      doExportOutput(eval('document.body'),'Gold Tax Report','*FILE',strFunction);
    }
    function processForm() {
       if (checkInput() == true) {
@@ -47,6 +40,7 @@
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
+<!--#include file="ics_std_export.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -76,7 +70,7 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Receiving Plants:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><%=objForm.Fields("DTA_TaxClass02").Value%>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_ReceivingPlant" size="100" maxlength="200" value="<%=objForm.Fields("DTA_ReceivingPlant").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
@@ -95,7 +89,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDisplay();">&nbsp;Display&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doExport();">&nbsp;Export&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
