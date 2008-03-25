@@ -228,7 +228,7 @@ create or replace package body dw_fcst_extract05 as
                var_output := var_output || chr(9) || null;
                var_output := var_output || chr(9) || 'EA';
                var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
-               var_output := var_output || chr(9) || 'RMB';
+               var_output := var_output || chr(9) || 'CNY';
                var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
                var_output := var_output || chr(9) || null;
                var_output := var_output || chr(9) || null;
@@ -306,7 +306,7 @@ create or replace package body dw_fcst_extract05 as
             var_output := var_output || chr(9) || null;
             var_output := var_output || chr(9) || 'EA';
             var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_qty,2));
-            var_output := var_output || chr(9) || 'RMB';
+            var_output := var_output || chr(9) || 'CNY';
             var_output := var_output || chr(9) || to_char(round(rcd_fcst_load_detail.fcst_gsv,2));
             var_output := var_output || chr(9) || null;
             var_output := var_output || chr(9) || null;
