@@ -18,6 +18,39 @@
    }
    function doExport() {
       if (!processForm()) {return;};
+      var strMessage = '';
+      if (document.main.INP_TaxClass01.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Tax classification range from value must be entered';
+      }
+      if (document.main.INP_TaxClass02.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Tax classification range to value must be entered';
+      }
+      if (document.main.INP_SupplyPlant.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Supply plant value must be entered';
+      }
+      if (document.main.INP_SupplyLocation.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Supply location value must be entered';
+      }
+      if (document.main.INP_ReceivingPlant.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Receiving plant value must be entered';
+      }
+      if (document.main.INP_GIDate01.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Goods issued date range from value must be entered';
+      }
+      if (document.main.INP_GIDate02.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Goods issued date range to value must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var strFunction = 'dw_tax_reporting.gold_tax_file(\'' + document.main.INP_TaxClass01.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_TaxClass02.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_SupplyPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
@@ -51,35 +84,35 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Tax Classification Range:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_TaxClass01" size="20" maxlength="20" value="<%=objForm.Fields("DTA_TaxClass01").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_TaxClass01" size="20" maxlength="20" value="" onFocus="setSelect(this);">
             <font class="clsLabelBB">&nbsp;to&nbsp;</font>
-            <input class="clsInputNN" type="text" name="INP_TaxClass02" size="20" maxlength="20" value="<%=objForm.Fields("DTA_TaxClass02").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_TaxClass02" size="20" maxlength="20" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Supply Plants:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SupplyPlant" size="100" maxlength="200" value="<%=objForm.Fields("DTA_SupplyPlant").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SupplyPlant" size="100" maxlength="200" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Supply Storage Locations:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SupplyLocation" size="100" maxlength="200" value="<%=objForm.Fields("DTA_SupplyLocation").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SupplyLocation" size="100" maxlength="200" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Receiving Plants:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_ReceivingPlant" size="100" maxlength="200" value="<%=objForm.Fields("DTA_ReceivingPlant").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_ReceivingPlant" size="100" maxlength="200" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Goods Issued Date Range (YYYYMMDD):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_GIDate01" size="8" maxlength="8" value="<%=objForm.Fields("DTA_GIDate01").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_GIDate01" size="8" maxlength="8" value="" onFocus="setSelect(this);">
             <font class="clsLabelBB">&nbsp;to&nbsp;</font>
-            <input class="clsInputNN" type="text" name="INP_GIDate02" size="8" maxlength="8" value="<%=objForm.Fields("DTA_GIDate02").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_GIDate02" size="8" maxlength="8" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -96,13 +129,6 @@
       </tr>
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
-   <input type="hidden" name="DTA_TaxClass01" value="<%=objForm.Fields("DTA_TaxClass01").Value%>">
-   <input type="hidden" name="DTA_TaxClass02" value="<%=objForm.Fields("DTA_TaxClass02").Value%>">
-   <input type="hidden" name="DTA_SupplyPlant" value="<%=objForm.Fields("DTA_SupplyPlant").Value%>">
-   <input type="hidden" name="DTA_SupplyLocation" value="<%=objForm.Fields("DTA_SupplyLocation").Value%>">
-   <input type="hidden" name="DTA_ReceivingPlant" value="<%=objForm.Fields("DTA_ReceivingPlant").Value%>">
-   <input type="hidden" name="DTA_GIDate01" value="<%=objForm.Fields("DTA_GIDate01").Value%>">
-   <input type="hidden" name="DTA_GIDate02" value="<%=objForm.Fields("DTA_GIDate02").Value%>">
 </form>
 </body>
 </html>

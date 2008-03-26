@@ -16,7 +16,7 @@
          objElement.className = 'clsButton';
       }
    }
-   function doDownload() {
+   function doReport() {
       if (!processForm()) {return;}
       var strMessage = '';
       if (document.main.INP_DeliveryPlant.value == '') {
@@ -39,11 +39,11 @@
          alert(strMessage);
          return;
       }
-      doActivityStart(eval('document.body'));
-      doSpreadsheetDownload(eval('document.body'),'*DISP','dw_tax_reporting.sample_pricing(\'' + document.main.INP_DeliveryPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\',\''
-                                                                                               + document.main.INP_PDDate01.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\',\''
-                                                                                               + document.main.INP_PDDate02.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\',\''
-                                                                                               + document.main.INP_OrderType.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\')');
+      var strFunction = 'dw_tax_reporting.sample_pricing(\'' + document.main.INP_DeliveryPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_PDDate01.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_PDDate02.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_OrderType.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\')';
+      doReportOutput(eval('document.body'),'Sample Pricing Tax Report','*SPREADSHEET','select * from table(' + strFunction + ')');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -58,8 +58,7 @@
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
-<!--#include file="ics_std_spreadsheet.inc"-->
-<!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -94,7 +93,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDownload();">&nbsp;Download&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doReport();">&nbsp;Report&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

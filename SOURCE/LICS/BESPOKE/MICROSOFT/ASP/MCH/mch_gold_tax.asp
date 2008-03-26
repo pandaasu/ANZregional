@@ -67,52 +67,22 @@
       GetForm()
       strMode = objForm.Fields("Mode").Value
 
-      '//
-      '// Process the form data
-      '//
-      select case strMode
-         case "SELECT"
-            call ProcessSelect
-         case else
-            strMode = "FATAL"
-            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
-      end select
-
    end if
 
    '//
    '// Paint response
    '//
-   select case strMode
-      case "FATAL"
-         call PaintFatal
-      case "SELECT"
-         call PaintSelect
-   end select
+   if strMode = "FATAL" then
+      call PaintFatal
+   else
+      call PaintResponse
+   end if
  
    '//
    '// Destroy references
    '//
    set objForm = nothing
    set objSecurity = nothing
-
-'////////////////////////////
-'// Process select routine //
-'////////////////////////////
-sub ProcessSelect()
-
-   '//
-   '// Initialise the data fields
-   '//
-   call objForm.AddField("DTA_TaxClass01", "")
-   call objForm.AddField("DTA_TaxClass01", "")
-   call objForm.AddField("DTA_SupplyPlant", "")
-   call objForm.AddField("DTA_SupplyLocation", "")
-   call objForm.AddField("DTA_ReceivingPlant", "")
-   call objForm.AddField("DTA_GIDate01", "")
-   call objForm.AddField("DTA_GIDate02", "")
-
-end sub
 
 '///////////////////
 '// Fatal routine //
@@ -121,10 +91,10 @@ sub PaintFatal()%>
 <!--#include file="ics_fatal.inc"-->
 <%end sub
 
-'//////////////////////////
-'// Paint select routine //
-'//////////////////////////
-sub PaintSelect()%>
+'////////////////////////////
+'// Paint response routine //
+'////////////////////////////
+sub PaintResponse()%>
 <!--#include file="mch_gold_tax_select.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->
