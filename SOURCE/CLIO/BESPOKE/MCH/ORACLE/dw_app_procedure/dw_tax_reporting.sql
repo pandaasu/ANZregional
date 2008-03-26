@@ -28,25 +28,27 @@ create or replace package dw_tax_reporting as
     -------   ------         -----------
     2008/01   Steve Gregan   Created
     2008/02   Steve Gregan   Added gold tax file download
-    2008/03   Steve Gregan   Added chinese UOM description to gold tax file download
+    2008/03   Steve Gregan   Added chinese UOM description to gold tax standard file export
+    2008/03   Steve Gregan   Changed stock transfer report to standard excel report
+    2008/03   Steve Gregan   Changed sample pricing report to standard excel report
 
    *******************************************************************************/
 
    /**/
    /* Public declarations
    /**/
-   procedure stock_transfer(par_tax_01 in varchar2,
-                            par_tax_02 in varchar2,
-                            par_sup_plant in varchar2,
-                            par_sup_locn in varchar2,
-                            par_rcv_plant in varchar2,
-                            par_gidate_01 in varchar2,
-                            par_gidate_02 in varchar2);
+   function stock_transfer(par_tax_01 in varchar2,
+                           par_tax_02 in varchar2,
+                           par_sup_plant in varchar2,
+                           par_sup_locn in varchar2,
+                           par_rcv_plant in varchar2,
+                           par_gidate_01 in varchar2,
+                           par_gidate_02 in varchar2) return dw_tax_reporting_table pipelined;
 
-   procedure sample_pricing(par_del_plant in varchar2,
-                            par_pddate_01 in varchar2,
-                            par_pddate_02 in varchar2,
-                            par_ord_type in varchar2);
+   function sample_pricing(par_del_plant in varchar2,
+                           par_pddate_01 in varchar2,
+                           par_pddate_02 in varchar2,
+                           par_ord_type in varchar2) return dw_tax_reporting_table pipelined;
 
    function gold_tax_file(par_tax_01 in varchar2,
                           par_tax_02 in varchar2,
@@ -70,16 +72,16 @@ create or replace package body dw_tax_reporting as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /******************************************************/
-   /* This procedure performs the stock transfer routine */
-   /******************************************************/
-   procedure stock_transfer(par_tax_01 in varchar2,
-                            par_tax_02 in varchar2,
-                            par_sup_plant in varchar2,
-                            par_sup_locn in varchar2,
-                            par_rcv_plant in varchar2,
-                            par_gidate_01 in varchar2,
-                            par_gidate_02 in varchar2) is
+   /*****************************************************/
+   /* This function performs the stock transfer routine */
+   /*****************************************************/
+   function stock_transfer(par_tax_01 in varchar2,
+                           par_tax_02 in varchar2,
+                           par_sup_plant in varchar2,
+                           par_sup_locn in varchar2,
+                           par_rcv_plant in varchar2,
+                           par_gidate_01 in varchar2,
+                           par_gidate_02 in varchar2) return dw_tax_reporting_table pipelined is
 
       /*-*/
       /* Local definitions
@@ -89,7 +91,6 @@ create or replace package body dw_tax_reporting as
       var_tidx number;
       var_query varchar2(32767 char);
       var_wrk_string varchar2(4000 char);
-      var_row_count number;
       var_tax_01 varchar2(256 char);
       var_tax_02 varchar2(256 char);
       var_sup_plant varchar2(256 char);
@@ -180,7 +181,8 @@ create or replace package body dw_tax_reporting as
       /* Load the query statement
       /*-*/
       var_query := 'select *
-                      from (select t01.vbeln as qry_ord_number,
+                      from (select /*+ ordered */
+                                   t01.vbeln as qry_ord_number,
                                    lads_trim_code(t01.posnr) as qry_ord_line,
                                    lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                    t01.werks as qry_sup_plant,
@@ -216,13 +218,13 @@ create or replace package body dw_tax_reporting as
                               from lads_del_det t01,
                                    lads_del_hdr t02,
                                    lads_del_tim t03,
-                                   (select lads_trim_code(matnr) sap_material_code, 
+                                   (select matnr as matnr, 
                                            max(taxm1) taxm1 
                                       from lads_mat_tax
                                      where aland = ''CN''
                                        and taty1 = ''MWST''
-                                     group by lads_trim_code(matnr)) t04,
-                                   (select lads_trim_code(t11.matnr) sap_material_code,
+                                     group by matnr) t04,
+                                   (select t11.matnr as matnr,
                                            lads_to_date(t11.datab,''yyyymmdd'') valid_from,
                                            lads_to_date(t11.datbi,''yyyymmdd'') valid_to,
                                            t12.kbetr
@@ -238,22 +240,22 @@ create or replace package body dw_tax_reporting as
                                         and t12.kpein = 1
                                         and t12.kmein = ''EA''
                                         and t11.matnr is not null) t05,
-                                    (select ltrim(t21.matnr,''0'') as matnr,
+                                    (select t21.matnr as matnr,
                                             max(round((1/ t21.umrez) * t21.umren)) as cs_each
                                        from lads_mat_uom t21
                                       where t21.meinh = ''CS''
-                                      group by ltrim(t21.matnr,''0'')) t06,
-                                    (select ltrim(t31.matnr,''0'') as matnr,
+                                      group by t21.matnr) t06,
+                                    (select t31.matnr as matnr,
                                             max(round((1/ t31.umrez) * t31.umren)) as sb_each
                                        from lads_mat_uom t31
                                       where t31.meinh = ''SB''
-                                      group by ltrim(t31.matnr,''0'')) t07,
-                                    (select ltrim(t41.matnr,''0'') as matnr,
+                                      group by t31.matnr) t07,
+                                    (select t41.matnr as matnr,
                                             max(round((1/ t41.umrez) * t41.umren)) as pc_each
                                        from lads_mat_uom t41
                                       where t41.meinh = ''PCE''
-                                      group by ltrim(t41.matnr,''0'')) t08,
-                                    (select lads_trim_code(matnr) as sap_material_code,
+                                      group by t41.matnr) t08,
+                                    (select matnr as matnr,
                                             decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
                                        from (select t51.matnr,
                                                     t51.maktx as sls_text,
@@ -280,7 +282,7 @@ create or replace package body dw_tax_reporting as
                                 and t02.lfart = ''ZNL''
                                 and t02.vbeln = t03.vbeln(+)
                                 and ''006'' = t03.qualf(+)
-                                and lads_trim_code(t01.matnr) = t04.sap_material_code
+                                and t01.matnr = t04.matnr
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in (''<SUPPLANT>'')
@@ -288,15 +290,16 @@ create or replace package body dw_tax_reporting as
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
-                                and lads_trim_code(t01.matnr) = t05.sap_material_code
+                                and t01.matnr = t05.matnr
                                 and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
                                 and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
-                                and lads_trim_code(t01.matnr) = t06.matnr(+)
-                                and lads_trim_code(t01.matnr) = t07.matnr(+)
-                                and lads_trim_code(t01.matnr) = t08.matnr(+)
-                                and lads_trim_code(t01.matnr) = t09.sap_material_code(+)
+                                and t01.matnr = t06.matnr(+)
+                                and t01.matnr = t07.matnr(+)
+                                and t01.matnr = t08.matnr(+)
+                                and t01.matnr = t09.matnr(+)
                               union all   
-                             select t01.vbeln as qry_ord_number,
+                             select /*+ ordered */
+                                    t01.vbeln as qry_ord_number,
                                     lads_trim_code(t01.posnr) as qry_ord_line,
                                     lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                     t01.werks as qry_sup_plant,
@@ -317,13 +320,13 @@ create or replace package body dw_tax_reporting as
                                from lads_del_det t01,
                                     lads_del_hdr t02,
                                     lads_del_tim t03,
-                                    (select lads_trim_code(matnr) sap_material_code, 
+                                    (select matnr as matnr, 
                                             max(taxm1) taxm1 
                                        from lads_mat_tax
                                       where aland = ''CN''
                                         and taty1 = ''MWST''
-                                      group by lads_trim_code(matnr)) t04,
-                                    (select lads_trim_code(matnr) as sap_material_code,
+                                      group by matnr) t04,
+                                    (select matnr as matnr,
                                             decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
                                        from (select t51.matnr,
                                                     t51.maktx as sls_text,
@@ -350,7 +353,7 @@ create or replace package body dw_tax_reporting as
                                 and t02.lfart = ''ZNL''
                                 and t02.vbeln = t03.vbeln(+)
                                 and ''006'' = t03.qualf(+)
-                                and lads_trim_code(t01.matnr) = t04.sap_material_code
+                                and t01.matnr = t04.matnr
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in ('' <SUPPLANT>'')
@@ -358,7 +361,7 @@ create or replace package body dw_tax_reporting as
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
-                                and lads_trim_code(t01.matnr) = t09.sap_material_code (+)
+                                and t01.matnr = t09.matnr(+)
                                 and not exists (select t12.kbetr
                                                   from lads_prc_lst_hdr t11,
                                                        lads_prc_lst_det t12
@@ -372,7 +375,7 @@ create or replace package body dw_tax_reporting as
                                                    and t12.kpein = 1
                                                    and t12.kmein = ''EA''
                                                    and t11.matnr is not null
-                                                   and lads_trim_code(t01.matnr) = lads_trim_code(t11.matnr)
+                                                   and t01.matnr = t11.matnr
                                                    and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
                                                    and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
                      order by qry_sup_plant,
@@ -398,120 +401,64 @@ create or replace package body dw_tax_reporting as
       close csr_report;
 
       /*-*/
-      /* Add the selection sheet
+      /* Add the selection data
       /*-*/
-      lics_spreadsheet.addSheet('Selections',false);
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selections</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15>Tax Classification Range: '||par_tax_01||' to '||par_tax_02||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15>Supply Plants: '||par_sup_plant||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15>Supply Storage Locations: '||par_sup_locn||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15>Receiving Plants: '||par_rcv_plant||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15>Goods Issued Date Range: '||par_gidate_01||' to '||par_gidate_02||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15></td>');
+      pipe row('</tr>');
 
       /*-*/
-      /* Set the selection data
+      /* Add the report heading
       /*-*/
-      lics_spreadsheet.setRange('A1:A1',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Selections');
-      lics_spreadsheet.setHeadingBorder('A1:A1',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRange('A2:A2',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Tax Classification Range: '||par_tax_01||' to '||par_tax_02);
-      lics_spreadsheet.setRange('A3:A3',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Supply Plants: '||par_sup_plant);
-      lics_spreadsheet.setRange('A4:A4',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Supply Storage Locations: '||par_sup_locn);
-      lics_spreadsheet.setRange('A5:A5',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Receiving Plants: '||par_rcv_plant);
-      lics_spreadsheet.setRange('A6:A6',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Goods Issued Date Range: '||par_gidate_01||' to '||par_gidate_02);
-      lics_spreadsheet.setRangeBorder('A2:A6',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Add the report sheet
-      /*-*/
-      lics_spreadsheet.addSheet('Report',false);
-
-      /*-*/
-      /* Set the sheet heading
-      /*-*/
-      lics_spreadsheet.setRange('A1:A1','A1:O1',lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Stock Transfer Tax Report');
-
-      /*-*/
-      /* Set the report heading
-      /*-*/
-      lics_spreadsheet.setRange('A2:A2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'ODN No');
-      lics_spreadsheet.setRange('B2:B2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Item');
-      lics_spreadsheet.setRange('C2:C2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'GI date');
-      lics_spreadsheet.setRange('D2:D2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'S_Plant');
-      lics_spreadsheet.setRange('E2:E2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'S_Location');
-      lics_spreadsheet.setRange('F2:F2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'R_Plant');
-      lics_spreadsheet.setRange('G2:G2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Material No');
-      lics_spreadsheet.setRange('H2:H2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Material Decription');
-      lics_spreadsheet.setRange('I2:I2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'ODN Qty');
-      lics_spreadsheet.setRange('J2:J2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'UOM');
-      lics_spreadsheet.setRange('K2:K2',null,lics_spreadsheet.TYPE_HEADING_HI,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Dispatch Price');
-      lics_spreadsheet.setRange('L2:L2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Value');
-      lics_spreadsheet.setRange('M2:M2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Tax Rate');
-      lics_spreadsheet.setRange('N2:N2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Tax Amount');
-      lics_spreadsheet.setRange('O2:O2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Total Amount');
-      lics_spreadsheet.setHeadingBorder('A2:O2',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Initialise the row count
-      /*-*/
-      var_row_count := 2;
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=15 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Stock Transfer Tax Report</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">ODN No</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Item</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">GI date</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">S_Plant</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">S_Location</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">R_Plant</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material No</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Decription</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">ODN Qty</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">UOM</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Dispatch Price</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Value</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Tax Rate</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Tax Amount</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Total Amount</td>');
+      pipe row('</tr>');
 
       /*-*/
       /* Exit when no detail lines
       /*-*/
       if tbl_report.count = 0 then
-         lics_spreadsheet.setRange('A3:A3','A3:O3',lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'NO DETAILS EXIST');
-         lics_spreadsheet.setRangeBorder('A3:O3',lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
+         pipe row('<tr><td align=center colspan=15 style="FONT-WEIGHT:bold;">NO DETAILS EXIST</td></tr>');
+         pipe row('</table>');
          return;
       end if;
-
-      /*-*/
-      /* Set the cell freeze
-      /*-*/
-      lics_spreadsheet.setFreezeCell('A3');
-
-      /*-*/
-      /* Define the data row
-      /*-*/
-      var_row_count := 3;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('E'||to_char(var_row_count,'FM999999990')||':E'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('F'||to_char(var_row_count,'FM999999990')||':F'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('G'||to_char(var_row_count,'FM999999990')||':G'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':H'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('I'||to_char(var_row_count,'FM999999990')||':I'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('J'||to_char(var_row_count,'FM999999990')||':J'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':K'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('L'||to_char(var_row_count,'FM999999990')||':L'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('M'||to_char(var_row_count,'FM999999990')||':M'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('N'||to_char(var_row_count,'FM999999990')||':N'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('O'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-
-      /*-*/
-      /* Define the borders
-      /*-*/
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Define the copy
-      /*-*/
-      lics_spreadsheet.setRangeCopy('A'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),tbl_report.count-1,lics_spreadsheet.COPY_DOWN);
-
-      /*-*/
-      /* Output the forecast material data
-      /*-*/
-      var_row_count := 2;
 
       /*-*/
       /* Retrieve the report data
@@ -522,31 +469,36 @@ create or replace package body dw_tax_reporting as
          /*-*/
          /* Output the report line
          /*-*/
-         var_row_count := var_row_count + 1;
-         var_wrk_string := tbl_report(idx).qry_ord_number||chr(9)||
-                           tbl_report(idx).qry_ord_line||chr(9)||
-                           tbl_report(idx).qry_gi_date||chr(9)||
-                           tbl_report(idx).qry_sup_plant||chr(9)||
-                           tbl_report(idx).qry_sup_plant||chr(9)||
-                           tbl_report(idx).qry_rcv_plant||chr(9)||
-                           tbl_report(idx).qry_matl_code||chr(9)||
-                           tbl_report(idx).qry_matl_desc||chr(9)||
-                           tbl_report(idx).qry_ord_qty||chr(9)||
-                           tbl_report(idx).qry_ord_uom||chr(9)||
-                           tbl_report(idx).qry_dsp_price||chr(9)||
-                           tbl_report(idx).qry_dsp_value||chr(9)||
-                           to_char(tbl_report(idx).qry_tax_rate*100)||'%'||chr(9)||
-                           tbl_report(idx).qry_tax_value||chr(9)||
-                           tbl_report(idx).qry_tot_value;
-         lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                        null,null,null,false,var_wrk_string);
+         var_wrk_string := '<tr>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_number||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_line||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_gi_date||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sup_plant||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sup_plant||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_rcv_plant||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_code||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_desc||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_qty||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_uom||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_price||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_value||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||to_char(tbl_report(idx).qry_tax_rate*100)||'%'||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_tax_value||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_tot_value||'</td>';
+         var_wrk_string := var_wrk_string||'</tr>';
+         pipe row(var_wrk_string);
 
       end loop;
 
       /*-*/
-      /* Set the print settings
+      /* End the report
       /*-*/
-      lics_spreadsheet.setPrintData('$1:$2','$A:$A',2,1,0);
+      pipe row('</table>');
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
 
    /*-------------------*/
    /* Exception handler */
@@ -559,11 +511,6 @@ create or replace package body dw_tax_reporting as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
          raise_application_error(-20000, 'FATAL ERROR - CLIO - DW_TAX_REPORTING - STOCK TRANSFER - ' || substr(SQLERRM, 1, 1024));
@@ -573,13 +520,13 @@ create or replace package body dw_tax_reporting as
    /*-------------*/
    end stock_transfer;
 
-   /******************************************************/
-   /* This procedure performs the sample pricing routine */
-   /******************************************************/
-   procedure sample_pricing(par_del_plant in varchar2,
-                            par_pddate_01 in varchar2,
-                            par_pddate_02 in varchar2,
-                            par_ord_type in varchar2) is
+   /*****************************************************/
+   /* This function performs the sample pricing routine */
+   /*****************************************************/
+   function sample_pricing(par_del_plant in varchar2,
+                           par_pddate_01 in varchar2,
+                           par_pddate_02 in varchar2,
+                           par_ord_type in varchar2) return dw_tax_reporting_table pipelined is
 
       /*-*/
       /* Local definitions
@@ -589,7 +536,6 @@ create or replace package body dw_tax_reporting as
       var_tidx number;
       var_query varchar2(32767 char);
       var_wrk_string varchar2(4000 char);
-      var_row_count number;
       var_del_plant varchar2(256 char);
       var_pddate_01 varchar2(256 char);
       var_pddate_02 varchar2(256 char);
@@ -663,7 +609,8 @@ create or replace package body dw_tax_reporting as
       /* Load the query statement
       /*-*/
       var_query := 'select *
-                      from (select t03.cust_name_en_level_1 as qry_region,
+                      from (select /*+ ordered */
+                                   t03.cust_name_en_level_1 as qry_region,
                                    t03.cust_name_en_level_2 as qry_cluster,
                                    t03.cust_name_en_level_3 as qry_area,
                                    t03.cust_name_en_level_4 as qry_sale_city,
@@ -733,8 +680,8 @@ create or replace package body dw_tax_reporting as
                                and ''ZA'' = t08.parvw(+)
                                and lads_trim_code(t08.kunnr) = t03.sap_hier_cust_code(+)
                              union all
-
-                            select t03.cust_name_en_level_1 as qry_region,
+                            select /*+ ordered */
+                                   t03.cust_name_en_level_1 as qry_region,
                                    t03.cust_name_en_level_2 as qry_cluster,
                                    t03.cust_name_en_level_3 as qry_area,
                                    t03.cust_name_en_level_4 as qry_sale_city,
@@ -815,136 +762,64 @@ create or replace package body dw_tax_reporting as
       close csr_report;
 
       /*-*/
-      /* Add the selection sheet
+      /* Add the selection data
       /*-*/
-      lics_spreadsheet.addSheet('Selections',false);
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selections</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21>Delivery Plants: '||par_del_plant||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21>POD Date Range: '||par_pddate_01||' to '||par_pddate_02||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21>Order Types: '||par_ord_type||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21></td>');
+      pipe row('</tr>');
 
       /*-*/
-      /* Set the selection data
+      /* Add the report heading
       /*-*/
-      lics_spreadsheet.setRange('A1:A1',null,lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Selections');
-      lics_spreadsheet.setHeadingBorder('A1:A1',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-      lics_spreadsheet.setRange('A2:A2',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Delivery Plants: '||par_del_plant);
-      lics_spreadsheet.setRange('A3:A3',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'POD Date Range: '||par_pddate_01||' to '||par_pddate_02);
-      lics_spreadsheet.setRange('A4:A4',null,lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Order Types: '||par_ord_type);
-      lics_spreadsheet.setRangeBorder('A2:A4',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Add the report sheet
-      /*-*/
-      lics_spreadsheet.addSheet('Report',false);
-
-      /*-*/
-      /* Set the sheet heading
-      /*-*/
-      lics_spreadsheet.setRange('A1:A1','A1:U1',lics_spreadsheet.getHeadingType(1),lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'Sample Pricing Tax Report');
-
-      /*-*/
-      /* Set the report heading
-      /*-*/
-      lics_spreadsheet.setRange('A2:A2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Region');
-      lics_spreadsheet.setRange('B2:B2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Cluster');
-      lics_spreadsheet.setRange('C2:C2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Area');
-      lics_spreadsheet.setRange('D2:D2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales City');
-      lics_spreadsheet.setRange('E2:E2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Customer');
-      lics_spreadsheet.setRange('F2:F2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Customer Description');
-      lics_spreadsheet.setRange('G2:G2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Delivery Plant');
-      lics_spreadsheet.setRange('H2:H2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Plant Decription');
-      lics_spreadsheet.setRange('I2:I2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Order Type');
-      lics_spreadsheet.setRange('J2:J2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Sales Order');
-      lics_spreadsheet.setRange('K2:K2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Material Code');
-      lics_spreadsheet.setRange('L2:L2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Material Description');
-      lics_spreadsheet.setRange('M2:M2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Brand');
-      lics_spreadsheet.setRange('N2:N2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'QTY(sales) POD');
-      lics_spreadsheet.setRange('O2:O2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'UOM(sales unit)');
-      lics_spreadsheet.setRange('P2:P2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'QTY(base) POD');
-      lics_spreadsheet.setRange('Q2:Q2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Dispatch price/EA per SO UOM');
-      lics_spreadsheet.setRange('R2:R2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Amount');
-      lics_spreadsheet.setRange('S2:S2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Tax rate');
-      lics_spreadsheet.setRange('T2:T2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'Cost Centre');
-      lics_spreadsheet.setRange('U2:U2',null,lics_spreadsheet.TYPE_HEADING_07,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,'I/O');
-      lics_spreadsheet.setHeadingBorder('A2:R2',lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Initialise the row count
-      /*-*/
-      var_row_count := 2;
+      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=21 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sample Pricing Tax Report</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Region</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Cluster</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sales City</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Customer</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Customer Description</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Delivery Plant</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant Decription</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Order Type</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sales Order</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Description</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Brand</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">QTY(sales) POD</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">UOM(sales unit)</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">QTY(base) POD</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Dispatch price/EA per SO UOM</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Amount</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Tax rate</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Cost Centre</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">I/O</td>');
+      pipe row('</tr>');
 
       /*-*/
       /* Exit when no detail lines
       /*-*/
       if tbl_report.count = 0 then
-         lics_spreadsheet.setRange('A3:A3','A3:U3',lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_CENTRE,0,false,'NO DETAILS EXIST');
-         lics_spreadsheet.setRangeBorder('A3:U3',lics_spreadsheet.BORDER_BOTTOM_LEFT_RIGHT,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
+         pipe row('<tr><td align=center colspan=21 style="FONT-WEIGHT:bold;">NO DETAILS EXIST</td></tr>');
+         pipe row('</table>');
          return;
       end if;
-
-      /*-*/
-      /* Set the cell freeze
-      /*-*/
-      lics_spreadsheet.setFreezeCell('A3');
-
-      /*-*/
-      /* Define the data row
-      /*-*/
-      var_row_count := 3;
-      lics_spreadsheet.setRange('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('B'||to_char(var_row_count,'FM999999990')||':B'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('C'||to_char(var_row_count,'FM999999990')||':C'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('D'||to_char(var_row_count,'FM999999990')||':D'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('E'||to_char(var_row_count,'FM999999990')||':E'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('F'||to_char(var_row_count,'FM999999990')||':F'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('G'||to_char(var_row_count,'FM999999990')||':G'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':H'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('I'||to_char(var_row_count,'FM999999990')||':I'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('J'||to_char(var_row_count,'FM999999990')||':J'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('K'||to_char(var_row_count,'FM999999990')||':K'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('L'||to_char(var_row_count,'FM999999990')||':L'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('M'||to_char(var_row_count,'FM999999990')||':M'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('N'||to_char(var_row_count,'FM999999990')||':N'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('O'||to_char(var_row_count,'FM999999990')||':O'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('P'||to_char(var_row_count,'FM999999990')||':P'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('Q'||to_char(var_row_count,'FM999999990')||':Q'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('R'||to_char(var_row_count,'FM999999990')||':R'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('S'||to_char(var_row_count,'FM999999990')||':S'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('T'||to_char(var_row_count,'FM999999990')||':T'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-      lics_spreadsheet.setRange('U'||to_char(var_row_count,'FM999999990')||':U'||to_char(var_row_count,'FM999999990'),null,
-                                lics_spreadsheet.TYPE_DETAIL,lics_spreadsheet.FORMAT_CHAR_LEFT,0,false,null);
-
-      /*-*/
-      /* Define the borders
-      /*-*/
-      lics_spreadsheet.setRangeBorder('A'||to_char(var_row_count,'FM999999990')||':U'||to_char(var_row_count,'FM999999990'),lics_spreadsheet.BORDER_ALL,lics_spreadsheet.BORDER_WEIGHT_DEFAULT);
-
-      /*-*/
-      /* Define the copy
-      /*-*/
-      lics_spreadsheet.setRangeCopy('A'||to_char(var_row_count,'FM999999990')||':U'||to_char(var_row_count,'FM999999990'),tbl_report.count-1,lics_spreadsheet.COPY_DOWN);
-
-      /*-*/
-      /* Output the forecast material data
-      /*-*/
-      var_row_count := 2;
 
       /*-*/
       /* Retrieve the report data
@@ -955,35 +830,42 @@ create or replace package body dw_tax_reporting as
          /*-*/
          /* Output the report line
          /*-*/
-         var_row_count := var_row_count + 1;
-         var_wrk_string := tbl_report(idx).qry_region||chr(9)||
-                           tbl_report(idx).qry_cluster||chr(9)||
-                           tbl_report(idx).qry_area||chr(9)||
-                           tbl_report(idx).qry_sale_city||chr(9)||
-                           tbl_report(idx).qry_cust_code||chr(9)||
-                           tbl_report(idx).qry_cust_desc||chr(9)||
-                           tbl_report(idx).qry_del_plant_code||chr(9)||
-                           tbl_report(idx).qry_del_plant_desc||chr(9)||
-                           tbl_report(idx).qry_ord_type||chr(9)||
-                           tbl_report(idx).qry_ord_number||chr(9)||
-                           tbl_report(idx).qry_matl_code||chr(9)||
-                           tbl_report(idx).qry_matl_desc||chr(9)||
-                           tbl_report(idx).qry_brand_desc||chr(9)||
-                           tbl_report(idx).qry_pod_qty||chr(9)||
-                           tbl_report(idx).qry_ord_uom||chr(9)||
-                           tbl_report(idx).qry_pod_base_qty||chr(9)||
-                           tbl_report(idx).qry_dsp_price||chr(9)||
-                           tbl_report(idx).qry_dsp_value||chr(9)||
-                           to_char(tbl_report(idx).qry_tax_rate*100)||'%'||chr(9)||chr(9);
-         lics_spreadsheet.setRangeArray('A'||to_char(var_row_count,'FM999999990')||':A'||to_char(var_row_count,'FM999999990'),
-                                        null,null,null,false,var_wrk_string);
+         var_wrk_string := '<tr>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_region||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_cluster||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_area||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sale_city||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_cust_code||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_cust_desc||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_del_plant_code||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_del_plant_desc||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_type||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_number||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_code||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_desc||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_brand_desc||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_pod_qty||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_uom||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_pod_base_qty||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_price||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_value||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||to_char(tbl_report(idx).qry_tax_rate*100)||'%'||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left></td>';
+         var_wrk_string := var_wrk_string||'<td align=left></td>';
+         var_wrk_string := var_wrk_string||'</tr>';
+         pipe row(var_wrk_string);
 
       end loop;
 
       /*-*/
-      /* Set the print settings
+      /* End the report
       /*-*/
-      lics_spreadsheet.setPrintData('$1:$2','$A:$A',2,1,0);
+      pipe row('</table>');
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
 
    /*-------------------*/
    /* Exception handler */
@@ -994,11 +876,6 @@ create or replace package body dw_tax_reporting as
       /* Exception trap
       /**/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
 
          /*-*/
          /* Raise an exception to the calling application
@@ -1038,6 +915,8 @@ create or replace package body dw_tax_reporting as
       var_hdr_cust_bank varchar2(256 char);
       var_hdr_comment varchar2(256 char);
       var_row_count number;
+      var_title01 varchar2(256 char);
+      var_title02 varchar2(256 char);
       var_tax_01 varchar2(256 char);
       var_tax_02 varchar2(256 char);
       var_sup_plant varchar2(256 char);
@@ -1140,7 +1019,8 @@ create or replace package body dw_tax_reporting as
       /* Load the query statement
       /*-*/
       var_query := 'select *
-                      from (select t01.vbeln as qry_ord_number,
+                      from (select /*+ ordered */
+                                   t01.vbeln as qry_ord_number,
                                    lads_trim_code(t01.posnr) as qry_ord_line,
                                    lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                    nvl(t01.werks,''NONE'') as qry_sup_plant,
@@ -1149,8 +1029,7 @@ create or replace package body dw_tax_reporting as
                                    lads_trim_code(t01.matnr) as qry_matl_code,
                                    nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
                                    t01.lfimg as qry_ord_qty,
-                                  -- nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
-                                   t01.vrkme as qry_ord_uom,
+                                   nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
                                    t05.kbetr as qry_dsp_price,
                                    t05.kbetr * decode(t01.vrkme, ''EA'', nvl(lads_to_number(t01.lfimg),0)*nvl(cs_each,1),
                                                                  ''SB'', nvl(lads_to_number(t01.lfimg),0)/nvl(sb_each,1)*nvl(cs_each,1),
@@ -1183,13 +1062,13 @@ create or replace package body dw_tax_reporting as
                               from lads_del_det t01,
                                    lads_del_hdr t02,
                                    lads_del_tim t03,
-                                   (select lads_trim_code(matnr) sap_material_code, 
+                                   (select matnr as matnr, 
                                            max(taxm1) taxm1 
                                       from lads_mat_tax
                                      where aland = ''CN''
                                        and taty1 = ''MWST''
-                                     group by lads_trim_code(matnr)) t04,
-                                   (select lads_trim_code(t11.matnr) sap_material_code,
+                                     group by matnr) t04,
+                                   (select t11.matnr as matnr,
                                            lads_to_date(t11.datab,''yyyymmdd'') valid_from,
                                            lads_to_date(t11.datbi,''yyyymmdd'') valid_to,
                                            t12.kbetr
@@ -1205,22 +1084,22 @@ create or replace package body dw_tax_reporting as
                                         and t12.kpein = 1
                                         and t12.kmein = ''EA''
                                         and t11.matnr is not null) t05,
-                                    (select ltrim(t21.matnr,''0'') as matnr,
+                                    (select t21.matnr as matnr,
                                             max(round((1/ t21.umrez) * t21.umren)) as cs_each
                                        from lads_mat_uom t21
                                       where t21.meinh = ''CS''
-                                      group by ltrim(t21.matnr,''0'')) t06,
-                                    (select ltrim(t31.matnr,''0'') as matnr,
+                                      group by t21.matnr) t06,
+                                    (select t31.matnr as matnr,
                                             max(round((1/ t31.umrez) * t31.umren)) as sb_each
                                        from lads_mat_uom t31
                                       where t31.meinh = ''SB''
-                                      group by ltrim(t31.matnr,''0'')) t07,
-                                    (select ltrim(t41.matnr,''0'') as matnr,
+                                      group by t31.matnr) t07,
+                                    (select t41.matnr as matnr,
                                             max(round((1/ t41.umrez) * t41.umren)) as pc_each
                                        from lads_mat_uom t41
                                       where t41.meinh = ''PCE''
-                                      group by ltrim(t41.matnr,''0'')) t08,
-                                    (select lads_trim_code(matnr) as sap_material_code,
+                                      group by t41.matnr) t08,
+                                    (select matnr as matnr,
                                             decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
                                        from (select t51.matnr,
                                                     t51.maktx as sls_text,
@@ -1249,7 +1128,7 @@ create or replace package body dw_tax_reporting as
                                 and t02.lfart = ''ZNL''
                                 and t02.vbeln = t03.vbeln(+)
                                 and ''006'' = t03.qualf(+)
-                                and lads_trim_code(t01.matnr) = t04.sap_material_code
+                                and t01.matnr = t04.matnr
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in (''<SUPPLANT>'')
@@ -1257,17 +1136,18 @@ create or replace package body dw_tax_reporting as
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
-                                and lads_trim_code(t01.matnr) = t05.sap_material_code
+                                and t01.matnr = t05.matnr
                                 and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
                                 and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
-                                and lads_trim_code(t01.matnr) = t06.matnr(+)
-                                and lads_trim_code(t01.matnr) = t07.matnr(+)
-                                and lads_trim_code(t01.matnr) = t08.matnr(+)
-                                and lads_trim_code(t01.matnr) = t09.sap_material_code(+)
+                                and t01.matnr = t06.matnr(+)
+                                and t01.matnr = t07.matnr(+)
+                                and t01.matnr = t08.matnr(+)
+                                and t01.matnr = t09.matnr(+)
                                 and lads_trim_code(t01.matnr) = t10.sap_material_code(+)
                                 and t02.werks2 = t11.cust_code(+)
                               union all  
-                             select t01.vbeln as qry_ord_number,
+                             select /*+ ordered */
+                                    t01.vbeln as qry_ord_number,
                                     lads_trim_code(t01.posnr) as qry_ord_line,
                                     lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                     nvl(t01.werks,''NONE'') as qry_sup_plant,
@@ -1276,8 +1156,7 @@ create or replace package body dw_tax_reporting as
                                     lads_trim_code(t01.matnr) as qry_matl_code,
                                     nvl(t09.material_desc,t01.arktx) as qry_matl_desc,
                                     t01.lfimg as qry_ord_qty,
-                                 --   nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
-                                    t01.vrkme as qry_ord_uom,
+                                    nvl((select dsv_value from table(lics_datastore.retrieve_value(''CHINA'',''CHINA_UOM'',t01.vrkme))),t01.vrkme) as qry_ord_uom,
                                     null as qry_dsp_price,
                                     null as qry_dsp_value,
                                     decode(t04.taxm1, 0, 0,
@@ -1295,13 +1174,13 @@ create or replace package body dw_tax_reporting as
                                from lads_del_det t01,
                                     lads_del_hdr t02,
                                     lads_del_tim t03,
-                                    (select lads_trim_code(matnr) sap_material_code, 
+                                    (select matnr as matnr, 
                                             max(taxm1) taxm1 
                                        from lads_mat_tax
                                       where aland = ''CN''
                                         and taty1 = ''MWST''
-                                      group by lads_trim_code(matnr)) t04,
-                                    (select lads_trim_code(matnr) as sap_material_code,
+                                      group by matnr) t04,
+                                    (select matnr as matnr,
                                             decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
                                        from (select t51.matnr,
                                                     t51.maktx as sls_text,
@@ -1330,7 +1209,7 @@ create or replace package body dw_tax_reporting as
                                 and t02.lfart = ''ZNL''
                                 and t02.vbeln = t03.vbeln(+)
                                 and ''006'' = t03.qualf(+)
-                                and lads_trim_code(t01.matnr) = t04.sap_material_code
+                                and t01.matnr = t04.matnr
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in ('' <SUPPLANT>'')
@@ -1338,7 +1217,7 @@ create or replace package body dw_tax_reporting as
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
-                                and lads_trim_code(t01.matnr) = t09.sap_material_code(+)
+                                and t01.matnr = t09.matnr(+)
                                 and lads_trim_code(t01.matnr) = t10.sap_material_code(+)
                                 and t02.werks2 = t11.cust_code(+)
                                 and not exists (select t12.kbetr
@@ -1354,7 +1233,7 @@ create or replace package body dw_tax_reporting as
                                                    and t12.kpein = 1
                                                    and t12.kmein = ''EA''
                                                    and t11.matnr is not null
-                                                   and lads_trim_code(t01.matnr) = lads_trim_code(t11.matnr)
+                                                   and t01.matnr = t11.matnr
                                                    and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
                                                    and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
                      order by qry_sup_plant,
@@ -1386,9 +1265,11 @@ create or replace package body dw_tax_reporting as
       /*-*/
       /* Output the title data when required
       /*-*/
+      select dsv_value into var_title01 from table(lics_datastore.retrieve_value('CHINA','CHINA_REPORT','GOLD_TAX_TITLE01'));
+      select dsv_value into var_title02 from table(lics_datastore.retrieve_value('CHINA','CHINA_REPORT','GOLD_TAX_TITLE02'));
       if tbl_report.count != 0 then
-         var_wrk_string := '"' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE01') || '"';
-         var_wrk_string := var_wrk_string || ' "' || lics_setting_configuration.retrieve_setting('TAX_REPORTING','GOLD_TAX_TITLE02') || '"';
+         var_wrk_string := '"' || var_title01 || '"';
+         var_wrk_string := var_wrk_string || ' "' || var_title02 || '"';
          var_wrk_string := var_wrk_string || ' "' || to_char(lics_time.get_tz_time(sysdate,'Asia/Shanghai'),'yyyymmddhh24miss') || '"';
          tbl_work(tbl_work.count+1) := var_wrk_string;
       end if;
