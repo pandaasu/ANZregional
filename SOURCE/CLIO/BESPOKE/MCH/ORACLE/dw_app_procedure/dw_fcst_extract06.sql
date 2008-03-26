@@ -145,7 +145,7 @@ create or replace package body dw_fcst_extract06 as
       tbl_outbound.delete;
 
       /*-*/
-      /* Retrieve the forecast extract loads (CN_FCS_OFL output)
+      /* Retrieve the forecast extract loads
       /*-*/
       open csr_fcst_extract_load;
       loop
