@@ -558,7 +558,9 @@ create or replace package body dw_tax_reporting as
                                 qry_pod_base_qty number,
                                 qry_dsp_price number,
                                 qry_dsp_value number,
-                                qry_tax_rate number);
+                                qry_tax_rate number,
+                                qry_internal_order varchar2(256 char),
+                                qry_cost_center varchar2(256 char));
       type typ_table is table of typ_record index by binary_integer;
       tbl_report typ_table;
       type typ_cursor is ref cursor;
@@ -631,9 +633,12 @@ create or replace package body dw_tax_reporting as
                                    decode(t06.taxm1, 0, 0,
                                                      1, 0.17,
                                                      2, 0.13,
-                                                     0) as qry_tax_rate
+                                                     0) as qry_tax_rate,
+                                   t021.refnr as qry_internal_order,
+                                   t021.ihrez as qry_cost_center
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
+                                   lads_sal_ord_irf t021,
                                    std_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
@@ -670,6 +675,9 @@ create or replace package body dw_tax_reporting as
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
                                and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', '''') <> t02.pstyv
+                               and t02.belnr = t021.belnr(+)
+                               and t02.genseq = t021.genseq(+)
+                               and ''044'' = t021.qualf(+)
                                and t01.sap_material_code = t04.sap_material_code(+)
                                and t01.sap_plant_code = t05.sap_plant_code(+)
                                and t01.sap_material_code = t06.sap_material_code(+)
@@ -702,9 +710,12 @@ create or replace package body dw_tax_reporting as
                                    decode(t06.taxm1, 0, 0,
                                                      1, 0.17,
                                                      2, 0.13,
-                                                     0) as qry_tax_rate
+                                                     0) as qry_tax_rate,
+                                   t021.refnr as qry_internal_order,
+                                   t021.ihrez as qry_cost_center
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
+                                   lads_sal_ord_irf t021,
                                    std_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
@@ -725,6 +736,9 @@ create or replace package body dw_tax_reporting as
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
                                and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', '''') <> t02.pstyv
+                               and t02.belnr = t021.belnr(+)
+                               and t02.genseq = t021.genseq(+)
+                               and ''044'' = t021.qualf(+)
                                and t01.sap_material_code = t04.sap_material_code(+)
                                and t01.sap_plant_code = t05.sap_plant_code(+)
                                and t01.sap_material_code = t06.sap_material_code(+)
@@ -850,8 +864,8 @@ create or replace package body dw_tax_reporting as
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_price||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_dsp_value||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||to_char(tbl_report(idx).qry_tax_rate*100)||'%'||'</td>';
-         var_wrk_string := var_wrk_string||'<td align=left></td>';
-         var_wrk_string := var_wrk_string||'<td align=left></td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_cost_center||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_internal_order||'</td>';
          var_wrk_string := var_wrk_string||'</tr>';
          pipe row(var_wrk_string);
 
