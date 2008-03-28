@@ -182,6 +182,7 @@ create or replace package body dw_fcst_extract06 as
                var_output := var_output || ',"' || rcd_fcst_load_detail.plant_code || '"';
                var_output := var_output || ',"' || rcd_fcst_load_detail.cover_yyyymmdd || '"';
                var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.cover_day) || 'D' || '"';
+               var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.fcst_qty) || '"';
                var_output := var_output || ',"' || to_char(tbl_outbound.count+1,'fm000000000') || '"';
                var_output := var_output || ',"' || to_char(var_tot_count,'fm000000000') || '"';
                var_output := var_output || ',"' || to_char(sysdate,'yyyymmddhh24miss') || '"';
@@ -197,7 +198,7 @@ create or replace package body dw_fcst_extract06 as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'IN_AP_CDW_DEMAND_SUP_STG_DWHAPL06.1');
+      var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'IN_AP_CDW_DEMAND_SUP_STG_DWHAPL06.1.dat');
 
       /*-*/
       /* Append the interface data
