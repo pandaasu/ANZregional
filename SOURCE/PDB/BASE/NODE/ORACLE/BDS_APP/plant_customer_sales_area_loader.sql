@@ -363,23 +363,23 @@ create or replace package body bds_app.plant_customer_sales_area_loader as
     /*-*/
     /* Validate the primary keys 
     /*-*/
-    if ( rcd_hdr.bom_material_code is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_MATERIAL_CODE');
+    if ( rcd_hdr.customer_code is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.CUSTOMER_CODE');
       var_trn_error := true;
     end if;
     
-    if ( rcd_hdr.bom_alternative is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_ALTERNATIVE');
+    if ( rcd_hdr.sales_org_code is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.SALES_ORG_CODE');
       var_trn_error := true;
     end if;
           
-    if ( rcd_hdr.bom_plant is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_PLANT');
+    if ( rcd_hdr.distbn_chnl_code is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.DISTBN_CHNL_CODE');
       var_trn_error := true;
     end if;
     
-    if ( rcd_hdr.item_sequence is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.ITEM_SEQUENCE');
+    if ( rcd_hdr.division_code is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.DIVISION_CODE');
       var_trn_error := true;
     end if;
     
@@ -400,75 +400,207 @@ create or replace package body bds_app.plant_customer_sales_area_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_bom_all_test
-    set bom_material_code = rcd_hdr.bom_material_code,
-      bom_alternative = rcd_hdr.bom_alternative,
-      bom_plant = rcd_hdr.bom_plant,
-      bom_number = rcd_hdr.bom_number,
-      bom_msg_function = rcd_hdr.bom_msg_function,
-      bom_usage = rcd_hdr.bom_usage,
-      bom_eff_from_date = rcd_hdr.bom_eff_from_date,
-      bom_eff_to_date = rcd_hdr.bom_eff_to_date,
-      bom_base_qty = rcd_hdr.bom_base_qty,
-      bom_base_uom = rcd_hdr.bom_base_uom,
-      bom_status = rcd_hdr.bom_status,
-      item_sequence = rcd_hdr.item_sequence,
-      item_number = rcd_hdr.item_number,
-      item_msg_function = rcd_hdr.item_msg_function,
-      item_material_code = rcd_hdr.item_material_code,
-      item_category = rcd_hdr.item_category,
-      item_base_qty = rcd_hdr.item_base_qty,
-      item_base_uom = rcd_hdr.item_base_uom,
-      item_eff_from_date = rcd_hdr.item_eff_from_date,
-      item_eff_to_date = rcd_hdr.item_eff_to_date
-    where bom_material_code = rcd_hdr.bom_material_code;
+    update bds_cust_sales_area_test
+    set customer_code = rcd_hdr.customer_code, 
+      sales_org_code = rcd_hdr.sales_org_code, 
+      distbn_chnl_code = rcd_hdr.distbn_chnl_code, 
+      division_code = rcd_hdr.division_code,
+      auth_group_code = rcd_hdr.auth_group_code, 
+      deletion_flag = rcd_hdr.deletion_flag, 
+      statistics_group = rcd_hdr.statistics_group, 
+      order_block_flag = rcd_hdr.order_block_flag,
+      pricing_procedure = rcd_hdr.pricing_procedure, 
+      group_code = rcd_hdr.group_code, 
+      sales_district = rcd_hdr.sales_district, 
+      price_group = rcd_hdr.price_group,
+      price_list_type = rcd_hdr.price_list_type, 
+      order_probability = rcd_hdr.order_probability, 
+      inter_company_terms_01 = rcd_hdr.inter_company_terms_01,
+      inter_company_terms_02 = rcd_hdr.inter_company_terms_02, 
+      delivery_block_flag = rcd_hdr.delivery_block_flag,
+      order_complete_delivery_flag = rcd_hdr.order_complete_delivery_flag, 
+      partial_item_delivery_max = rcd_hdr.partial_item_delivery_max,
+      partial_item_delivery_flag = rcd_hdr.partial_item_delivery_flag, 
+      order_combination_flag = rcd_hdr.order_combination_flag, 
+      split_batch_flag = rcd_hdr.split_batch_flag,
+      delivery_priority = rcd_hdr.delivery_priority, 
+      shipper_account_number = rcd_hdr.shipper_account_number, 
+      ship_conditions = rcd_hdr.ship_conditions,
+      billing_block_flag = rcd_hdr.billing_block_flag, 
+      manual_invoice_flag = rcd_hdr.manual_invoice_flag, 
+      invoice_dates = rcd_hdr.invoice_dates,
+      invoice_list_schedule = rcd_hdr.invoice_list_schedule, 
+      currency_code = rcd_hdr.currency_code, 
+      account_assign_group = rcd_hdr.account_assign_group,
+      payment_terms_key = rcd_hdr.payment_terms_key, 
+      delivery_plant_code = rcd_hdr.delivery_plant_code, 
+      sales_group_code = rcd_hdr.sales_group_code,
+      sales_office_code = rcd_hdr.sales_office_code, 
+      item_proposal = rcd_hdr.item_proposal, 
+      invoice_combination = rcd_hdr.invoice_combination,
+      price_band_expected = rcd_hdr.price_band_expected, 
+      accept_int_pallet = rcd_hdr.accept_int_pallet, 
+      price_band_guaranteed = rcd_hdr.price_band_guaranteed,
+      back_order_flag = rcd_hdr.back_order_flag, 
+      rebate_flag = rcd_hdr.rebate_flag, 
+      exchange_rate_type = rcd_hdr.exchange_rate_type,
+      price_determination_id = rcd_hdr.price_determination_id, 
+      abc_classification = rcd_hdr.abc_classification, 
+      payment_guarantee_proc = rcd_hdr.payment_guarantee_proc,
+      credit_control_area = rcd_hdr.credit_control_area, 
+      sales_block_flag = rcd_hdr.sales_block_flag, 
+      rounding_off = rcd_hdr.rounding_off,
+      agency_business_flag = rcd_hdr.agency_business_flag, 
+      uom_group = rcd_hdr.uom_group, 
+      over_delivery_tolerance = rcd_hdr.over_delivery_tolerance,
+      under_delivery_tolerance = rcd_hdr.under_delivery_tolerance, 
+      unlimited_over_delivery = rcd_hdr.unlimited_over_delivery,
+      product_proposal_proc = rcd_hdr.product_proposal_proc, 
+      pod_processing = rcd_hdr.pod_processing, 
+      pod_confirm_timeframe = rcd_hdr.pod_confirm_timeframe,
+      po_index_compilation = rcd_hdr.po_index_compilation, 
+      batch_search_strategy = rcd_hdr.batch_search_strategy, 
+      vmi_input_method = rcd_hdr.vmi_input_method,
+      current_planning_flag = rcd_hdr.current_planning_flag, 
+      future_planning_flag = rcd_hdr.future_planning_flag, 
+      market_account_flag = rcd_hdr.market_account_flag
+    where customer_code = rcd_hdr.customer_code 
+      and sales_org_code = rcd_hdr.sales_org_code
+      and distbn_chnl_code = rcd_hdr.distbn_chnl_code 
+      and division_code = rcd_hdr.division_code;
     
     if ( sql%notfound ) then    
-      insert into bds_bom_all_test
+      insert into bds_cust_sales_area_test
       (
-        bom_material_code, 
-        bom_alternative,
-        bom_plant,
-        bom_number,
-        bom_msg_function,
-        bom_usage,
-        bom_eff_from_date,
-        bom_eff_to_date,
-        bom_base_qty,
-        bom_base_uom,
-        bom_status,
-        item_sequence,
-        item_number,
-        item_msg_function,
-        item_material_code,
-        item_category,
-        item_base_qty,
-        item_base_uom,
-        item_eff_from_date,
-        item_eff_to_date
+        customer_code, 
+        sales_org_code, 
+        distbn_chnl_code, 
+        division_code,
+        auth_group_code, 
+        deletion_flag, 
+        statistics_group, 
+        order_block_flag,
+        pricing_procedure, 
+        group_code, 
+        sales_district, 
+        price_group,
+        price_list_type, 
+        order_probability, 
+        inter_company_terms_01,
+        inter_company_terms_02, 
+        delivery_block_flag,
+        order_complete_delivery_flag, 
+        partial_item_delivery_max,
+        partial_item_delivery_flag, 
+        order_combination_flag, 
+        split_batch_flag,
+        delivery_priority, 
+        shipper_account_number, 
+        ship_conditions,
+        billing_block_flag, 
+        manual_invoice_flag, 
+        invoice_dates,
+        invoice_list_schedule, 
+        currency_code, 
+        account_assign_group,
+        payment_terms_key, 
+        delivery_plant_code, 
+        sales_group_code,
+        sales_office_code, 
+        item_proposal, 
+        invoice_combination,
+        price_band_expected, 
+        accept_int_pallet, 
+        price_band_guaranteed,
+        back_order_flag, 
+        rebate_flag, 
+        exchange_rate_type,
+        price_determination_id, 
+        abc_classification, 
+        payment_guarantee_proc,
+        credit_control_area, 
+        sales_block_flag, 
+        rounding_off,
+        agency_business_flag, 
+        uom_group, 
+        over_delivery_tolerance,
+        under_delivery_tolerance, 
+        unlimited_over_delivery,
+        product_proposal_proc, 
+        pod_processing, 
+        pod_confirm_timeframe,
+        po_index_compilation, 
+        batch_search_strategy, 
+        vmi_input_method,
+        current_planning_flag, 
+        future_planning_flag, 
+        market_account_flag
       )
       values 
       (
-        rcd_hdr.bom_material_code, 
-        rcd_hdr.bom_alternative,
-        rcd_hdr.bom_plant,
-        rcd_hdr.bom_number,
-        rcd_hdr.bom_msg_function,
-        rcd_hdr.bom_usage,
-        rcd_hdr.bom_eff_from_date,
-        rcd_hdr.bom_eff_to_date,
-        rcd_hdr.bom_base_qty,
-        rcd_hdr.bom_base_uom,
-        rcd_hdr.bom_status,
-        rcd_hdr.item_sequence,
-        rcd_hdr.item_number,
-        rcd_hdr.item_msg_function,
-        rcd_hdr.item_material_code,
-        rcd_hdr.item_category,
-        rcd_hdr.item_base_qty,
-        rcd_hdr.item_base_uom,
-        rcd_hdr.item_eff_from_date,
-        rcd_hdr.item_eff_to_date
+        rcd_hdr.customer_code, 
+        rcd_hdr.sales_org_code, 
+        rcd_hdr.distbn_chnl_code, 
+        rcd_hdr.division_code,
+        rcd_hdr.auth_group_code, 
+        rcd_hdr.deletion_flag, 
+        rcd_hdr.statistics_group, 
+        rcd_hdr.order_block_flag,
+        rcd_hdr.pricing_procedure, 
+        rcd_hdr.group_code, 
+        rcd_hdr.sales_district, 
+        rcd_hdr.price_group,
+        rcd_hdr.price_list_type, 
+        rcd_hdr.order_probability, 
+        rcd_hdr.inter_company_terms_01,
+        rcd_hdr.inter_company_terms_02, 
+        rcd_hdr.delivery_block_flag,
+        rcd_hdr.order_complete_delivery_flag, 
+        rcd_hdr.partial_item_delivery_max,
+        rcd_hdr.partial_item_delivery_flag, 
+        rcd_hdr.order_combination_flag, 
+        rcd_hdr.split_batch_flag,
+        rcd_hdr.delivery_priority, 
+        rcd_hdr.shipper_account_number, 
+        rcd_hdr.ship_conditions,
+        rcd_hdr.billing_block_flag, 
+        rcd_hdr.manual_invoice_flag, 
+        rcd_hdr.invoice_dates,
+        rcd_hdr.invoice_list_schedule, 
+        rcd_hdr.currency_code, 
+        rcd_hdr.account_assign_group,
+        rcd_hdr.payment_terms_key, 
+        rcd_hdr.delivery_plant_code, 
+        rcd_hdr.sales_group_code,
+        rcd_hdr.sales_office_code, 
+        rcd_hdr.item_proposal, 
+        rcd_hdr.invoice_combination,
+        rcd_hdr.price_band_expected, 
+        rcd_hdr.accept_int_pallet, 
+        rcd_hdr.price_band_guaranteed,
+        rcd_hdr.back_order_flag, 
+        rcd_hdr.rebate_flag, 
+        rcd_hdr.exchange_rate_type,
+        rcd_hdr.price_determination_id, 
+        rcd_hdr.abc_classification, 
+        rcd_hdr.payment_guarantee_proc,
+        rcd_hdr.credit_control_area, 
+        rcd_hdr.sales_block_flag, 
+        rcd_hdr.rounding_off,
+        rcd_hdr.agency_business_flag, 
+        rcd_hdr.uom_group, 
+        rcd_hdr.over_delivery_tolerance,
+        rcd_hdr.under_delivery_tolerance, 
+        rcd_hdr.unlimited_over_delivery,
+        rcd_hdr.product_proposal_proc, 
+        rcd_hdr.pod_processing, 
+        rcd_hdr.pod_confirm_timeframe,
+        rcd_hdr.po_index_compilation, 
+        rcd_hdr.batch_search_strategy, 
+        rcd_hdr.vmi_input_method,
+        rcd_hdr.current_planning_flag, 
+        rcd_hdr.future_planning_flag, 
+        rcd_hdr.market_account_flag
       );
     end if;
     

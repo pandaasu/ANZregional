@@ -41,7 +41,7 @@ create or replace package ics_app.plant_material_classfctn_extract as
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2);
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_material_classfctn_extract;
 /
@@ -128,22 +128,22 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB02.1');   
+        execute_send('LADPDB11.1');   
       end if;    
       if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB02.2');   
+        execute_send('LADPDB11.2');   
       end if;    
       if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB02.3');   
+        execute_send('LADPDB11.3');   
       end if;    
       if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB02.4');   
+        execute_send('LADPDB11.4');   
       end if;    
       if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB02.5');   
+        execute_send('LADPDB11.5');   
       end if;
       if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB02.6');   
+        execute_send('LADPDB11.6');   
       end if;
     end if; 
       
@@ -247,7 +247,7 @@ create or replace package body ics_app.plant_material_classfctn_extract as
         t01.sap_pack_family_code as sap_pack_family_code,
         t01.sap_pack_sub_family_code as sap_pack_sub_family_code
       from bds.bds_material_classfctn t01
-        and 
+      where 
         (
           par_action = '*ALL'
           or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))

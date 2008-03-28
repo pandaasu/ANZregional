@@ -9,7 +9,7 @@
 
   Description 
   ----------- 
-  Plant Database - Inbound reference data loader 
+  Plant Database - Inbound BOM alternative loader 
 
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
@@ -240,17 +240,17 @@ create or replace package body bds_app.plant_bom_alternative_loader as
     /* Validate the primary keys 
     /*-*/
     if ( rcd_hdr.bom_material_code is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - BOM.BOM_MATERIAL_CODE');
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_MATERIAL_CODE');
       var_trn_error := true;
     end if;
     
     if ( rcd_hdr.bom_alternative is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - BOM.BOM_ALTERNATIVE');
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_ALTERNATIVE');
       var_trn_error := true;
     end if;
           
     if ( rcd_hdr.bom_plant is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - BOM.BOM_PLANT');
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_PLANT');
       var_trn_error := true;
     end if;
     

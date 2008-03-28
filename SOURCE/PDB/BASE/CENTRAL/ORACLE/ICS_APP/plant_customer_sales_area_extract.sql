@@ -128,22 +128,22 @@ create or replace package body ics_app.plant_customer_sales_area_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB02.1');   
+        execute_send('LADPDB10.1');   
       end if;    
       if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB02.2');   
+        execute_send('LADPDB10.2');   
       end if;    
       if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB02.3');   
+        execute_send('LADPDB10.3');   
       end if;    
       if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB02.4');   
+        execute_send('LADPDB10.4');   
       end if;    
       if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB02.5');   
+        execute_send('LADPDB10.5');   
       end if;
       if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB02.6');   
+        execute_send('LADPDB10.6');   
       end if;
     end if; 
       
