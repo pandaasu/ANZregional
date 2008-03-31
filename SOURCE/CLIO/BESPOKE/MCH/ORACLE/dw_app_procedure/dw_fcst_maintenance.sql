@@ -579,19 +579,19 @@ create or replace package body dw_fcst_maintenance as
       end;
 
       /*-*/
-      /* Retrieve the control data
+      /* Retrieve the channel data
       /*-*/
-      select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','SALES_ORG_CODE'));
-      select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DISTBN_CHNL_CODE'));
-      select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DIVISION_CODE'));
+      select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_SALES_ORG_CODE'));
+      select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE'));
+      select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DIVISION_CODE'));
       if var_sales_org_code is null then
-         raise_application_error(-20000, 'Forecast sales organisation code not set in the LICS data store');
+         raise_application_error(-20000, 'Forecast domestic sales organisation code not set in the LICS data store');
       end if;
       if var_distbn_chnl_code is null then
-         raise_application_error(-20000, 'Forecast distribution channel code not set in the LICS data store');
+         raise_application_error(-20000, 'Forecast domestic distribution channel code not set in the LICS data store');
       end if;
       if var_division_code is null then
-         raise_application_error(-20000, 'Forecast division code not set in the LICS data store');
+         raise_application_error(-20000, 'Forecast domestic division code not set in the LICS data store');
       end if;
 
       /*-*/
@@ -1017,19 +1017,35 @@ create or replace package body dw_fcst_maintenance as
       end if;
 
       /*-*/
-      /* Retrieve the control data
+      /* Retrieve the channel data
       /*-*/
-      select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','SALES_ORG_CODE'));
-      select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DISTBN_CHNL_CODE'));
-      select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DIVISION_CODE'));
-      if var_sales_org_code is null then
-         var_message := var_message || chr(13) || 'Forecast sales organisation code not set in the LICS data store';
+      if rcd_fcst_load_type.load_type_channel = '*DOMESTIC' then
+         select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_SALES_ORG_CODE'));
+         select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE'));
+         select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DIVISION_CODE'));
+         if var_sales_org_code is null then
+            var_message := var_message || chr(13) || 'Forecast domestic sales organisation code not set in the LICS data store';
+         end if;
+         if var_distbn_chnl_code is null then
+            var_message := var_message || chr(13) || 'Forecast domestic distribution channel code not set in the LICS data store';
+         end if;
+         if var_division_code is null then
+            var_message := var_message || chr(13) || 'Forecast domestic division code not set in the LICS data store';
+         end if;
       end if;
-      if var_distbn_chnl_code is null then
-         var_message := var_message || chr(13) || 'Forecast distribution channel code not set in the LICS data store';
-      end if;
-      if var_division_code is null then
-         var_message := var_message || chr(13) || 'Forecast division code not set in the LICS data store';
+      if rcd_fcst_load_type.load_type_channel = '*AFFILIATE' then
+         select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE'));
+         select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE'));
+         select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_DIVISION_CODE'));
+         if var_sales_org_code is null then
+            var_message := var_message || chr(13) || 'Forecast affiliate sales organisation code not set in the LICS data store';
+         end if;
+         if var_distbn_chnl_code is null then
+            var_message := var_message || chr(13) || 'Forecast affiliate distribution channel code not set in the LICS data store';
+         end if;
+         if var_division_code is null then
+            var_message := var_message || chr(13) || 'Forecast affiliate division code not set in the LICS data store';
+         end if;
       end if;
 
       /*-*/
