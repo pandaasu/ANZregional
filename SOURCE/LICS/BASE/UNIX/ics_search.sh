@@ -150,7 +150,6 @@ exec_search()
     log_file "INFO: [exec_search] Search Execution complete - ${match_count} matches found" "HARMLESS"
 }
 
-
 # ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
