@@ -25,7 +25,9 @@ create table od.fcst_extract_type
     extract_plan_group              varchar2(32 char)      not null,
     extract_format                  varchar2(32 char)      not null,
     extract_planner                 varchar2(32 char)      not null,
-    extract_procedure               varchar2(128 char)     not null);
+    extract_procedure               varchar2(128 char)     not null,
+    extract_action_text             varchar2(32 char)      null,
+    extract_action_url              varchar2(256 char)     null);
 
 /**/
 /* Comments
@@ -38,6 +40,8 @@ comment on column od.fcst_extract_type.extract_plan_group  is 'Extract plan grou
 comment on column od.fcst_extract_type.extract_format  is 'Extract format - *FILE or *INTERFACE';
 comment on column od.fcst_extract_type.extract_planner  is 'Extract planner - CNPLAN_SNK, CNPLAN_PET or *NONE';
 comment on column od.fcst_extract_type.extract_procedure is 'Extract procedure';
+comment on column od.fcst_extract_type.extract_action_text is 'Extract export action button text';
+comment on column od.fcst_extract_type.extract_action_url is 'Extract export action URL';
 
 /**/
 /* Primary Key Constraint
