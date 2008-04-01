@@ -2314,6 +2314,8 @@ create or replace package body dw_fcst_maintenance as
       var_dmnd_group fcst_load_detail.dmnd_group%type;
       var_material_code fcst_load_detail.material_code%type;
       var_plant_code fcst_load_detail.plant_code%type;
+      var_dmnd_group_desc varchar(256 char);
+      var_material_desc varchar(256 char);
       var_output varchar2(4000 char);
       var_found boolean;
       var_work_yyyypp number;
@@ -2330,9 +2332,12 @@ create or replace package body dw_fcst_maintenance as
       /* Local cursors
       /*-*/
       cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = var_load_identifier;
+         select t01.*,
+                t02.load_type_channel
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type(+)
+            and t01.load_identifier = var_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_fcst_load_row is
@@ -2344,9 +2349,24 @@ create or replace package body dw_fcst_maintenance as
                         sum(t01.fcst_qty) as fcst_qty,
                         max(t01.fcst_prc) as fcst_prc,
                         sum(t01.fcst_gsv) as fcst_gsv,
+                        max(t02.material_desc_zh) as material_desc_zh,
+                        max(t02.material_desc_en) as material_desc_en,
+                        max(t03.customer_desc) as customer_desc,
                         null as mesg_text
-                   from fcst_load_detail t01
+                   from fcst_load_detail t01,
+                        (select lads_trim_code(t01.sap_material_code) as material_code,
+                                max(case when t01.desc_language = 'ZH' then t01.material_desc end) material_desc_zh,
+                                max(case when t01.desc_language = 'EN' then t01.material_desc end) material_desc_en
+                           from bds_material_desc t01
+                          where (t01.desc_language = 'ZH' or t01.desc_language = 'EN')
+                          group by lads_trim_code(t01.sap_material_code)) t02,
+                        (select lads_trim_code(t01.customer_code) as customer_code,
+                                t01.name as customer_desc
+                           from bds_addr_customer t01
+                          where t01.address_version = '*NONE') t03
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
+                    and t01.material_code = t02.material_code(+)
+                    and t01.dmnd_group = t03.customer_code(+)
                   group by t01.dmnd_group,
                            t01.material_code,
                            t01.plant_code,
@@ -2359,6 +2379,9 @@ create or replace package body dw_fcst_maintenance as
                         0 as fcst_qty,
                         0 as fcst_prc,
                         0 as fcst_gsv,
+                        null as material_desc_zh,
+                        null as material_desc_en,
+                        null as customer_desc,
                         t01.mesg_text
                    from fcst_load_detail t01
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
@@ -2425,8 +2448,8 @@ create or replace package body dw_fcst_maintenance as
       pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+5)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group</td>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group/Customer</td>');
+      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant</td>');
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Data</td>');
       for idx in 1..tbl_datv.count loop
@@ -2465,8 +2488,8 @@ create or replace package body dw_fcst_maintenance as
                /* Quantity row
                /*-*/
                var_output := '<tr>';
-               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group||'</td>';
-               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_code||'</td>';
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
                var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
                var_output := var_output||'<td align=center>QTY</td>';
                for idx in 1..tbl_datv.count loop
@@ -2527,6 +2550,24 @@ create or replace package body dw_fcst_maintenance as
             var_dmnd_group := rcd_fcst_load_row.dmnd_group;
             var_material_code := rcd_fcst_load_row.material_code;
             var_plant_code := rcd_fcst_load_row.plant_code;
+            if rcd_fcst_load_header.load_type_channel != '*AFFILIATE' then
+               var_dmnd_group_desc := rcd_fcst_load_row.dmnd_group;
+            else
+               var_dmnd_group_desc := '('||rcd_fcst_load_row.dmnd_group||')';
+               if not(rcd_fcst_load_row.customer_desc is null) then
+                  var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_row.customer_desc;
+               else
+                  var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+               end if;
+            end if;
+            var_material_desc := '('||rcd_fcst_load_row.material_code||')';
+            if not(rcd_fcst_load_row.material_desc_zh is null) then
+               var_material_desc := var_material_desc||' '||rcd_fcst_load_row.material_desc_zh;
+            elsif not(rcd_fcst_load_row.material_desc_en is null) then
+               var_material_desc := var_material_desc||' '||rcd_fcst_load_row.material_desc_en;
+            else
+               var_material_desc := var_material_desc||' UNKNOWN';
+            end if;
             for idx in 1..tbl_datv.count loop
                tbl_datv(idx).fcst_qty := 0;
                tbl_datv(idx).fcst_prc := 0;
@@ -2564,8 +2605,8 @@ create or replace package body dw_fcst_maintenance as
          /* Quantity row
          /*-*/
          var_output := '<tr>';
-         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group||'</td>';
-         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_code||'</td>';
+         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
          var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
          var_output := var_output||'<td align=center>QTY</td>';
          for idx in 1..tbl_datv.count loop
@@ -2941,7 +2982,12 @@ create or replace package body dw_fcst_maintenance as
       /* Local definitions
       /*-*/
       var_errors boolean;
-      var_material_save varchar2(18 char);
+      var_material_save varchar2(128 char);
+      var_customer_save varchar2(128 char);
+      var_price_vakey varchar2(128 char);
+      var_price_kschl varchar2(128 char);
+      var_vakey varchar2(128 char);
+      var_kschl varchar2(128 char);
       var_wrk_yyyypp number;
       type rcd_wrkv is record(yyyypp number, price number);
       type tab_wrkv is table of rcd_wrkv index by binary_integer;
@@ -2951,37 +2997,47 @@ create or replace package body dw_fcst_maintenance as
       /* Local cursors
       /*-*/
       cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = par_load_identifier;
+         select t01.*,
+                t02.load_type_channel
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type(+)
+            and t01.load_identifier = par_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_fcst_load_detail is
          select t01.*,
+                t02.sap_material_code,
                 t02.matl_code,
                 t02.matl_status,
-                decode(t02.bus_sgmnt_code,'01','*SNACK','05','*PET','*NONE') as new_plan_group
+                decode(t02.bus_sgmnt_code,'01','*SNACK','05','*PET','*NONE') as new_plan_group,
+                t03.sap_customer_code,
+                t03.cust_code,
+                t03.cust_status
            from fcst_load_detail t01,
-                (select lads_trim_code(t01.matnr) as matl_code,
-                        decode(t01.lvorm,'X','INACTIVE','ACTIVE') as matl_status,
-                        t02.atwrt as bus_sgmnt_code
-                   from lads_mat_hdr t01,
-                        lads_cla_chr t02
-                  where t01.matnr = t02.objek(+)
-                    and t02.obtab(+) = 'MARA'
-                    and t02.klart(+) = '001'
-                    and t02.atnam(+) = 'CLFFERT01') t02
+                (select t01.sap_material_code as sap_material_code,
+                        lads_trim_code(t01.sap_material_code) as matl_code,
+                        decode(t01.deletion_flag,'X','INACTIVE','ACTIVE') as matl_status,
+                        t02.sap_bus_sgmnt_code as bus_sgmnt_code
+                   from bds_material_hdr t01,
+                        bds_material_classfctn t02
+                  where t01.sap_material_code = t02.sap_material_code(+)) t02,
+                (select t01.customer_code as sap_customer_code,
+                        lads_trim_code(t01.customer_code) as cust_code,
+                        decode(t01.deletion_flag,'X','INACTIVE','ACTIVE') as cust_status
+                   from bds_cust_header t01) t03
           where t01.material_code = t02.matl_code(+)
+            and t01.dmnd_group = t03.cust_code(+)
             and t01.load_identifier = rcd_fcst_load_header.load_identifier
-          order by t01.material_code asc;
+          order by t02.sap_material_code asc,
+                   t03.sap_customer_code asc;
       rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
 
       cursor csr_material_price is
-         select t04.mars_period as str_yyyypp,
-                nvl(t05.mars_period,999999) as end_yyyypp,
-                ((t02.kbetr/t02.kpein)*nvl(t03.umren,1))/nvl(t03.umrez,1) as material_price 
-           from lads_mat_hdr t01,
-                (select t01.matnr,
+         select t03.mars_period as str_yyyypp,
+                nvl(t04.mars_period,999999) as end_yyyypp,
+                ((t01.kbetr/t01.kpein)*nvl(t02.umren,1))/nvl(t02.umrez,1) as material_price 
+           from (select t01.matnr,
                         lads_to_date(t01.datab,'yyyymmdd') datab,
                         lads_to_date(t01.datbi,'yyyymmdd') datbi,
                         t02.kmein,
@@ -2993,20 +3049,17 @@ create or replace package body dw_fcst_maintenance as
                     and t01.kschl = t02.kschl
                     and t01.datab = t02.datab
                     and t01.knumh = t02.knumh
-                    and t01.vkorg = rcd_fcst_load_header.sales_org_code
-                    and t01.vtweg is null
-                    and t01.kschl = 'PR00') t02,
-                lads_mat_uom t03,
-                mars_date t04,
-                mars_date t05
-          where t01.matnr = t02.matnr
-            and t02.matnr = t03.matnr(+)
-            and t02.kmein = t03.meinh(+)
-            and t02.datab = t04.calendar_date
-            and t02.datbi = t05.calendar_date(+)
-            and lads_trim_code(t01.matnr) = rcd_fcst_load_detail.material_code
-            and (t04.mars_period <= rcd_fcst_load_header.load_str_yyyypp or
-                 (t05.mars_period is null or t05.mars_period >= rcd_fcst_load_header.load_end_yyyypp));
+                    and t01.vakey = var_vakey
+                    and t01.kschl = var_kschl) t01,
+                lads_mat_uom t02,
+                mars_date t03,
+                mars_date t04
+          where t01.matnr = t02.matnr(+)
+            and t01.kmein = t02.meinh(+)
+            and t01.datab = t03.calendar_date
+            and t01.datbi = t04.calendar_date(+)
+            and (t03.mars_period <= rcd_fcst_load_header.load_str_yyyypp or
+                 (t04.mars_period is null or t04.mars_period >= rcd_fcst_load_header.load_end_yyyypp));
       rcd_material_price csr_material_price%rowtype;
 
    /*-------------*/
@@ -3023,6 +3076,17 @@ create or replace package body dw_fcst_maintenance as
          raise_application_error(-20000, 'Forecast load (' || par_load_identifier || ') does not exist');
       end if;
       close csr_fcst_load_header;
+
+      /*-*/
+      /* Retrieve the price settings
+      /*-*/
+      if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
+         select dsv_value into var_price_vakey from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_PRICE_VAKEY'));
+         select dsv_value into var_price_kschl from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_PRICE_KSCHL'));
+      else
+         select dsv_value into var_price_vakey from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_PRICE_VAKEY'));
+         select dsv_value into var_price_kschl from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_PRICE_KSCHL'));
+      end if;
 
       /*-*/
       /* Load the forecast period array
@@ -3051,6 +3115,7 @@ create or replace package body dw_fcst_maintenance as
       /* Retrieve the forecast load details
       /*-*/
       var_material_save := '*NONE';
+      var_customer_save := '*NONE';
       open csr_fcst_load_detail;
       loop
          fetch csr_fcst_load_detail into rcd_fcst_load_detail;
@@ -3062,25 +3127,54 @@ create or replace package body dw_fcst_maintenance as
          /* Retrieve the material price data when required
          /*-*/
          if rcd_fcst_load_header.load_data_type = '*QTY_ONLY' then
-            if rcd_fcst_load_detail.material_code != var_material_save then
-               for idx in 1..tbl_wrkn.count loop
-                  tbl_wrkn(idx).price := 0;
-	       end loop;
-               open csr_material_price;
-               loop
-                  fetch csr_material_price into rcd_material_price;
-                  if csr_material_price%notfound then
-                     exit;
-                  end if;
+            if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
+               if rcd_fcst_load_detail.sap_material_code != var_material_save then
                   for idx in 1..tbl_wrkn.count loop
-                     if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                        rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                        tbl_wrkn(idx).price := rcd_material_price.material_price;
+                     tbl_wrkn(idx).price := 0;
+	          end loop;
+                  var_vakey := var_price_vakey||' '||rcd_fcst_load_detail.sap_material_code;
+                  var_kschl := var_price_kschl;
+                  open csr_material_price;
+                  loop
+                     fetch csr_material_price into rcd_material_price;
+                     if csr_material_price%notfound then
+                        exit;
                      end if;
+                     for idx in 1..tbl_wrkn.count loop
+                        if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                           rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                           tbl_wrkn(idx).price := rcd_material_price.material_price;
+                        end if;
+                     end loop;
                   end loop;
-               end loop;
-               close csr_material_price;
-               var_material_save := rcd_fcst_load_detail.material_code;
+                  close csr_material_price;
+                  var_material_save := rcd_fcst_load_detail.sap_material_code;
+               end if;
+            else
+               if rcd_fcst_load_detail.sap_material_code != var_material_save or
+                  rcd_fcst_load_detail.sap_customer_code != var_customer_save then
+                  for idx in 1..tbl_wrkn.count loop
+                     tbl_wrkn(idx).price := 0;
+	          end loop;
+                  var_vakey := var_price_vakey||rcd_fcst_load_detail.sap_customer_code||rcd_fcst_load_detail.sap_material_code;
+                  var_kschl := var_price_kschl;
+                  open csr_material_price;
+                  loop
+                     fetch csr_material_price into rcd_material_price;
+                     if csr_material_price%notfound then
+                        exit;
+                     end if;
+                     for idx in 1..tbl_wrkn.count loop
+                        if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                           rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                           tbl_wrkn(idx).price := rcd_material_price.material_price;
+                        end if;
+                     end loop;
+                  end loop;
+                  close csr_material_price;
+                  var_material_save := rcd_fcst_load_detail.sap_material_code;
+                  var_customer_save := rcd_fcst_load_detail.sap_customer_code;
+               end if;
             end if;
          end if;
 
@@ -3112,15 +3206,14 @@ create or replace package body dw_fcst_maintenance as
             end if;
             rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not exist in LADS';
             var_errors := true;
-         end if;
-         if rcd_fcst_load_detail.matl_status != 'ACTIVE' then
-            if rcd_fcst_load_detail.mesg_text is null then
-               rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+         else
+            if rcd_fcst_load_detail.matl_status != 'ACTIVE' then
+               if rcd_fcst_load_detail.mesg_text is null then
+                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               end if;
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not active in LADS';
+               var_errors := true;
             end if;
-            rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not active in LADS';
-            var_errors := true;
-         end if;
-         if not(rcd_fcst_load_detail.matl_code is null) then
             if rcd_fcst_load_detail.new_plan_group = '*NONE' then
                if rcd_fcst_load_detail.mesg_text is null then
                   rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
@@ -3139,22 +3232,62 @@ create or replace package body dw_fcst_maintenance as
          end if;
 
          /*-*/
-         /* Validate the forecast data
+         /* Validate the forecast customer when required
          /*-*/
-         if rcd_fcst_load_detail.fcst_qty = 0 then
-            if rcd_fcst_load_detail.mesg_text is null then
-               rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
-            end if;
-            rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
-            var_errors := true;
-         end if;
-         if not(rcd_fcst_load_detail.matl_code is null) then
-            if rcd_fcst_load_detail.fcst_prc = 0 then
+         if upper(rcd_fcst_load_header.load_type_channel) = '*AFFILIATE' then
+            if rcd_fcst_load_detail.cust_code is null then
                if rcd_fcst_load_detail.mesg_text is null then
                   rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
                end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not exist in LADS';
                var_errors := true;
+            else
+               if rcd_fcst_load_detail.cust_status != 'ACTIVE' then
+                  if rcd_fcst_load_detail.mesg_text is null then
+                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  end if;
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') is not active in LADS';
+                  var_errors := true;
+               end if;
+            end if;
+         end if;
+
+         /*-*/
+         /* Validate the forecast data
+         /*-*/
+         if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
+            if rcd_fcst_load_detail.fcst_qty = 0 then
+               if rcd_fcst_load_detail.mesg_text is null then
+                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               end if;
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+               var_errors := true;
+            end if;
+            if not(rcd_fcst_load_detail.matl_code is null) then
+               if rcd_fcst_load_detail.fcst_prc = 0 then
+                  if rcd_fcst_load_detail.mesg_text is null then
+                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  end if;
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                  var_errors := true;
+               end if;
+            end if;
+         else
+            if rcd_fcst_load_detail.fcst_qty = 0 then
+               if rcd_fcst_load_detail.mesg_text is null then
+                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               end if;
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+               var_errors := true;
+            end if;
+            if not(rcd_fcst_load_detail.matl_code is null) and not(rcd_fcst_load_detail.cust_code is null) then
+               if rcd_fcst_load_detail.fcst_prc = 0 then
+                  if rcd_fcst_load_detail.mesg_text is null then
+                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  end if;
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                  var_errors := true;
+               end if;
             end if;
          end if;
 
@@ -3375,18 +3508,20 @@ create or replace package body dw_fcst_maintenance as
                end if;
                if par_data_type = '*QTY_ONLY' then
                   if var_index != par_data_range then
-                     raise_application_error(-20000, 'Text file data (quantity only) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + 2));
+                     raise_application_error(-20000, 'Text file data (quantity only) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + 3));
                   end if;
                end if;
                if par_data_type = '*QTY_GSV' then
                   if var_index != par_data_range + par_data_range then
-                     raise_application_error(-20000, 'Text file data (quantity/gsv) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + par_data_range + 2));
+                     raise_application_error(-20000, 'Text file data (quantity/gsv) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + par_data_range + 3));
                   end if;
                end if;
                for idx in 1..par_data_range loop
                   rcd_fcst_data.fcst_qty := tbl_wrkw(idx);
-                  rcd_fcst_data.fcst_gsv := tbl_wrkw(idx+par_data_range);
+                  rcd_fcst_data.fcst_prc := 0;
+                  rcd_fcst_data.fcst_gsv := 0;
                   if par_data_type = '*QTY_GSV' then
+                     rcd_fcst_data.fcst_gsv := tbl_wrkw(idx+par_data_range);
                      rcd_fcst_data.fcst_prc := rcd_fcst_data.fcst_gsv / rcd_fcst_data.fcst_qty;
                   end if;
                   if rcd_fcst_data.fcst_qty != 0 then

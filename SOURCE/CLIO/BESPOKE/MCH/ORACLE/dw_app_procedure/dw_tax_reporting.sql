@@ -270,7 +270,7 @@ create or replace package body dw_tax_reporting as
                                                     lads_mat_txl t52
                                               where t51.matnr = t52.matnr(+)
                                                 and t51.txhseq = t52.txhseq(+)
-                                                and trim(substr(t51.tdname,19,6)) = ''137 10''
+                                                and trim(substr(t51.tdname,19,6)) = ''135 10''
                                                 and t51.tdobject = ''MVKE''
                                                 and t52.txlseq = 1
                                                 and t51.spras_iso = ''ZH''
@@ -341,7 +341,7 @@ create or replace package body dw_tax_reporting as
                                                     lads_mat_txl t52
                                               where t51.matnr = t52.matnr(+)
                                                 and t51.txhseq = t52.txhseq(+)
-                                                and trim(substr(t51.tdname,19,6)) = ''137 10''
+                                                and trim(substr(t51.tdname,19,6)) = ''135 10''
                                                 and t51.tdobject = ''MVKE''
                                                 and t52.txlseq = 1
                                                 and t51.spras_iso = ''ZH''
@@ -1128,7 +1128,7 @@ create or replace package body dw_tax_reporting as
                                                     lads_mat_txl t52
                                               where t51.matnr = t52.matnr(+)
                                                 and t51.txhseq = t52.txhseq(+)
-                                                and trim(substr(t51.tdname,19,6)) = ''137 10''
+                                                and trim(substr(t51.tdname,19,6)) = ''135 10''
                                                 and t51.tdobject = ''MVKE''
                                                 and t52.txlseq = 1
                                                 and t51.spras_iso = ''ZH''
@@ -1209,7 +1209,7 @@ create or replace package body dw_tax_reporting as
                                                     lads_mat_txl t52
                                               where t51.matnr = t52.matnr(+)
                                                 and t51.txhseq = t52.txhseq(+)
-                                                and trim(substr(t51.tdname,19,6)) = ''137 10''
+                                                and trim(substr(t51.tdname,19,6)) = ''135 10''
                                                 and t51.tdobject = ''MVKE''
                                                 and t52.txlseq = 1
                                                 and t51.spras_iso = ''ZH''
