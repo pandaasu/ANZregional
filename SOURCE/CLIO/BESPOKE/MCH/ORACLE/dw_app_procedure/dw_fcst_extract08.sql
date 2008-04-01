@@ -179,6 +179,12 @@ create or replace package body dw_fcst_extract08 as
       select dsv_value into var_aff_vol_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','FPPS_AFF_VOL_CODE'));
 
       /*-*/
+      /* Pipe the header row
+      /*-*/
+      var_output := 'item,source,destination,customer,line item,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13';
+      pipe row(var_output);
+
+      /*-*/
       /* Retrieve the forecast extract loads (GSV)
       /*-*/
       open csr_fcst_extract_load;
