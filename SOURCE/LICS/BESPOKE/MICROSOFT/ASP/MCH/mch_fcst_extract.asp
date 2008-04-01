@@ -149,7 +149,7 @@ sub ProcessSelect()
    strQuery = strQuery & " t02.extract_procedure"
    strQuery = strQuery & " from fcst_extract_header t01, fcst_extract_type t02"
    strQuery = strQuery & " where t01.extract_type = t02.extract_type(+)"
-   strQuery = strQuery & " order by t01.extract_version desc, t01.extract_identifier desc"
+   strQuery = strQuery & " order by t01.crt_date desc, t01.extract_identifier asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"

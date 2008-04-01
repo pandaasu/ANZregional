@@ -172,7 +172,7 @@ sub ProcessSelect()
    strQuery = strQuery & " nvl(t02.load_type_updatable,'0')"
    strQuery = strQuery & " from fcst_load_header t01, fcst_load_type t02"
    strQuery = strQuery & " where t01.load_type = t02.load_type(+)"
-   strQuery = strQuery & " order by t01.load_data_version desc, t01.load_identifier desc"
+   strQuery = strQuery & " order by t01.upd_date desc, t01.load_identifier asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
