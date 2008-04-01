@@ -23,6 +23,7 @@ create or replace package lads_atllad04_monitor as
     -------   ------         -----------
     2004/01   Steve Gregan   Created
     2006/11   Linden Glen    Included LADS FLATTENING callout
+    2008/03   Linden Glen    Added Duplicate Material check
 
    *******************************************************************************/
 
@@ -34,10 +35,8 @@ create or replace package lads_atllad04_monitor as
 end lads_atllad04_monitor;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lads_atllad04_monitor as
+
+CREATE OR REPLACE package body LADS_APP.lads_atllad04_monitor as
 
    /*-*/
    /* Private exceptions
@@ -51,6 +50,11 @@ create or replace package body lads_atllad04_monitor as
    procedure execute(par_matnr in varchar2) is
 
       /*-*/
+      /* Local variables
+      /*-*/
+      var_email varchar2(256);
+
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_lads_mat_hdr is
@@ -58,7 +62,13 @@ create or replace package body lads_atllad04_monitor as
            from lads_mat_hdr t01
           where t01.matnr = par_matnr;
       rcd_lads_mat_hdr csr_lads_mat_hdr%rowtype;
-    
+
+      cursor csr_lads_mat_chk is
+         select count(*) as matl_chk
+           from lads_mat_hdr t01
+          where ltrim(t01.matnr,'0') = ltrim(par_matnr,'0');
+      rcd_lads_mat_chk csr_lads_mat_chk%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -81,9 +91,34 @@ create or replace package body lads_atllad04_monitor as
       /*---------------------------*/
 
       /*-*/
-      /* Transaction logic
-      /* **note** - changes to the LADS data (eg. delivery deletion)
+      /* Validate for duplicate material code
+      /*   note : a manual process exists within GRD that allows users to send
+      /*          materials without leading zeros if used incorrectly.
+      /*          e.g. 000000000010012345 would be received as 10012345
+      /*          Any applications performing an ltrim of 0's from material codes
+      /*          will return a duplicate entry for the material. 
+      /*          This routine checks for the existence of duplicates and notifies
       /*-*/
+      open csr_lads_mat_chk;
+      fetch csr_lads_mat_chk into rcd_lads_mat_chk;
+      if (rcd_lads_mat_chk.matl_chk > 1) then
+
+         var_email := lics_setting_configuration.retrieve_setting('ATLLAD04_DUP_CHECK', 'EMAIL_GROUP');
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
+
+            lics_notification.send_email(lads_parameter.system_code,
+                                         lads_parameter.system_unit,
+                                         lads_parameter.system_environment,
+                                         'HK/CHINA DUPLICATE MATERIAL CHECKER',
+                                         'LADS_ATLLAD04_MONITOR',
+                                         var_email,
+                                         'GRD Material Code ' || par_matnr || ' exists more than once with and without leading zeros' || chr(13) || 
+                                         'Please notify DW_INFO_DELIVERY_AP via Magic Incident to have the duplicate records removed.');
+         end if;
+
+      end if;
+      close csr_lads_mat_chk;
+
 
       /*---------------------------*/
       /* 2. LADS flattening logic  */
@@ -94,6 +129,8 @@ create or replace package body lads_atllad04_monitor as
       /* **note** - delete and replace
       /*-*/
       bds_atllad04_flatten.execute('*DOCUMENT',par_matnr);
+
+
 
       /*---------------------------*/
       /* 3. Triggered procedures   */
@@ -126,9 +163,3 @@ create or replace package body lads_atllad04_monitor as
 
 end lads_atllad04_monitor;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lads_atllad04_monitor for lads_app.lads_atllad04_monitor;
-grant execute on lads_atllad04_monitor to lics_app;
