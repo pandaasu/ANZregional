@@ -3007,11 +3007,11 @@ create or replace package body dw_fcst_maintenance as
 
       cursor csr_fcst_load_detail is
          select t01.*,
-                t02.sap_material_code,
+                nvl(t02.sap_material_code,'*NULL') as sap_material_code,
                 t02.matl_code,
                 t02.matl_status,
                 decode(t02.bus_sgmnt_code,'01','*SNACK','05','*PET','*NONE') as new_plan_group,
-                t03.sap_customer_code,
+                nvl(t03.sap_customer_code,'*NULL') as sap_customer_code,
                 t03.cust_code,
                 t03.cust_status
            from fcst_load_detail t01,
@@ -3132,22 +3132,24 @@ create or replace package body dw_fcst_maintenance as
                   for idx in 1..tbl_wrkn.count loop
                      tbl_wrkn(idx).price := 0;
 	          end loop;
-                  var_vakey := var_price_vakey||' '||rcd_fcst_load_detail.sap_material_code;
-                  var_kschl := var_price_kschl;
-                  open csr_material_price;
-                  loop
-                     fetch csr_material_price into rcd_material_price;
-                     if csr_material_price%notfound then
-                        exit;
-                     end if;
-                     for idx in 1..tbl_wrkn.count loop
-                        if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                           rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                           tbl_wrkn(idx).price := rcd_material_price.material_price;
+                  if rcd_fcst_load_detail.sap_material_code != '*NULL' then
+                     var_vakey := var_price_vakey||' '||rcd_fcst_load_detail.sap_material_code;
+                     var_kschl := var_price_kschl;
+                     open csr_material_price;
+                     loop
+                        fetch csr_material_price into rcd_material_price;
+                        if csr_material_price%notfound then
+                           exit;
                         end if;
+                        for idx in 1..tbl_wrkn.count loop
+                           if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                              rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                              tbl_wrkn(idx).price := rcd_material_price.material_price;
+                           end if;
+                        end loop;
                      end loop;
-                  end loop;
-                  close csr_material_price;
+                     close csr_material_price;
+                  end if;
                   var_material_save := rcd_fcst_load_detail.sap_material_code;
                end if;
             else
@@ -3156,22 +3158,25 @@ create or replace package body dw_fcst_maintenance as
                   for idx in 1..tbl_wrkn.count loop
                      tbl_wrkn(idx).price := 0;
 	          end loop;
-                  var_vakey := var_price_vakey||rcd_fcst_load_detail.sap_customer_code||rcd_fcst_load_detail.sap_material_code;
-                  var_kschl := var_price_kschl;
-                  open csr_material_price;
-                  loop
-                     fetch csr_material_price into rcd_material_price;
-                     if csr_material_price%notfound then
-                        exit;
-                     end if;
-                     for idx in 1..tbl_wrkn.count loop
-                        if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                           rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                           tbl_wrkn(idx).price := rcd_material_price.material_price;
+                  if rcd_fcst_load_detail.sap_material_code != '*NULL' and
+                     rcd_fcst_load_detail.sap_customer_code != '*NULL' then
+                     var_vakey := var_price_vakey||rcd_fcst_load_detail.sap_customer_code||rcd_fcst_load_detail.sap_material_code;
+                     var_kschl := var_price_kschl;
+                     open csr_material_price;
+                     loop
+                        fetch csr_material_price into rcd_material_price;
+                        if csr_material_price%notfound then
+                           exit;
                         end if;
+                        for idx in 1..tbl_wrkn.count loop
+                           if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                              rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                              tbl_wrkn(idx).price := rcd_material_price.material_price;
+                           end if;
+                        end loop;
                      end loop;
-                  end loop;
-                  close csr_material_price;
+                     close csr_material_price;
+                  end if;
                   var_material_save := rcd_fcst_load_detail.sap_material_code;
                   var_customer_save := rcd_fcst_load_detail.sap_customer_code;
                end if;
