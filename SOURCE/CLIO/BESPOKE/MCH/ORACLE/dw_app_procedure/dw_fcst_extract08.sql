@@ -25,7 +25,7 @@ create or replace package dw_fcst_extract08 as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure export(par_extract_identifier in varchar2);
+   function export(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
 end dw_fcst_extract08;
 /
@@ -44,7 +44,7 @@ create or replace package body dw_fcst_extract08 as
    /**********************************************/
    /* This procedure performs the export routine */
    /**********************************************/
-   procedure export(par_extract_identifier in varchar2) is
+   function export(par_extract_identifier in varchar2) return dw_fcst_table pipelined is
 
       /*-*/
       /* Local definitions
@@ -54,8 +54,6 @@ create or replace package body dw_fcst_extract08 as
       var_aff_gsv_code varchar2(256);
       var_aff_vol_code varchar2(256);
       var_output varchar2(4000);
-      type typ_outbound is table of varchar2(4000) index by binary_integer;
-      tbl_outbound typ_outbound;
 
       /*-*/
       /* Local cursors
@@ -82,13 +80,49 @@ create or replace package body dw_fcst_extract08 as
           where t01.load_identifier = rcd_fcst_extract_load.load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
-      cursor csr_fcst_load_detail is 
-         select t01.*,
-                t02.srce_code
-                t03.dest_code
-           from fcst_load_detail t01,
+      cursor csr_fcst_load_detail is
+         select t01.material_code,
+                t02.srce_code,
+                t03.dest_code,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '01' then t01.fcst_gsv end) w01_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '02' then t01.fcst_gsv end) w02_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '03' then t01.fcst_gsv end) w03_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '04' then t01.fcst_gsv end) w04_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '05' then t01.fcst_gsv end) w05_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '06' then t01.fcst_gsv end) w06_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '07' then t01.fcst_gsv end) w07_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '08' then t01.fcst_gsv end) w08_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '09' then t01.fcst_gsv end) w09_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '10' then t01.fcst_gsv end) w10_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '11' then t01.fcst_gsv end) w11_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '12' then t01.fcst_gsv end) w12_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '13' then t01.fcst_gsv end) w13_gsv,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '01' then t01.fcst_qty end) w01_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '02' then t01.fcst_qty end) w02_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '03' then t01.fcst_qty end) w03_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '04' then t01.fcst_qty end) w04_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '05' then t01.fcst_qty end) w05_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '06' then t01.fcst_qty end) w06_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '07' then t01.fcst_qty end) w07_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '08' then t01.fcst_qty end) w08_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '09' then t01.fcst_qty end) w09_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '10' then t01.fcst_qty end) w10_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '11' then t01.fcst_qty end) w11_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '12' then t01.fcst_qty end) w12_qty,
+                sum(case when substr(to_char(t01.fcst_yyyypp,'fm000000'),5,2) = '13' then t01.fcst_qty end) w13_qty
+           from (select t01.material_code,
+                        t01.plant_code,
+                        t01.dmnd_group,
+                        t01.fcst_yyyypp,
+                        t01.fcst_gsv,
+                        t01.fcst_qty
+                   from fcst_load_detail t01
+                  where t01.load_identifier = rcd_fcst_extract_load.load_identifier
+                    and to_number(substr(to_char(t01.fcst_yyyypp,'fm000000'),1,4)) = rcd_fcst_load_header.load_data_version
+                    and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
+                         t01.plan_group = rcd_fcst_extract_header.extract_plan_group)) t01,
                 (select lads_trim_code(t01.matnr) as material_code,
-                        t01.werks as plant_code
+                        t01.werks as plant_code,
                         max(t02.zzfppsmoe) as srce_code
                    from lads_mat_mrc t01,
                         lads_mat_zmc t02
@@ -97,23 +131,27 @@ create or replace package body dw_fcst_extract08 as
                   group by t01.matnr,
                            t01.werks) t02,
                 (select lads_trim_code(t01.customer_code) as cust_code,
-                        t01.location as dest_code
+                        t01.location_code as dest_code
                    from bds_cust_header t01) t03
           where t01.material_code = t02.material_code(+)
             and t01.plant_code = t02.plant_code(+)
             and t01.dmnd_group = t03.cust_code(+)
-            and t01.load_identifier = rcd_fcst_extract_load.load_identifier
-            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
-                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
+          group by t01.material_code,
+                   t02.srce_code,
+                   t03.dest_code
           order by t01.material_code asc,
-                   t01.dmnd_group asc,
-                   t01.fcst_yyyypp asc;
+                   t02.srce_code asc,
+                   t03.dest_code asc;
       rcd_fcst_load_detail csr_fcst_load_detail%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
 
       /*-*/
       /* Validate the parameter values
@@ -133,7 +171,6 @@ create or replace package body dw_fcst_extract08 as
       end if;
       close csr_fcst_extract_header;
 
-
       /*-*/
       /* Retrieve the FPPS settings
       /*-*/
@@ -142,12 +179,7 @@ create or replace package body dw_fcst_extract08 as
       select dsv_value into var_aff_vol_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','FPPS_AFF_VOL_CODE'));
 
       /*-*/
-      /* Clear the outbound array
-      /*-*/
-      tbl_outbound.delete;
-
-      /*-*/
-      /* Retrieve the forecast extract loads
+      /* Retrieve the forecast extract loads (GSV)
       /*-*/
       open csr_fcst_extract_load;
       loop
@@ -176,29 +208,28 @@ create or replace package body dw_fcst_extract08 as
                exit;
             end if;
 
-5103034        393            BJ             GC                                      15498                                2007            -181.955              65.858         1358797.696          463339.896          445882.242          463008.469         
-
-material = 15
-source = 15
-destination = 15
-customer = 40
-line item = 40
-
-P01 - p13 = 20
-
             /*-*/
-            /* Output the interface data
+            /* Pipe the detail row
             /*-*/
-            if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
-               var_output := '"' || rcd_fcst_load_detail.material_code || '"';
-               var_output := var_output || ',"' || rcd_fcst_load_detail.plant_code || '"';
-               var_output := var_output || ',"' || rcd_fcst_load_detail.cover_yyyymmdd || '"';
-               var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.cover_day) || 'D' || '"';
-               var_output := var_output || ',"' || to_char(tbl_outbound.count+1,'fm000000000') || '"';
-               var_output := var_output || ',"' || to_char(var_tot_count,'fm000000000') || '"';
-               var_output := var_output || ',"' || to_char(sysdate,'yyyymmddhh24miss') || '"';
-               tbl_outbound(tbl_outbound.count+1) := var_output;
-            end if;
+            var_output := rcd_fcst_load_detail.material_code;
+            var_output := var_output || ',' || nvl(rcd_fcst_load_detail.srce_code,'000');
+            var_output := var_output || ',' || nvl(rcd_fcst_load_detail.dest_code,'000');
+            var_output := var_output || ',' || var_aff_cust_code;
+            var_output := var_output || ',' || var_aff_gsv_code;
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w01_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w02_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w03_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w04_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w05_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w06_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w07_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w08_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w09_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w10_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w11_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w12_gsv,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w13_gsv,2));
+            pipe row(var_output);
 
          end loop;
          close csr_fcst_load_detail;
@@ -207,26 +238,68 @@ P01 - p13 = 20
       close csr_fcst_extract_load;
 
       /*-*/
-      /* Create the outbound interface
+      /* Retrieve the forecast extract loads (VOL)
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'ODSAPL.DAT');
+      open csr_fcst_extract_load;
+      loop
+         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
+         if csr_fcst_extract_load%notfound then
+            exit;
+         end if;
 
-      /*-*/
-      /* Append the interface data
-      /*-*/
-      for idx in 1..tbl_outbound.count loop
-         lics_outbound_loader.append_data(tbl_outbound(idx));
+         /*-*/
+         /* Retrieve the forecast load header
+         /*-*/
+         open csr_fcst_load_header;
+         fetch csr_fcst_load_header into rcd_fcst_load_header;
+         if csr_fcst_load_header%notfound then
+            raise_application_error(-20000, 'Forecast load (' || rcd_fcst_extract_load.load_identifier || ') does not exist');
+         end if;
+         close csr_fcst_load_header;
+
+         /*-*/
+         /* Retrieve the forecast load detail
+         /*-*/
+         open csr_fcst_load_detail;
+         loop
+            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
+            if csr_fcst_load_detail%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Pipe the detail row when required
+            /*-*/
+            var_output := rcd_fcst_load_detail.material_code;
+            var_output := var_output || ',' || rcd_fcst_load_detail.srce_code;
+            var_output := var_output || ',' || nvl(rcd_fcst_load_detail.dest_code,'000');
+            var_output := var_output || ',' || var_aff_cust_code;
+            var_output := var_output || ',' || var_aff_vol_code;
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w01_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w02_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w03_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w04_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w05_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w06_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w07_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w08_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w09_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w10_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w11_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w12_qty,2));
+            var_output := var_output || ',' || to_char(round(rcd_fcst_load_detail.w13_qty,2));
+            pipe row(var_output);
+
+         end loop;
+         close csr_fcst_load_detail;
+
       end loop;
+      close csr_fcst_extract_load;
 
       /*-*/
-      /* Finalise the interface
-      /*-*/
-      lics_outbound_loader.finalise_interface;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
+      /* Return
+      /*-*/  
+      return;
 
    /*-------------------*/
    /* Exception handler */
@@ -237,19 +310,6 @@ P01 - p13 = 20
       /* Exception trap
       /**/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 1024));
-            lics_outbound_loader.finalise_interface;
-         end if;
 
          /*-*/
          /* Raise an exception to the calling application
