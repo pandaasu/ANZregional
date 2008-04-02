@@ -1,0 +1,222 @@
+﻿/*-*/
+/* Set the echo off
+/*-*/
+set echo off;
+
+/*-*/
+/* Set the define character
+/*-*/
+set define ^;
+
+/*-*/
+/* OD
+/*-*/
+connect od/odwall@ap0112t.ap.mars
+
+--
+-- Compile the tables
+--
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\china_tax_customer.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_data.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_extract_type.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_extract_type_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_extract_header.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_extract_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_type.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_header.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_detail.sql;
+
+--
+-- OD data
+--
+insert into fcst_plan_group values('*SNACK','Snackfood');
+insert into fcst_plan_group values('*PET','Petcare');
+commit;
+
+insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','0');
+insert into fcst_load_type values('*FCST_AFFILIATE','Business review affiliate forecast','*PERIOD','*AFFILIATE','1');
+insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','1');
+insert into fcst_load_type values('*FCST_FRESHNESS','Business review freshness forecast','*PERIOD','*DOMESTIC','1');
+insert into fcst_load_type values('*PLAN_DOMESTIC','Operating plan domestic','*YEAR','*DOMESTIC','1');
+insert into fcst_load_type values('*PLAN_AFFILIATE','Operating plan affiliate','*YEAR','*AFFILIATE','1');
+insert into fcst_load_type values('*REPLAN_DOMESTIC','Replan domestic','*YEAR','*DOMESTIC','1');
+insert into fcst_load_type values('*REPLAN_AFFILIATE','Replan affiliate','*YEAR','*AFFILIATE','1');
+insert into fcst_load_type values('*ROB_DOMESTIC','Review of business domestic','*PERIOD','*DOMESTIC','1');
+insert into fcst_load_type values('*ROB_AFFILIATE','Review of business affiliate','*PERIOD','*AFFILIATE','1');
+
+commit;
+
+insert into fcst_extract_type values('SNACK_DOM_BW_FORECAST','BW Forecast Extract (Snackfood Domestic)','*PERIOD','*SNACK','*FILE','CN_SNK_DOM','dw_fcst_extract01','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_AFF_BW_FORECAST','BW Forecast Extract (Snackfood Affiliate)','*PERIOD','*SNACK','*FILE','CN_SNK_AFF','dw_fcst_extract01','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_DOM_BW_DRAFT','BW Draft Extract (Snackfood Domestic)','*PERIOD','*SNACK','*FILE','CN_SNK_DOM','dw_fcst_extract02','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_AFF_BW_DRAFT','BW Draft Extract (Snackfood Affiliate)','*PERIOD','*SNACK','*FILE','CN_SNK_AFF','dw_fcst_extract02','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_DOM_BW_PLAN','BW Plan Extract (Snackfood Domestic)','*YEAR','*SNACK','*FILE','CN_SNK_DOM','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_AFF_BW_PLAN','BW Plan Extract (Snackfood Affiliate)','*YEAR','*SNACK','*FILE','CN_SNK_AFF','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_DOM_BW_REPLAN','BW Replan Extract (Snackfood Domestic)','*YEAR','*SNACK','*FILE','CN_SNK_DOM','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_AFF_BW_REPLAN','BW Replan Extract (Snackfood Affiliate)','*YEAR','*SNACK','*FILE','CN_SNK_AFF','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_DOM_BW_ROB','BW ROB Extract (Snackfood Domestic)','*PERIOD','*SNACK','*FILE','CN_SNK_DOM','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('SNACK_AFF_BW_ROB','BW ROB Extract (Snackfood Affiliate)','*PERIOD','*SNACK','*FILE','CN_SNK_AFF','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_FORECAST','BW Forecast Extract (Petcare Domestic)','*PERIOD','*PET','*FILE','CN_PET_DOM','dw_fcst_extract01','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_FORECAST','BW Forecast Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract01','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_DRAFT','BW Draft Extract (Petcare Domestic)','*PERIOD','*PET','*FILE','CN_PET_DOM','dw_fcst_extract02','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_DRAFT','BW Draft Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract02','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_PLAN','BW Plan Extract (Petcare Domestic)','*YEAR','*PET','*FILE','CN_PET_DOM','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_PLAN','BW Plan Extract (Petcare Affiliate)','*YEAR','*PET','*FILE','CN_PET_AFF','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_REPLAN','BW Replan Extract (Petcare Domestic)','*YEAR','*PET','CN_PET_DOM','*FILE','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_REPLAN','BW Replan Extract (Petcare Affiliate)','*YEAR','*PET','CN_PET_AFF','*FILE','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_ROB','BW ROB Extract (Petcare Domestic)','*PERIOD','*PET','*FILE','CN_PET_DOM','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_ROB','BW ROB Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('APOLLO','Apollo Extract','*PERIOD','*ALL','*INTERFACE','*NONE','dw_fcst_extract06',null,null);
+insert into fcst_extract_type values('FPPS_DOM_PLAN','FPPS Domestic Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_AFF_PLAN','FPPS Affiliate Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('FPPS_DOM_REPLAN','FPPS Domestic Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_AFF_REPLAN','FPPS Affiliate Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
+
+commit;
+
+insert into fcst_extract_type_load values('SNACK_DOM_BW_FORECAST','*FCST_DOMESTIC');
+insert into fcst_extract_type_load values('SNACK_DOM_BW_DRAFT','*FCST_DOMESTIC');
+insert into fcst_extract_type_load values('SNACK_DOM_BW_PLAN','*PLAN_DOMESTIC');
+insert into fcst_extract_type_load values('SNACK_DOM_BW_REPLAN','*REPLAN_DOMESTIC');
+insert into fcst_extract_type_load values('SNACK_DOM_BW_ROB','*ROB_DOMESTIC');
+insert into fcst_extract_type_load values('SNACK_AFF_BW_FORECAST','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('SNACK_AFF_BW_DRAFT','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('SNACK_AFF_BW_PLAN','*PLAN_AFFILIATE');
+insert into fcst_extract_type_load values('SNACK_AFF_BW_REPLAN','*REPLAN_AFFILIATE');
+insert into fcst_extract_type_load values('SNACK_AFF_BW_ROB','*ROB_AFFILIATE');
+insert into fcst_extract_type_load values('PET_DOM_BW_FORECAST','*FCST_DOMESTIC');
+insert into fcst_extract_type_load values('PET_DOM_BW_DRAFT','*FCST_DOMESTIC');
+insert into fcst_extract_type_load values('PET_DOM_BW_PLAN','*PLAN_DOMESTIC');
+insert into fcst_extract_type_load values('PET_DOM_BW_REPLAN','*REPLAN_DOMESTIC');
+insert into fcst_extract_type_load values('PET_DOM_BW_ROB','*ROB_DOMESTIC');
+insert into fcst_extract_type_load values('PET_AFF_BW_FORECAST','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('PET_AFF_BW_DRAFT','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('PET_AFF_BW_PLAN','*PLAN_AFFILIATE');
+insert into fcst_extract_type_load values('PET_AFF_BW_REPLAN','*REPLAN_AFFILIATE');
+insert into fcst_extract_type_load values('PET_AFF_BW_ROB','*ROB_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO','*FCST_SAMPLE');
+insert into fcst_extract_type_load values('APOLLO','*FCST_FRESHNESS');
+insert into fcst_extract_type_load values('FPPS_DOM_PLAN','*PLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_DOM_REPLAN','*REPLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_AFF_PLAN','*PLAN_AFFILIATE');
+insert into fcst_extract_type_load values('FPPS_AFF_REPLAN','*REPLAN_AFFILIATE');
+
+commit;
+
+/*-*/
+/* DW_APP
+/*-*/
+connect dw_app/dwcell@ap0112t.ap.mars
+
+--
+-- Compile the packages
+--
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_tax_configuration.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_tax_reporting.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_type.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_maintenance.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_purging.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract01.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract02.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract03.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract04.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract05.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract06.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract07.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract08.sql;
+
+/*-*/
+/* OD_APP
+/*-*/
+connect od_app/odcell@ap0112t.ap.mars
+
+--
+-- Compile the packages
+--
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_app_procedure\ods_aplods01.sql;
+
+/*-*/
+/* LICS_APP
+/*-*/
+connect lics_app/licscell@ap0112t.ap.mars
+
+--
+-- LICS interface
+--
+insert into lics_interface values('APLODS01','Apollo to ODS - Demand Forecast Interface','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'ods_aplods01','1');
+insert into lics_interface values('ODSAPL01','ODS to Apollo - Forecast Interface','*OUTBOUND','OB_PRC',1,5,5,'ICS_OUTBOUND','ODSAPL01_',15,'DAT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1');
+commit;
+
+--
+-- LICS job
+--
+insert into lics_job values('FCST_PURGING','Forecast Purging',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+
+--
+-- LICS data store
+--
+insert into lics_das_system values('CHINA','China Local System','LICS_APP',sysdate);
+commit;
+
+insert into lics_das_group values('CHINA','CHINA_UOM','China local UOM descriptions','LICS_APP',sysdate);
+insert into lics_das_code values('CHINA','CHINA_UOM','CS','Case UOM','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_UOM','CS',1,'箱');
+insert into lics_das_code values('CHINA','CHINA_UOM','SB','Show Box UOM','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_UOM','SB',1,'盒');
+insert into lics_das_code values('CHINA','CHINA_UOM','PC','Piece UOM','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_UOM','PC',1,'块');
+insert into lics_das_code values('CHINA','CHINA_UOM','PCE','Piece UOM','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_UOM','PCE',1,'块');
+insert into lics_das_code values('CHINA','CHINA_UOM','EA','Each UOM','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_UOM','EA',1,'件');
+commit;
+
+insert into lics_das_group values('CHINA','CHINA_REPORT','China local report settings','LICS_APP',sysdate);
+insert into lics_das_code values('CHINA','CHINA_REPORT','GOLD_TAX_TITLE01','Title 01','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_REPORT','GOLD_TAX_TITLE01',1,'SJJK0101');
+insert into lics_das_code values('CHINA','CHINA_REPORT','GOLD_TAX_TITLE02','Title 02','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_REPORT','GOLD_TAX_TITLE02',1,'销售单据传入');
+commit;
+
+insert into lics_das_group values('CHINA','CHINA_FCST','China forecast settings','LICS_APP',sysdate);
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_SALES_ORG_CODE','Domestic Sales Organisation Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_SALES_ORG_CODE',1,'135');
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE','Domestic Distribution Channel Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE',1,'10');
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_DIVISION_CODE','Domestic Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_DIVISION_CODE',1,'51');
+
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE','Affiliate Sales Organisation Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE',1,'135');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE','Affiliate Distribution Channel Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE',1,'99');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_DIVISION_CODE','Affiliate Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_DIVISION_CODE',1,'51');
+
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_DOM_DEST_CODE','FPPS Domestic Destination Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_DOM_DEST_CODE',1,'187');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_DOM_CUST_CODE','FPPS Domestic Customer Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_DOM_CUST_CODE',1,'101');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_AFF_CUST_CODE','FPPS Affiliate Customer Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_AFF_CUST_CODE',1,'101');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_DOM_GSV_CODE','FPPS Domestic GSV Item Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_DOM_GSV_CODE',1,'25035');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_DOM_VOL_CODE','FPPS Domestic Volume Item Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_DOM_VOL_CODE',1,'841');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_AFF_GSV_CODE','FPPS Affiliate GSV Item Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_AFF_GSV_CODE',1,'19645');
+insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_AFF_VOL_CODE','FPPS Affiliate Volume Item Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_AFF_VOL_CODE',1,'16794');
+
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_PRICE_VAKEY','Domestic Price Variable Key','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_PRICE_VAKEY',1,'135');
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_PRICE_KSCHL','Domestic Price Condition Type','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_PRICE_KSCHL',1,'PR00');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PRICE_VAKEY','Affiliate Price Variable Key','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PRICE_VAKEY',1,'135 99');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PRICE_KSCHL','Affiliate Price Condition Type','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PRICE_KSCHL',1,'ZV01');
+
+commit;
+
