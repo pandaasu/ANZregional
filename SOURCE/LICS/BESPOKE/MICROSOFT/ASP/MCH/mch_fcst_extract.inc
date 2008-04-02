@@ -102,9 +102,9 @@
          document.main.submit();
       }
    }
-   function doExport(strIdentifier,strFormat,strFunction) {
+   function doExport(strIdentifier,strFormat,strFunction,strActionText,strActionUrl) {
       if (!processForm()) {return;};
-      doExportOutput(eval('document.body'),strIdentifier,strFormat,strFunction + '.export(\'' + strIdentifier + '\')');
+      doExportOutput(eval('document.body'),strIdentifier,strFormat,strFunction + '.export(\'' + strIdentifier + '\')',strActionText,strActionUrl);
    }
    function doReport(strIdentifier) {
       if (!processForm()) {return;}
@@ -178,7 +178,7 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=6 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=12 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>','<%=objSelection.ListValue06("LIST",i)%>','<%=objSelection.ListValue07("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>','<%=objSelection.ListValue06("LIST",i)%>','<%=objSelection.ListValue07("LIST",i)%>','<%=objSelection.ListValue08("LIST",i)%>','<%=objSelection.ListValue09("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>

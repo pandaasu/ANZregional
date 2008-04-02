@@ -58,7 +58,7 @@
       strFunction = strFunction + ',\'' + document.main.INP_ReceivingPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_GIDate01.value.replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_GIDate02.value.replace(/\'/g,'').replace(/ /g,'') + '\')';
-      doExportOutput(eval('document.body'),'Gold Tax Report','*FILE',strFunction);
+      doExportOutput(eval('document.body'),'Gold Tax Report','*FILE',strFunction,'','');
    }
    function processForm() {
       if (checkInput() == true) {
