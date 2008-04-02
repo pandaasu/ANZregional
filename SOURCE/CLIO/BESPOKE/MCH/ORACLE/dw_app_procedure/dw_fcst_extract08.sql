@@ -75,9 +75,12 @@ create or replace package body dw_fcst_extract08 as
       rcd_fcst_extract_load csr_fcst_extract_load%rowtype;
 
       cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = rcd_fcst_extract_load.load_identifier;
+         select t01.*,
+                t02.load_type_channel
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type(+)
+            and t01.load_identifier = rcd_fcst_extract_load.load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
       cursor csr_fcst_load_detail is
