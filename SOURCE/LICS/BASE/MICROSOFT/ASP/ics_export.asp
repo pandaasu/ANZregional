@@ -112,6 +112,16 @@ sub ProcessExportPrompt()%>
    function doClose() {
       parent.doExportClose();
    }
+   function doUrl() {
+      var strRandom = Math.random().toString();
+      var strName = 'child' + strRandom.substr(2,strRandom.length-2);
+      var strFeatures = 'toolbar=no,location=no,menubar=no,resizable=yes';
+      strFeatures = strFeatures + ',width=' + (screen.availWidth - 40);
+      strFeatures = strFeatures + ',height=' + (screen.availHeight - 60);
+      strFeatures = strFeatures + ',top=16';
+      strFeatures = strFeatures + ',left=16';
+      window.open('<%=objForm.Fields("DTA_ActionUrl").Value%>',strName,'"' + strFeatures + '"',true);
+   }
    function doExecute() {
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = '<%=objForm.Fields("DTA_Format").Value%>';
@@ -135,9 +145,11 @@ sub ProcessExportPrompt()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=<%if objForm.Fields("DTA_ActionText").Value = "" then%>1<%else%>3<%end if%> cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td><%if objForm.Fields("DTA_ActionText").Value <> "" then%>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doUrl();">&nbsp;<%=objForm.Fields("DTA_ActionText").Value%>&nbsp;</a></nobr></td><%end if%>
                </tr>
             </table>
          </nobr></td>

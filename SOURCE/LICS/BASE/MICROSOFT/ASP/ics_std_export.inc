@@ -5,12 +5,12 @@
    ///////////////////
    var cobjExport;
    var cobjExportParent;
-   function doExportOutput(objParent,strName,strFormat,strQuery) {
+   function doExportOutput(objParent,strName,strFormat,strQuery,strActionText,strActionUrl) {
       if (cobjExport != null) {
          return;
       }
       cobjExportParent = objParent;
-      var strURL = '<%=strBase%>ics_export.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Format=' + strFormat + '&DTA_Query=' + strQuery;
+      var strURL = '<%=strBase%>ics_export.asp?Mode=PROMPT&DTA_Name=' + strName + '&DTA_Format=' + strFormat + '&DTA_Query=' + strQuery + '&DTA_ActionText=' + strActionText + '&DTA_ActionUrl=' + strActionUrl;
       cobjExport = document.createElement('iframe');
       cobjExport.src = strURL;
       cobjExport.style.position = 'absolute';
