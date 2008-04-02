@@ -33,16 +33,16 @@ insert into fcst_plan_group values('*SNACK','Snackfood');
 insert into fcst_plan_group values('*PET','Petcare');
 commit;
 
-insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','0');
-insert into fcst_load_type values('*FCST_AFFILIATE','Business review affiliate forecast','*PERIOD','*AFFILIATE','1');
-insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','1');
-insert into fcst_load_type values('*FCST_FRESHNESS','Business review freshness forecast','*PERIOD','*DOMESTIC','1');
-insert into fcst_load_type values('*PLAN_DOMESTIC','Operating plan domestic','*YEAR','*DOMESTIC','1');
-insert into fcst_load_type values('*PLAN_AFFILIATE','Operating plan affiliate','*YEAR','*AFFILIATE','1');
-insert into fcst_load_type values('*REPLAN_DOMESTIC','Replan domestic','*YEAR','*DOMESTIC','1');
-insert into fcst_load_type values('*REPLAN_AFFILIATE','Replan affiliate','*YEAR','*AFFILIATE','1');
-insert into fcst_load_type values('*ROB_DOMESTIC','Review of business domestic','*PERIOD','*DOMESTIC','1');
-insert into fcst_load_type values('*ROB_AFFILIATE','Review of business affiliate','*PERIOD','*AFFILIATE','1');
+insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','*DGRP_APOLLO','*QTY_GSV','0');
+insert into fcst_load_type values('*FCST_AFFILIATE','Business review affiliate forecast','*PERIOD','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','*MATL_DOWN_DAY','*QTY_ONLY','1');
+insert into fcst_load_type values('*FCST_FRESHNESS','Business review freshness forecast','*PERIOD','*DOMESTIC','*MATL_DOWN_DAY','*QTY_ONLY','1');
+insert into fcst_load_type values('*PLAN_DOMESTIC','Operating plan domestic','*YEAR','*DOMESTIC','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*PLAN_AFFILIATE','Operating plan affiliate','*YEAR','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*REPLAN_DOMESTIC','Replan domestic','*YEAR','*DOMESTIC','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*REPLAN_AFFILIATE','Replan affiliate','*YEAR','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*ROB_DOMESTIC','Review of business domestic','*PERIOD','*DOMESTIC','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
+insert into fcst_load_type values('*ROB_AFFILIATE','Review of business affiliate','*PERIOD','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
 
 commit;
 
