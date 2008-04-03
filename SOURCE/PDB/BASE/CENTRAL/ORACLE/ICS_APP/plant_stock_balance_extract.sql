@@ -211,7 +211,7 @@ create or replace package body ics_app.plant_stock_balance_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_stock_balance_extract - company_code: ' || var_company_code || ' - plant_code: ' || var_plant_code || ' - storage_location_code: ' || var_storage_location_code || ' - stock_balance_date: ' || var_stock_balance_date || ' - stock_balance_time: ' || var_stock_balance_time' - ' || var_exception);
+    raise_application_error(-20000, 'plant_stock_balance_extract - company_code: ' || var_company_code || ' - plant_code: ' || var_plant_code || ' - storage_location_code: ' || var_storage_location_code || ' - stock_balance_date: ' || var_stock_balance_date || ' - stock_balance_time: ' || var_stock_balance_time || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
