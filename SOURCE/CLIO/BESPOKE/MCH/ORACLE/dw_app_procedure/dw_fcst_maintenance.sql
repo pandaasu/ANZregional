@@ -48,7 +48,6 @@ create or replace package dw_fcst_maintenance as
    function retrieve_loads(par_extract_type in varchar2, par_extract_version in number) return dw_fcst_table pipelined;
    function export_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
    function report_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
-   function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
 end dw_fcst_maintenance;
 /
@@ -74,11 +73,13 @@ create or replace package body dw_fcst_maintenance as
    /*-*/
    procedure validate_load(par_load_identifier in varchar2);
    procedure read_xml_stream(par_type_version in varchar2,
+                             par_data_format in varchar2,
                              par_data_type in varchar2,
                              par_data_version in number,
                              par_data_range in number,
                              par_stream in clob);
    procedure read_xml_child(par_type_version in varchar2,
+                            par_data_format in varchar2,
                             par_data_type in varchar2,
                             par_data_version in number,
                             par_data_range in number,
@@ -868,6 +869,24 @@ create or replace package body dw_fcst_maintenance as
       var_division_code fcst_load_header.division_code%type;
       var_title varchar2(128);
       var_message varchar2(4000);
+      var_query varchar2(32767 char);
+      type typ_fcst_data is record(material_code varchar2(18 char),
+                                   dmnd_group varchar2(32 char),
+                                   plant_code varchar2(32 char),
+                                   fcst_yyyymmdd varchar2(8 char),
+                                   fcst_yyyyppw number,
+                                   fcst_yyyypp number,
+                                   fcst_cover number,
+                                   fcst_qty number,
+                                   fcst_prc number,
+                                   fcst_gsv number,
+                                   work_yyyymmdd varchar2(8 char),
+                                   work_yyyyppw number,
+                                   work_yyyypp number,
+                                   work_cover number);
+      rcd_fcst_data typ_fcst_data;
+      type typ_cursor is ref cursor;
+      csr_fcst_data typ_cursor;
 
       /*-*/
       /* Local cursors
@@ -896,25 +915,6 @@ create or replace package body dw_fcst_maintenance as
           where mars_year = var_load_data_version;
       rcd_mars_year csr_mars_year%rowtype;
 
-      cursor csr_fcst_data is
-         select t01.*,
-                nvl(t02.mars_yyyymmdd,'99999999') as mars_yyyymmdd,
-                nvl(t02.mars_yyyyppw,9999999) as mars_yyyyppw,
-                nvl(t02.mars_cover,0) as mars_cover
-           from fcst_data t01,
-                (select t01.mars_period,
-                        min(to_char(t01.calendar_date,'yyyymmdd')) as mars_yyyymmdd,
-                        min(t01.mars_week) as mars_yyyyppw,
-                        max(period_day_num) as mars_cover
-                   from mars_date t01
-                  group by t01.mars_period) t02
-          where t01.fcst_yyyypp = t02.mars_period(+)
-          order by t01.material_code asc,
-                   t01.dmnd_group asc,
-                   t01.plant_code asc,
-                   t01.fcst_yyyypp asc;
-      rcd_fcst_data csr_fcst_data%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -932,7 +932,7 @@ create or replace package body dw_fcst_maintenance as
       var_load_type := upper(par_load_type);
       var_load_identifier := upper(par_load_identifier);
       var_load_description := par_load_description;
-      var_load_data_type := par_load_data_type;
+      var_load_data_type := upper(par_load_data_type);
       var_load_data_version := par_load_data_version;
       var_load_data_range := par_load_data_range;
       var_load_plan_group := par_load_plan_group;
@@ -980,6 +980,9 @@ create or replace package body dw_fcst_maintenance as
          if rcd_fcst_load_type.load_type_updatable != '1' then
             var_message := var_message || chr(13) || 'Forecast load type (' || rcd_fcst_load_header.load_type || ') is not updatable';
          end if;
+         if upper(rcd_fcst_load_type.load_type_data_format) = '*DGRP_DOWN_DAY' or upper(rcd_fcst_load_type.load_type_data_format) = '*MATL_DOWN_DAY' then
+            var_load_data_range := 1;
+         end if;
       end if;
       close csr_fcst_load_type;
 
@@ -1007,7 +1010,7 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Validate the load plan group when required
       /*-*/
-      if var_load_plan_group != '*ALL' then
+      if upper(var_load_plan_group) != '*ALL' then
          open csr_fcst_plan_group;
          fetch csr_fcst_plan_group into rcd_fcst_plan_group;
          if csr_fcst_plan_group%notfound then
@@ -1019,7 +1022,7 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Retrieve the channel data
       /*-*/
-      if rcd_fcst_load_type.load_type_channel = '*DOMESTIC' then
+      if upper(rcd_fcst_load_type.load_type_channel) = '*DOMESTIC' then
          select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_SALES_ORG_CODE'));
          select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE'));
          select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_DIVISION_CODE'));
@@ -1033,7 +1036,7 @@ create or replace package body dw_fcst_maintenance as
             var_message := var_message || chr(13) || 'Forecast domestic division code not set in the LICS data store';
          end if;
       end if;
-      if rcd_fcst_load_type.load_type_channel = '*AFFILIATE' then
+      if upper(rcd_fcst_load_type.load_type_channel) = '*AFFILIATE' then
          select dsv_value into var_sales_org_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE'));
          select dsv_value into var_distbn_chnl_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE'));
          select dsv_value into var_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_DIVISION_CODE'));
@@ -1058,7 +1061,12 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Retrieve the stream data
       /*-*/
-      read_xml_stream(rcd_fcst_load_type.load_type_version,var_load_data_type,var_load_data_version,var_load_data_range,lics_form.get_clob('LOAD_STREAM'));
+      read_xml_stream(rcd_fcst_load_type.load_type_version,
+                      rcd_fcst_load_type.load_type_data_format,
+                      var_load_data_type,
+                      var_load_data_version,
+                      var_load_data_range,
+                      lics_form.get_clob('LOAD_STREAM'));
 
       /*-*/
       /* Initialise the forecast load header
@@ -1133,11 +1141,50 @@ create or replace package body dw_fcst_maintenance as
       end if;
 
       /*-*/
+      /* Load the detail query statement based on the load type data format
+      /*-*/
+      if upper(rcd_fcst_load_type.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_type.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         var_query := 'select t01.*,
+                              nvl(t02.mars_yyyymmdd,''99999999'') as work_yyyymmdd,
+                              nvl(t02.mars_yyyyppw,9999999) as work_yyyyppw,
+                              t01.fcst_yyyypp as work_yyyypp,
+                              nvl(t02.mars_cover,0) as work_cover
+                         from fcst_data t01,
+                              (select t01.mars_period,
+                                      min(to_char(t01.calendar_date,''yyyymmdd'')) as mars_yyyymmdd,
+                                      min(t01.mars_week) as mars_yyyyppw,
+                                      max(period_day_num) as mars_cover
+                                 from mars_date t01
+                                group by t01.mars_period) t02
+                        where t01.fcst_yyyypp = t02.mars_period(+)
+                        order by t01.material_code asc,
+                                 t01.dmnd_group asc,
+                                 t01.plant_code asc,
+                                 t01.fcst_yyyypp asc';
+      end if;
+      if upper(rcd_fcst_load_type.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_type.load_type_data_format) = '*MATL_DOWN_DAY' then
+         var_query := 'select t01.*,
+                              t01.fcst_yyyymmdd as work_yyyymmdd,
+                              nvl(t02.mars_week,9999999) as work_yyyyppw,
+                              nvl(t02.mars_period,999999) as work_yyyypp,
+                              1 as work_cover
+                         from fcst_data t01,
+                              mars_date t02
+                        where t01.fcst_yyyymmdd = to_char(t02.calendar_date(+),''yyyymmdd'')
+                        order by t01.material_code asc,
+                                 t01.dmnd_group asc,
+                                 t01.plant_code asc,
+                                 t01.fcst_yyyymmdd asc';
+      end if;
+
+      /*-*/
       /* Retrieve the forecast data
       /*-*/
       rcd_fcst_load_detail.load_identifier := rcd_fcst_load_header.load_identifier;
       rcd_fcst_load_detail.load_sequence := 0;
-      open csr_fcst_data;
+      open csr_fcst_data for var_query;
       loop
          fetch csr_fcst_data into rcd_fcst_data;
          if csr_fcst_data%notfound then
@@ -1151,11 +1198,11 @@ create or replace package body dw_fcst_maintenance as
          rcd_fcst_load_detail.material_code := rcd_fcst_data.material_code;
          rcd_fcst_load_detail.dmnd_group := rcd_fcst_data.dmnd_group;
          rcd_fcst_load_detail.plant_code := rcd_fcst_data.plant_code;
-         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.mars_yyyymmdd;
-         rcd_fcst_load_detail.cover_day := rcd_fcst_data.mars_cover;
+         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.work_yyyymmdd;
+         rcd_fcst_load_detail.cover_day := rcd_fcst_data.work_cover;
          rcd_fcst_load_detail.cover_qty := rcd_fcst_data.fcst_qty;
-         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.mars_yyyyppw;
-         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp;
+         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.work_yyyyppw;
+         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.work_yyyypp;
          rcd_fcst_load_detail.fcst_qty := rcd_fcst_data.fcst_qty;
          rcd_fcst_load_detail.fcst_prc := rcd_fcst_data.fcst_prc;
          rcd_fcst_load_detail.fcst_gsv := rcd_fcst_data.fcst_gsv;
@@ -1278,6 +1325,24 @@ create or replace package body dw_fcst_maintenance as
       var_available boolean;
       var_title varchar2(128);
       var_message varchar2(4000);
+      var_query varchar2(32767 char);
+      type typ_fcst_data is record(material_code varchar2(18 char),
+                                   dmnd_group varchar2(32 char),
+                                   plant_code varchar2(32 char),
+                                   fcst_yyyymmdd varchar2(8 char),
+                                   fcst_yyyyppw number,
+                                   fcst_yyyypp number,
+                                   fcst_cover number,
+                                   fcst_qty number,
+                                   fcst_prc number,
+                                   fcst_gsv number,
+                                   work_yyyymmdd varchar2(8 char),
+                                   work_yyyyppw number,
+                                   work_yyyypp number,
+                                   work_cover number);
+      rcd_fcst_data typ_fcst_data;
+      type typ_cursor is ref cursor;
+      csr_fcst_data typ_cursor;
 
       /*-*/
       /* Local cursors
@@ -1294,25 +1359,6 @@ create or replace package body dw_fcst_maintenance as
            from fcst_load_type t01
           where t01.load_type = rcd_fcst_load_header.load_type;
       rcd_fcst_load_type csr_fcst_load_type%rowtype;
-
-      cursor csr_fcst_data is
-         select t01.*,
-                nvl(t02.mars_yyyymmdd,'99999999') as mars_yyyymmdd,
-                nvl(t02.mars_yyyyppw,9999999) as mars_yyyyppw,
-                nvl(t02.mars_cover,0) as mars_cover
-           from fcst_data t01,
-                (select t01.mars_period,
-                        min(to_char(t01.calendar_date,'yyyymmdd')) as mars_yyyymmdd,
-                        min(t01.mars_week) as mars_yyyyppw,
-                        max(period_day_num) as mars_cover
-                   from mars_date t01
-                  group by t01.mars_period) t02
-          where t01.fcst_yyyypp = t02.mars_period(+)
-          order by t01.material_code asc,
-                   t01.dmnd_group asc,
-                   t01.plant_code asc,
-                   t01.fcst_yyyypp asc;
-      rcd_fcst_data csr_fcst_data%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1404,7 +1450,12 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       /* Retrieve the stream data
       /*-*/
-      read_xml_stream(rcd_fcst_load_type.load_type_version,rcd_fcst_load_header.load_data_type,rcd_fcst_load_header.load_data_version,rcd_fcst_load_header.load_data_range,lics_form.get_clob('LOAD_STREAM'));
+      read_xml_stream(rcd_fcst_load_type.load_type_version,
+                      rcd_fcst_load_type.load_type_data_format,
+                      rcd_fcst_load_header.load_data_type,
+                      rcd_fcst_load_header.load_data_version,
+                      rcd_fcst_load_header.load_data_range,
+                      lics_form.get_clob('LOAD_STREAM'));
 
       /*-*/
       /* Delete the existing forecast load detail
@@ -1412,11 +1463,50 @@ create or replace package body dw_fcst_maintenance as
       delete from fcst_load_detail where load_identifier = rcd_fcst_load_header.load_identifier;
 
       /*-*/
+      /* Load the detail query statement based on the load type data format
+      /*-*/
+      if upper(rcd_fcst_load_type.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_type.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         var_query := 'select t01.*,
+                              nvl(t02.mars_yyyymmdd,''99999999'') as work_yyyymmdd,
+                              nvl(t02.mars_yyyyppw,9999999) as work_yyyyppw,
+                              t01.fcst_yyyypp as work_yyyypp,
+                              nvl(t02.mars_cover,0) as work_cover
+                         from fcst_data t01,
+                              (select t01.mars_period,
+                                      min(to_char(t01.calendar_date,''yyyymmdd'')) as mars_yyyymmdd,
+                                      min(t01.mars_week) as mars_yyyyppw,
+                                      max(period_day_num) as mars_cover
+                                 from mars_date t01
+                                group by t01.mars_period) t02
+                        where t01.fcst_yyyypp = t02.mars_period(+)
+                        order by t01.material_code asc,
+                                 t01.dmnd_group asc,
+                                 t01.plant_code asc,
+                                 t01.fcst_yyyypp asc';
+      end if;
+      if upper(rcd_fcst_load_type.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_type.load_type_data_format) = '*MATL_DOWN_DAY' then
+         var_query := 'select t01.*,
+                              t01.fcst_yyyymmdd as work_yyyymmdd,
+                              nvl(t02.mars_week,9999999) as work_yyyyppw,
+                              nvl(t02.mars_period,999999) as work_yyyypp,
+                              1 as work_cover
+                         from fcst_data t01,
+                              mars_date t02
+                        where t01.fcst_yyyymmdd = to_char(t02.calendar_date(+),''yyyymmdd'')
+                        order by t01.material_code asc,
+                                 t01.dmnd_group asc,
+                                 t01.plant_code asc,
+                                 t01.fcst_yyyymmdd asc';
+      end if;
+
+      /*-*/
       /* Retrieve the forecast data
       /*-*/
       rcd_fcst_load_detail.load_identifier := rcd_fcst_load_header.load_identifier;
       rcd_fcst_load_detail.load_sequence := 0;
-      open csr_fcst_data;
+      open csr_fcst_data for var_query;
       loop
          fetch csr_fcst_data into rcd_fcst_data;
          if csr_fcst_data%notfound then
@@ -1430,11 +1520,11 @@ create or replace package body dw_fcst_maintenance as
          rcd_fcst_load_detail.material_code := rcd_fcst_data.material_code;
          rcd_fcst_load_detail.dmnd_group := rcd_fcst_data.dmnd_group;
          rcd_fcst_load_detail.plant_code := rcd_fcst_data.plant_code;
-         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.mars_yyyymmdd;
-         rcd_fcst_load_detail.cover_day := rcd_fcst_data.mars_cover;
+         rcd_fcst_load_detail.cover_yyyymmdd := rcd_fcst_data.work_yyyymmdd;
+         rcd_fcst_load_detail.cover_day := rcd_fcst_data.work_cover;
          rcd_fcst_load_detail.cover_qty := rcd_fcst_data.fcst_qty;
-         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.mars_yyyyppw;
-         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp;
+         rcd_fcst_load_detail.fcst_yyyyppw := rcd_fcst_data.work_yyyyppw;
+         rcd_fcst_load_detail.fcst_yyyypp := rcd_fcst_data.work_yyyypp;
          rcd_fcst_load_detail.fcst_qty := rcd_fcst_data.fcst_qty;
          rcd_fcst_load_detail.fcst_prc := rcd_fcst_data.fcst_prc;
          rcd_fcst_load_detail.fcst_gsv := rcd_fcst_data.fcst_gsv;
@@ -2104,8 +2194,11 @@ create or replace package body dw_fcst_maintenance as
       var_dmnd_group fcst_load_detail.dmnd_group%type;
       var_material_code fcst_load_detail.material_code%type;
       var_plant_code fcst_load_detail.plant_code%type;
+      var_cover_yyyymmdd fcst_load_detail.cover_yyyymmdd%type;
       var_output varchar2(4000 char);
       var_work_yyyypp number;
+      var_cover_qty number;
+      var_cover_gsv number;
       type rcd_datv is record(fcst_yyyypp number,
                               fcst_qty number,
                               fcst_gsv number);
@@ -2116,12 +2209,17 @@ create or replace package body dw_fcst_maintenance as
       /* Local cursors
       /*-*/
       cursor csr_fcst_load_header is 
-         select t01.*
-           from fcst_load_header t01
-          where t01.load_identifier = var_load_identifier;
+         select t01.*,
+                t02.load_type_channel,
+                t02.load_type_data_format,
+                t02.load_type_data_type
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type(+)
+            and t01.load_identifier = var_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
-      cursor csr_fcst_load_row is
+      cursor csr_fcst_load_period is
          select t01.dmnd_group,
                 t01.material_code,
                 t01.plant_code,
@@ -2138,7 +2236,26 @@ create or replace package body dw_fcst_maintenance as
                    t01.material_code asc,
                    t01.plant_code asc,
                    t01.fcst_yyyypp asc;
-      rcd_fcst_load_row csr_fcst_load_row%rowtype;
+      rcd_fcst_load_period csr_fcst_load_period%rowtype;
+
+      cursor csr_fcst_load_day is
+         select t01.dmnd_group,
+                t01.material_code,
+                t01.plant_code,
+                t01.cover_yyyymmdd,
+                sum(t01.fcst_qty) as fcst_qty,
+                sum(t01.fcst_gsv) as fcst_gsv
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+          group by t01.dmnd_group,
+                   t01.material_code,
+                   t01.plant_code,
+                   t01.cover_yyyymmdd
+          order by t01.dmnd_group asc,
+                   t01.material_code asc,
+                   t01.plant_code asc,
+                   t01.cover_yyyymmdd asc;
+      rcd_fcst_load_day csr_fcst_load_day%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -2168,112 +2285,231 @@ create or replace package body dw_fcst_maintenance as
       close csr_fcst_load_header;
 
       /*-*/
-      /* Initialise the period range
+      /* Initialise the period range when required
       /*-*/
-      tbl_datv.delete;
-      var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
-      for idx in 1..rcd_fcst_load_header.load_data_range loop
-         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
-         tbl_datv(tbl_datv.count).fcst_qty := 0;
-         tbl_datv(tbl_datv.count).fcst_gsv := 0;
-         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
-            var_work_yyyypp := var_work_yyyypp + 88;
-         else
-            var_work_yyyypp := var_work_yyyypp + 1;
-         end if;
-      end loop;
-
-      /*-*/
-      /* Retrieve the forecast load rows
-      /*-*/
-      var_dmnd_group := null;
-      var_material_code := null;
-      var_plant_code := null;
-      open csr_fcst_load_row;
-      loop
-         fetch csr_fcst_load_row into rcd_fcst_load_row;
-         if csr_fcst_load_row%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Change in row
-         /*-*/
-         if var_dmnd_group is null or
-            var_dmnd_group != rcd_fcst_load_row.dmnd_group or
-            var_material_code != rcd_fcst_load_row.material_code or
-            var_plant_code != rcd_fcst_load_row.plant_code then
-
-            /*-*/
-            /* Output the row when required
-            /*-*/
-            if not(var_dmnd_group is null) then
-
-               /*-*/
-               /* Output the row
-               /*-*/
-               var_output := var_dmnd_group;
-               var_output := var_output||chr(9)||var_material_code;
-               var_output := var_output||chr(9)||var_plant_code;
-               for idx in 1..tbl_datv.count loop
-                  var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_qty);
-               end loop;
-               if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
-                  for idx in 1..tbl_datv.count loop
-                     var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_gsv);
-                  end loop;
-               end if;
-               pipe row(var_output);
-
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         tbl_datv.delete;
+         var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
+         for idx in 1..rcd_fcst_load_header.load_data_range loop
+            tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
+            tbl_datv(tbl_datv.count).fcst_qty := 0;
+            tbl_datv(tbl_datv.count).fcst_gsv := 0;
+            if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+               var_work_yyyypp := var_work_yyyypp + 88;
+            else
+               var_work_yyyypp := var_work_yyyypp + 1;
             end if;
+         end loop;
+      end if;
 
-            /*-*/
-            /* Initialise the row
-            /*-*/
-            var_dmnd_group := rcd_fcst_load_row.dmnd_group;
-            var_material_code := rcd_fcst_load_row.material_code;
-            var_plant_code := rcd_fcst_load_row.plant_code;
-            for idx in 1..tbl_datv.count loop
-               tbl_datv(idx).fcst_qty := 0;
-               tbl_datv(idx).fcst_gsv := 0;
-            end loop;
-
-         end if;
+      /*-*/
+      /* Process the period dimension
+      /*-*/
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
 
          /*-*/
-         /* Set the values
+         /* Retrieve the forecast load period
          /*-*/
-         for idx in 1..tbl_datv.count loop
-            if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_row.fcst_yyyypp then
-               tbl_datv(idx).fcst_qty := rcd_fcst_load_row.fcst_qty;
-               tbl_datv(idx).fcst_gsv := rcd_fcst_load_row.fcst_gsv;
+         var_dmnd_group := null;
+         var_material_code := null;
+         var_plant_code := null;
+         open csr_fcst_load_period;
+         loop
+            fetch csr_fcst_load_period into rcd_fcst_load_period;
+            if csr_fcst_load_period%notfound then
                exit;
             end if;
-         end loop;
 
-      end loop;
-      close csr_fcst_load_row;
+            /*-*/
+            /* Change in row
+            /*-*/
+            if var_dmnd_group is null or
+               var_dmnd_group != rcd_fcst_load_period.dmnd_group or
+               var_material_code != rcd_fcst_load_period.material_code or
+               var_plant_code != rcd_fcst_load_period.plant_code then
 
-      /*-*/
-      /* Output the last row when required
-      /*-*/
-      if not(var_dmnd_group is null) then
+               /*-*/
+               /* Output the row when required
+               /*-*/
+               if not(var_dmnd_group is null) then
 
-         /*-*/
-         /* Output the row
-         /*-*/
-         var_output := var_dmnd_group;
-         var_output := var_output||chr(9)||var_material_code;
-         var_output := var_output||chr(9)||var_plant_code;
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_qty);
-         end loop;
-         if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+                  /*-*/
+                  /* Output the row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+                     var_output := var_dmnd_group;
+                     var_output := var_output||chr(9)||var_material_code;
+                  else
+                     var_output := var_material_code;
+                  end if;
+                  var_output := var_output||chr(9)||var_plant_code;
+                  for idx in 1..tbl_datv.count loop
+                     var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_qty);
+                  end loop;
+                  if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+                     for idx in 1..tbl_datv.count loop
+                        var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_gsv);
+                     end loop;
+                  end if;
+                 pipe row(var_output);
+
+               end if;
+
+               /*-*/
+               /* Initialise the row
+               /*-*/
+               var_dmnd_group := rcd_fcst_load_period.dmnd_group;
+               var_material_code := rcd_fcst_load_period.material_code;
+               var_plant_code := rcd_fcst_load_period.plant_code;
+               for idx in 1..tbl_datv.count loop
+                  tbl_datv(idx).fcst_qty := 0;
+                  tbl_datv(idx).fcst_gsv := 0;
+               end loop;
+
+            end if;
+
+            /*-*/
+            /* Set the values
+            /*-*/
             for idx in 1..tbl_datv.count loop
-               var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_gsv);
+               if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_period.fcst_yyyypp then
+                  tbl_datv(idx).fcst_qty := tbl_datv(idx).fcst_qty + rcd_fcst_load_period.fcst_qty;
+                  tbl_datv(idx).fcst_gsv := tbl_datv(idx).fcst_gsv + rcd_fcst_load_period.fcst_gsv;
+                  exit;
+               end if;
             end loop;
+
+         end loop;
+         close csr_fcst_load_period;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_dmnd_group is null) then
+
+            /*-*/
+            /* Output the row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+               var_output := var_dmnd_group;
+               var_output := var_output||chr(9)||var_material_code;
+            else
+               var_output := var_material_code;
+            end if;
+            var_output := var_output||chr(9)||var_plant_code;
+            for idx in 1..tbl_datv.count loop
+               var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_qty);
+            end loop;
+            if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+               for idx in 1..tbl_datv.count loop
+                  var_output := var_output||chr(9)||to_char(tbl_datv(idx).fcst_gsv);
+               end loop;
+            end if;
+            pipe row(var_output);
+
          end if;
-         pipe row(var_output);
+
+      end if;
+
+      /*-*/
+      /* Process the day dimension
+      /*-*/
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+
+         /*-*/
+         /* Retrieve the forecast load period
+         /*-*/
+         var_dmnd_group := null;
+         var_material_code := null;
+         var_plant_code := null;
+         var_cover_yyyymmdd := null;
+         open csr_fcst_load_day;
+         loop
+            fetch csr_fcst_load_day into rcd_fcst_load_day;
+            if csr_fcst_load_day%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Change in row
+            /*-*/
+            if var_dmnd_group is null or
+               var_dmnd_group != rcd_fcst_load_day.dmnd_group or
+               var_material_code != rcd_fcst_load_day.material_code or
+               var_plant_code != rcd_fcst_load_day.plant_code or
+               var_cover_yyyymmdd != rcd_fcst_load_day.cover_yyyymmdd then
+
+               /*-*/
+               /* Output the row when required
+               /*-*/
+               if not(var_dmnd_group is null) then
+
+                  /*-*/
+                  /* Output the row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+                     var_output := var_dmnd_group;
+                     var_output := var_output||chr(9)||var_material_code;
+                  else
+                     var_output := var_material_code;
+                  end if;
+                  var_output := var_output||chr(9)||var_plant_code;
+                  var_output := var_output||chr(9)||var_cover_yyyymmdd;
+                  var_output := var_output||chr(9)||to_char(var_cover_qty);
+                  if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+                     var_output := var_output||chr(9)||to_char(var_cover_gsv);
+                  end if;
+                 pipe row(var_output);
+
+               end if;
+
+               /*-*/
+               /* Initialise the row
+               /*-*/
+               var_dmnd_group := rcd_fcst_load_day.dmnd_group;
+               var_material_code := rcd_fcst_load_day.material_code;
+               var_plant_code := rcd_fcst_load_day.plant_code;
+               var_cover_yyyymmdd := rcd_fcst_load_day.cover_yyyymmdd;
+               var_cover_qty := 0;
+               var_cover_gsv := 0;
+
+            end if;
+
+            /*-*/
+            /* Set the values
+            /*-*/
+            var_cover_qty := var_cover_qty + rcd_fcst_load_day.fcst_qty;
+            var_cover_gsv := var_cover_gsv + rcd_fcst_load_day.fcst_gsv;
+
+         end loop;
+         close csr_fcst_load_day;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_dmnd_group is null) then
+
+            /*-*/
+            /* Output the row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+               var_output := var_dmnd_group;
+               var_output := var_output||chr(9)||var_material_code;
+            else
+               var_output := var_material_code;
+            end if;
+            var_output := var_output||chr(9)||var_plant_code;
+            var_output := var_output||chr(9)||var_cover_yyyymmdd;
+            var_output := var_output||chr(9)||to_char(var_cover_qty);
+            if rcd_fcst_load_header.load_data_type = '*QTY_GSV' then
+               var_output := var_output||chr(9)||to_char(var_cover_gsv);
+            end if;
+            pipe row(var_output);
+
+         end if;
 
       end if;
 
@@ -2314,11 +2550,15 @@ create or replace package body dw_fcst_maintenance as
       var_dmnd_group fcst_load_detail.dmnd_group%type;
       var_material_code fcst_load_detail.material_code%type;
       var_plant_code fcst_load_detail.plant_code%type;
+      var_cover_yyyymmdd fcst_load_detail.cover_yyyymmdd%type;
       var_dmnd_group_desc varchar(256 char);
       var_material_desc varchar(256 char);
       var_output varchar2(4000 char);
       var_found boolean;
       var_work_yyyypp number;
+      var_cover_qty number;
+      var_cover_prc number;
+      var_cover_gsv number;
       type rcd_datv is record(fcst_yyyypp number,
                               fcst_qty number,
                               fcst_prc number,
@@ -2333,14 +2573,16 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       cursor csr_fcst_load_header is 
          select t01.*,
-                t02.load_type_channel
+                t02.load_type_channel,
+                t02.load_type_data_format,
+                t02.load_type_data_type
            from fcst_load_header t01,
                 fcst_load_type t02
           where t01.load_type = t02.load_type(+)
             and t01.load_identifier = var_load_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
-      cursor csr_fcst_load_row is
+      cursor csr_fcst_load_period is
          select t01.*
            from (select t01.dmnd_group,
                         t01.material_code,
@@ -2394,7 +2636,67 @@ create or replace package body dw_fcst_maintenance as
                    t01.material_code asc,
                    t01.plant_code asc,
                    t01.fcst_yyyypp asc;
-      rcd_fcst_load_row csr_fcst_load_row%rowtype;
+      rcd_fcst_load_period csr_fcst_load_period%rowtype;
+
+      cursor csr_fcst_load_day is
+         select t01.*
+           from (select t01.dmnd_group,
+                        t01.material_code,
+                        t01.plant_code,
+                        t01.cover_yyyymmdd,
+                        max(t01.cover_yyyymmdd) as fcst_yyyymmdd,
+                        sum(t01.fcst_qty) as fcst_qty,
+                        max(t01.fcst_prc) as fcst_prc,
+                        sum(t01.fcst_gsv) as fcst_gsv,
+                        max(t02.material_desc_zh) as material_desc_zh,
+                        max(t02.material_desc_en) as material_desc_en,
+                        max(t03.customer_desc) as customer_desc,
+                        null as mesg_text
+                   from fcst_load_detail t01,
+                        (select lads_trim_code(t01.sap_material_code) as material_code,
+                                max(case when t01.desc_language = 'ZH' then t01.material_desc end) material_desc_zh,
+                                max(case when t01.desc_language = 'EN' then t01.material_desc end) material_desc_en
+                           from bds_material_desc t01
+                          where (t01.desc_language = 'ZH' or t01.desc_language = 'EN')
+                          group by lads_trim_code(t01.sap_material_code)) t02,
+                        (select lads_trim_code(t01.customer_code) as customer_code,
+                                t01.name as customer_desc
+                           from bds_addr_customer t01
+                          where t01.address_version = '*NONE') t03
+                  where t01.load_identifier = rcd_fcst_load_header.load_identifier
+                    and t01.material_code = t02.material_code(+)
+                    and t01.dmnd_group = t03.customer_code(+)
+                  group by t01.dmnd_group,
+                           t01.material_code,
+                           t01.plant_code,
+                           t01.cover_yyyymmdd
+                  union all
+                 select t01.dmnd_group,
+                        t01.material_code,
+                        t01.plant_code,
+                        t01.cover_yyyymmdd,
+                        '99999999' as fcst_yyyymmdd,
+                        0 as fcst_qty,
+                        0 as fcst_prc,
+                        0 as fcst_gsv,
+                        null as material_desc_zh,
+                        null as material_desc_en,
+                        null as customer_desc,
+                        t01.mesg_text
+                   from fcst_load_detail t01
+                  where t01.load_identifier = rcd_fcst_load_header.load_identifier
+                    and not(t01.mesg_text is null)
+                  group by t01.dmnd_group,
+                           t01.material_code,
+                           t01.plant_code,
+                           t01.cover_yyyymmdd,
+                           t01.mesg_text) t01
+          order by t01.dmnd_group asc,
+                   t01.material_code asc,
+                   t01.plant_code asc,
+                   t01.cover_yyyymmdd asc,
+                   t01.fcst_yyyymmdd asc;
+      rcd_fcst_load_day csr_fcst_load_day%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -2424,105 +2726,299 @@ create or replace package body dw_fcst_maintenance as
       close csr_fcst_load_header;
 
       /*-*/
-      /* Initialise the period range
+      /* Initialise the period range when required
       /*-*/
-      tbl_datv.delete;
-      var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
-      for idx in 1..rcd_fcst_load_header.load_data_range loop
-         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
-         tbl_datv(tbl_datv.count).fcst_qty := 0;
-         tbl_datv(tbl_datv.count).fcst_prc := 0;
-         tbl_datv(tbl_datv.count).fcst_gsv := 0;
-         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
-            var_work_yyyypp := var_work_yyyypp + 88;
-         else
-            var_work_yyyypp := var_work_yyyypp + 1;
-         end if;
-      end loop;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         tbl_datv.delete;
+         var_work_yyyypp := rcd_fcst_load_header.load_str_yyyypp;
+         for idx in 1..rcd_fcst_load_header.load_data_range loop
+            tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
+            tbl_datv(tbl_datv.count).fcst_qty := 0;
+            tbl_datv(tbl_datv.count).fcst_prc := 0;
+            tbl_datv(tbl_datv.count).fcst_gsv := 0;
+            if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
+               var_work_yyyypp := var_work_yyyypp + 88;
+            else
+               var_work_yyyypp := var_work_yyyypp + 1;
+            end if;
+         end loop;
+      end if;
 
       /*-*/
       /* Start the report
       /*-*/
       pipe row('<table border=1 cellpadding="0" cellspacing="0">');
       pipe row('<tr>');
-      pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+5)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+         pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+6)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      end if;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+         pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+5)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      end if;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+         pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+5)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      end if;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         pipe row('<td align=center colspan='||to_char(rcd_fcst_load_header.load_data_range+4)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Load Report - ('||rcd_fcst_load_header.load_identifier||') '||rcd_fcst_load_header.load_description||'</td>');
+      end if;
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group/Customer</td>');
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group/Customer</td>');
+      end if;
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant</td>');
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Date</td>');
+      end if;
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Data</td>');
-      for idx in 1..tbl_datv.count loop
-         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">'||to_char(tbl_datv(idx).fcst_yyyypp)||'</td>');
-      end loop;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
+         for idx in 1..tbl_datv.count loop
+            pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">'||to_char(tbl_datv(idx).fcst_yyyypp)||'</td>');
+         end loop;
+      end if;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Value</td>');
+      end if;
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Messages</td>');
       pipe row('</tr>');
 
       /*-*/
-      /* Retrieve the forecast load rows
+      /* Process the period dimension
       /*-*/
-      var_dmnd_group := null;
-      var_material_code := null;
-      var_plant_code := null;
-      open csr_fcst_load_row;
-      loop
-         fetch csr_fcst_load_row into rcd_fcst_load_row;
-         if csr_fcst_load_row%notfound then
-            exit;
-         end if;
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_ACROSS_PERIOD' then
 
          /*-*/
-         /* Change in row
+         /* Retrieve the forecast load period
          /*-*/
-         if var_dmnd_group is null or
-            var_dmnd_group != rcd_fcst_load_row.dmnd_group or
-            var_material_code != rcd_fcst_load_row.material_code or
-            var_plant_code != rcd_fcst_load_row.plant_code then
+         var_dmnd_group := null;
+         var_material_code := null;
+         var_plant_code := null;
+         open csr_fcst_load_period;
+         loop
+            fetch csr_fcst_load_period into rcd_fcst_load_period;
+            if csr_fcst_load_period%notfound then
+               exit;
+            end if;
 
             /*-*/
-            /* Output the row when required
+            /* Change in row
             /*-*/
-            if not(var_dmnd_group is null) then
+            if var_dmnd_group is null or
+               var_dmnd_group != rcd_fcst_load_period.dmnd_group or
+               var_material_code != rcd_fcst_load_period.material_code or
+               var_plant_code != rcd_fcst_load_period.plant_code then
 
                /*-*/
-               /* Quantity row
+               /* Output the row when required
                /*-*/
-               var_output := '<tr>';
-               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
-               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
-               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
-               var_output := var_output||'<td align=center>QTY</td>';
-               for idx in 1..tbl_datv.count loop
-                  var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
-               end loop;
-               pipe row(var_output);
+               if not(var_dmnd_group is null) then
 
-               /*-*/
-               /* Messages
-               /*-*/
-               var_found := false;
-               for idx in 1..tbl_datm.count loop
-                  if var_found = false then
-                     pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
-                     var_found := true;
+                  /*-*/
+                  /* Quantity row
+                  /*-*/
+                  var_output := '<tr>';
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+                        var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+                     end if;
+                     var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
+                     var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
+                     var_output := var_output||'<td align=center>QTY</td>';
                   else
-                     pipe row(chr(10)||tbl_datm(idx));
+                     if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+                        var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+                     end if;
+                     var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_material_desc||'</td>';
+                     var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_plant_code||'</td>';
+                     var_output := var_output||'<td align=center>QTY</td>';
                   end if;
-               end loop;
-               if var_found = true then
-                  pipe row('</td>');
-               else
-                  pipe row('<td rowspan=3 valign=top align=left></td>');
+                  for idx in 1..tbl_datv.count loop
+                     var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
+                  end loop;
+                  pipe row(var_output);
+
+                  /*-*/
+                  /* Messages
+                  /*-*/
+                  var_found := false;
+                  for idx in 1..tbl_datm.count loop
+                     if var_found = false then
+                        if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                           pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
+                        else
+                           pipe row('<td rowspan=1 valign=top align=left>'||tbl_datm(idx));
+                        end if;
+                        var_found := true;
+                     else
+                        pipe row(chr(10)||tbl_datm(idx));
+                     end if;
+                  end loop;
+                  if var_found = true then
+                     pipe row('</td>');
+                  else
+                     if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                        pipe row('<td rowspan=3 valign=top align=left></td>');
+                     else
+                        pipe row('<td rowspan=1 valign=top align=left></td>');
+                     end if;
+                  end if;
+
+                  /*-*/
+                  /* Quantity row
+                  /*-*/
+                  pipe row('</tr>');
+
+                  /*-*/
+                  /* Price row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     var_output := '<tr>';
+                     var_output := var_output||'<td align=center>PRICE</td>';
+                     for idx in 1..tbl_datv.count loop
+                        var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_prc,2))||'</td>';
+                     end loop;
+                     var_output := var_output||'</tr>';
+                     pipe row(var_output);
+                  end if;
+
+                  /*-*/
+                  /* GSV row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     var_output := '<tr>';
+                     var_output := var_output||'<td align=center>GSV</td>';
+                     for idx in 1..tbl_datv.count loop
+                        var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>';
+                     end loop;
+                     var_output := var_output||'</tr>';
+                     pipe row(var_output);
+                  end if;
+
                end if;
 
                /*-*/
-               /* Quantity row
+               /* Initialise the row
                /*-*/
-               pipe row('</tr>');
+               var_dmnd_group := rcd_fcst_load_period.dmnd_group;
+               var_material_code := rcd_fcst_load_period.material_code;
+               var_plant_code := rcd_fcst_load_period.plant_code;
+               if rcd_fcst_load_header.load_type_channel != '*AFFILIATE' then
+                  var_dmnd_group_desc := rcd_fcst_load_period.dmnd_group;
+               else
+                  var_dmnd_group_desc := '('||rcd_fcst_load_period.dmnd_group||')';
+                  if not(rcd_fcst_load_period.customer_desc is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_period.customer_desc;
+                  else
+                     var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                  end if;
+               end if;
+               var_material_desc := '('||rcd_fcst_load_period.material_code||')';
+               if not(rcd_fcst_load_period.material_desc_zh is null) then
+                  var_material_desc := var_material_desc||' '||rcd_fcst_load_period.material_desc_zh;
+               elsif not(rcd_fcst_load_period.material_desc_en is null) then
+                  var_material_desc := var_material_desc||' '||rcd_fcst_load_period.material_desc_en;
+               else
+                  var_material_desc := var_material_desc||' UNKNOWN';
+               end if;
+               for idx in 1..tbl_datv.count loop
+                  tbl_datv(idx).fcst_qty := 0;
+                  tbl_datv(idx).fcst_prc := 0;
+                  tbl_datv(idx).fcst_gsv := 0;
+               end loop;
+               tbl_datm.delete;
 
-               /*-*/
-               /* Price row
-               /*-*/
+            end if;
+
+            /*-*/
+            /* Set the values
+            /*-*/
+            if rcd_fcst_load_period.fcst_yyyypp != 999999 then
+               for idx in 1..tbl_datv.count loop
+                  if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_period.fcst_yyyypp then
+                     tbl_datv(idx).fcst_qty := tbl_datv(idx).fcst_qty + rcd_fcst_load_period.fcst_qty;
+                     tbl_datv(idx).fcst_prc := tbl_datv(idx).fcst_prc + rcd_fcst_load_period.fcst_prc;
+                     tbl_datv(idx).fcst_gsv := tbl_datv(idx).fcst_gsv + rcd_fcst_load_period.fcst_gsv;
+                     exit;
+                  end if;
+               end loop;
+            else
+               tbl_datm(tbl_datm.count+1) := rcd_fcst_load_period.mesg_text;
+            end if;
+
+         end loop;
+         close csr_fcst_load_period;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_dmnd_group is null) then
+
+            /*-*/
+            /* Quantity row
+            /*-*/
+            var_output := '<tr>';
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+                  var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+               end if;
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
+               var_output := var_output||'<td align=center>QTY</td>';
+            else
+               if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' then
+                  var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+               end if;
+               var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_material_desc||'</td>';
+               var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_plant_code||'</td>';
+               var_output := var_output||'<td align=center>QTY</td>';
+            end if;
+            for idx in 1..tbl_datv.count loop
+               var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
+            end loop;
+            pipe row(var_output);
+
+            /*-*/
+            /* Messages
+            /*-*/
+            var_found := false;
+            for idx in 1..tbl_datm.count loop
+               if var_found = false then
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
+                  else
+                     pipe row('<td rowspan=1 valign=top align=left>'||tbl_datm(idx));
+                  end if;
+                  var_found := true;
+               else
+                  pipe row(chr(10)||tbl_datm(idx));
+               end if;
+            end loop;
+            if var_found = true then
+               pipe row('</td>');
+            else
+               if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                  pipe row('<td rowspan=3 valign=top align=left></td>');
+               else
+                  pipe row('<td rowspan=1 valign=top align=left></td>');
+               end if;
+            end if;
+
+            /*-*/
+            /* Quantity row
+            /*-*/
+            pipe row('</tr>');
+
+            /*-*/
+            /* Price row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
                var_output := '<tr>';
                var_output := var_output||'<td align=center>PRICE</td>';
                for idx in 1..tbl_datv.count loop
@@ -2530,10 +3026,12 @@ create or replace package body dw_fcst_maintenance as
                end loop;
                var_output := var_output||'</tr>';
                pipe row(var_output);
+            end if;
 
-               /*-*/
-               /* GSV row
-               /*-*/
+            /*-*/
+            /* GSV row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
                var_output := '<tr>';
                var_output := var_output||'<td align=center>GSV</td>';
                for idx in 1..tbl_datv.count loop
@@ -2541,123 +3039,258 @@ create or replace package body dw_fcst_maintenance as
                end loop;
                var_output := var_output||'</tr>';
                pipe row(var_output);
+            end if;
 
+         end if;
+
+      end if;
+
+      /*-*/
+      /* Process the day dimension
+      /*-*/
+      if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' or
+         upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+
+         /*-*/
+         /* Retrieve the forecast load period
+         /*-*/
+         var_dmnd_group := null;
+         var_material_code := null;
+         var_plant_code := null;
+         var_cover_yyyymmdd := null;
+         open csr_fcst_load_day;
+         loop
+            fetch csr_fcst_load_day into rcd_fcst_load_day;
+            if csr_fcst_load_day%notfound then
+               exit;
             end if;
 
             /*-*/
-            /* Initialise the row
+            /* Change in row
             /*-*/
-            var_dmnd_group := rcd_fcst_load_row.dmnd_group;
-            var_material_code := rcd_fcst_load_row.material_code;
-            var_plant_code := rcd_fcst_load_row.plant_code;
-            if rcd_fcst_load_header.load_type_channel != '*AFFILIATE' then
-               var_dmnd_group_desc := rcd_fcst_load_row.dmnd_group;
-            else
-               var_dmnd_group_desc := '('||rcd_fcst_load_row.dmnd_group||')';
-               if not(rcd_fcst_load_row.customer_desc is null) then
-                  var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_row.customer_desc;
+            if var_dmnd_group is null or
+               var_dmnd_group != rcd_fcst_load_day.dmnd_group or
+               var_material_code != rcd_fcst_load_day.material_code or
+               var_plant_code != rcd_fcst_load_day.plant_code or
+               var_cover_yyyymmdd != rcd_fcst_load_day.cover_yyyymmdd then
+
+               /*-*/
+               /* Output the row when required
+               /*-*/
+               if not(var_dmnd_group is null) then
+
+                  /*-*/
+                  /* Quantity row
+                  /*-*/
+                  var_output := '<tr>';
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+                        var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+                     end if;
+                     var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
+                     var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
+                     var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_cover_yyyymmdd||'</td>';
+                     var_output := var_output||'<td align=center>QTY</td>';
+                     var_output := var_output||'<td align=right>'||to_char(round(var_cover_qty,2))||'</td>';
+                     pipe row(var_output);
+                  else
+                     if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+                        var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+                     end if;
+                     var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_material_desc||'</td>';
+                     var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_plant_code||'</td>';
+                     var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_cover_yyyymmdd||'</td>';
+                     var_output := var_output||'<td align=center>QTY</td>';
+                     var_output := var_output||'<td align=right>'||to_char(round(var_cover_qty,2))||'</td>';
+                     pipe row(var_output);
+                  end if;
+
+                  /*-*/
+                  /* Messages
+                  /*-*/
+                  var_found := false;
+                  for idx in 1..tbl_datm.count loop
+                     if var_found = false then
+                        if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                           pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
+                        else
+                           pipe row('<td rowspan=1 valign=top align=left>'||tbl_datm(idx));
+                        end if;
+                        var_found := true;
+                     else
+                        pipe row(chr(10)||tbl_datm(idx));
+                     end if;
+                  end loop;
+                  if var_found = true then
+                     pipe row('</td>');
+                  else
+                     if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                        pipe row('<td rowspan=3 valign=top align=left></td>');
+                     else
+                        pipe row('<td rowspan=1 valign=top align=left></td>');
+                     end if;
+                  end if;
+
+                  /*-*/
+                  /* Quantity row
+                  /*-*/
+                  pipe row('</tr>');
+
+                  /*-*/
+                  /* Price row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     var_output := '<tr>';
+                     var_output := var_output||'<td align=center>PRICE</td>';
+                     var_output := var_output||'<td align=right>'||to_char(round(var_cover_prc,2))||'</td>';
+                     var_output := var_output||'</tr>';
+                     pipe row(var_output);
+                  end if;
+
+                  /*-*/
+                  /* GSV row
+                  /*-*/
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     var_output := '<tr>';
+                     var_output := var_output||'<td align=center>GSV</td>';
+                     var_output := var_output||'<td align=right>'||to_char(round(var_cover_gsv,2))||'</td>';
+                     var_output := var_output||'</tr>';
+                     pipe row(var_output);
+                  end if;
+
+               end if;
+
+               /*-*/
+               /* Initialise the row
+               /*-*/
+               var_dmnd_group := rcd_fcst_load_day.dmnd_group;
+               var_material_code := rcd_fcst_load_day.material_code;
+               var_plant_code := rcd_fcst_load_day.plant_code;
+               var_cover_yyyymmdd := rcd_fcst_load_day.cover_yyyymmdd;
+               if rcd_fcst_load_header.load_type_channel != '*AFFILIATE' then
+                  var_dmnd_group_desc := rcd_fcst_load_day.dmnd_group;
                else
-                  var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                  var_dmnd_group_desc := '('||rcd_fcst_load_day.dmnd_group||')';
+                  if not(rcd_fcst_load_day.customer_desc is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_day.customer_desc;
+                  else
+                     var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                  end if;
+               end if;
+               var_material_desc := '('||rcd_fcst_load_day.material_code||')';
+               if not(rcd_fcst_load_day.material_desc_zh is null) then
+                  var_material_desc := var_material_desc||' '||rcd_fcst_load_day.material_desc_zh;
+               elsif not(rcd_fcst_load_day.material_desc_en is null) then
+                  var_material_desc := var_material_desc||' '||rcd_fcst_load_day.material_desc_en;
+               else
+                  var_material_desc := var_material_desc||' UNKNOWN';
+               end if;
+               var_cover_qty := 0;
+               var_cover_prc := 0;
+               var_cover_gsv := 0;
+               tbl_datm.delete;
+
+            end if;
+
+            /*-*/
+            /* Set the values
+            /*-*/
+            if rcd_fcst_load_day.cover_yyyymmdd != '99999999' then
+               var_cover_qty := var_cover_qty + rcd_fcst_load_day.fcst_qty;
+               var_cover_prc := var_cover_prc + rcd_fcst_load_day.fcst_prc;
+               var_cover_gsv := var_cover_gsv + rcd_fcst_load_day.fcst_gsv;
+            else
+               tbl_datm(tbl_datm.count+1) := rcd_fcst_load_day.mesg_text;
+            end if;
+
+         end loop;
+         close csr_fcst_load_day;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_dmnd_group is null) then
+
+            /*-*/
+            /* Quantity row
+            /*-*/
+            var_output := '<tr>';
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+                  var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+               end if;
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
+               var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_cover_yyyymmdd||'</td>';
+               var_output := var_output||'<td align=center>QTY</td>';
+               var_output := var_output||'<td align=right>'||to_char(round(var_cover_qty,2))||'</td>';
+               pipe row(var_output);
+            else
+               if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
+                  var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_dmnd_group_desc||'</td>';
+               end if;
+               var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_material_desc||'</td>';
+               var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_plant_code||'</td>';
+               var_output := var_output||'<td rowspan=1 valign=top align=left>'||var_cover_yyyymmdd||'</td>';
+               var_output := var_output||'<td align=center>QTY</td>';
+               var_output := var_output||'<td align=right>'||to_char(round(var_cover_qty,2))||'</td>';
+               pipe row(var_output);
+            end if;
+
+            /*-*/
+            /* Messages
+            /*-*/
+            var_found := false;
+            for idx in 1..tbl_datm.count loop
+               if var_found = false then
+                  if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                     pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
+                  else
+                     pipe row('<td rowspan=1 valign=top align=left>'||tbl_datm(idx));
+                  end if;
+                  var_found := true;
+               else
+                  pipe row(chr(10)||tbl_datm(idx));
+               end if;
+            end loop;
+            if var_found = true then
+               pipe row('</td>');
+            else
+               if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+                  pipe row('<td rowspan=3 valign=top align=left></td>');
+               else
+                  pipe row('<td rowspan=1 valign=top align=left></td>');
                end if;
             end if;
-            var_material_desc := '('||rcd_fcst_load_row.material_code||')';
-            if not(rcd_fcst_load_row.material_desc_zh is null) then
-               var_material_desc := var_material_desc||' '||rcd_fcst_load_row.material_desc_zh;
-            elsif not(rcd_fcst_load_row.material_desc_en is null) then
-               var_material_desc := var_material_desc||' '||rcd_fcst_load_row.material_desc_en;
-            else
-               var_material_desc := var_material_desc||' UNKNOWN';
+
+            /*-*/
+            /* Quantity row
+            /*-*/
+            pipe row('</tr>');
+
+            /*-*/
+            /* Price row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               var_output := '<tr>';
+               var_output := var_output||'<td align=center>PRICE</td>';
+               var_output := var_output||'<td align=right>'||to_char(round(var_cover_prc,2))||'</td>';
+               var_output := var_output||'</tr>';
+               pipe row(var_output);
             end if;
-            for idx in 1..tbl_datv.count loop
-               tbl_datv(idx).fcst_qty := 0;
-               tbl_datv(idx).fcst_prc := 0;
-               tbl_datv(idx).fcst_gsv := 0;
-            end loop;
-            tbl_datm.delete;
 
-         end if;
-
-         /*-*/
-         /* Set the values
-         /*-*/
-         if rcd_fcst_load_row.fcst_yyyypp != 999999 then
-            for idx in 1..tbl_datv.count loop
-               if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_row.fcst_yyyypp then
-                  tbl_datv(idx).fcst_qty := rcd_fcst_load_row.fcst_qty;
-                  tbl_datv(idx).fcst_prc := rcd_fcst_load_row.fcst_prc;
-                  tbl_datv(idx).fcst_gsv := rcd_fcst_load_row.fcst_gsv;
-                  exit;
-               end if;
-            end loop;
-         else
-            tbl_datm(tbl_datm.count+1) := rcd_fcst_load_row.mesg_text;
-         end if;
-
-      end loop;
-      close csr_fcst_load_row;
-
-      /*-*/
-      /* Output the last row when required
-      /*-*/
-      if not(var_dmnd_group is null) then
-
-         /*-*/
-         /* Quantity row
-         /*-*/
-         var_output := '<tr>';
-         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_dmnd_group_desc||'</td>';
-         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_material_desc||'</td>';
-         var_output := var_output||'<td rowspan=3 valign=top align=left>'||var_plant_code||'</td>';
-         var_output := var_output||'<td align=center>QTY</td>';
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
-         end loop;
-         pipe row(var_output);
-
-         /*-*/
-         /* Messages
-         /*-*/
-         var_found := false;
-         for idx in 1..tbl_datm.count loop
-            if var_found = false then
-               pipe row('<td rowspan=3 valign=top align=left>'||tbl_datm(idx));
-               var_found := true;
-            else
-               pipe row(chr(10)||tbl_datm(idx));
+            /*-*/
+            /* GSV row
+            /*-*/
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               var_output := '<tr>';
+               var_output := var_output||'<td align=center>GSV</td>';
+               var_output := var_output||'<td align=right>'||to_char(round(var_cover_gsv,2))||'</td>';
+               var_output := var_output||'</tr>';
+               pipe row(var_output);
             end if;
-         end loop;
-         if var_found = true then
-            pipe row('</td>');
-         else
-            pipe row('<td rowspan=3 valign=top align=left></td>');
+
          end if;
-
-         /*-*/
-         /* Quantity row
-         /*-*/
-         pipe row('</tr>');
-
-         /*-*/
-         /* Price row
-         /*-*/
-         var_output := '<tr>';
-         var_output := var_output||'<td align=center>PRICE</td>';
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_prc,2))||'</td>';
-         end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
-
-         /*-*/
-         /* GSV row
-         /*-*/
-         var_output := '<tr>';
-         var_output := var_output||'<td align=center>GSV</td>';
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>';
-         end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
 
       end if;
 
@@ -2691,288 +3324,6 @@ create or replace package body dw_fcst_maintenance as
    /*-------------*/
    end report_load;
 
-   /******************************************************/
-   /* This procedure performs the report extract routine */
-   /******************************************************/
-   function report_extract(par_extract_identifier in varchar2) return dw_fcst_table pipelined is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_extract_identifier fcst_extract_header.extract_identifier%type;
-      var_load_str_yyyypp fcst_load_header.load_str_yyyypp%type;
-      var_load_end_yyyypp fcst_load_header.load_end_yyyypp%type;
-      var_material_code fcst_load_detail.material_code%type;
-      var_plant_code fcst_load_detail.plant_code%type;
-      var_output varchar2(4000 char);
-      var_found boolean;
-      var_work_yyyypp number;
-      type rcd_datv is record(fcst_yyyypp number,
-                              fcst_qty number,
-                              fcst_gsv number);
-      type typ_datv is table of rcd_datv index by binary_integer;
-      tbl_datv typ_datv;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_fcst_extract_header is 
-         select t01.*,
-                t02.extract_plan_group,
-                t02.extract_planner
-           from fcst_extract_header t01,
-                fcst_extract_type t02
-          where t01.extract_type = t02.extract_type(+)
-            and t01.extract_identifier = var_extract_identifier;
-      rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
-
-      cursor csr_fcst_extract_load is 
-         select t02.*
-           from fcst_extract_load t01,
-                fcst_load_header t02
-          where t01.load_identifier = t02.load_identifier(+)
-            and t01.extract_identifier = rcd_fcst_extract_header.extract_identifier;
-      rcd_fcst_extract_load csr_fcst_extract_load%rowtype;
-
-      cursor csr_fcst_load_row is
-         select t01.material_code,
-                t01.plant_code,
-                t01.fcst_yyyypp,
-                sum(t01.fcst_qty) as fcst_qty,
-                sum(t01.fcst_gsv) as fcst_gsv
-           from fcst_load_detail t01
-          where t01.load_identifier in (select load_identifier
-                                          from fcst_extract_load
-                                         where extract_identifier = rcd_fcst_extract_header.extract_identifier)
-            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
-                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
-          group by t01.material_code,
-                   t01.plant_code,
-                   t01.fcst_yyyypp
-          order by t01.material_code asc,
-                   t01.plant_code asc,
-                   t01.fcst_yyyypp asc;
-      rcd_fcst_load_row csr_fcst_load_row%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Validate the parameter values
-      /*-*/
-      var_extract_identifier := upper(par_extract_identifier);
-      if var_extract_identifier is null then
-         raise_application_error(-20000, 'Forecast extract identifier must be specified');
-      end if;
-
-      /*-*/
-      /* Retrieve the extract header
-      /*-*/
-      open csr_fcst_extract_header;
-      fetch csr_fcst_extract_header into rcd_fcst_extract_header;
-      if csr_fcst_extract_header%notfound then
-         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist');
-      end if;
-      close csr_fcst_extract_header;
-
-      /*-*/
-      /* Retrieve the forecast extract loads
-      /*-*/
-      var_load_str_yyyypp := 999999;
-      var_load_end_yyyypp := 0;
-      open csr_fcst_extract_load;
-      loop
-         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
-         if csr_fcst_extract_load%notfound then
-            exit;
-         end if;
-         if rcd_fcst_extract_load.load_str_yyyypp < var_load_str_yyyypp then
-            var_load_str_yyyypp := rcd_fcst_extract_load.load_str_yyyypp;
-         end if;
-         if rcd_fcst_extract_load.load_end_yyyypp > var_load_end_yyyypp then
-            var_load_end_yyyypp := rcd_fcst_extract_load.load_end_yyyypp;
-         end if;
-      end loop;
-      close csr_fcst_extract_load;
-
-      /*-*/
-      /* Initialise the period range
-      /*-*/
-      tbl_datv.delete;
-      var_work_yyyypp := var_load_str_yyyypp;
-      loop
-         if var_work_yyyypp > var_load_end_yyyypp then
-            exit;
-         end if;
-         tbl_datv(tbl_datv.count+1).fcst_yyyypp := var_work_yyyypp;
-         tbl_datv(tbl_datv.count).fcst_qty := 0;
-         tbl_datv(tbl_datv.count).fcst_gsv := 0;
-         if substr(to_char(var_work_yyyypp,'fm000000'),5,2) = '13' then
-            var_work_yyyypp := var_work_yyyypp + 88;
-         else
-            var_work_yyyypp := var_work_yyyypp + 1;
-         end if;
-      end loop;
-
-      /*-*/
-      /* Start the report
-      /*-*/
-      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
-      pipe row('<tr>');
-      pipe row('<td align=center colspan='||to_char(tbl_datv.count+3)||' style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Forecast Extract Report - ('||rcd_fcst_extract_header.extract_identifier||') '||rcd_fcst_extract_header.extract_description||'</td>');
-      pipe row('</tr>');
-      pipe row('<tr>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant</td>');
-      pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Data</td>');
-      for idx in 1..tbl_datv.count loop
-         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">'||to_char(tbl_datv(idx).fcst_yyyypp)||'</td>');
-      end loop;
-      pipe row('</tr>');
-
-      /*-*/
-      /* Retrieve the forecast load rows
-      /*-*/
-      var_material_code := null;
-      var_plant_code := null;
-      open csr_fcst_load_row;
-      loop
-         fetch csr_fcst_load_row into rcd_fcst_load_row;
-         if csr_fcst_load_row%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Change in row
-         /*-*/
-         if var_material_code is null or
-            var_material_code != rcd_fcst_load_row.material_code or
-            var_plant_code != rcd_fcst_load_row.plant_code then
-
-            /*-*/
-            /* Output the row when required
-            /*-*/
-            if not(var_material_code is null) then
-
-               /*-*/
-               /* Quantity row
-               /*-*/
-               var_output := '<tr>';
-               var_output := var_output||'<td rowspan=2 valign=top align=left>'||var_material_code||'</td>';
-               var_output := var_output||'<td rowspan=2 valign=top align=left>'||var_plant_code||'</td>';
-               var_output := var_output||'<td align=center>QTY</td>';
-               for idx in 1..tbl_datv.count loop
-                  var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
-               end loop;
-               var_output := var_output||'</tr>';
-               pipe row(var_output);
-
-               /*-*/
-               /* GSV row
-               /*-*/
-               var_output := '<tr>';
-               var_output := var_output||'<td align=center>GSV</td>';
-               for idx in 1..tbl_datv.count loop
-                  var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>';
-               end loop;
-               var_output := var_output||'</tr>';
-               pipe row(var_output);
-
-            end if;
-
-            /*-*/
-            /* Initialise the row
-            /*-*/
-            var_material_code := rcd_fcst_load_row.material_code;
-            var_plant_code := rcd_fcst_load_row.plant_code;
-            for idx in 1..tbl_datv.count loop
-               tbl_datv(idx).fcst_qty := 0;
-               tbl_datv(idx).fcst_gsv := 0;
-            end loop;
-
-         end if;
-
-         /*-*/
-         /* Set the values
-         /*-*/
-         for idx in 1..tbl_datv.count loop
-            if tbl_datv(idx).fcst_yyyypp = rcd_fcst_load_row.fcst_yyyypp then
-               tbl_datv(idx).fcst_qty := rcd_fcst_load_row.fcst_qty;
-               tbl_datv(idx).fcst_gsv := rcd_fcst_load_row.fcst_gsv;
-               exit;
-            end if;
-         end loop;
-
-      end loop;
-      close csr_fcst_load_row;
-
-      /*-*/
-      /* Output the last row when required
-      /*-*/
-      if not(var_material_code is null) then
-
-         /*-*/
-         /* Quantity row
-         /*-*/
-         var_output := '<tr>';
-         var_output := var_output||'<td rowspan=2 valign=top align=left>'||var_material_code||'</td>';
-         var_output := var_output||'<td rowspan=2 valign=top align=left>'||var_plant_code||'</td>';
-         var_output := var_output||'<td align=center>QTY</td>';
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_qty,2))||'</td>';
-         end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
-
-         /*-*/
-         /* GSV row
-         /*-*/
-         var_output := '<tr>';
-         var_output := var_output||'<td align=center>GSV</td>';
-         for idx in 1..tbl_datv.count loop
-            var_output := var_output||'<td align=right>'||to_char(round(tbl_datv(idx).fcst_gsv,2))||'</td>';
-         end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
-
-      end if;
-
-      /*-*/
-      /* End the report
-      /*-*/
-      pipe row('</table>');
-
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - REPORT_EXTRACT - ' || substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end report_extract;
-
    /*****************************************************/
    /* This procedure performs the validate load routine */
    /*****************************************************/
@@ -2989,6 +3340,7 @@ create or replace package body dw_fcst_maintenance as
       var_vakey varchar2(128 char);
       var_kschl varchar2(128 char);
       var_wrk_yyyypp number;
+      var_wrk_date date;
       type rcd_wrkv is record(yyyypp number, price number);
       type tab_wrkv is table of rcd_wrkv index by binary_integer;
       tbl_wrkn tab_wrkv;
@@ -2998,7 +3350,9 @@ create or replace package body dw_fcst_maintenance as
       /*-*/
       cursor csr_fcst_load_header is 
          select t01.*,
-                t02.load_type_channel
+                t02.load_type_channel,
+                t02.load_type_data_format,
+                t02.load_type_data_type
            from fcst_load_header t01,
                 fcst_load_type t02
           where t01.load_type = t02.load_type(+)
@@ -3125,76 +3479,86 @@ create or replace package body dw_fcst_maintenance as
 
          /*-*/
          /* Retrieve the material price data when required
+         /* *notes** 1. Load type data type must be *QTY_GSV (ie. quantity and GSV required)
+         /*          2. Load header data type must be *QTY_ONLY (ie. only quantity supplied)
+         /*          3. Domestic is priced at the material level
+         /*          4. Affiliate is priced at the customer/material level
          /*-*/
-         if rcd_fcst_load_header.load_data_type = '*QTY_ONLY' then
-            if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
-               if rcd_fcst_load_detail.sap_material_code != var_material_save then
-                  for idx in 1..tbl_wrkn.count loop
-                     tbl_wrkn(idx).price := 0;
-	          end loop;
-                  if rcd_fcst_load_detail.sap_material_code != '*NULL' then
-                     var_vakey := var_price_vakey||' '||rcd_fcst_load_detail.sap_material_code;
-                     var_kschl := var_price_kschl;
-                     open csr_material_price;
-                     loop
-                        fetch csr_material_price into rcd_material_price;
-                        if csr_material_price%notfound then
-                           exit;
-                        end if;
-                        for idx in 1..tbl_wrkn.count loop
-                           if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                              rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                              tbl_wrkn(idx).price := rcd_material_price.material_price;
+         if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+            if upper(rcd_fcst_load_header.load_data_type) = '*QTY_ONLY' then
+               if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
+                  if rcd_fcst_load_detail.sap_material_code != var_material_save then
+                     for idx in 1..tbl_wrkn.count loop
+                        tbl_wrkn(idx).price := 0;
+	             end loop;
+                     if rcd_fcst_load_detail.sap_material_code != '*NULL' then
+                        var_vakey := var_price_vakey||' '||rcd_fcst_load_detail.sap_material_code;
+                        var_kschl := var_price_kschl;
+                        open csr_material_price;
+                        loop
+                           fetch csr_material_price into rcd_material_price;
+                           if csr_material_price%notfound then
+                              exit;
                            end if;
+                           for idx in 1..tbl_wrkn.count loop
+                              if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                                 rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                                 tbl_wrkn(idx).price := rcd_material_price.material_price;
+                              end if;
+                           end loop;
                         end loop;
-                     end loop;
-                     close csr_material_price;
+                        close csr_material_price;
+                     end if;
+                     var_material_save := rcd_fcst_load_detail.sap_material_code;
                   end if;
-                  var_material_save := rcd_fcst_load_detail.sap_material_code;
-               end if;
-            else
-               if rcd_fcst_load_detail.sap_material_code != var_material_save or
-                  rcd_fcst_load_detail.sap_customer_code != var_customer_save then
-                  for idx in 1..tbl_wrkn.count loop
-                     tbl_wrkn(idx).price := 0;
-	          end loop;
-                  if rcd_fcst_load_detail.sap_material_code != '*NULL' and
-                     rcd_fcst_load_detail.sap_customer_code != '*NULL' then
-                     var_vakey := var_price_vakey||rcd_fcst_load_detail.sap_customer_code||rcd_fcst_load_detail.sap_material_code;
-                     var_kschl := var_price_kschl;
-                     open csr_material_price;
-                     loop
-                        fetch csr_material_price into rcd_material_price;
-                        if csr_material_price%notfound then
-                           exit;
-                        end if;
-                        for idx in 1..tbl_wrkn.count loop
-                           if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
-                              rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
-                              tbl_wrkn(idx).price := rcd_material_price.material_price;
+               else
+                  if rcd_fcst_load_detail.sap_material_code != var_material_save or
+                     rcd_fcst_load_detail.sap_customer_code != var_customer_save then
+                     for idx in 1..tbl_wrkn.count loop
+                        tbl_wrkn(idx).price := 0;
+	             end loop;
+                     if rcd_fcst_load_detail.sap_material_code != '*NULL' and
+                        rcd_fcst_load_detail.sap_customer_code != '*NULL' then
+                        var_vakey := var_price_vakey||rcd_fcst_load_detail.sap_customer_code||rcd_fcst_load_detail.sap_material_code;
+                        var_kschl := var_price_kschl;
+                        open csr_material_price;
+                        loop
+                           fetch csr_material_price into rcd_material_price;
+                           if csr_material_price%notfound then
+                              exit;
                            end if;
+                           for idx in 1..tbl_wrkn.count loop
+                              if rcd_material_price.str_yyyypp <= tbl_wrkn(idx).yyyypp and
+                                 rcd_material_price.end_yyyypp >= tbl_wrkn(idx).yyyypp then
+                                 tbl_wrkn(idx).price := rcd_material_price.material_price;
+                              end if;
+                           end loop;
                         end loop;
-                     end loop;
-                     close csr_material_price;
+                        close csr_material_price;
+                     end if;
+                     var_material_save := rcd_fcst_load_detail.sap_material_code;
+                     var_customer_save := rcd_fcst_load_detail.sap_customer_code;
                   end if;
-                  var_material_save := rcd_fcst_load_detail.sap_material_code;
-                  var_customer_save := rcd_fcst_load_detail.sap_customer_code;
                end if;
             end if;
          end if;
 
          /*-*/
          /* Retrieve the detail price and calculate the gsv for *QTY_ONLY
+         /* *notes** 1. Load type data type must be *QTY_GSV (ie. quantity and GSV required)
+         /*          2. Load header data type must be *QTY_ONLY (ie. only quantity supplied)
          /*-*/
-         if rcd_fcst_load_header.load_data_type = '*QTY_ONLY' then
-            rcd_fcst_load_detail.fcst_prc := 0;
-            for idx in 1..tbl_wrkn.count loop
-               if tbl_wrkn(idx).yyyypp = rcd_fcst_load_detail.fcst_yyyypp then
-                  rcd_fcst_load_detail.fcst_prc := tbl_wrkn(idx).price;
-                  exit;
-               end if;
-	    end loop;
-            rcd_fcst_load_detail.fcst_gsv := rcd_fcst_load_detail.fcst_qty * rcd_fcst_load_detail.fcst_prc;
+         if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+            if upper(rcd_fcst_load_header.load_data_type) = '*QTY_ONLY' then
+               rcd_fcst_load_detail.fcst_prc := 0;
+               for idx in 1..tbl_wrkn.count loop
+                  if tbl_wrkn(idx).yyyypp = rcd_fcst_load_detail.fcst_yyyypp then
+                     rcd_fcst_load_detail.fcst_prc := tbl_wrkn(idx).price;
+                     exit;
+                  end if;
+	       end loop;
+               rcd_fcst_load_detail.fcst_gsv := rcd_fcst_load_detail.fcst_qty * rcd_fcst_load_detail.fcst_prc;
+            end if;
          end if;
 
          /*-*/
@@ -3258,6 +3622,22 @@ create or replace package body dw_fcst_maintenance as
          end if;
 
          /*-*/
+         /* Validate the forecast cover date when required
+         /*-*/
+         if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' or upper(rcd_fcst_load_header.load_type_data_format) = '*MATL_DOWN_DAY' then
+            begin
+               var_wrk_date := to_date(rcd_fcst_load_detail.cover_yyyymmdd,'yyyymmdd');
+            exception
+               when others then
+                  if rcd_fcst_load_detail.mesg_text is null then
+                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  end if;
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Forecast date ('||rcd_fcst_load_detail.cover_yyyymmdd||') is not a valid date';
+                  var_errors := true;
+            end;
+         end if;
+
+         /*-*/
          /* Validate the forecast data
          /*-*/
          if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
@@ -3268,13 +3648,15 @@ create or replace package body dw_fcst_maintenance as
                rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                var_errors := true;
             end if;
-            if not(rcd_fcst_load_detail.matl_code is null) then
-               if rcd_fcst_load_detail.fcst_prc = 0 then
-                  if rcd_fcst_load_detail.mesg_text is null then
-                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               if not(rcd_fcst_load_detail.matl_code is null) then
+                  if rcd_fcst_load_detail.fcst_prc = 0 then
+                     if rcd_fcst_load_detail.mesg_text is null then
+                        rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                     end if;
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                     var_errors := true;
                   end if;
-                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
-                  var_errors := true;
                end if;
             end if;
          else
@@ -3285,13 +3667,15 @@ create or replace package body dw_fcst_maintenance as
                rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                var_errors := true;
             end if;
-            if not(rcd_fcst_load_detail.matl_code is null) and not(rcd_fcst_load_detail.cust_code is null) then
-               if rcd_fcst_load_detail.fcst_prc = 0 then
-                  if rcd_fcst_load_detail.mesg_text is null then
-                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+            if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
+               if not(rcd_fcst_load_detail.matl_code is null) and not(rcd_fcst_load_detail.cust_code is null) then
+                  if rcd_fcst_load_detail.fcst_prc = 0 then
+                     if rcd_fcst_load_detail.mesg_text is null then
+                        rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                     end if;
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                     var_errors := true;
                   end if;
-                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
-                  var_errors := true;
                end if;
             end if;
          end if;
@@ -3335,6 +3719,7 @@ create or replace package body dw_fcst_maintenance as
    /* This procedure performs the read xml stream routine */
    /*******************************************************/
    procedure read_xml_stream(par_type_version in varchar2,
+                             par_data_format in varchar2,
                              par_data_type in varchar2,
                              par_data_version in number,
                              par_data_range in number,
@@ -3373,7 +3758,7 @@ create or replace package body dw_fcst_maintenance as
       var_wrkr := 0;
       obj_xml_element := xmlDom.getDocumentElement(obj_xml_document);
       obj_xml_node := xmlDom.makeNode(obj_xml_element);
-      read_xml_child(par_type_version,par_data_type,par_data_version,par_data_range,obj_xml_node);
+      read_xml_child(par_type_version,par_data_format,par_data_type,par_data_version,par_data_range,obj_xml_node);
 
       /*-*/
       /* Free the XML document
@@ -3394,6 +3779,7 @@ create or replace package body dw_fcst_maintenance as
    /* This procedure performs the read xml child routine */
    /******************************************************/
    procedure read_xml_child(par_type_version in varchar2,
+                            par_data_format in varchar2,
                             par_data_type in varchar2,
                             par_data_version in number,
                             par_data_range in number,
@@ -3410,6 +3796,7 @@ create or replace package body dw_fcst_maintenance as
       var_char varchar2(1);
       var_value varchar2(4000);
       var_index number;
+      var_column number;
       type typ_wrkw is table of number index by binary_integer;
       tbl_wrkw typ_wrkw;
 
@@ -3427,14 +3814,36 @@ create or replace package body dw_fcst_maintenance as
          when 'XR' then
             var_wrkr := var_wrkr + 1;
          when '#CDATA-SECTION' then
+            var_column := 0;
+            if upper(par_data_format) = '*DGRP_ACROSS_PERIOD' then
+               var_column := 3;
+            end if;
+            if upper(par_data_format) = '*MATL_ACROSS_PERIOD' then
+               var_column := 2;
+            end if;
+            if upper(par_data_format) = '*DGRP_DOWN_DAY' then
+               var_column := 4;
+            end if;
+            if upper(par_data_format) = '*MATL_DOWN_DAY' then
+               var_column := 3;
+            end if;
             rcd_fcst_data.material_code := '*ROW';
             rcd_fcst_data.dmnd_group := '*ROW';
+            if upper(par_data_format) = '*MATL_ACROSS_PERIOD' or upper(par_data_format) = '*MATL_DOWN_DAY' then
+               rcd_fcst_data.dmnd_group := '*NONE';
+            end if;
             rcd_fcst_data.plant_code := '*ROW';
             rcd_fcst_data.fcst_yyyymmdd := '00000000';
+            if upper(par_data_format) = '*DGRP_DOWN_DAY' or upper(par_data_format) = '*MATL_DOWN_DAY' then
+               rcd_fcst_data.fcst_yyyymmdd := '*ROW';
+            end if;
             rcd_fcst_data.fcst_yyyyppw := 0;
-            rcd_fcst_data.fcst_yyyypp := par_data_version;
-            if par_type_version = '*YEAR' then
-               rcd_fcst_data.fcst_yyyypp := (par_data_version * 100) + 1;
+            rcd_fcst_data.fcst_yyyypp := 0;
+            if upper(par_data_format) = '*DGRP_ACROSS_PERIOD' or upper(par_data_format) = '*MATL_ACROSS_PERIOD' then
+               rcd_fcst_data.fcst_yyyypp := par_data_version;
+               if par_type_version = '*YEAR' then
+                  rcd_fcst_data.fcst_yyyypp := (par_data_version * 100) + 1;
+               end if;
             end if;
             rcd_fcst_data.fcst_cover := 0;
             rcd_fcst_data.fcst_qty := 0;
@@ -3443,7 +3852,7 @@ create or replace package body dw_fcst_maintenance as
             for idx in 1..par_data_range loop
                tbl_wrkw(idx) := 0;
 	    end loop;
-            if par_data_type = '*QTY_GSV' then
+            if upper(par_data_type) = '*QTY_GSV' then
                for idx in 1..par_data_range loop
                   tbl_wrkw(idx+par_data_range) := 0;
 	       end loop;
@@ -3464,24 +3873,31 @@ create or replace package body dw_fcst_maintenance as
                         if length(var_value) > 18 then
                            raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Material code ('||var_value||') exceeds maximum length 18');
                         end if;
-                        rcd_fcst_data.material_code := var_value;
+                        rcd_fcst_data.material_code := nvl(var_value,'*NONE');
                      elsif rcd_fcst_data.plant_code = '*ROW' then
                         if length(var_value) > 4 then
                            raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Plant code ('||var_value||') exceeds maximum length 4');
                         end if;
-                        rcd_fcst_data.plant_code := upper(var_value);
+                        rcd_fcst_data.plant_code := upper(nvl(var_value,'*NONE'));
+                     elsif rcd_fcst_data.fcst_yyyymmdd = '*ROW' then
+                        if length(var_value) > 8 then
+                           raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Forecast date ('||var_value||') exceeds maximum length 8');
+                        end if;
+                        rcd_fcst_data.fcst_yyyymmdd := nvl(var_value,'*NONE');
                      else
                         var_index := var_index + 1;
-                        begin
-                           if substr(var_value,length(var_value),1) = '-' then
-                              tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
-                           else
-                              tbl_wrkw(var_index) := to_number(var_value);
-                           end if;
-                        exception
-                           when others then
-                              raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
-                        end;
+                        if not(var_value is null) then
+                           begin
+                              if substr(var_value,length(var_value),1) = '-' then
+                                 tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
+                              else
+                                 tbl_wrkw(var_index) := to_number(var_value);
+                              end if;
+                           exception
+                              when others then
+                                 raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
+                           end;
+                        end if;
                      end if;
                      var_value := null;
                   else
@@ -3497,28 +3913,40 @@ create or replace package body dw_fcst_maintenance as
                   if length(var_value) > 18 then
                      raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Material code ('||var_value||') exceeds maximum length 18');
                   end if;
-                  rcd_fcst_data.material_code := var_value;
+                  rcd_fcst_data.material_code := nvl(var_value,'*NONE');
+               elsif rcd_fcst_data.plant_code = '*ROW' then
+                  if length(var_value) > 4 then
+                     raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Plant code ('||var_value||') exceeds maximum length 4');
+                  end if;
+                  rcd_fcst_data.plant_code := upper(nvl(var_value,'*NONE'));
+               elsif rcd_fcst_data.fcst_yyyymmdd = '*ROW' then
+                  if length(var_value) > 8 then
+                     raise_application_error(-20000, 'Text file data row '||var_wrkr||' - Forecast date ('||var_value||') exceeds maximum length 8');
+                  end if;
+                  rcd_fcst_data.fcst_yyyymmdd := nvl(var_value,'*NONE');
                else
                   var_index := var_index + 1;
-                  begin
-                     if substr(var_value,length(var_value),1) = '-' then
-                        tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
-                     else
-                        tbl_wrkw(var_index) := to_number(var_value);
-                     end if;
-                  exception
-                     when others then
-                        raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
-                  end;
-               end if;
-               if par_data_type = '*QTY_ONLY' then
-                  if var_index != par_data_range then
-                     raise_application_error(-20000, 'Text file data (quantity only) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + 3));
+                  if not(var_value is null) then
+                     begin
+                        if substr(var_value,length(var_value),1) = '-' then
+                           tbl_wrkw(var_index) := to_number('-' || substr(var_value,1,length(var_value) - 1));
+                        else
+                           tbl_wrkw(var_index) := to_number(var_value);
+                        end if;
+                     exception
+                        when others then
+                           raise_application_error(-20000, 'Text file data row '||var_wrkr||' column '||var_index||' - Invalid number ('||var_value||')');
+                     end;
                   end if;
                end if;
-               if par_data_type = '*QTY_GSV' then
+               if upper(par_data_type) = '*QTY_ONLY' then
+                  if var_index != par_data_range then
+                     raise_application_error(-20000, 'Text file data (quantity only) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + var_column));
+                  end if;
+               end if;
+               if upper(par_data_type) = '*QTY_GSV' then
                   if var_index != par_data_range + par_data_range then
-                     raise_application_error(-20000, 'Text file data (quantity/gsv) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + par_data_range + 3));
+                     raise_application_error(-20000, 'Text file data (quantity/gsv) row '||var_wrkr||' - Column count must be equal to ' || to_char(par_data_range + par_data_range + var_column));
                   end if;
                end if;
                for idx in 1..par_data_range loop
@@ -3552,10 +3980,12 @@ create or replace package body dw_fcst_maintenance as
                                rcd_fcst_data.fcst_prc,
                                rcd_fcst_data.fcst_gsv);
                   end if;
-                  if substr(to_char(rcd_fcst_data.fcst_yyyypp,'fm000000'),5,2) = '13' then
-                     rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 88;
-                  else
-                     rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 1;
+                  if upper(par_data_format) = '*DGRP_ACROSS_PERIOD' or upper(par_data_format) = '*MATL_ACROSS_PERIOD' then
+                     if substr(to_char(rcd_fcst_data.fcst_yyyypp,'fm000000'),5,2) = '13' then
+                        rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 88;
+                     else
+                        rcd_fcst_data.fcst_yyyypp := rcd_fcst_data.fcst_yyyypp + 1;
+                     end if;
                   end if;
                end loop;
             end if;
@@ -3568,7 +3998,7 @@ create or replace package body dw_fcst_maintenance as
       obj_xml_node_list := xmlDom.getChildNodes(par_xml_node);
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         read_xml_child(par_type_version,par_data_type,par_data_version,par_data_range,obj_xml_node);
+         read_xml_child(par_type_version,par_data_format,par_data_type,par_data_version,par_data_range,obj_xml_node);
       end loop;
 
    /*-------------*/
