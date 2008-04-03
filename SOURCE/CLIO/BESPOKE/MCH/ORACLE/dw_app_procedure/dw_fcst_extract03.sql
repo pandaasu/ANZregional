@@ -309,9 +309,9 @@ create or replace package body dw_fcst_extract03 as
                   var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
                   var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                   var_output := var_output || chr(9) || rcd_fcst_load_detail_02.plant_code;
-                  var_output := var_output || chr(9) || null;
                   var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
-                  var_output := var_output || chr(9) || null;
+                  var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
+                  var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
                   var_output := var_output || chr(9) || rcd_fcst_load_detail_02.material_code;
                   var_output := var_output || chr(9) || null;
                   var_output := var_output || chr(9) || null;
@@ -453,9 +453,9 @@ create or replace package body dw_fcst_extract03 as
                var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
                var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_02.plant_code;
-               var_output := var_output || chr(9) || null;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
-               var_output := var_output || chr(9) || null;
+               var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
+               var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_02.material_code;
                var_output := var_output || chr(9) || null;
                var_output := var_output || chr(9) || null;
