@@ -131,7 +131,9 @@ sub ProcessSelect()
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " t01.load_type,"
-   strQuery = strQuery & " t01.load_type_description"
+   strQuery = strQuery & " t01.load_type_description,"
+   strQuery = strQuery & " t01.load_type_data_format,"
+   strQuery = strQuery & " t01.load_type_data_type"
    strQuery = strQuery & " from fcst_load_type t01"
    strQuery = strQuery & " where t01.load_type_updatable = '1'"
    strQuery = strQuery & " order by t01.load_type asc"

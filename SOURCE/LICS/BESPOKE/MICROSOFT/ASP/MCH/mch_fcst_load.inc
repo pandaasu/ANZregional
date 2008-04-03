@@ -1,6 +1,20 @@
 <html>
 <script language="javascript">
 <!--
+   var thisDataFormat = '';
+   var thisDataType = '';
+   var thisFileText = '';
+   var objLoadTypes = new Array();<%for i = objSelection.ListLower("LOAD") to objSelection.ListUpper("LOAD")%>
+   objLoadTypes[<%=i%>] = new clsLoadType('<%=objSelection.ListValue01("LOAD",i)%>','<%=objSelection.ListValue03("LOAD",i)%>','<%=objSelection.ListValue04("LOAD",i)%>');<%next%>
+   function clsLoadType(strLoadType,strDataFormat,strDataType) {
+      this.loadType = strLoadType;
+      this.dataFormat = strDataFormat;
+      this.dataType = strDataType;
+      if (strLoadType == '<%=objForm.Fields("DTA_LoadType").Value%>') {
+         thisDataFormat = strDataFormat;
+         thisDataType = strDataType;
+      }
+   }
    function showError() {<%if strError <> "" then%>
       alert('<%=strError%>');<%else%>return;<%end if%>
    }
@@ -180,6 +194,7 @@
    }
    function selectType(objSelect) {
       document.main.INP_LoadType.value = objSelect.options[objSelect.selectedIndex].value;
+      setFileText();
    }
    function selectPlanGroup(objSelect) {
       document.main.INP_LoadPlanGroup.value = objSelect.options[objSelect.selectedIndex].value;
@@ -199,14 +214,69 @@
       return true;
    }
    function setFileText() {
-      var strFileText = '';
-      if (document.main.INP_LoadDataType.value == '*QTY_ONLY') {
-         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values';
+      for (var i=0;i<objLoadTypes.length;i++) {
+         if (objLoadTypes[i].loadType == document.main.INP_LoadType.value) {
+            thisDataFormat = objLoadTypes[i].dataFormat;
+            thisDataType = objLoadTypes[i].dataType;
+            break;
+         }
       }
-      if (document.main.INP_LoadDataType.value == '*QTY_GSV') {
-         strFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ' + document.main.INP_LoadDataRange.value + ' Quantity Values, ' + document.main.INP_LoadDataRange.value + ' GSV Values';
+      if (thisDataFormat == '*DGRP_ACROSS_PERIOD') {
+         document.main.INP_LoadDataRange.disabled = false;
       }
-      document.all.fntFileText.innerText = strFileText;
+      if (thisDataFormat == '*DGRP_DOWN_DAY') {
+         document.main.INP_LoadDataRange.value = 1;
+         document.main.INP_LoadDataRange.disabled = true;
+      }
+      if (thisDataFormat == '*MATL_ACROSS_PERIOD') {
+         document.main.INP_LoadDataRange.disabled = false;
+      }
+      if (thisDataFormat == '*MATL_DOWN_DAY') {
+         document.main.INP_LoadDataRange.value = 1;
+         document.main.INP_LoadDataRange.disabled = true;
+      }
+      if (thisDataType == '*QTY_ONLY') {
+         document.main.INP_LoadDataType.value = '*QTY_ONLY';
+         for (var i=0;i<document.main.sltDataType.length;i++) {
+            document.main.sltDataType[i].disabled = true;
+            document.main.sltDataType[i].checked = false;
+            if (document.main.sltDataType[i].value == '*QTY_ONLY') {
+               document.main.sltDataType[i].checked = true;
+            }
+         }
+      } else {
+         for (var i=0;i<document.main.sltDataType.length;i++) {
+            document.main.sltDataType[i].disabled = false;
+         }
+      }
+      if (thisDataFormat != '') {
+         var strFileText = '';
+         var strRangeText = '';
+         if (thisDataFormat == '*DGRP_ACROSS_PERIOD') {
+            thisFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ';
+            strRangeText = '(number of periods)';
+         }
+         if (thisDataFormat == '*DGRP_DOWN_DAY') {
+            thisFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, Forecast Date (YYYYMMDD), ';
+            strRangeText = '';
+         }
+         if (thisDataFormat == '*MATL_ACROSS_PERIOD') {
+            thisFileText = 'The data file must be a tab delimited file - Material Code, Plant Code, ';
+            strRangeText = '(number of periods)';
+         }
+         if (thisDataFormat == '*MATL_DOWN_DAY') {
+            thisFileText = 'The data file must be a tab delimited file - Material Code, Plant Code, Forecast Date (YYYYMMDD), ';
+            strRangeText = '';
+         }
+         if (document.main.INP_LoadDataType.value == '*QTY_ONLY') {
+            strFileText = thisFileText + document.main.INP_LoadDataRange.value + ' Quantity Value(s)';
+         }
+         if (document.main.INP_LoadDataType.value == '*QTY_GSV') {
+            strFileText = thisFileText + document.main.INP_LoadDataRange.value + ' Quantity Value(s), ' + document.main.INP_LoadDataRange.value + ' GSV Value(s)';
+         }
+         document.all.fntFileText.innerText = strFileText;
+         document.all.fntRangeText.innerText = strRangeText;
+      }
    }
 // -->
 </script>
@@ -336,7 +406,7 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Forecast Data Range:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_LoadDataRange" size="3" maxlength="3" value="<%=objForm.Fields("DTA_LoadDataRange").Value%>" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);setFileText();">
-         &nbsp;(number of periods)</nobr></td>
+         &nbsp;<font id="fntRangeText"></font></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Forecast Data Header:&nbsp;</nobr></td>
@@ -356,7 +426,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
-         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;<font id="fntFileText">The text file must be a tab delimited file - Demand Group, Material Code, Plant Code, Quantity Values</font>&nbsp;</nobr></td>
+         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;<font id="fntFileText">The text file must be a tab delimited file</font>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
