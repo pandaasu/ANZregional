@@ -25,7 +25,7 @@ create or replace package dw_fcst_extract06 as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure export(par_extract_identifier in varchar2);
+   procedure export(par_batch_code in varchar2);
    function report(par_extract_identifier in varchar2) return dw_fcst_table pipelined;
 
 end dw_fcst_extract06;
@@ -45,29 +45,34 @@ create or replace package body dw_fcst_extract06 as
    /**********************************************/
    /* This procedure performs the export routine */
    /**********************************************/
-   procedure export(par_extract_identifier in varchar2) is
+   procedure export(par_batch_code in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
-      var_extract_identifier fcst_extract_header.extract_identifier%type;
+      var_batch_code fcst_extract_type.extract_format%type;
+      var_exception varchar2(4000);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
       var_instance number(15,0);
       var_output varchar2(4000);
-      var_tot_count number;
       type typ_outbound is table of varchar2(4000) index by binary_integer;
       tbl_outbound typ_outbound;
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_fcst_extract_type is 
+         select t01.*
+           from fcst_extract_type t01
+          where upper(t01.extract_format) = var_batch_code;
+      rcd_fcst_extract_type csr_fcst_extract_type%rowtype;
+
       cursor csr_fcst_extract_header is 
-         select t01.*,
-                t02.extract_plan_group,
-                t02.extract_planner
-           from fcst_extract_header t01,
-                fcst_extract_type t02
-          where t01.extract_type = t02.extract_type(+)
-            and t01.extract_identifier = var_extract_identifier;
+         select t01.*
+           from fcst_extract_header t01
+          where t01.extract_type = rcd_fcst_extract_type.extract_type
+          order by t01.crt_date desc;
       rcd_fcst_extract_header csr_fcst_extract_header%rowtype;
 
       cursor csr_fcst_extract_load is 
@@ -89,8 +94,8 @@ create or replace package body dw_fcst_extract06 as
          select t01.*
            from fcst_load_detail t01
           where t01.load_identifier = rcd_fcst_extract_load.load_identifier
-            and (rcd_fcst_extract_header.extract_plan_group = '*ALL' or
-                 t01.plan_group = rcd_fcst_extract_header.extract_plan_group)
+            and (rcd_fcst_extract_type.extract_plan_group = '*ALL' or
+                 t01.plan_group = rcd_fcst_extract_type.extract_plan_group)
           order by t01.material_code asc,
                    t01.plant_code asc,
                    t01.cover_yyyymmdd asc;
@@ -104,44 +109,26 @@ create or replace package body dw_fcst_extract06 as
       /*-*/
       /* Validate the parameter values
       /*-*/
-      var_extract_identifier := upper(par_extract_identifier);
-      if var_extract_identifier is null then
-         raise_application_error(-20000, 'Forecast extract identifier must be specified');
+      var_batch_code := upper(par_batch_code);
+      if var_batch_code is null then
+         raise_application_error(-20000, 'Forecast extract batch code must be specified');
       end if;
 
       /*-*/
-      /* Retrieve the extract header
+      /* Initialise the log variables
       /*-*/
-      open csr_fcst_extract_header;
-      fetch csr_fcst_extract_header into rcd_fcst_extract_header;
-      if csr_fcst_extract_header%notfound then
-         raise_application_error(-20000, 'Forecast extract (' || var_extract_identifier || ') does not exist');
-      end if;
-      close csr_fcst_extract_header;
+      var_log_prefix := 'DW - FCST_APOLLO_EXTRACT';
+      var_log_search := 'FCST_APOLLO_EXTRACT';
 
       /*-*/
-      /* Retrieve the total record count
+      /* Log start
       /*-*/
-      var_tot_count := 0;
-      open csr_fcst_extract_load;
-      loop
-         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
-         if csr_fcst_extract_load%notfound then
-            exit;
-         end if;
-         open csr_fcst_load_detail;
-         loop
-            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
-            if csr_fcst_load_detail%notfound then
-               exit;
-            end if;
-            if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
-               var_tot_count := var_tot_count + 1;
-            end if;
-         end loop;
-         close csr_fcst_load_detail;
-      end loop;
-      close csr_fcst_extract_load;
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - Apollo Forecast Extract - Parameters(' || var_batch_code || ')');
 
       /*-*/
       /* Clear the outbound array
@@ -149,72 +136,129 @@ create or replace package body dw_fcst_extract06 as
       tbl_outbound.delete;
 
       /*-*/
-      /* Retrieve the forecast extract loads
+      /* Retrieve the extract types for the batch code
       /*-*/
-      open csr_fcst_extract_load;
+      open csr_fcst_extract_type;
       loop
-         fetch csr_fcst_extract_load into rcd_fcst_extract_load;
-         if csr_fcst_extract_load%notfound then
+         fetch csr_fcst_extract_type into rcd_fcst_extract_type;
+         if csr_fcst_extract_type%notfound then
             exit;
          end if;
 
          /*-*/
-         /* Retrieve the forecast load header
+         /* Retrieve the latest forecast extract header for the extract type
          /*-*/
-         open csr_fcst_load_header;
-         fetch csr_fcst_load_header into rcd_fcst_load_header;
-         if csr_fcst_load_header%notfound then
-            raise_application_error(-20000, 'Forecast load (' || rcd_fcst_extract_load.load_identifier || ') does not exist');
+         open csr_fcst_extract_header;
+         fetch csr_fcst_extract_header into rcd_fcst_extract_header;
+         if csr_fcst_extract_header%found then
+
+            /*-*/
+            /* Retrieve the forecast extract loads
+            /*-*/
+            open csr_fcst_extract_load;
+            loop
+               fetch csr_fcst_extract_load into rcd_fcst_extract_load;
+               if csr_fcst_extract_load%notfound then
+                  exit;
+               end if;
+
+               /*-*/
+               /* Retrieve the forecast load header
+               /*-*/
+               open csr_fcst_load_header;
+               fetch csr_fcst_load_header into rcd_fcst_load_header;
+               if csr_fcst_load_header%notfound then
+                  raise_application_error(-20000, 'Forecast load (' || rcd_fcst_extract_load.load_identifier || ') does not exist');
+               end if;
+               close csr_fcst_load_header;
+
+               /*-*/
+               /* Interface sent
+               /*-*/
+               lics_logging.write_log('Extracting load ('||rcd_fcst_extract_load.load_identifier||')');
+
+               /*-*/
+               /* Retrieve the forecast load detail
+               /*-*/
+               open csr_fcst_load_detail;
+               loop
+                  fetch csr_fcst_load_detail into rcd_fcst_load_detail;
+                  if csr_fcst_load_detail%notfound then
+                     exit;
+                  end if;
+
+                  /*-*/
+                  /* Output the interface data
+                  /*-*/
+                  if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
+                     var_output := '"' || rcd_fcst_load_detail.material_code || '"';
+                     var_output := var_output || ',"' || rcd_fcst_load_detail.plant_code || '"';
+                     var_output := var_output || ',"' || rcd_fcst_load_detail.cover_yyyymmdd || '"';
+                     var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.cover_day) || 'D' || '"';
+                     var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.fcst_qty) || '"';
+                     var_output := var_output || ',"' || to_char(tbl_outbound.count+1,'fm000000000') || '"';
+                     var_output := var_output || ',"<TOTCOUNT>"';
+                     var_output := var_output || ',"' || to_char(sysdate,'yyyymmddhh24miss') || '"';
+                     tbl_outbound(tbl_outbound.count+1) := var_output;
+                  end if;
+
+               end loop;
+               close csr_fcst_load_detail;
+
+            end loop;
+            close csr_fcst_extract_load;
+
          end if;
-         close csr_fcst_load_header;
+         close csr_fcst_extract_header;
+
+      end loop;
+      close csr_fcst_extract_type;
+
+      /*-*/
+      /* Process the data when required
+      /*-*/
+      if tbl_outbound.count != 0 then
 
          /*-*/
-         /* Retrieve the forecast load detail
+         /* Create the outbound interface
          /*-*/
-         open csr_fcst_load_detail;
-         loop
-            fetch csr_fcst_load_detail into rcd_fcst_load_detail;
-            if csr_fcst_load_detail%notfound then
-               exit;
-            end if;
+         var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'IN_AP_CDW_DEMAND_SUP_STG_DWHAPL06.1.dat');
 
-            /*-*/
-            /* Output the interface data
-            /*-*/
-            if rcd_fcst_load_detail.fcst_yyyypp >= rcd_fcst_extract_header.extract_version then
-               var_output := '"' || rcd_fcst_load_detail.material_code || '"';
-               var_output := var_output || ',"' || rcd_fcst_load_detail.plant_code || '"';
-               var_output := var_output || ',"' || rcd_fcst_load_detail.cover_yyyymmdd || '"';
-               var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.cover_day) || 'D' || '"';
-               var_output := var_output || ',"' || to_char(rcd_fcst_load_detail.fcst_qty) || '"';
-               var_output := var_output || ',"' || to_char(tbl_outbound.count+1,'fm000000000') || '"';
-               var_output := var_output || ',"' || to_char(var_tot_count,'fm000000000') || '"';
-               var_output := var_output || ',"' || to_char(sysdate,'yyyymmddhh24miss') || '"';
-               tbl_outbound(tbl_outbound.count+1) := var_output;
-            end if;
-
+         /*-*/
+         /* Append the interface data
+         /*-*/
+         for idx in 1..tbl_outbound.count loop
+            lics_outbound_loader.append_data(replace(tbl_outbound(idx),'<TOTCOUNT>',to_char(tbl_outbound.count,'fm000000000')));
          end loop;
-         close csr_fcst_load_detail;
 
-      end loop;
-      close csr_fcst_extract_load;
+         /*-*/
+         /* Finalise the interface
+         /*-*/
+         lics_outbound_loader.finalise_interface;
+
+         /*-*/
+         /* Interface sent
+         /*-*/
+         lics_logging.write_log('Interface Sent - Record Count ('||to_char(tbl_outbound.count,'fm000000000')||')');
+
+      else
+
+         /*-*/
+         /* Interface sent
+         /*-*/
+         lics_logging.write_log('Interface NOT sent - no data');
+
+      end if;
 
       /*-*/
-      /* Create the outbound interface
+      /* End procedure
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ODSAPL01',null,'IN_AP_CDW_DEMAND_SUP_STG_DWHAPL06.1.dat');
+      lics_logging.write_log('End - Apollo Forecast Extract');
 
       /*-*/
-      /* Append the interface data
+      /* Log end
       /*-*/
-      for idx in 1..tbl_outbound.count loop
-         lics_outbound_loader.append_data(tbl_outbound(idx));
-      end loop;
-
-      /*-*/
-      /* Finalise the interface
-      /*-*/
-      lics_outbound_loader.finalise_interface;
+      lics_logging.end_log;
 
       /*-*/
       /* Commit the database
@@ -237,17 +281,33 @@ create or replace package body dw_fcst_extract06 as
          rollback;
 
          /*-*/
-         /* Raise an exception to the calling application
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 1024);
+
+         /*-*/
+         /* Finalise the outbound loader when required
          /*-*/
          if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 1024));
+            lics_outbound_loader.add_exception(var_exception);
             lics_outbound_loader.finalise_interface;
          end if;
 
          /*-*/
+         /* Log error
+         /*-*/
+         begin
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         exception
+            when others then
+               null;
+         end;
+
+         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_FCST_EXTRACT06 - EXPORT - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - DW_FCST_EXTRACT06 - EXPORT - ' || var_exception);
 
    /*-------------*/
    /* End routine */
