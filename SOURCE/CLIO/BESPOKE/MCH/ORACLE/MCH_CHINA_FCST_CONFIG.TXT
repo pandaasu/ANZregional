@@ -101,8 +101,8 @@ insert into fcst_extract_type_load values('FPPS_DOM_REPLAN','*REPLAN_DOMESTIC');
 insert into fcst_extract_type_load values('FPPS_AFF_PLAN','*PLAN_AFFILIATE');
 insert into fcst_extract_type_load values('FPPS_AFF_REPLAN','*REPLAN_AFFILIATE');
 insert into fcst_extract_type_load values('APOLLO_AFFILIATE','*FCST_AFFILIATE');
-insert into fcst_extract_type_load values('APOLLO_FRESHNESS','*FCST_SAMPLE');
-insert into fcst_extract_type_load values('APOLLO_SAMPLE','*FCST_FRESHNESS');
+insert into fcst_extract_type_load values('APOLLO_FRESHNESS','*FCST_FRESHNESS');
+insert into fcst_extract_type_load values('APOLLO_SAMPLE','*FCST_SAMPLE');
 
 commit;
 
