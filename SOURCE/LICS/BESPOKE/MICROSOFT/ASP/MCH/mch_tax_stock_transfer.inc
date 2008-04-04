@@ -31,10 +31,6 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Supply plant value must be entered';
       }
-      if (document.main.INP_SupplyLocation.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Supply location value must be entered';
-      }
       if (document.main.INP_ReceivingPlant.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Receiving plant value must be entered';
@@ -99,7 +95,7 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Supply Storage Locations:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SupplyLocation" size="100" maxlength="200" value="" onFocus="setSelect(this);">
-         </nobr></td>
+         &nbsp;Blank = All</font></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Receiving Plants:&nbsp;</nobr></td>
