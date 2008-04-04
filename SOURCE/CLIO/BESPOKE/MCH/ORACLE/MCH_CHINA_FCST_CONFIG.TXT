@@ -35,7 +35,7 @@ commit;
 
 insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','*DGRP_APOLLO','*QTY_GSV','0');
 insert into fcst_load_type values('*FCST_AFFILIATE','Business review affiliate forecast','*PERIOD','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
-insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','*MATL_DOWN_DAY','*QTY_ONLY','1');
+insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','*MATL_ACROSS_PERIOD','*QTY_ONLY','1');
 insert into fcst_load_type values('*FCST_FRESHNESS','Business review freshness forecast','*PERIOD','*DOMESTIC','*MATL_DOWN_DAY','*QTY_ONLY','1');
 insert into fcst_load_type values('*PLAN_DOMESTIC','Operating plan domestic','*YEAR','*DOMESTIC','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
 insert into fcst_load_type values('*PLAN_AFFILIATE','Operating plan affiliate','*YEAR','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
@@ -66,11 +66,13 @@ insert into fcst_extract_type values('PET_DOM_BW_REPLAN','BW Replan Extract (Pet
 insert into fcst_extract_type values('PET_AFF_BW_REPLAN','BW Replan Extract (Petcare Affiliate)','*YEAR','*PET','CN_PET_AFF','*FILE','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_DOM_BW_ROB','BW ROB Extract (Petcare Domestic)','*PERIOD','*PET','*FILE','CN_PET_DOM','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_AFF_BW_ROB','BW ROB Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
-insert into fcst_extract_type values('APOLLO','Apollo Extract','*PERIOD','*ALL','*INTERFACE','*NONE','dw_fcst_extract06',null,null);
 insert into fcst_extract_type values('FPPS_DOM_PLAN','FPPS Domestic Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
 insert into fcst_extract_type values('FPPS_AFF_PLAN','FPPS Affiliate Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
 insert into fcst_extract_type values('FPPS_DOM_REPLAN','FPPS Domestic Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
 insert into fcst_extract_type values('FPPS_AFF_REPLAN','FPPS Affiliate Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('APOLLO_AFFILIATE','Apollo Affiliate Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
+insert into fcst_extract_type values('APOLLO_FRESHNESS','Apollo Freshness Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
+insert into fcst_extract_type values('APOLLO_SAMPLE','Apollo Sample Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
 
 commit;
 
@@ -94,13 +96,13 @@ insert into fcst_extract_type_load values('PET_AFF_BW_DRAFT','*FCST_AFFILIATE');
 insert into fcst_extract_type_load values('PET_AFF_BW_PLAN','*PLAN_AFFILIATE');
 insert into fcst_extract_type_load values('PET_AFF_BW_REPLAN','*REPLAN_AFFILIATE');
 insert into fcst_extract_type_load values('PET_AFF_BW_ROB','*ROB_AFFILIATE');
-insert into fcst_extract_type_load values('APOLLO','*FCST_AFFILIATE');
-insert into fcst_extract_type_load values('APOLLO','*FCST_SAMPLE');
-insert into fcst_extract_type_load values('APOLLO','*FCST_FRESHNESS');
 insert into fcst_extract_type_load values('FPPS_DOM_PLAN','*PLAN_DOMESTIC');
 insert into fcst_extract_type_load values('FPPS_DOM_REPLAN','*REPLAN_DOMESTIC');
 insert into fcst_extract_type_load values('FPPS_AFF_PLAN','*PLAN_AFFILIATE');
 insert into fcst_extract_type_load values('FPPS_AFF_REPLAN','*REPLAN_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO_AFFILIATE','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO_FRESHNESS','*FCST_SAMPLE');
+insert into fcst_extract_type_load values('APOLLO_SAMPLE','*FCST_FRESHNESS');
 
 commit;
 
@@ -151,6 +153,7 @@ commit;
 --
 -- LICS job
 --
+insert into lics_job values('APOLLO_FORECAST_EXTRACT','Apollo Forecast Extract',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_extract06.export(''APOLLO'')','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','0');
 insert into lics_job values('FCST_PURGING','Forecast Purging',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
 
 --
