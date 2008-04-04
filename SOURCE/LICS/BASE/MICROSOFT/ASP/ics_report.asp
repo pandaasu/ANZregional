@@ -164,8 +164,9 @@ sub ProcessReportSpreadsheet()
    strReturn = objSelection.Execute("REPORT", objForm.Fields("DTA_Query").Value, 0)
    if strReturn = "*OK" then
       Response.Buffer = true
-      Response.ContentType = "application/vnd.ms-excel"
+      Response.ContentType = "application/vnd.ms-excel; charset=UTF-8"
       Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("DTA_Name").Value & ".xls"
+      Response.Write "<meta http-equiv='content-type' content='application/vnd.ms-excel; charset=UTF-8'>"
       for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")
          Response.Write objSelection.ListValue01("REPORT",i)
       next
