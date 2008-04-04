@@ -62,8 +62,8 @@ insert into fcst_extract_type values('PET_DOM_BW_DRAFT','BW Draft Extract (Petca
 insert into fcst_extract_type values('PET_AFF_BW_DRAFT','BW Draft Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract02','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_DOM_BW_PLAN','BW Plan Extract (Petcare Domestic)','*YEAR','*PET','*FILE','CN_PET_DOM','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_AFF_BW_PLAN','BW Plan Extract (Petcare Affiliate)','*YEAR','*PET','*FILE','CN_PET_AFF','dw_fcst_extract03','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
-insert into fcst_extract_type values('PET_DOM_BW_REPLAN','BW Replan Extract (Petcare Domestic)','*YEAR','*PET','CN_PET_DOM','*FILE','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
-insert into fcst_extract_type values('PET_AFF_BW_REPLAN','BW Replan Extract (Petcare Affiliate)','*YEAR','*PET','CN_PET_AFF','*FILE','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_DOM_BW_REPLAN','BW Replan Extract (Petcare Domestic)','*YEAR','*PET','*FILE','CN_PET_DOM','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
+insert into fcst_extract_type values('PET_AFF_BW_REPLAN','BW Replan Extract (Petcare Affiliate)','*YEAR','*PET','*FILE','CN_PET_AFF','dw_fcst_extract04','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_DOM_BW_ROB','BW ROB Extract (Petcare Domestic)','*PERIOD','*PET','*FILE','CN_PET_DOM','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('PET_AFF_BW_ROB','BW ROB Extract (Petcare Affiliate)','*PERIOD','*PET','*FILE','CN_PET_AFF','dw_fcst_extract05','Sap BW Upload','http://webappdev11.ap.mars/ics_browser.asp');
 insert into fcst_extract_type values('FPPS_DOM_PLAN','FPPS Domestic Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
