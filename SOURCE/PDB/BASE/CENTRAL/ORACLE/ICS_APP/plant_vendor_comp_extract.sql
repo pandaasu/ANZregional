@@ -18,7 +18,7 @@
     
     Data related to the action specified:
       - *ALL = null 
-      - *VENDOR = material code 
+      - *VENDOR = vendor code 
 
   3. PAR_SITE (OPTIONAL) 
   
@@ -128,22 +128,22 @@ create or replace package body ics_app.plant_vendor_comp_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB02.1');   
+        execute_send('LADPDB12.1');   
       end if;    
       if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB02.2');   
+        execute_send('LADPDB12.2');   
       end if;    
       if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB02.3');   
+        execute_send('LADPDB12.3');   
       end if;    
       if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB02.4');   
+        execute_send('LADPDB12.4');   
       end if;    
       if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB02.5');   
+        execute_send('LADPDB12.5');   
       end if;
       if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB02.6');   
+        execute_send('LADPDB12.6');   
       end if;
     end if; 
       

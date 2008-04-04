@@ -243,7 +243,7 @@ create or replace package body ics_app.plant_stock_balance_extract as
         t01.stock_best_before_date as stock_best_before_date,
         t01.consignment_cust_vend as consignment_cust_vend, 
         t01.rcv_isu_storage_location_code as rcv_isu_storage_location_code, 
-        t01.stock_type_code as stock_type_code,        
+        t01.stock_type_code as stock_type_code        
       from bds_stock_balance t01
       where (par_company_code is null or par_company_code = t01.company_code)
         and (par_plant_code is null or par_plant_code = t01.plant_code)
