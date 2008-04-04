@@ -29,16 +29,6 @@
       document.main.Mode.value = 'SELECT';
       document.main.submit();
    }
-   function doDelete(strIdentifier) {
-      if (!processForm()) {return;}
-      if (confirm('Please confirm that you wish to delete '+strIdentifier+'\r\nPress OK to continue or press Cancel')) {
-         doActivityStart(eval('document.body'));
-         document.main.DTA_ExtractIdentifier.value = strIdentifier;
-         document.main.action = '<%=strBase%><%=strTarget%>';
-         document.main.Mode.value = 'EXECUTE';
-         document.main.submit();
-      }
-   }
    function doExecute(strFormat,strProcedure) {
       if (confirm('Please confirm that you wish to execute '+strFormat+'\r\nPress OK to continue or press Cancel')) {
          doActivityStart(eval('document.body'));
@@ -47,6 +37,7 @@
          document.main.action = '<%=strBase%><%=strTarget%>';
          document.main.Mode.value = 'EXECUTE';
          document.main.submit();
+      }
    }
    function processForm() {
       if (checkInput() == true) {
@@ -72,11 +63,9 @@
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:showPanel(true);">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

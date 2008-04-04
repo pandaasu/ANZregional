@@ -153,7 +153,7 @@ sub ProcessExecute()
    '// Execute the forecast batch extract
    '//
    strStatement = objSecurity.FixString(objForm.Fields("DTA_ExtractProcedure").Value)
-   strStatement = strStatement & ".export('" objSecurity.FixString(objForm.Fields("DTA_ExtractFormat").Value) & "')"
+   strStatement = strStatement & ".export('" & objSecurity.FixString(objForm.Fields("DTA_ExtractFormat").Value) & "')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
