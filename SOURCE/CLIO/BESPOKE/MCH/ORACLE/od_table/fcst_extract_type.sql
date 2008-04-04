@@ -37,7 +37,7 @@ comment on column od.fcst_extract_type.extract_type  is 'Extract type';
 comment on column od.fcst_extract_type.extract_type_description is 'Extract type description';
 comment on column od.fcst_extract_type.extract_type_version is 'Extract type version - *PERIOD or *YEAR';
 comment on column od.fcst_extract_type.extract_plan_group  is 'Extract plan group - *SNACK, *PET or *ALL';
-comment on column od.fcst_extract_type.extract_format  is 'Extract format - *FILE or *INTERFACE';
+comment on column od.fcst_extract_type.extract_format  is 'Extract format - *FILE, *INTERFACE or batch code';
 comment on column od.fcst_extract_type.extract_planner  is 'Extract planner - CNPLAN_SNK, CNPLAN_PET or *NONE';
 comment on column od.fcst_extract_type.extract_procedure is 'Extract procedure';
 comment on column od.fcst_extract_type.extract_action_text is 'Extract export action button text';
