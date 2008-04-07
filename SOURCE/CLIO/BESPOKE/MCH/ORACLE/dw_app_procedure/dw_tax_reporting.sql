@@ -31,6 +31,8 @@ create or replace package dw_tax_reporting as
     2008/03   Steve Gregan   Added chinese UOM description to gold tax standard file export
     2008/03   Steve Gregan   Changed stock transfer report to standard excel report
     2008/03   Steve Gregan   Changed sample pricing report to standard excel report
+    2008/04   Steve Gregan   Changed storage location to optional
+    2008/04   Steve Gregan   Removed gold tax report heading
 
    *******************************************************************************/
 
@@ -144,20 +146,24 @@ create or replace package body dw_tax_reporting as
       var_sup_plant := substr(par_sup_plant,var_fidx,(var_tidx-var_fidx)+1);
       var_sup_plant := replace(var_sup_plant,',',''',''');
       /*-*/
-      var_found := false;
-      var_fidx := 0;
-      var_tidx := 0;
-      for idx in 1..length(par_sup_locn) loop
-         if substr(par_sup_locn,idx,1) != ',' then
-            if var_found = false then
-               var_found := true; 
-               var_fidx := idx;
+      if par_sup_locn is null then
+         var_sup_locn := null;
+      else
+         var_found := false;
+         var_fidx := 0;
+         var_tidx := 0;
+         for idx in 1..length(par_sup_locn) loop
+            if substr(par_sup_locn,idx,1) != ',' then
+               if var_found = false then
+                  var_found := true; 
+                  var_fidx := idx;
+               end if;
+               var_tidx := idx;
             end if;
-            var_tidx := idx;
-         end if;
-      end loop;
-      var_sup_locn := substr(par_sup_locn,var_fidx,(var_tidx-var_fidx)+1);
-      var_sup_locn := replace(var_sup_locn,',',''',''');
+         end loop;
+         var_sup_locn := substr(par_sup_locn,var_fidx,(var_tidx-var_fidx)+1);
+         var_sup_locn := replace(var_sup_locn,',',''',''');
+      end if;
       /*-*/
       var_found := false;
       var_fidx := 0;
@@ -286,7 +292,7 @@ create or replace package body dw_tax_reporting as
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in (''<SUPPLANT>'')
-                                and upper(t01.lgort) in (''<SUPLOCN>'')
+                                <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
@@ -356,8 +362,8 @@ create or replace package body dw_tax_reporting as
                                 and t01.matnr = t04.matnr
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
-                                and upper(t01.werks) in ('' <SUPPLANT>'')
-                                and upper(t01.lgort) in (''<SUPLOCN>'')
+                                and upper(t01.werks) in (''<SUPPLANT>'')
+                                <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
@@ -386,7 +392,11 @@ create or replace package body dw_tax_reporting as
       var_query := replace(var_query,'<TAX01>',var_tax_01);
       var_query := replace(var_query,'<TAX02>',var_tax_02);
       var_query := replace(var_query,'<SUPPLANT>',var_sup_plant);
-      var_query := replace(var_query,'<SUPLOCN>',var_sup_locn);
+      if var_sup_locn is null then
+         var_query := replace(var_query,'<SUPLOCN>',null);
+      else
+         var_query := replace(var_query,'<SUPLOCN>','and upper(t01.lgort) in (''' || var_sup_locn || ''')');
+      end if;
       var_query := replace(var_query,'<RCVPLANT>',var_rcv_plant);
       var_query := replace(var_query,'<GIDATE01>',var_gidate_01);
       var_query := replace(var_query,'<GIDATE02>',var_gidate_02);
@@ -414,7 +424,7 @@ create or replace package body dw_tax_reporting as
       pipe row('<td align=center colspan=15>Supply Plants: '||par_sup_plant||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=15>Supply Storage Locations: '||par_sup_locn||'</td>');
+      pipe row('<td align=center colspan=15>Supply Storage Locations: '||nvl(par_sup_locn,'All')||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
       pipe row('<td align=center colspan=15>Receiving Plants: '||par_rcv_plant||'</td>');
@@ -429,7 +439,6 @@ create or replace package body dw_tax_reporting as
       /*-*/
       /* Add the report heading
       /*-*/
-      pipe row('<table border=1 cellpadding="0" cellspacing="0">');
       pipe row('<tr>');
       pipe row('<td align=center colspan=15 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Stock Transfer Tax Report</td>');
       pipe row('</tr>');
@@ -441,7 +450,7 @@ create or replace package body dw_tax_reporting as
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">S_Location</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">R_Plant</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material No</td>');
-      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Decription</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Description</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">ODN Qty</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">UOM</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Dispatch Price</td>');
@@ -474,7 +483,7 @@ create or replace package body dw_tax_reporting as
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_line||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_gi_date||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sup_plant||'</td>';
-         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sup_plant||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_sup_locn||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_rcv_plant||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_code||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_desc||'</td>';
@@ -810,7 +819,7 @@ create or replace package body dw_tax_reporting as
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Customer</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Customer Description</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Delivery Plant</td>');
-      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant Decription</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant Description</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Order Type</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sales Order</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
@@ -996,20 +1005,24 @@ create or replace package body dw_tax_reporting as
       var_sup_plant := substr(par_sup_plant,var_fidx,(var_tidx-var_fidx)+1);
       var_sup_plant := replace(var_sup_plant,',',''',''');
       /*-*/
-      var_found := false;
-      var_fidx := 0;
-      var_tidx := 0;
-      for idx in 1..length(par_sup_locn) loop
-         if substr(par_sup_locn,idx,1) != ',' then
-            if var_found = false then
-               var_found := true; 
-               var_fidx := idx;
+      if par_sup_locn is null then
+         var_sup_locn := null;
+      else
+         var_found := false;
+         var_fidx := 0;
+         var_tidx := 0;
+         for idx in 1..length(par_sup_locn) loop
+            if substr(par_sup_locn,idx,1) != ',' then
+               if var_found = false then
+                  var_found := true; 
+                  var_fidx := idx;
+               end if;
+               var_tidx := idx;
             end if;
-            var_tidx := idx;
-         end if;
-      end loop;
-      var_sup_locn := substr(par_sup_locn,var_fidx,(var_tidx-var_fidx)+1);
-      var_sup_locn := replace(var_sup_locn,',',''',''');
+         end loop;
+         var_sup_locn := substr(par_sup_locn,var_fidx,(var_tidx-var_fidx)+1);
+         var_sup_locn := replace(var_sup_locn,',',''',''');
+      end if;
       /*-*/
       var_found := false;
       var_fidx := 0;
@@ -1146,7 +1159,7 @@ create or replace package body dw_tax_reporting as
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in (''<SUPPLANT>'')
-                                and upper(t01.lgort) in (''<SUPLOCN>'')
+                                <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
@@ -1227,7 +1240,7 @@ create or replace package body dw_tax_reporting as
                                 and t01.lfimg <> 0
                                 and t04.taxm1 >= ''<TAX01>'' and taxm1 <= ''<TAX02>''
                                 and upper(t01.werks) in ('' <SUPPLANT>'')
-                                and upper(t01.lgort) in (''<SUPLOCN>'')
+                                <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
                                 and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
@@ -1258,7 +1271,11 @@ create or replace package body dw_tax_reporting as
       var_query := replace(var_query,'<TAX01>',var_tax_01);
       var_query := replace(var_query,'<TAX02>',var_tax_02);
       var_query := replace(var_query,'<SUPPLANT>',var_sup_plant);
-      var_query := replace(var_query,'<SUPLOCN>',var_sup_locn);
+      if var_sup_locn is null then
+         var_query := replace(var_query,'<SUPLOCN>',null);
+      else
+         var_query := replace(var_query,'<SUPLOCN>','and upper(t01.lgort) in (''' || var_sup_locn || ''')');
+      end if;
       var_query := replace(var_query,'<RCVPLANT>',var_rcv_plant);
       var_query := replace(var_query,'<GIDATE01>',var_gidate_01);
       var_query := replace(var_query,'<GIDATE02>',var_gidate_02);
@@ -1275,18 +1292,6 @@ create or replace package body dw_tax_reporting as
       /* Clear the work array
       /*-*/
       tbl_work.delete;
-
-      /*-*/
-      /* Output the title data when required
-      /*-*/
-      select dsv_value into var_title01 from table(lics_datastore.retrieve_value('CHINA','CHINA_REPORT','GOLD_TAX_TITLE01'));
-      select dsv_value into var_title02 from table(lics_datastore.retrieve_value('CHINA','CHINA_REPORT','GOLD_TAX_TITLE02'));
-      if tbl_report.count != 0 then
-         var_wrk_string := '"' || var_title01 || '"';
-         var_wrk_string := var_wrk_string || ' "' || var_title02 || '"';
-         var_wrk_string := var_wrk_string || ' "' || to_char(lics_time.get_tz_time(sysdate,'Asia/Shanghai'),'yyyymmddhh24miss') || '"';
-         tbl_work(tbl_work.count+1) := var_wrk_string;
-      end if;
 
       /*-*/
       /* Retrieve the report data
@@ -1400,7 +1405,8 @@ create or replace package body dw_tax_reporting as
       /*-*/
       for idx in 1..tbl_work.count loop
          var_vir_table.extend;
-         var_vir_table(var_vir_table.last) := tbl_work(idx);
+       --  var_vir_table(var_vir_table.last) := tbl_work(idx);
+         var_vir_table(var_vir_table.last) := convert(tbl_work(idx),'ZHS16GBK','UTF8');
       end loop;
       return var_vir_table;
 
