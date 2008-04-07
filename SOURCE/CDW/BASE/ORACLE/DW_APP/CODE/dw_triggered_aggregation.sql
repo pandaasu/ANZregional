@@ -701,9 +701,9 @@ create or replace package body dw_triggered_aggregation as
                                     group by t01.billing_doc_num)
             and t01.trace_status = '*ACTIVE'
             and t01.matl_code = t02.objek(+)
-            and t02.obtab = 'MARA'
-            and t02.klart = '001'
-            and t02.atnam = 'CLFFERT01'
+            and 'MARA' = t02.obtab(+)
+            and '001' = t02.klart(+)
+            and 'CLFFERT01' = t02.atnam(+)
           order by t01.billing_doc_num asc,
                    t01.billing_doc_line_num asc;
       rcd_trace csr_trace%rowtype;
