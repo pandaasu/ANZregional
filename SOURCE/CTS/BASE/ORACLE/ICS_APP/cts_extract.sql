@@ -47,6 +47,7 @@
  2006/05   Steve Gregan   Created
  2006/08   Steve Gregan   Modified for specification versions 1 to 20 (major upgrades)
  2007/06   Steve Gregan   Modified delivery line consolidation for material substitution
+ 2008/04   Steve Gregan   Modified material UOM retrieval to use EA when CS not available
 
 *******************************************************************************/
 
@@ -2537,11 +2538,23 @@ create or replace package body cts_extract as
          var_output := var_output || tbl_mat_data(var_midx).name || con_separator;
          var_output := var_output || round(tbl_mat_data(var_midx).rsu_cnt,5) || con_separator;
          var_output := var_output || round(tbl_mat_data(var_midx).rsu_cnt/tbl_mat_data(var_midx).mcu_cnt,5) || con_separator;
-         var_output := var_output || round(tbl_mat_data(var_midx).cas_len,5) || con_separator;
-         var_output := var_output || round(tbl_mat_data(var_midx).cas_bth,5) || con_separator;
-         var_output := var_output || round(tbl_mat_data(var_midx).cas_hgt,5) || con_separator;
-         var_output := var_output || round(tbl_mat_data(var_midx).cas_vol,5) || con_separator;
-         var_output := var_output || round(tbl_mat_data(var_midx).cas_wgt,5) || con_separator;
+         if (not(tbl_mat_data(var_midx).cas_wgt is null) and tbl_mat_data(var_midx).cas_wgt > 0) and
+            (not(tbl_mat_data(var_midx).cas_len is null) and tbl_mat_data(var_midx).cas_len > 0) and
+            (not(tbl_mat_data(var_midx).cas_bth is null) and tbl_mat_data(var_midx).cas_bth > 0) and
+            (not(tbl_mat_data(var_midx).cas_hgt is null) and tbl_mat_data(var_midx).cas_hgt > 0) and
+            (not(tbl_mat_data(var_midx).cas_vol is null) and tbl_mat_data(var_midx).cas_vol > 0) then
+            var_output := var_output || round(tbl_mat_data(var_midx).cas_len,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).cas_bth,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).cas_hgt,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).cas_vol,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).cas_wgt,5) || con_separator;
+         else
+            var_output := var_output || round(tbl_mat_data(var_midx).bas_len,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).bas_bth,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).bas_hgt,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).bas_vol,5) || con_separator;
+            var_output := var_output || round(tbl_mat_data(var_midx).bas_wgt,5) || con_separator;
+         end if;
          var_output := var_output || tbl_mat_data(var_midx).brand || con_separator;
          var_output := var_output || tbl_mat_data(var_midx).category || con_separator;
          var_output := var_output || tbl_mat_data(var_midx).fighting || con_separator;
