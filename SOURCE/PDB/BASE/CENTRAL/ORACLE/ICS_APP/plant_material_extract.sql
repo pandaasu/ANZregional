@@ -223,10 +223,12 @@ as
         t01.dimension_uom as dimension_uom,
         t01.interntl_article_no as interntl_article_no,
         t01.total_shelf_life as total_shelf_life,
+        t01.mars_plan_item_flag as mars_plan_item_flag,
         t01.mars_intrmdt_prdct_compnt_flag as mars_intrmdt_prdct_compnt_flag,
         t01.mars_merchandising_unit_flag as mars_merchandising_unit_flag,
         t01.mars_prmotional_material_flag as mars_prmotional_material_flag,
         t01.mars_retail_sales_unit_flag as mars_retail_sales_unit_flag,
+        t01.mars_shpping_contnr_flag as mars_shpping_contnr_flag,
         t01.mars_semi_finished_prdct_flag as mars_semi_finished_prdct_flag,
         t01.mars_rprsnttv_item_flag as mars_rprsnttv_item_flag,
         t01.mars_traded_unit_flag as mars_traded_unit_flag,
@@ -289,18 +291,18 @@ as
           where regional_code_id in ('10', '18', '17', '19')
           group by sap_material_code
         ) t04,
-      bds_material_vltn t05,
-      (
-        select sap_material_code,
-          max(case when uom_code = 'PCE' then bds_factor_from_base_uom end) as bds_pce_factor_from_base_uom,
-          max(case when uom_code = 'PCE' then mars_pc_item_code end) as mars_pce_item_code,
-          max(case when uom_code = 'PCE' then interntl_article_no end) as mars_pce_interntl_article_no,
-          max(case when uom_code = 'SB' then bds_factor_from_base_uom end) as bds_sb_factor_from_base_uom,
-          max(case when uom_code = 'SB' then mars_pc_item_code end) as mars_sb_item_code
-        from bds_material_uom
-        where uom_code in ('PCE','SB')
-        group by sap_material_code
-      ) t06
+        bds_material_vltn t05,
+        (
+          select sap_material_code,
+            max(case when uom_code = 'PCE' then bds_factor_from_base_uom end) as bds_pce_factor_from_base_uom,
+            max(case when uom_code = 'PCE' then mars_pc_item_code end) as mars_pce_item_code,
+            max(case when uom_code = 'PCE' then interntl_article_no end) as mars_pce_interntl_article_no,
+            max(case when uom_code = 'SB' then bds_factor_from_base_uom end) as bds_sb_factor_from_base_uom,
+            max(case when uom_code = 'SB' then mars_pc_item_code end) as mars_sb_item_code
+          from bds_material_uom
+          where uom_code in ('PCE','SB')
+          group by sap_material_code
+        ) t06
       where t01.sap_material_code = t02.sap_material_code
         and t01.mars_rprsnttv_item_code = t03.sap_material_code(+)
         and t01.sap_material_code = t04.sap_material_code(+)
@@ -372,7 +374,40 @@ as
         and t01.pkg_instr_end_date >= sysdate
         and t01.sap_material_code = rcd_bds_material_plant_mfanz.sap_material_code;       
          
-    rcd_bds_material_pkg_instr_det csr_bds_material_pkg_instr_det%rowtype;
+    rcd_bds_material_pkg_instr_det csr_bds_material_pkg_instr_det%rowtype;   
+    
+    cursor csr_bds_material_uom is
+      select t01.sap_material_code as sap_material_code,
+        t01.uom_code as uom_code,
+        t01.sap_function as sap_function,
+        t01.base_uom_numerator as base_uom_numerator,
+        t01.base_uom_denominator as base_uom_denominator,
+        t01.bds_factor_to_base_uom as bds_factor_to_base_uom,
+        t01.bds_factor_from_base_uom as bds_factor_from_base_uom,
+        t01.interntl_article_no as interntl_article_no,
+        t01.interntl_article_no_ctgry as interntl_article_no_ctgry,
+        t01.length as length,
+        t01.width as width,
+        t01.height as height,
+        t01.dimension_uom as dimension_uom,
+        t01.volume as volume,
+        t01.volume_unit as volume_unit,
+        t01.gross_weight as gross_weight,
+        t01.gross_weight_unit as gross_weight_unit,
+        t01.lower_level_hierachy_uom as lower_level_hierachy_uom,
+        t01.global_trade_item_variant as global_trade_item_variant,
+        t01.mars_mutli_convrsn_uom_indctr as mars_mutli_convrsn_uom_indctr,
+        t01.mars_pc_item_code as mars_pc_item_code,
+        t01.mars_pc_level as mars_pc_level,
+        t01.mars_order_uom_prfrnc_indctr as mars_order_uom_prfrnc_indctr,
+        t01.mars_sales_uom_prfrnc_indctr as mars_sales_uom_prfrnc_indctr,
+        t01.mars_issue_uom_prfrnc_indctr as mars_issue_uom_prfrnc_indctr,
+        t01.mars_wm_uom_prfrnc_indctr as mars_wm_uom_prfrnc_indctr,
+        t01.mars_rprsnttv_material_code as mars_rprsnttv_material_code
+      from bds_material_uom t01
+      where t01.sap_material_code = rcd_bds_material_plant_mfanz.sap_material_code;
+    
+    rcd_bds_material_uom csr_bds_material_uom%rowtype;
   
   begin
   
@@ -424,10 +459,12 @@ as
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.dimension_uom,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.interntl_article_no,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.total_shelf_life,'0')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_plan_item_flag,' ')),6,' ')        
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_intrmdt_prdct_compnt_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_merchandising_unit_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_prmotional_material_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_retail_sales_unit_flag,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_shpping_contnr_flag,' ')),1,' ')        
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_semi_finished_prdct_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_rprsnttv_item_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_traded_unit_flag,' ')),1,' ')
@@ -513,7 +550,46 @@ as
             || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.uom,' ')),3,' ');
             
         end loop;
-        close csr_bds_material_pkg_instr_det;                
+        close csr_bds_material_pkg_instr_det;
+        
+        open csr_bds_material_uom;
+        loop
+          fetch csr_bds_material_uom into rcd_bds_material_uom;
+          exit when csr_bds_material_uom%notfound;
+                               
+          var_index := tbl_definition.count + 1;
+                                 
+          tbl_definition(var_index).value := 'UOM'
+            || rpad(to_char(nvl(rcd_bds_material_uom.uom_code,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.sap_function,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.base_uom_numerator,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.base_uom_denominator,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.bds_factor_to_base_uom,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.bds_factor_from_base_uom,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.interntl_article_no,' ')),18,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.interntl_article_no_ctgry,' ')),2,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.length,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.width,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.height,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.dimension_uom,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.volume,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.volume_unit,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.gross_weight,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.gross_weight_unit,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.lower_level_hierachy_uom,' ')),3,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.global_trade_item_variant,' ')),2,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_mutli_convrsn_uom_indctr,' ')),1,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_pc_item_code,' ')),18,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_pc_level,'0')),38,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_order_uom_prfrnc_indctr,' ')),1,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_sales_uom_prfrnc_indctr,' ')),1,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_issue_uom_prfrnc_indctr,' ')),1,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_wm_uom_prfrnc_indctr,' ')),1,' ')
+            || rpad(to_char(nvl(rcd_bds_material_uom.mars_rprsnttv_material_code,' ')),18,' ');
+            
+        end loop;
+        close csr_bds_material_uom;
+                          
       end if;
            
     end loop;

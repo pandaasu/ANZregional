@@ -2,7 +2,7 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_customer_sales_area_extract 
+  Package : plant_cust_sales_area_extract 
   Owner   : ics_app 
 
   Description 
@@ -36,20 +36,20 @@
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_customer_sales_area_extract as
+create or replace package ics_app.plant_cust_sales_area_extract as
 
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2);
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_customer_sales_area_extract;
+end plant_cust_sales_area_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_customer_sales_area_extract as
+create or replace package body ics_app.plant_cust_sales_area_extract as
 
   /*-*/
   /* Private exceptions 
@@ -178,7 +178,7 @@ create or replace package body ics_app.plant_customer_sales_area_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_customer_sales_area_extract - ' || 'customer_code: ' || var_customer_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_cust_sales_area_extract - ' || 'customer_code: ' || var_customer_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -393,18 +393,18 @@ create or replace package body ics_app.plant_customer_sales_area_extract as
     commit;
   end execute_send;
 
-end plant_customer_sales_area_extract;
+end plant_cust_sales_area_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_customer_sales_area_extract to appsupport;
-grant execute on ics_app.plant_customer_sales_area_extract to lads_app;
-grant execute on ics_app.plant_customer_sales_area_extract to lics_app;
-grant execute on ics_app.plant_customer_sales_area_extract to ics_executor;
+grant execute on ics_app.plant_cust_sales_area_extract to appsupport;
+grant execute on ics_app.plant_cust_sales_area_extract to lads_app;
+grant execute on ics_app.plant_cust_sales_area_extract to lics_app;
+grant execute on ics_app.plant_cust_sales_area_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_customer_sales_area_extract for ics_app.plant_customer_sales_area_extract;
+create or replace public synonym plant_cust_sales_area_extract for ics_app.plant_cust_sales_area_extract;

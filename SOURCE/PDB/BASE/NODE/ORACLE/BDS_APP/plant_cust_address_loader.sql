@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_customer_address_loader 
+  Package : plant_cust_address_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   14-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_customer_address_loader as
+create or replace package bds_app.plant_cust_address_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_customer_address_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_customer_address_loader; 
+end plant_cust_address_loader; 
 /
 
-create or replace package body bds_app.plant_customer_address_loader as
+create or replace package body bds_app.plant_cust_address_loader as
 
   /*-*/
   /* Private exceptions 
@@ -50,7 +50,7 @@ create or replace package body bds_app.plant_customer_address_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_addr_customer_test%rowtype;
+  rcd_hdr bds_addr_customer_det%rowtype;
   var_customer_code rcd_hdr.customer_code%type;
 
   /************************************************/
@@ -355,7 +355,7 @@ create or replace package body bds_app.plant_customer_address_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_addr_customer_test
+    update bds_addr_customer_det
     set customer_code = rcd_hdr.customer_code, 
       address_version = rcd_hdr.address_version, 
       valid_from_date = rcd_hdr.valid_from_date, 
@@ -399,7 +399,7 @@ create or replace package body bds_app.plant_customer_address_loader as
     where customer_code = rcd_hdr.customer_code;
     
     if ( sql%notfound ) then  
-      insert into bds_addr_customer_test
+      insert into bds_addr_customer_det
       (
         customer_code, 
         address_version, 
@@ -492,16 +492,16 @@ create or replace package body bds_app.plant_customer_address_loader as
   /*-------------*/
   end process_record_hdr;
   
-end plant_customer_address_loader; 
+end plant_cust_address_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_customer_address_loader to appsupport;
-grant execute on bds_app.plant_customer_address_loader to lics_app;
+grant execute on bds_app.plant_cust_address_loader to appsupport;
+grant execute on bds_app.plant_cust_address_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_customer_address_loader for bds_app.plant_customer_address_loader;
+create or replace public synonym plant_cust_address_loader for bds_app.plant_cust_address_loader;

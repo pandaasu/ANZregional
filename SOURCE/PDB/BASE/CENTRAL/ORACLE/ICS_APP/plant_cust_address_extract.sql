@@ -2,7 +2,7 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_customer_address_extract 
+  Package : plant_cust_address_extract 
   Owner   : ics_app 
 
   Description 
@@ -36,20 +36,20 @@
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_customer_address_extract as
+create or replace package ics_app.plant_cust_address_extract as
 
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2);
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_customer_address_extract;
+end plant_cust_address_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_customer_address_extract as
+create or replace package body ics_app.plant_cust_address_extract as
 
   /*-*/
   /* Private exceptions 
@@ -178,7 +178,7 @@ create or replace package body ics_app.plant_customer_address_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_customer_address_extract - ' || 'customer_code: ' || var_customer_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_cust_address_extract - ' || 'customer_code: ' || var_customer_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -239,14 +239,7 @@ create or replace package body ics_app.plant_customer_address_extract as
         t01.fax_extension as fax_extension, 
         t01.fax_full_number as fax_full_number
       from bds_addr_customer t01
-      where exists 
-        (
-          select 1
-          from bds_cust_sales_area t02
-          where t02.sales_org_code in ('147', '149')
-            and t02.customer_code = t01.customer_code
-        )
-        and 
+      where 
         (
           par_action = '*ALL'
           or (par_action = '*CUSTOMER' and ltrim(t01.customer_code,'0') = ltrim(par_data,'0'))
@@ -353,18 +346,18 @@ create or replace package body ics_app.plant_customer_address_extract as
     commit;
   end execute_send;
 
-end plant_customer_address_extract;
+end plant_cust_address_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_customer_address_extract to appsupport;
-grant execute on ics_app.plant_customer_address_extract to lads_app;
-grant execute on ics_app.plant_customer_address_extract to lics_app;
-grant execute on ics_app.plant_customer_address_extract to ics_executor;
+grant execute on ics_app.plant_cust_address_extract to appsupport;
+grant execute on ics_app.plant_cust_address_extract to lads_app;
+grant execute on ics_app.plant_cust_address_extract to lics_app;
+grant execute on ics_app.plant_cust_address_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_customer_address_extract for ics_app.plant_customer_address_extract;
+create or replace public synonym plant_cust_address_extract for ics_app.plant_cust_address_extract;

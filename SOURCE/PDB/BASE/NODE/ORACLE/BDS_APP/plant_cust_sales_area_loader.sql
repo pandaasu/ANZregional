@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_customer_sales_area_loader 
+  Package : plant_cust_sales_area_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,9 @@
   14-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_customer_sales_area_loader as
+/* Using bds_cust_sales_area_ics table for SNACK testing only.  Replace for other sites */ 
+
+create or replace package bds_app.plant_cust_sales_area_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +27,10 @@ create or replace package bds_app.plant_customer_sales_area_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_customer_sales_area_loader; 
+end plant_cust_sales_area_loader; 
 /
 
-create or replace package body bds_app.plant_customer_sales_area_loader as
+create or replace package body bds_app.plant_cust_sales_area_loader as
 
   /*-*/
   /* Private exceptions 
@@ -400,7 +402,7 @@ create or replace package body bds_app.plant_customer_sales_area_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_cust_sales_area_test
+    update bds_cust_sales_area_ics
     set customer_code = rcd_hdr.customer_code, 
       sales_org_code = rcd_hdr.sales_org_code, 
       distbn_chnl_code = rcd_hdr.distbn_chnl_code, 
@@ -470,7 +472,7 @@ create or replace package body bds_app.plant_customer_sales_area_loader as
       and division_code = rcd_hdr.division_code;
     
     if ( sql%notfound ) then    
-      insert into bds_cust_sales_area_test
+      insert into bds_cust_sales_area_ics
       (
         customer_code, 
         sales_org_code, 
@@ -609,16 +611,16 @@ create or replace package body bds_app.plant_customer_sales_area_loader as
   /*-------------*/
   end process_record_hdr;
   
-end plant_customer_sales_area_loader; 
+end plant_cust_sales_area_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_customer_sales_area_loader to appsupport;
-grant execute on bds_app.plant_customer_sales_area_loader to lics_app;
+grant execute on bds_app.plant_cust_sales_area_loader to appsupport;
+grant execute on bds_app.plant_cust_sales_area_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_customer_sales_area_loader for bds_app.plant_customer_sales_area_loader;
+create or replace public synonym plant_cust_sales_area_loader for bds_app.plant_cust_sales_area_loader;

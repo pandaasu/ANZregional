@@ -56,8 +56,9 @@ create or replace package body bds_app.plant_material_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
     
-  rcd_hdr bds_material_plant_mfanz_test%rowtype;
+  rcd_hdr bds_material_plant_mfanz_ics%rowtype;
   rcd_pkg bds_material_pkg_instr_det%rowtype;
+  rcd_uom bds_material_uom%rowtype;
 
   var_material_code rcd_hdr.sap_material_code%type;
 
@@ -105,10 +106,12 @@ create or replace package body bds_app.plant_material_loader as
     lics_inbound_utility.set_definition('HDR','DIMENSION_UOM', 3);
     lics_inbound_utility.set_definition('HDR','INTERNTL_ARTICLE_NO', 18);
     lics_inbound_utility.set_definition('HDR','TOTAL_SHELF_LIFE', 38);
+    lics_inbound_utility.set_definition('HDR','MARS_PLAN_ITEM_FLAG', 6);
     lics_inbound_utility.set_definition('HDR','MARS_INTRMDT_PRDCT_COMPNT_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_MERCHANDISING_UNIT_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_PRMOTIONAL_MATERIAL_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_RETAIL_SALES_UNIT_FLAG', 1);
+    lics_inbound_utility.set_definition('HDR','MARS_SHPPING_CONTNR_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_SEMI_FINISHED_PRDCT_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_RPRSNTTV_ITEM_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_TRADED_UNIT_FLAG', 1);
@@ -178,6 +181,35 @@ create or replace package body bds_app.plant_material_loader as
     lics_inbound_utility.set_definition('PKG','ROUNDING_QTY', 38);
     lics_inbound_utility.set_definition('PKG','UOM', 3); 
       
+    /*-*/
+    lics_inbound_utility.set_definition('UOM','ID',10);
+    lics_inbound_utility.set_definition('UOM','UOM_CODE',10);
+    lics_inbound_utility.set_definition('UOM','SAP_FUNCTION',10);
+    lics_inbound_utility.set_definition('UOM','BASE_UOM_NUMERATOR',10);
+    lics_inbound_utility.set_definition('UOM','BASE_UOM_DENOMINATOR',10);
+    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_TO_BASE_UOM',10);
+    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_FROM_BASE_UOM',10);
+    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO',10);
+    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO_CTGRY',10);
+    lics_inbound_utility.set_definition('UOM','LENGTH',10);
+    lics_inbound_utility.set_definition('UOM','WIDTH',10);
+    lics_inbound_utility.set_definition('UOM','HEIGHT',10);
+    lics_inbound_utility.set_definition('UOM','DIMENSION_UOM',10);
+    lics_inbound_utility.set_definition('UOM','VOLUME',10);
+    lics_inbound_utility.set_definition('UOM','VOLUME_UNIT',10);
+    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT',10);
+    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT_UNIT',10);
+    lics_inbound_utility.set_definition('UOM','LOWER_LEVEL_HIERACHY_UOM',10);
+    lics_inbound_utility.set_definition('UOM','GLOBAL_TRADE_ITEM_VARIANT',10);
+    lics_inbound_utility.set_definition('UOM','MARS_MUTLI_CONVRSN_UOM_INDCTR',10);
+    lics_inbound_utility.set_definition('UOM','MARS_PC_ITEM_CODE',10);
+    lics_inbound_utility.set_definition('UOM','MARS_PC_LEVEL',10);
+    lics_inbound_utility.set_definition('UOM','MARS_ORDER_UOM_PRFRNC_INDCTR',10);
+    lics_inbound_utility.set_definition('UOM','MARS_SALES_UOM_PRFRNC_INDCTR',10);
+    lics_inbound_utility.set_definition('UOM','MARS_ISSUE_UOM_PRFRNC_INDCTR',10);
+    lics_inbound_utility.set_definition('UOM','MARS_WM_UOM_PRFRNC_INDCTR',10);
+    lics_inbound_utility.set_definition('UOM','MARS_RPRSNTTV_MATERIAL_CODE',10);
+    
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -207,6 +239,7 @@ create or replace package body bds_app.plant_material_loader as
       when 'HDR' then process_record_hdr(par_record);
       when 'STX' then process_record_stx(par_record);
       when 'PKG' then process_record_pkg(par_record);
+      when 'UOM' then process_record_uom(par_record);
       else lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
 
@@ -359,6 +392,7 @@ create or replace package body bds_app.plant_material_loader as
     if ( var_exists = true ) then
       if ( rcd_hdr.idoc_timestamp > rcd_bds_material_plant_mfanz.msg_timestamp ) then
         delete from bds_material_pkg_instr_det_t where sap_material_code = rcd_hdr.sap_material_code;
+        delete from bds_material_uom where sap_material_code = rcd_hdr.sap_material_code;
         delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;
       else
         var_trn_ignore := true;
@@ -407,7 +441,6 @@ create or replace package body bds_app.plant_material_loader as
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */  
     /*--------------------------------------*/
-    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_hdr.bds_material_desc_en := lics_inbound_utility.get_variable('BDS_MATERIAL_DESC_EN');
     rcd_hdr.material_type := lics_inbound_utility.get_variable('MATERIAL_TYPE');
@@ -498,201 +531,132 @@ create or replace package body bds_app.plant_material_loader as
       return;
     end if;
     
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_material_plant_mfanz_test
-    set bds_material_desc_en = rcd_hdr.bds_material_desc_en,
-      material_type = rcd_hdr.material_type,
-      material_grp = rcd_hdr.material_grp,
-      base_uom = rcd_hdr.base_uom,
-      order_unit = rcd_hdr.order_unit,
-      gross_weight = rcd_hdr.gross_weight,
-      net_weight = rcd_hdr.net_weight,
-      gross_weight_unit = rcd_hdr.gross_weight_unit,
-      length = rcd_hdr.length,
-      width = rcd_hdr.width,
-      height = rcd_hdr.height,
-      dimension_uom = rcd_hdr.dimension_uom,
-      interntl_article_no = rcd_hdr.interntl_article_no,
-      total_shelf_life = rcd_hdr.total_shelf_life,
-      mars_intrmdt_prdct_compnt_flag = rcd_hdr.mars_intrmdt_prdct_compnt_flag,
-      mars_merchandising_unit_flag = rcd_hdr.mars_merchandising_unit_flag,
-      mars_prmotional_material_flag = rcd_hdr.mars_prmotional_material_flag,
-      mars_retail_sales_unit_flag = rcd_hdr.mars_retail_sales_unit_flag,
-      mars_semi_finished_prdct_flag = rcd_hdr.mars_semi_finished_prdct_flag,
-      mars_rprsnttv_item_flag = rcd_hdr.mars_rprsnttv_item_flag,
-      mars_traded_unit_flag = rcd_hdr.mars_traded_unit_flag,
-      xplant_status = rcd_hdr.xplant_status,
-      xplant_status_valid = rcd_hdr.xplant_status_valid,
-      batch_mngmnt_reqrmnt_indctr = rcd_hdr.batch_mngmnt_reqrmnt_indctr,
-      mars_plant_material_type = rcd_hdr.mars_plant_material_type,
-      procurement_type = rcd_hdr.procurement_type,
-      special_procurement_type = rcd_hdr.special_procurement_type,
-      issue_storage_location = rcd_hdr.issue_storage_location,
-      mrp_controller = rcd_hdr.mrp_controller,
-      plant_specific_status_valid = rcd_hdr.plant_specific_status_valid,
-      deletion_indctr = rcd_hdr.deletion_indctr,
-      plant_specific_status = rcd_hdr.plant_specific_status,
-      assembly_scrap_percntg = rcd_hdr.assembly_scrap_percntg,
-      component_scrap_percntg = rcd_hdr.component_scrap_percntg,
-      backflush_indctr = rcd_hdr.backflush_indctr,
-      mars_rprsnttv_item_code = rcd_hdr.mars_rprsnttv_item_code,
-      regional_code_10 = rcd_hdr.regional_code_10,
-      regional_code_17 = rcd_hdr.regional_code_17,
-      regional_code_18 = rcd_hdr.regional_code_18,
-      regional_code_19 = rcd_hdr.regional_code_19,
-      sales_text_147 = '',
-      sales_text_149 = '',
-      bds_unit_cost = rcd_hdr.bds_unit_cost,
-      future_planned_price_1 = rcd_hdr.future_planned_price_1,
-      vltn_class = rcd_hdr.vltn_class,
-      bds_pce_factor_from_base_uom = rcd_hdr.bds_pce_factor_from_base_uom,
-      mars_pce_item_code = rcd_hdr.mars_pce_item_code,
-      mars_pce_interntl_article_no = rcd_hdr.mars_pce_interntl_article_no,
-      bds_sb_factor_from_base_uom = rcd_hdr.bds_sb_factor_from_base_uom,
-      mars_sb_item_code = rcd_hdr.mars_sb_item_code,
-      discontinuation_indctr = rcd_hdr.discontinuation_indctr,
-      followup_material = rcd_hdr.followup_material,
-      material_division = rcd_hdr.material_division,
-      mrp_type = rcd_hdr.mrp_type,
-      max_storage_prd = rcd_hdr.max_storage_prd,
-      max_storage_prd_unit = rcd_hdr.max_storage_prd_unit,
-      issue_unit = rcd_hdr.issue_unit,
-      planned_delivery_days = rcd_hdr.planned_delivery_days,
-      effective_out_date = rcd_hdr.effective_out_date,
-      idoc_timestamp = rcd_hdr.idoc_timestamp
-    where sap_material_code = rcd_hdr.sap_material_code
-      and plant_code = rcd_hdr.plant_code;
-    
-    if ( sql%notfound ) then
-      insert into bds_material_plant_mfanz_test
-      (
-        sap_material_code,
-        plant_code,
-        bds_material_desc_en,
-        material_type,
-        material_grp,
-        base_uom,
-        order_unit,
-        gross_weight,
-        net_weight,
-        gross_weight_unit,
-        length,
-        width,
-        height,
-        dimension_uom,
-        interntl_article_no,
-        total_shelf_life,
-        mars_intrmdt_prdct_compnt_flag,
-        mars_merchandising_unit_flag,
-        mars_prmotional_material_flag,
-        mars_retail_sales_unit_flag,
-        mars_semi_finished_prdct_flag,
-        mars_rprsnttv_item_flag,
-        mars_traded_unit_flag,
-        xplant_status,
-        xplant_status_valid,
-        batch_mngmnt_reqrmnt_indctr,
-        mars_plant_material_type,
-        procurement_type,
-        special_procurement_type,
-        issue_storage_location,
-        mrp_controller,
-        plant_specific_status_valid,
-        deletion_indctr,
-        plant_specific_status,
-        assembly_scrap_percntg,
-        component_scrap_percntg,
-        backflush_indctr,
-        mars_rprsnttv_item_code,
-        regional_code_10,
-        regional_code_17,
-        regional_code_18,
-        regional_code_19,
-        bds_unit_cost,
-        future_planned_price_1,
-        vltn_class,
-        bds_pce_factor_from_base_uom,
-        mars_pce_item_code,
-        mars_pce_interntl_article_no,
-        bds_sb_factor_from_base_uom,
-        mars_sb_item_code,
-        discontinuation_indctr,
-        followup_material,
-        material_division,
-        mrp_type,
-        max_storage_prd,
-        max_storage_prd_unit,
-        issue_unit,
-        planned_delivery_days,
-        effective_out_date,
-        idoc_timestamp
-      )
-      values 
-      (
-        rcd_hdr.sap_material_code,
-        rcd_hdr.plant_code,
-        rcd_hdr.bds_material_desc_en,
-        rcd_hdr.material_type,
-        rcd_hdr.material_grp,
-        rcd_hdr.base_uom,
-        rcd_hdr.order_unit,
-        rcd_hdr.gross_weight,
-        rcd_hdr.net_weight,
-        rcd_hdr.gross_weight_unit,
-        rcd_hdr.length,
-        rcd_hdr.width,
-        rcd_hdr.height,
-        rcd_hdr.dimension_uom,
-        rcd_hdr.interntl_article_no,
-        rcd_hdr.total_shelf_life,
-        rcd_hdr.mars_intrmdt_prdct_compnt_flag,
-        rcd_hdr.mars_merchandising_unit_flag,
-        rcd_hdr.mars_prmotional_material_flag,
-        rcd_hdr.mars_retail_sales_unit_flag,
-        rcd_hdr.mars_semi_finished_prdct_flag,
-        rcd_hdr.mars_rprsnttv_item_flag,
-        rcd_hdr.mars_traded_unit_flag,
-        rcd_hdr.xplant_status,
-        rcd_hdr.xplant_status_valid,
-        rcd_hdr.batch_mngmnt_reqrmnt_indctr,
-        rcd_hdr.mars_plant_material_type,
-        rcd_hdr.procurement_type,
-        rcd_hdr.special_procurement_type,
-        rcd_hdr.issue_storage_location,
-        rcd_hdr.mrp_controller,
-        rcd_hdr.plant_specific_status_valid,
-        rcd_hdr.deletion_indctr,
-        rcd_hdr.plant_specific_status,
-        rcd_hdr.assembly_scrap_percntg,
-        rcd_hdr.component_scrap_percntg,
-        rcd_hdr.backflush_indctr,
-        rcd_hdr.mars_rprsnttv_item_code,
-        rcd_hdr.regional_code_10,
-        rcd_hdr.regional_code_17,
-        rcd_hdr.regional_code_18,
-        rcd_hdr.regional_code_19,
-        rcd_hdr.bds_unit_cost,
-        rcd_hdr.future_planned_price_1,
-        rcd_hdr.vltn_class,
-        rcd_hdr.bds_pce_factor_from_base_uom,
-        rcd_hdr.mars_pce_item_code,
-        rcd_hdr.mars_pce_interntl_article_no,
-        rcd_hdr.bds_sb_factor_from_base_uom,
-        rcd_hdr.mars_sb_item_code,
-        rcd_hdr.discontinuation_indctr,
-        rcd_hdr.followup_material,
-        rcd_hdr.material_division,
-        rcd_hdr.mrp_type,
-        rcd_hdr.max_storage_prd,
-        rcd_hdr.max_storage_prd_unit,
-        rcd_hdr.issue_unit,
-        rcd_hdr.planned_delivery_days,
-        rcd_hdr.effective_out_date,
-        rcd_hdr.idoc_timestamp
-      );      
-    end if;
+    insert into bds_material_plant_mfanz_test
+    (
+      sap_material_code,
+      plant_code,
+      bds_material_desc_en,
+      material_type,
+      material_grp,
+      base_uom,
+      order_unit,
+      gross_weight,
+      net_weight,
+      gross_weight_unit,
+      length,
+      width,
+      height,
+      dimension_uom,
+      interntl_article_no,
+      total_shelf_life,
+      mars_intrmdt_prdct_compnt_flag,
+      mars_merchandising_unit_flag,
+      mars_prmotional_material_flag,
+      mars_retail_sales_unit_flag,
+      mars_semi_finished_prdct_flag,
+      mars_rprsnttv_item_flag,
+      mars_traded_unit_flag,
+      xplant_status,
+      xplant_status_valid,
+      batch_mngmnt_reqrmnt_indctr,
+      mars_plant_material_type,
+      procurement_type,
+      special_procurement_type,
+      issue_storage_location,
+      mrp_controller,
+      plant_specific_status_valid,
+      deletion_indctr,
+      plant_specific_status,
+      assembly_scrap_percntg,
+      component_scrap_percntg,
+      backflush_indctr,
+      mars_rprsnttv_item_code,
+      regional_code_10,
+      regional_code_17,
+      regional_code_18,
+      regional_code_19,
+      bds_unit_cost,
+      future_planned_price_1,
+      vltn_class,
+      bds_pce_factor_from_base_uom,
+      mars_pce_item_code,
+      mars_pce_interntl_article_no,
+      bds_sb_factor_from_base_uom,
+      mars_sb_item_code,
+      discontinuation_indctr,
+      followup_material,
+      material_division,
+      mrp_type,
+      max_storage_prd,
+      max_storage_prd_unit,
+      issue_unit,
+      planned_delivery_days,
+      effective_out_date,
+      idoc_timestamp
+    )
+    values 
+    (
+      rcd_hdr.sap_material_code,
+      rcd_hdr.plant_code,
+      rcd_hdr.bds_material_desc_en,
+      rcd_hdr.material_type,
+      rcd_hdr.material_grp,
+      rcd_hdr.base_uom,
+      rcd_hdr.order_unit,
+      rcd_hdr.gross_weight,
+      rcd_hdr.net_weight,
+      rcd_hdr.gross_weight_unit,
+      rcd_hdr.length,
+      rcd_hdr.width,
+      rcd_hdr.height,
+      rcd_hdr.dimension_uom,
+      rcd_hdr.interntl_article_no,
+      rcd_hdr.total_shelf_life,
+      rcd_hdr.mars_intrmdt_prdct_compnt_flag,
+      rcd_hdr.mars_merchandising_unit_flag,
+      rcd_hdr.mars_prmotional_material_flag,
+      rcd_hdr.mars_retail_sales_unit_flag,
+      rcd_hdr.mars_semi_finished_prdct_flag,
+      rcd_hdr.mars_rprsnttv_item_flag,
+      rcd_hdr.mars_traded_unit_flag,
+      rcd_hdr.xplant_status,
+      rcd_hdr.xplant_status_valid,
+      rcd_hdr.batch_mngmnt_reqrmnt_indctr,
+      rcd_hdr.mars_plant_material_type,
+      rcd_hdr.procurement_type,
+      rcd_hdr.special_procurement_type,
+      rcd_hdr.issue_storage_location,
+      rcd_hdr.mrp_controller,
+      rcd_hdr.plant_specific_status_valid,
+      rcd_hdr.deletion_indctr,
+      rcd_hdr.plant_specific_status,
+      rcd_hdr.assembly_scrap_percntg,
+      rcd_hdr.component_scrap_percntg,
+      rcd_hdr.backflush_indctr,
+      rcd_hdr.mars_rprsnttv_item_code,
+      rcd_hdr.regional_code_10,
+      rcd_hdr.regional_code_17,
+      rcd_hdr.regional_code_18,
+      rcd_hdr.regional_code_19,
+      rcd_hdr.bds_unit_cost,
+      rcd_hdr.future_planned_price_1,
+      rcd_hdr.vltn_class,
+      rcd_hdr.bds_pce_factor_from_base_uom,
+      rcd_hdr.mars_pce_item_code,
+      rcd_hdr.mars_pce_interntl_article_no,
+      rcd_hdr.bds_sb_factor_from_base_uom,
+      rcd_hdr.mars_sb_item_code,
+      rcd_hdr.discontinuation_indctr,
+      rcd_hdr.followup_material,
+      rcd_hdr.material_division,
+      rcd_hdr.mrp_type,
+      rcd_hdr.max_storage_prd,
+      rcd_hdr.max_storage_prd_unit,
+      rcd_hdr.issue_unit,
+      rcd_hdr.planned_delivery_days,
+      rcd_hdr.effective_out_date,
+      rcd_hdr.idoc_timestamp
+    );
 
   /*-------------*/
   /* End routine */
@@ -837,14 +801,42 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     /* Validate the primary keys 
     /*-*/
-    if ( rcd_hdr.sap_material_code is null ) then
-       lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_MATERIAL_CODE');
-       var_trn_error := TRUE;
+    if ( rcd_pkg.pkg_instr_table_usage is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_TABLE_USAGE');
+       var_trn_error := true;
     end if;
-    if ( rcd_hdr.plant_code is null ) then
-       lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_CODE');
-       var_trn_error := TRUE;
+    if ( rcd_pkg.pkg_instr_table is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_TABLE');
+       var_trn_error := true;
     end if;
+    if ( rcd_pkg.pkg_instr_type is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_TYPE');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.pkg_instr_application is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_APPLICATION');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.pkg_instr_start_date is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_START_DATE');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.pkg_instr_end_date is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.PKG_INSTR_END_DATE');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.sales_organisation is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.SALES_ORGANISATION');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.item_ctgry is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.ITEM_CTGRY');
+       var_trn_error := true;
+    end if;
+    if ( rcd_pkg.component is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - PKG.COMPONENT');
+       var_trn_error := true;
+    end if;    
             
     /*----------------------------------------*/
     /* ERROR- Bypass the update when required */
@@ -920,6 +912,163 @@ create or replace package body bds_app.plant_material_loader as
   /* End routine */
   /*-------------*/
   end process_record_pkg;
+  
+  /**************************************************/
+  /* This procedure performs the record UOM routine */
+  /**************************************************/
+  procedure process_record_uom(par_record in varchar2) is
+                        
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin
+
+    /*--------------------------------------------*/
+    /* IGNORE - Ignore the data row when required */
+    /*--------------------------------------------*/
+
+    if var_trn_ignore = true then
+       return;
+    end if;
+
+    /*-------------------------------*/
+    /* PARSE - Parse the data record */
+    /*-------------------------------*/
+    lics_inbound_utility.parse_record('UOM', par_record);    
+      
+    /*--------------------------------------*/
+    /* RETRIEVE - Retrieve the field values */  
+    /*--------------------------------------*/    
+    rcd_uom.uom_code := lics_inbound_utility.get_variable('UOM_CODE');  
+    rcd_uom.sap_function := lics_inbound_utility.get_variable('SAP_FUNCTION');  
+    rcd_uom.base_uom_numerator := lics_inbound_utility.get_number('BASE_UOM_NUMERATOR', null);  
+    rcd_uom.base_uom_denominator := lics_inbound_utility.get_number('BASE_UOM_DENOMINATOR', null);  
+    rcd_uom.bds_factor_to_base_uom := lics_inbound_utility.get_number('BDS_FACTOR_TO_BASE_UOM', null);  
+    rcd_uom.bds_factor_from_base_uom := lics_inbound_utility.get_number('BDS_FACTOR_FROM_BASE_UOM', null);  
+    rcd_uom.interntl_article_no := lics_inbound_utility.get_variable('INTERNTL_ARTICLE_NO');  
+    rcd_uom.interntl_article_no_ctgry := lics_inbound_utility.get_variable('INTERNTL_ARTICLE_NO_CTGRY');  
+    rcd_uom.length := lics_inbound_utility.get_number('LENGTH', null);  
+    rcd_uom.width := lics_inbound_utility.get_number('WIDTH', null);  
+    rcd_uom.height := lics_inbound_utility.get_number('HEIGHT', null);  
+    rcd_uom.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');  
+    rcd_uom.volume := lics_inbound_utility.get_number('VOLUME', null);  
+    rcd_uom.volume_unit := lics_inbound_utility.get_variable('VOLUME_UNIT');  
+    rcd_uom.gross_weight := lics_inbound_utility.get_number('GROSS_WEIGHT', null);  
+    rcd_uom.gross_weight_unit := lics_inbound_utility.get_variable('GROSS_WEIGHT_UNIT');  
+    rcd_uom.lower_level_hierachy_uom := lics_inbound_utility.get_variable('LOWER_LEVEL_HIERACHY_UOM');  
+    rcd_uom.global_trade_item_variant := lics_inbound_utility.get_variable('GLOBAL_TRADE_ITEM_VARIANT');  
+    rcd_uom.mars_mutli_convrsn_uom_indctr := lics_inbound_utility.get_variable('MARS_MUTLI_CONVRSN_UOM_INDCTR');  
+    rcd_uom.mars_pc_item_code := lics_inbound_utility.get_variable('MARS_PC_ITEM_CODE');  
+    rcd_uom.mars_pc_level := lics_inbound_utility.get_number('MARS_PC_LEVEL', null);  
+    rcd_uom.mars_order_uom_prfrnc_indctr := lics_inbound_utility.get_variable('MARS_ORDER_UOM_PRFRNC_INDCTR');  
+    rcd_uom.mars_sales_uom_prfrnc_indctr := lics_inbound_utility.get_variable('MARS_SALES_UOM_PRFRNC_INDCTR');  
+    rcd_uom.mars_issue_uom_prfrnc_indctr := lics_inbound_utility.get_variable('MARS_ISSUE_UOM_PRFRNC_INDCTR');  
+    rcd_uom.mars_wm_uom_prfrnc_indctr := lics_inbound_utility.get_variable('MARS_WM_UOM_PRFRNC_INDCTR');  
+    rcd_uom.mars_rprsnttv_material_code := lics_inbound_utility.get_variable('MARS_RPRSNTTV_MATERIAL_CODE');  
+
+    /*-*/
+    /* Retrieve exceptions raised 
+    /*-*/
+    if ( lics_inbound_utility.has_errors = true ) then
+      var_trn_error := true;
+    end if;
+
+    /*----------------------------------------*/
+    /* VALIDATION - Validate the field values */
+    /*----------------------------------------*/
+
+    /*-*/
+    /* Validate the primary keys 
+    /*-*/
+    if ( rcd_uom.uom_code is null ) then
+       lics_inbound_utility.add_exception('Missing Primary Key - UOM.UOM_CODE');
+       var_trn_error := TRUE;
+    end if;
+            
+    /*----------------------------------------*/
+    /* ERROR- Bypass the update when required */
+    /*----------------------------------------*/
+    if ( var_trn_error = true ) then
+       return;
+    end if;
+
+    /*----------------------------------------*/
+    /* LOCK- Lock the interface transaction   */
+    /*----------------------------------------*/
+
+    /*-*/
+    /* Lock the transaction 
+    /* NOTE - attempt to lock the transaction header row (oracle default wait behaviour) 
+    /*          - insert/insert (not exists) - first holds lock and second fails on first commit with duplicate index 
+    /*          - update/update (exists) - logic goes to update and default wait behaviour 
+    /*      - validate the IDOC sequence when locking row exists 
+    /*      - lock and commit cycle encompasses transaction child procedure execution 
+    /*-*/
+    insert into bds_material_uom
+    (
+      sap_material_code,
+      uom_code,
+      sap_function,
+      base_uom_numerator,
+      base_uom_denominator,
+      bds_factor_to_base_uom,
+      bds_factor_from_base_uom,
+      interntl_article_no,
+      interntl_article_no_ctgry,
+      length,
+      width,
+      height,
+      dimension_uom,
+      volume,
+      volume_unit,
+      gross_weight,
+      gross_weight_unit,
+      lower_level_hierachy_uom,
+      global_trade_item_variant,
+      mars_mutli_convrsn_uom_indctr,
+      mars_pc_item_code,
+      mars_pc_level,
+      mars_order_uom_prfrnc_indctr,
+      mars_sales_uom_prfrnc_indctr,
+      mars_issue_uom_prfrnc_indctr,
+      mars_wm_uom_prfrnc_indctr,
+      mars_rprsnttv_material_code
+    )
+    values 
+    (
+      rcd_uom.sap_material_code,
+      rcd_uom.uom_code,
+      rcd_uom.sap_function,
+      rcd_uom.base_uom_numerator,
+      rcd_uom.base_uom_denominator,
+      rcd_uom.bds_factor_to_base_uom,
+      rcd_uom.bds_factor_from_base_uom,
+      rcd_uom.interntl_article_no,
+      rcd_uom.interntl_article_no_ctgry,
+      rcd_uom.length,
+      rcd_uom.width,
+      rcd_uom.height,
+      rcd_uom.dimension_uom,
+      rcd_uom.volume,
+      rcd_uom.volume_unit,
+      rcd_uom.gross_weight,
+      rcd_uom.gross_weight_unit,
+      rcd_uom.lower_level_hierachy_uom,
+      rcd_uom.global_trade_item_variant,
+      rcd_uom.mars_mutli_convrsn_uom_indctr,
+      rcd_uom.mars_pc_item_code,
+      rcd_uom.mars_pc_level,
+      rcd_uom.mars_order_uom_prfrnc_indctr,
+      rcd_uom.mars_sales_uom_prfrnc_indctr,
+      rcd_uom.mars_issue_uom_prfrnc_indctr,
+      rcd_uom.mars_wm_uom_prfrnc_indctr,
+      rcd_uom.mars_rprsnttv_material_code
+    );
+     
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end process_record_uom;  
   
 end plant_material_loader; 
 /

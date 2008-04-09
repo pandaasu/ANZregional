@@ -41,7 +41,7 @@ create or replace package ics_app.plant_vendor_comp_extract as
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2, par_cust_code in varchar2);
+  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_vendor_comp_extract;
 /
