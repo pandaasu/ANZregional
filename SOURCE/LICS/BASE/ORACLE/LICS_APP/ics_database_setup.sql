@@ -20,8 +20,8 @@ Please create the following a new database on [server name] ...
 
    - Please execute the following commands .....
 
-      execute dbms_java.grant_permission('IU_APP','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
-      execute dbms_java.grant_permission('IU_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
+      execute dbms_java.grant_permission('DBEC','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
+      execute dbms_java.grant_permission('DBEC','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
       execute dbms_java.grant_permission('LICS_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
       commit;
@@ -44,10 +44,10 @@ Please create the following a new database on [server name] ...
    - Please compile lics_db_trigger using SYS.
 
 
-execute dbms_java.revoke_permission('IU_APP','java.io.FilePermission','/ics/lad/prod/-','read,write,execute,delete');
+execute dbms_java.revoke_permission('DBEC','java.io.FilePermission','/ics/lad/prod/-','read,write,execute,delete');
 execute dbms_java.revoke_permission('LICS_APP','java.io.FilePermission','/ics/lad/prod/-','read,write,execute,delete');
-execute dbms_java.grant_permission('IU_APP','java.io.FilePermission','/ics/lad/template/-','read,write,execute,delete');
-execute dbms_java.grant_permission('IU_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
+execute dbms_java.grant_permission('DBEC','java.io.FilePermission','/ics/lad/template/-','read,write,execute,delete');
+execute dbms_java.grant_permission('DBEC','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
 execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/lad/template/-','read,write,execute,delete');
 execute dbms_java.grant_permission('LICS_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
 commit;
