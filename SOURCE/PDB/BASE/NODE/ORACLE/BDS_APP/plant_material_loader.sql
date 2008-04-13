@@ -56,8 +56,8 @@ create or replace package body bds_app.plant_material_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
     
-  rcd_hdr bds_material_plant_mfanz_ics%rowtype;
-  rcd_pkg bds_material_pkg_instr_det%rowtype;
+  rcd_hdr bds_material_plant_mfanz_test%rowtype;
+  rcd_pkg bds_material_pkg_instr_det_t%rowtype;
   rcd_uom bds_material_uom%rowtype;
 
   var_material_code rcd_hdr.sap_material_code%type;
@@ -342,7 +342,7 @@ create or replace package body bds_app.plant_material_loader as
     /*-*/
     cursor csr_bds_material_plant_mfanz is
       select t01.sap_material_code as sap_material_code,
-        min(t01.idoc_timestamp) as msg_timestamp
+        min(t01.msg_timestamp) as msg_timestamp
       from bds_material_plant_mfanz_test t01
       where t01.sap_material_code = rcd_hdr.sap_material_code
       group by t01.sap_material_code;
@@ -375,7 +375,7 @@ create or replace package body bds_app.plant_material_loader as
     /* RETRIEVE - Retrieve the field values 
     /*-*/
     rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-    rcd_hdr.idoc_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
+    rcd_hdr.msg_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
     
     /*-*/
     /* Validate message sequence  
@@ -390,7 +390,7 @@ create or replace package body bds_app.plant_material_loader as
     close csr_bds_material_plant_mfanz;
     
     if ( var_exists = true ) then
-      if ( rcd_hdr.idoc_timestamp > rcd_bds_material_plant_mfanz.msg_timestamp ) then
+      if ( rcd_hdr.msg_timestamp > rcd_bds_material_plant_mfanz.msg_timestamp ) then
         delete from bds_material_pkg_instr_det_t where sap_material_code = rcd_hdr.sap_material_code;
         delete from bds_material_uom where sap_material_code = rcd_hdr.sap_material_code;
         delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;
@@ -456,10 +456,12 @@ create or replace package body bds_app.plant_material_loader as
     rcd_hdr.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');
     rcd_hdr.interntl_article_no := lics_inbound_utility.get_variable('INTERNTL_ARTICLE_NO');
     rcd_hdr.total_shelf_life := lics_inbound_utility.get_number('TOTAL_SHELF_LIFE',null);
+    rcd_hdr.mars_plan_item_flag := lics_inbound_utility.get_variable('MARS_PLAN_ITEM_FLAG');
     rcd_hdr.mars_intrmdt_prdct_compnt_flag := lics_inbound_utility.get_variable('MARS_INTRMDT_PRDCT_COMPNT_FLAG');
     rcd_hdr.mars_merchandising_unit_flag := lics_inbound_utility.get_variable('MARS_MERCHANDISING_UNIT_FLAG');
     rcd_hdr.mars_prmotional_material_flag := lics_inbound_utility.get_variable('MARS_PRMOTIONAL_MATERIAL_FLAG');
     rcd_hdr.mars_retail_sales_unit_flag := lics_inbound_utility.get_variable('MARS_RETAIL_SALES_UNIT_FLAG');
+    rcd_hdr.mars_shpping_contnr_flag := lics_inbound_utility.get_variable('MARS_SHPPING_CONTNR_FLAG');
     rcd_hdr.mars_semi_finished_prdct_flag := lics_inbound_utility.get_variable('MARS_SEMI_FINISHED_PRDCT_FLAG');
     rcd_hdr.mars_rprsnttv_item_flag := lics_inbound_utility.get_variable('MARS_RPRSNTTV_ITEM_FLAG');
     rcd_hdr.mars_traded_unit_flag := lics_inbound_utility.get_variable('MARS_TRADED_UNIT_FLAG');
@@ -549,10 +551,12 @@ create or replace package body bds_app.plant_material_loader as
       dimension_uom,
       interntl_article_no,
       total_shelf_life,
+      mars_plan_item_flag,
       mars_intrmdt_prdct_compnt_flag,
       mars_merchandising_unit_flag,
       mars_prmotional_material_flag,
       mars_retail_sales_unit_flag,
+      mars_shpping_contnr_flag,
       mars_semi_finished_prdct_flag,
       mars_rprsnttv_item_flag,
       mars_traded_unit_flag,
@@ -592,7 +596,7 @@ create or replace package body bds_app.plant_material_loader as
       issue_unit,
       planned_delivery_days,
       effective_out_date,
-      idoc_timestamp
+      msg_timestamp
     )
     values 
     (
@@ -612,10 +616,12 @@ create or replace package body bds_app.plant_material_loader as
       rcd_hdr.dimension_uom,
       rcd_hdr.interntl_article_no,
       rcd_hdr.total_shelf_life,
+      rcd_hdr.mars_plan_item_flag,
       rcd_hdr.mars_intrmdt_prdct_compnt_flag,
       rcd_hdr.mars_merchandising_unit_flag,
       rcd_hdr.mars_prmotional_material_flag,
       rcd_hdr.mars_retail_sales_unit_flag,
+      rcd_hdr.mars_shpping_contnr_flag,
       rcd_hdr.mars_semi_finished_prdct_flag,
       rcd_hdr.mars_rprsnttv_item_flag,
       rcd_hdr.mars_traded_unit_flag,
@@ -655,7 +661,7 @@ create or replace package body bds_app.plant_material_loader as
       rcd_hdr.issue_unit,
       rcd_hdr.planned_delivery_days,
       rcd_hdr.effective_out_date,
-      rcd_hdr.idoc_timestamp
+      rcd_hdr.msg_timestamp
     );
 
   /*-------------*/

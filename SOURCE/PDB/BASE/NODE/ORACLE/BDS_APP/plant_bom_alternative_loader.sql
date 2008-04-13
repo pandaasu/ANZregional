@@ -275,7 +275,7 @@ create or replace package body bds_app.plant_bom_alternative_loader as
     set bom_material_code = rcd_hdr.bom_material_code,
       bom_alternative = rcd_hdr.bom_alternative,
       bom_plant = rcd_hdr.bom_plant,
-      bom_eff_to_date = rcd_hdr.bom_eff_to_date
+      bom_eff_from_date = rcd_hdr.bom_eff_from_date
     where bom_material_code = rcd_hdr.bom_material_code
       and bom_alternative = rcd_hdr.bom_alternative
       and bom_plant = rcd_hdr.bom_plant;
@@ -286,14 +286,14 @@ create or replace package body bds_app.plant_bom_alternative_loader as
         bom_material_code, 
         bom_alternative,
         bom_plant,        
-        bom_eff_to_date
+        bom_eff_from_date
       )
       values 
       (
         rcd_hdr.bom_material_code, 
         rcd_hdr.bom_alternative,
         rcd_hdr.bom_plant,
-        rcd_hdr.bom_eff_to_date
+        rcd_hdr.bom_eff_from_date
       );
     end if;
   

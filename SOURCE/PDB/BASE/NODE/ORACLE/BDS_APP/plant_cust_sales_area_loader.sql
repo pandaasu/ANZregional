@@ -52,7 +52,7 @@ create or replace package body bds_app.plant_cust_sales_area_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_addr_customer%rowtype;
+  rcd_hdr bds_cust_sales_area_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -300,16 +300,16 @@ create or replace package body bds_app.plant_cust_sales_area_loader as
     rcd_hdr.sales_district := lics_inbound_utility.get_variable('SALES_DISTRICT');
     rcd_hdr.price_group := lics_inbound_utility.get_variable('PRICE_GROUP');
     rcd_hdr.price_list_type := lics_inbound_utility.get_variable('PRICE_LIST_TYPE');
-    rcd_hdr.order_probability := lics_inbound_utility.get_variable('ORDER_PROBABILITY');
+    rcd_hdr.order_probability := lics_inbound_utility.get_number('ORDER_PROBABILITY',null);
     rcd_hdr.inter_company_terms_01 := lics_inbound_utility.get_variable('INTER_COMPANY_TERMS_01');
     rcd_hdr.inter_company_terms_02 := lics_inbound_utility.get_variable('INTER_COMPANY_TERMS_02');
     rcd_hdr.delivery_block_flag := lics_inbound_utility.get_variable('DELIVERY_BLOCK_FLAG');
     rcd_hdr.order_complete_delivery_flag := lics_inbound_utility.get_variable('ORDER_COMPLETE_DELIVERY_FLAG');
-    rcd_hdr.partial_item_delivery_max := lics_inbound_utility.get_variable('PARTIAL_ITEM_DELIVERY_MAX');
+    rcd_hdr.partial_item_delivery_max := lics_inbound_utility.get_number('PARTIAL_ITEM_DELIVERY_MAX',null);
     rcd_hdr.partial_item_delivery_flag := lics_inbound_utility.get_variable('PARTIAL_ITEM_DELIVERY_FLAG');
     rcd_hdr.order_combination_flag := lics_inbound_utility.get_variable('ORDER_COMBINATION_FLAG');
     rcd_hdr.split_batch_flag := lics_inbound_utility.get_variable('SPLIT_BATCH_FLAG');
-    rcd_hdr.delivery_priority := lics_inbound_utility.get_variable('DELIVERY_PRIORITY');
+    rcd_hdr.delivery_priority := lics_inbound_utility.get_number('DELIVERY_PRIORITY',null);
     rcd_hdr.shipper_account_number := lics_inbound_utility.get_variable('SHIPPER_ACCOUNT_NUMBER');
     rcd_hdr.ship_conditions := lics_inbound_utility.get_variable('SHIP_CONDITIONS');
     rcd_hdr.billing_block_flag := lics_inbound_utility.get_variable('BILLING_BLOCK_FLAG');
@@ -345,8 +345,8 @@ create or replace package body bds_app.plant_cust_sales_area_loader as
     rcd_hdr.pod_processing := lics_inbound_utility.get_variable('POD_PROCESSING');
     rcd_hdr.pod_confirm_timeframe := lics_inbound_utility.get_variable('POD_CONFIRM_TIMEFRAME');
     rcd_hdr.po_index_compilation := lics_inbound_utility.get_variable('PO_INDEX_COMPILATION');
-    rcd_hdr.batch_search_strategy := lics_inbound_utility.get_variable('BATCH_SEARCH_STRATEGY');
-    rcd_hdr.vmi_input_method := lics_inbound_utility.get_variable('VMI_INPUT_METHOD');
+    rcd_hdr.batch_search_strategy := lics_inbound_utility.get_number('BATCH_SEARCH_STRATEGY',null);
+    rcd_hdr.vmi_input_method := lics_inbound_utility.get_number('VMI_INPUT_METHOD',null);
     rcd_hdr.current_planning_flag := lics_inbound_utility.get_variable('CURRENT_PLANNING_FLAG');
     rcd_hdr.future_planning_flag := lics_inbound_utility.get_variable('FUTURE_PLANNING_FLAG');
     rcd_hdr.market_account_flag := lics_inbound_utility.get_variable('MARKET_ACCOUNT_FLAG');
