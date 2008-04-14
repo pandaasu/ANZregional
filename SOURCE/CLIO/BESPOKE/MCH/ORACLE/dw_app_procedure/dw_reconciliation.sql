@@ -48,6 +48,7 @@ create or replace package dw_reconciliation as
     2006/05   Steve Gregan   Added order aggregation for non_invoice days
     2007/01   Steve Gregan   Changed check_sales function to include warning
     2007/04   Steve Gregan   Included company code parameter
+    2008/04   Steve Gregan   Added CLIO company check for sales checker
 
    *******************************************************************************/
 
@@ -343,7 +344,8 @@ create or replace package body dw_reconciliation as
       /*-*/
       cursor csr_company is
          select sap_company_code as sap_company_code
-           from company t1;
+           from company t1
+          where t1.sap_company_code in (select dsv_value from table(lics_datastore.retrieve_value('CLIO','SALES','COMPANY')));
       rcd_company csr_company%rowtype;
 
       cursor csr_summary is

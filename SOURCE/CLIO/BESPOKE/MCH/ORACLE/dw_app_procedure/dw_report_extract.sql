@@ -32,6 +32,7 @@ create or replace package dw_report_extract as
     2005/07   Steve Gregan   Created
     2006/08   Steve Gregan   Added Hermes data marts
     2007/04   Steve Gregan   Added multiple company functionality
+    2008/04   Steve Gregan   Added CLIO company check
 
    *******************************************************************************/
 
@@ -71,6 +72,7 @@ create or replace package body dw_report_extract as
       var_locked boolean;
       var_errors boolean;
       var_return varchar2(4000);
+      var_sales boolean;
 
       /*-*/
       /* Local constants
@@ -84,6 +86,15 @@ create or replace package body dw_report_extract as
       con_dbp_alt_group constant varchar2(32) := 'LICS_TRIGGER_ALERT';
       con_dbp_ema_group constant varchar2(32) := 'LICS_TRIGGER_EMAIL_GROUP';
       con_dbp_tri_group constant varchar2(32) := 'LICS_TRIGGER_GROUP';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_company is
+         select t01.*
+           from table(lics_datastore.retrieve_value('CLIO','SALES','COMPANY')) t01
+          where t01.dsv_value = par_company_code;
+      rcd_company csr_company%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -107,6 +118,17 @@ create or replace package body dw_report_extract as
       if upper(par_company_code) is null then
          raise_application_error(-20000, 'Company code parameter must be supplied');
       end if;
+
+      /*-*/
+      /* Retrieve the CLIO sales company code
+      /*-*/
+      var_sales := false;
+      open csr_company;
+      fetch csr_company into rcd_company;
+      if csr_company%found then
+         var_sales := true;
+      end if;
+      close csr_company;
 
       /*-*/
       /* Log start
@@ -137,20 +159,8 @@ create or replace package body dw_report_extract as
 
          /*-*/
          /* Execute the inventory extract procedures
+         /* **note** ALWAYS REFRESHED (ie. no company sales test)
          /*-*/
-         begin
-            var_return := hk_inv_format01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
          begin
             var_return := hk_inv_format02_extract.main(par_company_code);
             if var_return = '*OK' then
@@ -165,408 +175,428 @@ create or replace package body dw_report_extract as
          end;
 
          /*-*/
-         /* Execute the sales extract procedures
+         /* CLIO sales companies only
          /*-*/
-         begin
-            var_return := hk_sal_format01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_format01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_format01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract  - sales- hk_sal_format01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_format11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
+         if var_sales = true then
 
-         /*-*/
-         /* Execute the standard sales extract procedures
-         /*-*/
-         begin
-            var_return := hk_sal_cus_mth_01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - successful');
+            /*-*/
+            /* Execute the inventory extract procedures
+            /*-*/
+            begin
+               var_return := hk_inv_format01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - inventory - hk_inv_format01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+
+            /*-*/
+            /* Execute the sales extract procedures
+            /*-*/
+            begin
+               var_return := hk_sal_format01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_format01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_format01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract  - sales- hk_sal_format01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_format11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_format11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+
+            /*-*/
+            /* Execute the standard sales extract procedures
+            /*-*/
+            begin
+               var_return := hk_sal_cus_mth_01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_mth_02_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_mth_03_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_mth_11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_mth_12_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_mth_13_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_02_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_03_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_12_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_cus_prd_13_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_02_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_03_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_12_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_mth_13_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - successful');
             else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_mth_02_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_mth_03_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_mth_11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_mth_12_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_mth_13_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_mth_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_02_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_03_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_12_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_cus_prd_13_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_cus_prd_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_02_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_03_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_12_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_mth_13_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_prd_01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_prd_02_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_prd_03_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_prd_11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_mth_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_prd_01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_prd_02_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_prd_03_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_03_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_prd_11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
             var_return := hk_sal_mat_prd_12_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_sal_mat_prd_13_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_sal_mat_prd_13_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - sales - hk_sal_mat_prd_13_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
 
-         /*-*/
-         /* Execute the customer service level extract procedures
-         /*-*/
-         begin
-            var_return := hk_csl_prd_01_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_csl_prd_11_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_csl_prd_02_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
-         /*----*/
-         begin
-            var_return := hk_csl_prd_12_extract.main(par_company_code);
-            if var_return = '*OK' then
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - successful');
-            else
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - **ERROR** - ' || var_return);
-            end if;
-         exception
-            when others then
-               var_errors := true;
-               lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
-         end;
+            /*-*/
+            /* Execute the customer service level extract procedures
+            /*-*/
+            begin
+               var_return := hk_csl_prd_01_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_csl_prd_11_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_11_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_csl_prd_02_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_02_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
+            /*----*/
+            begin
+               var_return := hk_csl_prd_12_extract.main(par_company_code);
+               if var_return = '*OK' then
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - successful');
+               else
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - **ERROR** - ' || var_return);
+               end if;
+            exception
+               when others then
+                  var_errors := true;
+                  lics_logging.write_log('Report Extract - csl - hk_csl_prd_12_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
+            end;
 
-         /*-*/
-         /* Execute the hermes extract procedures only when Hong Kong (137)
-         /*-*/
-         if par_company_code = '137' then
+            /*-*/
+            /* Execute the hermes extract procedures
+            /*-*/
             begin
                var_return := hermes_prd_01_extract.main;
                if var_return = '*OK' then
@@ -579,6 +609,7 @@ create or replace package body dw_report_extract as
                   var_errors := true;
                   lics_logging.write_log('Report Extract - hermes - hermes_prd_01_extract - **ERROR** - ' || substr(SQLERRM, 1, 1024));
             end;
+
          end if;
 
          /*-*/
@@ -625,13 +656,15 @@ create or replace package body dw_report_extract as
       else
 
          /*-*/
-         /* Trigger the Regional DBP Extract
+         /* Trigger the Regional DBP Extract for CLIO sales companies only
          /*-*/
-         lics_trigger_loader.execute('Regional DBP Extract',
-                                     'dw_regional_dbp.execute(''' || par_company_code || ''')',
-                                     lics_setting_configuration.retrieve_setting(con_dbp_alt_group, con_dbp_code),
-                                     lics_setting_configuration.retrieve_setting(con_dbp_ema_group, con_dbp_code),
-                                     lics_setting_configuration.retrieve_setting(con_dbp_tri_group, con_dbp_code));
+         if var_sales = true then
+            lics_trigger_loader.execute('Regional DBP Extract',
+                                        'dw_regional_dbp.execute(''' || par_company_code || ''')',
+                                        lics_setting_configuration.retrieve_setting(con_dbp_alt_group, con_dbp_code),
+                                        lics_setting_configuration.retrieve_setting(con_dbp_ema_group, con_dbp_code),
+                                        lics_setting_configuration.retrieve_setting(con_dbp_tri_group, con_dbp_code));
+         end if;
 
       end if;
 
