@@ -19,6 +19,8 @@ create or replace package dw_fcst_maintenance as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/02   Steve Gregan   Created
+    2008/04   Steve Gregan   Changed daily forecast load to 28D for Apollo
+    2008/04   Steve Gregan   Changed daily forecast load to 1D for Apollo
 
    *******************************************************************************/
 
@@ -1169,7 +1171,7 @@ create or replace package body dw_fcst_maintenance as
                               t01.fcst_yyyymmdd as work_yyyymmdd,
                               nvl(t02.mars_week,9999999) as work_yyyyppw,
                               nvl(t02.mars_period,999999) as work_yyyypp,
-                              28 as work_cover
+                              1 as work_cover
                          from fcst_data t01,
                               mars_date t02
                         where t01.fcst_yyyymmdd = to_char(t02.calendar_date(+),''yyyymmdd'')
@@ -1491,7 +1493,7 @@ create or replace package body dw_fcst_maintenance as
                               t01.fcst_yyyymmdd as work_yyyymmdd,
                               nvl(t02.mars_week,9999999) as work_yyyyppw,
                               nvl(t02.mars_period,999999) as work_yyyypp,
-                              28 as work_cover
+                              1 as work_cover
                          from fcst_data t01,
                               mars_date t02
                         where t01.fcst_yyyymmdd = to_char(t02.calendar_date(+),''yyyymmdd'')
