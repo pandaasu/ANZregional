@@ -2606,8 +2606,7 @@ create or replace package body dw_fcst_maintenance as
                           group by lads_trim_code(t01.sap_material_code)) t02,
                         (select lads_trim_code(t01.customer_code) as customer_code,
                                 t01.name as customer_desc
-                           from bds_addr_customer t01
-                          where t01.address_version = '*NONE') t03
+                           from bds_addr_customer_zh t01) t03
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
                     and t01.material_code = t02.material_code(+)
                     and t01.dmnd_group = t03.customer_code(+)
@@ -2663,8 +2662,7 @@ create or replace package body dw_fcst_maintenance as
                           group by lads_trim_code(t01.sap_material_code)) t02,
                         (select lads_trim_code(t01.customer_code) as customer_code,
                                 t01.name as customer_desc
-                           from bds_addr_customer t01
-                          where t01.address_version = '*NONE') t03
+                           from bds_addr_customer_zh t01) t03
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
                     and t01.material_code = t02.material_code(+)
                     and t01.dmnd_group = t03.customer_code(+)
