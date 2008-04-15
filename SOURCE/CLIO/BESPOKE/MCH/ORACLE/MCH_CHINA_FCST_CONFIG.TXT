@@ -12,6 +12,7 @@ set define ^;
 /* OD
 /*-*/
 connect od/odwall@ap0112t.ap.mars
+connect od/OD_080410@ap0115p.ap.mars
 
 --
 -- Compile the tables
@@ -25,6 +26,7 @@ connect od/odwall@ap0112t.ap.mars
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_type.sql;
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_header.sql;
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_load_detail.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_table\fcst_plan_group.sql;
 
 --
 -- OD data
@@ -106,6 +108,23 @@ insert into fcst_extract_type_load values('APOLLO_SAMPLE','*FCST_SAMPLE');
 
 commit;
 
+
+insert into china_tax_customer values('CN03','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区61667410','中行cn03','110227600037341');
+insert into china_tax_customer values('CN01','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区 61667410','怀柔中国银行','110227600037341');
+insert into china_tax_customer values('CN04','玛氏食品（中国）有限公司上海分公司','上海市卢湾区淮海中路381号中环广场1735-1741室02163915998','招行上海市淮中支行096657－22804899001','310103X07220815');
+insert into china_tax_customer values('CN05','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区 61667410','中行cn05','110227600037341');
+insert into china_tax_customer values('CN06','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区 61667410','中行cn06','110227600037341');
+insert into china_tax_customer values('CN07','玛氏食品（中国）有限公司广州分公司','广州市天河路228号广晟大厦自然层25层2506-2509号020-38350103','招商银行广州分行营业部120902019010301','440104X18473228');
+insert into china_tax_customer values('CN08','玛氏食品（中国）有限公司成都分公司','成都市青羊区顺城大街308号冠城大厦36楼B座028-86528620','招商银行成都分行正府街支行3082198710001','510105X21712904');
+insert into china_tax_customer values('CN09','玛氏食品（中国）有限公司沈阳分公司','和平区和平北大街69号总统大厦C座1503024-22812106','招商银行沈阳分行营业部5180182575210001','210102X04604274');
+insert into china_tax_customer values('CN10','玛氏食品（中国）有限公司武汉分公司','武汉市江汉区解放大道686号武汉世界贸易大厦写字楼3719室027-85448534','招商银行武汉分行营业部0184432810001','420101X16415876');
+insert into china_tax_customer values('CN12','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区 61667410','中行cn12','110227600037341');
+insert into china_tax_customer values('CN16','玛氏食品（中国）有限公司','北京市怀柔雁栖开发区 61667410','中行cn16','110227600037341');
+insert into china_tax_customer values('CN17','玛氏食品（嘉兴）有限公司','浙江省嘉兴经济（技术）开发区行政中心B幢208室0573-3938666','中行cn17','330411778270415');
+insert into china_tax_customer values('CN18','玛氏食品（嘉兴）有限公司','浙江省嘉兴经济（技术）开发区行政中心B幢208室0573-3938666','中行cn18','330411778270415');
+
+commit;
+
 /*-*/
 /* DW_APP
 /*-*/
@@ -127,11 +146,14 @@ connect dw_app/dwcell@ap0112t.ap.mars
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract06.sql;
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract07.sql;
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract08.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_reconciliation.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_report_extract.sql;
 
 /*-*/
 /* OD_APP
 /*-*/
 connect od_app/odcell@ap0112t.ap.mars
+connect od_app/odappcup@ap0115p.ap.mars
 
 --
 -- Compile the packages
@@ -139,22 +161,44 @@ connect od_app/odcell@ap0112t.ap.mars
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\od_app_procedure\ods_aplods01.sql;
 
 /*-*/
+/* LADS_APP
+/*-*/
+connect lads_app/ladscell@ap0112t.ap.mars
+connect lads_app/ladsappcup@ap0115p.ap.mars
+
+--
+-- Compile the packages
+--
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\LADS\BESPOKE\ORACLE\MCH\LADS_APP\lads_atllad12_monitor.sql;
+
+
+**********************
+****DONE FROM HERE****
+**********************
+
+/*-*/
 /* LICS_APP
 /*-*/
 connect lics_app/licscell@ap0112t.ap.mars
+connect lics_app/licsappcup@ap0115p.ap.mars
+
+--
+-- Compile the packages
+--
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE\lics_inbound_utility.sql;
 
 --
 -- LICS interface
 --
 insert into lics_interface values('APLODS01','Apollo to ODS - Demand Forecast Interface','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'ods_aplods01','1');
-insert into lics_interface values('ODSAPL01','ODS to Apollo - Forecast Interface','*OUTBOUND','OB_PRC',1,5,5,'ICS_OUTBOUND','ODSAPL01_',15,'DAT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1');
+insert into lics_interface values('ODSAPL01','ODS to Apollo - Forecast Interface','*OUTBOUND','OB_PRC',1,5,5,'ICS_OUTBOUND','ODSAPL01_',15,'DAT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'/ics/lad/hk/prod/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1');
 commit;
 
 --
 -- LICS job
 --
 insert into lics_job values('APOLLO_FORECAST_EXTRACT','Apollo Forecast Extract',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_extract06.export(''APOLLO'')','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','0');
-insert into lics_job values('FCST_PURGING','Forecast Purging',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('FCST_PURGING','Forecast Purging',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'dw_app.dw_fcst_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','0');
 
 --
 -- LICS data store
@@ -220,6 +264,23 @@ insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PRICE_VAKEY','Affilia
 insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PRICE_VAKEY',1,'135 99');
 insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PRICE_KSCHL','Affiliate Price Condition Type','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PRICE_KSCHL',1,'ZV01');
+
+insert into lics_das_system values('LADS','Local Atlas Data Store','LICS_APP',sysdate);
+insert into lics_das_group values('CLIO','SALES','Sales settings','LICS_APP',sysdate);
+insert into lics_das_code values('CLIO','SALES','COMPANY','Company codes','*LIST','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CLIO','SALES','COMPANY',1,'137');
+commit;
+
+insert into lics_sec_option values('MCH_TAX_STOCK_TRANSFER','Stock Transfer Tax Report','mch_tax_stock_transfer.asp','1');
+insert into lics_sec_option values('MCH_TAX_SAMPLE_PRICING','Sample Pricing Tax Report','mch_tax_sample_pricing.asp','1');
+insert into lics_sec_option values('MCH_TAX_CUST_CONFIG','Tax Customer Configuration','mch_tax_customer.asp?Mode=SELECT','1');
+insert into lics_sec_option values('MCH_GOLD_TAX','Stock Transfer Gold Tax Report','mch_gold_tax.asp','1');
+insert into lics_sec_option values('MCH_FCST_BATCH','China Forecast Batch Extract','mch_fcst_batch.asp?Mode=SELECT','1');
+insert into lics_sec_option values('MCH_FCST_EXTRACT','China Forecast Extract Maintenance','mch_fcst_extract.asp?Mode=SELECT','1');
+insert into lics_sec_option values('MCH_FCST_LOAD','China Forecast Load Maintenance','mch_fcst_load.asp?Mode=SELECT','1');
+
+insert into lics_sec_menu values('CHN_TAX_REPORTING','China Tax Reporting');
+insert into lics_sec_menu values('CHN_FORECASTING','China Forecasting');
 
 commit;
 
