@@ -34,6 +34,9 @@ create or replace package dw_tax_reporting as
     2008/04   Steve Gregan   Changed storage location to optional
     2008/04   Steve Gregan   Removed gold tax report heading
     2008/04   Steve Gregan   Fixed lads_del_tim where clause
+    2008/04   Steve Gregan   Changed sample pricing report for order type where clause bug
+    2008/04   Steve Gregan   Changed sample pricing report for customer descriptions
+    2008/04   Steve Gregan   Changed sample pricing report for pricing condition PR00
 
    *******************************************************************************/
 
@@ -622,12 +625,13 @@ create or replace package body dw_tax_reporting as
       /*-*/
       var_query := 'select *
                       from (select /*+ ordered */
-                                   t03.cust_name_en_level_1 as qry_region,
-                                   t03.cust_name_en_level_2 as qry_cluster,
-                                   t03.cust_name_en_level_3 as qry_area,
-                                   t03.cust_name_en_level_4 as qry_sale_city,
+                                   t03.cust_name_en_level_2 as qry_region,
+                                   t03.cust_name_en_level_3 as qry_cluster,
+                                   t03.cust_name_en_level_4 as qry_area,
+                                   t03.cust_name_en_level_5 as qry_sale_city,
+                                   t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
-                                   t03.cust_name_en_level_5 as qry_cust_desc,
+                                   t09.name||'' ''||t09.name02 as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
@@ -649,7 +653,7 @@ create or replace package body dw_tax_reporting as
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
                                    lads_sal_ord_irf t021,
-                                   std_hier t03,
+                                   sales_force_geo_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
                                    (select lads_trim_code(matnr) sap_material_code, 
@@ -669,12 +673,13 @@ create or replace package body dw_tax_reporting as
                                        and t11.datab = t12.datab
                                        and t11.knumh = t12.knumh
                                        and t11.vkorg in (''135'',''234'')
-                                       and t11.kschl = ''ZCD0''
+                                       and t11.kschl = ''PR00''
                                        and t12.konwa = ''CNY''
                                        and t12.kpein = 1
                                        and t12.kmein = ''EA''
                                        and t11.matnr is not null) t07,
-                                   lads_cus_pfr t08
+                                   lads_cus_pfr t08,
+                                   bds_addr_customer_zh t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
                                and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
                                and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
@@ -684,7 +689,7 @@ create or replace package body dw_tax_reporting as
                                and t01.sap_order_type_code in (''<ORDTYPE>'')
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
-                               and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', '''') <> t02.pstyv
+                               and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', t01.sap_order_type_code) <> t02.pstyv
                                and t02.belnr = t021.belnr(+)
                                and t02.genseq = t021.genseq(+)
                                and ''044'' = t021.qualf(+)
@@ -696,15 +701,17 @@ create or replace package body dw_tax_reporting as
                                and (t01.pod_date <= t07.valid_to or t07.valid_to is null)
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
-                               and lads_trim_code(t08.kunnr) = t03.sap_hier_cust_code(+)
+                               and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
+                               and t01.sap_sold_to_cust_code = t09.customer_code(+)
                              union all
                             select /*+ ordered */
-                                   t03.cust_name_en_level_1 as qry_region,
-                                   t03.cust_name_en_level_2 as qry_cluster,
-                                   t03.cust_name_en_level_3 as qry_area,
-                                   t03.cust_name_en_level_4 as qry_sale_city,
+                                   t03.cust_name_en_level_2 as qry_region,
+                                   t03.cust_name_en_level_3 as qry_cluster,
+                                   t03.cust_name_en_level_4 as qry_area,
+                                   t03.cust_name_en_level_5 as qry_sale_city,
+                                   t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
-                                   t03.cust_name_en_level_5 as qry_cust_desc,
+                                   t09.name||'' ''||t09.name02 as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
@@ -726,7 +733,7 @@ create or replace package body dw_tax_reporting as
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
                                    lads_sal_ord_irf t021,
-                                   std_hier t03,
+                                   sales_force_geo_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
                                    (select lads_trim_code(matnr) sap_material_code, 
@@ -735,7 +742,8 @@ create or replace package body dw_tax_reporting as
                                      where aland = ''CN''
                                        and taty1 = ''MWST''
                                      group by lads_trim_code(matnr)) t06,
-                                   lads_cus_pfr t08
+                                   lads_cus_pfr t08,
+                                   bds_addr_customer_zh t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
                                and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
                                and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
@@ -745,7 +753,7 @@ create or replace package body dw_tax_reporting as
                                and t01.sap_order_type_code in (''<ORDTYPE>'')
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
-                               and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', '''') <> t02.pstyv
+                               and decode(t01.sap_order_type_code, ''ZOR'', ''ZTAN'', t01.sap_order_type_code) <> t02.pstyv
                                and t02.belnr = t021.belnr(+)
                                and t02.genseq = t021.genseq(+)
                                and ''044'' = t021.qualf(+)
@@ -754,7 +762,8 @@ create or replace package body dw_tax_reporting as
                                and t01.sap_material_code = t06.sap_material_code(+)
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
-                               and lads_trim_code(t08.kunnr) = t03.sap_hier_cust_code(+)
+                               and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
+                               and t01.sap_sold_to_cust_code = t09.customer_code(+)
                                and not exists (select t12.kbetr
                                                  from lads_prc_lst_hdr t11,
                                                       lads_prc_lst_det t12
@@ -763,7 +772,7 @@ create or replace package body dw_tax_reporting as
                                                   and t11.datab = t12.datab
                                                   and t11.knumh = t12.knumh
                                                   and t11.vkorg in (''135'',''234'')
-                                                  and t11.kschl = ''ZCD0''
+                                                  and t11.kschl = ''PR00''
                                                   and t12.konwa = ''CNY''
                                                   and t12.kpein = 1
                                                   and t12.kmein = ''EA''
