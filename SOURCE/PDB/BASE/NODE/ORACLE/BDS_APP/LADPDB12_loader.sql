@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_vendor_comp_loader 
+  Package : ladpdb12_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   04-Apr-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_vendor_comp_loader as
+create or replace package bds_app.ladpdb12_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_vendor_comp_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_vendor_comp_loader; 
+end ladpdb12_loader; 
 /
 
-create or replace package body bds_app.plant_vendor_comp_loader as
+create or replace package body bds_app.ladpdb12_loader as
 
   /*-*/
   /* Private exceptions 
@@ -377,67 +377,67 @@ create or replace package body bds_app.plant_vendor_comp_loader as
     /* UPDATE - Update the database */
     /*------------------------------*/        
     update bds_vend_comp
-    set vendor_code := rcd_hdr.vendor_code,
-      company_code := rcd_hdr.company_code,
-      create_date := rcd_hdr.create_date,
-      create_user := rcd_hdr.create_user,
-      posting_block_flag := rcd_hdr.posting_block_flag,
-      deletion_flag := rcd_hdr.deletion_flag,
-      assignment_sort_key := rcd_hdr.assignment_sort_key,
-      reconciliation_account := rcd_hdr.reconciliation_account,
-      authorisation_group := rcd_hdr.authorisation_group,
-      interest_calc_ind := rcd_hdr.interest_calc_ind,
-      payment_method := rcd_hdr.payment_method,
-      clearing_flag := rcd_hdr.clearing_flag,
-      payment_block_flag := rcd_hdr.payment_block_flag,
-      payment_terms := rcd_hdr.payment_terms,
-      shipper_account := rcd_hdr.shipper_account,
-      vendor_clerk := rcd_hdr.vendor_clerk,
-      planning_group := rcd_hdr.planning_group,
-      account_clerk_code := rcd_hdr.account_clerk_code,
-      head_office_account := rcd_hdr.head_office_account,
-      alternative_payee_account := rcd_hdr.alternative_payee_account,
-      interest_calc_key_date := rcd_hdr.interest_calc_key_date,
-      interest_calc_freq := rcd_hdr.interest_calc_freq,
-      nterest_calc_run_date := rcd_hdr.nterest_calc_run_date,
-      local_process_flag := rcd_hdr.local_process_flag,
-      bill_of_exchange_limit := rcd_hdr.bill_of_exchange_limit,
-      probable_check_paid_time := rcd_hdr.probable_check_paid_time,
-      inv_crd_check_flag := rcd_hdr.inv_crd_check_flag,
-      tolerance_group_code := rcd_hdr.tolerance_group_code,
-      house_bank_key := rcd_hdr.house_bank_key,
-      pay_item_separate_flag := rcd_hdr.pay_item_separate_flag,
-      withhold_tax_certificate := rcd_hdr.withhold_tax_certificate,
-      withhold_tax_valid_date := rcd_hdr.withhold_tax_valid_date,
-      withhold_tax_code := rcd_hdr.withhold_tax_code,
-      subsidy_flag := rcd_hdr.subsidy_flag,
-      minority_indicator := rcd_hdr.minority_indicator,
-      previous_record_number := rcd_hdr.previous_record_number,
-      payment_grouping_code := rcd_hdr.payment_grouping_code,
-      dunning_notice_group_code := rcd_hdr.dunning_notice_group_code,
-      recipient_type := rcd_hdr.recipient_type,
-      withhold_tax_exemption := rcd_hdr.withhold_tax_exemption,
-      withhold_tax_country := rcd_hdr.withhold_tax_country,
-      edi_payment_advice := rcd_hdr.edi_payment_advice,
-      release_approval_group := rcd_hdr.release_approval_group,
-      accounting_fax := rcd_hdr.accounting_fax,
-      accounting_url := rcd_hdr.accounting_url,
-      credit_payment_terms := rcd_hdr.credit_payment_terms,
-      income_tax_activity_code := rcd_hdr.income_tax_activity_code,
-      employ_tax_distbn_type := rcd_hdr.employ_tax_distbn_type,
-      periodic_account_statement := rcd_hdr.periodic_account_statement,
-      certification_date := rcd_hdr.certification_date,
-      invoice_tolerance_group := rcd_hdr.invoice_tolerance_group,
-      personnel_number := rcd_hdr.personnel_number,
-      deletion_block_flag := rcd_hdr.deletion_block_flag,
-      accounting_phone := rcd_hdr.accounting_phone,
-      execution_flag := rcd_hdr.execution_flag,
-      vendor_name_01 := rcd_hdr.vendor_name_01,
-      vendor_name_02 := rcd_hdr.vendor_name_02,
-      vendor_name_03 := rcd_hdr.vendor_name_03,
-      vendor_name_04 := rcd_hdr.vendor_name_04
-    where vendor_code := rcd_hdr.vendor_code
-      and company_code := rcd_hdr.company_code;
+    set vendor_code = rcd_hdr.vendor_code,
+      company_code = rcd_hdr.company_code,
+      create_date = rcd_hdr.create_date,
+      create_user = rcd_hdr.create_user,
+      posting_block_flag = rcd_hdr.posting_block_flag,
+      deletion_flag = rcd_hdr.deletion_flag,
+      assignment_sort_key = rcd_hdr.assignment_sort_key,
+      reconciliation_account = rcd_hdr.reconciliation_account,
+      authorisation_group = rcd_hdr.authorisation_group,
+      interest_calc_ind = rcd_hdr.interest_calc_ind,
+      payment_method = rcd_hdr.payment_method,
+      clearing_flag = rcd_hdr.clearing_flag,
+      payment_block_flag = rcd_hdr.payment_block_flag,
+      payment_terms = rcd_hdr.payment_terms,
+      shipper_account = rcd_hdr.shipper_account,
+      vendor_clerk = rcd_hdr.vendor_clerk,
+      planning_group = rcd_hdr.planning_group,
+      account_clerk_code = rcd_hdr.account_clerk_code,
+      head_office_account = rcd_hdr.head_office_account,
+      alternative_payee_account = rcd_hdr.alternative_payee_account,
+      interest_calc_key_date = rcd_hdr.interest_calc_key_date,
+      interest_calc_freq = rcd_hdr.interest_calc_freq,
+      nterest_calc_run_date = rcd_hdr.nterest_calc_run_date,
+      local_process_flag = rcd_hdr.local_process_flag,
+      bill_of_exchange_limit = rcd_hdr.bill_of_exchange_limit,
+      probable_check_paid_time = rcd_hdr.probable_check_paid_time,
+      inv_crd_check_flag = rcd_hdr.inv_crd_check_flag,
+      tolerance_group_code = rcd_hdr.tolerance_group_code,
+      house_bank_key = rcd_hdr.house_bank_key,
+      pay_item_separate_flag = rcd_hdr.pay_item_separate_flag,
+      withhold_tax_certificate = rcd_hdr.withhold_tax_certificate,
+      withhold_tax_valid_date = rcd_hdr.withhold_tax_valid_date,
+      withhold_tax_code = rcd_hdr.withhold_tax_code,
+      subsidy_flag = rcd_hdr.subsidy_flag,
+      minority_indicator = rcd_hdr.minority_indicator,
+      previous_record_number = rcd_hdr.previous_record_number,
+      payment_grouping_code = rcd_hdr.payment_grouping_code,
+      dunning_notice_group_code = rcd_hdr.dunning_notice_group_code,
+      recipient_type = rcd_hdr.recipient_type,
+      withhold_tax_exemption = rcd_hdr.withhold_tax_exemption,
+      withhold_tax_country = rcd_hdr.withhold_tax_country,
+      edi_payment_advice = rcd_hdr.edi_payment_advice,
+      release_approval_group = rcd_hdr.release_approval_group,
+      accounting_fax = rcd_hdr.accounting_fax,
+      accounting_url = rcd_hdr.accounting_url,
+      credit_payment_terms = rcd_hdr.credit_payment_terms,
+      income_tax_activity_code = rcd_hdr.income_tax_activity_code,
+      employ_tax_distbn_type = rcd_hdr.employ_tax_distbn_type,
+      periodic_account_statement = rcd_hdr.periodic_account_statement,
+      certification_date = rcd_hdr.certification_date,
+      invoice_tolerance_group = rcd_hdr.invoice_tolerance_group,
+      personnel_number = rcd_hdr.personnel_number,
+      deletion_block_flag = rcd_hdr.deletion_block_flag,
+      accounting_phone = rcd_hdr.accounting_phone,
+      execution_flag = rcd_hdr.execution_flag,
+      vendor_name_01 = rcd_hdr.vendor_name_01,
+      vendor_name_02 = rcd_hdr.vendor_name_02,
+      vendor_name_03 = rcd_hdr.vendor_name_03,
+      vendor_name_04 = rcd_hdr.vendor_name_04
+    where vendor_code = rcd_hdr.vendor_code
+      and company_code = rcd_hdr.company_code;
     
     if ( sql%notfound ) then    
       insert into bds_vend_comp
@@ -570,16 +570,16 @@ create or replace package body bds_app.plant_vendor_comp_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_vendor_comp_loader; 
+end ladpdb12_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_vendor_comp_loader to appsupport;
-grant execute on bds_app.plant_vendor_comp_loader to lics_app;
+grant execute on bds_app.ladpdb12_loader to appsupport;
+grant execute on bds_app.ladpdb12_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_vendor_comp_loader for bds_app.plant_vendor_comp_loader;
+create or replace public synonym ladpdb12_loader for bds_app.ladpdb12_loader;

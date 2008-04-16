@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_material_classfctn_loader 
+  Package : ladpdb11_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   28-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_material_classfctn_loader as
+create or replace package bds_app.ladpdb11_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_material_classfctn_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_material_classfctn_loader; 
+end ladpdb11_loader; 
 /
 
-create or replace package body bds_app.plant_material_classfctn_loader as
+create or replace package body bds_app.ladpdb11_loader as
 
   /*-*/
   /* Private exceptions 
@@ -49,7 +49,7 @@ create or replace package body bds_app.plant_material_classfctn_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_material_classfctn%rowtype;
+  rcd_hdr bds_material_classfctn_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -512,16 +512,16 @@ create or replace package body bds_app.plant_material_classfctn_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_material_classfctn_loader; 
+end ladpdb11_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_material_classfctn_loader to appsupport;
-grant execute on bds_app.plant_material_classfctn_loader to lics_app;
+grant execute on bds_app.ladpdb11_loader to appsupport;
+grant execute on bds_app.ladpdb11_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_material_classfctn_loader for bds_app.plant_material_classfctn_loader;
+create or replace public synonym ladpdb11_loader for bds_app.ladpdb11_loader;

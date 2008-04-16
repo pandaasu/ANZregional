@@ -9,6 +9,12 @@
   ----------- 
   Vendor Company Data for Plant databases 
 
+  EXECUTE - 
+    Send Vendor Company data since last successful send 
+    
+  EXECUTE - 
+    Send Vendor Company data based on the specified action.       
+
   1. PAR_ACTION (MANDATORY) 
 
     *ALL - send all vendor comp data  
@@ -41,6 +47,7 @@ create or replace package ics_app.plant_vendor_comp_extract as
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_vendor_comp_extract;
@@ -67,7 +74,10 @@ create or replace package body ics_app.plant_vendor_comp_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
-  var_material_code bds_bom_all.bom_material_code%type;
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;  
+  var_vendor_code bds_vend_comp.vendor_code%type;
   
   /*-*/
   /* Private declarations 
@@ -76,6 +86,25 @@ create or replace package body ics_app.plant_vendor_comp_extract as
   type typ_definition is table of rcd_definition index by binary_integer;
      
   tbl_definition typ_definition;
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB12');
+  
+    execute('*ALL',null,'*MCA');
+  end;  
 
   /***********************************************/
   /* This procedure performs the execute routine */
@@ -127,25 +156,29 @@ create or replace package body ics_app.plant_vendor_comp_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if ( par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB12.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB12.2');   
+      if ( par_site in ('*ALL','*WGI') ) then
+        execute_send('LADPDB122');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if ( par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB12.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if ( par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB12.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB12.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if ( par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB12.6');   
       end if;
     end if; 
+
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB12',var_start_date);
+    end if;  
       
   /*-------------------*/
   /* Exception handler */
@@ -178,7 +211,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_vendor_comp_extract - ' || 'material_code: ' || var_material_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_vendor_comp_extract - ' || 'material_code: ' || var_vendor_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -257,11 +290,13 @@ create or replace package body ics_app.plant_vendor_comp_extract as
         t01.vendor_name_02 as vendor_name_02,
         t01.vendor_name_03 as vendor_name_03, 
         t01.vendor_name_04 as vendor_name_04
-      from bds_vend_comp t01
-      where t01.deletion_flag is null
+      from bds_vend_comp t01,
+        bds_vend_header t02
+      where t01.vendor_code = t02.vendor_code  
+        and t01.deletion_flag is null
         and 
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date))
           or (par_action = '*VENDOR' and ltrim(t01.vendor_code,'0') = ltrim(par_data,'0'))
         );
     rcd_bds_vend_comp csr_bds_vend_comp%rowtype;
@@ -291,7 +326,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
       /*-*/
       /* Store current customer code for error message purposes 
       /*-*/
-      var_material_code := rcd_bds_vend_comp.bom_material_code;
+      var_vendor_code := rcd_bds_vend_comp.vendor_code;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_code,' ')),10,' ')

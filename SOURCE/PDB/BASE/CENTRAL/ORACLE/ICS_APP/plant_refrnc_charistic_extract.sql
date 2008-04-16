@@ -105,29 +105,29 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI or NULL');
     end if;
     
-    var_start := execute_extract;
+    var_start := execute_extract(var_charistic_code, var_charistic_value_code);
         
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if (par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB07.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if (par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB07.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if (par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB07.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if (par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB07.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB07.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if (par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB07.6');   
       end if;
     end if; 
@@ -163,7 +163,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_refrnc_charistic_extract - material_code: ' || var_material_code || ' - alternative_bom: ' || var_alternative || ' - plant_code: ' || var_plant || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_refrnc_charistic_extract - charistic_code: ' || var_charistic_code || ' - charistic_value_code: ' || var_charistic_value_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -222,7 +222,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
         || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_code,' ')),30,' ')
         || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_shrt_desc,' ')),256,' ')
         || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_long_desc,' ')),256,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_idoc_number,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_idoc_number,'0')),38,' ')
         || rpad(to_char(nvl(rcd_refrnc_charistic.sap_idoc_timestamp,' ')),14,' ')
         || rpad(to_char(nvl(rcd_refrnc_charistic.change_flag,' ')),1,' ');
 

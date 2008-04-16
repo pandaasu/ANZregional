@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_refrnc_charistic_loader 
+  Package : ladpdb07_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   19-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_refrnc_charistic_loader as
+create or replace package bds_app.ladpdb07_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_refrnc_charistic_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_refrnc_charistic_loader; 
+end ladpdb07_loader; 
 /
 
-create or replace package body bds_app.plant_refrnc_charistic_loader as
+create or replace package body bds_app.ladpdb07_loader as
 
   /*-*/
   /* Private exceptions 
@@ -49,7 +49,7 @@ create or replace package body bds_app.plant_refrnc_charistic_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_refrnc_charistic%rowtype;
+  rcd_hdr bds_refrnc_charistic_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -196,7 +196,7 @@ create or replace package body bds_app.plant_refrnc_charistic_loader as
   /*-------------*/
   end complete_transaction;
 
-  procedure process_record_rch(par_record in varchar2) is
+  procedure process_record_hdr(par_record in varchar2) is
     
   /*-------------*/
   /* Begin block */
@@ -272,7 +272,7 @@ create or replace package body bds_app.plant_refrnc_charistic_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_refrnc_charistic
+    update bds_refrnc_charistic_ics
     set sap_charistic_code = rcd_hdr.sap_charistic_code,
       sap_charistic_value_code = rcd_hdr.sap_charistic_value_code,
       sap_charistic_value_shrt_desc = rcd_hdr.sap_charistic_value_shrt_desc,
@@ -284,7 +284,7 @@ create or replace package body bds_app.plant_refrnc_charistic_loader as
       and sap_charistic_value_code = rcd_hdr.sap_charistic_value_code;
     
     if ( sql%notfound ) then    
-      insert into bds_refrnc_charistic
+      insert into bds_refrnc_charistic_ics
       (
         sap_charistic_code,
         sap_charistic_value_code,
@@ -309,18 +309,18 @@ create or replace package body bds_app.plant_refrnc_charistic_loader as
   /*-------------*/
   /* End routine */
   /*-------------*/
-  end process_record_rch;
+  end process_record_hdr;
     
-end plant_refrnc_charistic_loader; 
+end ladpdb07_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_refrnc_charistic_loader to appsupport;
-grant execute on bds_app.plant_refrnc_charistic_loader to lics_app;
+grant execute on bds_app.ladpdb07_loader to appsupport;
+grant execute on bds_app.ladpdb07_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_refrnc_charistic_loader for bds_app.plant_refrnc_charistic_loader;
+create or replace public synonym ladpdb07_loader for bds_app.ladpdb07_loader;

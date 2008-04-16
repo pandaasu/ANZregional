@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_bom_det_loader 
+  Package : ladpdb04_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   14-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_bom_det_loader as
+create or replace package bds_app.ladpdb04_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_bom_det_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_bom_det_loader; 
+end ladpdb04_loader; 
 /
 
-create or replace package body bds_app.plant_bom_det_loader as
+create or replace package body bds_app.ladpdb04_loader as
 
   /*-*/
   /* Private exceptions 
@@ -50,7 +50,7 @@ create or replace package body bds_app.plant_bom_det_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_addr_customer_test%rowtype;
+  rcd_hdr bds_bom_det%rowtype;
   var_bom_material_code rcd_hdr.bom_material_code%type;
 
   /************************************************/
@@ -77,25 +77,25 @@ create or replace package body bds_app.plant_bom_det_loader as
     
     /*-*/
     lics_inbound_utility.set_definition('HDR','ID',3);
-    lics_inbound_utility.set_definition('HDR','BOM_MATERIAL_CODE', 10);
-    lics_inbound_utility.set_definition('HDR','BOM_ALTERNATIVE', 5);
-    lics_inbound_utility.set_definition('HDR','BOM_PLANT', 14);
-    lics_inbound_utility.set_definition('HDR','BOM_NUMBER', 14);
-    lics_inbound_utility.set_definition('HDR','BOM_MSG_FUNCTION', 4);
-    lics_inbound_utility.set_definition('HDR','BOM_USAGE', 40);
-    lics_inbound_utility.set_definition('HDR','BOM_EFF_TO_DATE', 40);
-    lics_inbound_utility.set_definition('HDR','BOM_BASE_QTY', 40);
-    lics_inbound_utility.set_definition('HDR','BOM_BASE_UOM', 40);
-    lics_inbound_utility.set_definition('HDR','BOM_STATUS', 40);
-    lics_inbound_utility.set_definition('HDR','ITEM_SEQUENCE', 10);
-    lics_inbound_utility.set_definition('HDR','ITEM_NUMBER', 10);
-    lics_inbound_utility.set_definition('HDR','ITEM_MSG_FUNCTION', 10);
-    lics_inbound_utility.set_definition('HDR','ITEM_MATERIAL_CODE', 10);
+    lics_inbound_utility.set_definition('HDR','BOM_MATERIAL_CODE', 18);
+    lics_inbound_utility.set_definition('HDR','BOM_ALTERNATIVE', 2);
+    lics_inbound_utility.set_definition('HDR','BOM_PLANT', 4);
+    lics_inbound_utility.set_definition('HDR','BOM_NUMBER', 8);
+    lics_inbound_utility.set_definition('HDR','BOM_MSG_FUNCTION', 3);
+    lics_inbound_utility.set_definition('HDR','BOM_USAGE', 1);
+    lics_inbound_utility.set_definition('HDR','BOM_EFF_TO_DATE', 14);
+    lics_inbound_utility.set_definition('HDR','BOM_BASE_QTY', 38);
+    lics_inbound_utility.set_definition('HDR','BOM_BASE_UOM', 3);
+    lics_inbound_utility.set_definition('HDR','BOM_STATUS', 2);
+    lics_inbound_utility.set_definition('HDR','ITEM_SEQUENCE', 38);
+    lics_inbound_utility.set_definition('HDR','ITEM_NUMBER', 4);
+    lics_inbound_utility.set_definition('HDR','ITEM_MSG_FUNCTION', 3);
+    lics_inbound_utility.set_definition('HDR','ITEM_MATERIAL_CODE', 18);
     lics_inbound_utility.set_definition('HDR','ITEM_CATEGORY', 1);
-    lics_inbound_utility.set_definition('HDR','ITEM_BASE_QTY', 40);
+    lics_inbound_utility.set_definition('HDR','ITEM_BASE_QTY', 38);
     lics_inbound_utility.set_definition('HDR','ITEM_BASE_UOM', 3);
-    lics_inbound_utility.set_definition('HDR','ITEM_EFF_FROM_DATE', 3);
-    lics_inbound_utility.set_definition('HDR','ITEM_EFF_TO_DATE', 2);
+    lics_inbound_utility.set_definition('HDR','ITEM_EFF_FROM_DATE', 14);
+    lics_inbound_utility.set_definition('HDR','ITEM_EFF_TO_DATE', 14);
       
    /*-------------*/
    /* End routine */
@@ -248,19 +248,19 @@ create or replace package body bds_app.plant_bom_det_loader as
     rcd_hdr.bom_number := lics_inbound_utility.get_variable('BOM_NUMBER');
     rcd_hdr.bom_msg_function := lics_inbound_utility.get_variable('BOM_MSG_FUNCTION');
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
-    rcd_hdr.bom_eff_to_date := lics_inbound_utility.get_variable('BOM_EFF_TO_DATE');
-    rcd_hdr.bom_base_qty := lics_inbound_utility.get_variable('BOM_BASE_QTY');
+    rcd_hdr.bom_eff_to_date := lics_inbound_utility.get_date('BOM_EFF_TO_DATE','yyyymmddhh24miss');
+    rcd_hdr.bom_base_qty := lics_inbound_utility.get_number('BOM_BASE_QTY',null);
     rcd_hdr.bom_base_uom := lics_inbound_utility.get_variable('BOM_BASE_UOM');
     rcd_hdr.bom_status := lics_inbound_utility.get_variable('BOM_STATUS');
-    rcd_hdr.item_sequence := lics_inbound_utility.get_variable('ITEM_SEQUENCE');
+    rcd_hdr.item_sequence := lics_inbound_utility.get_number('ITEM_SEQUENCE',null);
     rcd_hdr.item_number := lics_inbound_utility.get_variable('ITEM_NUMBER');
     rcd_hdr.item_msg_function := lics_inbound_utility.get_variable('ITEM_MSG_FUNCTION');
     rcd_hdr.item_material_code := lics_inbound_utility.get_variable('ITEM_MATERIAL_CODE');
     rcd_hdr.item_category := lics_inbound_utility.get_variable('ITEM_CATEGORY');
-    rcd_hdr.item_base_qty := lics_inbound_utility.get_variable('ITEM_BASE_QTY');
+    rcd_hdr.item_base_qty := lics_inbound_utility.get_number('ITEM_BASE_QTY',null);
     rcd_hdr.item_base_uom := lics_inbound_utility.get_variable('ITEM_BASE_UOM');
-    rcd_hdr.item_eff_from_date := lics_inbound_utility.get_variable('ITEM_EFF_FROM_DATE');
-    rcd_hdr.item_eff_to_date := lics_inbound_utility.get_variable('ITEM_EFF_TO_DATE');
+    rcd_hdr.item_eff_from_date := lics_inbound_utility.get_date('ITEM_EFF_FROM_DATE','yyyymmddhh24miss');
+    rcd_hdr.item_eff_to_date := lics_inbound_utility.get_date('ITEM_EFF_TO_DATE','yyyymmddhh24miss');
     
     /*-*/
     /* Retrieve exceptions raised 
@@ -390,16 +390,16 @@ create or replace package body bds_app.plant_bom_det_loader as
   /*-------------*/
   end process_record_hdr;
   
-end plant_bom_det_loader; 
+end ladpdb04_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_bom_det_loader to appsupport;
-grant execute on bds_app.plant_bom_det_loader to lics_app;
+grant execute on bds_app.ladpdb04_loader to appsupport;
+grant execute on bds_app.ladpdb04_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_bom_det_loader for bds_app.plant_bom_det_loader;
+create or replace public synonym ladpdb04_loader for bds_app.ladpdb04_loader;

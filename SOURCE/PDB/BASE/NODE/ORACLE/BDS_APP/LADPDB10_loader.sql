@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_cust_sales_area_loader 
+  Package : ladpdb10_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -18,7 +18,7 @@
 
 /* Using bds_cust_sales_area_ics table for SNACK testing only.  Replace for other sites */ 
 
-create or replace package bds_app.plant_cust_sales_area_loader as
+create or replace package bds_app.ladpdb10_loader as
 
   /*-*/
   /* Public declarations 
@@ -27,10 +27,10 @@ create or replace package bds_app.plant_cust_sales_area_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_cust_sales_area_loader; 
+end ladpdb10_loader; 
 /
 
-create or replace package body bds_app.plant_cust_sales_area_loader as
+create or replace package body bds_app.ladpdb10_loader as
 
   /*-*/
   /* Private exceptions 
@@ -611,16 +611,16 @@ create or replace package body bds_app.plant_cust_sales_area_loader as
   /*-------------*/
   end process_record_hdr;
   
-end plant_cust_sales_area_loader; 
+end ladpdb10_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_cust_sales_area_loader to appsupport;
-grant execute on bds_app.plant_cust_sales_area_loader to lics_app;
+grant execute on bds_app.ladpdb10_loader to appsupport;
+grant execute on bds_app.ladpdb10_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_cust_sales_area_loader for bds_app.plant_cust_sales_area_loader;
+create or replace public synonym ladpdb10_loader for bds_app.ladpdb10_loader;

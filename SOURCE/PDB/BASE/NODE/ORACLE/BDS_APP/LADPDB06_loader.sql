@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_prodctn_resrc_loader 
+  Package : ladpdb06_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   19-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_prodctn_resrc_loader as
+create or replace package bds_app.ladpdb06_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_prodctn_resrc_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_prodctn_resrc_loader; 
+end ladpdb06_loader; 
 /
 
-create or replace package body bds_app.plant_prodctn_resrc_loader as
+create or replace package body bds_app.ladpdb06_loader as
 
   /*-*/
   /* Private exceptions 
@@ -49,7 +49,7 @@ create or replace package body bds_app.plant_prodctn_resrc_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_prodctn_resrc_en%rowtype;
+  rcd_hdr bds_prodctn_resrc_en_ics%rowtype;
   /************************************************/
   /* This procedure performs the on start routine */
   /************************************************/
@@ -260,7 +260,7 @@ create or replace package body bds_app.plant_prodctn_resrc_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_prodctn_resrc_en
+    update bds_prodctn_resrc_en_ics
     set resrc_id = rcd_hdr.resrc_id,
       resrc_code = rcd_hdr.resrc_code,
       resrc_text = rcd_hdr.resrc_text,
@@ -268,7 +268,7 @@ create or replace package body bds_app.plant_prodctn_resrc_loader as
     where resrc_id = rcd_hdr.resrc_id;
     
     if ( sql%notfound ) then    
-      insert into bds_prodctn_resrc_en
+      insert into bds_prodctn_resrc_en_ics
       (
         resrc_id, 
         resrc_code,
@@ -289,16 +289,16 @@ create or replace package body bds_app.plant_prodctn_resrc_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_prodctn_resrc_loader; 
+end ladpdb06_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_prodctn_resrc_loader to appsupport;
-grant execute on bds_app.plant_prodctn_resrc_loader to lics_app;
+grant execute on bds_app.ladpdb06_loader to appsupport;
+grant execute on bds_app.ladpdb06_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_prodctn_resrc_loader for bds_app.plant_prodctn_resrc_loader;
+create or replace public synonym ladpdb06_loader for bds_app.ladpdb06_loader;

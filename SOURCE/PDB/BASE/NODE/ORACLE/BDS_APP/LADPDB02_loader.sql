@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_material_loader 
+  Package : ladpdb02_loader 
   Owner   : BDS_APP 
   Author  : Jeff Phillipson 
 
@@ -19,7 +19,7 @@
                                 plant_material_extract 
 *******************************************************************************/
 
-create or replace package bds_app.plant_material_loader as
+create or replace package bds_app.ladpdb02_loader as
 
   /*-*/
   /* Public declarations 
@@ -28,10 +28,10 @@ create or replace package bds_app.plant_material_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_material_loader; 
+end ladpdb02_loader; 
 /
 
-create or replace package body bds_app.plant_material_loader as
+create or replace package body bds_app.ladpdb02_loader as
 
   /*-*/
   /* Private exceptions 
@@ -47,6 +47,7 @@ create or replace package body bds_app.plant_material_loader as
   procedure process_record_hdr(par_record in varchar2);
   procedure process_record_stx(par_record in varchar2);
   procedure process_record_pkg(par_record in varchar2);
+  procedure process_record_uom(par_record in varchar2);
 
 
   /*-*/
@@ -78,7 +79,7 @@ create or replace package body bds_app.plant_material_loader as
     var_trn_start := false;
     var_trn_ignore := false;
     var_trn_error := false;
-
+    
     /*-*/
     /* Initialise the inbound definitions 
     /*-*/ 
@@ -182,33 +183,33 @@ create or replace package body bds_app.plant_material_loader as
     lics_inbound_utility.set_definition('PKG','UOM', 3); 
       
     /*-*/
-    lics_inbound_utility.set_definition('UOM','ID',10);
-    lics_inbound_utility.set_definition('UOM','UOM_CODE',10);
-    lics_inbound_utility.set_definition('UOM','SAP_FUNCTION',10);
-    lics_inbound_utility.set_definition('UOM','BASE_UOM_NUMERATOR',10);
-    lics_inbound_utility.set_definition('UOM','BASE_UOM_DENOMINATOR',10);
-    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_TO_BASE_UOM',10);
-    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_FROM_BASE_UOM',10);
-    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO',10);
-    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO_CTGRY',10);
-    lics_inbound_utility.set_definition('UOM','LENGTH',10);
-    lics_inbound_utility.set_definition('UOM','WIDTH',10);
-    lics_inbound_utility.set_definition('UOM','HEIGHT',10);
-    lics_inbound_utility.set_definition('UOM','DIMENSION_UOM',10);
-    lics_inbound_utility.set_definition('UOM','VOLUME',10);
-    lics_inbound_utility.set_definition('UOM','VOLUME_UNIT',10);
-    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT',10);
-    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT_UNIT',10);
-    lics_inbound_utility.set_definition('UOM','LOWER_LEVEL_HIERACHY_UOM',10);
-    lics_inbound_utility.set_definition('UOM','GLOBAL_TRADE_ITEM_VARIANT',10);
-    lics_inbound_utility.set_definition('UOM','MARS_MUTLI_CONVRSN_UOM_INDCTR',10);
-    lics_inbound_utility.set_definition('UOM','MARS_PC_ITEM_CODE',10);
-    lics_inbound_utility.set_definition('UOM','MARS_PC_LEVEL',10);
-    lics_inbound_utility.set_definition('UOM','MARS_ORDER_UOM_PRFRNC_INDCTR',10);
-    lics_inbound_utility.set_definition('UOM','MARS_SALES_UOM_PRFRNC_INDCTR',10);
-    lics_inbound_utility.set_definition('UOM','MARS_ISSUE_UOM_PRFRNC_INDCTR',10);
-    lics_inbound_utility.set_definition('UOM','MARS_WM_UOM_PRFRNC_INDCTR',10);
-    lics_inbound_utility.set_definition('UOM','MARS_RPRSNTTV_MATERIAL_CODE',10);
+    lics_inbound_utility.set_definition('UOM','ID',3);
+    lics_inbound_utility.set_definition('UOM','UOM_CODE',3);
+    lics_inbound_utility.set_definition('UOM','SAP_FUNCTION',3);
+    lics_inbound_utility.set_definition('UOM','BASE_UOM_NUMERATOR',38);
+    lics_inbound_utility.set_definition('UOM','BASE_UOM_DENOMINATOR',38);
+    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_TO_BASE_UOM',38);
+    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_FROM_BASE_UOM',38);
+    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO',18);
+    lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO_CTGRY',2);
+    lics_inbound_utility.set_definition('UOM','LENGTH',38);
+    lics_inbound_utility.set_definition('UOM','WIDTH',38);
+    lics_inbound_utility.set_definition('UOM','HEIGHT',38);
+    lics_inbound_utility.set_definition('UOM','DIMENSION_UOM',3);
+    lics_inbound_utility.set_definition('UOM','VOLUME',38);
+    lics_inbound_utility.set_definition('UOM','VOLUME_UNIT',3);
+    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT',38);
+    lics_inbound_utility.set_definition('UOM','GROSS_WEIGHT_UNIT',3);
+    lics_inbound_utility.set_definition('UOM','LOWER_LEVEL_HIERACHY_UOM',3);
+    lics_inbound_utility.set_definition('UOM','GLOBAL_TRADE_ITEM_VARIANT',2);
+    lics_inbound_utility.set_definition('UOM','MARS_MUTLI_CONVRSN_UOM_INDCTR',1);
+    lics_inbound_utility.set_definition('UOM','MARS_PC_ITEM_CODE',18);
+    lics_inbound_utility.set_definition('UOM','MARS_PC_LEVEL',38);
+    lics_inbound_utility.set_definition('UOM','MARS_ORDER_UOM_PRFRNC_INDCTR',1);
+    lics_inbound_utility.set_definition('UOM','MARS_SALES_UOM_PRFRNC_INDCTR',1);
+    lics_inbound_utility.set_definition('UOM','MARS_ISSUE_UOM_PRFRNC_INDCTR',1);
+    lics_inbound_utility.set_definition('UOM','MARS_WM_UOM_PRFRNC_INDCTR',1);
+    lics_inbound_utility.set_definition('UOM','MARS_RPRSNTTV_MATERIAL_CODE',18);
     
    /*-------------*/
    /* End routine */
@@ -274,7 +275,7 @@ create or replace package body bds_app.plant_material_loader as
     /* Complete the Transaction 
     /*-*/
     complete_transaction;
-
+    
   /*-------------*/
   /* End routine */
   /*-------------*/
@@ -331,12 +332,7 @@ create or replace package body bds_app.plant_material_loader as
   /* This procedure performs the record CTL routine */
   /**************************************************/
   procedure process_record_ctl(par_record in varchar2) is              
-  
-    /*-*/
-    /* Local definitions
-    /*-*/
-    var_exists boolean;
-                     
+                       
     /*-*/
     /* Local cursors 
     /*-*/
@@ -375,29 +371,25 @@ create or replace package body bds_app.plant_material_loader as
     /* RETRIEVE - Retrieve the field values 
     /*-*/
     rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-    rcd_hdr.msg_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
-    
+    rcd_hdr.msg_timestamp := lics_inbound_utility.get_variable('MSG_TIMESTAMP');
+        
     /*-*/
     /* Validate message sequence  
     /*-*/
     open csr_bds_material_plant_mfanz;
     fetch csr_bds_material_plant_mfanz into rcd_bds_material_plant_mfanz;
     
-    if ( csr_bds_material_plant_mfanz%notfound ) then
-      var_exists := false;
-    end if;
-    
-    close csr_bds_material_plant_mfanz;
-    
-    if ( var_exists = true ) then
-      if ( rcd_hdr.msg_timestamp > rcd_bds_material_plant_mfanz.msg_timestamp ) then
+    if ( csr_bds_material_plant_mfanz%found ) then      
+      if ( rcd_hdr.msg_timestamp >= rcd_bds_material_plant_mfanz.msg_timestamp ) then
         delete from bds_material_pkg_instr_det_t where sap_material_code = rcd_hdr.sap_material_code;
         delete from bds_material_uom where sap_material_code = rcd_hdr.sap_material_code;
-        delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;
+        delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;        
       else
         var_trn_ignore := true;
       end if;
-    end if;    
+    end if;   
+     
+    close csr_bds_material_plant_mfanz;
     
   /*-------------*/
   /* End routine */
@@ -890,7 +882,7 @@ create or replace package body bds_app.plant_material_loader as
     )
     values 
     (
-      rcd_pkg.sap_material_code,
+      rcd_hdr.sap_material_code,
       rcd_pkg.pkg_instr_table_usage,
       rcd_pkg.pkg_instr_table,
       rcd_pkg.pkg_instr_type,
@@ -1042,7 +1034,7 @@ create or replace package body bds_app.plant_material_loader as
     )
     values 
     (
-      rcd_uom.sap_material_code,
+      rcd_hdr.sap_material_code,
       rcd_uom.uom_code,
       rcd_uom.sap_function,
       rcd_uom.base_uom_numerator,
@@ -1076,16 +1068,16 @@ create or replace package body bds_app.plant_material_loader as
   /*-------------*/
   end process_record_uom;  
   
-end plant_material_loader; 
+end ladpdb02_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_material_loader to appsupport;
-grant execute on bds_app.plant_material_loader to lics_app;
+grant execute on bds_app.ladpdb02_loader to appsupport;
+grant execute on bds_app.ladpdb02_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_material_loader for bds_app.plant_material_loader;
+create or replace public synonym ladpdb02_loader for bds_app.ladpdb02_loader;

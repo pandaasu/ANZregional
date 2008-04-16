@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_intransit_loader 
+  Package : ladpdb15_loader 
   Owner   : bds_app  
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   09-Apr-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_intransit_loader as
+create or replace package bds_app.ladpdb15_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_intransit_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_intransit_loader ; 
+end ladpdb15_loader ; 
 /
 
-create or replace package body bds_app.plant_intransit_loader as
+create or replace package body bds_app.ladpdb15_loader as
 
   /*-*/
   /* Private exceptions 
@@ -540,16 +540,16 @@ create or replace package body bds_app.plant_intransit_loader as
   /*-------------*/
   end process_record_det;
   
-end plant_intransit_loader; 
+end ladpdb15_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_intransit_loader to appsupport;
-grant execute on bds_app.plant_intransit_loader to lics_app;
+grant execute on bds_app.ladpdb15_loader to appsupport;
+grant execute on bds_app.ladpdb15_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_intransit_loader for bds_app.plant_intransit_loader;
+create or replace public synonym ladpdb15_loader for bds_app.ladpdb15_loader;

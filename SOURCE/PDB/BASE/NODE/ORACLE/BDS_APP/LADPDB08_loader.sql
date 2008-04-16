@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_refrnc_plant_loader 
+  Package : ladpdb08_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   19-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_refrnc_plant_loader as
+create or replace package bds_app.ladpdb08_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_refrnc_plant_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_refrnc_plant_loader; 
+end ladpdb08_loader; 
 /
 
-create or replace package body bds_app.plant_refrnc_plant_loader as
+create or replace package body bds_app.ladpdb08_loader as
 
   /*-*/
   /* Private exceptions 
@@ -49,7 +49,7 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_rpl bds_refrnc_plant%rowtype;
+  rcd_hdr bds_refrnc_plant_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -73,7 +73,8 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
     /*-*/ 
     lics_inbound_utility.clear_definition;  
     
-    /*-*/  
+    /*-*/
+    lics_inbound_utility.set_definition('HDR','ID', 3);  
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);  
     lics_inbound_utility.set_definition('HDR','SAP_IDOC_NUMBER', 38);  
     lics_inbound_utility.set_definition('HDR','SAP_IDOC_TIMESTAMP', 14);  
@@ -266,7 +267,7 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
     /*-------------------------------*/
     /* PARSE - Parse the data record */
     /*-------------------------------*/
-    lics_inbound_utility.parse_record('BOM', par_record);
+    lics_inbound_utility.parse_record('HDR', par_record);
     
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */  
@@ -364,7 +365,7 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_refrnc_plant
+    update bds_refrnc_plant_ics
     set plant_code = rcd_hdr.plant_code, 
       sap_idoc_number = rcd_hdr.sap_idoc_number, 
       sap_idoc_timestamp = rcd_hdr.sap_idoc_timestamp, 
@@ -424,7 +425,7 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
     where plant_code = rcd_hdr.plant_code;
     
     if ( sql%notfound ) then    
-      insert into bds_refrnc_plant
+      insert into bds_refrnc_plant_ics
       (
         plant_code, 
         sap_idoc_number, 
@@ -549,16 +550,16 @@ create or replace package body bds_app.plant_refrnc_plant_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_refrnc_plant_loader; 
+end ladpdb08_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_refrnc_plant_loader to appsupport;
-grant execute on bds_app.plant_refrnc_plant_loader to lics_app;
+grant execute on bds_app.ladpdb08_loader to appsupport;
+grant execute on bds_app.ladpdb08_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_refrnc_plant_loader for bds_app.plant_refrnc_plant_loader;
+create or replace public synonym ladpdb08_loader for bds_app.ladpdb08_loader;

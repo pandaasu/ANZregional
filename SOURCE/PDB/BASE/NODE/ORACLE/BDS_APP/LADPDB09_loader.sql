@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_refrnc_purchasing_src_loader 
+  Package : ladpdb09_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   19-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_refrnc_purchasing_src_loader as
+create or replace package bds_app.ladpdb09_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_refrnc_purchasing_src_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_refrnc_purchasing_src_loader; 
+end ladpdb09_loader; 
 /
 
-create or replace package body bds_app.plant_refrnc_purchasing_src_loader as
+create or replace package body bds_app.ladpdb09_loader as
 
   /*-*/
   /* Private exceptions 
@@ -49,7 +49,7 @@ create or replace package body bds_app.plant_refrnc_purchasing_src_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_rpr bds_refrnc_purchasing_src%rowtype;
+  rcd_hdr bds_refrnc_prchsing_src_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -308,7 +308,7 @@ create or replace package body bds_app.plant_refrnc_purchasing_src_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_refrnc_purchasing_src
+    update bds_refrnc_prchsing_src_ics
     set sap_material_code = rcd_hdr.sap_material_code, 
       plant_code = rcd_hdr.plant_code, 
       record_no = rcd_hdr.record_no, 
@@ -337,7 +337,7 @@ create or replace package body bds_app.plant_refrnc_purchasing_src_loader as
       and record_no = rcd_hdr.record_no; 
     
     if ( sql%notfound ) then    
-      insert into bds_refrnc_purchasing_src
+      insert into bds_refrnc_prchsing_src_ics
       (
         sap_material_code, 
         plant_code, 
@@ -396,16 +396,16 @@ create or replace package body bds_app.plant_refrnc_purchasing_src_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_refrnc_purchasing_src_loader; 
+end ladpdb09_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_refrnc_purchasing_src_loader to appsupport;
-grant execute on bds_app.plant_refrnc_purchasing_src_loader to lics_app;
+grant execute on bds_app.ladpdb09_loader to appsupport;
+grant execute on bds_app.ladpdb09_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_refrnc_purchasing_src_loader for bds_app.plant_refrnc_purchasing_src_loader;
+create or replace public synonym ladpdb09_loader for bds_app.ladpdb09_loader;

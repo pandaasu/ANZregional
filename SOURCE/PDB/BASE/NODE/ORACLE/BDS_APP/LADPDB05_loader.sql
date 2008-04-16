@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_bom_alternative_loader 
+  Package : ladpdb05_loader 
   Owner   : bds_app 
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   19-Mar-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_bom_alternative_loader as
+create or replace package bds_app.ladpdb05_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_bom_alternative_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_bom_alternative_loader; 
+end ladpdb05_loader; 
 /
 
-create or replace package body bds_app.plant_bom_alternative_loader as
+create or replace package body bds_app.ladpdb05_loader as
 
   /*-*/
   /* Private exceptions 
@@ -78,6 +78,7 @@ create or replace package body bds_app.plant_bom_alternative_loader as
     lics_inbound_utility.set_definition('HDR','BOM_MATERIAL_CODE', 18);  
     lics_inbound_utility.set_definition('HDR','BOM_ALTERNATIVE', 2);  
     lics_inbound_utility.set_definition('HDR','BOM_PLANT', 4);  
+    lics_inbound_utility.set_definition('HDR','BOM_USAGE', 1);  
     lics_inbound_utility.set_definition('HDR','BOM_EFF_FROM_DATE', 14);
       
    /*-------------*/
@@ -223,7 +224,8 @@ create or replace package body bds_app.plant_bom_alternative_loader as
     rcd_hdr.bom_material_code := lics_inbound_utility.get_variable('BOM_MATERIAL_CODE');
     rcd_hdr.bom_alternative := lics_inbound_utility.get_variable('BOM_ALTERNATIVE');
     rcd_hdr.bom_plant := lics_inbound_utility.get_variable('BOM_PLANT');
-    rcd_hdr.bom_eff_from_date := lics_inbound_utility.get_variable('BOM_EFF_FROM_DATE');
+    rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
+    rcd_hdr.bom_eff_from_date := lics_inbound_utility.get_date('BOM_EFF_FROM_DATE','yyyymmddhh24miss');
     
     /*-*/
     /* Retrieve exceptions raised 
@@ -243,16 +245,21 @@ create or replace package body bds_app.plant_bom_alternative_loader as
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_MATERIAL_CODE');
       var_trn_error := true;
     end if;
-    
-    if ( rcd_hdr.bom_alternative is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_ALTERNATIVE');
-      var_trn_error := true;
-    end if;
           
     if ( rcd_hdr.bom_plant is null ) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_PLANT');
       var_trn_error := true;
     end if;
+        
+    if ( rcd_hdr.bom_usage is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_USAGE');
+      var_trn_error := true;
+    end if;
+    
+    if ( rcd_hdr.bom_eff_from_date is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_EFF_FROM_DATE');
+      var_trn_error := true;
+    end if;    
     
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
@@ -275,6 +282,7 @@ create or replace package body bds_app.plant_bom_alternative_loader as
     set bom_material_code = rcd_hdr.bom_material_code,
       bom_alternative = rcd_hdr.bom_alternative,
       bom_plant = rcd_hdr.bom_plant,
+      bom_usage = rcd_hdr.bom_usage,
       bom_eff_from_date = rcd_hdr.bom_eff_from_date
     where bom_material_code = rcd_hdr.bom_material_code
       and bom_alternative = rcd_hdr.bom_alternative
@@ -285,7 +293,8 @@ create or replace package body bds_app.plant_bom_alternative_loader as
       (
         bom_material_code, 
         bom_alternative,
-        bom_plant,        
+        bom_plant,  
+        bom_usage,        
         bom_eff_from_date
       )
       values 
@@ -293,6 +302,7 @@ create or replace package body bds_app.plant_bom_alternative_loader as
         rcd_hdr.bom_material_code, 
         rcd_hdr.bom_alternative,
         rcd_hdr.bom_plant,
+        rcd_hdr.bom_usage,
         rcd_hdr.bom_eff_from_date
       );
     end if;
@@ -302,16 +312,16 @@ create or replace package body bds_app.plant_bom_alternative_loader as
   /*-------------*/
   end process_record_hdr;
     
-end plant_bom_alternative_loader; 
+end ladpdb05_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_bom_alternative_loader to appsupport;
-grant execute on bds_app.plant_bom_alternative_loader to lics_app;
+grant execute on bds_app.ladpdb05_loader to appsupport;
+grant execute on bds_app.ladpdb05_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_bom_alternative_loader for bds_app.plant_bom_alternative_loader;
+create or replace public synonym ladpdb05_loader for bds_app.ladpdb05_loader;

@@ -2,7 +2,7 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_refrnc_purchasing_src_extract 
+  Package : plant_refrnc_prch_src_extract 
   Owner   : ics_app 
 
   Description 
@@ -25,7 +25,7 @@
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_refrnc_purchasing_src_extract as
+create or replace package ics_app.plant_refrnc_prch_src_extract as
 
   /*-*/
   /* Public declarations 
@@ -33,13 +33,13 @@ create or replace package ics_app.plant_refrnc_purchasing_src_extract as
   procedure execute(par_site in varchar2 default '*ALL');
   procedure execute(par_material_code in varchar2, par_plant_code in varchar2, par_record_no in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_refrnc_purchasing_src_extract;
+end plant_refrnc_prch_src_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
+create or replace package body ics_app.plant_refrnc_prch_src_extract as
 
   /*-*/
   /* Private exceptions 
@@ -114,22 +114,22 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if (par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB09.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if (par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB09.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if (par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB09.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if (par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB09.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB09.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if (par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB09.6');   
       end if;
     end if; 
@@ -165,7 +165,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_refrnc_purchasing_src_extract - material_code: ' || var_material_code || ' - plant_code: ' || var_plant_code || ' - record_no: ' || var_record_no || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_refrnc_prch_src_extract - material_code: ' || var_material_code || ' - plant_code: ' || var_plant_code || ' - record_no: ' || var_record_no || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -212,7 +212,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
         and (par_plant_code is null or t01.plant_code = par_plant_code)
         and (par_record_no is null or t01.record_no = par_record_no);
         
-    rcd_refrnc_purchasing_src csr_refrnc_plant%rowtype;
+    rcd_refrnc_purchasing_src csr_refrnc_purchasing_src%rowtype;
 
  /*-------------*/
  /* Begin block */
@@ -266,7 +266,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
 
     return var_result;
   
-  end execute_refrnc_purchasing_src_extract;
+  end execute_extract;
   
   procedure execute_send(par_interface in varchar2) is
   
@@ -292,18 +292,18 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     commit;
   end execute_send;
 
-end plant_refrnc_purchasing_src_extract;
+end plant_refrnc_prch_src_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_refrnc_purchasing_src_extract to appsupport;
-grant execute on ics_app.plant_refrnc_purchasing_src_extract to lads_app;
-grant execute on ics_app.plant_refrnc_purchasing_src_extract to lics_app;
-grant execute on ics_app.plant_refrnc_purchasing_src_extract to ics_executor;
+grant execute on ics_app.plant_refrnc_prch_src_extract to appsupport;
+grant execute on ics_app.plant_refrnc_prch_src_extract to lads_app;
+grant execute on ics_app.plant_refrnc_prch_src_extract to lics_app;
+grant execute on ics_app.plant_refrnc_prch_src_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_refrnc_purchasing_src_extract for ics_app.plant_refrnc_purchasing_src_extract;
+create or replace public synonym plant_refrnc_prch_src_extract for ics_app.plant_refrnc_prch_src_extract;

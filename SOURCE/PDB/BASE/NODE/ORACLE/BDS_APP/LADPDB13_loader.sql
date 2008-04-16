@@ -3,7 +3,7 @@
 /******************************************************************************/
 /** 
   System  : Plant Database 
-  Package : plant_material_bom_loader 
+  Package : ladpdb13_loader 
   Owner   : bds_app  
   Author  : Trevor Keon 
 
@@ -16,7 +16,7 @@
   08-Apr-2008  Trevor Keon      Created 
 *******************************************************************************/
 
-create or replace package bds_app.plant_material_bom_loader as
+create or replace package bds_app.ladpdb13_loader as
 
   /*-*/
   /* Public declarations 
@@ -25,10 +25,10 @@ create or replace package bds_app.plant_material_bom_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end plant_material_bom_loader ; 
+end ladpdb13_loader ; 
 /
 
-create or replace package body bds_app.plant_material_bom_loader as
+create or replace package body bds_app.ladpdb13_loader as
 
   /*-*/
   /* Private exceptions 
@@ -495,16 +495,16 @@ create or replace package body bds_app.plant_material_bom_loader as
   /*-------------*/
   end process_record_det;
   
-end plant_material_bom_loader; 
+end ladpdb13_loader; 
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on bds_app.plant_material_bom_loader to appsupport;
-grant execute on bds_app.plant_material_bom_loader to lics_app;
+grant execute on bds_app.ladpdb13_loader to appsupport;
+grant execute on bds_app.ladpdb13_loader to lics_app;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_material_bom_loader for bds_app.plant_material_bom_loader;
+create or replace public synonym ladpdb13_loader for bds_app.ladpdb13_loader;

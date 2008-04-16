@@ -127,23 +127,23 @@ create or replace package body ics_app.plant_refrnc_plant_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB02.1');   
+      if (par_site in ('*ALL','*MFA') ) then
+        execute_send('LADPDB08.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB02.2');   
+      if (par_site in ('*ALL','*WGI') ) then
+        execute_send('LADPDB08.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB02.3');   
+      if (par_site in ('*ALL','*WOD') ) then
+        execute_send('LADPDB08.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB02.4');   
+      if (par_site in ('*ALL','*BTH') ) then
+        execute_send('LADPDB08.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB02.5');   
+      if (par_site in ('*ALL','*MCA') ) then
+        execute_send('LADPDB08.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB02.6');   
+      if (par_site in ('*ALL','*SCO') ) then
+        execute_send('LADPDB08.6');   
       end if;
     end if; 
       
@@ -178,7 +178,7 @@ create or replace package body ics_app.plant_refrnc_plant_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_material_extract - ' || 'sap_material_code: ' || to_char(rcd_bds_material_plant_mfanz.sap_material_code) || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_refrnc_plant_extract - ' || 'plant_code: ' || var_plant_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -287,7 +287,7 @@ create or replace package body ics_app.plant_refrnc_plant_extract as
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_refrnc_plant.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.sap_idoc_number,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_refrnc_plant.sap_idoc_number,'0')),38,' ')
         || rpad(to_char(nvl(rcd_refrnc_plant.sap_idoc_timestamp,' ')),14,' ')
         || rpad(to_char(nvl(rcd_refrnc_plant.change_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_refrnc_plant.plant_name,' ')),30,' ')

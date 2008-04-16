@@ -71,9 +71,10 @@ create or replace package body ics_app.plant_reference_data_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_exception varchar2(4000);
-    var_site      varchar2(10);
-    var_start     boolean := false;
+    var_exception   varchar2(4000);
+    var_site        varchar2(10);
+    var_z_tabname   varchar2(10);
+    var_start       boolean := false;
          
   begin
   
@@ -144,7 +145,7 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       /* Purchasing Source (Vendor/Material) Reference Table*/
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'EORD') then plant_refrnc_purchasing_src_extract.execute(par_site);
+      when (var_z_tabname = 'EORD') then plant_refrnc_prch_src_extract.execute(par_site);
       /*----------------------------------------------------*/
       /* Production Resources (Details/Descriptions)        */
       /*----------------------------------------------------*/
