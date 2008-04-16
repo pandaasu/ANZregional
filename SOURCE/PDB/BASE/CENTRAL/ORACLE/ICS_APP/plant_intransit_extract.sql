@@ -91,7 +91,7 @@ create or replace package body ics_app.plant_intransit_extract as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -202,7 +202,7 @@ create or replace package body ics_app.plant_intransit_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -268,7 +268,7 @@ create or replace package body ics_app.plant_intransit_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -280,7 +280,7 @@ create or replace package body ics_app.plant_intransit_extract as
       exit when csr_bds_intransit_header%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current codes for error message purposes 

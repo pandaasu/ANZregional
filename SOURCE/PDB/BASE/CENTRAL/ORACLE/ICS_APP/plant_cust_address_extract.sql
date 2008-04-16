@@ -9,6 +9,12 @@
   ----------- 
   Customer Address Data for Plant databases 
 
+  EXECUTE - 
+    Send Customer Address data since last successful send 
+    
+  EXECUTE - 
+    Send Customer Address data based on the specified action.     
+
   1. PAR_ACTION (MANDATORY) 
 
     *ALL - send all address data  
@@ -41,6 +47,7 @@ create or replace package ics_app.plant_cust_address_extract as
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_cust_address_extract;
@@ -67,6 +74,10 @@ create or replace package body ics_app.plant_cust_address_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+  
   var_customer_code bds_addr_customer.customer_code%type;
   
   /*-*/
@@ -80,6 +91,25 @@ create or replace package body ics_app.plant_cust_address_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB03');
+  
+    execute('*ALL',null,'*MCA');
+  end;  
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
@@ -89,7 +119,7 @@ create or replace package body ics_app.plant_cust_address_extract as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -146,6 +176,10 @@ create or replace package body ics_app.plant_cust_address_extract as
         execute_send('LADPDB03.6');   
       end if;
     end if; 
+    
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB03',var_start_date);
+    end if;    
       
   /*-------------------*/
   /* Exception handler */
@@ -191,7 +225,7 @@ create or replace package body ics_app.plant_cust_address_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -238,10 +272,13 @@ create or replace package body ics_app.plant_cust_address_extract as
         t01.fax_number as fax_number, 
         t01.fax_extension as fax_extension, 
         t01.fax_full_number as fax_full_number
-      from bds_addr_customer t01
-      where 
+      from bds_addr_customer t01,
+        bds_addr_header t02
+      where t01.customer_code = t02.address_code
+        and t02.address_type = 'KNA1'
+        and
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date))
           or (par_action = '*CUSTOMER' and ltrim(t01.customer_code,'0') = ltrim(par_data,'0'))
         );
     rcd_bds_addr_customer csr_bds_addr_customer%rowtype;
@@ -254,7 +291,7 @@ create or replace package body ics_app.plant_cust_address_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -266,7 +303,7 @@ create or replace package body ics_app.plant_cust_address_extract as
       exit when csr_bds_addr_customer%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current customer code for error message purposes 

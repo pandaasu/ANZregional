@@ -87,7 +87,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     /*-*/
     var_exception varchar2(4000);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -177,7 +177,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -222,7 +222,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -234,7 +234,7 @@ create or replace package body ics_app.plant_refrnc_purchasing_src_extract as
       exit when csr_refrnc_purchasing_src%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_refrnc_purchasing_src.sap_material_code,' ')),18,' ')

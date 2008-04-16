@@ -2,23 +2,31 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_material_classfctn_extract 
+  Package : plant_mat_classfctn_extract 
   Owner   : ics_app 
 
   Description 
   ----------- 
   Material Classification Data for Plant databases 
 
+  EXECUTE - 
+    Send Material Classification  data since last successful send 
+    
+  EXECUTE - 
+    Send Material Classification  data based on the specified action.     
+
   1. PAR_ACTION (MANDATORY) 
 
     *ALL - send all material classification data  
     *MATERIAL - send material classification data matching a given material code 
+    *HISTORY - send material classification data updated since a specific point in the past 
     
   2. PAR_DATA (MANDATORY) 
     
     Data related to the action specified:
       - *ALL = null 
       - *MATERIAL = material code 
+      - *HISTORY = number of days 
 
   3. PAR_SITE (OPTIONAL) 
   
@@ -36,20 +44,21 @@
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_material_classfctn_extract as
+create or replace package ics_app.plant_mat_classfctn_extract as
 
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_material_classfctn_extract;
+end plant_mat_classfctn_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_material_classfctn_extract as
+create or replace package body ics_app.plant_mat_classfctn_extract as
 
   /*-*/
   /* Private exceptions 
@@ -67,6 +76,10 @@ create or replace package body ics_app.plant_material_classfctn_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+  
   var_material_code bds_bom_all.bom_material_code%type;
   
   /*-*/
@@ -80,6 +93,25 @@ create or replace package body ics_app.plant_material_classfctn_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB11');
+  
+    execute('*ALL',null,'*MCA');
+  end; 
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
@@ -89,7 +121,7 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -103,8 +135,9 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /* validate parameters 
     /*-*/
     if ( var_action != '*ALL'
-        and var_action != '*MATERIAL' ) then
-      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *MATERIAL');
+        and var_action != '*MATERIAL' 
+        and var_action != '*HISTORY' ) then
+      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL, *MATERIAL or *HISTORY');
     end if;
     
     if ( var_site != '*ALL'
@@ -118,7 +151,9 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     
     if ( var_action = '*MATERIAL' and var_data is null ) then
       raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *MATERIAL actions.');
-    end if;
+    elsif ( var_action = '*HISTORY' and (var_data is null or to_number(var_data) <= 0) ) then
+      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null and must be greater than 1 for *HISTORY actions.');
+    end if;    
     
     var_start := execute_extract(var_action, var_data);
     
@@ -127,24 +162,28 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if ( par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB11.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if ( par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB11.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if ( par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB11.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if ( par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB11.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB11.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if ( par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB11.6');   
       end if;
+    end if; 
+
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB03',var_start_date);
     end if; 
       
   /*-------------------*/
@@ -178,7 +217,7 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_material_classfctn_extract - ' || 'material_code: ' || var_material_code || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_mat_classfctn_extract - ' || 'material_code: ' || var_material_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -191,14 +230,14 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
     /* Local cursors 
     /*-*/
     cursor csr_bds_material_classfctn is
-      SELECT t01.sap_material_code as sap_material_code, 
+      select t01.sap_material_code as sap_material_code, 
         to_char(t01.bds_lads_date, 'yyyymmddhh24miss') as bds_lads_date, 
         t01.bds_lads_status as bds_lads_status, 
         t01.sap_idoc_name as sap_idoc_name,
@@ -249,9 +288,10 @@ create or replace package body ics_app.plant_material_classfctn_extract as
       from bds.bds_material_classfctn t01
       where 
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
           or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))
-        );
+          or (par_action = '*HISTORY' and t01.bds_lads_date >= trunc(sysdate - to_number(par_data)))
+        );  
     rcd_bds_material_classfctn csr_bds_material_classfctn%rowtype;
 
  /*-------------*/
@@ -262,7 +302,7 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -274,12 +314,12 @@ create or replace package body ics_app.plant_material_classfctn_extract as
       exit when csr_bds_material_classfctn%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current customer code for error message purposes 
       /*-*/
-      var_material_code := rcd_bds_material_classfctn.bom_material_code;
+      var_material_code := rcd_bds_material_classfctn.sap_material_code;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_material_code,' ')),18,' ')
@@ -362,18 +402,18 @@ create or replace package body ics_app.plant_material_classfctn_extract as
     commit;
   end execute_send;
 
-end plant_material_classfctn_extract;
+end plant_mat_classfctn_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_material_classfctn_extract to appsupport;
-grant execute on ics_app.plant_material_classfctn_extract to lads_app;
-grant execute on ics_app.plant_material_classfctn_extract to lics_app;
-grant execute on ics_app.plant_material_classfctn_extract to ics_executor;
+grant execute on ics_app.plant_mat_classfctn_extract to appsupport;
+grant execute on ics_app.plant_mat_classfctn_extract to lads_app;
+grant execute on ics_app.plant_mat_classfctn_extract to lics_app;
+grant execute on ics_app.plant_mat_classfctn_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_material_classfctn_extract for ics_app.plant_material_classfctn_extract;
+create or replace public synonym plant_mat_classfctn_extract for ics_app.plant_mat_classfctn_extract;

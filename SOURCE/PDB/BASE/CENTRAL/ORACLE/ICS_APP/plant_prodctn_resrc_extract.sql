@@ -7,7 +7,7 @@
 
   Description 
   ----------- 
-  Reference Data for Plant databases 
+  Production Resource Data for Plant databases 
 
   1. PAR_ACTION (MANDATORY) 
 
@@ -89,7 +89,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -127,23 +127,23 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
-        execute_send('LADPDB06.1');
+      if (par_site in ('*ALL','*MFA') ) then
+        execute_send('LADPDB06.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
-        execute_send('LADPDB06.2');
+      if (par_site in ('*ALL','*WGI') ) then
+        execute_send('LADPDB06.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
-        execute_send('LADPDB06.3');
+      if (par_site in ('*ALL','*WOD') ) then
+        execute_send('LADPDB06.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
-        execute_send('LADPDB06.4');
+      if (par_site in ('*ALL','*BTH') ) then
+        execute_send('LADPDB06.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
-        execute_send('LADPDB06.5');
+      if (par_site in ('*ALL','*MCA') ) then
+        execute_send('LADPDB06.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
-        execute_send('LADPDB06.6');
+      if (par_site in ('*ALL','*SCO') ) then
+        execute_send('LADPDB06.6');   
       end if;
     end if;
       
@@ -190,7 +190,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -220,7 +220,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -232,7 +232,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
       exit when csr_prodctn_resrc_en%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_prodctn_resrc_en.resrc_id,' ')),8,' ')

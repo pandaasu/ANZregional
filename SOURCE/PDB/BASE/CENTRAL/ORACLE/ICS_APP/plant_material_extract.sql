@@ -9,6 +9,12 @@
   ----------- 
   Material Data for Plant databases 
 
+  EXECUTE - 
+    Send Material data since last successful send 
+    
+  EXECUTE - 
+    Send Material data based on the specified action.     
+
   1. PAR_ACTION (MANDATORY) 
 
     *ALL - send all material data  
@@ -40,7 +46,8 @@
   2008/02   J. Phillipson Changed criteria to just material so it can be 
                             trigged by changes only to LADS table 
   2008/03   J. Phillipson Added sending of Packaging instruction data 
-  2008/03   T. Keon       Changed structure to match new standards    
+  2008/03   T. Keon       Changed structure to match new standards   
+  2008/04   T. Keon       Added option to extract data since last run only  
 
 *******************************************************************************/ 
 
@@ -50,6 +57,7 @@ create or replace package ics_app.plant_material_extract as
   /* Public declarations 
   /* par_material either null or a material code 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_material_extract;
@@ -76,6 +84,9 @@ as
   /*-*/
   /* Global variables 
   /*-*/
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
   var_material_code bds_material_hdr.sap_material_code%type;
       
   /*-*/
@@ -86,6 +97,25 @@ as
      
   tbl_definition typ_definition;
 
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB02');
+  
+    execute('*ALL',null,'*MCA');
+  end; 
+
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
@@ -95,7 +125,7 @@ as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -136,25 +166,29 @@ as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if (par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB02.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if (par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB02.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if (par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB02.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if (par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB02.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB02.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if (par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB02.6');   
       end if;
-    end if; 
+    end if;
+    
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB02',var_start_date);
+    end if;         
       
   /*-------------------*/
   /* Exception handler */
@@ -187,7 +221,7 @@ as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_material_extract - ' || 'sap_material_code: ' || to_char(rcd_bds_material_plant_mfanz.sap_material_code) || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_material_extract - ' || 'sap_material_code: ' || var_material_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
@@ -317,7 +351,7 @@ as
         and t05.deletion_indctr(+) is null 
         and 
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
           or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))
           or (par_action = '*HISTORY' and t01.bds_lads_date >= trunc(sysdate - to_number(par_data)))
         );  
@@ -414,7 +448,7 @@ as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
     var_skip_pkg := false;
   
     open csr_bds_material_plant_mfanz;
@@ -424,7 +458,7 @@ as
       exit when csr_bds_material_plant_mfanz%notfound;
            
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       if ( var_material_code is null or var_material_code <> rcd_bds_material_plant_mfanz.sap_material_code) then
       

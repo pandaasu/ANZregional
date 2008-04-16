@@ -8,19 +8,39 @@
   Description 
   ----------- 
   Bill of Material Detail Data for Plant databases 
-
-  1. PAR_ACTION (MANDATORY) 
-
-    *ALL - send all BOM data  
-    *MATERIAL - send BOM data matching a given material code 
+  
+  EXECUTE - 
+    Send all BOM material data since last successful send 
     
-  2. PAR_DATA (MANDATORY) 
+  EXECUTE - 
+    Send all BOM material data to the specified site(s)   
+  
+  1. PAR_SITE 
+  
+    Specify the site for the data to be sent to.
+      - *ALL = All sites 
+      - *MCA = Ballarat 
+      - *SCO = Scoresby 
+      - *WOD = Wodonga 
+      - *MFA = Wyong 
+      - *WGI = Wanganui 
+      
+  EXECUTE - 
+    Send the specified BOM material data to the specified site(s)
     
-    Data related to the action specified:
-      - *ALL = null 
-      - *MATERIAL = material code 
-
-  3. PAR_SITE (OPTIONAL) 
+  1. PAR_ALTERNATIVE (MANDATORY) 
+   
+    Alternative BOM 
+    
+  2. PAR_MATERIAL_CODE (MANDATORY) 
+  
+    Material Code 
+    
+  3. PAR_PLANT (MANDATORY) 
+  
+    Plant Code 
+    
+  4. PAR_SITE 
   
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
@@ -29,6 +49,7 @@
       - *WOD = Wodonga 
       - *MFA = Wyong 
       - *WGI = Wanganui 
+    
 
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
@@ -41,7 +62,8 @@ create or replace package ics_app.plant_bom_det_extract as
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_site in varchar2 default '*ALL');
+  procedure execute;
+  procedure execute(par_site in varchar2);
   procedure execute(par_alternative in varchar2, par_material_code in varchar2, par_plant in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_bom_det_extract;
@@ -68,6 +90,10 @@ create or replace package body ics_app.plant_bom_det_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+  
   var_material_code bds_bom_det.bom_material_code%type;
   var_alternative bds_bom_det.bom_alternative%type;
   var_plant bds_bom_det.bom_plant%type;
@@ -83,7 +109,26 @@ create or replace package body ics_app.plant_bom_det_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_site in varchar2 default '*ALL') is
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB04');
+  
+    execute(null, null, null, '*MCA');
+  end;  
+  
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute(par_site in varchar2) is
   begin
     execute(null, null, null, par_site);
   end;
@@ -98,7 +143,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/
     var_exception varchar2(4000);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -125,25 +170,29 @@ create or replace package body ics_app.plant_bom_det_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if (par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB04.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if (par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB04.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if (par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB04.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if (par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB04.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB04.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if (par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB04.6');   
       end if;
     end if; 
+    
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB04',var_start_date);
+    end if;
       
   /*-------------------*/
   /* Exception handler */
@@ -189,7 +238,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -215,11 +264,16 @@ create or replace package body ics_app.plant_bom_det_extract as
         t01.item_base_uom as item_base_uom, 
         to_char(t01.item_eff_from_date, 'yyyymmddhh24miss') as item_eff_from_date, 
         to_char(t01.item_eff_to_date, 'yyyymmddhh24miss') as item_eff_to_date
-      from bds_bom_det t01
-      where t01.bds_lads_status = '1'
+      from bds_bom_det t01,
+        bds_bom_hdr t02
+      where t01.bom_material_code = t02.bom_material_code
+        and t01.bom_alternative = t02.bom_alternative
+        and t01.bom_plant = t02.bom_plant
+        and t01.bds_lads_status = '1'
         and (var_alternative is null or t01.bom_alternative = var_alternative)
         and (var_material_code is null or t01.bom_material_code = var_material_code)
-        and (var_plant is null or t01.bom_plant = var_plant);
+        and (var_plant is null or t01.bom_plant = var_plant)
+        and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date);
         
     rcd_bds_bom_det csr_bds_bom_det%rowtype;
 
@@ -231,7 +285,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -243,7 +297,7 @@ create or replace package body ics_app.plant_bom_det_extract as
       exit when csr_bds_bom_det%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current record details for error message purposes 
@@ -251,7 +305,7 @@ create or replace package body ics_app.plant_bom_det_extract as
       var_material_code := rcd_bds_bom_det.bom_material_code;
       var_alternative := rcd_bds_bom_det.bom_alternative;
       var_plant := rcd_bds_bom_det.bom_plant;
-              
+                    
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_alternative,' ')),2,' ')

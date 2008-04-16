@@ -7,7 +7,7 @@
 
   Description 
   ----------- 
-  BOM Reference Data for Plant databases 
+  BOM Alternative Data for Plant databases 
 
   1. PAR_SITE (OPTIONAL) 
   
@@ -87,7 +87,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     /*-*/
     var_exception varchar2(4000);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
     var_material_code := trim(par_material_code);
@@ -113,22 +113,22 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+      if (par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB05.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if (par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB05.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if (par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB05.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if (par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB05.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB05.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if (par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB05.6');   
       end if;
     end if; 
@@ -177,7 +177,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -187,11 +187,12 @@ create or replace package body ics_app.plant_bom_alternative_extract as
       select ltrim(t01.sap_material_code,'0') as bom_material_code,
         ltrim(t01.altrntv_bom,'0') as bom_alternative,
         t01.plant_code as bom_plant,
+        t01.bom_usage as bom_usage,
         to_char(t01.valid_from_date, 'yyyymmddhh24miss') as bom_eff_from_date
       from bds_refrnc_bom_altrnt_t415a t01
-      where (par_material_code is null or t01.bom_material_code = par_material_code)
-        and (par_alternative is null or t01.bom_alternative = par_alternative)
-        and (par_plant is null or t01.bom_plant = par_plant);
+      where (par_material_code is null or ltrim(t01.sap_material_code,'0') = ltrim(par_material_code,'0'))
+        and (par_alternative is null or ltrim(t01.altrntv_bom,'0') = ltrim(par_alternative,'0'))
+        and (par_plant is null or t01.plant_code = par_plant);
         
     rcd_bds_refrnc_bom_altrnt csr_bds_refrnc_bom_altrnt%rowtype;
 
@@ -203,7 +204,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -215,12 +216,13 @@ create or replace package body ics_app.plant_bom_alternative_extract as
       exit when csr_bds_refrnc_bom_altrnt%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_alternative,' ')),2,' ')
         || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_plant,' ')),4,' ')
+        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_usage,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_eff_from_date,' ')),14,' ');
 
     end loop;

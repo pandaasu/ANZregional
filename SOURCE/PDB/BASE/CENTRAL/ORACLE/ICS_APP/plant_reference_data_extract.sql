@@ -73,7 +73,7 @@ create or replace package body ics_app.plant_reference_data_extract as
     /*-*/
     var_exception varchar2(4000);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   

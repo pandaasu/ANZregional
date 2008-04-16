@@ -9,6 +9,12 @@
   ----------- 
   Customer Sales Area Extract for Plant databases 
 
+  EXECUTE - 
+    Send Customer Sales Area data since last successful send 
+    
+  EXECUTE - 
+    Send Customer Sales Area data based on the specified action.     
+
   1. PAR_ACTION (MANDATORY) 
 
     *ALL - send all address data  
@@ -41,6 +47,7 @@ create or replace package ics_app.plant_cust_sales_area_extract as
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_cust_sales_area_extract;
@@ -67,6 +74,10 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+    
   var_customer_code bds_addr_customer.customer_code%type;
   
   /*-*/
@@ -80,6 +91,25 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB10');
+  
+    execute('*ALL',null,'*MCA');
+  end; 
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
@@ -89,7 +119,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     var_action    varchar2(10);
     var_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -126,27 +156,32 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     /* ensure data was returned in the cursor before creating interfaces 
     /* to send to the specified site(s) 
     /*-*/ 
-    if ( var_start = true ) then    
-      if (par_site = '*ALL' or '*MFA') then
+    if ( var_start = true ) then  
+    
+      if ( par_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB10.1');   
       end if;    
-      if (par_site = '*ALL' or '*WGI') then
+      if ( par_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB10.2');   
       end if;    
-      if (par_site = '*ALL' or '*WOD') then
+      if ( par_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB10.3');   
       end if;    
-      if (par_site = '*ALL' or '*BTH') then
+      if ( par_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB10.4');   
       end if;    
-      if (par_site = '*ALL' or '*MCA') then
+      if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB10.5');   
       end if;
-      if (par_site = '*ALL' or '*SCO') then
+      if ( par_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB10.6');   
       end if;
     end if; 
-      
+    
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB10',var_start_date);
+    end if;  
+          
   /*-------------------*/
   /* Exception handler */
   /*-------------------*/
@@ -191,7 +226,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -261,11 +296,13 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
         t01.current_planning_flag as current_planning_flag, 
         t01.future_planning_flag as future_planning_flag, 
         t01.market_account_flag as market_account_flag
-      from bds_cust_sales_area t01
-      where t01.deletion_flag is null
+      from bds_cust_sales_area t01,
+        bds_cust_header t02
+      where t01.customer_code = t02.customer_code
+        and t01.deletion_flag is null
         and 
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date))
           or (par_action = '*CUSTOMER' and ltrim(t01.customer_code,'0') = ltrim(par_data,'0'))
         );
     rcd_bds_cust_sales_area csr_bds_cust_sales_area%rowtype;
@@ -278,7 +315,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -290,7 +327,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
       exit when csr_bds_cust_sales_area%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current customer code for error message purposes 

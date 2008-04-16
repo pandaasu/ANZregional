@@ -8,6 +8,12 @@
   Description 
   ----------- 
   Material BOM Data for Plant databases 
+  
+  EXECUTE - 
+    Send Material BOM data since last successful send 
+    
+  EXECUTE - 
+    Send Material BOM data based on the specified action.   
 
   1. PAR_ACTION (MANDATORY) 
 
@@ -50,6 +56,7 @@ create or replace package ics_app.plant_material_bom_extract as
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_alt_data in varchar2, par_site in varchar2);
 
 end plant_material_bom_extract;
@@ -76,6 +83,10 @@ create or replace package body ics_app.plant_material_bom_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+    
   var_bom bds_material_bom_hdr.sap_bom%type;
   var_alt_bom bds_material_bom_hdr.sap_bom_alternative%type;
   
@@ -90,7 +101,26 @@ create or replace package body ics_app.plant_material_bom_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_alt_data in varchar2, par_site in varchar2);
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB13');
+  
+    execute('*ALL',null,null,'*MCA');
+  end; 
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute(par_action in varchar2, par_data in varchar2, par_alt_data in varchar2, par_site in varchar2) is
     
     /*-*/
     /* Local variables 
@@ -100,7 +130,7 @@ create or replace package body ics_app.plant_material_bom_extract as
     var_data      varchar2(100);
     var_alt_data      varchar2(100);
     var_site      varchar2(10);
-    var_start     boolean;
+    var_start     boolean := false;
          
   begin
   
@@ -161,6 +191,10 @@ create or replace package body ics_app.plant_material_bom_extract as
         execute_send('LADPDB13.6');   
       end if;
     end if; 
+
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB13',var_start_date);
+    end if;   
       
   /*-------------------*/
   /* Exception handler */
@@ -206,7 +240,7 @@ create or replace package body ics_app.plant_material_bom_extract as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index number(5,0);
+    var_index number(8,0);
     var_result boolean;
     
     /*-*/
@@ -226,7 +260,7 @@ create or replace package body ics_app.plant_material_bom_extract as
       where t01.bds_lads_status = '1'
         and  
         (
-          par_action = '*ALL'
+          (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
           or (par_action = '*BOM' and t01.sap_bom = par_data and t01.sap_bom_alternative = par_alt_data)          
           or (par_action = '*HISTORY' and t01.bds_lads_date >= trunc(sysdate - to_number(par_data)))
         );
@@ -241,7 +275,7 @@ create or replace package body ics_app.plant_material_bom_extract as
         t01.child_base_uom as child_base_uom
       from bds_material_bom_det t01
       where t01.sap_bom = rcd_bds_material_bom_hdr.sap_bom
-        and t01.sap_bom_alterative = rcd_bds_material_bom_hdr.sap_bom_alternative;
+        and t01.sap_bom_alternative = rcd_bds_material_bom_hdr.sap_bom_alternative;
     rcd_bds_material_bom_det csr_bds_material_bom_det%rowtype;    
 
  /*-------------*/
@@ -252,7 +286,7 @@ create or replace package body ics_app.plant_material_bom_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := true;
+    var_result := false;
 
     /*-*/
     /* Open Cursor for output 
@@ -264,7 +298,7 @@ create or replace package body ics_app.plant_material_bom_extract as
       exit when csr_bds_material_bom_hdr%notfound;
 
       var_index := tbl_definition.count + 1;
-      var_result := false;
+      var_result := true;
       
       /*-*/
       /* Store current codes for error message purposes 
