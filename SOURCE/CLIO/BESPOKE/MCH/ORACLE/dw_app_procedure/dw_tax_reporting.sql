@@ -37,6 +37,8 @@ create or replace package dw_tax_reporting as
     2008/04   Steve Gregan   Changed sample pricing report for order type where clause bug
     2008/04   Steve Gregan   Changed sample pricing report for customer descriptions
     2008/04   Steve Gregan   Changed sample pricing report for pricing condition PR00
+    2008/04   Steve Gregan   Changed sample pricing report for heading change
+    2008/04   Steve Gregan   Changed sample pricing report for finished goods only
 
    *******************************************************************************/
 
@@ -702,6 +704,7 @@ create or replace package body dw_tax_reporting as
                                and ''ZA'' = t08.parvw(+)
                                and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
                                and t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and t04.sap_material_type_code = ''FERT''
                              union all
                             select /*+ ordered */
                                    t03.cust_name_en_level_2 as qry_region,
@@ -762,6 +765,7 @@ create or replace package body dw_tax_reporting as
                                and ''ZA'' = t08.parvw(+)
                                and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
                                and t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and t04.sap_material_type_code = ''FERT''
                                and not exists (select t12.kbetr
                                                  from lads_prc_lst_hdr t11,
                                                       lads_prc_lst_det t12
@@ -836,7 +840,7 @@ create or replace package body dw_tax_reporting as
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">QTY(sales) POD</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">UOM(sales unit)</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">QTY(base) POD</td>');
-      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Dispatch price/EA per SO UOM</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">List price per EA</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Amount</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Tax rate</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Cost Centre</td>');
