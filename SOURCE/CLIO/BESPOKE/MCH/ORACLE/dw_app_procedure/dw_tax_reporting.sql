@@ -703,7 +703,7 @@ create or replace package body dw_tax_reporting as
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
                                and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
-                               and t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code(+)
                                and t04.sap_material_type_code = ''FERT''
                              union all
                             select /*+ ordered */
@@ -764,7 +764,7 @@ create or replace package body dw_tax_reporting as
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
                                and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
-                               and t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code(+)
                                and t04.sap_material_type_code = ''FERT''
                                and not exists (select t12.kbetr
                                                  from lads_prc_lst_hdr t11,
