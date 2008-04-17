@@ -315,9 +315,9 @@ create or replace package body ics_app.plant_material_bom_extract as
               
       tbl_definition(var_index).value := 'HDR' 
         || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_plant,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_usage,'0')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_usage,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_eff_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_status,'0')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_status,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_material_code,' ')),18,' ')
         || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_base_qty,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_base_uom,' ')),3,' ');

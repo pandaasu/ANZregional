@@ -183,7 +183,7 @@ create or replace package body ics_app.plant_mat_classfctn_extract as
     end if; 
 
     if ( var_update_lastrun = true ) then
-      lics_last_run_control.set_last_run('LADPDB03',var_start_date);
+      lics_last_run_control.set_last_run('LADPDB11',var_start_date);
     end if; 
       
   /*-------------------*/
@@ -326,7 +326,7 @@ create or replace package body ics_app.plant_mat_classfctn_extract as
         || rpad(to_char(nvl(rcd_bds_material_classfctn.bds_lads_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_material_classfctn.bds_lads_status,' ')),2,' ')
         || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_idoc_name,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_idoc_number,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_idoc_number,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_idoc_timestamp,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_bus_sgmnt_code,' ')),30,' ')
         || rpad(to_char(nvl(rcd_bds_material_classfctn.sap_mrkt_sgmnt_code,' ')),30,' ')

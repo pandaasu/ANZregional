@@ -138,22 +138,22 @@ create or replace package body ics_app.plant_intransit_extract as
         end if;
       end if;
                 
-      if ( par_site in ('*ALL','*MFA') ) then
+      if ( var_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB15.1');   
       end if;    
-      if ( par_site in ('*ALL','*WGI') ) then
+      if ( var_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB15.2');   
       end if;    
-      if ( par_site in ('*ALL','*WOD') ) then
+      if ( var_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB15.3');   
       end if;    
-      if ( par_site in ('*ALL','*BTH') ) then
+      if ( var_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB15.4');   
       end if;    
-      if ( par_site in ('*ALL','*MCA') ) then
+      if ( var_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB15.5');   
       end if;
-      if ( par_site in ('*ALL','*SCO') ) then
+      if ( var_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB15.6');   
       end if;
     end if; 
@@ -352,7 +352,7 @@ create or replace package body ics_app.plant_intransit_extract as
     var_result varchar2(10);    
     var_vir_table lics_datastore_table := lics_datastore_table();
     
-  begin
+  begin    
     var_vir_table := lics_datastore.retrieve_group('PDB','PLC',var_plant_code);
     
     if ( var_vir_table.count = 0 ) then      
@@ -374,7 +374,7 @@ create or replace package body ics_app.plant_intransit_extract as
     var_instance number(15,0);
     
   begin
-
+  
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
         var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);

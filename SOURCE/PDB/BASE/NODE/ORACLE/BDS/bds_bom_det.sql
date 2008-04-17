@@ -37,6 +37,7 @@ create table bds.bds_bom_det
   bom_number          varchar2(8 char),
   bom_msg_function    varchar2(3 char),
   bom_usage           varchar2(1 char),
+  bom_eff_from_date   date,
   bom_eff_to_date     date,
   bom_base_qty        number,
   bom_base_uom        varchar2(3 char),
@@ -59,4 +60,4 @@ grant select on bds.bds_bom_det to fcs_user;
 /**/
 /* Synonym 
 /**/
-create public synonym bds_bom_det for bds.bds_bom_det;
+create or replace public synonym bds_bom_det for bds.bds_bom_det;

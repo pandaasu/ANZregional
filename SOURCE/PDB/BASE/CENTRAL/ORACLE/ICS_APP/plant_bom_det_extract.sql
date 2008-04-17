@@ -251,6 +251,7 @@ create or replace package body ics_app.plant_bom_det_extract as
         t01.bom_number as bom_number, 
         t01.bom_msg_function as bom_msg_function, 
         t01.bom_usage as bom_usage,
+        to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
         to_char(t01.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
         t01.bom_base_qty as bom_base_qty, 
         t01.bom_base_uom as bom_base_uom,
@@ -313,6 +314,7 @@ create or replace package body ics_app.plant_bom_det_extract as
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_number,' ')),8,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_msg_function,' ')),3,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_usage,' ')),1,' ')
+        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_from_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_to_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_qty,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_uom,' ')),3,' ')

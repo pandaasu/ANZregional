@@ -73,8 +73,9 @@ create or replace package body ics_app.plant_reference_data_extract as
     /*-*/
     var_exception   varchar2(4000);
     var_site        varchar2(10);
-    var_z_tabname   varchar2(10);
     var_start       boolean := false;
+    
+    var_z_tabname   lads_ref_hdr.z_tabname%type;
          
   begin
   
@@ -151,7 +152,7 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       when (var_z_tabname = 'CRTX' or var_z_tabname = 'CRHD') then plant_prodctn_resrc_extract.execute('*ALL', null, par_site);
       /*-*/
-      else raise_application_error(-20000, 'Z_TABNAME parameter (' || var_z_tabname || ') is not known.');
+      else return;
     end case;
     
   end execute;

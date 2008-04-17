@@ -73,14 +73,14 @@ alter table bds.bds_addr_customer_det
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_addr_customer_det to bds_app with grant option;
+grant select, update, delete, insert on bds.bds_addr_customer_det to bds_app with grant option;
 grant select on bds.bds_addr_customer_det to appsupport;
 grant select on bds.bds_addr_customer_det to fcs_user;
 
 /**/
 /* Synonym 
 /**/
-create public synonym bds_addr_customer_det for bds.bds_addr_customer_det;
+create or replace public synonym bds_addr_customer_det for bds.bds_addr_customer_det;
 
 
 

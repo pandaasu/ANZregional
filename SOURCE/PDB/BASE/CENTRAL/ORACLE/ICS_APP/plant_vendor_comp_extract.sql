@@ -380,7 +380,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
         || rpad(to_char(nvl(rcd_bds_vend_comp.periodic_account_statement,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_vend_comp.certification_date,' ')),14,' ')
         || rpad(to_char(nvl(rcd_bds_vend_comp.invoice_tolerance_group,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.personnel_number,' ')),38,' ')
+        || rpad(to_char(nvl(rcd_bds_vend_comp.personnel_number,'0')),38,' ')
         || rpad(to_char(nvl(rcd_bds_vend_comp.deletion_block_flag,' ')),1,' ')
         || rpad(to_char(nvl(rcd_bds_vend_comp.accounting_phone,' ')),30,' ')
         || rpad(to_char(nvl(rcd_bds_vend_comp.execution_flag,' ')),1,' ')

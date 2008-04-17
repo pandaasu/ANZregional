@@ -164,22 +164,22 @@ create or replace package body ics_app.plant_stock_extract as
         end if;
       end if;
                 
-      if ( par_site in ('*ALL','*MFA') ) then
+      if ( var_site in ('*ALL','*MFA') ) then
         execute_send('LADPDB14.1');   
       end if;    
-      if ( par_site in ('*ALL','*WGI') ) then
+      if ( var_site in ('*ALL','*WGI') ) then
         execute_send('LADPDB14.2');   
       end if;    
-      if ( par_site in ('*ALL','*WOD') ) then
+      if ( var_site in ('*ALL','*WOD') ) then
         execute_send('LADPDB14.3');   
       end if;    
-      if ( par_site in ('*ALL','*BTH') ) then
+      if ( var_site in ('*ALL','*BTH') ) then
         execute_send('LADPDB14.4');   
       end if;    
-      if ( par_site in ('*ALL','*MCA') ) then
+      if ( var_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB14.5');   
       end if;
-      if ( par_site in ('*ALL','*SCO') ) then
+      if ( var_site in ('*ALL','*SCO') ) then
         execute_send('LADPDB14.6');   
       end if;
     end if; 
@@ -258,8 +258,15 @@ create or replace package body ics_app.plant_stock_extract as
         t01.storage_location_code as storage_location_code,
         t01.stock_balance_date as stock_balance_date,
         t01.stock_balance_time as stock_balance_time,
-        t01.company_identifier as company_identifier,
-        t01.inventory_document as inventory_document
+        t01.material_code as material_code,
+        t01.material_batch_number as material_batch_number,
+        t01.inspection_stock_flag as inspection_stock_flag,
+        t01.stock_quantity as stock_quantity,
+        t01.stock_uom_code as stock_uom_code,
+        t01.stock_best_before_date as stock_best_before_date,
+        t01.consignment_cust_vend as consignment_cust_vend,
+        t01.rcv_isu_storage_location_code as rcv_isu_storage_location_code,
+        t01.stock_type_code as stock_type_code
       from bds_stock_detail t01  
       where t01.company_code = rcd_bds_stock_header.company_code
         and t01.plant_code = rcd_bds_stock_header.plant_code
@@ -323,7 +330,7 @@ create or replace package body ics_app.plant_stock_extract as
         exit when csr_bds_stock_detail%notfound;
         
         tbl_definition(var_index).value := 'DET'
-          || rpad(to_char(nvl(rcd_bds_stock_detail.material_code,' ')),10,' ')
+          || rpad(to_char(nvl(rcd_bds_stock_detail.material_code,' ')),18,' ')
           || rpad(to_char(nvl(rcd_bds_stock_detail.material_batch_number,' ')),1,' ')
           || rpad(to_char(nvl(rcd_bds_stock_detail.inspection_stock_flag,' ')),1,' ')
           || rpad(to_char(nvl(rcd_bds_stock_detail.stock_quantity,'0')),38,' ')

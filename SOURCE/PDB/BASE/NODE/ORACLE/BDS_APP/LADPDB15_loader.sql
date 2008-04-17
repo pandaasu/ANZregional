@@ -382,7 +382,6 @@ create or replace package body bds_app.ladpdb15_loader as
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */
     /*--------------------------------------*/
-    rcd_det.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_det.detseq := lics_inbound_utility.get_variable('DETSEQ');
     rcd_det.company_code := lics_inbound_utility.get_variable('COMPANY_CODE');
     rcd_det.business_segment_code := lics_inbound_utility.get_variable('BUSINESS_SEGMENT_CODE');
@@ -405,7 +404,7 @@ create or replace package body bds_app.ladpdb15_loader as
     rcd_det.forward_agent_code := lics_inbound_utility.get_variable('FORWARD_AGENT_CODE');
     rcd_det.forward_agent_trailer_number := lics_inbound_utility.get_variable('FORWARD_AGENT_TRAILER_NUMBER');
     rcd_det.material_code := lics_inbound_utility.get_variable('MATERIAL_CODE');
-    rcd_det.quantitys := lics_inbound_utility.get_variable('QUANTITY');
+    rcd_det.quantity := lics_inbound_utility.get_variable('QUANTITY');
     rcd_det.uom_code := lics_inbound_utility.get_variable('UOM_CODE');
     rcd_det.stock_type_code := lics_inbound_utility.get_variable('STOCK_TYPE_CODE');
     rcd_det.order_type_code := lics_inbound_utility.get_variable('ORDER_TYPE_CODE');
@@ -431,11 +430,6 @@ create or replace package body bds_app.ladpdb15_loader as
     /*-*/
     /* Validate the primary keys 
     /*-*/
-    if ( rcd_det.plant_code is null ) then
-       lics_inbound_utility.add_exception('Missing Primary Key - DET.PLANT_CODE');
-       var_trn_error := true;
-    end if;
-
     if ( rcd_det.detseq is null ) then
        lics_inbound_utility.add_exception('Missing Primary Key - DET.DETSEQ');
        var_trn_error := true;
@@ -485,7 +479,7 @@ create or replace package body bds_app.ladpdb15_loader as
       forward_agent_code,
       forward_agent_trailer_number,
       material_code,
-      quantitys,
+      quantity,
       uom_code,
       stock_type_code,
       order_type_code,
@@ -522,7 +516,7 @@ create or replace package body bds_app.ladpdb15_loader as
       rcd_det.forward_agent_code,
       rcd_det.forward_agent_trailer_number,
       rcd_det.material_code,
-      rcd_det.quantitys,
+      rcd_det.quantity,
       rcd_det.uom_code,
       rcd_det.stock_type_code,
       rcd_det.order_type_code,

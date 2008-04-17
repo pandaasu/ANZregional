@@ -99,7 +99,7 @@ create or replace package body bds_app.ladpdb14_loader as
     
     /*-*/
     lics_inbound_utility.set_definition('DET','ID',3);
-    lics_inbound_utility.set_definition('DET','MATERIAL_CODE',10);
+    lics_inbound_utility.set_definition('DET','MATERIAL_CODE',18);
     lics_inbound_utility.set_definition('DET','MATERIAL_BATCH_NUMBER',1);
     lics_inbound_utility.set_definition('DET','INSPECTION_STOCK_FLAG',1);
     lics_inbound_utility.set_definition('DET','STOCK_QUANTITY',38);

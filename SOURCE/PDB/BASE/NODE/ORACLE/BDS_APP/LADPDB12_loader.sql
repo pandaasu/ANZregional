@@ -49,7 +49,7 @@ create or replace package body bds_app.ladpdb12_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_refrnc_hdr_altrnt%rowtype;
+  rcd_hdr bds_vend_comp_ics%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -277,7 +277,7 @@ create or replace package body bds_app.ladpdb12_loader as
     /*--------------------------------------*/    
     rcd_hdr.vendor_code := lics_inbound_utility.get_variable('VENDOR_CODE');
     rcd_hdr.company_code := lics_inbound_utility.get_variable('COMPANY_CODE');
-    rcd_hdr.create_date := lics_inbound_utility.get_variable('CREATE_DATE');
+    rcd_hdr.create_date := lics_inbound_utility.get_date('CREATE_DATE',null);
     rcd_hdr.create_user := lics_inbound_utility.get_variable('CREATE_USER');
     rcd_hdr.posting_block_flag := lics_inbound_utility.get_variable('POSTING_BLOCK_FLAG');
     rcd_hdr.deletion_flag := lics_inbound_utility.get_variable('DELETION_FLAG');
@@ -295,18 +295,18 @@ create or replace package body bds_app.ladpdb12_loader as
     rcd_hdr.account_clerk_code := lics_inbound_utility.get_variable('ACCOUNT_CLERK_CODE');
     rcd_hdr.head_office_account := lics_inbound_utility.get_variable('HEAD_OFFICE_ACCOUNT');
     rcd_hdr.alternative_payee_account := lics_inbound_utility.get_variable('ALTERNATIVE_PAYEE_ACCOUNT');
-    rcd_hdr.interest_calc_key_date := lics_inbound_utility.get_variable('INTEREST_CALC_KEY_DATE');
-    rcd_hdr.interest_calc_freq := lics_inbound_utility.get_variable('INTEREST_CALC_FREQ');
-    rcd_hdr.nterest_calc_run_date := lics_inbound_utility.get_variable('NTEREST_CALC_RUN_DATE');
+    rcd_hdr.interest_calc_key_date := lics_inbound_utility.get_date('INTEREST_CALC_KEY_DATE',null);
+    rcd_hdr.interest_calc_freq := lics_inbound_utility.get_number('INTEREST_CALC_FREQ',null);
+    rcd_hdr.nterest_calc_run_date := lics_inbound_utility.get_date('NTEREST_CALC_RUN_DATE',null);
     rcd_hdr.local_process_flag := lics_inbound_utility.get_variable('LOCAL_PROCESS_FLAG');
-    rcd_hdr.bill_of_exchange_limit := lics_inbound_utility.get_variable('BILL_OF_EXCHANGE_LIMIT');
-    rcd_hdr.probable_check_paid_time := lics_inbound_utility.get_variable('PROBABLE_CHECK_PAID_TIME');
+    rcd_hdr.bill_of_exchange_limit := lics_inbound_utility.get_number('BILL_OF_EXCHANGE_LIMIT',null);
+    rcd_hdr.probable_check_paid_time := lics_inbound_utility.get_number('PROBABLE_CHECK_PAID_TIME',null);
     rcd_hdr.inv_crd_check_flag := lics_inbound_utility.get_variable('INV_CRD_CHECK_FLAG');
     rcd_hdr.tolerance_group_code := lics_inbound_utility.get_variable('TOLERANCE_GROUP_CODE');
     rcd_hdr.house_bank_key := lics_inbound_utility.get_variable('HOUSE_BANK_KEY');
     rcd_hdr.pay_item_separate_flag := lics_inbound_utility.get_variable('PAY_ITEM_SEPARATE_FLAG');
     rcd_hdr.withhold_tax_certificate := lics_inbound_utility.get_variable('WITHHOLD_TAX_CERTIFICATE');
-    rcd_hdr.withhold_tax_valid_date := lics_inbound_utility.get_variable('WITHHOLD_TAX_VALID_DATE');
+    rcd_hdr.withhold_tax_valid_date := lics_inbound_utility.get_date('WITHHOLD_TAX_VALID_DATE',null);
     rcd_hdr.withhold_tax_code := lics_inbound_utility.get_variable('WITHHOLD_TAX_CODE');
     rcd_hdr.subsidy_flag := lics_inbound_utility.get_variable('SUBSIDY_FLAG');
     rcd_hdr.minority_indicator := lics_inbound_utility.get_variable('MINORITY_INDICATOR');
@@ -324,9 +324,9 @@ create or replace package body bds_app.ladpdb12_loader as
     rcd_hdr.income_tax_activity_code := lics_inbound_utility.get_variable('INCOME_TAX_ACTIVITY_CODE');
     rcd_hdr.employ_tax_distbn_type := lics_inbound_utility.get_variable('EMPLOY_TAX_DISTBN_TYPE');
     rcd_hdr.periodic_account_statement := lics_inbound_utility.get_variable('PERIODIC_ACCOUNT_STATEMENT');
-    rcd_hdr.certification_date := lics_inbound_utility.get_variable('CERTIFICATION_DATE');
+    rcd_hdr.certification_date := lics_inbound_utility.get_date('CERTIFICATION_DATE',null);
     rcd_hdr.invoice_tolerance_group := lics_inbound_utility.get_variable('INVOICE_TOLERANCE_GROUP');
-    rcd_hdr.personnel_number := lics_inbound_utility.get_variable('PERSONNEL_NUMBER');
+    rcd_hdr.personnel_number := lics_inbound_utility.get_number('PERSONNEL_NUMBER',null);
     rcd_hdr.deletion_block_flag := lics_inbound_utility.get_variable('DELETION_BLOCK_FLAG');
     rcd_hdr.accounting_phone := lics_inbound_utility.get_variable('ACCOUNTING_PHONE');
     rcd_hdr.execution_flag := lics_inbound_utility.get_variable('EXECUTION_FLAG');
@@ -376,7 +376,7 @@ create or replace package body bds_app.ladpdb12_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_vend_comp
+    update bds_vend_comp_ics
     set vendor_code = rcd_hdr.vendor_code,
       company_code = rcd_hdr.company_code,
       create_date = rcd_hdr.create_date,
@@ -440,7 +440,7 @@ create or replace package body bds_app.ladpdb12_loader as
       and company_code = rcd_hdr.company_code;
     
     if ( sql%notfound ) then    
-      insert into bds_vend_comp
+      insert into bds_vend_comp_ics
       (
         vendor_code, 
         company_code, 

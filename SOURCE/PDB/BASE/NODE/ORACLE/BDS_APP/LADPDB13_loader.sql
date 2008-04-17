@@ -91,13 +91,14 @@ create or replace package body bds_app.ladpdb13_loader as
     lics_inbound_utility.set_definition('HDR','BOM_PLANT',5);
     lics_inbound_utility.set_definition('HDR','BOM_USAGE',1);
     lics_inbound_utility.set_definition('HDR','BOM_EFF_DATE',14);
-    lics_inbound_utility.set_definition('HDR','BOM_STATUS',1);
+    lics_inbound_utility.set_definition('HDR','BOM_STATUS',38);
     lics_inbound_utility.set_definition('HDR','PARENT_MATERIAL_CODE',18);
     lics_inbound_utility.set_definition('HDR','PARENT_BASE_QTY',38);
     lics_inbound_utility.set_definition('HDR','PARENT_BASE_UOM',3);
     
     /*-*/
     lics_inbound_utility.set_definition('DET','ID',3);
+    lics_inbound_utility.set_definition('DET','CHILD_MATERIAL_CODE',18);
     lics_inbound_utility.set_definition('DET','CHILD_ITEM_CATEGORY',1);
     lics_inbound_utility.set_definition('DET','CHILD_BASE_QTY',38);
     lics_inbound_utility.set_definition('DET','CHILD_BASE_UOM',3);
@@ -221,11 +222,6 @@ create or replace package body bds_app.ladpdb13_loader as
   /* This procedure performs the record CTL routine */
   /**************************************************/
   procedure process_record_ctl(par_record in varchar2) is              
-  
-    /*-*/
-    /* Local definitions
-    /*-*/
-    var_exists boolean;
                      
     /*-*/
     /* Local cursors 
@@ -268,7 +264,7 @@ create or replace package body bds_app.ladpdb13_loader as
     /*-*/
     rcd_hdr.sap_bom := lics_inbound_utility.get_variable('SAP_BOM');
     rcd_hdr.sap_bom_alternative := lics_inbound_utility.get_variable('SAP_BOM_ALTERNATIVE');
-    rcd_hdr.msg_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
+    rcd_hdr.msg_timestamp := lics_inbound_utility.get_variable('MSG_TIMESTAMP');
     
     /*-*/
     /* Validate message sequence  
@@ -276,20 +272,16 @@ create or replace package body bds_app.ladpdb13_loader as
     open csr_bds_material_bom_hdr;
     fetch csr_bds_material_bom_hdr into rcd_bds_material_bom_hdr;
     
-    if ( csr_bds_material_bom_hdr%notfound ) then
-      var_exists := false;
-    end if;
-    
-    close csr_bds_material_bom_hdr;
-    
-    if ( var_exists = true ) then
+    if ( csr_bds_material_bom_hdr%found ) then
       if ( rcd_hdr.msg_timestamp > rcd_bds_material_bom_hdr.msg_timestamp ) then
         delete from bds_material_bom_hdr where sap_bom = rcd_hdr.sap_bom and sap_bom_alternative = rcd_hdr.sap_bom_alternative;
         delete from bds_material_bom_det where sap_bom = rcd_hdr.sap_bom and sap_bom_alternative = rcd_hdr.sap_bom_alternative;
       else
         var_trn_ignore := true;
       end if;
-    end if;    
+    end if;
+    
+    close csr_bds_material_bom_hdr; 
     
   /*-------------*/
   /* End routine */
@@ -335,7 +327,7 @@ create or replace package body bds_app.ladpdb13_loader as
     /*--------------------------------------*/    
     rcd_hdr.bom_plant := lics_inbound_utility.get_variable('BOM_PLANT');
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
-    rcd_hdr.bom_eff_date := lics_inbound_utility.get_variable('BOM_EFF_DATE');
+    rcd_hdr.bom_eff_date := lics_inbound_utility.get_date('BOM_EFF_DATE',null);
     rcd_hdr.bom_status := lics_inbound_utility.get_number('BOM_STATUS', null);
     rcd_hdr.parent_material_code := lics_inbound_utility.get_variable('PARENT_MATERIAL_CODE');
     rcd_hdr.parent_base_qty := lics_inbound_utility.get_number('PARENT_BASE_QTY', null);

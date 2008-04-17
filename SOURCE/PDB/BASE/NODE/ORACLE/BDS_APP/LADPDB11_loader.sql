@@ -265,10 +265,10 @@ create or replace package body bds_app.ladpdb11_loader as
     /* RETRIEVE - Retrieve the field values */  
     /*--------------------------------------*/    
     rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-    rcd_hdr.bds_lads_date := lics_inbound_utility.get_variable('BDS_LADS_DATE');
+    rcd_hdr.bds_lads_date := lics_inbound_utility.get_date('BDS_LADS_DATE',null);
     rcd_hdr.bds_lads_status := lics_inbound_utility.get_variable('BDS_LADS_STATUS');
     rcd_hdr.sap_idoc_name := lics_inbound_utility.get_variable('SAP_IDOC_NAME');
-    rcd_hdr.sap_idoc_number := lics_inbound_utility.get_variable('SAP_IDOC_NUMBER');
+    rcd_hdr.sap_idoc_number := lics_inbound_utility.get_number('SAP_IDOC_NUMBER',null);
     rcd_hdr.sap_idoc_timestamp := lics_inbound_utility.get_variable('SAP_IDOC_TIMESTAMP');
     rcd_hdr.sap_bus_sgmnt_code := lics_inbound_utility.get_variable('SAP_BUS_SGMNT_CODE');
     rcd_hdr.sap_mrkt_sgmnt_code := lics_inbound_utility.get_variable('SAP_MRKT_SGMNT_CODE');
@@ -349,7 +349,7 @@ create or replace package body bds_app.ladpdb11_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/        
-    update bds_refrnc_hdr_altrnt
+    update bds_material_classfctn_ics
     set sap_material_code = rcd_hdr.sap_material_code,
       bds_lads_date = rcd_hdr.bds_lads_date,
       bds_lads_status = rcd_hdr.bds_lads_status,
@@ -398,12 +398,10 @@ create or replace package body bds_app.ladpdb11_loader as
       sap_physical_condtn_code = rcd_hdr.sap_physical_condtn_code,
       sap_pack_family_code = rcd_hdr.sap_pack_family_code,
       sap_pack_sub_family_code = rcd_hdr.sap_pack_sub_family_code
-    where bom_material_code = rcd_hdr.bom_material_code
-      and bom_alternative = rcd_hdr.bom_alternative
-      and bom_plant = rcd_hdr.bom_plant;
+    where sap_material_code = rcd_hdr.sap_material_code;
     
     if ( sql%notfound ) then    
-      insert into bds_refrnc_hdr_altrnt
+      insert into bds_material_classfctn_ics
       (
         sap_material_code, 
         bds_lads_date, 

@@ -83,6 +83,7 @@ create or replace package body bds_app.ladpdb04_loader as
     lics_inbound_utility.set_definition('HDR','BOM_NUMBER', 8);
     lics_inbound_utility.set_definition('HDR','BOM_MSG_FUNCTION', 3);
     lics_inbound_utility.set_definition('HDR','BOM_USAGE', 1);
+    lics_inbound_utility.set_definition('HDR','BOM_EFF_FROM_DATE', 14);
     lics_inbound_utility.set_definition('HDR','BOM_EFF_TO_DATE', 14);
     lics_inbound_utility.set_definition('HDR','BOM_BASE_QTY', 38);
     lics_inbound_utility.set_definition('HDR','BOM_BASE_UOM', 3);
@@ -248,6 +249,7 @@ create or replace package body bds_app.ladpdb04_loader as
     rcd_hdr.bom_number := lics_inbound_utility.get_variable('BOM_NUMBER');
     rcd_hdr.bom_msg_function := lics_inbound_utility.get_variable('BOM_MSG_FUNCTION');
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
+    rcd_hdr.bom_eff_from_date := lics_inbound_utility.get_date('BOM_EFF_FROM_DATE','yyyymmddhh24miss');
     rcd_hdr.bom_eff_to_date := lics_inbound_utility.get_date('BOM_EFF_TO_DATE','yyyymmddhh24miss');
     rcd_hdr.bom_base_qty := lics_inbound_utility.get_number('BOM_BASE_QTY',null);
     rcd_hdr.bom_base_uom := lics_inbound_utility.get_variable('BOM_BASE_UOM');
@@ -320,6 +322,7 @@ create or replace package body bds_app.ladpdb04_loader as
       bom_number = rcd_hdr.bom_number,
       bom_msg_function = rcd_hdr.bom_msg_function,
       bom_usage = rcd_hdr.bom_usage,
+      bom_eff_from_date = rcd_hdr.bom_eff_from_date,
       bom_eff_to_date = rcd_hdr.bom_eff_to_date,
       bom_base_qty = rcd_hdr.bom_base_qty,
       bom_base_uom = rcd_hdr.bom_base_uom,
@@ -347,6 +350,7 @@ create or replace package body bds_app.ladpdb04_loader as
         bom_number,
         bom_msg_function,
         bom_usage,
+        bom_eff_from_date,
         bom_eff_to_date,
         bom_base_qty,
         bom_base_uom,
@@ -369,6 +373,7 @@ create or replace package body bds_app.ladpdb04_loader as
         rcd_hdr.bom_number,
         rcd_hdr.bom_msg_function,
         rcd_hdr.bom_usage,
+        rcd_hdr.bom_eff_from_date,
         rcd_hdr.bom_eff_to_date,
         rcd_hdr.bom_base_qty,
         rcd_hdr.bom_base_uom,
