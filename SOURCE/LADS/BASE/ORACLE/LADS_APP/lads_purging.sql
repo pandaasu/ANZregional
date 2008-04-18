@@ -61,7 +61,6 @@ create or replace package body lads_purging as
    procedure purge_atllad28;
    procedure purge_atllad29;
 
-
    /*-*/
    /* Private constants
    /*-*/
@@ -142,7 +141,6 @@ create or replace package body lads_purging as
       /* Purge the atllad29 (Open Planned Process Orders)
       /*-*/
       purge_atllad29;
-
 
    /*-------------------*/
    /* Exception handler */
