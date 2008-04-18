@@ -1,26 +1,29 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lads
- Package : lads_purging
- Owner   : lads_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Atlas Data Store - Purging
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lads_purging as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lads
+    Package : lads_purging
+    Owner   : lads_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Atlas Data Store - Purging
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2006/06   Linden Glen    MOD : ATLLAD03 Purging
+                             ADD : ATLLAD25 Purging
+    2006/08   Linden Glen    ADD : ATLLAD28 and ATLLAD29 Purging
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -54,6 +57,10 @@ create or replace package body lads_purging as
    procedure purge_atllad16;
    procedure purge_atllad18;
    procedure purge_atllad20;
+   procedure purge_atllad25;
+   procedure purge_atllad28;
+   procedure purge_atllad29;
+
 
    /*-*/
    /* Private constants
@@ -121,6 +128,22 @@ create or replace package body lads_purging as
       /*-*/
       purge_atllad20;
 
+      /*-*/
+      /* Purge the atllad25 (Generic ICB)
+      /*-*/
+      purge_atllad25;
+
+      /*-*/
+      /* Purge the atllad28 (Open Purchase Order/Requisition)
+      /*-*/
+      purge_atllad28;
+
+      /*-*/
+      /* Purge the atllad29 (Open Planned Process Orders)
+      /*-*/
+      purge_atllad29;
+
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -161,13 +184,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.cntl_rec_id
            from lads_ctl_rec_hpi t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.cntl_rec_id
            from lads_ctl_rec_hpi t01
           where t01.cntl_rec_id = rcd_header.cntl_rec_id
@@ -264,7 +287,7 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.bukrs,
                 t01.werks,
                 t01.lgort,
@@ -274,7 +297,7 @@ create or replace package body lads_purging as
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.bukrs,
                 t01.werks,
                 t01.lgort,
@@ -385,17 +408,17 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
-         select t01.exidv
-           from lads_icb_llt_hdr t01
-          where t01.lads_date < sysdate - var_history;
+      cursor csr_header is
+         select t01.venum
+         from lads_icb_llt_hdr t01
+         where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
-         select t01.exidv
-           from lads_icb_llt_hdr t01
-          where t01.exidv = rcd_header.exidv
-                for update nowait;
+      cursor csr_lock is
+         select t01.venum
+         from lads_icb_llt_hdr t01
+         where t01.venum = rcd_header.venum
+         for update nowait;
       rcd_lock csr_lock%rowtype;
 
    /*-------------*/
@@ -454,8 +477,8 @@ create or replace package body lads_purging as
          /* Delete the header and related data when available
          /*-*/
          if var_available = true then
-            delete from lads_icb_llt_det where exidv = rcd_lock.exidv;
-            delete from lads_icb_llt_hdr where exidv = rcd_lock.exidv;
+            delete from lads_icb_llt_det where venum = rcd_lock.venum;
+            delete from lads_icb_llt_hdr where venum = rcd_lock.venum;
          end if;
 
       end loop;
@@ -486,13 +509,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.belnr
            from lads_sto_po_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.belnr
            from lads_sto_po_hdr t01
           where t01.belnr = rcd_header.belnr
@@ -601,14 +624,14 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.fkdat,
                 t01.bukrs
            from lads_inv_sum_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.fkdat,
                 t01.bukrs
            from lads_inv_sum_hdr t01
@@ -707,13 +730,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.belnr
            from lads_sal_ord_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.belnr
            from lads_sal_ord_hdr t01
           where t01.belnr = rcd_header.belnr
@@ -850,13 +873,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.tknum
            from lads_shp_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.tknum
            from lads_shp_hdr t01
           where t01.tknum = rcd_header.tknum
@@ -972,13 +995,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.vbeln
            from lads_del_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.vbeln
            from lads_del_hdr t01
           where t01.vbeln = rcd_header.vbeln
@@ -1089,13 +1112,13 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.belnr
            from lads_inv_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.belnr
            from lads_inv_hdr t01
           where t01.belnr = rcd_header.belnr
@@ -1223,14 +1246,14 @@ create or replace package body lads_purging as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_header is 
+      cursor csr_header is
          select t01.hdrdat,
                 t01.hdrseq
            from lads_hie_cus_hdr t01
           where t01.lads_date < sysdate - var_history;
       rcd_header csr_header%rowtype;
 
-      cursor csr_lock is 
+      cursor csr_lock is
          select t01.hdrdat,
                 t01.hdrseq
            from lads_hie_cus_hdr t01
@@ -1314,8 +1337,346 @@ create or replace package body lads_purging as
    /*-------------*/
    end purge_atllad20;
 
+   /******************************************************/
+   /* This procedure performs the purge ATLLAD25 routine */
+   /******************************************************/
+   procedure purge_atllad25 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_history number;
+      var_count number;
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_header is
+         select t01.zzgrpnr
+           from lads_exp_hdr t01
+          where t01.lads_date < sysdate - var_history;
+      rcd_header csr_header%rowtype;
+
+      cursor csr_lock is
+         select t01.zzgrpnr
+           from lads_exp_hdr t01
+          where t01.zzgrpnr = rcd_header.zzgrpnr
+                for update nowait;
+      rcd_lock csr_lock%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the history days
+      /*-*/
+      var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'ATLLAD25'));
+
+      /*-*/
+      /* Retrieve the headers
+      /*-*/
+      var_count := 0;
+      open csr_header;
+      loop
+         if var_count >= cnt_process_count then
+            if csr_header%isopen then
+               close csr_header;
+            end if;
+            commit;
+            open csr_header;
+            var_count := 0;
+         end if;
+         fetch csr_header into rcd_header;
+         if csr_header%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Increment the count
+         /*-*/
+         var_count := var_count + 1;
+
+         /*-*/
+         /* Attempt to lock the header
+         /*-*/
+         var_available := true;
+         begin
+            open csr_lock;
+            fetch csr_lock into rcd_lock;
+            if csr_lock%notfound then
+               var_available := false;
+            end if;
+         exception
+            when others then
+               var_available := false;
+         end;
+         if csr_lock%isopen then
+            close csr_lock;
+         end if;
+
+         /*-*/
+         /* Delete the header and related data when available
+         /*-*/
+         if var_available = true then
+            delete from lads_exp_add where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_dat where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_del where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_det where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_erf where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_gen where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hag where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_har where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hda where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hde where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hin where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hor where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hsd where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hsh where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hsi where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hsp where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hst where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_huc where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_huh where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_icn where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_ico where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_idt where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_ign where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_int where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_inv where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_ire where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_irf where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_ord where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_org where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_pnr where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_shp where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_sin where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_sor where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_tim where zzgrpnr = rcd_lock.zzgrpnr;
+            delete from lads_exp_hdr where zzgrpnr = rcd_lock.zzgrpnr;
+         end if;
+
+      end loop;
+      close csr_header;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end purge_atllad25;
+
+   /******************************************************/
+   /* This procedure performs the purge ATLLAD28 routine */
+   /******************************************************/
+   procedure purge_atllad28 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_history number;
+      var_count number;
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_header is
+         select t01.order_num,
+                t01.order_item
+           from lads_opr_hdr t01
+          where t01.lads_date < sysdate - var_history;
+      rcd_header csr_header%rowtype;
+
+      cursor csr_lock is
+         select t01.order_num,
+                t01.order_item
+           from lads_opr_hdr t01
+          where t01.order_num = rcd_header.order_num
+            and t01.order_item = rcd_header.order_item
+                for update nowait;
+      rcd_lock csr_lock%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the history days
+      /*-*/
+      var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'ATLLAD28'));
+
+      /*-*/
+      /* Retrieve the headers
+      /*-*/
+      var_count := 0;
+      open csr_header;
+      loop
+         if var_count >= cnt_process_count then
+            if csr_header%isopen then
+               close csr_header;
+            end if;
+            commit;
+            open csr_header;
+            var_count := 0;
+         end if;
+         fetch csr_header into rcd_header;
+         if csr_header%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Increment the count
+         /*-*/
+         var_count := var_count + 1;
+
+         /*-*/
+         /* Attempt to lock the header
+         /*-*/
+         var_available := true;
+         begin
+            open csr_lock;
+            fetch csr_lock into rcd_lock;
+            if csr_lock%notfound then
+               var_available := false;
+            end if;
+         exception
+            when others then
+               var_available := false;
+         end;
+         if csr_lock%isopen then
+            close csr_lock;
+         end if;
+
+         /*-*/
+         /* Delete the header and related data when available
+         /*-*/
+         if var_available = true then
+            delete from lads_opr_hdr where order_num = rcd_lock.order_num
+                                       and order_item = rcd_lock.order_item;
+         end if;
+
+      end loop;
+      close csr_header;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end purge_atllad28;
+
+   /******************************************************/
+   /* This procedure performs the purge ATLLAD29 routine */
+   /******************************************************/
+   procedure purge_atllad29 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_history number;
+      var_count number;
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_header is
+         select t01.order_id
+           from lads_ppo_hdr t01
+          where t01.lads_date < sysdate - var_history;
+      rcd_header csr_header%rowtype;
+
+      cursor csr_lock is
+         select t01.order_id
+           from lads_ppo_hdr t01
+          where t01.order_id = rcd_header.order_id
+                for update nowait;
+      rcd_lock csr_lock%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the history days
+      /*-*/
+      var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'ATLLAD29'));
+
+      /*-*/
+      /* Retrieve the headers
+      /*-*/
+      var_count := 0;
+      open csr_header;
+      loop
+         if var_count >= cnt_process_count then
+            if csr_header%isopen then
+               close csr_header;
+            end if;
+            commit;
+            open csr_header;
+            var_count := 0;
+         end if;
+         fetch csr_header into rcd_header;
+         if csr_header%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Increment the count
+         /*-*/
+         var_count := var_count + 1;
+
+         /*-*/
+         /* Attempt to lock the header
+         /*-*/
+         var_available := true;
+         begin
+            open csr_lock;
+            fetch csr_lock into rcd_lock;
+            if csr_lock%notfound then
+               var_available := false;
+            end if;
+         exception
+            when others then
+               var_available := false;
+         end;
+         if csr_lock%isopen then
+            close csr_lock;
+         end if;
+
+         /*-*/
+         /* Delete the header and related data when available
+         /*-*/
+         if var_available = true then
+            delete from lads_ppo_hdr where order_id = rcd_lock.order_id;
+         end if;
+
+      end loop;
+      close csr_header;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end purge_atllad29;
+
 end lads_purging;
-/  
+/
 
 /**************************/
 /* Package Synonym/Grants */
