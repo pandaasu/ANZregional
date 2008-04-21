@@ -3955,7 +3955,9 @@ create or replace package body dw_fcst_maintenance as
                   rcd_fcst_data.fcst_gsv := 0;
                   if par_data_type = '*QTY_GSV' then
                      rcd_fcst_data.fcst_gsv := tbl_wrkw(idx+par_data_range);
-                     rcd_fcst_data.fcst_prc := rcd_fcst_data.fcst_gsv / rcd_fcst_data.fcst_qty;
+                     if rcd_fcst_data.fcst_qty != 0 then
+                        rcd_fcst_data.fcst_prc := rcd_fcst_data.fcst_gsv / rcd_fcst_data.fcst_qty;
+                     end if;
                   end if;
                   if rcd_fcst_data.fcst_qty != 0 then
                      insert into fcst_data
