@@ -128,16 +128,20 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB06.1');   
+--        execute_send('LADPDB06.1');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB06.2');   
+--        execute_send('LADPDB06.2');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB06.3');   
+--        execute_send('LADPDB06.3'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB06.4');   
+--        execute_send('LADPDB06.4');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB06.5');   
@@ -235,10 +239,10 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
       var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_prodctn_resrc_en.resrc_id,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_prodctn_resrc_en.resrc_code,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_prodctn_resrc_en.resrc_text,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_prodctn_resrc_en.resrc_plant_code,' ')),4,' ');
+        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_id),' '),8,' ')
+        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_code),' '),8,' ')
+        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_text),' '),40,' ')
+        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_plant_code),' '),4,' ');
 
     end loop;
     close csr_prodctn_resrc_en;

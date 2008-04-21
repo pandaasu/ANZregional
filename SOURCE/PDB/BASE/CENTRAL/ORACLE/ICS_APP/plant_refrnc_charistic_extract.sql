@@ -113,16 +113,20 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB07.1');   
+--        execute_send('LADPDB07.1'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB07.2');   
+--        execute_send('LADPDB07.2');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB07.3');   
+--        execute_send('LADPDB07.3'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB07.4');   
+--        execute_send('LADPDB07.4');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB07.5');   
@@ -218,13 +222,13 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
       var_result := true; 
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_code,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_code,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_shrt_desc,' ')),256,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_charistic_value_long_desc,' ')),256,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_idoc_number,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.sap_idoc_timestamp,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_refrnc_charistic.change_flag,' ')),1,' ');
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_charistic_code),' '),30,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_charistic_value_code),' '),30,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_charistic_value_shrt_desc),' '),256,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_charistic_value_long_desc),' '),256,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_idoc_number),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.sap_idoc_timestamp),' '),14,' ')
+        || rpad(nvl(to_char(rcd_refrnc_charistic.change_flag),' '),1,' ');
 
     end loop;
     close csr_refrnc_charistic;

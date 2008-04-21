@@ -131,6 +131,9 @@ create or replace package body ics_app.plant_intransit_extract as
     /*-*/ 
     if ( var_start = true ) then
       if (var_site = '*REL' ) then
+        /*-*/
+        /* do not sent to related site if no plant code was specified 
+        /*-*/        
         if ( var_plant_code is null or var_action = '*ALL' ) then
           var_site := '*ALL';
         else  
@@ -139,16 +142,20 @@ create or replace package body ics_app.plant_intransit_extract as
       end if;
                 
       if ( var_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB15.1');   
+--        execute_send('LADPDB15.1'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB15.2');   
+--        execute_send('LADPDB15.2'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB15.3');   
+--        execute_send('LADPDB15.3');
+        var_start := false;   
       end if;    
       if ( var_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB15.4');   
+--        execute_send('LADPDB15.4'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB15.5');   
@@ -210,6 +217,9 @@ create or replace package body ics_app.plant_intransit_extract as
     /*-*/
     cursor csr_bds_intransit_header is
       select t01.plant_code as plant_code,
+        t01.sap_idoc_name as sap_idoc_name,
+        t01.sap_idoc_number as sap_idoc_number,
+        t01.sap_idoc_timestamp as sap_idoc_timestamp,
         t01.target_planning_area as target_planning_area
       from bds_intransit_header t01
       where         
@@ -288,8 +298,11 @@ create or replace package body ics_app.plant_intransit_extract as
       var_plant_code := rcd_bds_intransit_header.plant_code;
       
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_intransit_header.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_intransit_header.target_planning_area,' ')),10,' ')
+        || rpad(nvl(to_char(rcd_bds_intransit_header.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_intransit_header.sap_idoc_name),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_intransit_header.sap_idoc_number),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_intransit_header.sap_idoc_timestamp),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_intransit_header.target_planning_area),' '),10,' ')
         || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
           
       open csr_bds_intransit_detail;
@@ -301,39 +314,39 @@ create or replace package body ics_app.plant_intransit_extract as
         exit when csr_bds_intransit_detail%notfound;
         
         tbl_definition(var_index).value := 'DET'
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.detseq,'0')),10,' ')
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.company_code,' ')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.business_segment_code,'0')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.cnn_number,' ')),35,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.purch_order_number,' ')),10,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.vendor_code,' ')),10,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.shipment_number,' ')),10,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.inbound_delivery_number,' ')),10,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.source_plant_code,' ')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.source_storage_location_code,' ')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.shipping_plant_code,' ')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.target_storage_location_code,' ')),4,' ')  
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.target_mrp_plant_code,' ')),4,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.shipping_date,' ')),8,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.arrival_date,' ')),8,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.maturation_date,' ')),8,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.batch_number,' ')),10,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.best_before_date,' ')),8,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.transportation_model_code,' ')),2,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.forward_agent_code,' ')),10,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.forward_agent_trailer_number,' ')),10,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.material_code,' ')),18,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.quantity,'0')),38,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.uom_code,' ')),3,' ')   
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.stock_type_code,' ')),1,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.order_type_code,' ')),4,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.container_number,' ')),20,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.seal_number,' ')),40,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.vessel_name,' ')),20,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.voyage,' ')),20,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.record_sequence,' ')),15,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.record_count,' ')),15,' ')    
-          || rpad(to_char(nvl(rcd_bds_intransit_detail.record_timestamp,' ')),18,' ');         
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.detseq),'0'),10,' ')
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.company_code),' '),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.business_segment_code),'0'),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.cnn_number),' '),35,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.purch_order_number),' '),10,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.vendor_code),' '),10,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.shipment_number),' '),10,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.inbound_delivery_number),' '),10,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.source_plant_code),' '),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.source_storage_location_code),' '),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.shipping_plant_code),' '),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.target_storage_location_code),' '),4,' ')  
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.target_mrp_plant_code),' '),4,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.shipping_date),' '),8,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.arrival_date),' '),8,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.maturation_date),' '),8,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.batch_number),' '),10,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.best_before_date),' '),8,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.transportation_model_code),' '),2,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.forward_agent_code),' '),10,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.forward_agent_trailer_number),' '),10,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.material_code),' '),18,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.quantity),'0'),38,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.uom_code),' '),3,' ')   
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.stock_type_code),' '),1,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.order_type_code),' '),4,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.container_number),' '),20,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.seal_number),' '),40,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.vessel_name),' '),20,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.voyage),' '),20,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.record_sequence),' '),15,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.record_count),' '),15,' ')    
+          || rpad(nvl(to_char(rcd_bds_intransit_detail.record_timestamp),' '),18,' ');         
       
       end loop;
       close csr_bds_intransit_detail;  

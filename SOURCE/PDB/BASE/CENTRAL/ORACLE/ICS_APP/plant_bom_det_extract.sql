@@ -122,7 +122,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB04');
   
-    execute(null, null, null, '*MCA');
+    execute(null, null, null, '*ALL');
   end;  
   
   /***********************************************/
@@ -171,16 +171,20 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB04.1');   
+--        execute_send('LADPDB04.1'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB04.2');   
+--        execute_send('LADPDB04.2'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB04.3');   
+--        execute_send('LADPDB04.3'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB04.4');   
+--        execute_send('LADPDB04.4'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB04.5');   
@@ -308,26 +312,26 @@ create or replace package body ics_app.plant_bom_det_extract as
       var_plant := rcd_bds_bom_det.bom_plant;
                     
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_alternative,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_plant,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_number,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_msg_function,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_from_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_eff_to_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_qty,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_base_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.bom_status,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_sequence,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_number,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_msg_function,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_category,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_base_qty,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_base_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_eff_from_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_bom_det.item_eff_to_date,' ')),14,' ');
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_alternative),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_plant),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_number),' '),8,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_msg_function),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_usage),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_eff_from_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_eff_to_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_base_qty),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_base_uom),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.bom_status),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_sequence),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_number),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_msg_function),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_category),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_base_qty),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_base_uom),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_eff_from_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_eff_to_date),' '),14,' ');
 
     end loop;
     close csr_bds_bom_det;

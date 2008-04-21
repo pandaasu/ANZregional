@@ -4,14 +4,26 @@
 /**
  System  : lics 
  Package : lics_last_run_control 
- Owner   : lics_app 
+  Owner   : lics_app 
  Author  : Trevor Keon 
 
  DESCRIPTION 
  ----------- 
  Local Interface Control System - Last Run Control 
 
- The package manages the last run values for an interface 
+ The package manages the last run values for an interface.
+ 
+  FUNCTION: GET_LAST_RUN 
+
+    1. PAR_INTERFACE - the interface to get the last successful run date.
+      Returns null if the interface does not exist. 
+
+  PROCEDURE: SET_LAST_RUN 
+
+    1. PAR_INTERFACE - the interface to set the successful run date for 
+    2. PAR_DATE - the date the interface last ran successfully on 
+       
+    Inserts the interface and date if it does not exist already  
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -51,32 +63,35 @@ create or replace package body lics_last_run_control as
   /*-*/
   /* Local definitions 
   /*-*/
-  var_result date;
+  var_result date := null;
+  
+  /*-*/
+  /* Local cursors 
+  /*-*/
+  cursor csr_lics_last_run is 
+    select lsr_date
+    from lics_last_run
+    where lsr_interface = par_interface;
+  rcd_lics_last_run csr_lics_last_run%rowtype;
      
   /*-------------*/
   /* Begin block */
   /*-------------*/   
   begin
-    
+
     /*-*/
-    /* Get the date 
+    /* Retrieve the next run date 
     /*-*/
-    select lsr_date
-    into var_result
-    from lics_last_run
-    where lsr_interface = par_interface;
+    open csr_lics_last_run;
+    fetch csr_lics_last_run into rcd_lics_last_run;
+      if csr_lics_last_run%notfound then
+        var_result := null;
+      else
+        var_result := rcd_lics_last_run.lsr_date;
+      end if;    
+    close csr_lics_last_run;
     
     return var_result;
-
-  /*-----------------*/
-  /* Exception block */
-  /*-----------------*/         
-  exception
-    /*-*/
-    /* Ignore no data errors 
-    /*-*/  
-    when no_data_found then
-      return null;
             
   /*-------------*/
   /* End routine */

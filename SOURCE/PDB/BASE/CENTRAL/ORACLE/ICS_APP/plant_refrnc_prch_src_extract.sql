@@ -115,16 +115,20 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB09.1');   
+--        execute_send('LADPDB09.1');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB09.2');   
+--        execute_send('LADPDB09.2'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB09.3');   
+--        execute_send('LADPDB09.3');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB09.4');   
+--        execute_send('LADPDB09.4'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB09.5');   
@@ -237,29 +241,29 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
       var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.sap_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.record_no,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.creatn_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.creatn_user,' ')),12,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.src_list_valid_from,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.src_list_valid_to,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.vendor_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.fixed_vendor_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.agreement_no,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.agreement_item,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.fixed_purchase_agreement_item,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.plant_procured_from,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.sto_fixed_issuing_plant,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.manufctr_part_refrnc_material,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.blocked_supply_src_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.purchasing_organisation,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.purchasing_document_ctgry,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.src_list_ctgry,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.src_list_planning_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.order_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.logical_system,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_purchasing_src.special_stock_indctr,' ')),1,' ');
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.sap_material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.record_no),' '),5,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.creatn_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.creatn_user),' '),12,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.src_list_valid_from),' '),14,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.src_list_valid_to),' '),14,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.vendor_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.fixed_vendor_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.agreement_no),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.agreement_item),' '),5,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.fixed_purchase_agreement_item),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.plant_procured_from),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.sto_fixed_issuing_plant),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.manufctr_part_refrnc_material),' '),18,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.blocked_supply_src_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.purchasing_organisation),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.purchasing_document_ctgry),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.src_list_ctgry),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.src_list_planning_usage),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.order_unit),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.logical_system),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.special_stock_indctr),' '),1,' ');
 
     end loop;
     close csr_refrnc_purchasing_src;

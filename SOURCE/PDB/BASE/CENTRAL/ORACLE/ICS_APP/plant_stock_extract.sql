@@ -124,6 +124,8 @@ create or replace package body ics_app.plant_stock_extract as
     var_exception varchar2(4000);
     var_site      varchar2(10);
     var_start     boolean := false;
+    
+    var_specific_plant_code bds_stock_header.plant_code%type;
          
   begin
   
@@ -149,6 +151,11 @@ create or replace package body ics_app.plant_stock_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI, *REL or NULL');
     end if;
        
+    /*-*/
+    /* store the specified plant code for checking *REL sites  
+    /*-*/       
+    var_specific_plant_code := var_plant_code;
+    
     var_start := execute_extract(var_company_code,var_plant_code,var_storage_location_code,var_stock_balance_date,var_stock_balance_time);
     
     /*-*/
@@ -156,8 +163,11 @@ create or replace package body ics_app.plant_stock_extract as
     /* to send to the specified site(s) 
     /*-*/ 
     if ( var_start = true ) then
-      if (var_site = '*REL' ) then
-        if ( var_plant_code is null ) then
+      if (var_site = '*REL' ) then        
+        /*-*/
+        /* do not sent to related site if no plant code was specified 
+        /*-*/        
+        if ( var_specific_plant_code is null ) then
           var_site := '*ALL';
         else  
           var_site := get_send_relative;
@@ -165,16 +175,20 @@ create or replace package body ics_app.plant_stock_extract as
       end if;
                 
       if ( var_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB14.1');   
+--        execute_send('LADPDB14.1'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB14.2');   
+--        execute_send('LADPDB14.2'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB14.3');   
+--        execute_send('LADPDB14.3');
+        var_start := false;   
       end if;    
       if ( var_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB14.4');   
+--        execute_send('LADPDB14.4'); 
+        var_start := false;  
       end if;    
       if ( var_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB14.5');   
@@ -308,18 +322,18 @@ create or replace package body ics_app.plant_stock_extract as
       var_stock_balance_time := rcd_bds_stock_header.stock_balance_time;
       
       tbl_definition(var_index).value := 'CTL'
-        || rpad(to_char(nvl(rcd_bds_stock_header.company_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_stock_header.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_stock_header.storage_location_code,' ')),12,' ')
-        || rpad(to_char(nvl(rcd_bds_stock_header.stock_balance_date,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_bds_stock_header.stock_balance_time,' ')),8,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.company_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.storage_location_code),' '),12,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.stock_balance_date),' '),8,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.stock_balance_time),' '),8,' ')
         || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');    
 
       var_index := tbl_definition.count + 1;              
         
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_stock_header.company_identifier,' ')),6,' ')
-        || rpad(to_char(nvl(rcd_bds_stock_header.inventory_document,' ')),10,' ');
+        || rpad(nvl(to_char(rcd_bds_stock_header.company_identifier),' '),6,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_header.inventory_document),' '),10,' ');
           
       open csr_bds_stock_detail;
       loop      
@@ -330,15 +344,15 @@ create or replace package body ics_app.plant_stock_extract as
         exit when csr_bds_stock_detail%notfound;
         
         tbl_definition(var_index).value := 'DET'
-          || rpad(to_char(nvl(rcd_bds_stock_detail.material_code,' ')),18,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.material_batch_number,' ')),1,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.inspection_stock_flag,' ')),1,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.stock_quantity,'0')),38,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.stock_uom_code,' ')),3,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.stock_best_before_date,' ')),8,' ')   
-          || rpad(to_char(nvl(rcd_bds_stock_detail.consignment_cust_vend,' ')),10,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.rcv_isu_storage_location_code,' ')),4,' ')
-          || rpad(to_char(nvl(rcd_bds_stock_detail.stock_type_code,' ')),2,' ');     
+          || rpad(nvl(to_char(rcd_bds_stock_detail.material_code),' '),18,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.material_batch_number),' '),1,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.inspection_stock_flag),' '),1,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_quantity),'0'),38,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_uom_code),' '),3,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_best_before_date),' '),8,' ')   
+          || rpad(nvl(to_char(rcd_bds_stock_detail.consignment_cust_vend),' '),10,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.rcv_isu_storage_location_code),' '),4,' ')
+          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_type_code),' '),2,' ');     
       
       end loop;
       close csr_bds_stock_detail;  

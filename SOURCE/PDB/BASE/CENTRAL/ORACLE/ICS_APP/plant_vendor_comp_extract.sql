@@ -103,7 +103,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB12');
   
-    execute('*ALL',null,'*MCA');
+    execute('*ALL',null,'*ALL');
   end;  
 
   /***********************************************/
@@ -157,16 +157,20 @@ create or replace package body ics_app.plant_vendor_comp_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB12.1');   
+--        execute_send('LADPDB12.1'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB122');   
+--        execute_send('LADPDB122'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB12.3');   
+--        execute_send('LADPDB12.3');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB12.4');   
+--        execute_send('LADPDB12.4');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB12.5');   
@@ -329,65 +333,65 @@ create or replace package body ics_app.plant_vendor_comp_extract as
       var_vendor_code := rcd_bds_vend_comp.vendor_code;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.company_code,' ')),6,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.create_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.create_user,' ')),12,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.posting_block_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.deletion_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.assignment_sort_key,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.reconciliation_account,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.authorisation_group,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.interest_calc_ind,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.payment_method,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.clearing_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.payment_block_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.payment_terms,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.shipper_account,' ')),12,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_clerk,' ')),15,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.planning_group,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.account_clerk_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.head_office_account,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.alternative_payee_account,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.interest_calc_key_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.interest_calc_freq,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.nterest_calc_run_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.local_process_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.bill_of_exchange_limit,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.probable_check_paid_time,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.inv_crd_check_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.tolerance_group_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.house_bank_key,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.pay_item_separate_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.withhold_tax_certificate,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.withhold_tax_valid_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.withhold_tax_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.subsidy_flag,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.minority_indicator,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.previous_record_number,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.payment_grouping_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.dunning_notice_group_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.recipient_type,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.withhold_tax_exemption,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.withhold_tax_country,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.edi_payment_advice,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.release_approval_group,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.accounting_fax,' ')),31,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.accounting_url,' ')),130,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.credit_payment_terms,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.income_tax_activity_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.employ_tax_distbn_type,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.periodic_account_statement,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.certification_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.invoice_tolerance_group,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.personnel_number,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.deletion_block_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.accounting_phone,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.execution_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_name_01,' ')),35,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_name_02,' ')),35,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_name_03,' ')),35,' ')
-        || rpad(to_char(nvl(rcd_bds_vend_comp.vendor_name_04,' ')),35,' ');
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.company_code),' '),6,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.create_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.create_user),' '),12,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.posting_block_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.deletion_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.assignment_sort_key),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.reconciliation_account),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.authorisation_group),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.interest_calc_ind),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.payment_method),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.clearing_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.payment_block_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.payment_terms),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.shipper_account),' '),12,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_clerk),' '),15,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.planning_group),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.account_clerk_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.head_office_account),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.alternative_payee_account),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.interest_calc_key_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.interest_calc_freq),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.nterest_calc_run_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.local_process_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.bill_of_exchange_limit),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.probable_check_paid_time),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.inv_crd_check_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.tolerance_group_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.house_bank_key),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.pay_item_separate_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.withhold_tax_certificate),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.withhold_tax_valid_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.withhold_tax_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.subsidy_flag),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.minority_indicator),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.previous_record_number),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.payment_grouping_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.dunning_notice_group_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.recipient_type),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.withhold_tax_exemption),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.withhold_tax_country),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.edi_payment_advice),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.release_approval_group),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.accounting_fax),' '),31,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.accounting_url),' '),130,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.credit_payment_terms),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.income_tax_activity_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.employ_tax_distbn_type),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.periodic_account_statement),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.certification_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.invoice_tolerance_group),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.personnel_number),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.deletion_block_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.accounting_phone),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.execution_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_name_01),' '),35,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_name_02),' '),35,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_name_03),' '),35,' ')
+        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_name_04),' '),35,' ');
 
     end loop;
     close csr_bds_vend_comp;

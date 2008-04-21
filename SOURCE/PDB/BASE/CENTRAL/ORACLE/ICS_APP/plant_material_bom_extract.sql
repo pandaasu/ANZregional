@@ -114,7 +114,7 @@ create or replace package body ics_app.plant_material_bom_extract as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB13');
   
-    execute('*ALL',null,null,'*MCA');
+    execute('*ALL',null,null,'*ALL');
   end; 
 
   /***********************************************/
@@ -173,16 +173,20 @@ create or replace package body ics_app.plant_material_bom_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB13.1');   
+--        execute_send('LADPDB13.1'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB13.2');   
+--        execute_send('LADPDB13.2');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB13.3');   
+--        execute_send('LADPDB13.3');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB13.4');   
+--        execute_send('LADPDB13.4');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB13.5');   
@@ -307,20 +311,20 @@ create or replace package body ics_app.plant_material_bom_extract as
       var_alt_bom := rcd_bds_material_bom_hdr.sap_bom_alternative;
       
       tbl_definition(var_index).value := 'CTL'
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.sap_bom,' ')),8,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.sap_bom_alternative,' ')),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.sap_bom),' '),8,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.sap_bom_alternative),' '),2,' ')
         || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
         
       var_index := tbl_definition.count + 1;
               
       tbl_definition(var_index).value := 'HDR' 
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_plant,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_eff_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.bom_status,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_base_qty,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_bom_hdr.parent_base_uom,' ')),3,' ');
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.bom_plant),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.bom_usage),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.bom_eff_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.bom_status),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.parent_material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.parent_base_qty),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_bom_hdr.parent_base_uom),' '),3,' ');
         
       open csr_bds_material_bom_det;
       loop
@@ -330,10 +334,10 @@ create or replace package body ics_app.plant_material_bom_extract as
         var_index := tbl_definition.count + 1;
                                  
         tbl_definition(var_index).value := 'DET'
-          || rpad(to_char(nvl(rcd_bds_material_bom_det.child_material_code,' ')),18,' ')
-          || rpad(to_char(nvl(rcd_bds_material_bom_det.child_item_category,' ')),1,' ')
-          || rpad(to_char(nvl(rcd_bds_material_bom_det.child_base_qty,'0')),38,' ')
-          || rpad(to_char(nvl(rcd_bds_material_bom_det.child_base_uom,' ')),3,' ');
+          || rpad(nvl(to_char(rcd_bds_material_bom_det.child_material_code),' '),18,' ')
+          || rpad(nvl(to_char(rcd_bds_material_bom_det.child_item_category),' '),1,' ')
+          || rpad(nvl(to_char(rcd_bds_material_bom_det.child_base_qty),'0'),38,' ')
+          || rpad(nvl(to_char(rcd_bds_material_bom_det.child_base_uom),' '),3,' ');
             
       end loop;
       close csr_bds_material_bom_det;         

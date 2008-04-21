@@ -104,7 +104,7 @@ create or replace package body ics_app.plant_cust_address_extract as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB03');
   
-    execute('*ALL',null,'*MCA');
+    execute('*ALL',null,'*ALL');
   end;  
 
   /***********************************************/
@@ -158,16 +158,20 @@ create or replace package body ics_app.plant_cust_address_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB03.1');   
+--        execute_send('LADPDB03.1'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB03.2');   
+--        execute_send('LADPDB03.2'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB03.3');   
+--        execute_send('LADPDB03.3');
+        var_start := false;   
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB03.4');   
+--        execute_send('LADPDB03.4'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB03.5');   
@@ -311,46 +315,46 @@ create or replace package body ics_app.plant_cust_address_extract as
       var_customer_code := rcd_bds_addr_customer.customer_code;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_addr_customer.customer_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.address_version,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.valid_from_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.valid_to_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.title,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.name,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.name_02,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.name_03,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.name_04,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.city,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.district,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.city_post_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_post_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.company_post_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_minus_number,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_city,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_region,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_country,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.po_box_country_iso,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.transportation_zone,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.street,' ')),60,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.house_number,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.location,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.building,' ')),20,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.floor,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.room_number,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.country,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.country_iso,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.language,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.language_iso,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.region_code,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.search_term_01,' ')),20,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.search_term_02,' ')),20,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_number,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_extension,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.phone_full_number,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_number,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_extension,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_addr_customer.fax_full_number,' ')),30,' ');
+        || rpad(nvl(to_char(rcd_bds_addr_customer.customer_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.address_version),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.valid_from_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.valid_to_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.title),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.name),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.name_02),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.name_03),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.name_04),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.city),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.district),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.city_post_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_post_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.company_post_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_minus_number),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_city),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_region),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_country),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.po_box_country_iso),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.transportation_zone),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.street),' '),60,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.house_number),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.location),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.building),' '),20,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.floor),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.room_number),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.country),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.country_iso),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.language),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.language_iso),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.region_code),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.search_term_01),' '),20,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.search_term_02),' '),20,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.phone_number),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.phone_extension),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.phone_full_number),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.fax_number),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.fax_extension),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_addr_customer.fax_full_number),' '),30,' ');
 
     end loop;
     close csr_bds_addr_customer;

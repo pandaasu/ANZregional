@@ -104,7 +104,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB10');
   
-    execute('*ALL',null,'*MCA');
+    execute('*ALL',null,'*ALL');
   end; 
 
   /***********************************************/
@@ -159,16 +159,20 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
     if ( var_start = true ) then  
     
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB10.1');   
+--        execute_send('LADPDB10.1')
+        var_start := false; 
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB10.2');   
+--        execute_send('LADPDB10.2')
+        var_start := false; 
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB10.3');   
+--        execute_send('LADPDB10.3')
+        var_start := false; 
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB10.4');   
+--        execute_send('LADPDB10.4'); 
+        var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB10.5');   
@@ -335,69 +339,69 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
       var_customer_code := rcd_bds_cust_sales_area.customer_code;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.customer_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.sales_org_code,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.distbn_chnl_code,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.division_code,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.auth_group_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.deletion_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.statistics_group,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.order_block_flag,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.pricing_procedure,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.group_code,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.sales_district,' ')),6,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.price_group,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.price_list_type,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.order_probability,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.inter_company_terms_01,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.inter_company_terms_02,' ')),28,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.delivery_block_flag,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.order_complete_delivery_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.partial_item_delivery_max,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.partial_item_delivery_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.order_combination_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.split_batch_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.delivery_priority,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.shipper_account_number,' ')),12,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.ship_conditions,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.billing_block_flag,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.manual_invoice_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.invoice_dates,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.invoice_list_schedule,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.currency_code,' ')),5,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.account_assign_group,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.payment_terms_key,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.delivery_plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.sales_group_code,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.sales_office_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.item_proposal,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.invoice_combination,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.price_band_expected,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.accept_int_pallet,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.price_band_guaranteed,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.back_order_flag,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.rebate_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.exchange_rate_type,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.price_determination_id,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.abc_classification,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.payment_guarantee_proc,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.credit_control_area,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.sales_block_flag,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.rounding_off,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.agency_business_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.uom_group,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.over_delivery_tolerance,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.under_delivery_tolerance,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.unlimited_over_delivery,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.product_proposal_proc,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.pod_processing,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.pod_confirm_timeframe,' ')),11,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.po_index_compilation,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.batch_search_strategy,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.vmi_input_method,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.current_planning_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.future_planning_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_cust_sales_area.market_account_flag,' ')),1,' ');
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.customer_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.sales_org_code),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.distbn_chnl_code),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.division_code),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.auth_group_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.deletion_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.statistics_group),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.order_block_flag),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.pricing_procedure),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.group_code),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.sales_district),' '),6,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.price_group),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.price_list_type),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.order_probability),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.inter_company_terms_01),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.inter_company_terms_02),' '),28,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.delivery_block_flag),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.order_complete_delivery_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.partial_item_delivery_max),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.partial_item_delivery_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.order_combination_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.split_batch_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.delivery_priority),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.shipper_account_number),' '),12,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.ship_conditions),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.billing_block_flag),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.manual_invoice_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.invoice_dates),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.invoice_list_schedule),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.currency_code),' '),5,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.account_assign_group),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.payment_terms_key),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.delivery_plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.sales_group_code),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.sales_office_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.item_proposal),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.invoice_combination),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.price_band_expected),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.accept_int_pallet),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.price_band_guaranteed),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.back_order_flag),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.rebate_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.exchange_rate_type),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.price_determination_id),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.abc_classification),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.payment_guarantee_proc),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.credit_control_area),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.sales_block_flag),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.rounding_off),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.agency_business_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.uom_group),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.over_delivery_tolerance),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.under_delivery_tolerance),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.unlimited_over_delivery),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.product_proposal_proc),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.pod_processing),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.pod_confirm_timeframe),' '),11,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.po_index_compilation),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.batch_search_strategy),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.vmi_input_method),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.current_planning_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.future_planning_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_cust_sales_area.market_account_flag),' '),1,' ');
 
     end loop;
     close csr_bds_cust_sales_area;

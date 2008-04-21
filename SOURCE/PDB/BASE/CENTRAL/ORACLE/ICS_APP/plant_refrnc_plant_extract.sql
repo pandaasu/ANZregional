@@ -128,16 +128,20 @@ create or replace package body ics_app.plant_refrnc_plant_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB08.1');   
+--        execute_send('LADPDB08.1'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB08.2');   
+--        execute_send('LADPDB08.2'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB08.3');   
+--        execute_send('LADPDB08.3'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB08.4');   
+--        execute_send('LADPDB08.4');
+        var_start := false;   
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB08.5');   
@@ -286,62 +290,62 @@ create or replace package body ics_app.plant_refrnc_plant_extract as
       var_result := true;    
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.sap_idoc_number,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.sap_idoc_timestamp,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.change_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_name,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.vltn_area,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_customer_no,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_vendor_no,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.factory_calendar_key,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_name_2,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_street,' ')),30,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_po_box,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_post_code,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_city,' ')),25,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_purchasing_organisation,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_sales_organisation,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.batch_manage_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_condition_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.source_list_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.activate_reqrmnt_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_country_key,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_region,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_country_code,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_city_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_address,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.maint_planning_plant,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.tax_jurisdiction_code,' ')),15,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.dstrbtn_channel,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.division,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.language_key,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.sop_plant,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.variance_key,' ')),6,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.batch_manage_old_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_ctgry,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_sales_district,' ')),6,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_supply_region,' ')),10,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_tax_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.regular_vendor_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.first_reminder_days,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.second_reminder_days,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.third_reminder_days,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.vendor_declaration_text_1,' ')),16,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.vendor_declaration_text_2,' ')),16,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.vendor_declaration_text_3,' ')),16,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.po_tolerance_days,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_business_place,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.stock_xfer_rule,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.plant_dstrbtn_profile,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.central_archive_marker,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.dms_type_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.node_type,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.name_formation_structure,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.cost_control_active_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.mixed_costing_active_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.actual_costing_active_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_refrnc_plant.transport_point,' ')),4,' ');
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.sap_idoc_number),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.sap_idoc_timestamp),' '),14,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.change_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_name),' '),30,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.vltn_area),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_customer_no),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_vendor_no),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.factory_calendar_key),' '),2,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_name_2),' '),30,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_street),' '),30,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_po_box),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_post_code),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_city),' '),25,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_purchasing_organisation),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_sales_organisation),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.batch_manage_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_condition_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.source_list_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.activate_reqrmnt_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_country_key),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_region),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_country_code),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_city_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_address),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.maint_planning_plant),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.tax_jurisdiction_code),' '),15,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.dstrbtn_channel),' '),2,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.division),' '),2,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.language_key),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.sop_plant),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.variance_key),' '),6,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.batch_manage_old_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_ctgry),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_sales_district),' '),6,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_supply_region),' '),10,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_tax_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.regular_vendor_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.first_reminder_days),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.second_reminder_days),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.third_reminder_days),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.vendor_declaration_text_1),' '),16,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.vendor_declaration_text_2),' '),16,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.vendor_declaration_text_3),' '),16,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.po_tolerance_days),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_business_place),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.stock_xfer_rule),' '),2,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.plant_dstrbtn_profile),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.central_archive_marker),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.dms_type_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.node_type),' '),3,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.name_formation_structure),' '),4,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.cost_control_active_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.mixed_costing_active_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.actual_costing_active_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_refrnc_plant.transport_point),' '),4,' ');
 
     end loop;
     close csr_refrnc_plant;

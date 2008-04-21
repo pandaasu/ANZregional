@@ -113,7 +113,7 @@ as
     /*-*/    
     var_lastrun_date := lics_last_run_control.get_last_run('LADPDB02');
   
-    execute('*ALL',null,'*MCA');
+    execute('*ALL',null,'*ALL');
   end; 
 
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
@@ -167,16 +167,20 @@ as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB02.1');   
+--        execute_send('LADPDB02.1'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB02.2');   
+--        execute_send('LADPDB02.2'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB02.3');   
+--        execute_send('LADPDB02.3'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB02.4');   
+--        execute_send('LADPDB02.4'); 
+        var_start := false;  
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB02.5');   
@@ -233,7 +237,7 @@ as
     /*-*/
     /* Local variables 
     /*-*/
-    var_index     number(5,0);        
+    var_index     number(8,0);        
     var_result    boolean;
     var_skip_pkg  boolean; 
   
@@ -465,7 +469,7 @@ as
         var_material_code := rcd_bds_material_plant_mfanz.sap_material_code;
         
         tbl_definition(var_index).value := 'CTL'
-          || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.sap_material_code,' ')),18,' ')
+          || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.sap_material_code),' '),18,' ')
           || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
         
         var_index := tbl_definition.count + 1;
@@ -478,66 +482,66 @@ as
       end if;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.plant_code,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.bds_material_desc_en,' ')),40,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.material_type,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.material_grp,' ')),9,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.base_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.order_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.gross_weight,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.net_weight,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.gross_weight_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.length,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.width,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.height,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.dimension_uom,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.interntl_article_no,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.total_shelf_life,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_plan_item_flag,' ')),6,' ')        
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_intrmdt_prdct_compnt_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_merchandising_unit_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_prmotional_material_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_retail_sales_unit_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_shpping_contnr_flag,' ')),1,' ')        
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_semi_finished_prdct_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_rprsnttv_item_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_traded_unit_flag,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.xplant_status,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.xplant_status_valid,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.batch_mngmnt_reqrmnt_indctr,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_plant_material_type,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.procurement_type,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.special_procurement_type,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.issue_storage_location,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mrp_controller,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.plant_specific_status_valid,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.deletion_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.plant_specific_status,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.assembly_scrap_percntg,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.component_scrap_percntg,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.backflush_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_rprsnttv_item_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.regional_code_10,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.regional_code_17,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.regional_code_18,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.regional_code_19,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.price_unit,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.future_planned_price_1,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.vltn_class,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_pce_item_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_pce_interntl_article_no,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.bds_sb_factor_from_base_uom,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mars_sb_item_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.effective_out_date,' ')),14,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.discontinuation_indctr,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.followup_material,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.material_division,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.mrp_type,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.max_storage_prd,'0')),38,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.max_storage_prd_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.issue_unit,' ')),3,' ')
-        || rpad(to_char(nvl(rcd_bds_material_plant_mfanz.planned_delivery_days,'0')),38,' ');        
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_material_desc_en),' '),40,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.material_type),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.material_grp),' '),9,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.base_uom),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.order_unit),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.gross_weight),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.net_weight),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.gross_weight_unit),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.length),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.width),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.height),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.dimension_uom),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.interntl_article_no),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.total_shelf_life),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_plan_item_flag),' '),6,' ')        
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_intrmdt_prdct_compnt_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_merchandising_unit_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_prmotional_material_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_retail_sales_unit_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_shpping_contnr_flag),' '),1,' ')        
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_semi_finished_prdct_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_rprsnttv_item_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_traded_unit_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.xplant_status),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.xplant_status_valid),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.batch_mngmnt_reqrmnt_indctr),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_plant_material_type),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.procurement_type),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.special_procurement_type),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.issue_storage_location),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mrp_controller),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.plant_specific_status_valid),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.deletion_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.plant_specific_status),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.assembly_scrap_percntg),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.component_scrap_percntg),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.backflush_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_rprsnttv_item_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_10),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_17),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_18),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_19),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.price_unit),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.future_planned_price_1),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.vltn_class),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_item_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_interntl_article_no),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_sb_factor_from_base_uom),' '),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_sb_item_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.effective_out_date),' '),14,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.discontinuation_indctr),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.followup_material),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.material_division),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mrp_type),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.max_storage_prd),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.max_storage_prd_unit),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.issue_unit),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.planned_delivery_days),'0'),38,' ');        
       
       -- include the sales text in a seperate child record if it contains data 
       if ( rcd_bds_material_plant_mfanz.sales_text_147 is not null
@@ -561,27 +565,27 @@ as
           var_index := tbl_definition.count + 1;
                                  
           tbl_definition(var_index).value := 'PKG'
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_table_usage,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_table,' ')),64,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_type,' ')),4,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_application,' ')),2,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.item_ctgry,' ')),2,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.sales_organisation,' ')),4,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.component,' ')), 20,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_start_date,' ')),14,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.pkg_instr_end_date,' ')),14,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.variable_key,' ')),100,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.height,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.width,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.length,'0')),38,' ')                 
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.hu_total_weight,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.hu_total_volume,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.dimension_uom,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.weight_unit,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.volume_unit,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.target_qty,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.rounding_qty,'0')),38,' ') 
-            || rpad(to_char(nvl(rcd_bds_material_pkg_instr_det.uom,' ')),3,' ');
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_table_usage),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_table),' '),64,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_type),' '),4,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_application),' '),2,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.item_ctgry),' '),2,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.sales_organisation),' '),4,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.component),' '), 20,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_start_date),' '),14,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.pkg_instr_end_date),' '),14,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.variable_key),' '),100,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.height),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.width),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.length),'0'),38,' ')                 
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.hu_total_weight),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.hu_total_volume),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.dimension_uom),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.weight_unit),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.volume_unit),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.target_qty),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.rounding_qty),'0'),38,' ') 
+            || rpad(nvl(to_char(rcd_bds_material_pkg_instr_det.uom),' '),3,' ');
             
         end loop;
         close csr_bds_material_pkg_instr_det;
@@ -594,32 +598,32 @@ as
           var_index := tbl_definition.count + 1;
                                  
           tbl_definition(var_index).value := 'UOM'
-            || rpad(to_char(nvl(rcd_bds_material_uom.uom_code,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.sap_function,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.base_uom_numerator,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.base_uom_denominator,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.bds_factor_to_base_uom,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.bds_factor_from_base_uom,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.interntl_article_no,' ')),18,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.interntl_article_no_ctgry,' ')),2,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.length,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.width,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.height,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.dimension_uom,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.volume,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.volume_unit,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.gross_weight,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.gross_weight_unit,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.lower_level_hierachy_uom,' ')),3,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.global_trade_item_variant,' ')),2,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_mutli_convrsn_uom_indctr,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_pc_item_code,' ')),18,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_pc_level,'0')),38,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_order_uom_prfrnc_indctr,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_sales_uom_prfrnc_indctr,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_issue_uom_prfrnc_indctr,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_wm_uom_prfrnc_indctr,' ')),1,' ')
-            || rpad(to_char(nvl(rcd_bds_material_uom.mars_rprsnttv_material_code,' ')),18,' ');
+            || rpad(nvl(to_char(rcd_bds_material_uom.uom_code),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.sap_function),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.base_uom_numerator),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.base_uom_denominator),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.bds_factor_to_base_uom),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.bds_factor_from_base_uom),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.interntl_article_no),' '),18,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.interntl_article_no_ctgry),' '),2,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.length),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.width),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.height),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.dimension_uom),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.volume),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.volume_unit),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.gross_weight),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.gross_weight_unit),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.lower_level_hierachy_uom),' '),3,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.global_trade_item_variant),' '),2,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_mutli_convrsn_uom_indctr),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_pc_item_code),' '),18,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_pc_level),' '),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_order_uom_prfrnc_indctr),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_sales_uom_prfrnc_indctr),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_issue_uom_prfrnc_indctr),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_wm_uom_prfrnc_indctr),' '),1,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.mars_rprsnttv_material_code),' '),18,' ');
             
         end loop;
         close csr_bds_material_uom;

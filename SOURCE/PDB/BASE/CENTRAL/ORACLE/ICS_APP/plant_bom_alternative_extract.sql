@@ -114,16 +114,20 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB05.1');   
+--        execute_send('LADPDB05.1');
+        var_start := false;
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB05.2');   
+--        execute_send('LADPDB05.2');   
+        var_start := false;
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB05.3');   
+--        execute_send('LADPDB05.3');   
+        var_start := false;
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB05.4');   
+--        execute_send('LADPDB05.4');  
+        var_start := false; 
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB05.5');   
@@ -219,11 +223,11 @@ create or replace package body ics_app.plant_bom_alternative_extract as
       var_result := true;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_material_code,' ')),18,' ')
-        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_alternative,' ')),2,' ')
-        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_plant,' ')),4,' ')
-        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_usage,' ')),1,' ')
-        || rpad(to_char(nvl(rcd_bds_refrnc_bom_altrnt.bom_eff_from_date,' ')),14,' ');
+        || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_alternative),' '),2,' ')
+        || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_plant),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_usage),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_eff_from_date),' '),14,' ');
 
     end loop;
     close csr_bds_refrnc_bom_altrnt;
