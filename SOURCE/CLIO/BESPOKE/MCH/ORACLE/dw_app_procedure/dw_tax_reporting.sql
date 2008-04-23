@@ -39,6 +39,7 @@ create or replace package dw_tax_reporting as
     2008/04   Steve Gregan   Changed sample pricing report for pricing condition PR00
     2008/04   Steve Gregan   Changed sample pricing report for heading change
     2008/04   Steve Gregan   Changed sample pricing report for finished goods only
+    2008/04   Steve Gregan   Changed sample pricing report for pricing UOM and calculation
 
    *******************************************************************************/
 
@@ -666,18 +667,21 @@ create or replace package body dw_tax_reporting as
                                    (select lads_trim_code(t11.matnr) sap_material_code,
                                            lads_to_date(t11.datab,''yyyymmdd'') valid_from,
                                            lads_to_date(t11.datbi,''yyyymmdd'') valid_to,
-                                           t12.kbetr dispatch_price
+                                           t12.kbetr / decode(nvl(t13.bds_factor_to_base_uom,0),0,1,t13.bds_factor_to_base_uom) dispatch_price
                                       from lads_prc_lst_hdr t11,
-                                           lads_prc_lst_det t12
+                                           lads_prc_lst_det t12,
+                                           bds_material_uom t13
                                      where t11.vakey = t12.vakey
                                        and t11.kschl = t12.kschl
                                        and t11.datab = t12.datab
                                        and t11.knumh = t12.knumh
+                                       and t11.matnr = t13.sap_material_code(+)
+                                       and ''CS'' = t13.uom_code(+)
                                        and t11.vkorg in (''135'',''234'')
                                        and t11.kschl = ''PR00''
                                        and t12.konwa = ''CNY''
                                        and t12.kpein = 1
-                                       and t12.kmein = ''EA''
+                                       and t12.kmein = ''CS''
                                        and t11.matnr is not null) t07,
                                    lads_cus_pfr t08,
                                    bds_addr_customer_zh t09
@@ -777,7 +781,7 @@ create or replace package body dw_tax_reporting as
                                                   and t11.kschl = ''PR00''
                                                   and t12.konwa = ''CNY''
                                                   and t12.kpein = 1
-                                                  and t12.kmein = ''EA''
+                                                  and t12.kmein = ''CS''
                                                   and t11.matnr is not null
                                                   and t01.sap_material_code = lads_trim_code(t11.matnr)
                                                   and (t01.pod_date >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
