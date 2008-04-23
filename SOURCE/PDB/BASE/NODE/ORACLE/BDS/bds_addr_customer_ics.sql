@@ -75,6 +75,7 @@ create or replace force view bds.bds_addr_customer_ics as
 grant select on bds.bds_addr_customer_ics to appsupport;
 grant select on bds.bds_addr_customer_ics to bds_app with grant option;
 grant select on bds.bds_addr_customer_ics to fcs_user;
+grant select on bds.bds_addr_customer_ics to public;
 
 /**/
 /* Synonym 

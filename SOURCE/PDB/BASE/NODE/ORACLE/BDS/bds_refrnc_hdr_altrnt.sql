@@ -35,9 +35,10 @@ alter table bds.bds_refrnc_hdr_altrnt
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_refrnc_hdr_altrnt to appsupport;
 grant select, delete, insert, update on bds.bds_refrnc_hdr_altrnt to bds_app;
+grant select on bds.bds_refrnc_hdr_altrnt to appsupport;
 grant select on bds.bds_refrnc_hdr_altrnt to fcs_user;
+grant select on bds.bds_refrnc_hdr_altrnt to public;
 
 /**/
 /* Synonym 

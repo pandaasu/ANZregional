@@ -56,6 +56,7 @@ alter table bds.bds_bom_det
 grant select, insert, update, delete on bds_bom_det to bds_app;
 grant select on bds.bds_bom_det to appsupport;
 grant select on bds.bds_bom_det to fcs_user;
+grant select on bds.bds_bom_det to public;
 
 /**/
 /* Synonym 

@@ -50,6 +50,7 @@ alter table bds.bds_stock_detail
 grant select, update, delete, insert on bds.bds_stock_detail to bds_app with grant option;
 grant select on bds.bds_stock_detail to appsupport;
 grant select on bds.bds_stock_detail to fcs_user;
+grant select on bds.bds_stock_detail to public;
 
 /**/
 /* Synonym 

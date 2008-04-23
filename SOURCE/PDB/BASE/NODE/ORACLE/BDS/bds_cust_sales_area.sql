@@ -101,6 +101,7 @@ alter table bds.bds_cust_sales_area_ics
 grant select, insert, update, delete on bds.bds_cust_sales_area_ics to bds_app with grant option;
 grant select on bds.bds_cust_sales_area_ics to appsupport;
 grant select on bds.bds_cust_sales_area_ics to fcs_user;
+grant select on bds.bds_cust_sales_area_ics to public;
 
 /**/
 /* Synonym 

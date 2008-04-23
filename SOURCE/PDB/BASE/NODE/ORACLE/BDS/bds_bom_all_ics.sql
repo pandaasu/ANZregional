@@ -78,6 +78,7 @@ create or replace force view bds.bds_bom_all_ics as
 grant select on bds.bds_bom_all_ics to appsupport;
 grant select on bds.bds_bom_all_ics to bds_app with grant option;
 grant select on bds.bds_bom_all_ics to fcs_user;
+grant select on bds.bds_bom_all_ics to public;
 
 /**/
 /* Synonym 

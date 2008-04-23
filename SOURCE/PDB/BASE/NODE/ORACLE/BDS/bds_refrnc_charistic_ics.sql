@@ -45,6 +45,7 @@ alter table bds.bds_refrnc_charistic_ics
 grant delete, insert, select, update on bds.bds_refrnc_charistic_ics to bds_app;
 grant select on bds.bds_refrnc_charistic_ics to appsupport;
 grant select on bds.bds_refrnc_charistic_ics to fcs_user;
+grant select on bds.bds_refrnc_charistic_ics to public;
 
 /**/
 /* Synonym 

@@ -56,9 +56,9 @@ alter table bds.bds_material_pkg_instr_det_t
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_material_pkg_instr_det_t to appsupport;
 grant delete, insert, select, update on bds.bds_material_pkg_instr_det_t to bds_app;
-
+grant select on bds.bds_material_pkg_instr_det_t to appsupport;
+grant select on bds.bds_material_pkg_instr_det_t to public;
 /**/
 /* Synonym 
 /**/
