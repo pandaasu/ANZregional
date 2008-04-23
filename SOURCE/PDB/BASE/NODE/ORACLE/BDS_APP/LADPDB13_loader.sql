@@ -327,7 +327,7 @@ create or replace package body bds_app.ladpdb13_loader as
     /*--------------------------------------*/    
     rcd_hdr.bom_plant := lics_inbound_utility.get_variable('BOM_PLANT');
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
-    rcd_hdr.bom_eff_date := lics_inbound_utility.get_date('BOM_EFF_DATE',null);
+    rcd_hdr.bom_eff_date := lics_inbound_utility.get_date('BOM_EFF_DATE','yyyymmddhh24miss');
     rcd_hdr.bom_status := lics_inbound_utility.get_number('BOM_STATUS', null);
     rcd_hdr.parent_material_code := lics_inbound_utility.get_variable('PARENT_MATERIAL_CODE');
     rcd_hdr.parent_base_qty := lics_inbound_utility.get_number('PARENT_BASE_QTY', null);

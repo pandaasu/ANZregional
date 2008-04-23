@@ -368,13 +368,13 @@ create or replace package body ics_app.plant_intransit_extract as
   begin    
     var_vir_table := lics_datastore.retrieve_group('PDB','PLC',var_plant_code);
     
-    if ( var_vir_table.count = 0 ) then      
-      raise_application_error(-20000, 'Plant code (' || var_plant_code || ') is not known');
-    elsif ( var_vir_table.count > 1 ) then
-      raise_application_error(-20000, 'Plant code (' || var_plant_code || ') has multiple entries in the lics datastore');    
+    if ( var_vir_table.count > 1 ) then      
+      raise_application_error(-20000, 'Plant code (' || var_plant_code || ') has multiple entries in the lics datastore');
+    elsif ( var_vir_table.count = 1 ) then
+      var_result := '*' || var_vir_table(1).dsv_group;  
     else
-      var_result := '*' || var_vir_table(1).dsv_group;
-    end if;
+      var_result := '*NONE';
+    end if;    
     
     return var_result;
   end;

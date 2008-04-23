@@ -526,7 +526,7 @@ as
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_18),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.regional_code_19),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.price_unit),'0'),38,' ')
-        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.future_planned_price_1),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.future_planned_price_1),' '),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.vltn_class),' '),4,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_item_code),' '),18,' ')

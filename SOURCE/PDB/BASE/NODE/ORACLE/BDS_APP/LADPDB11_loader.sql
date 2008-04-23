@@ -265,7 +265,7 @@ create or replace package body bds_app.ladpdb11_loader as
     /* RETRIEVE - Retrieve the field values */  
     /*--------------------------------------*/    
     rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-    rcd_hdr.bds_lads_date := lics_inbound_utility.get_date('BDS_LADS_DATE',null);
+    rcd_hdr.bds_lads_date := lics_inbound_utility.get_date('BDS_LADS_DATE','yyyymmddhh24miss');
     rcd_hdr.bds_lads_status := lics_inbound_utility.get_variable('BDS_LADS_STATUS');
     rcd_hdr.sap_idoc_name := lics_inbound_utility.get_variable('SAP_IDOC_NAME');
     rcd_hdr.sap_idoc_number := lics_inbound_utility.get_number('SAP_IDOC_NUMBER',null);

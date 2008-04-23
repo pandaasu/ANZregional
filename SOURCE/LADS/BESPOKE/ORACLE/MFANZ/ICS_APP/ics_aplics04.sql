@@ -1,5 +1,4 @@
-
-  CREATE OR REPLACE PACKAGE "ICS_APP"."ICS_APLICS04" as
+create or replace package ics_app.ics_aplics04 as
 
    /*-*/
    /* Public declarations
@@ -9,8 +8,8 @@
    procedure on_end;
 
 end ics_aplics04;
-/
-CREATE OR REPLACE PACKAGE BODY "ICS_APP"."ICS_APLICS04" as
+
+create or replace package body ics_app.ics_aplics04 as
 
    /*-*/
    /* Private exceptions
@@ -197,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY "ICS_APP"."ICS_APLICS04" as
       var_count := 0;
 
       for idx in 1..tbl_definition.count loop
-	 if (tbl_definition(idx).bus_seg in ('05','00') and
+	       if (tbl_definition(idx).bus_seg in ('05','00') and
              (upper(substr(tbl_definition(idx).plant,1,2)) = 'AU' or
               upper(substr(tbl_definition(idx).plant,1,4)) = 'NZ01' or
               upper(substr(tbl_definition(idx).plant,1,4)) = 'NZ12' or
@@ -340,5 +339,15 @@ CREATE OR REPLACE PACKAGE BODY "ICS_APP"."ICS_APLICS04" as
    end on_end;
 
 end ics_aplics04;
-/
- 
+
+/*-*/
+/* Authority 
+/*-*/
+grant execute on ics_app.ics_aplics04 to ics_executor;
+grant execute on ics_app.ics_aplics04 to lics_app;
+grant execute on ics_app.ics_aplics04 to public;
+
+/*-*/
+/* Synonym 
+/*-*/
+create or replace public synonym ics_aplics04 for ics_app.ics_aplics04; 

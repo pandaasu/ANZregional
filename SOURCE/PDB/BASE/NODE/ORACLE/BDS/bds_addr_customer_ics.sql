@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds.bds_addr_customer_ics 
+create or replace force view bds.bds_addr_customer_ics as
   select t01.customer_code, 
     t01.address_version, 
     t01.valid_from_date,

@@ -23,6 +23,9 @@
 create table bds.bds_intransit_header
 (
   plant_code            varchar2(4 char)        not null,
+  sap_idoc_name         varchar2(30 char),
+  sap_idoc_number       number(16),
+  sap_idoc_timestamp    varchar2(14 char),
   target_planning_area  varchar2(10 char),
   msg_timestamp         varchar2(14 char)
 );

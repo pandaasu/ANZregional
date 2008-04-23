@@ -24,7 +24,7 @@ create table bds.bds_refrnc_hdr_altrnt
   bom_plant          varchar2(4 char)           not null,
   bom_usage          varchar2(1 char)           not null,
   bom_eff_from_date  date                       not null
-)
+);
 
 /**/
 /* Primary Key Constraint 

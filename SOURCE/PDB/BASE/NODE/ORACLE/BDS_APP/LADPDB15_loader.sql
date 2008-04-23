@@ -81,6 +81,9 @@ create or replace package body bds_app.ladpdb15_loader as
     /*-*/
     lics_inbound_utility.set_definition('HDR','ID',3);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE',4);
+    lics_inbound_utility.set_definition('HDR','SAP_IDOC_NAME',30);
+    lics_inbound_utility.set_definition('HDR','SAP_IDOC_NUMBER',38);
+    lics_inbound_utility.set_definition('HDR','SAP_IDOC_TIMESTAMP',14);
     lics_inbound_utility.set_definition('HDR','TARGET_PLANNING_AREA',10);
     lics_inbound_utility.set_definition('HDR','MSG_TIMESTAMP', 14);
     
@@ -238,11 +241,6 @@ create or replace package body bds_app.ladpdb15_loader as
   /* This procedure performs the record HDR routine */
   /**************************************************/
   procedure process_record_hdr(par_record in varchar2) is              
-  
-    /*-*/
-    /* Local definitions
-    /*-*/
-    var_exists boolean;
                      
     /*-*/
     /* Local cursors 
@@ -282,8 +280,11 @@ create or replace package body bds_app.ladpdb15_loader as
     /* RETRIEVE - Retrieve the field values 
     /*-*/
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
+    rcd_hdr.sap_idoc_name := lics_inbound_utility.get_variable('SAP_IDOC_NAME');
+    rcd_hdr.sap_idoc_number := lics_inbound_utility.get_number('SAP_IDOC_NUMBER',null);
+    rcd_hdr.sap_idoc_timestamp := lics_inbound_utility.get_variable('SAP_IDOC_TIMESTAMP');
     rcd_hdr.target_planning_area := lics_inbound_utility.get_variable('TARGET_PLANNING_AREA');
-    rcd_hdr.msg_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
+    rcd_hdr.msg_timestamp := lics_inbound_utility.get_variable('MSG_TIMESTAMP');
     
     /*-*/
     /* Validate message sequence  
@@ -291,13 +292,7 @@ create or replace package body bds_app.ladpdb15_loader as
     open csr_bds_intransit_header;
     fetch csr_bds_intransit_header into rcd_bds_intransit_header;
     
-    if ( csr_bds_intransit_header%notfound ) then
-      var_exists := false;
-    end if;
-    
-    close csr_bds_intransit_header;
-    
-    if ( var_exists = true ) then
+    if ( csr_bds_intransit_header%found ) then
       if ( rcd_hdr.msg_timestamp > rcd_bds_intransit_header.msg_timestamp ) then
         delete from bds_intransit_detail where plant_code = rcd_hdr.plant_code;
         delete from bds_intransit_header where plant_code = rcd_hdr.plant_code;
@@ -305,6 +300,8 @@ create or replace package body bds_app.ladpdb15_loader as
         var_trn_ignore := true;
       end if;
     end if;
+    
+    close csr_bds_intransit_header;
     
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
@@ -342,12 +339,18 @@ create or replace package body bds_app.ladpdb15_loader as
     insert into bds_intransit_header 
     (
       plant_code,
+      sap_idoc_name,
+      sap_idoc_number,
+      sap_idoc_timestamp,
       target_planning_area,
       msg_timestamp
     )
     values 
     (
       rcd_hdr.plant_code,
+      rcd_hdr.sap_idoc_name,
+      rcd_hdr.sap_idoc_number,
+      rcd_hdr.sap_idoc_timestamp,
       rcd_hdr.target_planning_area,
       rcd_hdr.msg_timestamp
     );     

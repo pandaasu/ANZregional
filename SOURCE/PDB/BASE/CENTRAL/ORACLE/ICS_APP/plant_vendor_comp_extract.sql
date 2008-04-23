@@ -161,7 +161,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
         var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
---        execute_send('LADPDB122'); 
+--        execute_send('LADPDB12.2'); 
         var_start := false;  
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then

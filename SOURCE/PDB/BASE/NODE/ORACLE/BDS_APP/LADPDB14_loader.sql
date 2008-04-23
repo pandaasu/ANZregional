@@ -228,11 +228,6 @@ create or replace package body bds_app.ladpdb14_loader as
   /* This procedure performs the record CTL routine */
   /**************************************************/
   procedure process_record_ctl(par_record in varchar2) is              
-  
-    /*-*/
-    /* Local definitions
-    /*-*/
-    var_exists boolean;
                      
     /*-*/
     /* Local cursors 
@@ -288,7 +283,7 @@ create or replace package body bds_app.ladpdb14_loader as
     rcd_hdr.storage_location_code := lics_inbound_utility.get_variable('STORAGE_LOCATION_CODE');
     rcd_hdr.stock_balance_date := lics_inbound_utility.get_variable('STOCK_BALANCE_DATE');
     rcd_hdr.stock_balance_time := lics_inbound_utility.get_variable('STOCK_BALANCE_TIME');
-    rcd_hdr.msg_timestamp := lics_inbound_utility.get_date('MSG_TIMESTAMP','yyyymmddhh24miss');
+    rcd_hdr.msg_timestamp := lics_inbound_utility.get_variable('MSG_TIMESTAMP');
     
     /*-*/
     /* Validate message sequence  
@@ -296,13 +291,7 @@ create or replace package body bds_app.ladpdb14_loader as
     open csr_bds_stock_header;
     fetch csr_bds_stock_header into rcd_bds_stock_header;
     
-    if ( csr_bds_stock_header%notfound ) then
-      var_exists := false;
-    end if;
-    
-    close csr_bds_stock_header;
-    
-    if ( var_exists = true ) then
+    if ( csr_bds_stock_header%found ) then
       if ( rcd_hdr.msg_timestamp > rcd_bds_stock_header.msg_timestamp ) then
         delete 
         from bds_stock_detail 
@@ -322,7 +311,9 @@ create or replace package body bds_app.ladpdb14_loader as
       else
         var_trn_ignore := true;
       end if;
-    end if;    
+    end if;
+    
+    close csr_bds_stock_header;
     
   /*-------------*/
   /* End routine */

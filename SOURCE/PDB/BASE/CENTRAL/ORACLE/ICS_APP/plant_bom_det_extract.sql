@@ -328,7 +328,7 @@ create or replace package body ics_app.plant_bom_det_extract as
         || rpad(nvl(to_char(rcd_bds_bom_det.item_msg_function),' '),3,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.item_material_code),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.item_category),' '),1,' ')
-        || rpad(nvl(to_char(rcd_bds_bom_det.item_base_qty),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_bom_det.item_base_qty),' '),38,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.item_base_uom),' '),3,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.item_eff_from_date),' '),14,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.item_eff_to_date),' '),14,' ');
