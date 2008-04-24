@@ -502,22 +502,19 @@ toggle_file_compression()
         # get the files extension so we can handle .zip or other different file extensions so gunzip can 
         # decompress the files successfully using the -S option
         FILE_EXT=".${FILE_INT##*.}"
-        DECOMPRESS_FILE_NAME=${FILE_INT%.*}
         
         if [[ "." = $FILE_EXT ]] ; then
-            CMD="gunzip -f $FILE_INT"
+            CMD="gunzip -N -v -f $FILE_INT 2>&1 | awk '{print $6}'"
         else
             if [[ "zip" = $FILE_EXT || "gz" = $FILE_EXT || "Z" = $FILE_EXT ]] ; then
-                CMD="gunzip -f -S $FILE_EXT $FILE_INT"
-            else
-                DECOMPRESS_FILE_NAME=$FILE_INT
-                
+                CMD="gunzip -N -v -f -S .${FILE_EXT} ${FILE_INT} 2>&1 | awk '{print $6}'"
+            else                
                 if [[ $COMPRESS_ZIP = $CMP_PARAM ]] ; then
-                    CMD="gunzip -f -S .zip ${FILE_INT}.zip"
+                    CMD="gunzip -N -v -f -S .zip ${FILE_INT}.zip 2>&1 | awk '{print $6}'"
                 elif [[ $COMPRESS_GZ = $CMP_PARAM ]] ; then
-                    CMD="gunzip -f -S .gz ${FILE_INT}.gz"
+                    CMD="gunzip -N -v -f -S .gz ${FILE_INT}.gz 2>&1 | awk '{print $6}'"
                 elif [[ $COMPRESS_Z = $CMP_PARAM ]] ; then
-                    CMD="gunzip -f -S .Z ${FILE_INT}.Z"
+                    CMD="gunzip -N -v -f -S .Z ${FILE_INT}.Z 2>&1 | awk '{print $6}'"
                 else
                     error_exit "ERROR: [toggle_file_compression] Compress command [${CMP_PARAM}] is not valid."
                 fi
@@ -529,7 +526,7 @@ toggle_file_compression()
     
     log_file "INFO: [toggle_file_compression] Running command [${CMD}]" "HARMLESS"
     
-    `${CMD}` >> $TMP_OUT 2>&1
+    DECOMPRESS_FILE_NAME=`${CMD}`
     rc=$?
     
     if [[ $rc -ne 0 ]] ; then
