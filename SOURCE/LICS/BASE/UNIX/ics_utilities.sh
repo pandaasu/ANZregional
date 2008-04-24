@@ -16,21 +16,22 @@
 # ---------------------------------------------------------------------------
 # Function Locations (line numbers):
 # ---------------------------------------------------------------------------
-# archive_file -            77
-# clean_up -                129
-# clean_up_file -           151
-# error_exit -              174
-# initialise_ami_tier -     190
-# initialise_utilities -    215
-# load_current_os -         286
-# log_file -                306
-# log_file_temp -           349
-# read_variable -           367
-# set_date -                391
-# set_ics_path -            424
-# set_permissions -         450
-# toggle_file_compression - 473
-# validate_file -           519
+# archive_file -            87
+# clean_up -                139
+# clean_up_file -           161
+# error_exit -              184
+# initialise_ami_tier -     200
+# initialise_utilities -    225
+# load_current_os -         302
+# log_file -                322
+# log_file_temp -           365
+# move_file -               385
+# read_variable -           402
+# set_date -                426
+# set_ics_path -            459
+# set_permissions -         485
+# toggle_file_compression - 508
+# validate_file -           568
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -371,6 +372,24 @@ log_file_temp()
    echo "$LOG_MSG"
 }
 
+# ---------------------------------------------------------------------------
+#
+# move_file Description:
+# Rename the provided file to the specified new name
+#
+# Parameters:
+# 1 - The file name
+# 2 - The new file name
+#
+# ---------------------------------------------------------------------------
+move_file()
+{
+    mv $1 $2
+    if [[ $? -ne 0 ]] ; then
+        log_file "WARNING: [move_file] Unable to move file from [${1}] to [${2}]" "HARMLESS"
+    fi
+}
+
 # --------------------------------------------------------------------------
 #
 # read_variable Description:
@@ -504,17 +523,20 @@ toggle_file_compression()
         FILE_EXT=".${FILE_INT##*.}"
         
         if [[ "." = $FILE_EXT ]] ; then
-            CMD="gunzip -N -v -f $FILE_INT 2>&1 | awk '{print $6}'"
+            CMD="gunzip -N -v -f $FILE_INT"
         else
             if [[ "zip" = $FILE_EXT || "gz" = $FILE_EXT || "Z" = $FILE_EXT ]] ; then
-                CMD="gunzip -N -v -f -S .${FILE_EXT} ${FILE_INT} 2>&1 | awk '{print $6}'"
+                CMD="gunzip -N -v -f -S .${FILE_EXT} ${FILE_INT}"
             else                
                 if [[ $COMPRESS_ZIP = $CMP_PARAM ]] ; then
-                    CMD="gunzip -N -v -f -S .zip ${FILE_INT}.zip 2>&1 | awk '{print $6}'"
+                    move_file ${FILE_INT} "${FILE_INT}.zip"
+                    CMD="gunzip -N -v -f -S .zip ${FILE_INT}.zip"
                 elif [[ $COMPRESS_GZ = $CMP_PARAM ]] ; then
-                    CMD="gunzip -N -v -f -S .gz ${FILE_INT}.gz 2>&1 | awk '{print $6}'"
+                    move_file ${FILE_INT} "${FILE_INT}.gz"
+                    CMD="gunzip -N -v -f -S .gz ${FILE_INT}.gz"
                 elif [[ $COMPRESS_Z = $CMP_PARAM ]] ; then
-                    CMD="gunzip -N -v -f -S .Z ${FILE_INT}.Z 2>&1 | awk '{print $6}'"
+                    move_file ${FILE_INT} "${FILE_INT}.Z"
+                    CMD="gunzip -N -v -f -S .Z ${FILE_INT}.Z"
                 else
                     error_exit "ERROR: [toggle_file_compression] Compress command [${CMP_PARAM}] is not valid."
                 fi
@@ -526,7 +548,7 @@ toggle_file_compression()
     
     log_file "INFO: [toggle_file_compression] Running command [${CMD}]" "HARMLESS"
     
-    DECOMPRESS_FILE_NAME=`${CMD}`
+    DECOMPRESS_FILE_NAME=`${CMD} 2>&1 | awk '{print $6}'`
     rc=$?
     
     if [[ $rc -ne 0 ]] ; then
