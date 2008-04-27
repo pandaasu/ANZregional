@@ -35,7 +35,7 @@ insert into fcst_plan_group values('*SNACK','Snackfood');
 insert into fcst_plan_group values('*PET','Petcare');
 commit;
 
-insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','*DGRP_APOLLO','*QTY_GSV','0');
+insert into fcst_load_type values('*FCST_DOMESTIC','Business review domestic forecast','*PERIOD','*DOMESTIC','*DGRP_ACROSS_PERIOD','*QTY_ONLY','0');
 insert into fcst_load_type values('*FCST_AFFILIATE','Business review affiliate forecast','*PERIOD','*AFFILIATE','*DGRP_ACROSS_PERIOD','*QTY_GSV','1');
 insert into fcst_load_type values('*FCST_SAMPLE','Business review sample forecast','*PERIOD','*DOMESTIC','*MATL_ACROSS_PERIOD','*QTY_ONLY','1');
 insert into fcst_load_type values('*FCST_FRESHNESS','Business review freshness forecast','*PERIOD','*DOMESTIC','*MATL_DOWN_DAY','*QTY_ONLY','1');
