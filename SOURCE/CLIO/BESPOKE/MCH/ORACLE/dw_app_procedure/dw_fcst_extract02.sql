@@ -19,6 +19,7 @@ create or replace package dw_fcst_extract02 as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/03   Steve Gregan   Created
+    2008/05   Steve Gregan   Changed customer description logic
 
    *******************************************************************************/
 
@@ -439,7 +440,8 @@ create or replace package body dw_fcst_extract02 as
                 t01.fcst_gsv as fcst_gsv,
                 t02.material_desc_zh,
                 t02.material_desc_en,
-                t03.customer_desc
+                t03.customer_desc_zh,
+                t03.customer_desc_en
            from fcst_load_detail t01,
                 (select lads_trim_code(t01.sap_material_code) as material_code,
                         max(case when t01.desc_language = 'ZH' then t01.material_desc end) material_desc_zh,
@@ -448,8 +450,11 @@ create or replace package body dw_fcst_extract02 as
                   where (t01.desc_language = 'ZH' or t01.desc_language = 'EN')
                   group by lads_trim_code(t01.sap_material_code)) t02,
                 (select lads_trim_code(t01.customer_code) as customer_code,
-                        t01.name as customer_desc
-                   from bds_addr_customer_zh t01) t03
+                        max(case when t01.address_version = 'I' then t01.name end) customer_desc_zh,
+                        max(case when t01.address_version = '*NONE' then t01.name end) customer_desc_en
+                   from bds_addr_customer t01
+                  where (t01.address_version = 'I' or t01.address_version = '*NONE')
+                  group by lads_trim_code(t01.customer_code)) t03
           where t01.material_code = t02.material_code(+)
             and t01.dmnd_group = t03.customer_code(+)
             and t01.load_identifier = rcd_fcst_extract_load.load_identifier
@@ -623,7 +628,7 @@ create or replace package body dw_fcst_extract02 as
                   elsif not(rcd_fcst_load_01.material_desc_en is null) then
                      var_material_desc := var_material_desc||' '||rcd_fcst_load_01.material_desc_en;
                   else
-                     var_material_desc := var_material_desc||' UNKNOWN';
+                     var_material_desc := var_material_desc||' NO DESCRIPTION';
                   end if;
                   for idx in 1..tbl_datv.count loop
                      tbl_datv(idx).fcst_qty := 0;
@@ -745,10 +750,12 @@ create or replace package body dw_fcst_extract02 as
                   var_material_code := rcd_fcst_load_02.material_code;
                   var_plant_code := rcd_fcst_load_02.plant_code;
                   var_dmnd_group_desc := '('||rcd_fcst_load_02.dmnd_group||')';
-                  if not(rcd_fcst_load_02.customer_desc is null) then
-                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_02.customer_desc;
+                  if not(rcd_fcst_load_02.customer_desc_zh is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_02.customer_desc_zh;
+                  elsif not(rcd_fcst_load_02.customer_desc_en is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_02.customer_desc_en;
                   else
-                     var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                     var_dmnd_group_desc := var_dmnd_group_desc||' NO DESCRIPTION';
                   end if;
                   var_material_desc := '('||rcd_fcst_load_02.material_code||')';
                   if not(rcd_fcst_load_02.material_desc_zh is null) then
@@ -756,7 +763,7 @@ create or replace package body dw_fcst_extract02 as
                   elsif not(rcd_fcst_load_02.material_desc_en is null) then
                      var_material_desc := var_material_desc||' '||rcd_fcst_load_02.material_desc_en;
                   else
-                     var_material_desc := var_material_desc||' UNKNOWN';
+                     var_material_desc := var_material_desc||' NO DESCRIPTION';
                   end if;
                   for idx in 1..tbl_datv.count loop
                      tbl_datv(idx).fcst_qty := 0;

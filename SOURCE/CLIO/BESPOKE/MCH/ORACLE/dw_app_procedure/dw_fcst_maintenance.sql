@@ -21,6 +21,8 @@ create or replace package dw_fcst_maintenance as
     2008/02   Steve Gregan   Created
     2008/04   Steve Gregan   Changed daily forecast load to 28D for Apollo
     2008/04   Steve Gregan   Changed daily forecast load to 1D for Apollo
+    2008/04   Steve Gregan   Changed validation error messages
+    2008/05   Steve Gregan   Changed customer description logic
 
    *******************************************************************************/
 
@@ -2595,7 +2597,8 @@ create or replace package body dw_fcst_maintenance as
                         sum(t01.fcst_gsv) as fcst_gsv,
                         max(t02.material_desc_zh) as material_desc_zh,
                         max(t02.material_desc_en) as material_desc_en,
-                        max(t03.customer_desc) as customer_desc,
+                        max(t03.customer_desc_zh) as customer_desc_zh,
+                        max(t03.customer_desc_en) as customer_desc_en,
                         null as mesg_text
                    from fcst_load_detail t01,
                         (select lads_trim_code(t01.sap_material_code) as material_code,
@@ -2605,8 +2608,11 @@ create or replace package body dw_fcst_maintenance as
                           where (t01.desc_language = 'ZH' or t01.desc_language = 'EN')
                           group by lads_trim_code(t01.sap_material_code)) t02,
                         (select lads_trim_code(t01.customer_code) as customer_code,
-                                t01.name as customer_desc
-                           from bds_addr_customer_zh t01) t03
+                                max(case when t01.address_version = 'I' then t01.name end) customer_desc_zh,
+                                max(case when t01.address_version = '*NONE' then t01.name end) customer_desc_en
+                           from bds_addr_customer t01
+                          where (t01.address_version = 'I' or t01.address_version = '*NONE')
+                          group by lads_trim_code(t01.customer_code)) t03
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
                     and t01.material_code = t02.material_code(+)
                     and t01.dmnd_group = t03.customer_code(+)
@@ -2624,7 +2630,8 @@ create or replace package body dw_fcst_maintenance as
                         0 as fcst_gsv,
                         null as material_desc_zh,
                         null as material_desc_en,
-                        null as customer_desc,
+                        null as customer_desc_zh,
+                        null as customer_desc_en,
                         t01.mesg_text
                    from fcst_load_detail t01
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
@@ -2651,7 +2658,8 @@ create or replace package body dw_fcst_maintenance as
                         sum(t01.fcst_gsv) as fcst_gsv,
                         max(t02.material_desc_zh) as material_desc_zh,
                         max(t02.material_desc_en) as material_desc_en,
-                        max(t03.customer_desc) as customer_desc,
+                        max(t03.customer_desc_zh) as customer_desc_zh,
+                        max(t03.customer_desc_en) as customer_desc_en,
                         null as mesg_text
                    from fcst_load_detail t01,
                         (select lads_trim_code(t01.sap_material_code) as material_code,
@@ -2661,8 +2669,11 @@ create or replace package body dw_fcst_maintenance as
                           where (t01.desc_language = 'ZH' or t01.desc_language = 'EN')
                           group by lads_trim_code(t01.sap_material_code)) t02,
                         (select lads_trim_code(t01.customer_code) as customer_code,
-                                t01.name as customer_desc
-                           from bds_addr_customer_zh t01) t03
+                                max(case when t01.address_version = 'I' then t01.name end) customer_desc_zh,
+                                max(case when t01.address_version = '*NONE' then t01.name end) customer_desc_en
+                           from bds_addr_customer t01
+                          where (t01.address_version = 'I' or t01.address_version = '*NONE')
+                          group by lads_trim_code(t01.customer_code)) t03
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
                     and t01.material_code = t02.material_code(+)
                     and t01.dmnd_group = t03.customer_code(+)
@@ -2681,7 +2692,8 @@ create or replace package body dw_fcst_maintenance as
                         0 as fcst_gsv,
                         null as material_desc_zh,
                         null as material_desc_en,
-                        null as customer_desc,
+                        null as customer_desc_zh,
+                        null as customer_desc_en,
                         t01.mesg_text
                    from fcst_load_detail t01
                   where t01.load_identifier = rcd_fcst_load_header.load_identifier
@@ -2913,10 +2925,12 @@ create or replace package body dw_fcst_maintenance as
                   var_dmnd_group_desc := rcd_fcst_load_period.dmnd_group;
                else
                   var_dmnd_group_desc := '('||rcd_fcst_load_period.dmnd_group||')';
-                  if not(rcd_fcst_load_period.customer_desc is null) then
-                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_period.customer_desc;
+                  if not(rcd_fcst_load_period.customer_desc_zh is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_period.customer_desc_zh;
+                  elsif not(rcd_fcst_load_period.customer_desc_en is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_period.customer_desc_en;
                   else
-                     var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                     var_dmnd_group_desc := var_dmnd_group_desc||' NO DESCRIPTION';
                   end if;
                end if;
                var_material_desc := '('||rcd_fcst_load_period.material_code||')';
@@ -2925,7 +2939,7 @@ create or replace package body dw_fcst_maintenance as
                elsif not(rcd_fcst_load_period.material_desc_en is null) then
                   var_material_desc := var_material_desc||' '||rcd_fcst_load_period.material_desc_en;
                else
-                  var_material_desc := var_material_desc||' UNKNOWN';
+                  var_material_desc := var_material_desc||' NO DESCRIPTION';
                end if;
                for idx in 1..tbl_datv.count loop
                   tbl_datv(idx).fcst_qty := 0;
@@ -3171,10 +3185,12 @@ create or replace package body dw_fcst_maintenance as
                   var_dmnd_group_desc := rcd_fcst_load_day.dmnd_group;
                else
                   var_dmnd_group_desc := '('||rcd_fcst_load_day.dmnd_group||')';
-                  if not(rcd_fcst_load_day.customer_desc is null) then
-                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_day.customer_desc;
+                  if not(rcd_fcst_load_day.customer_desc_zh is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_day.customer_desc_zh;
+                  elsif not(rcd_fcst_load_day.customer_desc_en is null) then
+                     var_dmnd_group_desc := var_dmnd_group_desc||' '||rcd_fcst_load_day.customer_desc_en;
                   else
-                     var_dmnd_group_desc := var_dmnd_group_desc||' UNKNOWN';
+                     var_dmnd_group_desc := var_dmnd_group_desc||' NO DESCRIPTION';
                   end if;
                end if;
                var_material_desc := '('||rcd_fcst_load_day.material_code||')';
@@ -3183,7 +3199,7 @@ create or replace package body dw_fcst_maintenance as
                elsif not(rcd_fcst_load_day.material_desc_en is null) then
                   var_material_desc := var_material_desc||' '||rcd_fcst_load_day.material_desc_en;
                else
-                  var_material_desc := var_material_desc||' UNKNOWN';
+                  var_material_desc := var_material_desc||' NO DESCRIPTION';
                end if;
                var_cover_qty := 0;
                var_cover_prc := 0;
@@ -3567,55 +3583,55 @@ create or replace package body dw_fcst_maintenance as
          rcd_fcst_load_detail.mesg_text := null;
 
          /*-*/
-         /* Validate the forecast material
+         /* Validate the forecast customer when required
          /*-*/
-         if rcd_fcst_load_detail.matl_code is null then
-            if rcd_fcst_load_detail.mesg_text is null then
-               rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
-            end if;
-            rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not exist in LADS';
-            var_errors := true;
-         else
-            if rcd_fcst_load_detail.matl_status != 'ACTIVE' then
-               if rcd_fcst_load_detail.mesg_text is null then
-                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+         if upper(rcd_fcst_load_header.load_type_channel) = '*AFFILIATE' then
+            if rcd_fcst_load_detail.cust_code is null then
+               if not(rcd_fcst_load_detail.mesg_text is null) then
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not active in LADS';
-               var_errors := true;
-            end if;
-            if rcd_fcst_load_detail.new_plan_group = '*NONE' then
-               if rcd_fcst_load_detail.mesg_text is null then
-                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
-               end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - is not a valid planning group material';
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Customer ('||rcd_fcst_load_detail.dmnd_group||') does not exist in LADS';
                var_errors := true;
             else
-               if rcd_fcst_load_header.load_plan_group != '*ALL' and rcd_fcst_load_detail.new_plan_group != rcd_fcst_load_header.load_plan_group then
-                  if rcd_fcst_load_detail.mesg_text is null then
-                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               if rcd_fcst_load_detail.cust_status != 'ACTIVE' then
+                  if not(rcd_fcst_load_detail.mesg_text is null) then
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                   end if;
-                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not match the loader header planning group ('||rcd_fcst_load_header.load_plan_group||')';
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Customer ('||rcd_fcst_load_detail.dmnd_group||') is not active in LADS';
                   var_errors := true;
                end if;
             end if;
          end if;
 
          /*-*/
-         /* Validate the forecast customer when required
+         /* Validate the forecast material
          /*-*/
-         if upper(rcd_fcst_load_header.load_type_channel) = '*AFFILIATE' then
-            if rcd_fcst_load_detail.cust_code is null then
-               if rcd_fcst_load_detail.mesg_text is null then
-                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+         if rcd_fcst_load_detail.matl_code is null then
+            if not(rcd_fcst_load_detail.mesg_text is null) then
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
+            end if;
+            rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - does not exist in LADS';
+            var_errors := true;
+         else
+            if rcd_fcst_load_detail.matl_status != 'ACTIVE' then
+               if not(rcd_fcst_load_detail.mesg_text is null) then
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not exist in LADS';
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - is not active in LADS';
+               var_errors := true;
+            end if;
+            if rcd_fcst_load_detail.new_plan_group = '*NONE' then
+               if not(rcd_fcst_load_detail.mesg_text is null) then
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
+               end if;
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - is not a valid planning group material';
                var_errors := true;
             else
-               if rcd_fcst_load_detail.cust_status != 'ACTIVE' then
-                  if rcd_fcst_load_detail.mesg_text is null then
-                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               if rcd_fcst_load_header.load_plan_group != '*ALL' and rcd_fcst_load_detail.new_plan_group != rcd_fcst_load_header.load_plan_group then
+                  if not(rcd_fcst_load_detail.mesg_text is null) then
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                   end if;
-                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') is not active in LADS';
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - does not match the loader header planning group ('||rcd_fcst_load_header.load_plan_group||')';
                   var_errors := true;
                end if;
             end if;
@@ -3629,10 +3645,10 @@ create or replace package body dw_fcst_maintenance as
                var_wrk_date := to_date(rcd_fcst_load_detail.cover_yyyymmdd,'yyyymmdd');
             exception
                when others then
-                  if rcd_fcst_load_detail.mesg_text is null then
-                     rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                  if not(rcd_fcst_load_detail.mesg_text is null) then
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                   end if;
-                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Forecast date ('||rcd_fcst_load_detail.cover_yyyymmdd||') is not a valid date';
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - Forecast date ('||rcd_fcst_load_detail.cover_yyyymmdd||') is not a valid date';
                   var_errors := true;
             end;
          end if;
@@ -3642,38 +3658,38 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
             if rcd_fcst_load_detail.fcst_qty = 0 then
-               if rcd_fcst_load_detail.mesg_text is null then
-                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               if not(rcd_fcst_load_detail.mesg_text is null) then
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                var_errors := true;
             end if;
             if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
                if not(rcd_fcst_load_detail.matl_code is null) then
                   if rcd_fcst_load_detail.fcst_prc = 0 then
-                     if rcd_fcst_load_detail.mesg_text is null then
-                        rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                     if not(rcd_fcst_load_detail.mesg_text is null) then
+                        rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                      end if;
-                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Material ('||rcd_fcst_load_detail.material_code||') - does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                      var_errors := true;
                   end if;
                end if;
             end if;
          else
             if rcd_fcst_load_detail.fcst_qty = 0 then
-               if rcd_fcst_load_detail.mesg_text is null then
-                  rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+               if not(rcd_fcst_load_detail.mesg_text is null) then
+                  rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                end if;
-               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+               rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'Customer ('||rcd_fcst_load_detail.dmnd_group||') / Material ('||rcd_fcst_load_detail.material_code||') does not have a forecast quantity for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                var_errors := true;
             end if;
             if upper(rcd_fcst_load_header.load_type_data_type) = '*QTY_GSV' then
                if not(rcd_fcst_load_detail.matl_code is null) and not(rcd_fcst_load_detail.cust_code is null) then
                   if rcd_fcst_load_detail.fcst_prc = 0 then
-                     if rcd_fcst_load_detail.mesg_text is null then
-                        rcd_fcst_load_detail.mesg_text := 'Material ('||rcd_fcst_load_detail.material_code||')';
+                     if not(rcd_fcst_load_detail.mesg_text is null) then
+                        rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||'; ';
                      end if;
-                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
+                     rcd_fcst_load_detail.mesg_text := rcd_fcst_load_detail.mesg_text||' - Customer ('||rcd_fcst_load_detail.dmnd_group||') / Material ('||rcd_fcst_load_detail.material_code||') does not have pricing data for period '||to_Char(rcd_fcst_load_detail.fcst_yyyypp);
                      var_errors := true;
                   end if;
                end if;

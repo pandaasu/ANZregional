@@ -490,7 +490,7 @@ create or replace package body dw_fcst_extract06 as
                elsif not(rcd_fcst_load.material_desc_en is null) then
                   var_material_desc := var_material_desc||' '||rcd_fcst_load.material_desc_en;
                else
-                  var_material_desc := var_material_desc||' UNKNOWN';
+                  var_material_desc := var_material_desc||' NO DESCRIPTION';
                end if;
                var_cover_qty := 0;
 
