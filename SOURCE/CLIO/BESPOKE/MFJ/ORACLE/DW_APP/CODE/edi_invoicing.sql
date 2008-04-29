@@ -1405,7 +1405,7 @@ create or replace package body edi_invoicing as
                /* Create the invoice interface when required
                /*-*/
                if tbl_outbound.count != 0 then
-                  var_instance := lics_outbound_loader.create_interface(var_interface_save,var_interface_save||'_'||par_date||'.TXT',var_interface_save||'_'||par_date||'.TXT');
+                  var_instance := lics_outbound_loader.create_interface(var_interface_save,null,var_interface_save);
                   for idx in 1..tbl_outbound.count loop
                      lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
                   end loop;
@@ -1887,7 +1887,7 @@ create or replace package body edi_invoicing as
          /* Create the invoice interface when required
          /*-*/
          if tbl_outbound.count != 0 then
-            var_instance := lics_outbound_loader.create_interface(var_interface_save,var_interface_save||'_'||par_date||'.TXT',var_interface_save||'_'||par_date||'.TXT');
+            var_instance := lics_outbound_loader.create_interface(var_interface_save,null,var_interface_save);
             for idx in 1..tbl_outbound.count loop
                lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
             end loop;
@@ -3305,7 +3305,7 @@ create or replace package body edi_invoicing as
       /* Create the invoice interface when required
       /*-*/
       if tbl_outbound.count != 0 then
-         var_instance := lics_outbound_loader.create_interface('LADEDI02','LADEDI02_'||par_date,'LADEDI02_'||par_date||'.TXT');
+         var_instance := lics_outbound_loader.create_interface('LADEDI02',null,'LADEDI02');
          for idx in 1..tbl_outbound.count loop
             lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
          end loop;
@@ -4211,7 +4211,7 @@ create or replace package body edi_invoicing as
       /* Create the invoice interface when required
       /*-*/
       if tbl_outbound.count != 0 then
-         var_instance := lics_outbound_loader.create_interface('LADEDI03','LADEDI03_'||par_date,'LADEDI03_'||par_date||'.TXT');
+         var_instance := lics_outbound_loader.create_interface('LADEDI03',null,'LADEDI03');
          for idx in 1..tbl_outbound.count loop
             lics_outbound_loader.append_data(convert(tbl_outbound(idx),'JA16SJIS','UTF8'));
          end loop;
