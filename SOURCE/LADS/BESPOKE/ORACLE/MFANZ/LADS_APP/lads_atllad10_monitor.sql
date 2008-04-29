@@ -19,7 +19,8 @@ create or replace package lads_atllad10_monitor as
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
- 2006/12   Linden Glen    Included LADS FLATTENING callout
+ 2006/12   Linden Glen    Included LADS FLATTENING callout 
+ 2008/04   Trevor Keon    Added call to plant reference data extract 
 
 *******************************************************************************/
 
@@ -103,6 +104,11 @@ create or replace package body lads_atllad10_monitor as
       /* Triggered procedures
       /* **note** - must be last (potentially use flattened data)
       /*-*/
+      lics_trigger_loader.execute('MFANZ Plant Reference Data Inteface',
+                            'plant_reference_data_extract.execute(''' || par_z_tabname || ''',''*ALL'')',
+                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','PLANT_INTERFACE'),
+                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','PLANT_INTERFACE'),
+                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','PLANT_INTERFACE'));
 
    /*-------------------*/
    /* Exception handler */
