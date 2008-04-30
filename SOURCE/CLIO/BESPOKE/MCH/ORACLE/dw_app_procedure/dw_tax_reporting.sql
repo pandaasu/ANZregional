@@ -633,7 +633,7 @@ create or replace package body dw_tax_reporting as
                                    t03.cust_name_en_level_4 as qry_area,
                                    t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
-                                   t09.name||'' ''||t09.name_02 as qry_cust_desc,
+                                   t09.customer_desc as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
@@ -684,7 +684,13 @@ create or replace package body dw_tax_reporting as
                                        and t12.kmein = ''CS''
                                        and t11.matnr is not null) t07,
                                    lads_cus_pfr t08,
-                                   bds_addr_customer_zh t09
+                                   (select t01.customer_code,
+                                           decode(max(case when t01.address_version = ''I'' then t01.name||'' ''||t01.name_02 end),null,
+                                                  max(case when t01.address_version = ''*NONE'' then t01.name||'' ''||t01.name_02 end),
+                                                  max(case when t01.address_version = ''I'' then t01.name||'' ''||t01.name_02 end)) as customer_desc
+                                      from bds_addr_customer t01
+                                     where (t01.address_version = ''I'' or t01.address_version = ''*NONE'')
+                                     group by t01.customer_code) t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
                                and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
                                and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
@@ -716,7 +722,7 @@ create or replace package body dw_tax_reporting as
                                    t03.cust_name_en_level_4 as qry_area,
                                    t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
-                                   t09.name||'' ''||t09.name_02 as qry_cust_desc,
+                                   t09.customer_desc as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
@@ -748,7 +754,13 @@ create or replace package body dw_tax_reporting as
                                        and taty1 = ''MWST''
                                      group by lads_trim_code(matnr)) t06,
                                    lads_cus_pfr t08,
-                                   bds_addr_customer_zh t09
+                                   (select t01.customer_code,
+                                           decode(max(case when t01.address_version = ''I'' then t01.name||'' ''||t01.name_02 end),null,
+                                                  max(case when t01.address_version = ''*NONE'' then t01.name||'' ''||t01.name_02 end),
+                                                  max(case when t01.address_version = ''I'' then t01.name||'' ''||t01.name_02 end)) as customer_desc
+                                      from bds_addr_customer t01
+                                     where (t01.address_version = ''I'' or t01.address_version = ''*NONE'')
+                                     group by t01.customer_code) t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
                                and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
                                and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
