@@ -74,6 +74,7 @@ create or replace package body bds_app.ladpdb09_loader as
     lics_inbound_utility.clear_definition;
     
     /*-*/  
+    lics_inbound_utility.set_definition('HDR','ID',3);
     lics_inbound_utility.set_definition('HDR','SAP_MATERIAL_CODE', 18);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);
     lics_inbound_utility.set_definition('HDR','RECORD_NO', 5);
@@ -241,10 +242,10 @@ create or replace package body bds_app.ladpdb09_loader as
     rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_hdr.record_no := lics_inbound_utility.get_variable('RECORD_NO');
-    rcd_hdr.creatn_date := lics_inbound_utility.get_variable('CREATN_DATE');
+    rcd_hdr.creatn_date := lics_inbound_utility.get_date('CREATN_DATE','yyyymmddhh24miss');
     rcd_hdr.creatn_user := lics_inbound_utility.get_variable('CREATN_USER');
-    rcd_hdr.src_list_valid_from := lics_inbound_utility.get_variable('SRC_LIST_VALID_FROM');
-    rcd_hdr.src_list_valid_to := lics_inbound_utility.get_variable('SRC_LIST_VALID_TO');
+    rcd_hdr.src_list_valid_from := lics_inbound_utility.get_date('SRC_LIST_VALID_FROM','yyyymmddhh24miss');
+    rcd_hdr.src_list_valid_to := lics_inbound_utility.get_date('SRC_LIST_VALID_TO','yyyymmddhh24miss');
     rcd_hdr.vendor_code := lics_inbound_utility.get_variable('VENDOR_CODE');
     rcd_hdr.fixed_vendor_indctr := lics_inbound_utility.get_variable('FIXED_VENDOR_INDCTR');
     rcd_hdr.agreement_no := lics_inbound_utility.get_variable('AGREEMENT_NO');

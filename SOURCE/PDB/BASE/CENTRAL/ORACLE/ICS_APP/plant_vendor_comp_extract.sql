@@ -348,7 +348,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
         || rpad(nvl(to_char(rcd_bds_vend_comp.payment_block_flag),' '),1,' ')
         || rpad(nvl(to_char(rcd_bds_vend_comp.payment_terms),' '),4,' ')
         || rpad(nvl(to_char(rcd_bds_vend_comp.shipper_account),' '),12,' ')
-        || rpad(nvl(to_char(rcd_bds_vend_comp.vendor_clerk),' '),15,' ')
+        || nvl(rcd_bds_vend_comp.vendor_clerk,' ') || rpad(' ',15-length(nvl(rcd_bds_vend_comp.vendor_clerk,' ')),' ')
         || rpad(nvl(to_char(rcd_bds_vend_comp.planning_group),' '),10,' ')
         || rpad(nvl(to_char(rcd_bds_vend_comp.account_clerk_code),' '),2,' ')
         || rpad(nvl(to_char(rcd_bds_vend_comp.head_office_account),' '),10,' ')
