@@ -22,7 +22,7 @@
 /**/
 create table lics_last_run
 (
-  lsr_interface   varchar2(32 char) not null,
+  lsr_identifier  varchar2(32 char) not null,
   lsr_date        date
 );
 
@@ -30,7 +30,7 @@ create table lics_last_run
 /* Comments 
 /**/
 comment on table lics_last_run is 'LICS Last Run Table';
-comment on column lics_last_run.lsr_interface is 'Last Run - interface identifier';
+comment on column lics_last_run.lsr_identifier is 'Last Run - item identifier';
 comment on column lics_last_run.lsr_date is 'Last Run - date of last successful run';
 
 /**/

@@ -65,6 +65,9 @@ setup_config()
         $TRIG)
             MQFT_SEND_PARAM="-trigger ${T_PROCESS}"
             ;;
+        $CMP)
+            MQFT_SEND_PARAM="-compress"
+            ;;            
         *)
             error_exit "ERROR: [setup_config] MQFT send type is not valid [${TRNSFR_TYPE}]"
             ;;
