@@ -185,6 +185,10 @@
       if (!processForm()) {return;}
       doReportOutput(eval('document.body'),strIdentifier,'*SPREADSHEET','select * from table(dw_fcst_maintenance.report_load(\'' + strIdentifier + '\'))');
    }
+   function doPricing(strIdentifier) {
+      if (!processForm()) {return;};
+      doExportOutput(eval('document.body'),strIdentifier,'*FILE','dw_fcst_maintenance.export_pricing(\'' + strIdentifier + '\')','','');
+   }
    function processForm() {
       if (checkInput() == true) {
          alert('Input data errors exist');
@@ -333,9 +337,11 @@
                      <div class="clsScroll" id="conBody">
                      <table class="clsTableBody" id="tabBody" align=left cols=9 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=9 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
-                        <tr><%if objSelection.ListValue09("LIST",i) = "1" then%>
+                        <tr><%if objSelection.ListValue10("LIST",i) = "*QTY_GSV" then%><%if objSelection.ListValue09("LIST",i) = "1" then%>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doPricing('<%=objSelection.ListValue01("LIST",i)%>');">Pricing</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td><%else%>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doPricing('<%=objSelection.ListValue01("LIST",i)%>');">Pricing</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a></nobr></td><%end if%><%else%><%if objSelection.ListValue09("LIST",i) = "1" then%>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td><%else%>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a></nobr></td><%end if%>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doReport('<%=objSelection.ListValue01("LIST",i)%>');">Report</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doExport('<%=objSelection.ListValue01("LIST",i)%>');">Export</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doValidate('<%=objSelection.ListValue01("LIST",i)%>');">Validate</a></nobr></td><%end if%><%end if%>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
