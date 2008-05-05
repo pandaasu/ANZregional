@@ -23,6 +23,7 @@ create or replace package dw_fcst_maintenance as
     2008/04   Steve Gregan   Changed daily forecast load to 1D for Apollo
     2008/04   Steve Gregan   Changed validation error messages
     2008/05   Steve Gregan   Changed customer description logic
+    2008/05   Steve Gregan   Changed create apollo load to ignore zero quantity rows
 
    *******************************************************************************/
 
@@ -546,6 +547,7 @@ create or replace package body dw_fcst_maintenance as
            from fcst_data t01,
                 mars_date t02
           where to_date(t01.fcst_yyyymmdd,'yyyymmdd') = t02.calendar_date(+)
+            and t01.fcst_qty != 0
           order by t01.material_code asc,
                    t01.dmnd_group asc,
                    t01.plant_code asc,
