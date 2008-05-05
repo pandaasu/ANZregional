@@ -24,6 +24,7 @@ create or replace package dw_fcst_maintenance as
     2008/04   Steve Gregan   Changed validation error messages
     2008/05   Steve Gregan   Changed customer description logic
     2008/05   Steve Gregan   Changed create apollo load to ignore zero quantity rows
+    2008/05   Steve Gregan   Added forecast load pricing exception report
 
    *******************************************************************************/
 
@@ -53,6 +54,7 @@ create or replace package dw_fcst_maintenance as
    function retrieve_loads(par_extract_type in varchar2, par_extract_version in number) return dw_fcst_table pipelined;
    function export_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
    function report_load(par_load_identifier in varchar2) return dw_fcst_table pipelined;
+   function export_pricing(par_load_identifier in varchar2) return dw_fcst_table pipelined;
 
 end dw_fcst_maintenance;
 /
@@ -3341,6 +3343,249 @@ create or replace package body dw_fcst_maintenance as
    /* End routine */
    /*-------------*/
    end report_load;
+
+   /******************************************************/
+   /* This procedure performs the export pricing routine */
+   /******************************************************/
+   function export_pricing(par_load_identifier in varchar2) return dw_fcst_table pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_load_identifier fcst_load_header.load_identifier%type;
+      var_dmnd_group fcst_load_detail.dmnd_group%type;
+      var_material_code fcst_load_detail.material_code%type;
+      var_output varchar2(4000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_load_header is 
+         select t01.*,
+                t02.load_type_channel,
+                t02.load_type_data_type
+           from fcst_load_header t01,
+                fcst_load_type t02
+          where t01.load_type = t02.load_type(+)
+            and t01.load_identifier = var_load_identifier;
+      rcd_fcst_load_header csr_fcst_load_header%rowtype;
+
+      cursor csr_fcst_load_01 is
+         select t01.material_code,
+                t01.fcst_yyyypp
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+            and t01.fcst_prc = 0
+          group by t01.material_code,
+                   t01.fcst_yyyypp
+          order by t01.material_code asc,
+                   t01.fcst_yyyypp asc;
+      rcd_fcst_load_01 csr_fcst_load_01%rowtype;
+
+      cursor csr_fcst_load_02 is
+         select t01.dmnd_group,
+                t01.material_code,
+                t01.fcst_yyyypp
+           from fcst_load_detail t01
+          where t01.load_identifier = rcd_fcst_load_header.load_identifier
+            and t01.fcst_prc = 0
+          group by t01.dmnd_group,
+                   t01.material_code,
+                   t01.fcst_yyyypp
+          order by t01.dmnd_group asc,
+                   t01.material_code asc,
+                   t01.fcst_yyyypp asc;
+      rcd_fcst_load_02 csr_fcst_load_02%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      var_load_identifier := upper(par_load_identifier);
+      if var_load_identifier is null then
+         raise_application_error(-20000, 'Forecast load identifier must be specified');
+      end if;
+
+      /*-*/
+      /* Retrieve the load header
+      /*-*/
+      open csr_fcst_load_header;
+      fetch csr_fcst_load_header into rcd_fcst_load_header;
+      if csr_fcst_load_header%notfound then
+         raise_application_error(-20000, 'Forecast load (' || var_load_identifier || ') does not exist');
+      end if;
+      close csr_fcst_load_header;
+      if rcd_fcst_load_header.load_type_data_type != '*QTY_GSV' then
+         raise_application_error(-20000, 'Forecast load type does not support pricing');
+      end if;
+
+      /*-*/
+      /* Material pricing
+      /*-*/
+      if upper(rcd_fcst_load_header.load_type_channel) != '*AFFILIATE' then
+
+         /*-*/
+         /* Retrieve the forecast load period
+         /*-*/
+         pipe row('Material,No Pricing Periods');
+         var_material_code := null;
+         open csr_fcst_load_01;
+         loop
+            fetch csr_fcst_load_01 into rcd_fcst_load_01;
+            if csr_fcst_load_01%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Change in row
+            /*-*/
+            if var_material_code is null or
+               var_material_code != rcd_fcst_load_01.material_code then
+
+               /*-*/
+               /* Output the row when required
+               /*-*/
+               if not(var_material_code is null) then
+
+                  /*-*/
+                  /* Output the row
+                  /*-*/
+                  var_output := var_material_code||var_output;
+                  pipe row(var_output);
+
+               end if;
+
+               /*-*/
+               /* Initialise the row
+               /*-*/
+               var_material_code := rcd_fcst_load_01.material_code;
+               var_output := null;
+
+            end if;
+
+            /*-*/
+            /* Set the periods
+            /*-*/
+            var_output := var_output||','||rcd_fcst_load_01.fcst_yyyypp;
+
+         end loop;
+         close csr_fcst_load_01;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_material_code is null) then
+
+            /*-*/
+            /* Output the row
+            /*-*/
+            var_output := var_material_code||var_output;
+            pipe row(var_output);
+
+         end if;
+
+      /*-*/
+      /* Customer/material pricing
+      /*-*/
+      else
+
+         /*-*/
+         /* Retrieve the forecast load period
+         /*-*/
+         pipe row('Customer,Material,No Pricing Periods');
+         var_dmnd_group := null;
+         var_material_code := null;
+         open csr_fcst_load_02;
+         loop
+            fetch csr_fcst_load_02 into rcd_fcst_load_02;
+            if csr_fcst_load_02%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Change in row
+            /*-*/
+            if var_dmnd_group is null or
+               var_dmnd_group != rcd_fcst_load_02.dmnd_group or
+               var_material_code != rcd_fcst_load_02.material_code then
+
+               /*-*/
+               /* Output the row when required
+               /*-*/
+               if not(var_dmnd_group is null) then
+
+                  /*-*/
+                  /* Output the row
+                  /*-*/
+                  var_output := var_dmnd_group||','||var_material_code||var_output;
+                  pipe row(var_output);
+
+               end if;
+
+               /*-*/
+               /* Initialise the row
+               /*-*/
+               var_dmnd_group := rcd_fcst_load_02.dmnd_group;
+               var_material_code := rcd_fcst_load_02.material_code;
+               var_output := null;
+
+            end if;
+
+            /*-*/
+            /* Set the periods
+            /*-*/
+            var_output := var_output||','||rcd_fcst_load_02.fcst_yyyypp;
+
+         end loop;
+         close csr_fcst_load_02;
+
+         /*-*/
+         /* Output the last row when required
+         /*-*/
+         if not(var_dmnd_group is null) then
+
+            /*-*/
+            /* Output the row
+            /*-*/
+            var_output := var_dmnd_group||','||var_material_code||var_output;
+            pipe row(var_output);
+
+         end if;
+
+      end if;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'DW_FCST_MAINTENANCE - EXPORT_PRICING - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end export_pricing;
 
    /*****************************************************/
    /* This procedure performs the validate load routine */
