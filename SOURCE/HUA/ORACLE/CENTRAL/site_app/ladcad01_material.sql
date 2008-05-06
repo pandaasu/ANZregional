@@ -217,7 +217,7 @@ create or replace package body ladcad01_material as
          lics_outbound_loader.append_data('HDR' ||
                                           rpad(to_char(nvl(rec_matl_master.sap_material_code,' ')),18, ' ') ||
                                           nvl(rec_matl_master.material_desc_ch,' ')||rpad(' ',40-length(nvl(rec_matl_master.material_desc_ch,' ')),' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.material_desc_en,' ')),40, ' ') ||
+                                          nvl(rec_matl_master.material_desc_en,' ')||rpad(' ',40-length(nvl(rec_matl_master.material_desc_en,' ')),' ') ||
                                           rpad(to_char(nvl(rec_matl_master.mars_rprsnttv_item_code,' ')),18, ' ') ||
                                           nvl(rec_matl_master.zrep_material_desc_ch,' ')||rpad(' ',40-length(nvl(rec_matl_master.zrep_material_desc_ch,' ')),' ') ||
                                           rpad(to_char(nvl(rec_matl_master.zrep_material_desc_en,' ')),40, ' ') ||

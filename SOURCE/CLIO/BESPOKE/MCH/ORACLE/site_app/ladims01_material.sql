@@ -10,21 +10,26 @@ create or replace package ladims01_material as
  -----------
  Material Master Data
 
- 1. PAR_HISTORY (OPTIONAL)
+ 1. PAR_EMA_RECIPIENT (MANDATORY)
 
-    ## - Number of days changes to extract
-    0 - Full extract (default)
+    Email address attachment is to be sent to.
+
+ 2. PAR_PLANT_CODE (MANDATORY)
+
+    GRD Plant Code extract is for
+
 
  YYYY/MM   Author         Description
  -------   ------         -----------
  2008/02   Linden Glen    Created
+ 2008/05   Linden Glen    Changed to send as email
 
 *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_history in number default 0);
+   procedure execute(par_ema_recipient in varchar2, par_plant_code in varchar2);
 
 end ladims01_material;
 /
@@ -43,33 +48,35 @@ create or replace package body ladims01_material as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_history in number default 0) is
+   procedure execute(par_ema_recipient in varchar2, par_plant_code in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
-      var_history number;
       var_instance number(15,0);
       var_start boolean;
+      var_subject varchar2(128 char);
+      var_sender varchar2(128 char);
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_matl_master is
-         select a.sap_material_code as sap_material_code,
-                a.bds_material_desc_zh as material_desc_ch, 
-                a.material_type as material_type,
-                a.base_uom as base_uom,
-                a.xplant_status as xplant_status,
-                b.special_procurement_type as special_procurement_type,
-                b.abc_indctr as abc_indctr,
-                nvl(to_char(a.creatn_date,'yyyymmdd'),'19000101') as creatn_date
+         select ltrim(a.sap_material_code,'0') || ',' ||
+                a.bds_material_desc_zh || ',' ||
+                decode(a.material_type,'ROH','RAW/SFG',
+                                       'FERT','FG',
+                                       'VERP','PACK',a.material_type) || ',' ||
+                decode(b.special_procurement_type,'50','YES','NO') || ',' ||
+                a.base_uom || ',' ||
+                decode(a.xplant_status,'99','Retired','New') as extract_line
          from bds_material_hdr a,
               bds_material_plant_hdr b
          where a.sap_material_code = b.sap_material_code
            and a.bds_lads_status = '1'
-           and a.bds_lads_date >= sysdate - var_history
-           and b.plant_code = 'CN02';
+           and b.plant_code = par_plant_code
+           and ((a.bds_lads_date >= sysdate-1 and to_char(a.creatn_date,'yyyymmdd') in (to_char(a.bds_lads_date,'yyyymmdd'),to_char(a.bds_lads_date-1,'yyyymmdd'))) or
+                (a.bds_lads_date >= sysdate-1 and a.xplant_status = '99'));
       rec_matl_master  csr_matl_master%rowtype;
 
    /*-------------*/
@@ -81,15 +88,25 @@ create or replace package body ladims01_material as
       /* Initialise variables
       /*-*/
       var_start := true;
+      var_sender := 'BDS@AP0115P';
+      var_subject := 'GRD Material Change Extract - IMS - Plant Code: ' || par_plant_code;
 
       /*-*/
-      /* Define number of days to extract
+      /* Validate the parameters
       /*-*/
-      if (par_history = 0) then
-         var_history := 99999;
-      else
-         var_history := par_history;
+      if trim(par_ema_recipient) is null then
+         raise_application_error(-20000, 'Email Recipient parameter is required');
       end if;
+      /*-*/
+      if trim(par_plant_code) is null then
+         raise_application_error(-20000, 'Plant Code parameter is required');
+      end if;
+
+      /*-*/
+      /* Create Email
+      /*-*/
+      isi_mailer.create_email(par_ema_recipient,var_subject,null,null);
+      isi_mailer.append_data('GRD Material Changes for Plant ' || par_plant_code);
 
       /*-*/
       /* Open Cursor for output
@@ -106,33 +123,37 @@ create or replace package body ladims01_material as
          /*-*/
          if (var_start) then
 
-            var_instance := lics_outbound_loader.create_interface('LADIMS01');
+            /*-*/
+            /* Create attachment
+            /*-*/
+            isi_mailer.create_attachment('grd_extract_' || to_char(sysdate,'yyyymmddhh24miss') || '.csv');
+            isi_mailer.append_attachment('MATERIAL_CODE,DESCRIPTION,MATERIAL_TYPE,PHANTOM,UOM,STATUS');
 
             var_start := false;
 
          end if;
 
          /*-*/
-         /* Append Data Lines
+         /* Append attachment records
          /*-*/
-         lics_outbound_loader.append_data(rpad(to_char(nvl(rec_matl_master.sap_material_code,' ')),18, ' ') ||
-                                          nvl(rec_matl_master.material_desc_ch,' ')||rpad(' ',40-length(nvl(rec_matl_master.material_desc_ch,' ')),' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.material_type,' ')),4, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.base_uom,' ')),3, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.xplant_status,' ')),2, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.special_procurement_type,' ')),2, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.abc_indctr,' ')),1, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.creatn_date,' ')),8, ' '));
+         isi_mailer.append_attachment(rec_matl_master.extract_line);
 
       end loop;
       close csr_matl_master;
 
       /*-*/
-      /* Finalise Interface
+      /* Notify in email if no attachment generated
       /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+      if (var_start) then
+         isi_mailer.append_data('<NO GRD CHANGES AVAILABLE>');
       end if;
+
+      /*-*/
+      /* Finalise and send email
+      /*-*/
+      isi_mailer.finalise_email(var_sender);
+
+
 
    /*-------------------*/
    /* Exception handler */
@@ -150,11 +171,11 @@ create or replace package body ladims01_material as
          rollback;
 
          /*-*/
-         /* Finalise the outbound loader when required
+         /* Finalise the email
          /*-*/
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
+         if (isi_mailer.is_created) then
+             isi_mailer.append_data('** FATAL ERROR DURING EXTRACT ** - Please notify support');
+             isi_mailer.finalise_email(var_sender);
          end if;
 
          /*-*/
