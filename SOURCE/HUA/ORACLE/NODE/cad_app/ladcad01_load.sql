@@ -18,6 +18,7 @@ create or replace package ladcad01_material as
  2008/03   Linden Glen    Added zrep English and Chinese descriptions
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
+ 2008/05   Linden Glen    Added dstrbtn_chain_status
 
 *******************************************************************************/
 
@@ -147,6 +148,7 @@ create or replace package body ladcad01_material as
       lics_inbound_utility.set_definition('HDR','SELL_MOE_0168',1);
       lics_inbound_utility.set_definition('HDR','MAKE_MOE_0168',1);
       lics_inbound_utility.set_definition('HDR','INTRMDT_PRDCT_COMPNT',1);
+      lics_inbound_utility.set_definition('HDR','DSTRBTN_CHAIN_STATUS',2);
       /*-*/
       lics_inbound_utility.set_definition('INV','IDOC_INV',3);
       lics_inbound_utility.set_definition('INV','SAP_COMPANY_CODE',6);
@@ -358,6 +360,7 @@ create or replace package body ladcad01_material as
       rcd_cad_material_master.sell_moe_0168 := lics_inbound_utility.get_variable('SELL_MOE_0168');
       rcd_cad_material_master.make_moe_0168 := lics_inbound_utility.get_variable('MAKE_MOE_0168');
       rcd_cad_material_master.intrmdt_prdct_compnt := lics_inbound_utility.get_variable('INTRMDT_PRDCT_COMPNT');
+      rcd_cad_material_master.dstrbtn_chain_status := lics_inbound_utility.get_variable('DSTRBTN_CHAIN_STATUS');
       rcd_cad_material_master.cad_load_date := sysdate;
 
       /*-*/
@@ -447,6 +450,7 @@ create or replace package body ladcad01_material as
           sell_moe_0168,
           make_moe_0168,
           intrmdt_prdct_compnt,
+          dstrbtn_chain_status,
           cad_load_date)
       values
          (rcd_cad_material_master.sap_material_code,
@@ -509,6 +513,7 @@ create or replace package body ladcad01_material as
           rcd_cad_material_master.sell_moe_0168,
           rcd_cad_material_master.make_moe_0168,
           rcd_cad_material_master.intrmdt_prdct_compnt,
+          rcd_cad_material_master.dstrbtn_chain_status,
           rcd_cad_material_master.cad_load_date);
 
    /*-------------*/

@@ -17,6 +17,7 @@
  2008/03   Linden Glen    Added zrep English and Chinese descriptions
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
+ 2008/05   Linden Glen    Added dstrbtn_chain_status
 
 *******************************************************************************/
 
@@ -87,6 +88,7 @@ create table cad_material_master
     sell_moe_0168                    varchar2(1 char)      null,
     make_moe_0168                    varchar2(1 char)      null,
     intrmdt_prdct_compnt             varchar2(1 char)      null,
+    dstrbtn_chain_status             varchar2(2 char)      null,
     cad_load_date                    date                  not null);
 
 

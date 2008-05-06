@@ -19,6 +19,7 @@ create or replace package ladcad01_material as
  2008/03   Linden Glen    Added zrep English and Chinese descriptions
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
+ 2008/05   Linden Glen    Added dstrbtn_chain_status
                            
 *******************************************************************************/
 
@@ -115,7 +116,8 @@ create or replace package body ladcad01_material as
                 f.tax_classfctn_01 as tax_classification,
                 j.sell_moe_0168 as sell_moe_0168,
                 j.make_moe_0168 as make_moe_0168,
-                a.mars_intrmdt_prdct_compnt_flag as intrmdt_prdct_compnt
+                a.mars_intrmdt_prdct_compnt_flag as intrmdt_prdct_compnt,
+                k.dstrbtn_chain_status as dstrbtn_chain_status
          from bds_material_hdr a,
               bds_material_classfctn_en c,
               (select sap_material_code,
@@ -148,7 +150,12 @@ create or replace package body ladcad01_material as
                from bds_material_moe
                where usage_code in ('SEL','MKE')
                  and moe_code = '0168'
-               group by sap_material_code) j
+               group by sap_material_code) j,
+              (select sap_material_code,
+                      dstrbtn_chain_status as dstrbtn_chain_status
+               from bds_material_dstrbtn_chain
+               where sales_organisation = '135'
+                 and dstrbtn_channel = '10') k
          where a.sap_material_code = c.sap_material_code(+)
            and a.sap_material_code = d.sap_material_code(+)
            and a.material_type = e.sap_material_type_code(+)
@@ -156,6 +163,7 @@ create or replace package body ladcad01_material as
            and a.sap_material_code = h.sap_material_code(+)
            and a.mars_rprsnttv_item_code = i.sap_material_code(+)
            and a.sap_material_code = j.sap_material_code(+)
+           and a.sap_material_code = k.sap_material_code(+)
            and a.bds_lads_status = '1';
       rec_matl_master  csr_matl_master%rowtype;
 
@@ -266,7 +274,8 @@ create or replace package body ladcad01_material as
                                           rpad(to_char(nvl(rec_matl_master.tax_classification,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.sell_moe_0168,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.make_moe_0168,' ')),1, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.intrmdt_prdct_compnt,' ')),1, ' '));
+                                          rpad(to_char(nvl(rec_matl_master.intrmdt_prdct_compnt,' ')),1, ' ') ||
+                                          rpad(to_char(nvl(rec_matl_master.dstrbtn_chain_status,' ')),2, ' '));
 
 
          /*-*/
