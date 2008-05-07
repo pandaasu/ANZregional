@@ -19,6 +19,7 @@ create or replace package ladcad03_customer as
  -------   ------         -----------
  2008/01   Linden Glen    Created
  2008/01   Linden Glen    Added data check to stop empty interfaces
+ 2008/05   Linden Glen    Added account_group_code and search_term_02
 
 *******************************************************************************/
 
@@ -85,6 +86,8 @@ create or replace package body ladcad03_customer as
                 max(h.sap_sub_channel_desc) as channel_name,
                 max(h.sap_channel_code) as channel_grp_code,
                 max(h.sap_channel_desc) as channel_grp_name,
+                max(a.account_group_code) as account_group_code,
+                max(c.search_term_02) as search_term_02,
                 max(to_char(a.bds_lads_date,'yyyymmddhh24miss')) as bds_lads_date
          from bds_cust_header a,
               (select t01.customer_code,
@@ -196,6 +199,8 @@ create or replace package body ladcad03_customer as
                                           nvl(rec_cust_master.channel_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_name,' ')),' ') ||
                                           rpad(to_char(nvl(rec_cust_master.channel_grp_code,' ')),10, ' ') ||
                                           nvl(rec_cust_master.channel_grp_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_grp_name,' ')),' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.account_group_code,' ')),4, ' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.search_term_02,' ')),20, ' ') ||
                                           rpad(to_char(nvl(rec_cust_master.bds_lads_date,' ')),14, ' '));
 
       end loop;
