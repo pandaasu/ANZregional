@@ -49,9 +49,8 @@ alter table bds.bds_material_bom_hdr
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_material_bom_hdr to bds_app with grant option;
-grant select on bds.bds_material_bom_hdr to appsupport;
-grant select on bds.bds_material_bom_hdr to fcs_user;
-grant select on bds.bds_material_bom_hdr to public;
+grant select on bds.bds_material_bom_hdr to manu_app with grant option;
+grant select on bds.bds_material_bom_hdr to pt_app with grant option;
 
 /**/
 /* Synonym 

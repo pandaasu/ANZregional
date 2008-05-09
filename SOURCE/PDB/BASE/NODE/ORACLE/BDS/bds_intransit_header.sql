@@ -40,9 +40,8 @@ alter table bds.bds_intransit_header
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_intransit_header to bds_app with grant option;
-grant select on bds.bds_intransit_header to appsupport;
-grant select on bds.bds_intransit_header to fcs_user;
-grant select on bds.bds_intransit_header to public;
+grant select on bds.bds_intransit_header to manu_app with grant option;
+grant select on bds.bds_intransit_header to pt_app with grant option;
 
 /**/
 /* Synonym 

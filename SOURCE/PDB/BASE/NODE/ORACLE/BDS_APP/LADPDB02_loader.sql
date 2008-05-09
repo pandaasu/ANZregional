@@ -405,18 +405,6 @@ create or replace package body bds_app.ladpdb02_loader as
   /* Begin block */
   /*-------------*/
   begin
-
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
     
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
@@ -750,7 +738,6 @@ create or replace package body bds_app.ladpdb02_loader as
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
     /*--------------------------------------------*/
-
     if var_trn_ignore = true then
        return;
     end if;

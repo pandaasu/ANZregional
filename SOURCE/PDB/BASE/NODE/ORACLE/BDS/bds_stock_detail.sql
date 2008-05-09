@@ -48,9 +48,8 @@ alter table bds.bds_stock_detail
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_stock_detail to bds_app with grant option;
-grant select on bds.bds_stock_detail to appsupport;
-grant select on bds.bds_stock_detail to fcs_user;
-grant select on bds.bds_stock_detail to public;
+grant select on bds.bds_stock_detail to manu_app with grant option;
+grant select on bds.bds_stock_detail to pt_app with grant option;
 
 /**/
 /* Synonym 

@@ -82,9 +82,8 @@ alter table bds.bds_material_classfctn_ics
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_material_classfctn_ics to bds_app with grant option;
-grant select on bds.bds_material_classfctn_ics to appsupport;
-grant select on bds.bds_material_classfctn_ics to fcs_user;
-grant select on bds.bds_material_classfctn_ics to public;
+grant select on bds.bds_material_classfctn_ics to manu_app with grant option;
+grant select on bds.bds_material_classfctn_ics to pt_app with grant option;
 
 /**/
 /* Synonym 

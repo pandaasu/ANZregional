@@ -51,14 +51,14 @@ create index bds.bds_material_pkg_instr_t_idx1 on bds.bds_material_pkg_instr_det
 /* Primary Key Constraint 
 /**/
 alter table bds.bds_material_pkg_instr_det_t 
-  add constraint bds_material_pkg_instr_det_t_pk primary key (sap_material_code, pkg_instr_table_usage, pkg_instr_table, pkg_instr_type, pkg_instr_application, pkg_instr_start_date, pkg_instr_end_date, sales_organisation, item_ctgry, component);
+  add constraint bds_mat_pkg_instr_det_t_pk primary key (sap_material_code, pkg_instr_table_usage, pkg_instr_table, pkg_instr_type, pkg_instr_application, pkg_instr_start_date, pkg_instr_end_date, sales_organisation, item_ctgry, component);
  
 /**/
 /* Authority 
 /**/
-grant delete, insert, select, update on bds.bds_material_pkg_instr_det_t to bds_app;
-grant select on bds.bds_material_pkg_instr_det_t to appsupport;
-grant select on bds.bds_material_pkg_instr_det_t to public;
+grant delete, insert, select, update on bds.bds_material_pkg_instr_det_t to bds_app with grant option;
+grant select on bds.bds_material_pkg_instr_det_t to manu_app with grant option;
+grant select on bds.bds_material_pkg_instr_det_t to pt_app with grant option;
 /**/
 /* Synonym 
 /**/

@@ -93,9 +93,8 @@ alter table bds.bds_vend_comp_ics
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_vend_comp_ics to bds_app with grant option;
-grant select on bds.bds_vend_comp_ics to appsupport;
-grant select on bds.bds_vend_comp_ics to fcs_user;
-grant select on bds.bds_vend_comp_ics to public;
+grant select on bds.bds_vend_comp_ics to manu_app with grant option;
+grant select on bds.bds_vend_comp_ics to pt_app with grant option;
 
 /**/
 /* Synonym 

@@ -102,16 +102,14 @@ create index bds.bds_material_plant_test_idx03 on bds.bds_material_plant_mfanz_t
 /* Primary Key Constraint 
 /**/
 alter table bds.bds_material_plant_mfanz_test 
-  add constraint bds_material_plant_mfanz_test_pk primary key (sap_material_code, plant_code);
+  add constraint bds_mat_plant_mfanz_test_pk primary key (sap_material_code, plant_code);
  
 /**/
 /* Authority 
 /**/
-grant select, delete, insert, update on bds.bds_material_plant_mfanz_test to bds_app;
-grant select on bds.bds_material_plant_mfanz_test to appsupport;
-grant select on bds.bds_material_plant_mfanz_test to bo_user;
-grant select on bds.bds_material_plant_mfanz_test to manu with grant option;
+grant select, delete, insert, update on bds.bds_material_plant_mfanz_test to bds_app with grant option;
 grant select on bds.bds_material_plant_mfanz_test to manu_app with grant option;
+grant select on bds.bds_material_plant_mfanz_test to pt_app with grant option;
 
 /**/
 /* Synonym 

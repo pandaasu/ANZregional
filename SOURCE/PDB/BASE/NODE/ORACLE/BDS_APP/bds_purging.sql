@@ -51,7 +51,7 @@ create or replace package body bds_purging as
    /*-*/
    /* Private constants
    /*-*/
-   con_purging_group constant varchar2(32) := 'bds_purging';
+   con_purging_group constant varchar2(32) := 'BDS_PURGING';
    cnt_process_count constant number(5,0) := 10;
 
    /***********************************************/
@@ -133,7 +133,7 @@ create or replace package body bds_purging as
   cursor csr_lock is
     select t01.proc_order
     from bds_recipe_header t01
-    where t01.plant_code = rcd_header.plant_code
+    where t01.proc_order = rcd_header.proc_order
     for update nowait;
   rcd_lock csr_lock%rowtype;
 
@@ -468,5 +468,5 @@ end bds_purging;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym bds_purging for lads_app.bds_purging;
+create or replace public synonym bds_purging for bds_app.bds_purging;
 grant execute on bds_purging to public;

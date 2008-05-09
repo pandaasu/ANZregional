@@ -285,8 +285,9 @@ create or replace package body bds_app.ladpdb05_loader as
       bom_usage = rcd_hdr.bom_usage,
       bom_eff_from_date = rcd_hdr.bom_eff_from_date
     where bom_material_code = rcd_hdr.bom_material_code
-      and bom_alternative = rcd_hdr.bom_alternative
-      and bom_plant = rcd_hdr.bom_plant;
+      and bom_plant = rcd_hdr.bom_plant
+      and bom_usage = rcd_hdr.bom_usage
+      and bom_eff_from_date = rcd_hdr.bom_eff_from_date;
     
     if ( sql%notfound ) then    
       insert into bds_refrnc_hdr_altrnt

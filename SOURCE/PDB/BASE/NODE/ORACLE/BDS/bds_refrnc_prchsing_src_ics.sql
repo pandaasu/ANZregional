@@ -58,10 +58,9 @@ alter table bds.bds_refrnc_prchsing_src_ics
 /**/
 /* Authority 
 /**/
-grant select, insert, update, delete on bds_refrnc_prchsing_src_ics to bds_app;
-grant select on bds.bds_refrnc_prchsing_src_ics to appsupport;
-grant select on bds.bds_refrnc_prchsing_src_ics to fcs_user;
-grant select on bds.bds_refrnc_prchsing_src_ics to public;
+grant select, insert, update, delete on bds_refrnc_prchsing_src_ics to bds_app with grant option;
+grant select on bds.bds_refrnc_prchsing_src_ics to manu_app with grant option;
+grant select on bds.bds_refrnc_prchsing_src_ics to pt_app with grant option;
 
 /**/
 /* Synonym 

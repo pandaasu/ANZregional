@@ -37,7 +37,7 @@ comment on column lics_last_run.lsr_date is 'Last Run - date of last successful 
 /* Primary Key Constraint 
 /**/
 alter table lics_last_run
-   add constraint lics_last_run_pk primary key (lsr_interface);
+   add constraint lics_last_run_pk primary key (lsr_identifier);
 
 /**/
 /* Authority 

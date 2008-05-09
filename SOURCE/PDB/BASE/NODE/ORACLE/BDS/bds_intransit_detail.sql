@@ -69,9 +69,8 @@ alter table bds.bds_intransit_detail
 /* Authority 
 /**/
 grant select, update, delete, insert on bds.bds_intransit_detail to bds_app with grant option;
-grant select on bds.bds_intransit_detail to appsupport;
-grant select on bds.bds_intransit_detail to fcs_user;
-grant select on bds.bds_intransit_detail to public;
+grant select on bds.bds_intransit_detail to manu_app with grant option;
+grant select on bds.bds_intransit_detail to pt_app with grant option;
 
 /**/
 /* Synonym 

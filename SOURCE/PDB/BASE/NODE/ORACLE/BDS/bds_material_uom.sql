@@ -60,10 +60,9 @@ alter table bds.bds_material_uom
 /**/
 /* Authority 
 /**/
-grant select, delete, insert, update on bds.bds_material_uom to bds_app;
-grant select on bds.bds_material_uom to appsupport;
-grant select on bds.bds_material_uom to fcs_user;
-grant select on bds.bds_material_uom to public;
+grant select, delete, insert, update on bds.bds_material_uom to bds_app with grant option;
+grant select on bds.bds_material_uom to manu_app with grant option;
+grant select on bds.bds_material_uom to pt_app with grant option;
 
 /**/
 /* Synonym 

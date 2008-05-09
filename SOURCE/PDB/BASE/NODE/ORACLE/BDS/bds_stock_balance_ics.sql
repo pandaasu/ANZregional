@@ -68,9 +68,8 @@ create or replace force view bds.bds_stock_balance_ics as
 /* Authority 
 /**/
 grant select on bds.bds_stock_balance_ics to bds_app with grant option;
-grant select on bds.bds_stock_balance_ics to appsupport;
-grant select on bds.bds_stock_balance_ics to fcs_user;
-grant select on bds.bds_stock_balance_ics to public;
+grant select on bds.bds_stock_balance_ics to manu_app with grant option;
+grant select on bds.bds_stock_balance_ics to pt_app with grant option;
 
 /**/
 /* Synonym 

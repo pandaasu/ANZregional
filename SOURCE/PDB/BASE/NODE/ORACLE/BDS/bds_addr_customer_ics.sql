@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- View   : bds_prodctn_resrc_en_ics  
+ View   : bds_addr_customer_ics  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_prodctn_resrc_en_ics 
+ Business Data Store - bds_addr_customer_ics 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -72,10 +72,9 @@ create or replace force view bds.bds_addr_customer_ics as
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_addr_customer_ics to appsupport;
 grant select on bds.bds_addr_customer_ics to bds_app with grant option;
-grant select on bds.bds_addr_customer_ics to fcs_user;
-grant select on bds.bds_addr_customer_ics to public;
+grant select on bds.bds_addr_customer_ics to manu_app with grant option;
+grant select on bds.bds_addr_customer_ics to pt_app with grant option;
 
 /**/
 /* Synonym 

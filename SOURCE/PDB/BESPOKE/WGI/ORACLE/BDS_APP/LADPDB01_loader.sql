@@ -303,13 +303,13 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Ladpdb01_Loader AS
          /*-*/
          /* call recipe conversion procedure
          /*-*/
-         BEGIN
+         /*BEGIN
             Recipe_Conversion.EXECUTE(rcd_hdr.cntl_rec_id);
          EXCEPTION
             WHEN OTHERS THEN
                lics_inbound_utility.add_exception(SUBSTR(SQLERRM, 1, 512));
          END;
-
+         */
       END IF;
 
    /*-------------*/

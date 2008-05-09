@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_prodctn_resrc_en_ics  
+ Table   : bds_refrnc_hdr_altrnt  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_prodctn_resrc_en_ics 
+ Business Data Store - bds_refrnc_hdr_altrnt 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -35,10 +35,9 @@ alter table bds.bds_refrnc_hdr_altrnt
 /**/
 /* Authority 
 /**/
-grant select, delete, insert, update on bds.bds_refrnc_hdr_altrnt to bds_app;
-grant select on bds.bds_refrnc_hdr_altrnt to appsupport;
-grant select on bds.bds_refrnc_hdr_altrnt to fcs_user;
-grant select on bds.bds_refrnc_hdr_altrnt to public;
+grant select, delete, insert, update on bds.bds_refrnc_hdr_altrnt to bds_app with grant option;
+grant select on bds.bds_refrnc_hdr_altrnt to manu_app with grant option;
+grant select on bds.bds_refrnc_hdr_altrnt to pt_app with grant option;
 
 /**/
 /* Synonym 
