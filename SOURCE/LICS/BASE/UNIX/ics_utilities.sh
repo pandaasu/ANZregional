@@ -523,11 +523,13 @@ toggle_file_compression()
         # decompress the files successfully using the -S option
         FILE_EXT=".${FILE_INT##*.}"
         
+        log_file "INFO: [toggle_file_compression] File extension [${FILE_EXT}]" "HARMLESS"  
+        
         if [[ "." = $FILE_EXT ]] ; then
             CMD="gunzip -N -v -f $FILE_INT"
         else
-            if [[ "zip" = $FILE_EXT || "gz" = $FILE_EXT || "Z" = $FILE_EXT ]] ; then
-                CMD="gunzip -N -v -f -S .${FILE_EXT} ${FILE_INT}"
+            if [[ ".zip" = $FILE_EXT || ".gz" = $FILE_EXT || ".Z" = $FILE_EXT ]] ; then
+                CMD="gunzip -N -v -f -S ${FILE_EXT} ${FILE_INT}"
             else                
                 if [[ $COMPRESS_ZIP = $CMP_PARAM ]] ; then
                     move_file ${FILE_INT} "${FILE_INT}.zip"
