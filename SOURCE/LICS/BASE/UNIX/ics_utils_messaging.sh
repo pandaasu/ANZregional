@@ -11,6 +11,8 @@
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
 # 07-MAR-2008   L. Glen     Added set_permission call within process_passthru_mqft
+# 13-MAY-2008   S. Gregan   Added pipe to TMP_OUT for java calls within get_file_from_sap
+# 13-MAY-2008   S. Gregan   Added oracle classes12.jar to java calls within get_file_from_sap
 #
 # ---------------------------------------------------------------------------
 
@@ -154,9 +156,9 @@ get_file_from_sap()
     export SHLIB_PATH=/ics/lad/sapjco32 
 
     if [[ $TYPE_INT -eq 0 ]] ; then
-        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password ${SAP_PWD}>&1
+        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password ${SAP_PWD} >> ${TMP_OUT} 2>&1
     else
-        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 ${SAP_PWD_01} -user02 ${SAP_USER_02} -password02 ${SAP_PWD_02}>&1
+        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 ${SAP_PWD_01} -user02 ${SAP_USER_02} -password02 ${SAP_PWD_02} >> ${TMP_OUT} 2>&1
     fi
     
     rc=$?
