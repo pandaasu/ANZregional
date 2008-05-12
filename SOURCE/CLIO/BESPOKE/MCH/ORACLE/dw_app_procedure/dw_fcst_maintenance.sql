@@ -177,13 +177,6 @@ create or replace package body dw_fcst_maintenance as
       end if;
 
       /*-*/
-      /* Return the message when required
-      /*-*/
-      if not(var_message is null) then
-         return var_title || var_message;
-      end if;
-
-      /*-*/
       /* Check the load usage
       /*-*/
       open csr_fcst_extract_load;
@@ -192,6 +185,13 @@ create or replace package body dw_fcst_maintenance as
          var_message := var_message || chr(13) || 'Forecast load (' || var_load_identifier || ') is currently attached to one or more forecast extracts';
       end if;
       close csr_fcst_extract_load;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
 
       /*-*/
       /* Delete the forecast load detail
