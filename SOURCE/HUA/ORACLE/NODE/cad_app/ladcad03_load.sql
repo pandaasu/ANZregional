@@ -16,7 +16,7 @@ create or replace package ladcad03_customer as
  -------   ------         -----------
  2008/01   Linden Glen    Created
  2008/02   Linden Glen    Added LAST_UPDATE_DATE
- 2008/05   Linden Glen    Added account_group_code and search_term_02
+ 2008/05   Linden Glen    Added swb_status
 
 *******************************************************************************/
 
@@ -105,8 +105,7 @@ create or replace package body ladcad03_customer as
       lics_inbound_utility.set_definition('HDR','CHANNEL_NAME',120);
       lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_CODE',10);
       lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_NAME',120);
-      lics_inbound_utility.set_definition('HDR','ACCT_GRP_CODE',4);
-      lics_inbound_utility.set_definition('HDR','SEARCH_TERM_02',20);
+      lics_inbound_utility.set_definition('HDR','SWB_STATUS',8);
       lics_inbound_utility.set_definition('HDR','LAST_UPDATE_DATE',14);
 
 
@@ -291,8 +290,7 @@ create or replace package body ladcad03_customer as
       rcd_cad_customer_master.channel_grp_code := lics_inbound_utility.get_variable('CHANNEL_GRP_CODE');
       rcd_cad_customer_master.channel_grp_name := lics_inbound_utility.get_variable('CHANNEL_GRP_NAME');
       rcd_cad_customer_master.last_update_date := lics_inbound_utility.get_variable('LAST_UPDATE_DATE');
-      rcd_cad_customer_master.account_group_code := lics_inbound_utility.get_variable('ACCT_GRP_CODE');
-      rcd_cad_customer_master.search_term_02 := lics_inbound_utility.get_variable('SEARCH_TERM_02');
+      rcd_cad_customer_master.swb_status := lics_inbound_utility.get_variable('SWB_STATUS');
       rcd_cad_customer_master.cad_load_date := sysdate;
 
       /*-*/
@@ -355,8 +353,7 @@ create or replace package body ladcad03_customer as
           channel_name,
           channel_grp_code,
           channel_grp_name,
-          account_group_code,
-          search_term_02,
+          swb_status,
           last_update_date,
           cad_load_date)
       values
@@ -387,8 +384,7 @@ create or replace package body ladcad03_customer as
           rcd_cad_customer_master.channel_name,
           rcd_cad_customer_master.channel_grp_code,
           rcd_cad_customer_master.channel_grp_name,
-          rcd_cad_customer_master.account_group_code,
-          rcd_cad_customer_master.search_term_02,
+          rcd_cad_customer_master.swb_status,
           rcd_cad_customer_master.last_update_date,
           rcd_cad_customer_master.cad_load_date);
 

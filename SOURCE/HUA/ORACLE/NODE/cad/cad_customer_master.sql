@@ -15,7 +15,7 @@
  -------   ------         -----------
  2007/01   Linden Glen    Created
  2008/02   Linden Glen    Added LAST_UPDATE_DATE
- 2008/05   Linden Glen    Added account_group_code and search_term_02
+ 2008/05   Linden Glen    Added swb_status
 
 *******************************************************************************/
 
@@ -52,9 +52,8 @@ create table cad_customer_master
     channel_name                     varchar2(120 char)    null,
     channel_grp_code                 varchar2(10 char)     null,
     channel_grp_name                 varchar2(120 char)    null,
+    swb_status                       varchar2(8 char)      null,
     last_update_date                 varchar2(14 char)     null,
-    account_group_code               varchar2(4 char)      null,
-    search_term_02                   varchar2(20 char)     null,
     cad_load_date                    date                  not null);
 
 

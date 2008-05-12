@@ -19,7 +19,7 @@ create or replace package ladcad03_customer as
  -------   ------         -----------
  2008/01   Linden Glen    Created
  2008/01   Linden Glen    Added data check to stop empty interfaces
- 2008/05   Linden Glen    Added account_group_code and search_term_02
+ 2008/05   Linden Glen    Added swb_status
 
 *******************************************************************************/
 
@@ -86,8 +86,13 @@ create or replace package body ladcad03_customer as
                 max(h.sap_sub_channel_desc) as channel_name,
                 max(h.sap_channel_code) as channel_grp_code,
                 max(h.sap_channel_desc) as channel_grp_name,
-                max(a.account_group_code) as account_group_code,
-                max(c.search_term_02) as search_term_02,
+                case
+                   when max(a.account_group_code) = '0001' 
+                    and nvl(max(c.search_term_02),'x') not in ('SHIPTO','BILLTO') 
+                    and max(a.order_block_flag) is null 
+                    and max(i.order_block_flag) is null then 'ACTIVE'
+                   else 'INACTIVE'
+                end as swb_status,
                 max(to_char(a.bds_lads_date,'yyyymmddhh24miss')) as bds_lads_date
          from bds_cust_header a,
               (select t01.customer_code,
@@ -111,7 +116,13 @@ create or replace package body ladcad03_customer as
               bds_cust_vat e,
               bds_cust_comp f,
               std_hier g,
-              bds_customer_classfctn_en h
+              bds_customer_classfctn_en h,
+              (select customer_code,
+                      order_block_flag
+               from bds_cust_sales_area
+               where sales_org_code = '135'
+                 and distbn_chnl_code = '10'
+                 and division_code = '51') i
          where a.customer_code = b.customer_code(+)
            and a.customer_code = c.customer_code(+)
            and a.customer_code = d.address_code(+)
@@ -119,6 +130,7 @@ create or replace package body ladcad03_customer as
            and a.customer_code = f.customer_code(+)
            and ltrim(a.customer_code,'0') = ltrim(g.sap_hier_cust_code(+),'0')
            and a.customer_code = h.sap_customer_code(+)
+           and a.customer_code = i.customer_code(+)
            and e.country_code(+) = 'CN'
            and f.company_code(+) = '135'
            and g.sap_sales_org_code(+) = '135'
@@ -199,8 +211,7 @@ create or replace package body ladcad03_customer as
                                           nvl(rec_cust_master.channel_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_name,' ')),' ') ||
                                           rpad(to_char(nvl(rec_cust_master.channel_grp_code,' ')),10, ' ') ||
                                           nvl(rec_cust_master.channel_grp_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_grp_name,' ')),' ') ||
-                                          rpad(to_char(nvl(rec_cust_master.account_group_code,' ')),4, ' ') ||
-                                          rpad(to_char(nvl(rec_cust_master.search_term_02,' ')),20, ' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.swb_status,' ')),8, ' ') ||
                                           rpad(to_char(nvl(rec_cust_master.bds_lads_date,' ')),14, ' '));
 
       end loop;

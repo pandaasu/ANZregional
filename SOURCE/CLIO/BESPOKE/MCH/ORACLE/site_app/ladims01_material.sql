@@ -69,14 +69,14 @@ create or replace package body ladims01_material as
                                        'VERP','PACK',a.material_type) || ',' ||
                 decode(b.special_procurement_type,'50','YES','NO') || ',' ||
                 a.base_uom || ',' ||
-                decode(a.xplant_status,'99','Retired','New') as extract_line
+                decode(b.plant_specific_status,'99','Retired','New') as extract_line
          from bds_material_hdr a,
               bds_material_plant_hdr b
          where a.sap_material_code = b.sap_material_code
            and a.bds_lads_status = '1'
            and b.plant_code = par_plant_code
            and ((a.bds_lads_date >= sysdate-1 and to_char(a.creatn_date,'yyyymmdd') in (to_char(a.bds_lads_date,'yyyymmdd'),to_char(a.bds_lads_date-1,'yyyymmdd'))) or
-                (a.bds_lads_date >= sysdate-1 and a.xplant_status = '99'));
+                (a.bds_lads_date >= sysdate-1 and b.plant_specific_status = '99'));
       rec_matl_master  csr_matl_master%rowtype;
 
    /*-------------*/
