@@ -91,8 +91,8 @@ create or replace package body lads_saplad04 as
       lics_inbound_utility.set_definition('NOD','INT_QUERY',30);
       /*-*/
       lics_inbound_utility.set_definition('DAT','INT_DAT',3);
-      lics_inbound_utility.set_definition('DAT','INT_TRANSACION',30);
-      lics_inbound_utility.set_definition('DAT','INT_IDENTIFIER',2048);
+      lics_inbound_utility.set_definition('DAT','INT_TRANSACTION',30);
+      lics_inbound_utility.set_definition('DAT','INT_IDENTIFIER',128);
 
    /*-------------*/
    /* End routine */
@@ -352,7 +352,7 @@ create or replace package body lads_saplad04 as
       /* Local definitions
       /*-*/
       var_transaction varchar2(30);
-      var_identifier varchar2(64);
+      var_identifier varchar2(128);
 
    /*-------------*/
    /* Begin block */
@@ -380,7 +380,7 @@ create or replace package body lads_saplad04 as
       /*-*/
       /* Retrieve field values
       /*-*/
-      var_transaction := lics_inbound_utility.get_variable('INT_TRASACTION');
+      var_transaction := lics_inbound_utility.get_variable('INT_TRANSACTION');
       var_identifier := lics_inbound_utility.get_variable('INT_IDENTIFIER');
 
       /*-*/
@@ -421,17 +421,31 @@ create or replace package body lads_saplad04 as
       /*-*/
       /* Process the transaction
       /*-*/
-      case var_transaction
+      case trim(upper(var_transaction))
+         when 'PURCHASE_ORDER' then
+            update lads_sto_po_hdr
+               set idoc_name = rcd_lads_control.idoc_name,
+                   idoc_number = rcd_lads_control.idoc_number,
+                   idoc_timestamp = rcd_lads_control.idoc_timestamp,
+                   lads_date = sysdate,
+                   lads_status = '4'
+             where belnr = var_identifier;
          when 'SALES_ORDER' then
             update lads_sal_ord_hdr
-               set lads_status = '4'
-             where belnr = var_identifier
-               and lads_status != '4';
+               set idoc_name = rcd_lads_control.idoc_name,
+                   idoc_number = rcd_lads_control.idoc_number,
+                   idoc_timestamp = rcd_lads_control.idoc_timestamp,
+                   lads_date = sysdate,
+                   lads_status = '4'
+             where belnr = var_identifier;
          when 'DELIVERY' then
             update lads_del_hdr
-               set lads_status = '4'
-             where vbeln = var_identifier
-               and lads_status != '4';
+               set idoc_name = rcd_lads_control.idoc_name,
+                   idoc_number = rcd_lads_control.idoc_number,
+                   idoc_timestamp = rcd_lads_control.idoc_timestamp,
+                   lads_date = sysdate,
+                   lads_status = '4'
+             where vbeln = var_identifier;
          else
             lics_inbound_utility.add_exception('Transaction (' || var_transaction || ') not recognised');
             var_trn_error := true;
