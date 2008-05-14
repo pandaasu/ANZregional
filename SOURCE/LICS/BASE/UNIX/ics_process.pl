@@ -376,7 +376,7 @@ sub LogInfoICS
 
    open OUT2, ">>$ICS_LOG"
      or print "Cannot write to log file $ICS_LOG";
-   print OUT2 $fmt_date . " INFO test TOKU006.AP.MARS " . $type . " ics_process.pl:[" . $process_id . "] INFO: Queue: [" . $q_name . "] " . $message . "\n";
+   print OUT2 $fmt_date . " INFO " . $type . " ics_process.pl:[" . $process_id . "] INFO: Queue: [" . $q_name . "] " . $message . "\n";
 
    close OUT2;
 }

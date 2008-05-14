@@ -185,7 +185,15 @@ process_file()
         MV_TARGET_FULL_FILE_Z="${MV_TARGET_FULL_FILE}.gz"
         
         copy_file "${MV_SOURCE_FULL_FILE_Z}" "${MV_TARGET_FULL_FILE_Z}"
-        unzip_file "${MV_TARGET_FULL_FILE_Z}"
+        toggle_file_compression "${MV_TARGET_FULL_FILE_Z}" 1
+    elif [[ -a "${MV_SOURCE_FULL_FILE_NZ}.Z" ]] ; then
+        log_file "INFO: [process_file] Zipped source file exists - copying to target and unzipping"
+        
+        MV_SOURCE_FULL_FILE_Z="${MV_SOURCE_FULL_FILE_NZ}.Z"
+        MV_TARGET_FULL_FILE_Z="${MV_TARGET_FULL_FILE}.Z"
+        
+        copy_file "${MV_SOURCE_FULL_FILE_Z}" "${MV_TARGET_FULL_FILE_Z}"
+        toggle_file_compression "${MV_TARGET_FULL_FILE_Z}" 1     
     elif [[ -a ${MV_INBOUND_FULL_FILE_NZ} ]] ; then
         log_file "INFO: [process_file] File exists in directory [${INBOUND_PATH}] - copying to target"
         copy_file "${MV_INBOUND_FULL_FILE_NZ}" "${MV_TARGET_FULL_FILE}"
@@ -217,24 +225,6 @@ copy_file()
     run_command "$CP_CMD" "copy" "$SOURCE_FULL_FILE"
 
     log_file "INFO: [copy_file] Copy file successful"
-}
-
-# --------------------------------------------------------------------------
-#
-# unzip_file Description:
-# Unzip the specified file.
-#
-# Parameters: <none>
-#
-# --------------------------------------------------------------------------
-unzip_file() 
-{
-    FULL_FILE_UNZIP=${1}
-
-    UNZIP_CMD="gunzip -f ${FULL_FILE_UNZIP}"
-    run_command "$UNZIP_CMD" "unzip" "$FULL_FILE_UNZIP"
-    
-    log_file "INFO: [unzip_file] Unzip file successful"
 }
 
 # --------------------------------------------------------------------------
