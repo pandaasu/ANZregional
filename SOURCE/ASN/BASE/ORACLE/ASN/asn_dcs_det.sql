@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2005/11   Steve Gregan   Created
+ 2008/02   Steve Gregan   Added the customer GTIN
 
 *******************************************************************************/
 
@@ -33,7 +34,8 @@ create table asn_dcs_det
     dcd_whs_bbdt varchar2(8 char) null,
     dcd_whs_palt_qty number null,
     dcd_whs_palt_lay number null,
-    dcd_whs_layr_unt number null);
+    dcd_whs_layr_unt number null,
+    dcd_whs_cust_gtin varchar2(22 char) null);
 
 /**/
 /* Comments
@@ -52,6 +54,7 @@ comment on column asn_dcs_det.dcd_whs_bbdt is 'Warehouse - Best before date';
 comment on column asn_dcs_det.dcd_whs_palt_qty is 'Warehouse - Pallet unit qty';
 comment on column asn_dcs_det.dcd_whs_palt_lay is 'Warehouse - Pallet layers';
 comment on column asn_dcs_det.dcd_whs_layr_unt is 'Warehouse - Layer units';
+comment on column asn_dcs_det.dcd_whs_cust_gtin is 'Warehouse - Customer GTIN';
 
 /**/
 /* Primary Key Constraint
