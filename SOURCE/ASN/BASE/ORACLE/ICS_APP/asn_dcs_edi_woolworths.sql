@@ -36,6 +36,7 @@ create or replace package asn_dcs_edi_woolworths as
     -------   ------         -----------
     2007/11   Steve Gregan   Created
     2008/02   Steve Gregan   Changed the interface file name
+    2008/02   Steve Gregan   Changed the GTIN to the customer GTIN
 
    *******************************************************************************/
 
@@ -80,7 +81,7 @@ create or replace package body asn_dcs_edi_woolworths as
       var_030qty number;
       var_040qty number;
       var_040plt number;
-      var_sav_gtin asn_dcs_det.dcd_whs_gtin%type;
+      var_sav_gtin asn_dcs_det.dcd_whs_cust_gtin%type;
       var_sav_btch asn_dcs_det.dcd_whs_btch%type;
       var_sav_bbdt asn_dcs_det.dcd_whs_bbdt%type;
       var_sav_sscc asn_dcs_det.dcd_whs_sscc_nbr%type;
@@ -102,7 +103,7 @@ create or replace package body asn_dcs_edi_woolworths as
            from asn_dcs_det t01
           where t01.dcd_mars_cde = rcd_asn_dcs_hdr.dch_mars_cde
             and t01.dcd_pick_nbr = rcd_asn_dcs_hdr.dch_pick_nbr
-          order by t01.dcd_whs_gtin asc,
+          order by t01.dcd_whs_cust_gtin asc,
                    t01.dcd_whs_btch asc,
                    t01.dcd_whs_bbdt asc,
                    t01.dcd_whs_sscc_nbr asc;
@@ -222,7 +223,7 @@ create or replace package body asn_dcs_edi_woolworths as
          /* Test "020" record
          /*-*/
          if var_020ind = false or
-            rcd_asn_dcs_det.dcd_whs_gtin != var_sav_gtin or
+            rcd_asn_dcs_det.dcd_whs_cust_gtin != var_sav_gtin or
             rcd_asn_dcs_det.dcd_whs_btch != var_sav_btch or
             rcd_asn_dcs_det.dcd_whs_bbdt != var_sav_bbdt then
 
@@ -251,7 +252,7 @@ create or replace package body asn_dcs_edi_woolworths as
             tbl_outbound(tbl_outbound.count+1) := '      <RECID>020</RECID>';
             tbl_outbound(tbl_outbound.count+1) := '      <PACKTYPE>' || trim(rcd_asn_dcs_det.dcd_whs_pack_typ) || '</PACKTYPE>';
             tbl_outbound(tbl_outbound.count+1) := '      <EQUIPTYP>' || rcd_asn_dcs_det.dcd_whs_eqpt_typ || '</EQUIPTYP>';
-            tbl_outbound(tbl_outbound.count+1) := '      <GTIN>' || rcd_asn_dcs_det.dcd_whs_gtin || '</GTIN>';
+            tbl_outbound(tbl_outbound.count+1) := '      <GTIN>' || rcd_asn_dcs_det.dcd_whs_cust_gtin || '</GTIN>';
             tbl_outbound(tbl_outbound.count+1) := '      <TIHILAY>' || to_char(nvl(rcd_asn_dcs_det.dcd_whs_palt_lay,0),'fm990') || '</TIHILAY>';
             tbl_outbound(tbl_outbound.count+1) := '      <TIHIUPL>' || to_char(nvl(rcd_asn_dcs_det.dcd_whs_layr_unt,0),'fm999999990') || '</TIHIUPL>';
             tbl_outbound(tbl_outbound.count+1) := '      <CARTPERPAL>' || to_char(nvl(rcd_asn_dcs_det.dcd_whs_palt_lay,0)*nvl(rcd_asn_dcs_det.dcd_whs_layr_unt,0),'fm990') || '</CARTPERPAL>';
@@ -266,7 +267,7 @@ create or replace package body asn_dcs_edi_woolworths as
             var_020qty := 0;
             var_030ind := false;
             var_030qty := 0;
-            var_sav_gtin := rcd_asn_dcs_det.dcd_whs_gtin;
+            var_sav_gtin := rcd_asn_dcs_det.dcd_whs_cust_gtin;
             var_sav_btch := rcd_asn_dcs_det.dcd_whs_btch;
             var_sav_bbdt := rcd_asn_dcs_det.dcd_whs_bbdt;
             var_sav_sscc := null;

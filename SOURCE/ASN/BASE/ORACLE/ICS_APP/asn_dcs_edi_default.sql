@@ -35,6 +35,7 @@ create or replace package asn_dcs_edi_default as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/11   Steve Gregan   Created
+    2008/02   Steve Gregan   Changed the GTIN to the customer GTIN
 
    *******************************************************************************/
 
@@ -80,7 +81,7 @@ create or replace package body asn_dcs_edi_default as
       var_040qty number;
       var_040plt number;
       var_sav_sscc asn_dcs_det.dcd_whs_sscc_nbr%type;
-      var_sav_gtin asn_dcs_det.dcd_whs_gtin%type;
+      var_sav_gtin asn_dcs_det.dcd_whs_cust_gtin%type;
       var_sav_btch asn_dcs_det.dcd_whs_btch%type;
       var_sav_bbdt asn_dcs_det.dcd_whs_bbdt%type;
       var_cust_iid asn_par_val.apv_value%type;
@@ -103,7 +104,7 @@ create or replace package body asn_dcs_edi_default as
           where t01.dcd_mars_cde = rcd_asn_dcs_hdr.dch_mars_cde
             and t01.dcd_pick_nbr = rcd_asn_dcs_hdr.dch_pick_nbr
           order by t01.dcd_whs_sscc_nbr asc,
-                   t01.dcd_whs_gtin asc,
+                   t01.dcd_whs_cust_gtin asc,
                    t01.dcd_whs_btch asc,
                    t01.dcd_whs_bbdt asc;
       rcd_asn_dcs_det csr_asn_dcs_det%rowtype;
@@ -281,7 +282,7 @@ create or replace package body asn_dcs_edi_default as
          /* Test "030" record
          /*-*/
          if var_030ind = false or
-            rcd_asn_dcs_det.dcd_whs_gtin != var_sav_gtin or
+            rcd_asn_dcs_det.dcd_whs_cust_gtin != var_sav_gtin or
             rcd_asn_dcs_det.dcd_whs_btch != var_sav_btch or
             rcd_asn_dcs_det.dcd_whs_bbdt != var_sav_bbdt then
 
@@ -301,7 +302,7 @@ create or replace package body asn_dcs_edi_default as
             tbl_outbound(tbl_outbound.count+1) := '         <INTCVRSN/>';
             tbl_outbound(tbl_outbound.count+1) := '         <EDIDOCNUM/>';
             tbl_outbound(tbl_outbound.count+1) := '         <RECID>030</RECID>';
-            tbl_outbound(tbl_outbound.count+1) := '         <GTIN>' || rcd_asn_dcs_det.dcd_whs_gtin || '</GTIN>';
+            tbl_outbound(tbl_outbound.count+1) := '         <GTIN>' || rcd_asn_dcs_det.dcd_whs_cust_gtin || '</GTIN>';
             tbl_outbound(tbl_outbound.count+1) := '         <BBDATE>' || rcd_asn_dcs_det.dcd_whs_bbdt || '</BBDATE>';
             tbl_outbound(tbl_outbound.count+1) := '         <BATCHCODE>' || rcd_asn_dcs_det.dcd_whs_btch || '</BATCHCODE>';
             tbl_outbound(tbl_outbound.count+1) := '         <QTYONPAL>' || to_char(nvl(rcd_asn_dcs_det.dcd_whs_palt_qty,0),'fm99990') || '</QTYONPAL>';
@@ -311,7 +312,7 @@ create or replace package body asn_dcs_edi_default as
             /* Set the "030" level variables
             /*-*/
             var_030ind := true;
-            var_sav_gtin := rcd_asn_dcs_det.dcd_whs_gtin;
+            var_sav_gtin := rcd_asn_dcs_det.dcd_whs_cust_gtin;
             var_sav_btch := rcd_asn_dcs_det.dcd_whs_btch;
             var_sav_bbdt := rcd_asn_dcs_det.dcd_whs_bbdt;
 
@@ -372,7 +373,7 @@ create or replace package body asn_dcs_edi_default as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ASNEDI02');
+      var_instance := lics_outbound_loader.create_interface('ASNEDI02',null,'ASNGHPL'||to_char(sysdate,'yyyymmddhh24miss')||'.xml');
 
       /*-*/
       /* Append the interface data

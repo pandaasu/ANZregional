@@ -27,6 +27,7 @@ create or replace package asn_tolasn_dcs as
                               Added send message original sent time
                               Changed outbound acknowledgement interface to unique file name
     2007/11   Steve Gregan    Added sales order creation date to the DCS header table
+    2008/02   Steve Gregan    Added the customer GTIN to the DCS detail table
 
    *******************************************************************************/
 
@@ -591,6 +592,7 @@ create or replace package body asn_tolasn_dcs as
       rcd_asn_dcs_det.dcd_whs_palt_qty := lics_inbound_utility.get_number('DET_PLTCAS',null);
       rcd_asn_dcs_det.dcd_whs_palt_lay := lics_inbound_utility.get_number('DET_TIHILP',null);
       rcd_asn_dcs_det.dcd_whs_layr_unt := lics_inbound_utility.get_number('DET_TIHICL',null);
+      rcd_asn_dcs_det.dcd_whs_cust_gtin := lics_inbound_utility.get_variable('DET_GTIN');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -636,7 +638,8 @@ create or replace package body asn_tolasn_dcs as
              dcd_whs_bbdt,
              dcd_whs_palt_qty,
              dcd_whs_palt_lay,
-             dcd_whs_layr_unt)
+             dcd_whs_layr_unt,
+             dcd_whs_cust_gtin)
          values
             (rcd_asn_dcs_det.dcd_mars_cde,
              rcd_asn_dcs_det.dcd_pick_nbr,
@@ -650,7 +653,8 @@ create or replace package body asn_tolasn_dcs as
              rcd_asn_dcs_det.dcd_whs_bbdt,
              rcd_asn_dcs_det.dcd_whs_palt_qty,
              rcd_asn_dcs_det.dcd_whs_palt_lay,
-             rcd_asn_dcs_det.dcd_whs_layr_unt);
+             rcd_asn_dcs_det.dcd_whs_layr_unt,
+             rcd_asn_dcs_det.dcd_whs_cust_gtin);
 
       end if;
 

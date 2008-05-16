@@ -153,6 +153,23 @@ create or replace package body asn_dcs_processor as
                 for update nowait;
       rcd_asn_dcs_hdr csr_asn_dcs_hdr%rowtype;
 
+      cursor csr_asn_dcs_det is 
+         select t01.dcd_mars_cde,
+                t01.dcd_pick_nbr,
+                t01.dcd_seqn_nbr,
+                t02.kdmat
+           from asn_dcs_det t01,
+                (select t01.charg,
+                        max(t01.kdmat) as kdmat
+                   from lads_del_det t01
+                  where t01.vbeln = rcd_asn_dcs_hdr.dch_pick_nbr
+                    and not(t01.kdmat is null)
+                  group by t01.charg) t02
+          where t01.dcd_mars_cde = rcd_asn_dcs_hdr.dch_mars_cde
+            and t01.dcd_pick_nbr = rcd_asn_dcs_hdr.dch_pick_nbr
+            and trim(t01.dcd_whs_btch) = trim(t02.charg);
+      rcd_asn_dcs_det csr_asn_dcs_det%rowtype;
+
       cursor csr_lads_del_hdr is
          select *
            from lads_del_hdr t01
@@ -565,7 +582,26 @@ create or replace package body asn_dcs_processor as
                         end if;
 
                      end if;
-  
+
+                     /*-*/
+                     /* Update the details when the delivery data received
+                     /*-*/
+                     if rcd_asn_dcs_hdr.dch_delv_ind = '1' then
+                        open csr_asn_dcs_det;
+                        loop
+                        fetch csr_asn_dcs_det into rcd_asn_dcs_det;
+                           if csr_asn_dcs_det%notfound then
+                              exit;
+                           end if;
+                           update asn_dcs_det
+                              set dcd_whs_cust_gtin = trim(rcd_asn_dcs_det.kdmat)
+                            where dcd_mars_cde = rcd_asn_dcs_det.dcd_mars_cde
+                              and dcd_pick_nbr = rcd_asn_dcs_det.dcd_pick_nbr
+                              and dcd_seqn_nbr = rcd_asn_dcs_det.dcd_seqn_nbr;
+                        end loop;
+                        close csr_asn_dcs_det;
+                     end if;
+
                      /*-*/
                      /* Update the status to *COMPLETE/*ACK_NORMAL when all transaction data received
                      /*-*/
