@@ -251,7 +251,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=11 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=12 cellpadding="0" cellspacing="1">
                         <tr>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;SSCC Number&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Id Type&nbsp;</nobr></td>
@@ -263,6 +263,7 @@
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Pallet Quantity&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Pallet Layers&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Layer Units&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Customer GTIN&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
                      </table>
@@ -272,8 +273,8 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=10 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("DETAIL") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=10 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("DETAIL") to objSelection.ListUpper("DETAIL")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=11 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("DETAIL") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=11 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("DETAIL") to objSelection.ListUpper("DETAIL")%>
                         <tr>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue01("DETAIL",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue02("DETAIL",i)%></nobr></td>
@@ -285,6 +286,7 @@
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue08("DETAIL",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue09("DETAIL",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue10("DETAIL",i)%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue11("DETAIL",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>
