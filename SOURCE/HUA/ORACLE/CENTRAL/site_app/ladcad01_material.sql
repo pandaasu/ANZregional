@@ -68,7 +68,7 @@ create or replace package body ladcad01_material as
                 to_char(a.length,'fm0000000000.00000') as matl_length,
                 to_char(a.width,'fm0000000000.00000') as width,
                 to_char(a.height,'fm0000000000.00000') as height,
-                h.pcs_per_case as pcs_per_case,
+                decode(c.sap_cnsmr_pack_frmt_code,'13','0000000024.00000',h.pcs_per_case) as pcs_per_case,
                 h.outters_per_case as outers_per_case,
                 h.cases_per_pallet as cases_per_pallet,
                 c.sap_brand_essnc_code as brand_essnc_code,
@@ -177,7 +177,7 @@ create or replace package body ladcad01_material as
                 a.inv_class02 as inv_class02
          from pld_inv_format0202 a
          where a.sap_company_code = '135'
-           and a.sap_material_code = rec_matl_master.sap_material_code;
+           and ltrim(a.sap_material_code,'0') = ltrim(rec_matl_master.sap_material_code,'0');
       rec_matl_invntry  csr_matl_invntry%rowtype;
 
    /*-------------*/

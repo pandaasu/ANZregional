@@ -117,25 +117,23 @@ create or replace package body ladcad03_customer as
               bds_cust_comp f,
               std_hier g,
               bds_customer_classfctn_en h,
-              (select customer_code,
-                      order_block_flag
-               from bds_cust_sales_area
-               where sales_org_code = '135'
-                 and distbn_chnl_code = '10'
-                 and division_code = '51') i
+              bds_cust_sales_area i
          where a.customer_code = b.customer_code(+)
            and a.customer_code = c.customer_code(+)
            and a.customer_code = d.address_code(+)
            and a.customer_code = e.customer_code(+)
            and a.customer_code = f.customer_code(+)
-           and ltrim(a.customer_code,'0') = ltrim(g.sap_hier_cust_code(+),'0')
            and a.customer_code = h.sap_customer_code(+)
-           and a.customer_code = i.customer_code(+)
+           and a.customer_code = i.customer_code
+           and i.sales_org_code = '135'
+           and i.distbn_chnl_code = '10'
+           and i.division_code = '51'
            and e.country_code(+) = 'CN'
            and f.company_code(+) = '135'
-           and g.sap_sales_org_code(+) = '135'
-           and g.sap_distbn_chnl_code(+) = '10'
-           and g.sap_division_code(+) = '51'
+           and ltrim(i.customer_code,'0') = ltrim(g.sap_hier_cust_code(+),'0')
+           and i.sales_org_code = g.sap_sales_org_code(+)
+           and i.distbn_chnl_code = g.sap_distbn_chnl_code(+)
+           and i.division_code = g.sap_division_code(+)
            and trunc(a.bds_lads_date) >= trunc(sysdate) - var_history
          group by a.customer_code;
    rec_cust_master  csr_cust_master%rowtype;

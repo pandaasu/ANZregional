@@ -194,5 +194,5 @@ end ladims01_material;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ladims01_material for site_app.ladims01_material;
+create or replace public synonym ladims01_material for ics_app.ladims01_material;
 grant execute on ladims01_material to public;
