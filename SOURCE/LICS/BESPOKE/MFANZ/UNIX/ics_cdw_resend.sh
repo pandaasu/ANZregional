@@ -170,7 +170,7 @@ clean_up_local()
 # MAIN
 # ---------------------------------------------------------------------------
 
-FILENAME=${1}               # Variable: File to receive passthru
+FILENAME=${1}               # Variable: File containing files to send
 INTERFACE_ID=${2}           # Variable: Interface type
 
 setup_config $0             # Function: Setup script variables

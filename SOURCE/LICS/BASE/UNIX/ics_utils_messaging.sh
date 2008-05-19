@@ -150,14 +150,13 @@ get_file_from_sap()
     TYPE_INT=$1    
     log_file "INFO: [get_file_from_sap] Getting file from SAP : [${INTERFACE_ID}]" "HARMLESS"
 
-    # Call generic script to get file from queue
-    log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password xxx]" "HARMLESS"
-
     export SHLIB_PATH=/ics/lad/sapjco32 
 
     if [[ $TYPE_INT -eq 0 ]] ; then
+        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
         ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password ${SAP_PWD} >> ${TMP_OUT} 2>&1
     else
+        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 xxx -user02 ${SAP_USER_02} -password02 xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
         ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 ${SAP_PWD_01} -user02 ${SAP_USER_02} -password02 ${SAP_PWD_02} >> ${TMP_OUT} 2>&1
     fi
     
@@ -278,12 +277,12 @@ process_inbound_dj()
     load_file $LOAD_FILE_INBOUND "${DJ_MAP}" "${Q_FILE}"
     
     # Send files via MQFT to CDW if param is not equal to *NONE
-    if [[ ! -z $FORWARD_Q && $FORWARD_Q != "*NONE" ]] ; then
+    if [[ ! -z $FORWARD_Q && $FORWARD_Q != *NONE ]] ; then
         send_file_via_mqft_to_CDW
     fi
 
     # Send files via MQFT to HK if param is not equal to *NO
-    if [[ ! -z $FORWARD_HK && $FORWARD_HK != "*NO" ]] ; then
+    if [[ ! -z $FORWARD_HK && $FORWARD_HK != *NO ]] ; then
         send_file_via_mqft_to_HK
     fi
         
@@ -344,7 +343,7 @@ process_inbound_sap()
     load_file $LOAD_FILE_INBOUND "${INTERFACE_ID}" "${OUT_FILE}"
 
     # Load file onto queue for CDW if param is not equal to *NONE
-    if [[ ${FORWARD_Q} != "*NONE" ]] ; then
+    if [[ ${FORWARD_Q} != *NONE ]] ; then
         log_file "INFO: [process_inbound_sap] Executing command [cat ${OUT_FILE} | ${MQIF} -p -q ${FORWARD_Q} -r 0 -o ${OUT_FILE}]" "HARMLESS"      
         MQIFRC=`cat ${OUT_FILE} | ${MQIF} -p -q ${FORWARD_Q} -r 0 -o ${OUT_FILE} 2>&1`
         rc=$?
@@ -409,22 +408,22 @@ process_outbound()
 
     case $OUTBOUND_TYPE in
         $DJ)
-            CMD="${AMI_PATH}/bin/dj/file2msg.sh -queue ${QUEUE} -interface ${INTERFACE_ID} -file ${FILE_INT}"
+            log_file "INFO: [process_outbound] Executing command [${AMI_PATH}/bin/dj/file2msg.sh -queue ${QUEUE} -interface ${INTERFACE_ID} -file ${FILE_INT}]" "HARMLESS"
+            ${AMI_PATH}/bin/dj/file2msg.sh -queue ${QUEUE} -interface ${INTERFACE_ID} -file ${FILE_INT} >> ${TMP_OUT} 2>&1
             ;;
         $MQIF)
-            CMD="cat ${FILE_INT} | ${AMI_PATH}/bin/mq/mqif.pl -p -q ${QUEUE} -r 0 -o ${T_FILE_NAME}"
+            log_file "INFO: [process_outbound] Executing command [cat ${FILE_INT} | ${AMI_PATH}/bin/mq/mqif.pl -p -q ${QUEUE} -r 0 -o ${T_FILE_NAME}]" "HARMLESS"
+            cat ${FILE_INT} | ${AMI_PATH}/bin/mq/mqif.pl -p -q ${QUEUE} -r 0 -o ${T_FILE_NAME} >> ${TMP_OUT} 2>&1
             ;;
         $MQFT)
-            CMD="${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}"
+            log_file "INFO: [process_outbound] Executing command [${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}]" "HARMLESS"
+            ${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM} >> ${TMP_OUT} 2>&1
             ;;
         *)
             error_exit "ERROR: [process_outbound] Outbound type is not valid [${OUTBOUND_TYPE}]"
             ;;
-    esac
-    
-    log_file "INFO: [process_outbound] Executing command [${CMD}]" "HARMLESS"
-    
-    eval ${CMD} >> ${TMP_OUT} 2>&1
+    esac   
+
     rc=$?
     if [[ $rc -ne 0 ]] ; then
         error_exit "ERROR: [process_outbound] Process command failed. Return Code [${rc}]"
@@ -456,9 +455,9 @@ process_outbound_ftp()
     log_file "INFO: [process_outbound_ftp] Verified destination path valid [${DEST_PATH}]" "HARMLESS"
     
     # Ping destination server 3 times using the correct ping command for the operating system
-    if [[ ${CURRENT_OS} = ${HP_UNIX_OS} ]] ; then    
+    if [ $CURRENT_OS = $HP_UNIX_OS ] ; then    
         ping $DEST_SERVER -n 3 >> /dev/null 2>&1
-    elif [[ ${CURRENT_OS} = ${LINUX_OS} ]] ; then
+    elif [ $CURRENT_OS = $LINUX_OS ] ; then
         ping $DEST_SERVER -c 3 >> /dev/null 2>&1
     else
         error_exit "ERROR: [process_outbound_ftp] Specified O/S [${CURRENT_OS}] is not supported"
@@ -549,7 +548,7 @@ queue_depth()
         error_exit "ERROR: [queue_depth] Error checking qdepth for queue [${QUEUE}]"
     fi
     
-    if [[ $Q_DEPTH -eq 0 && $DEPTH_MODE_INT != "GET_MSG" ]] ; then
+    if [[ $Q_DEPTH -eq 0 && $DEPTH_MODE_INT != GET_MSG ]] ; then
         log_file "WARNING: [queue_depth]:[${DEPTH_MODE_INT}] Queue [${QUEUE}] has [${Q_DEPTH}] messages - not necessary to run MQIF: Exiting ..." "HARMLESS"
         
         trigger_queue "TRIGGER"     # turn the trigger back on

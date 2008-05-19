@@ -358,8 +358,8 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Ladpdb01_Loader AS
       IF SUBSTR(par_record,4,1) BETWEEN '0' AND '9' THEN
           var_proc_order := lics_inbound_utility.get_variable('PROC_ORDER');
       ELSE
-          IF SUBSTR(par_record,34,4) IN ('AU10','NZ01') THEN 
-           lics_inbound_utility.add_exception('Validation Proc Orders are not configured for AU10 and NZ01 at present.');
+          IF SUBSTR(par_record,34,4) IN ('NZ01') THEN 
+           lics_inbound_utility.add_exception('Validation Proc Orders are not configured for NZ01 at present.');
            var_trn_error := TRUE;
        END IF;
        SELECT bds_recipe_seq.NEXTVAL INTO var_proc_order FROM dual; 

@@ -103,8 +103,9 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
         and var_site != '*SCO'
         and var_site != '*WOD'
         and var_site != '*MFA'
+        and var_site != '*BTH'
         and var_site != '*WGI' ) then
-      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI or NULL');
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
 
     var_start := execute_extract(var_material_code, var_plant_code, var_record_no);
@@ -115,20 +116,16 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if (par_site in ('*ALL','*MFA') ) then
---        execute_send('LADPDB09.1');
-        var_start := false;   
+        execute_send('LADPDB09.1');
       end if;    
       if (par_site in ('*ALL','*WGI') ) then
---        execute_send('LADPDB09.2'); 
-        var_start := false;  
+        execute_send('LADPDB09.2'); 
       end if;    
       if (par_site in ('*ALL','*WOD') ) then
---        execute_send('LADPDB09.3');
-        var_start := false;   
+        execute_send('LADPDB09.3');
       end if;    
       if (par_site in ('*ALL','*BTH') ) then
---        execute_send('LADPDB09.4'); 
-        var_start := false;  
+        execute_send('LADPDB09.4');
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB09.5');   

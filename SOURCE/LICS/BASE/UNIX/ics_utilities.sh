@@ -281,11 +281,11 @@ initialise_utilities()
     CMP_PARAM=${CMP_PARAM:-$NOCOMPRESS}
     
     # set global is compressed value so we dont need to check if CMP_PARAM matches
-    # any of the compress options
-    if [[ $NOCOMPRESS = $CMP_PARAM ]] ; then
+    # any of the compress options.  ***NOTE: Use single [ to get correct result.
+    if [ $NOCOMPRESS = $CMP_PARAM ] ; then
         IS_COMPRESSED=0
     fi
-    
+        
     echo "INFO: Creating working log file [${TMP_OUT}]" >> $TMP_OUT
     
     set_permissions $TMP_OUT   
@@ -525,19 +525,19 @@ toggle_file_compression()
         
         log_file "INFO: [toggle_file_compression] File extension [${FILE_EXT}]" "HARMLESS"  
         
-        if [[ "." = $FILE_EXT ]] ; then
+        if [[ $FILE_EXT = . ]] ; then
             CMD="gunzip -N -v -f $FILE_INT"
         else
-            if [[ ".zip" = $FILE_EXT || ".gz" = $FILE_EXT || ".Z" = $FILE_EXT ]] ; then
+            if [[ $FILE_EXT = .zip || $FILE_EXT = .gz || $FILE_EXT = .Z ]] ; then
                 CMD="gunzip -N -v -f -S ${FILE_EXT} ${FILE_INT}"
             else                
-                if [[ $COMPRESS_ZIP = $CMP_PARAM ]] ; then
+                if [ $COMPRESS_ZIP = $CMP_PARAM ] ; then
                     move_file ${FILE_INT} "${FILE_INT}.zip"
                     CMD="gunzip -N -v -f -S .zip ${FILE_INT}.zip"
-                elif [[ $COMPRESS_GZ = $CMP_PARAM ]] ; then
+                elif [ $COMPRESS_GZ = $CMP_PARAM ] ; then
                     move_file ${FILE_INT} "${FILE_INT}.gz"
                     CMD="gunzip -N -v -f -S .gz ${FILE_INT}.gz"
-                elif [[ $COMPRESS_Z = $CMP_PARAM ]] ; then
+                elif [ $COMPRESS_Z = $CMP_PARAM ] ; then
                     move_file ${FILE_INT} "${FILE_INT}.Z"
                     CMD="gunzip -N -v -f -S .Z ${FILE_INT}.Z"
                 else

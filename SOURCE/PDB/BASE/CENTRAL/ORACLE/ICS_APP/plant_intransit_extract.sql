@@ -114,9 +114,10 @@ create or replace package body ics_app.plant_intransit_extract as
         and var_site != '*SCO'
         and var_site != '*WOD'
         and var_site != '*MFA'
+        and var_site != '*BTH'
         and var_site != '*WGI' 
         and var_site != '*REL' ) then
-      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *WGI, *REL or NULL');
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI, *REL or NULL');
     end if;
     
     if ( var_action = '*PLANT' and var_data is null ) then
@@ -142,20 +143,16 @@ create or replace package body ics_app.plant_intransit_extract as
       end if;
                 
       if ( var_site in ('*ALL','*MFA') ) then
---        execute_send('LADPDB15.1'); 
-        var_start := false;  
+        execute_send('LADPDB15.1'); 
       end if;    
       if ( var_site in ('*ALL','*WGI') ) then
---        execute_send('LADPDB15.2'); 
-        var_start := false;  
+        execute_send('LADPDB15.2');
       end if;    
       if ( var_site in ('*ALL','*WOD') ) then
---        execute_send('LADPDB15.3');
-        var_start := false;   
+        execute_send('LADPDB15.3');
       end if;    
       if ( var_site in ('*ALL','*BTH') ) then
---        execute_send('LADPDB15.4'); 
-        var_start := false;  
+        execute_send('LADPDB15.4');
       end if;    
       if ( var_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB15.5');   
