@@ -72,9 +72,16 @@ insert into fcst_extract_type values('FPPS_DOM_PLAN','FPPS Domestic Plan Extract
 insert into fcst_extract_type values('FPPS_AFF_PLAN','FPPS Affiliate Plan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
 insert into fcst_extract_type values('FPPS_DOM_REPLAN','FPPS Domestic Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract07',null,null);
 insert into fcst_extract_type values('FPPS_AFF_REPLAN','FPPS Affiliate Replan Extract','*YEAR','*ALL','*FILE','*NONE','dw_fcst_extract08',null,null);
-insert into fcst_extract_type values('APOLLO_AFFILIATE','Apollo Affiliate Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
 insert into fcst_extract_type values('APOLLO_FRESHNESS','Apollo Freshness Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
+
+--insert into fcst_extract_type values('APOLLO_AFFILIATE','Apollo Affiliate Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
 --insert into fcst_extract_type values('APOLLO_SAMPLE','Apollo Sample Extract','*PERIOD','*ALL','APOLLO','*NONE','dw_fcst_extract06',null,null);
+
+--delete from fcst_extract_load where extract_identifier in (select extract_identifier from fcst_extract_header where extract_type on ('APOLLO_AFFILIATE','APOLLO_SAMPLE'));
+--delete from fcst_extract_header where extract_type on ('APOLLO_AFFILIATE','APOLLO_SAMPLE');
+
+insert into fcst_extract_type values('APOLLO_SNACK_AFFILIATE','Apollo Affiliate Extract (Snackfood)','*PERIOD','*SNACK','APOLLO','*NONE','dw_fcst_extract06',null,null);
+insert into fcst_extract_type values('APOLLO_PET_AFFILIATE','Apollo Affiliate Extract (Petcare)','*PERIOD','*PET','APOLLO','*NONE','dw_fcst_extract06',null,null);
 insert into fcst_extract_type values('APOLLO_SNACK_SAMPLE','Apollo Sample Extract (Snackfood)','*PERIOD','*SNACK','APOLLO','*NONE','dw_fcst_extract06',null,null);
 insert into fcst_extract_type values('APOLLO_PET_SAMPLE','Apollo Sample Extract (Petcare)','*PERIOD','*PET','APOLLO','*NONE','dw_fcst_extract06',null,null);
 
@@ -104,9 +111,13 @@ insert into fcst_extract_type_load values('FPPS_DOM_PLAN','*PLAN_DOMESTIC');
 insert into fcst_extract_type_load values('FPPS_DOM_REPLAN','*REPLAN_DOMESTIC');
 insert into fcst_extract_type_load values('FPPS_AFF_PLAN','*PLAN_AFFILIATE');
 insert into fcst_extract_type_load values('FPPS_AFF_REPLAN','*REPLAN_AFFILIATE');
-insert into fcst_extract_type_load values('APOLLO_AFFILIATE','*FCST_AFFILIATE');
 insert into fcst_extract_type_load values('APOLLO_FRESHNESS','*FCST_FRESHNESS');
+
+--insert into fcst_extract_type_load values('APOLLO_AFFILIATE','*FCST_AFFILIATE');
 --insert into fcst_extract_type_load values('APOLLO_SAMPLE','*FCST_SAMPLE');
+
+insert into fcst_extract_type_load values('APOLLO_SNACK_AFFILIATE','*FCST_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO_PET_AFFILIATE','*FCST_AFFILIATE');
 insert into fcst_extract_type_load values('APOLLO_SNACK_SAMPLE','*FCST_SAMPLE');
 insert into fcst_extract_type_load values('APOLLO_PET_SAMPLE','*FCST_SAMPLE');
 
