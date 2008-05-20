@@ -18,6 +18,7 @@ create or replace package lics_security as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/06   Steve Gregan   Created
+    2008/05   Linden Glen    Added Interface Security
 
    *******************************************************************************/
 
@@ -26,6 +27,8 @@ create or replace package lics_security as
    /*-*/
    function get_security(par_user in varchar2) return lics_security_table pipelined;
    function check_security(par_user in varchar2, par_option in varchar2) return varchar2;
+   function check_intfc_security(par_interface in varchar2, par_user in varchar2) return varchar2;
+   function check_intfc_hdr_security(par_interface_hdr in varchar2, par_user in varchar2) return varchar2;
 
 end lics_security;
 /
@@ -379,6 +382,159 @@ create or replace package body lics_security as
    /* End routine */
    /*-------------*/
    end check_security;
+
+   /****************************************************************/
+   /* This procedure performs the check interface security routine */
+   /****************************************************************/
+   function check_intfc_security(par_interface in varchar2, par_user in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(64);
+
+      /*-*/
+      /* Cursor definitions
+      /*-*/
+      cursor csr_lics_sec_interface is 
+         select 'x'
+           from lics_sec_interface t01
+          where upper(t01.sei_interface) = upper(par_interface)
+       group by t01.sei_interface;
+      rcd_lics_sec_interface csr_lics_sec_interface%rowtype;
+
+      cursor csr_lics_sec_interface01 is 
+         select 'x'
+           from lics_sec_interface t01
+          where upper(t01.sei_interface) = upper(par_interface)
+            and upper(t01.sei_user) = upper(par_user);
+      rcd_lics_sec_interface01 csr_lics_sec_interface01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the return variable
+      /*-*/
+      var_return := '*OK';
+
+      /*-*/
+      /* User must have access to view interface data
+      /*   notes : 
+      /*     - User interface access is defined in LICS_SEC_INTERFACE
+      /*     - Where an interface has no user access defined, it is assumed open to public
+      /*     - Where an interface has one or more users defined, it is restricted to only those defined
+      /*-*/
+      open csr_lics_sec_interface;
+      fetch csr_lics_sec_interface into rcd_lics_sec_interface;
+      if csr_lics_sec_interface%found then
+         open csr_lics_sec_interface01;
+         fetch csr_lics_sec_interface01 into rcd_lics_sec_interface01;
+         if csr_lics_sec_interface01%notfound then
+            var_return := 'Access Denied - You do not have access to view this interface';
+         end if;
+      end if;
+      close csr_lics_sec_interface;
+
+      /*-*/
+      /* Return the result
+      /*-*/
+      return var_return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LICS_SECURITY - CHECK_INTFC_SECURITY (' || par_interface || ' / '  || par_user || ') - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end check_intfc_security;
+
+
+   /********************************************************************/
+   /* This procedure performs the check interface hdr security routine */
+   /********************************************************************/
+   function check_intfc_hdr_security(par_interface_hdr in varchar2, par_user in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(64);
+
+      /*-*/
+      /* Cursor definitions
+      /*-*/
+      cursor csr_lics_header_01 is 
+         select t02.int_interface
+           from lics_header t01,
+                lics_interface t02
+          where t01.hea_interface = t02.int_interface(+)
+            and t01.hea_header = par_interface_hdr;
+      rcd_lics_header_01 csr_lics_header_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the return variable
+      /*-*/
+      var_return := '*OK';
+
+      /*-*/
+      /* Header must exist
+      /*-*/
+      open csr_lics_header_01;
+      fetch csr_lics_header_01 into rcd_lics_header_01;
+      if csr_lics_header_01%notfound then
+         var_return := 'Interface header (' || to_char(par_interface_hdr,'FM999999999999990') || ') does not exist';
+         return var_return;
+      end if;
+      close csr_lics_header_01;
+
+      /*-*/
+      /* Perform Interface ID Security Check
+      /*-*/
+      var_return := check_intfc_security(rcd_lics_header_01.int_interface, par_user);
+
+      /*-*/
+      /* Return result
+      /*-*/
+      return var_return;      
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LICS_SECURITY - CHECK_INTFC_HDR_SECURITY (' || par_interface_hdr || ' / '  || par_user || ') - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end check_intfc_hdr_security;
 
 end lics_security;
 /

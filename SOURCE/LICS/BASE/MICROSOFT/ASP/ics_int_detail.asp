@@ -118,6 +118,23 @@ sub ProcessForm()
    dim strStatement
 
    '//
+   '// Create the function object
+   '//
+   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
+   set objFunction.Security = objSecurity
+
+   '//
+   '// Check Interface Security setting
+   '//
+   strStatement = "lics_security.check_intfc_hdr_security(" & objForm.Fields("QRY_Header").Value & ",'" & GetUser() & "')"
+   strReturn = objFunction.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strReturn = FormatError(strReturn)
+      exit sub
+   end if
+
+
+   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
