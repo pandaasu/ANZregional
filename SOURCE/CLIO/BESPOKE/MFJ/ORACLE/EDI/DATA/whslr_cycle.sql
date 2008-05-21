@@ -21,7 +21,7 @@
 create table edi.whslr_cycle
    (edi_sndto_code                  varchar2(20 char)             not null,
     edi_effat_month                 varchar2(6 char)              not null,
-    edi_crton_day                   varchar2(5 char)              not null,
+    edi_crton_day                   varchar2(2 char)              not null,
     edi_sndon_delay                 number                        not null);
 
 /**/
@@ -30,7 +30,7 @@ create table edi.whslr_cycle
 comment on table edi.whslr_cycle is 'Wholesaler Cycle Table';
 comment on column edi.whslr_cycle.edi_sndto_code is 'EDI Send to code';
 comment on column edi.whslr_cycle.edi_effat_month is 'EDI Effective at month';
-comment on column edi.whslr_cycle.edi_crton_day is 'EDI Create on day number (01-27 or *LAST)';
+comment on column edi.whslr_cycle.edi_crton_day is 'EDI Create on day number (01-27 or 99)';
 comment on column edi.whslr_cycle.edi_sndon_delay is 'EDI Send on delay days';
 
 /**/
