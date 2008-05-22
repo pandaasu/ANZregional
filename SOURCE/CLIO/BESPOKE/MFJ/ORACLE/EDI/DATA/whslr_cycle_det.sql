@@ -21,7 +21,7 @@
 create table edi.whslr_cycle_det
    (edi_sndto_code                  varchar2(20 char)             not null,
     edi_effat_month                 varchar2(6 char)              not null,
-    edi_endon_day                   varchar2(2 char)              not null
+    edi_endon_day                   varchar2(2 char)              not null,
     edi_stron_month                 varchar2(1 char)              not null,
     edi_stron_day                   varchar2(2 char)              not null);
 
