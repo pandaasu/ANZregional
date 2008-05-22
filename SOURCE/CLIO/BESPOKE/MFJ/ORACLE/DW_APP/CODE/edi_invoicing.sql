@@ -45,6 +45,7 @@ create or replace package edi_invoicing as
     2008/02   Steve Gregan   Added sold to selection to EDI link logic
     2008/02   Steve Gregan   Added wholesaler discount none option
     2008/03   Steve Gregan   Added character set conversion from UTF8 to SHIFTJIS
+    2008/05   Steve Gregan   Modified wholesaler monthly for sub monthly invoicing
 
    *******************************************************************************/
 
@@ -3383,20 +3384,46 @@ create or replace package body edi_invoicing as
       /*-*/
       /* Local cursors
       /*-*/
+    --  cursor csr_whslr is
+    --     select t01.edi_sndto_code,
+    --            t01.edi_whslr_code,
+    --            t01.edi_whslr_name,
+    --            t01.edi_disc_code,
+    --            t01.edi_email_group,
+    --            t02.edi_bilto_date,
+    --            t02.edi_bilto_str_date,
+    --            t02.edi_bilto_end_date,
+    --            t02.edi_sndon_date 
+    --      from whslr t01,
+    --            whslr_billing t02
+    --      where t01.edi_sndto_code = t02.edi_sndto_code
+    --        and t02.edi_sndon_date = par_date
+    --      order by t01.edi_sndto_code asc;
+    --  rcd_whslr csr_whslr%rowtype;
+
+    --  cursor csr_whslr_dly_inv_hdr is
+    --     select t01.*
+    --       from whslr_dly_inv_hdr t01
+    --      where t01.edi_sndto_code = rcd_whslr_mly_inv_hdr.edi_sndto_code
+    --        and (t01.edi_invoice_date >= rcd_whslr_mly_inv_hdr.edi_bilto_str_date and
+    --             t01.edi_invoice_date <= rcd_whslr_mly_inv_hdr.edi_bilto_end_date)
+    --      order by t01.edi_brnch_code asc,
+    --               t01.sap_invoice_number asc;
+    --  rcd_whslr_dly_inv_hdr csr_whslr_dly_inv_hdr%rowtype;
+
       cursor csr_whslr is
          select t01.edi_sndto_code,
                 t01.edi_whslr_code,
                 t01.edi_whslr_name,
                 t01.edi_disc_code,
                 t01.edi_email_group,
-                t02.edi_bilto_date,
-                t02.edi_bilto_str_date,
-                t02.edi_bilto_end_date,
-                t02.edi_sndon_date 
+                t02.bilto_date as edi_bilto_date,
+                t02.bilto_str_date as edi_bilto_str_date,
+                t02.bilto_end_date as edi_bilto_end_date,
+                t02.sndon_date as edi_sndon_date 
            from whslr t01,
-                whslr_billing t02
-          where t01.edi_sndto_code = t02.edi_sndto_code
-            and t02.edi_sndon_date = par_date
+                table(edi_billing.whslr_monthly(par_date)) t02
+          where t01.edi_sndto_code = t02.sndto_code
           order by t01.edi_sndto_code asc;
       rcd_whslr csr_whslr%rowtype;
 
