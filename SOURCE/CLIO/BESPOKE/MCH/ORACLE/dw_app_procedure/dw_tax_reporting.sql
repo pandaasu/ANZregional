@@ -40,6 +40,7 @@ create or replace package dw_tax_reporting as
     2008/04   Steve Gregan   Changed sample pricing report for heading change
     2008/04   Steve Gregan   Changed sample pricing report for finished goods only
     2008/04   Steve Gregan   Changed sample pricing report for pricing UOM and calculation
+    2008/05   Steve Gregan   Changed gold tax report formatting
 
    *******************************************************************************/
 
@@ -1380,9 +1381,13 @@ create or replace package body dw_tax_reporting as
          /*-*/
          var_wrk_string := '"' || tbl_report(idx).qry_matl_desc || '"';
          var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_ord_uom || '"';
-         var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_pack_frmt || '"';
+         if instr(tbl_report(idx).qry_pack_frmt,'*') = 0 then
+            var_wrk_string := var_wrk_string || ' "1*' || tbl_report(idx).qry_pack_frmt || '"';
+         else
+            var_wrk_string := var_wrk_string || ' "' || tbl_report(idx).qry_pack_frmt || '"';
+         end if;
          var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_ord_qty,0));
-         var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_dsp_value,0));
+         var_wrk_string := var_wrk_string || ' ' || to_char(round(nvl(tbl_report(idx).qry_dsp_value,0),2));
          var_wrk_string := var_wrk_string || ' ' || to_char(nvl(tbl_report(idx).qry_tax_rate,0));
          if tbl_report(idx).qry_tax_eye = '0301' and tbl_report(idx).qry_tax_rate = 0.17 then
             var_wrk_string := var_wrk_string || ' "0309"';
@@ -1433,7 +1438,6 @@ create or replace package body dw_tax_reporting as
       /*-*/
       for idx in 1..tbl_work.count loop
          var_vir_table.extend;
-       --  var_vir_table(var_vir_table.last) := tbl_work(idx);
          var_vir_table(var_vir_table.last) := convert(tbl_work(idx),'ZHS16GBK','UTF8');
       end loop;
       return var_vir_table;
