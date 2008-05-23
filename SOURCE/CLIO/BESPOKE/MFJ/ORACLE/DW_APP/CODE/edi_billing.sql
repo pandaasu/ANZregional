@@ -61,7 +61,7 @@ create or replace package body edi_billing as
       /*-*/
       cursor csr_whslr is 
          select *
-           from whslr_cycle_hdr t01
+           from whslr t01
           order by t01.edi_sndto_code;
       rcd_whslr csr_whslr%rowtype;
 
