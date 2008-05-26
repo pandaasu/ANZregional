@@ -3,17 +3,18 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : mjp_edi_whslr.asp                                  //
+'// Script  : mjp_edi_whslr_cycle.asp                            //
 '// Author  : Steve Gregan                                       //
 '// Date    : February 2008                                      //
 '// Text    : This script implements the EDI wholesaler          //
-'//           configuration functionality                        //
+'//           cycle configuration functionality                  //
 '//////////////////////////////////////////////////////////////////
 
    '//
    '// Declare the variables
    '//
    dim i
+   dim j
    dim strBase
    dim strTarget
    dim strStatus
@@ -36,8 +37,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "mjp_edi_whslr.asp"
-   strHeading = "EDI Wholesaler Configuration"
+   strTarget = "mjp_edi_whslr_cycle.asp"
+   strHeading = "EDI Wholesaler Cycle Configuration"
    strError = ""
 
    '//
@@ -58,7 +59,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("MJP_EDI_WHSLR_CONFIG")
+   strReturn = GetSecurityCheck("MJP_EDI_WHSLR_CYCLE_CONFIG")
    if strReturn <> "*OK" then
       strMode = "FATAL"
    else
@@ -79,10 +80,6 @@
             call ProcessInsertLoad
          case "INSERT_ACCEPT"
             call ProcessInsertAccept
-         case "UPDATE_LOAD"
-            call ProcessUpdateLoad
-         case "UPDATE_ACCEPT"
-            call ProcessUpdateAccept
          case "DELETE_LOAD"
             call ProcessDeleteLoad
          case "DELETE_ACCEPT"
@@ -104,8 +101,6 @@
          call PaintSelect
       case "INSERT"
          call PaintInsert
-      case "UPDATE"
-         call PaintUpdate
       case "DELETE"
          call PaintDelete
    end select
@@ -133,18 +128,20 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the wholesaler list
+   '// Retrieve the wholesaler cycle list
    '//
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " t01.edi_sndto_code,"
-   strQuery = strQuery & " t01.edi_whslr_code,"
-   strQuery = strQuery & " t01.edi_whslr_name,"
-   strQuery = strQuery & " t01.edi_disc_code,"
-   strQuery = strQuery & " t01.update_user,"
-   strQuery = strQuery & " to_char(t01.update_date,'yyyy/mm/dd HH24:mi:ss')"
-   strQuery = strQuery & " from whslr t01"
-   strQuery = strQuery & " order by t01.edi_sndto_code asc"
+   strQuery = strQuery & " t02.edi_whslr_name,"
+   strQuery = strQuery & " t01.edi_effat_month,"
+   strQuery = strQuery & " t01.edi_sndon_delay,"
+   strQuery = strQuery & " t03.cycle_text"
+   strQuery = strQuery & " from whslr_cycle_hdr t01, whslr t02, table(edi_billing.whslr_cycle) t03"
+   strQuery = strQuery & " where t01.edi_sndto_code = t02.edi_sndto_code(+)"
+   strQuery = strQuery & " and t01.edi_sndto_code = t03.sndto_code(+)"
+   strQuery = strQuery & " and t01.edi_effat_month = t03.effat_month(+)"
+   strQuery = strQuery & " order by t01.edi_sndto_code asc, t01.edi_effat_month asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -157,14 +154,40 @@ end sub
 '/////////////////////////////////
 sub ProcessInsertLoad()
 
+   dim strQuery
+   dim lngSize
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the wholesaler list
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " t01.edi_sndto_code,"
+   strQuery = strQuery & " t01.edi_whslr_name"
+   strQuery = strQuery & " from whslr t01"
+   strQuery = strQuery & " order by t01.edi_sndto_code asc"
+   strReturn = objSelection.Execute("WHSLR", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+   end if
+
    '//
    '// Initialise the data fields
    '//
    call objForm.AddField("DTA_EdiSndtoCode", "")
-   call objForm.AddField("DTA_EdiWhslrCode", "")
-   call objForm.AddField("DTA_EdiWhslrName", "")
-   call objForm.AddField("DTA_EdiDiscCode", "A")
-   call objForm.AddField("DTA_EdiEmailGroup", "")
+   call objForm.AddField("DTA_EdiEffatMonth", "")
+   call objForm.AddField("DTA_EdiSndonDelay", "0")
+   call objForm.AddField("DTA_EdiCycle01", "")
+   call objForm.AddField("DTA_EdiCycle02", "")
+   call objForm.AddField("DTA_EdiCycle03", "")
+   call objForm.AddField("DTA_EdiCycle04", "")
+   call objForm.AddField("DTA_EdiCycle05", "")
 
    '//
    '// Set the mode
@@ -187,104 +210,17 @@ sub ProcessInsertAccept()
    set objFunction.Security = objSecurity
 
    '//
-   '// Insert the wholesaler data
+   '// Insert the wholesaler cycle data
    '//
-   strStatement = "edi_configuration.insert_whslr("
+   strStatement = "edi_configuration.insert_whslr_cycle("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiSndtoCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiWhslrCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiWhslrName").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiDiscCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiEmailGroup").Value) & "',"
-   strStatement = strStatement & "'" & GetUser() & "'"
-   strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
-   if strReturn <> "*OK" then
-      strError = FormatError(strReturn)
-      strMode = "SELECT"
-      call ProcessSelect
-      exit sub
-   end if
-
-   '//
-   '// Set the mode
-   '//
-   strMode = "SELECT"
-   call ProcessSelect
-
-end sub
-
-'/////////////////////////////////
-'// Process update load routine //
-'/////////////////////////////////
-sub ProcessUpdateLoad()
-
-   dim strQuery
-   dim lngSize
-
-   '//
-   '// Create the selection object
-   '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve the wholesaler data
-   '//
-   lngSize = 0
-   strQuery = "select"
-   strQuery = strQuery & " t01.edi_sndto_code,"
-   strQuery = strQuery & " t01.edi_whslr_code,"
-   strQuery = strQuery & " t01.edi_whslr_name,"
-   strQuery = strQuery & " t01.edi_disc_code,"
-   strQuery = strQuery & " t01.edi_email_group"
-   strQuery = strQuery & " from whslr t01"
-   strQuery = strQuery & " where t01.edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "'"
-   strReturn = objSelection.Execute("LIST", strQuery, lngSize)
-   if strReturn <> "*OK" then
-      strError = FormatError(strReturn)
-      strMode = "SELECT"
-      call ProcessSelect
-      exit sub
-   end if
-
-   '//
-   '// Initialise the data fields
-   '//
-   call objForm.AddField("DTA_EdiWhslrCode", objSelection.ListValue02("LIST",objSelection.ListLower("LIST")))
-   call objForm.AddField("DTA_EdiWhslrName", objSelection.ListValue03("LIST",objSelection.ListLower("LIST")))
-   call objForm.AddField("DTA_EdiDiscCode", objSelection.ListValue04("LIST",objSelection.ListLower("LIST")))
-   call objForm.AddField("DTA_EdiEmailGroup", objSelection.ListValue05("LIST",objSelection.ListLower("LIST")))
-
-   '//
-   '// Set the mode
-   '//
-   strMode = "UPDATE"
-
-end sub
-
-'///////////////////////////////////
-'// Process update accept routine //
-'///////////////////////////////////
-sub ProcessUpdateAccept()
-
-   dim strStatement
-
-   '//
-   '// Create the function object
-   '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
-
-   '//
-   '// Update the wholesaler data
-   '//
-   strStatement = "edi_configuration.update_whslr("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiSndtoCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiWhslrCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiWhslrName").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiDiscCode").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiEmailGroup").Value) & "',"
-   strStatement = strStatement & "'" & GetUser() & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiEffatMonth").Value) & "',"
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_EdiSndonDelay").Value) & ","
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiCycle01").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiCycle02").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiCycle03").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiCycle04").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiCycle05").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -317,17 +253,21 @@ sub ProcessDeleteLoad()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the wholesaler data
+   '// Retrieve the wholesaler cycle header data
    '//
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " t01.edi_sndto_code,"
-   strQuery = strQuery & " t01.edi_whslr_code,"
-   strQuery = strQuery & " t01.edi_whslr_name,"
-   strQuery = strQuery & " t01.edi_disc_code,"
-   strQuery = strQuery & " t01.edi_email_group"
-   strQuery = strQuery & " from whslr t01"
-   strQuery = strQuery & " where t01.edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "'"
+   strQuery = strQuery & " t01.edi_effat_month,"
+   strQuery = strQuery & " t01.edi_sndon_delay,"
+   strQuery = strQuery & " t02.edi_whslr_name,"
+   strQuery = strQuery & " t03.cycle_text"
+   strQuery = strQuery & " from whslr_cycle_hdr t01, whslr t02, table(edi_billing.whslr_cycle) t03"
+   strQuery = strQuery & " where t01.edi_sndto_code = t02.edi_sndto_code(+)"
+   strQuery = strQuery & " and t01.edi_sndto_code = t03.sndto_code(+)"
+   strQuery = strQuery & " and t01.edi_effat_month = t03.effat_month(+)"
+   strQuery = strQuery & " and t01.edi_sndto_code = '" & objForm.Fields("DTA_EdiSndtoCode").Value & "'"
+   strQuery = strQuery & " and t01.edi_effat_month = '" & objForm.Fields("DTA_EdiEffatMonth").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -339,8 +279,9 @@ sub ProcessDeleteLoad()
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_EdiWhslrCode", objSelection.ListValue02("LIST",objSelection.ListLower("LIST")))
-   call objForm.AddField("DTA_EdiWhslrName", objSelection.ListValue03("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_EdiSndonDelay", objSelection.ListValue03("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_EdiWhslrName", objSelection.ListValue04("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_EdiCycleText", objSelection.ListValue05("LIST",objSelection.ListLower("LIST")))
 
    '//
    '// Set the mode
@@ -363,10 +304,11 @@ sub ProcessDeleteAccept()
    set objFunction.Security = objSecurity
 
    '//
-   '// Delete the wholesaler data
+   '// Delete the wholesaler cycle data
    '//
-   strStatement = "edi_configuration.delete_whslr("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiSndtoCode").Value) & "'"
+   strStatement = "edi_configuration.delete_whslr_cycle("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiSndtoCode").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EdiEffatMonth").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -395,27 +337,20 @@ sub PaintFatal()%>
 '// Paint prompt routine //
 '//////////////////////////
 sub PaintSelect()%>
-<!--#include file="mjp_edi_whslr_select.inc"-->
+<!--#include file="mjp_edi_whslr_cycle_select.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint insert routine //
 '//////////////////////////
 sub PaintInsert()%>
-<!--#include file="mjp_edi_whslr_insert.inc"-->
-<%end sub
-
-'//////////////////////////
-'// Paint update routine //
-'//////////////////////////
-sub PaintUpdate()%>
-<!--#include file="mjp_edi_whslr_update.inc"-->
+<!--#include file="mjp_edi_whslr_cycle_insert.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint delete routine //
 '//////////////////////////
 sub PaintDelete()%>
-<!--#include file="mjp_edi_whslr_delete.inc"-->
+<!--#include file="mjp_edi_whslr_cycle_delete.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->
