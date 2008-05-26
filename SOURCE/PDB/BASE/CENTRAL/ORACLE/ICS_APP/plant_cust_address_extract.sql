@@ -233,54 +233,54 @@ create or replace package body ics_app.plant_cust_address_extract as
     /* Local cursors 
     /*-*/
     cursor csr_bds_addr_customer is
-      select t01.customer_code as customer_code, 
-        t01.address_version as address_version, 
-        to_char(t01.valid_from_date,'yyyymmdd') as valid_from_date, 
-        to_char(t01.valid_to_date,'yyyymmdd') as valid_to_date,
-        t01.title as title,
-        t01.name as name, 
-        t01.name_02 as name_02, 
-        t01.name_03 as name_03, 
-        t01.name_04 as name_04, 
-        t01.city as city, 
-        t01.district as district, 
-        t01.city_post_code as city_post_code,
-        t01.po_box_post_code as po_box_post_code, 
-        t01.company_post_code as company_post_code, 
-        t01.po_box as po_box, 
-        t01.po_box_minus_number as po_box_minus_number,
-        t01.po_box_city as po_box_city, 
-        t01.po_box_region as po_box_region, 
-        t01.po_box_country as po_box_country, 
-        t01.po_box_country_iso as po_box_country_iso,
-        t01.transportation_zone as transportation_zone, 
-        t01.street as street,
-        t01.house_number as house_number, 
-        t01.location as location, 
-        t01.building as building, 
-        t01.floor as floor,
-        t01.room_number as room_number, 
-        t01.country as country, 
-        t01.country_iso as country_iso, 
-        t01.language as language, 
-        t01.language_iso as language_iso, 
-        t01.region_code as region_code,
-        t01.search_term_01 as search_term_01, 
-        t01.search_term_02 as search_term_02, 
-        t01.phone_number as phone_number, 
-        t01.phone_extension as phone_extension,
-        t01.phone_full_number as phone_full_number, 
-        t01.fax_number as fax_number, 
-        t01.fax_extension as fax_extension, 
-        t01.fax_full_number as fax_full_number
-      from bds_addr_customer t01,
-        bds_addr_header t02
-      where t01.customer_code = t02.address_code
-        and t02.address_type = 'KNA1'
+      select t01.address_code as customer_code, 
+        t02.address_version as address_version, 
+        to_char(t02.valid_from_date,'yyyymmdd') as valid_from_date, 
+        to_char(t02.valid_to_date,'yyyymmdd') as valid_to_date,
+        t02.title as title,
+        t02.name as name, 
+        t02.name_02 as name_02, 
+        t02.name_03 as name_03, 
+        t02.name_04 as name_04, 
+        t02.city as city, 
+        t02.district as district, 
+        t02.city_post_code as city_post_code,
+        t02.po_box_post_code as po_box_post_code, 
+        t02.company_post_code as company_post_code, 
+        t02.po_box as po_box, 
+        t02.po_box_minus_number as po_box_minus_number,
+        t02.po_box_city as po_box_city, 
+        t02.po_box_region as po_box_region, 
+        t02.po_box_country as po_box_country, 
+        t02.po_box_country_iso as po_box_country_iso,
+        t02.transportation_zone as transportation_zone, 
+        t02.street as street,
+        t02.house_number as house_number, 
+        t02.location as location, 
+        t02.building as building, 
+        t02.floor as floor,
+        t02.room_number as room_number, 
+        t02.country as country, 
+        t02.country_iso as country_iso, 
+        t02.language as language, 
+        t02.language_iso as language_iso, 
+        t02.region_code as region_code,
+        t02.search_term_01 as search_term_01, 
+        t02.search_term_02 as search_term_02, 
+        t02.phone_number as phone_number, 
+        t02.phone_extension as phone_extension,
+        t02.phone_full_number as phone_full_number, 
+        t02.fax_number as fax_number, 
+        t02.fax_extension as fax_extension, 
+        t02.fax_full_number as fax_full_number
+      from bds_addr_header t01,
+        bds_addr_customer t02        
+      where t01.address_code = t02.customer_code
+        and t01.address_type = 'KNA1'
         and
         (
-          (par_action = '*ALL' and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date))
-          or (par_action = '*CUSTOMER' and ltrim(t01.customer_code,'0') = ltrim(par_data,'0'))
+          (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
+          or (par_action = '*CUSTOMER' and ltrim(t01.address_code,'0') = ltrim(par_data,'0'))
         );
     rcd_bds_addr_customer csr_bds_addr_customer%rowtype;
 

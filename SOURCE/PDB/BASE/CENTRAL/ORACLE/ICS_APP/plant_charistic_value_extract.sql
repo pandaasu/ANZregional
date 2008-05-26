@@ -2,23 +2,29 @@
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
 /** 
-  Package : plant_prodctn_resrc_extract 
+  Package : plant_charistic_value_extract 
   Owner   : ics_app 
 
   Description 
   ----------- 
-  Production Resource Data for Plant databases 
+  Characteristic Value Extract for Plant databases 
+
+  EXECUTE - 
+    Send Characteristic Value data since last successful send 
+    
+  EXECUTE - 
+    Send Characteristic Value data based on the specified action.     
 
   1. PAR_ACTION (MANDATORY) 
 
-    *ALL - send all material data  
-    *RESRC - send production resource data matching a given resource id  
+    *ALL - send all address data  
+    *CHARISTIC - send charateristic value data matching a given charateristic code 
     
   2. PAR_DATA (MANDATORY) 
     
     Data related to the action specified:
       - *ALL = null 
-      - *RESRC = resource id 
+      - *CHARISTIC = charateristic code 
 
   3. PAR_SITE (OPTIONAL) 
   
@@ -32,24 +38,25 @@
 
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
-  2008/03   Trevor Keon    Created 
+  2008/05   Trevor Keon    Created 
 
 *******************************************************************************/
 
-create or replace package ics_app.plant_prodctn_resrc_extract as
+create or replace package ics_app.plant_charistic_value_extract as
 
   /*-*/
   /* Public declarations 
   /*-*/
+  procedure execute;
   procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
 
-end plant_prodctn_resrc_extract;
+end plant_charistic_value_extract;
 /
 
 /****************/ 
 /* Package Body */ 
 /****************/ 
-create or replace package body ics_app.plant_prodctn_resrc_extract as
+create or replace package body ics_app.plant_charistic_value_extract as
 
   /*-*/
   /* Private exceptions 
@@ -67,7 +74,11 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
-  var_resrc_id bds_prodctn_resrc_en.resrc_id%type;
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
+    
+  var_charistic_code bds_charistic_value_en.sap_charistic_code%type;
   
   /*-*/
   /* Private declarations 
@@ -76,7 +87,26 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
   type typ_definition is table of rcd_definition index by binary_integer;
      
   tbl_definition typ_definition;
+
+  /***********************************************/
+  /* This procedure performs the execute routine */
+  /***********************************************/
+  procedure execute is
+  begin
+    /*-*/
+    /* Set global variables  
+    /*-*/    
+    var_start_date := sysdate;
+    var_update_lastrun := true;
+    
+    /*-*/
+    /* Get last run date  
+    /*-*/    
+    var_lastrun_date := lics_last_run_control.get_last_run('LADPDB16');
   
+    execute('*ALL',null,'*ALL');
+  end; 
+
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
@@ -103,8 +133,8 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /* validate parameters 
     /*-*/
     if ( var_action != '*ALL'
-        and var_action != '*RESRC' ) then
-      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *RESRC');
+        and var_action != '*CHARISTIC' ) then
+      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *CHARISTIC');
     end if;
     
     if ( var_site != '*ALL'
@@ -117,8 +147,8 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
     
-    if ( var_action = '*RESRC' and var_data is null ) then
-      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *RESRC actions.');
+    if ( var_action = '*CHARISTIC' and var_data is null ) then
+      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *CHARISTIC actions.');
     end if;
     
     var_start := execute_extract(var_action, var_data);
@@ -127,27 +157,32 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /* ensure data was returned in the cursor before creating interfaces 
     /* to send to the specified site(s) 
     /*-*/ 
-    if ( var_start = true ) then    
-      if (par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB06.1');
+    if ( var_start = true ) then  
+    
+      if ( par_site in ('*ALL','*MFA') ) then
+        execute_send('LADPDB16.1');
       end if;    
-      if (par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB06.2');
+      if ( par_site in ('*ALL','*WGI') ) then
+        execute_send('LADPDB16.2');
       end if;    
-      if (par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB06.3');
+      if ( par_site in ('*ALL','*WOD') ) then
+        execute_send('LADPDB16.3');
       end if;    
-      if (par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB06.4');
+      if ( par_site in ('*ALL','*BTH') ) then
+        execute_send('LADPDB16.4');
       end if;    
-      if (par_site in ('*ALL','*MCA') ) then
-        execute_send('LADPDB06.5');   
+      if ( par_site in ('*ALL','*MCA') ) then
+        execute_send('LADPDB16.5');   
       end if;
-      if (par_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB06.6');   
+      if ( par_site in ('*ALL','*SCO') ) then
+        execute_send('LADPDB16.6');   
       end if;
-    end if;
-      
+    end if; 
+    
+    if ( var_update_lastrun = true ) then
+      lics_last_run_control.set_last_run('LADPDB16',var_start_date);
+    end if;  
+          
   /*-------------------*/
   /* Exception handler */
   /*-------------------*/
@@ -179,15 +214,16 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/
     /* Raise an exception to the calling application 
     /*-*/
-    raise_application_error(-20000, 'plant_prodctn_resrc_extract - ' || 'resrc_id: ' || var_resrc_id || ' - ' || var_exception);
+    raise_application_error(-20000, 'plant_charistic_value_extract - ' || 'charistic_code: ' || var_charistic_code || ' - ' || var_exception);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
   end execute;
-
+  
+  
   function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
-
+  
     /*-*/
     /* Local variables 
     /*-*/
@@ -197,22 +233,19 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/
     /* Local cursors 
     /*-*/
-    cursor csr_prodctn_resrc_en is
-      select t01.resrc_id as resrc_id, 
-        t01.resrc_code as resrc_code, 
-        t01.resrc_text as resrc_text, 
-        t01.resrc_plant_code as resrc_plant_code
-      from bds_prodctn_resrc_en t01
-      where t01.resrc_deletion_flag is null
-        and (t01.resrc_plant_code like 'AU%' or t01.resrc_plant_code like 'NZ%')
-        and substr(upper(resrc_text), 0, 6) <> 'DO NOT'
+    cursor csr_bds_charistic_value is
+      select t01.sap_charistic_code as sap_charistic_code, 
+        t02.sap_charistic_value_code as sap_charistic_value_code, 
+        t02.sap_charistic_value_desc as sap_charistic_value_desc
+      from bds_charistic_hdr t01,
+        bds_charistic_value_en t02        
+      where t01.sap_charistic_code = t02.sap_charistic_code
         and 
         (
-          par_action = '*ALL'
-          or (par_action = '*RESRC' and t01.resrc_id = par_data)
+          (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
+          or (par_action = '*CHARISTIC' and t01.sap_charistic_code = par_data)
         );
-        
-    rcd_prodctn_resrc_en csr_prodctn_resrc_en%rowtype;
+    rcd_bds_charistic_value csr_bds_charistic_value%rowtype;
 
  /*-------------*/
  /* Begin block */
@@ -227,26 +260,30 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     /*-*/
     /* Open Cursor for output 
     /*-*/
-    open csr_prodctn_resrc_en;
+    open csr_bds_charistic_value;
     loop
     
-      fetch csr_prodctn_resrc_en into rcd_prodctn_resrc_en;
-      exit when csr_prodctn_resrc_en%notfound;
+      fetch csr_bds_charistic_value into rcd_bds_charistic_value;
+      exit when csr_bds_charistic_value%notfound;
 
       var_index := tbl_definition.count + 1;
       var_result := true;
+      
+      /*-*/
+      /* Store current charistic code for error message purposes 
+      /*-*/
+      var_charistic_code := rcd_bds_charistic_value.sap_charistic_code;
               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_id),' '),8,' ')
-        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_code),' '),8,' ')
-        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_text),' '),40,' ')
-        || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_plant_code),' '),4,' ');
+        || rpad(nvl(to_char(rcd_bds_charistic_value.sap_charistic_code),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_charistic_value.sap_charistic_value_code),' '),30,' ')
+        || rpad(nvl(to_char(rcd_bds_charistic_value.sap_charistic_value_desc),' '),30,' ');
 
     end loop;
-    close csr_prodctn_resrc_en;
+    close csr_bds_charistic_value;
 
     return var_result;
-  
+    
   end execute_extract;
   
   procedure execute_send(par_interface in varchar2) is
@@ -273,18 +310,18 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
     commit;
   end execute_send;
 
-end plant_prodctn_resrc_extract;
+end plant_charistic_value_extract;
 /
 
 /*-*/
 /* Authority 
 /*-*/
-grant execute on ics_app.plant_prodctn_resrc_extract to appsupport;
-grant execute on ics_app.plant_prodctn_resrc_extract to lads_app;
-grant execute on ics_app.plant_prodctn_resrc_extract to lics_app;
-grant execute on ics_app.plant_prodctn_resrc_extract to ics_executor;
+grant execute on ics_app.plant_charistic_value_extract to appsupport;
+grant execute on ics_app.plant_charistic_value_extract to lads_app;
+grant execute on ics_app.plant_charistic_value_extract to lics_app;
+grant execute on ics_app.plant_charistic_value_extract to ics_executor;
 
 /*-*/
 /* Synonym 
 /*-*/
-create or replace public synonym plant_prodctn_resrc_extract for ics_app.plant_prodctn_resrc_extract;
+create or replace public synonym plant_charistic_value_extract for ics_app.plant_charistic_value_extract;

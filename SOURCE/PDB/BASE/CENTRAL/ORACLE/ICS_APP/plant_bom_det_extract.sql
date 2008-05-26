@@ -249,33 +249,33 @@ create or replace package body ics_app.plant_bom_det_extract as
       select t01.bom_material_code as bom_material_code, 
         t01.bom_alternative as bom_alternative, 
         t01.bom_plant as bom_plant,
-        t01.bom_number as bom_number, 
-        t01.bom_msg_function as bom_msg_function, 
-        t01.bom_usage as bom_usage,
-        to_char(t01.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
-        to_char(t01.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
-        t01.bom_base_qty as bom_base_qty, 
-        t01.bom_base_uom as bom_base_uom,
-        t01.bom_status as bom_status, 
-        t01.item_sequence as item_sequence, 
-        t01.item_number as item_number,
-        t01.item_msg_function as item_msg_function, 
-        t01.item_material_code as item_material_code, 
-        t01.item_category as item_category,
-        t01.item_base_qty as item_base_qty, 
-        t01.item_base_uom as item_base_uom, 
-        to_char(t01.item_eff_from_date, 'yyyymmddhh24miss') as item_eff_from_date, 
-        to_char(t01.item_eff_to_date, 'yyyymmddhh24miss') as item_eff_to_date
-      from bds_bom_det t01,
-        bds_bom_hdr t02
+        t02.bom_number as bom_number, 
+        t02.bom_msg_function as bom_msg_function, 
+        t02.bom_usage as bom_usage,
+        to_char(t02.bom_eff_from_date, 'yyyymmddhh24miss') as bom_eff_from_date,
+        to_char(t02.bom_eff_to_date, 'yyyymmddhh24miss') as bom_eff_to_date,
+        t02.bom_base_qty as bom_base_qty, 
+        t02.bom_base_uom as bom_base_uom,
+        t02.bom_status as bom_status, 
+        t02.item_sequence as item_sequence, 
+        t02.item_number as item_number,
+        t02.item_msg_function as item_msg_function, 
+        t02.item_material_code as item_material_code, 
+        t02.item_category as item_category,
+        t02.item_base_qty as item_base_qty, 
+        t02.item_base_uom as item_base_uom, 
+        to_char(t02.item_eff_from_date, 'yyyymmddhh24miss') as item_eff_from_date, 
+        to_char(t02.item_eff_to_date, 'yyyymmddhh24miss') as item_eff_to_date
+      from bds_bom_hdr t01,
+        bds_bom_det t02        
       where t01.bom_material_code = t02.bom_material_code
         and t01.bom_alternative = t02.bom_alternative
         and t01.bom_plant = t02.bom_plant
-        and t01.bds_lads_status = '1'
+        and t02.bds_lads_status = '1'
         and (var_alternative is null or t01.bom_alternative = var_alternative)
         and (var_material_code is null or t01.bom_material_code = var_material_code)
         and (var_plant is null or t01.bom_plant = var_plant)
-        and (var_lastrun_date is null or t02.bds_lads_date >= var_lastrun_date);
+        and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date);
         
     rcd_bds_bom_det csr_bds_bom_det%rowtype;
 

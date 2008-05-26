@@ -62,18 +62,31 @@ IS
          
   
    CURSOR c2 IS
-   SELECT v.*,K.*, r.resource_code, wc.work_ctr_code, LTRIM(c.MATERIAL,'0') matl_code
-      FROM recipe_vw v, CNTL_REC_RESOURCE_VW r, work_ctr_vw wc, CNTL_REC_VW c, SITE_AUTOMATION_TOWER K
-      WHERE TO_NUMBER(v.proc_order) = TO_NUMBER(r.proc_order)
-      AND v.code = K.tag_or_num(+)
-      AND TO_NUMBER(c.proc_order) = TO_NUMBER(r.proc_order)
-      AND r.RESOURCE_CODE = wc.RESOURCE_CODE
-      AND UPPER(v.description) NOT LIKE 'INSTRUCTION%'
-      AND UPPER(v.description) NOT LIKE 'NOTE%'
-      AND  v.proc_order = vproc_order
-      AND mpi_type IN ('M','V','H') 
-      AND r.resource_code = 'MXSIM037'
-      ORDER BY 1,2,3,4;
+    select t01.*,
+      t02.*, 
+      t03.resource_code, 
+      t04.work_ctr_code, 
+      ltrim(t05.material,'0') matl_code
+    from recipe_vw t01,
+      (
+        select proc_order,
+          resource_code
+        from cntl_rec_resource_vw
+        where substr(proc_order,1,1) between '0' and '9'
+      ) t03, 
+      work_ctr_vw t04, 
+      cntl_rec_vw t05, 
+      site_automation_tower t02
+    where to_number(t01.proc_order) = to_number(t03.proc_order)
+      and t01.code = t02.tag_or_num(+)
+      and to_number(t05.proc_order) = to_number(t03.proc_order)
+      and t03.resource_code = t04.resource_code
+      and upper(t01.description) not like 'INSTRUCTION%'
+      and upper(t01.description) not like 'NOTE%'
+      and t01.proc_order = vproc_order
+      and mpi_type in ('M','V','H') 
+      and t03.resource_code = 'MXSIM037'
+    order by 1,2,3,4;
           
      rcd_rec c2%ROWTYPE;
      rcd_aut AUTOMATION_TOWER%ROWTYPE;
