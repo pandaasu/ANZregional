@@ -84,7 +84,7 @@
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_EdiSndtoCode" value="<%=objForm.Fields("DTA_EdiSndtoCode").Value%>">
-   <input type="hidden" name="DTA_EdiEdiEffatMonth" value="<%=objForm.Fields("DTA_EdiEffatMonth").Value%>">
+   <input type="hidden" name="DTA_EdiEffatMonth" value="<%=objForm.Fields("DTA_EdiEffatMonth").Value%>">
 </form>
 </body>
 </html>
