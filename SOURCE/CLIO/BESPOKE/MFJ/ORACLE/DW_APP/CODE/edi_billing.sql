@@ -26,6 +26,7 @@ create or replace package edi_billing as
    /* Public declarations
    /*-*/
    function whslr_monthly(par_date in varchar2) return edi_billing_table pipelined;
+   function whslr_cycle return edi_cycle_table pipelined;
 
 end edi_billing;
 /
@@ -188,6 +189,101 @@ create or replace package body edi_billing as
    /* End routine */
    /*-------------*/
    end whslr_monthly;
+
+   /*******************************************************/
+   /* This function performs the wholesaler cycle routine */
+   /*******************************************************/
+   function whslr_cycle return edi_cycle_table pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      sav_sndto_code whslr_cycle_det.edi_sndto_code%type;
+      sav_effat_month whslr_cycle_det.edi_effat_month%type;
+      var_cycle_text varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_whslr_cycle_det is 
+         select t01.edi_sndto_code,
+                t01.edi_effat_month,
+                decode(edi_stron_month,'P','Previous ','C','Current ',edi_stron_month)||edi_stron_day||
+                ' - Current '||decode(edi_endon_day,'99','*LAST',edi_endon_day) as cycle_text
+           from whslr_cycle_det t01
+          order by t01.edi_sndto_code asc,
+                   t01.edi_effat_month asc,
+                   t01.edi_endon_day asc;
+      rcd_whslr_cycle_det csr_whslr_cycle_det%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve all wholesaler cycle details
+      /*-*/
+      sav_sndto_code := null;
+      sav_effat_month := null;
+      open csr_whslr_cycle_det;
+      loop
+         fetch csr_whslr_cycle_det into rcd_whslr_cycle_det;
+         if csr_whslr_cycle_det%notfound then
+            exit;
+         end if;
+         if sav_sndto_code is null or
+            sav_sndto_code != rcd_whslr_cycle_det.edi_sndto_code or
+            sav_effat_month != rcd_whslr_cycle_det.edi_effat_month then
+            if not(sav_sndto_code is null) then
+               pipe row(edi_cycle_object(sav_sndto_code,
+                                         sav_effat_month,
+                                         var_cycle_text));
+            end if;
+            sav_sndto_code := rcd_whslr_cycle_det.edi_sndto_code;
+            sav_effat_month := rcd_whslr_cycle_det.edi_effat_month;
+            var_cycle_text := null;
+         end if;
+         if not(var_cycle_text is null) then
+            var_cycle_text := var_cycle_text || '; ';
+         end if;
+         var_cycle_text := var_cycle_text || rcd_whslr_cycle_det.cycle_text;
+      end loop;
+      close csr_whslr_cycle_det;
+      if not(sav_sndto_code is null) then
+         pipe row(edi_cycle_object(sav_sndto_code,
+                                   sav_effat_month,
+                                   var_cycle_text));
+      end if;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - EDI_BILLING - WHSLR_CYCLE - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end whslr_cycle;
 
 end edi_billing;
 /

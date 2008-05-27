@@ -31,6 +31,10 @@ create or replace package edi_invoicing as
 
        The date for which the EDI invoicing is to be performed.
 
+    3. PAR_SNDTO_CODE (date) (OPTIONAL)
+
+       The wholesaler send to code for which the EDI wholesaler monthly invoicing is to be performed.
+
     **notes**
     1. A web log is produced under the search value EDI_INVOICING where all errors are logged.
 
@@ -46,13 +50,14 @@ create or replace package edi_invoicing as
     2008/02   Steve Gregan   Added wholesaler discount none option
     2008/03   Steve Gregan   Added character set conversion from UTF8 to SHIFTJIS
     2008/05   Steve Gregan   Modified wholesaler monthly for sub monthly invoicing
+    2008/05   Steve Gregan   Added send to parameter for wholesaler monthly rerun
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_action in varchar2, par_date in date);
+   procedure execute(par_action in varchar2, par_date in date, par_sndto_code in varchar2 default '*ALL');
 
 end edi_invoicing;
 /
@@ -75,9 +80,9 @@ create or replace package body edi_invoicing as
    procedure send_agency_daily(par_date in varchar2);
    procedure create_whslr_daily(par_date in varchar2);
    procedure send_whslr_daily(par_date in varchar2);
-   procedure create_whslr_monthly(par_date in varchar2);
-   procedure send_whslr_monthly(par_date in varchar2);
-   procedure email_whslr_monthly(par_date in varchar2);
+   procedure create_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2);
+   procedure send_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2);
+   procedure email_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2);
    function overpunch_zoned(par_number in number, par_format in varchar2) return varchar2;
 
    /*-*/
@@ -89,7 +94,7 @@ create or replace package body edi_invoicing as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_action in varchar2, par_date in date) is
+   procedure execute(par_action in varchar2, par_date in date, par_sndto_code in varchar2 default '*ALL') is
 
       /*-*/
       /* Local definitions
@@ -167,7 +172,7 @@ create or replace package body edi_invoicing as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - EDI Invoicing - Parameters(' || upper(par_action) || ' + '  || to_char(par_date,'yyyy/mm/dd') || ')');
+      lics_logging.write_log('Begin - EDI Invoicing - Parameters(' || upper(par_action) || ' + ' || to_char(par_date,'yyyy/mm/dd') || ' + ' || par_sndto_code || ')');
 
       /*-*/
       /* Request the lock
@@ -234,9 +239,9 @@ create or replace package body edi_invoicing as
             /* Execute the wholesaler monthly procedures
             /*-*/
             begin
-               create_whslr_monthly(var_date);
-               send_whslr_monthly(var_date);
-               email_whslr_monthly(var_date);
+               create_whslr_monthly(var_date, par_sndto_code);
+               send_whslr_monthly(var_date, par_sndto_code);
+               email_whslr_monthly(var_date, par_sndto_code);
             exception
                when others then
                   var_errors := true;
@@ -3370,7 +3375,7 @@ create or replace package body edi_invoicing as
    /**************************************************************************/
    /* This procedure performs the create wholesaler monthly invoices routine */
    /**************************************************************************/
-   procedure create_whslr_monthly(par_date in varchar2) is
+   procedure create_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -3384,33 +3389,6 @@ create or replace package body edi_invoicing as
       /*-*/
       /* Local cursors
       /*-*/
-    --  cursor csr_whslr is
-    --     select t01.edi_sndto_code,
-    --            t01.edi_whslr_code,
-    --            t01.edi_whslr_name,
-    --            t01.edi_disc_code,
-    --            t01.edi_email_group,
-    --            t02.edi_bilto_date,
-    --            t02.edi_bilto_str_date,
-    --            t02.edi_bilto_end_date,
-    --            t02.edi_sndon_date 
-    --      from whslr t01,
-    --            whslr_billing t02
-    --      where t01.edi_sndto_code = t02.edi_sndto_code
-    --        and t02.edi_sndon_date = par_date
-    --      order by t01.edi_sndto_code asc;
-    --  rcd_whslr csr_whslr%rowtype;
-
-    --  cursor csr_whslr_dly_inv_hdr is
-    --     select t01.*
-    --       from whslr_dly_inv_hdr t01
-    --      where t01.edi_sndto_code = rcd_whslr_mly_inv_hdr.edi_sndto_code
-    --        and (t01.edi_invoice_date >= rcd_whslr_mly_inv_hdr.edi_bilto_str_date and
-    --             t01.edi_invoice_date <= rcd_whslr_mly_inv_hdr.edi_bilto_end_date)
-    --      order by t01.edi_brnch_code asc,
-    --               t01.sap_invoice_number asc;
-    --  rcd_whslr_dly_inv_hdr csr_whslr_dly_inv_hdr%rowtype;
-
       cursor csr_whslr is
          select t01.edi_sndto_code,
                 t01.edi_whslr_code,
@@ -3424,6 +3402,7 @@ create or replace package body edi_invoicing as
            from whslr t01,
                 table(edi_billing.whslr_monthly(par_date)) t02
           where t01.edi_sndto_code = t02.sndto_code
+            and (upper(par_sndto_code) = '*ALL' or t01.edi_sndto_code = par_sndto_code)
           order by t01.edi_sndto_code asc;
       rcd_whslr csr_whslr%rowtype;
 
@@ -3744,7 +3723,7 @@ create or replace package body edi_invoicing as
    /************************************************************************/
    /* This procedure performs the send wholesaler monthly invoices routine */
    /************************************************************************/
-   procedure send_whslr_monthly(par_date in varchar2) is
+   procedure send_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -3875,7 +3854,8 @@ create or replace package body edi_invoicing as
       cursor csr_whslr_mly_inv_hdr is
          select t01.*
            from whslr_mly_inv_hdr t01
-          where t01.edi_sndon_date = par_date
+          where (upper(par_sndto_code) = '*ALL' or t01.edi_sndto_code = par_sndto_code)
+            and t01.edi_sndon_date = par_date
             and t01.edi_count != 0
           order by t01.edi_sndto_code asc;
       rcd_whslr_mly_inv_hdr csr_whslr_mly_inv_hdr%rowtype;
@@ -4302,7 +4282,7 @@ create or replace package body edi_invoicing as
    /*************************************************************************/
    /* This procedure performs the email wholesaler monthly messages routine */
    /*************************************************************************/
-   procedure email_whslr_monthly(par_date in varchar2) is
+   procedure email_whslr_monthly(par_date in varchar2, par_sndto_code in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -4320,6 +4300,7 @@ create or replace package body edi_invoicing as
            from whslr_mly_inv_hdr t01,
                 whslr t02
           where t01.edi_sndto_code = t02.edi_sndto_code(+)
+            and (upper(par_sndto_code) = '*ALL' or t01.edi_sndto_code = par_sndto_code)
             and t01.edi_sndon_date = par_date
           order by t01.edi_sndto_code asc;
       rcd_whslr_mly_inv_hdr csr_whslr_mly_inv_hdr%rowtype;

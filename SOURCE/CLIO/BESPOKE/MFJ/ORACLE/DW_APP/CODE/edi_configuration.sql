@@ -19,6 +19,7 @@ create or replace package edi_configuration as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/01   Steve Gregan   Created
+    2008/05   Steve Gregan   Added wholesaler cycles for sub monthly invoicing
 
    *******************************************************************************/
 
@@ -90,8 +91,6 @@ create or replace package edi_configuration as
                          par_edi_whslr_name in varchar2,
                          par_edi_disc_code in varchar2,
                          par_edi_email_group in varchar2,
-                         par_edi_gento_day in varchar2,
-                         par_edi_gento_year in varchar2,
                          par_update_user in varchar2) return varchar2;
 
    function update_whslr(par_edi_sndto_code in varchar2,
@@ -99,11 +98,21 @@ create or replace package edi_configuration as
                          par_edi_whslr_name in varchar2,
                          par_edi_disc_code in varchar2,
                          par_edi_email_group in varchar2,
-                         par_edi_gento_day in varchar2,
-                         par_edi_gento_year in varchar2,
                          par_update_user in varchar2) return varchar2;
 
    function delete_whslr(par_edi_sndto_code in varchar2) return varchar2;
+
+   function insert_whslr_cycle(par_edi_sndto_code in varchar2,
+                               par_edi_effat_month in varchar2,
+                               par_edi_sndon_delay number,
+                               par_edi_cycle01 in varchar2,
+                               par_edi_cycle02 in varchar2,
+                               par_edi_cycle03 in varchar2,
+                               par_edi_cycle04 in varchar2,
+                               par_edi_cycle05 in varchar2) return varchar2;
+
+   function delete_whslr_cycle(par_edi_sndto_code in varchar2,
+                               par_edi_effat_month in varchar2) return varchar2;
 
    function insert_whslr_transaction(par_sap_order_type in varchar2,
                                      par_sap_invoice_type in varchar2,
@@ -142,7 +151,8 @@ create or replace package body edi_configuration as
    rcd_agency_transaction agency_transaction%rowtype;
    rcd_agency_discount agency_discount%rowtype;
    rcd_whslr whslr%rowtype;
-   rcd_whslr_billing whslr_billing%rowtype;
+   rcd_whslr_cycle_hdr whslr_cycle_hdr%rowtype;
+   rcd_whslr_cycle_det whslr_cycle_det%rowtype;
    rcd_whslr_transaction whslr_transaction%rowtype;
 
    /**************************************************/
@@ -1840,8 +1850,6 @@ create or replace package body edi_configuration as
                          par_edi_whslr_name in varchar2,
                          par_edi_disc_code in varchar2,
                          par_edi_email_group in varchar2,
-                         par_edi_gento_day in varchar2,
-                         par_edi_gento_year in varchar2,
                          par_update_user in varchar2) return varchar2 is
 
       /*-*/
@@ -1849,10 +1857,6 @@ create or replace package body edi_configuration as
       /*-*/
       var_title varchar2(128);
       var_message varchar2(4000);
-      var_bilto_date whslr_billing.edi_bilto_date%type;
-      var_bilto_str_date whslr_billing.edi_bilto_str_date%type;
-      var_bilto_end_date whslr_billing.edi_bilto_end_date%type;
-      var_sndon_date whslr_billing.edi_sndon_date%type;
 
       /*-*/
       /* Local cursors
@@ -1862,13 +1866,6 @@ create or replace package body edi_configuration as
            from whslr t01
           where t01.edi_sndto_code = rcd_whslr.edi_sndto_code;
       rcd_whslr_01 csr_whslr_01%rowtype;
-
-      cursor csr_whslr_billing_01 is 
-         select *
-           from whslr_billing t01
-          where t01.edi_sndto_code = rcd_whslr.edi_sndto_code
-          order by t01.edi_bilto_date desc;
-      rcd_whslr_billing_01 csr_whslr_billing_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1913,11 +1910,6 @@ create or replace package body edi_configuration as
       if rcd_whslr.update_user is null then
          var_message := var_message || chr(13) || 'Update user must be specified';
       end if;
-      if not(par_edi_gento_day is null) and upper(par_edi_gento_day) != '*NONE' then
-         if par_edi_gento_year < '2000' then
-            var_message := var_message || chr(13) || 'Generate billing year must be specified and greater than 2000';
-         end if;
-      end if;
 
       /*-*/
       /* Wholesaler must not already exist
@@ -1940,48 +1932,6 @@ create or replace package body edi_configuration as
       /* Create the new wholesaler
       /*-*/
       insert into whslr values rcd_whslr;
-
-      /*-*/
-      /* Generate the wholesaler billing events when requested
-      /*-*/
-      if not(par_edi_gento_day is null) and upper(par_edi_gento_day) != '*NONE' then
-
-         /*-*/
-         /* Set the starting point for the billing events
-         /*-*/
-         var_bilto_end_date := to_char(last_day(to_date(to_char(to_number(substr(to_char(sysdate,'yyyymmdd'),1,4))-1)||'1201','yyyymmdd')),'yyyymmdd');
-         open csr_whslr_billing_01;
-         fetch csr_whslr_billing_01 into rcd_whslr_billing_01;
-         if csr_whslr_billing_01%found then
-            var_bilto_end_date := rcd_whslr_billing_01.edi_bilto_end_date;
-         end if;
-         close csr_whslr_billing_01;
-
-         /*-*/
-         /* Generate the billing events until required
-         /*-*/
-         loop
-            if to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyy') > par_edi_gento_year then
-               exit;
-            end if;
-            if upper(par_edi_gento_day) = '*LAST' then
-               var_bilto_str_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyymmdd');
-               var_bilto_end_date := to_char(last_day(add_months(to_date(substr(var_bilto_end_date,1,6)||'01','yyyymmdd'),1)),'yyyymmdd');
-            else
-               var_bilto_str_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyymmdd');
-               var_bilto_end_date := to_char(add_months(to_date(substr(var_bilto_end_date,1,6)||'01','yyyymmdd'),1),'yyyymm')||par_edi_gento_day;
-            end if;
-            var_bilto_date := var_bilto_end_date;
-            var_sndon_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+2,'yyyymmdd');
-            rcd_whslr_billing.edi_sndto_code := rcd_whslr.edi_sndto_code;
-            rcd_whslr_billing.edi_bilto_date := var_bilto_date;
-            rcd_whslr_billing.edi_bilto_str_date := var_bilto_str_date;
-            rcd_whslr_billing.edi_bilto_end_date := var_bilto_end_date;
-            rcd_whslr_billing.edi_sndon_date := var_sndon_date;
-            insert into whslr_billing values rcd_whslr_billing;
-         end loop;
-
-      end if;
 
       /*-*/
       /* Commit the database
@@ -2026,8 +1976,6 @@ create or replace package body edi_configuration as
                          par_edi_whslr_name in varchar2,
                          par_edi_disc_code in varchar2,
                          par_edi_email_group in varchar2,
-                         par_edi_gento_day in varchar2,
-                         par_edi_gento_year in varchar2,
                          par_update_user in varchar2) return varchar2 is
 
       /*-*/
@@ -2035,10 +1983,6 @@ create or replace package body edi_configuration as
       /*-*/
       var_title varchar2(128);
       var_message varchar2(4000);
-      var_bilto_date whslr_billing.edi_bilto_date%type;
-      var_bilto_str_date whslr_billing.edi_bilto_str_date%type;
-      var_bilto_end_date whslr_billing.edi_bilto_end_date%type;
-      var_sndon_date whslr_billing.edi_sndon_date%type;
 
       /*-*/
       /* Local cursors
@@ -2048,13 +1992,6 @@ create or replace package body edi_configuration as
            from whslr t01
           where t01.edi_sndto_code = rcd_whslr.edi_sndto_code;
       rcd_whslr_01 csr_whslr_01%rowtype;
-
-      cursor csr_whslr_billing_01 is 
-         select *
-           from whslr_billing t01
-          where t01.edi_sndto_code = rcd_whslr.edi_sndto_code
-          order by t01.edi_bilto_date desc;
-      rcd_whslr_billing_01 csr_whslr_billing_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -2099,11 +2036,6 @@ create or replace package body edi_configuration as
       if rcd_whslr.update_user is null then
          var_message := var_message || chr(13) || 'Update user must be specified';
       end if;
-      if not(par_edi_gento_day is null) and upper(par_edi_gento_day) != '*NONE' then
-         if par_edi_gento_year < '2000' then
-            var_message := var_message || chr(13) || 'Generate billing year must be specified and greater than 2000';
-         end if;
-      end if;
 
       /*-*/
       /* Wholesaler must already exist
@@ -2133,48 +2065,6 @@ create or replace package body edi_configuration as
              update_user = rcd_whslr.update_user,
              update_date = rcd_whslr.update_date
          where edi_sndto_code = rcd_whslr.edi_sndto_code;
-
-      /*-*/
-      /* Generate the wholesaler billing events when requested
-      /*-*/
-      if not(par_edi_gento_day is null) and upper(par_edi_gento_day) != '*NONE' then
-
-         /*-*/
-         /* Set the starting point for the billing events
-         /*-*/
-         var_bilto_end_date := to_char(last_day(to_date(to_char(to_number(substr(to_char(sysdate,'yyyymmdd'),1,4))-1)||'1201','yyyymmdd')),'yyyymmdd');
-         open csr_whslr_billing_01;
-         fetch csr_whslr_billing_01 into rcd_whslr_billing_01;
-         if csr_whslr_billing_01%found then
-            var_bilto_end_date := rcd_whslr_billing_01.edi_bilto_end_date;
-         end if;
-         close csr_whslr_billing_01;
-
-         /*-*/
-         /* Generate the billing events until required
-         /*-*/
-         loop
-            if to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyy') > par_edi_gento_year then
-               exit;
-            end if;
-            if upper(par_edi_gento_day) = '*LAST' then
-               var_bilto_str_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyymmdd');
-               var_bilto_end_date := to_char(last_day(add_months(to_date(substr(var_bilto_end_date,1,6)||'01','yyyymmdd'),1)),'yyyymmdd');
-            else
-               var_bilto_str_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+1,'yyyymmdd');
-               var_bilto_end_date := to_char(add_months(to_date(substr(var_bilto_end_date,1,6)||'01','yyyymmdd'),1),'yyyymm')||par_edi_gento_day;
-            end if;
-            var_bilto_date := var_bilto_end_date;
-            var_sndon_date := to_char(to_date(var_bilto_end_date,'yyyymmdd')+2,'yyyymmdd');
-            rcd_whslr_billing.edi_sndto_code := rcd_whslr.edi_sndto_code;
-            rcd_whslr_billing.edi_bilto_date := var_bilto_date;
-            rcd_whslr_billing.edi_bilto_str_date := var_bilto_str_date;
-            rcd_whslr_billing.edi_bilto_end_date := var_bilto_end_date;
-            rcd_whslr_billing.edi_sndon_date := var_sndon_date;
-            insert into whslr_billing values rcd_whslr_billing;
-         end loop;
-
-      end if;
 
       /*-*/
       /* Commit the database
@@ -2272,9 +2162,14 @@ create or replace package body edi_configuration as
       end if;
 
       /*-*/
-      /* Delete the related billing data
+      /* Delete the related cycle detail data
       /*-*/
-      delete from whslr_billing where edi_sndto_code = rcd_whslr.edi_sndto_code;
+      delete from whslr_cycle_det where edi_sndto_code = rcd_whslr.edi_sndto_code;
+
+      /*-*/
+      /* Delete the related cycle header data
+      /*-*/
+      delete from whslr_cycle_hdr where edi_sndto_code = rcd_whslr.edi_sndto_code;
 
       /*-*/
       /* Delete the existing wholesaler
@@ -2315,6 +2210,501 @@ create or replace package body edi_configuration as
    /* End routine */
    /*-------------*/
    end delete_whslr;
+
+   /**************************************************************/
+   /* This function performs the insert wholesaler cycle routine */
+   /**************************************************************/
+   function insert_whslr_cycle(par_edi_sndto_code in varchar2,
+                               par_edi_effat_month in varchar2,
+                               par_edi_sndon_delay number,
+                               par_edi_cycle01 in varchar2,
+                               par_edi_cycle02 in varchar2,
+                               par_edi_cycle03 in varchar2,
+                               par_edi_cycle04 in varchar2,
+                               par_edi_cycle05 in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_title varchar2(128);
+      var_message varchar2(4000);
+      var_work11 varchar2(20);
+      var_work12 varchar2(20);
+      var_work13 varchar2(20);
+      var_work21 varchar2(20);
+      var_work22 varchar2(20);
+      var_work23 varchar2(20);
+      var_work31 varchar2(20);
+      var_work32 varchar2(20);
+      var_work33 varchar2(20);
+      var_work41 varchar2(20);
+      var_work42 varchar2(20);
+      var_work43 varchar2(20);
+      var_work51 varchar2(20);
+      var_work52 varchar2(20);
+      var_work53 varchar2(20);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_whslr_01 is 
+         select *
+           from whslr t01
+          where t01.edi_sndto_code = rcd_whslr_cycle_hdr.edi_sndto_code;
+      rcd_whslr_01 csr_whslr_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Electronic Data Interchange - Configuration - Insert Wholesaler Cycle';
+      var_message := null;
+
+      /*-*/
+      /* Set the private variables
+      /**/
+      rcd_whslr_cycle_hdr.edi_sndto_code := upper(par_edi_sndto_code);
+      rcd_whslr_cycle_hdr.edi_effat_month := par_edi_effat_month;
+      rcd_whslr_cycle_hdr.edi_sndon_delay := par_edi_sndon_delay;
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      if rcd_whslr_cycle_hdr.edi_sndto_code is null then
+         var_message := var_message || chr(13) || 'Send to code must be specified';
+      end if;
+      if rcd_whslr_cycle_hdr.edi_effat_month is null then
+         var_message := var_message || chr(13) || 'Effective at month must be specified';
+      end if;
+      if rcd_whslr_cycle_hdr.edi_sndon_delay is null then
+         var_message := var_message || chr(13) || 'Send on delay must be specified';
+      else
+         if rcd_whslr_cycle_hdr.edi_sndon_delay < 0 then
+            var_message := var_message || chr(13) || 'Send on delay must be greater than or equal to zero';
+         end if;
+      end if;
+      var_work11 := '*';
+      var_work12 := '*';
+      var_work13 := '*';
+      var_work21 := '*';
+      var_work22 := '*';
+      var_work23 := '*';
+      var_work31 := '*';
+      var_work32 := '*';
+      var_work33 := '*';
+      var_work41 := '*';
+      var_work42 := '*';
+      var_work43 := '*';
+      var_work51 := '*';
+      var_work52 := '*';
+      var_work53 := '*';
+      if not(par_edi_cycle01 is null) and par_edi_cycle01 != '*' then
+         if instr(par_edi_cycle01,':') != 0 then
+            begin
+               var_work11 := to_char(to_number(substr(par_edi_cycle01,1,instr(par_edi_cycle01,':')-1)),'fm00');
+               var_work12 := 'C';
+               if var_work11 <= '27' then
+                  var_work12 := 'P';
+               end if;
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 01 start day is not a valid number';
+            end;
+            if var_work11 < '01' or var_work11 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 01 start day is not a valid day';
+            end if;
+            if var_work11 = '55' then
+               var_work11 := '99';
+            end if;
+            begin
+               var_work13 := to_char(to_number(substr(par_edi_cycle01,instr(par_edi_cycle01,':')+1)),'fm00');
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 01 end day is not a valid number';
+            end;
+            if var_work13 < '28' or var_work13 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 01 end day is not a valid day';
+            end if;
+            if var_work13 = '55' then
+               var_work13 := '99';
+            end if;
+            if var_work11 >= var_work13 then
+               var_message := var_message || chr(13) || 'Cycle 01 end day must be greater than cycle 01 start day';
+            end if;
+         end if;
+      end if;
+      if not(par_edi_cycle02 is null) and par_edi_cycle02 != '*' then
+         if instr(par_edi_cycle02,':') != 0 then
+            begin
+               var_work21 := to_char(to_number(substr(par_edi_cycle02,1,instr(par_edi_cycle02,':')-1)),'fm00');
+               var_work22 := 'C';
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 02 start day is not a valid number';
+            end;
+            if var_work21 < '28' or var_work21 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 02 start day is not a valid day';
+            end if;
+            if var_work21 = '55' then
+               var_work21 := '99';
+            end if;
+            begin
+               var_work23 := to_char(to_number(substr(par_edi_cycle02,instr(par_edi_cycle02,':')+1)),'fm00');
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 02 end day is not a valid number';
+            end;
+            if var_work23 < '28' or var_work23 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 02 end day is not a valid day';
+            end if;
+            if var_work23 = '55' then
+               var_work23 := '99';
+            end if;
+            if var_work21 >= var_work23 then
+               var_message := var_message || chr(13) || 'Cycle 02 end day must be greater than cycle 02 start day';
+            end if;
+         end if;
+      end if;
+      if not(par_edi_cycle03 is null) and par_edi_cycle03 != '*' then
+         if instr(par_edi_cycle03,':') != 0 then
+            begin
+               var_work31 := to_char(to_number(substr(par_edi_cycle03,1,instr(par_edi_cycle03,':')-1)),'fm00');
+               var_work32 := 'C';
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 03 start day is not a valid number';
+            end;
+            if var_work31 < '28' or var_work31 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 03 start day is not a valid day';
+            end if;
+            if var_work31 = '55' then
+               var_work31 := '99';
+            end if;
+            begin
+               var_work33 := to_char(to_number(substr(par_edi_cycle03,instr(par_edi_cycle03,':')+1)),'fm00');
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 03 end day is not a valid number';
+            end;
+            if var_work33 < '28' or var_work33 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 03 end day is not a valid day';
+            end if;
+            if var_work33 = '55' then
+               var_work33 := '99';
+            end if;
+            if var_work31 >= var_work33 then
+               var_message := var_message || chr(13) || 'Cycle 03 end day must be greater than cycle 03 start day';
+            end if;
+         end if;
+      end if;
+      if not(par_edi_cycle04 is null) and par_edi_cycle04 != '*' then
+         if instr(par_edi_cycle04,':') != 0 then
+            begin
+               var_work41 := to_char(to_number(substr(par_edi_cycle04,1,instr(par_edi_cycle04,':')-1)),'fm00');
+               var_work42 := 'C';
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 04 start day is not a valid number';
+            end;
+            if var_work41 < '28' or var_work41 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 04 start day is not a valid day';
+            end if;
+            if var_work41 = '55' then
+               var_work41 := '99';
+            end if;
+            begin
+               var_work43 := to_char(to_number(substr(par_edi_cycle04,instr(par_edi_cycle04,':')+1)),'fm00');
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 04 end day is not a valid number';
+            end;
+            if var_work43 < '28' or var_work43 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 04 end day is not a valid day';
+            end if;
+            if var_work43 = '55' then
+               var_work43 := '99';
+            end if;
+            if var_work41 >= var_work43 then
+               var_message := var_message || chr(13) || 'Cycle 04 end day must be greater than cycle 03 start day';
+            end if;
+         end if;
+      end if;
+      if not(par_edi_cycle05 is null) and par_edi_cycle05 != '*' then
+         if instr(par_edi_cycle05,':') != 0 then
+            begin
+               var_work51 := to_char(to_number(substr(par_edi_cycle05,1,instr(par_edi_cycle05,':')-1)),'fm00');
+               var_work52 := 'C';
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 05 start day is not a valid number';
+            end;
+            if var_work51 < '28' or var_work51 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 05 start day is not a valid day';
+            end if;
+            if var_work51 = '55' then
+               var_work51 := '99';
+            end if;
+            begin
+               var_work53 := to_char(to_number(substr(par_edi_cycle05,instr(par_edi_cycle05,':')+1)),'fm00');
+            exception
+               when others then
+                  var_message := var_message || chr(13) || 'Cycle 05 end day is not a valid number';
+            end;
+            if var_work53 < '28' or var_work53 > '55' then
+               var_message := var_message || chr(13) || 'Cycle 05 end day is not a valid day';
+            end if;
+            if var_work53 = '55' then
+               var_work53 := '99';
+            end if;
+            if var_work51 >= var_work53 then
+               var_message := var_message || chr(13) || 'Cycle 05 end day must be greater than cycle 03 start day';
+            end if;
+         end if;
+      end if;
+      if var_work11 = '*' and var_work21 = '*' and var_work31 = '*' and var_work41 = '*' and var_work51 = '*' then
+         var_message := var_message || chr(13) || 'At least one cycle must be specified';
+      end if;
+
+      /*-*/
+      /* Wholesaler must exist
+      /*-*/
+      open csr_whslr_01;
+      fetch csr_whslr_01 into rcd_whslr_01;
+      if csr_whslr_01%notfound then
+         var_message := var_message || chr(13) || 'Wholesaler (' || rcd_whslr_cycle_hdr.edi_sndto_code || ') does not exist';
+      end if;
+      close csr_whslr_01;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Delete any existing cycle header and detail
+      /*-*/
+      delete from whslr_cycle_det
+       where edi_sndto_code = rcd_whslr_cycle_hdr.edi_sndto_code
+         and edi_effat_month = rcd_whslr_cycle_hdr.edi_effat_month;
+      delete from whslr_cycle_hdr
+       where edi_sndto_code = rcd_whslr_cycle_hdr.edi_sndto_code
+         and edi_effat_month = rcd_whslr_cycle_hdr.edi_effat_month;
+
+      /*-*/
+      /* Create the new wholesaler cycle header and detail
+      /*-*/
+      insert into whslr_cycle_hdr values rcd_whslr_cycle_hdr;
+      /*-*/
+      if var_work11 != '*' and var_work13 != '*' then
+         if var_work12 = 'C' and var_work11 != '99' then
+            var_work11 := to_char(to_number(var_work11)-27,'fm00');
+         end if;
+         if var_work13 != '99' then
+            var_work13 := to_char(to_number(var_work13)-27,'fm00');
+         end if;
+         rcd_whslr_cycle_det.edi_sndto_code := rcd_whslr_cycle_hdr.edi_sndto_code;
+         rcd_whslr_cycle_det.edi_effat_month := rcd_whslr_cycle_hdr.edi_effat_month;
+         rcd_whslr_cycle_det.edi_endon_day := substr(var_work13,1,2);
+         rcd_whslr_cycle_det.edi_stron_month := substr(var_work12,1,1);
+         rcd_whslr_cycle_det.edi_stron_day := substr(var_work11,1,2);
+         insert into whslr_cycle_det values rcd_whslr_cycle_det;
+      end if;
+      /*-*/
+      if var_work21 != '*' and var_work23 != '*' then
+         if var_work21 != '99' then
+            var_work21 := to_char(to_number(var_work21)-27,'fm00');
+         end if;
+         if var_work23 != '99' then
+            var_work23 := to_char(to_number(var_work23)-27,'fm00');
+         end if;
+         rcd_whslr_cycle_det.edi_sndto_code := rcd_whslr_cycle_hdr.edi_sndto_code;
+         rcd_whslr_cycle_det.edi_effat_month := rcd_whslr_cycle_hdr.edi_effat_month;
+         rcd_whslr_cycle_det.edi_endon_day := substr(var_work23,1,2);
+         rcd_whslr_cycle_det.edi_stron_month := substr(var_work22,1,1);
+         rcd_whslr_cycle_det.edi_stron_day := substr(var_work21,1,2);
+         insert into whslr_cycle_det values rcd_whslr_cycle_det;
+      end if;
+      /*-*/
+      if var_work31 != '*' and var_work33 != '*' then
+         if var_work31 != '99' then
+            var_work31 := to_char(to_number(var_work31)-27,'fm00');
+         end if;
+         if var_work33 != '99' then
+            var_work33 := to_char(to_number(var_work33)-27,'fm00');
+         end if;
+         rcd_whslr_cycle_det.edi_sndto_code := rcd_whslr_cycle_hdr.edi_sndto_code;
+         rcd_whslr_cycle_det.edi_effat_month := rcd_whslr_cycle_hdr.edi_effat_month;
+         rcd_whslr_cycle_det.edi_endon_day := substr(var_work33,1,2);
+         rcd_whslr_cycle_det.edi_stron_month := substr(var_work32,1,1);
+         rcd_whslr_cycle_det.edi_stron_day := substr(var_work31,1,2);
+         insert into whslr_cycle_det values rcd_whslr_cycle_det;
+      end if;
+      /*-*/
+      if var_work41 != '*' and var_work43 != '*' then
+         if var_work41 != '99' then
+            var_work41 := to_char(to_number(var_work41)-27,'fm00');
+         end if;
+         if var_work43 != '99' then
+            var_work43 := to_char(to_number(var_work43)-27,'fm00');
+         end if;
+         rcd_whslr_cycle_det.edi_sndto_code := rcd_whslr_cycle_hdr.edi_sndto_code;
+         rcd_whslr_cycle_det.edi_effat_month := rcd_whslr_cycle_hdr.edi_effat_month;
+         rcd_whslr_cycle_det.edi_endon_day := substr(var_work43,1,2);
+         rcd_whslr_cycle_det.edi_stron_month := substr(var_work42,1,1);
+         rcd_whslr_cycle_det.edi_stron_day := substr(var_work41,1,2);
+         insert into whslr_cycle_det values rcd_whslr_cycle_det;
+      end if;
+      /*-*/
+      if var_work51 != '*' and var_work53 != '*' then
+         if var_work51 != '99' then
+            var_work51 := to_char(to_number(var_work51)-27,'fm00');
+         end if;
+         if var_work53 != '99' then
+            var_work53 := to_char(to_number(var_work53)-27,'fm00');
+         end if;
+         rcd_whslr_cycle_det.edi_sndto_code := rcd_whslr_cycle_hdr.edi_sndto_code;
+         rcd_whslr_cycle_det.edi_effat_month := rcd_whslr_cycle_hdr.edi_effat_month;
+         rcd_whslr_cycle_det.edi_endon_day := substr(var_work53,1,2);
+         rcd_whslr_cycle_det.edi_stron_month := substr(var_work52,1,1);
+         rcd_whslr_cycle_det.edi_stron_day := substr(var_work51,1,2);
+         insert into whslr_cycle_det values rcd_whslr_cycle_det;
+      end if;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end insert_whslr_cycle;
+
+   /**************************************************************/
+   /* This function performs the delete wholesaler cycle routine */
+   /**************************************************************/
+   function delete_whslr_cycle(par_edi_sndto_code in varchar2,
+                               par_edi_effat_month in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Electronic Data Interchange - Configuration - Delete Wholesaler Cycle';
+      var_message := null;
+
+      /*-*/
+      /* Set the private variables
+      /**/
+      rcd_whslr_cycle_hdr.edi_sndto_code := upper(par_edi_sndto_code);
+      rcd_whslr_cycle_hdr.edi_effat_month := par_edi_effat_month;
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      if rcd_whslr_cycle_hdr.edi_sndto_code is null then
+         var_message := var_message || chr(13) || 'Send to code must be specified';
+      end if;
+      if rcd_whslr_cycle_hdr.edi_effat_month is null then
+         var_message := var_message || chr(13) || 'Effective at month must be specified';
+      end if;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Delete the related cycle detail data
+      /*-*/
+      delete from whslr_cycle_det
+       where edi_sndto_code = rcd_whslr_cycle_hdr.edi_sndto_code
+         and edi_effat_month = rcd_whslr_cycle_hdr.edi_effat_month;
+
+      /*-*/
+      /* Delete the related cycle header data
+      /*-*/
+      delete from whslr_cycle_hdr
+       where edi_sndto_code = rcd_whslr_cycle_hdr.edi_sndto_code
+         and edi_effat_month = rcd_whslr_cycle_hdr.edi_effat_month;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end delete_whslr_cycle;
 
    /********************************************************************/
    /* This function performs the insert wholesaler transaction routine */
