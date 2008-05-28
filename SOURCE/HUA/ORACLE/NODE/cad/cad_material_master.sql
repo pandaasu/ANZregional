@@ -18,6 +18,8 @@
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
  2008/05   Linden Glen    Added dstrbtn_chain_status
+                          Added lads_change_date (LADS Last Updated timestamp)
+                          Added sap_change_date (SAP Last Updated timestamp)
 
 *******************************************************************************/
 
@@ -89,6 +91,8 @@ create table cad_material_master
     make_moe_0168                    varchar2(1 char)      null,
     intrmdt_prdct_compnt             varchar2(1 char)      null,
     dstrbtn_chain_status             varchar2(2 char)      null,
+    lads_change_date                 varchar2(14 char)     null,
+    sap_change_date                  varchar2(14 char)     null,
     cad_load_date                    date                  not null);
 
 

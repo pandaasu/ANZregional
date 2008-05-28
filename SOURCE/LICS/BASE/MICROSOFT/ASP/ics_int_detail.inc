@@ -130,8 +130,8 @@
                         <tr><td class="clsLabelFB" align=left colspan=1 nowrap><nobr>&nbsp;NO DATA FOUND&nbsp</nobr></td></tr><%else%>
                         <tr>
                            <td class="clsNormalFix" align=left colspan=1><pre><%for i = objSelection.ListLower("DATA") to objSelection.ListUpper("DATA")%><%if i < lngMaximum - 1 then%><%if objSelection.ListValue04("DETAIL",0) = "*INBOUND" and objSelection.ListValue03("DATA",i) = "x" then%>
-<a class="clsErrorFix" href="javascript:processDataMessage('<%=objForm.Fields("QRY_Header").Value%>','<%=objForm.Fields("QRY_Trace").Value%>','<%=objSelection.ListValue02("DATA",i)%>');"><%=replace(replace(objSelection.ListValue01("DATA",i), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1)%></a><%else%>
-<font class="clsNormalFix"><%=replace(replace(objSelection.ListValue01("DATA",i), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1)%></font><%end if%><%else%>
+<a class="clsErrorFix" href="javascript:processDataMessage('<%=objForm.Fields("QRY_Header").Value%>','<%=objForm.Fields("QRY_Trace").Value%>','<%=objSelection.ListValue02("DATA",i)%>');"><%=replace(replace(replace(objSelection.ListValue01("DATA",i), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1), chr(13), "", 1, -1, 1)%></a><%else%>
+<font class="clsNormalFix"><%=replace(replace(replace(objSelection.ListValue01("DATA",i), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1), chr(13), "", 1, -1, 1)%></font><%end if%><%else%>
 <font class="clsNormalFix">**MAXIMUM VIEWABLE ROWS RETRIEVED**</font><%end if%><%next%></pre></td>
                         </tr><%end if%>
                      </table>

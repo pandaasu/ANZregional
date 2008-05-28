@@ -19,6 +19,8 @@ create or replace package ladcad01_material as
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
  2008/05   Linden Glen    Added dstrbtn_chain_status
+                          Added lads_change_date (LADS Last Updated timestamp)
+                          Added sap_change_date (SAP Last Updated timestamp)
 
 *******************************************************************************/
 
@@ -149,6 +151,8 @@ create or replace package body ladcad01_material as
       lics_inbound_utility.set_definition('HDR','MAKE_MOE_0168',1);
       lics_inbound_utility.set_definition('HDR','INTRMDT_PRDCT_COMPNT',1);
       lics_inbound_utility.set_definition('HDR','DSTRBTN_CHAIN_STATUS',2);
+      lics_inbound_utility.set_definition('HDR','LADS_UPDATE_DATE',14);
+      lics_inbound_utility.set_definition('HDR','SAP_UPDATE_DATE',14);
       /*-*/
       lics_inbound_utility.set_definition('INV','IDOC_INV',3);
       lics_inbound_utility.set_definition('INV','SAP_COMPANY_CODE',6);
@@ -274,15 +278,6 @@ create or replace package body ladcad01_material as
    /**************************************************/
    procedure process_record_hdr(par_record in varchar2) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -361,6 +356,8 @@ create or replace package body ladcad01_material as
       rcd_cad_material_master.make_moe_0168 := lics_inbound_utility.get_variable('MAKE_MOE_0168');
       rcd_cad_material_master.intrmdt_prdct_compnt := lics_inbound_utility.get_variable('INTRMDT_PRDCT_COMPNT');
       rcd_cad_material_master.dstrbtn_chain_status := lics_inbound_utility.get_variable('DSTRBTN_CHAIN_STATUS');
+      rcd_cad_material_master.lads_change_date := lics_inbound_utility.get_variable('LADS_UPDATE_DATE');
+      rcd_cad_material_master.sap_change_date := lics_inbound_utility.get_variable('SAP_UPDATE_DATE');
       rcd_cad_material_master.cad_load_date := sysdate;
 
       /*-*/
@@ -451,6 +448,8 @@ create or replace package body ladcad01_material as
           make_moe_0168,
           intrmdt_prdct_compnt,
           dstrbtn_chain_status,
+          lads_change_date,
+          sap_change_date,
           cad_load_date)
       values
          (rcd_cad_material_master.sap_material_code,
@@ -514,6 +513,8 @@ create or replace package body ladcad01_material as
           rcd_cad_material_master.make_moe_0168,
           rcd_cad_material_master.intrmdt_prdct_compnt,
           rcd_cad_material_master.dstrbtn_chain_status,
+          rcd_cad_material_master.lads_change_date,
+          rcd_cad_material_master.sap_change_date,
           rcd_cad_material_master.cad_load_date);
 
    /*-------------*/

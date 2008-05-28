@@ -20,6 +20,8 @@ create or replace package ladcad01_material as
                           Added SELL and MAKE MOE identifier for 0168
                           Added Intermediate Component identifier
  2008/05   Linden Glen    Added dstrbtn_chain_status
+                          Added lads_change_date (LADS Last Updated timestamp)
+                          Added sap_change_date (SAP Last Updated timestamp)
                            
 *******************************************************************************/
 
@@ -117,7 +119,9 @@ create or replace package body ladcad01_material as
                 j.sell_moe_0168 as sell_moe_0168,
                 j.make_moe_0168 as make_moe_0168,
                 a.mars_intrmdt_prdct_compnt_flag as intrmdt_prdct_compnt,
-                k.dstrbtn_chain_status as dstrbtn_chain_status
+                k.dstrbtn_chain_status as dstrbtn_chain_status,
+                to_char(a.bds_lads_date,'yyyymmddhh24miss') as lads_change_date,
+                to_char(a.change_date,'yyyymmddhh24miss') as sap_change_date
          from bds_material_hdr a,
               bds_material_classfctn_en c,
               (select sap_material_code,
@@ -275,7 +279,9 @@ create or replace package body ladcad01_material as
                                           rpad(to_char(nvl(rec_matl_master.sell_moe_0168,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.make_moe_0168,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.intrmdt_prdct_compnt,' ')),1, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.dstrbtn_chain_status,' ')),2, ' '));
+                                          rpad(to_char(nvl(rec_matl_master.dstrbtn_chain_status,' ')),2, ' ') ||
+                                          rpad(to_char(nvl(rec_matl_master.lads_change_date,' ')),14, ' ') ||
+                                          rpad(to_char(nvl(rec_matl_master.sap_change_date,' ')),14, ' '));
 
 
          /*-*/

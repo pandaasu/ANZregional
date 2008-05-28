@@ -27,6 +27,7 @@ CREATE OR REPLACE package regl_dbp_aggregation as
  2008/01   Linden Glen       Created
  2008/04   Linden Glen       Changed Venus Actual aggregation to pickup YYYYPP for 
                              Effective Billing date, not range to current point in time
+ 2008/05   Linden Glen       Changed Company code for China (908 to 135 after Atlas GoLive)
 
 *******************************************************************************/
 
@@ -690,7 +691,7 @@ create or replace package body regl_dbp_aggregation as
                      from regl_sales_fact t01
                      where rprting_yyyyppdd in (select mars_yyyyppdd from mars_date
                                                 where mars_week between substr(par_yyyyppw,1,6)||'1' and par_yyyyppw)
-                       and company_code in ('131','900','901','902','903','904','905','906','907','908','909','912')
+                       and company_code in ('131','900','901','902','903','904','905','906','907','135','909','912')
                      group by t01.company_code) b
                where a.company_code = b.company_code
                  and a.rprting_yyyymmdd = b.rprting_yyyymmdd
@@ -706,7 +707,7 @@ create or replace package body regl_dbp_aggregation as
                       null as dbp_prd_tp_op_gsv,
                       null as dbp_ptd_tp_ord_gsv
                from dds_fpps_actual_fact a
-               where a.company_code in ('131','900','901','902','903','904','905','906','907','908','909','912')
+               where a.company_code in ('131','900','901','902','903','904','905','906','907','135','909','912')
                  and a.actual_yyyypp = substr(par_yyyyppw,1,4)-1||substr(par_yyyyppw,5,2)
                union all
                /***********************/
@@ -720,7 +721,7 @@ create or replace package body regl_dbp_aggregation as
                       a.fcst_gsv as dbp_prd_tp_op_gsv,
                       null as dbp_ptd_tp_ord_gsv
                from dds_fpps_fcst_fact a
-               where a.company_code in ('131','900','901','902','903','904','905','906','907','908','909','912')
+               where a.company_code in ('131','900','901','902','903','904','905','906','907','135','909','912')
                  and a.fcst_yyyypp = substr(par_yyyyppw,1,6)
                  and a.fcst_type = '*OP')
          group by company_code, dbp_aag_code, dbp_matl_code;
@@ -823,11 +824,11 @@ create or replace package body regl_dbp_aggregation as
       /*--------------------------------------*/
       /* Build Regional Companies             */
       /*--------------------------------------*/ 
-      lics_logging.write_log('COMMENCE build for SAP companies 131/900/901/902/903/904/905/906/907/908/909/912');
+      lics_logging.write_log('COMMENCE build for SAP companies 131/900/901/902/903/904/905/906/907/135/909/912');
 
       lics_logging.write_log('DELETE for Regional Companies and Week ' || par_yyyyppw);      
       delete dds_dbp_week_mart
-       where dbp_company_code in ('131','900','901','902','903','904','905','906','907','908','909','912')
+       where dbp_company_code in ('131','900','901','902','903','904','905','906','907','135','909','912')
          and dbp_yyyyppw = par_yyyyppw;
 
       /*-*/
