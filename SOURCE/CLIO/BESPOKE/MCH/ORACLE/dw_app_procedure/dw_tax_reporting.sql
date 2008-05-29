@@ -41,6 +41,8 @@ create or replace package dw_tax_reporting as
     2008/04   Steve Gregan   Changed sample pricing report for finished goods only
     2008/04   Steve Gregan   Changed sample pricing report for pricing UOM and calculation
     2008/05   Steve Gregan   Changed gold tax report formatting
+    2008/05   Steve Gregan   Changed stock transfer report to only select goods issued deliveries
+    2008/05   Steve Gregan   Changed gold tax report to only select goods issued deliveries
 
    *******************************************************************************/
 
@@ -198,7 +200,7 @@ create or replace package body dw_tax_reporting as
                       from (select /*+ ordered */
                                    t01.vbeln as qry_ord_number,
                                    lads_trim_code(t01.posnr) as qry_ord_line,
-                                   lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') as qry_gi_date,
+                                   lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                    t01.werks as qry_sup_plant,
                                    t01.lgort as qry_sup_locn,
                                    t02.werks2 as qry_rcv_plant,
@@ -302,11 +304,11 @@ create or replace package body dw_tax_reporting as
                                 and upper(t01.werks) in (''<SUPPLANT>'')
                                 <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
                                 and t01.matnr = t05.matnr
-                                and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
-                                and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
+                                and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
+                                and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
                                 and t01.matnr = t06.matnr(+)
                                 and t01.matnr = t07.matnr(+)
                                 and t01.matnr = t08.matnr(+)
@@ -315,7 +317,7 @@ create or replace package body dw_tax_reporting as
                              select /*+ ordered */
                                     t01.vbeln as qry_ord_number,
                                     lads_trim_code(t01.posnr) as qry_ord_line,
-                                    lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') as qry_gi_date,
+                                    lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                     t01.werks as qry_sup_plant,
                                     t01.lgort as qry_sup_locn,
                                     t02.werks2 as qry_rcv_plant,
@@ -373,8 +375,8 @@ create or replace package body dw_tax_reporting as
                                 and upper(t01.werks) in (''<SUPPLANT>'')
                                 <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
                                 and t01.matnr = t09.matnr(+)
                                 and not exists (select t12.kbetr
                                                   from lads_prc_lst_hdr t11,
@@ -390,8 +392,8 @@ create or replace package body dw_tax_reporting as
                                                    and t12.kmein = ''EA''
                                                    and t11.matnr is not null
                                                    and t01.matnr = t11.matnr
-                                                   and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
-                                                   and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
+                                                   and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
+                                                   and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
                      order by qry_sup_plant,
                               qry_sup_locn,
                               qry_rcv_plant,
@@ -1078,7 +1080,7 @@ create or replace package body dw_tax_reporting as
                       from (select /*+ ordered */
                                    t01.vbeln as qry_ord_number,
                                    lads_trim_code(t01.posnr) as qry_ord_line,
-                                   lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') as qry_gi_date,
+                                   lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                    nvl(t01.werks,''NONE'') as qry_sup_plant,
                                    t01.lgort as qry_sup_locn,
                                    nvl(t02.werks2,''NONE'') as qry_rcv_plant,
@@ -1190,11 +1192,11 @@ create or replace package body dw_tax_reporting as
                                 and upper(t01.werks) in (''<SUPPLANT>'')
                                 <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
                                 and t01.matnr = t05.matnr
-                                and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
-                                and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
+                                and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= t05.valid_from or t05.valid_from is null)
+                                and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= t05.valid_to or t05.valid_to is null)         
                                 and t01.matnr = t06.matnr(+)
                                 and t01.matnr = t07.matnr(+)
                                 and t01.matnr = t08.matnr(+)
@@ -1205,7 +1207,7 @@ create or replace package body dw_tax_reporting as
                              select /*+ ordered */
                                     t01.vbeln as qry_ord_number,
                                     lads_trim_code(t01.posnr) as qry_ord_line,
-                                    lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') as qry_gi_date,
+                                    lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') as qry_gi_date,
                                     nvl(t01.werks,''NONE'') as qry_sup_plant,
                                     t01.lgort as qry_sup_locn,
                                     nvl(t02.werks2,''NONE'') as qry_rcv_plant,
@@ -1271,8 +1273,8 @@ create or replace package body dw_tax_reporting as
                                 and upper(t01.werks) in ('' <SUPPLANT>'')
                                 <SUPLOCN>
                                 and upper(t02.werks2) in (''<RCVPLANT>'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
-                                and lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= to_date(''<GIDATE01>'', ''yyyymmdd'')
+                                and lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= to_date(''<GIDATE02>'', ''yyyymmdd'')
                                 and t01.matnr = t09.matnr(+)
                                 and lads_trim_code(t01.matnr) = t10.sap_material_code(+)
                                 and t02.werks2 = t11.cust_code(+)
@@ -1290,8 +1292,8 @@ create or replace package body dw_tax_reporting as
                                                    and t12.kmein = ''EA''
                                                    and t11.matnr is not null
                                                    and t01.matnr = t11.matnr
-                                                   and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
-                                                   and (lads_to_date(nvl(ltrim(t03.isdd,''0''),ltrim(t03.ntanf,''0'')),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
+                                                   and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
+                                                   and (lads_to_date(ltrim(t03.isdd,''0''),''yyyymmdd'') <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))
                      order by qry_sup_plant,
                               qry_rcv_plant,
                               qry_tax_eye,
