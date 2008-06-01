@@ -78,6 +78,7 @@ create or replace package asn_dcs_processor as
                              Implemented EDI message creation
     2007/11   Steve Gregan   Removed AS400 code
                              Added sales order creation date
+    2008/02   Steve Gregan   Added the customer GTIN to the DCS detail table
 
    *******************************************************************************/
 
