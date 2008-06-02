@@ -54,7 +54,7 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="T415A"/>
+               SapTables="T415A,EORD"/>
      <interface identifier="SAPLAD02#05"
                description="SAP to LADS Recipe Interface"
                class="com.isi.lad.cSapLad02"
