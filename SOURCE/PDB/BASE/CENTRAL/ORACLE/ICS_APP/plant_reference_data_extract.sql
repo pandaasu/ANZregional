@@ -146,7 +146,7 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       /* Purchasing Source (Vendor/Material) Reference Table*/
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'EORD') then plant_refrnc_prch_src_extract.execute(par_site);
+      when (var_z_tabname = 'EORD') then plant_refrnc_prch_src_extract.execute('*ALL', null, par_site);
       /*----------------------------------------------------*/
       /* Production Resources (Details/Descriptions)        */
       /*----------------------------------------------------*/

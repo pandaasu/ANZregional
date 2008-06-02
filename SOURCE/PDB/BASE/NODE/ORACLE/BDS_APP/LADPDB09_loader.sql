@@ -41,6 +41,7 @@ create or replace package body bds_app.ladpdb09_loader as
   /*-*/
   procedure complete_transaction;
   procedure process_record_hdr(par_record in varchar2);
+  procedure process_record_ctl(par_record in varchar2);
 
   /*-*/
   /* Private definitions 
@@ -74,8 +75,11 @@ create or replace package body bds_app.ladpdb09_loader as
     lics_inbound_utility.clear_definition;
     
     /*-*/  
+    lics_inbound_utility.set_definition('CTL','ID',3);
+    lics_inbound_utility.set_definition('CTL','SAP_MATERIAL_CODE', 18);
+    
+    /*-*/  
     lics_inbound_utility.set_definition('HDR','ID',3);
-    lics_inbound_utility.set_definition('HDR','SAP_MATERIAL_CODE', 18);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);
     lics_inbound_utility.set_definition('HDR','RECORD_NO', 5);
     lics_inbound_utility.set_definition('HDR','CREATN_DATE', 14);
@@ -124,6 +128,7 @@ create or replace package body bds_app.ladpdb09_loader as
     var_record_identifier := substr(par_record,1,3);
     
     case var_record_identifier
+      when 'CTL' then process_record_ctl(par_record);
       when 'HDR' then process_record_hdr(par_record);
       else lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
@@ -212,13 +217,23 @@ create or replace package body bds_app.ladpdb09_loader as
   /*-------------*/
   end complete_transaction;
   
-  procedure process_record_hdr(par_record in varchar2) is
+  procedure process_record_ctl(par_record in varchar2) is
+    /*-*/
+    /* Local cursors 
+    /*-*/
+    cursor csr_bds_refrnc_prchsing_src is
+      select t01.sap_material_code as sap_material_code
+      from bds_refrnc_prchsing_src_ics t01
+      where t01.sap_material_code = rcd_hdr.sap_material_code
+      group by t01.sap_material_code;
+      
+    rcd_bds_refrnc_prchsing_src csr_bds_refrnc_prchsing_src%rowtype;
     
   /*-------------*/
   /* Begin block */
   /*-------------*/
   begin
-  
+
     /*-*/
     /* Complete the previous transactions 
     /*-*/
@@ -231,6 +246,40 @@ create or replace package body bds_app.ladpdb09_loader as
     var_trn_ignore := false;
     var_trn_error := false;
 
+    /*-*/
+    /* PARSE - Parse the data record 
+    /*-*/    
+    lics_inbound_utility.parse_record('CTL', par_record);
+
+    /*-*/
+    /* RETRIEVE - Retrieve the field values 
+    /*-*/
+    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
+        
+    /*-*/
+    /* Validate message sequence  
+    /*-*/
+    open csr_bds_refrnc_prchsing_src;
+    fetch csr_bds_refrnc_prchsing_src into rcd_bds_refrnc_prchsing_src;
+    
+    if ( csr_bds_refrnc_prchsing_src%found ) then      
+      delete from bds_refrnc_prchsing_src_ics where sap_material_code = rcd_hdr.sap_material_code;
+    end if;   
+     
+    close csr_bds_refrnc_prchsing_src;
+    
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end process_record_ctl;
+  
+  procedure process_record_hdr(par_record in varchar2) is
+    
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin
+
     /*-------------------------------*/
     /* PARSE - Parse the data record */
     /*-------------------------------*/
@@ -239,7 +288,6 @@ create or replace package body bds_app.ladpdb09_loader as
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */  
     /*--------------------------------------*/        
-    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_hdr.record_no := lics_inbound_utility.get_variable('RECORD_NO');
     rcd_hdr.creatn_date := lics_inbound_utility.get_date('CREATN_DATE','yyyymmddhh24miss');
