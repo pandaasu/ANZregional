@@ -396,7 +396,10 @@ create or replace package body bds_app.ladpdb03_loader as
       fax_number = rcd_hdr.fax_number, 
       fax_extension = rcd_hdr.fax_extension, 
       fax_full_number = rcd_hdr.fax_full_number
-    where customer_code = rcd_hdr.customer_code;
+    where customer_code = rcd_hdr.customer_code
+      and address_version = rcd_hdr.address_version 
+      and valid_from_date = rcd_hdr.valid_from_date 
+      and valid_to_date = rcd_hdr.valid_to_date;
     
     if ( sql%notfound ) then  
       insert into bds_addr_customer_det
