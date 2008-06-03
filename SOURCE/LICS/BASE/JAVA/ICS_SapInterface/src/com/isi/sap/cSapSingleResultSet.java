@@ -337,7 +337,48 @@ public final class cSapSingleResultSet {
       }
       objPrintWriter.print("CTL" + strIdocName + cstrSpaces.substring(0,30-strIdocName.length()) + "9999999999999999" + strTimestamp);                      
       objPrintWriter.println();
-      objPrintWriter.print("NOD" + strQuery);
+      objPrintWriter.print("NOD" + strQuery + cstrSpaces.substring(0,30-strQuery.length()));
+      for (int i=0; i<cobjRows.size(); i++) {
+         ((cSapSingleResultSetRow)cobjRows.get(i)).toInterface(objPrintWriter);
+      }
+      objPrintWriter.close();
+   }
+   
+   /**
+    * Writes the result set to the specified interface file with meta data
+    * @param strFileName the target file path and name
+    * @param strIdocName the target IDOC name
+    * @param strQuery the query name
+    * @param bolAppend append data o the target file
+    * @throws Exception the exception message
+    */
+   public void toInterfaceMeta(String strFileName, String strIdocName, String strQuery, boolean bolAppend) throws Exception {
+      PrintWriter objPrintWriter = new PrintWriter(new FileWriter(strFileName, bolAppend));
+      DecimalFormat objDecimalFormat = new DecimalFormat();
+      objDecimalFormat.setGroupingSize(0);
+      objDecimalFormat.setMinimumFractionDigits(0);
+      GregorianCalendar objCalendar = new GregorianCalendar();
+      objCalendar.setTimeInMillis(Calendar.getInstance().getTimeInMillis());
+      objDecimalFormat.setMinimumIntegerDigits(4);
+      String strYear = objDecimalFormat.format((long)objCalendar.get(Calendar.YEAR));
+      objDecimalFormat.setMinimumIntegerDigits(2);
+      String strMonth = objDecimalFormat.format((long)objCalendar.get(Calendar.MONTH)+1);
+      objDecimalFormat.setMinimumIntegerDigits(2);
+      String strDay = objDecimalFormat.format((long)objCalendar.get(Calendar.DATE));
+      objDecimalFormat.setMinimumIntegerDigits(2);
+      String strHour = objDecimalFormat.format((long)objCalendar.get(Calendar.HOUR_OF_DAY));
+      objDecimalFormat.setMinimumIntegerDigits(2);
+      String strMinute = objDecimalFormat.format((long)objCalendar.get(Calendar.MINUTE));
+      objDecimalFormat.setMinimumIntegerDigits(2);
+      String strSecond = objDecimalFormat.format((long)objCalendar.get(Calendar.SECOND));
+      String strTimestamp = strYear + strMonth + strDay + strHour + strMinute + strSecond;
+      if (bolAppend) {
+         objPrintWriter.println();
+      }
+      objPrintWriter.print("CTL" + strIdocName + cstrSpaces.substring(0,30-strIdocName.length()) + "9999999999999999" + strTimestamp);                      
+      objPrintWriter.println();
+      objPrintWriter.print("NOD" + strQuery + cstrSpaces.substring(0,30-strQuery.length()));
+      cobjResultSetMetaData.toInterface(strQuery, objPrintWriter);
       for (int i=0; i<cobjRows.size(); i++) {
          ((cSapSingleResultSetRow)cobjRows.get(i)).toInterface(objPrintWriter);
       }

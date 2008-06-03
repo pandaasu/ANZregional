@@ -110,7 +110,7 @@ public final class cSapExecution {
       //
       JCO.Table objOptions = objFunction.getTableParameterList().getTable("OPTIONS");
       for (int i=0;i<cstrConditions.length;i++) {
-         if (!cstrConditions[i].trim().equals("")) {
+         if (!cstrConditions[i].trim().equals("") && !cstrConditions[i].trim().toUpperCase().equals("*NONE")) {
             String strConditions = cstrConditions[i].toString();
             if (cstrConditions[i].indexOf("<SAPVALUE>",0) != -1) {
                String strTag = "<SAPVALUE>";

@@ -85,7 +85,7 @@ public final class cSapSingleQuery {
       //
       JCO.Table objOptions = objFunction.getTableParameterList().getTable("OPTIONS");
       for (int i=0;i<strConditions.length;i++) {
-         if (!strConditions[i].trim().equals("")) {
+         if (!strConditions[i].trim().equals("") && !strConditions[i].trim().toUpperCase().equals("*NONE")) {
             objOptions.appendRow();
             objOptions.setValue(strConditions[i].trim(),"TEXT");
          }
@@ -96,7 +96,7 @@ public final class cSapSingleQuery {
       // Execute the function
       //
       cobjSapConnection.execute(objFunction);
-      
+
       //
       // Retrieve and load the result set meta data node columns
       // **note ** meta data is only stored once for a node
@@ -108,7 +108,7 @@ public final class cSapSingleQuery {
             cobjSapSingleResultSet.getMetaData().addColumn(strNode.toUpperCase(), objMetaData.getField("FIELDNAME").getString(), objMetaData.getField("OFFSET").getInt(), objMetaData.getField("LENGTH").getInt(), objMetaData.getField("TYPE").getString());
          }
       }
-      
+
       //
       // Retrieve and load the result set data rows when required
       //
@@ -165,7 +165,7 @@ public final class cSapSingleQuery {
       //
       JCO.Table objOptions = objFunction.getTableParameterList().getTable("OPTIONS");
       for (int i=0;i<strConditions.length;i++) {
-         if (!strConditions[i].trim().equals("")) {
+         if (!strConditions[i].trim().equals("") && !strConditions[i].trim().toUpperCase().equals("*NONE")) {
             objOptions.appendRow();
             objOptions.setValue(strConditions[i].trim(),"TEXT");
          }
