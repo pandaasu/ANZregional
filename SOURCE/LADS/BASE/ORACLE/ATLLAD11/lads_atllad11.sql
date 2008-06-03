@@ -24,6 +24,7 @@
                                                ZZFUTUREFLAG
                                                ZZMARKETACCTFLAG
  2007/08   Steve Gregan   Added columns (SAD) for Atlas 3.2.1 upgrade
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -679,13 +680,22 @@ create or replace package body lads_atllad11 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad11_monitor.execute(rcd_lads_cus_hdr.kunnr);
+            lads_atllad11_monitor.execute_before(rcd_lads_cus_hdr.kunnr);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad11_monitor.execute_after(rcd_lads_cus_hdr.kunnr);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

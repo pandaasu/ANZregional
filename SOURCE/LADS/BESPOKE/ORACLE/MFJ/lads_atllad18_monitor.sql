@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -25,7 +26,8 @@ create or replace package lads_atllad18_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_belnr in varchar2);
+   procedure execute_before(par_belnr in varchar2);
+   procedure execute_after(par_belnr in varchar2);
 
 end lads_atllad18_monitor;
 /
@@ -44,7 +46,7 @@ create or replace package body lads_atllad18_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_belnr in varchar2) is
+   procedure execute_before(par_belnr in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -99,6 +101,14 @@ create or replace package body lads_atllad18_monitor as
          raise_application_error(-20000, 'Invoice (' || par_belnr || ') not found');
       end if;
       close csr_lads_inv_hdr_01;
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data
+      /*-*/
 
       /*----------------------*/
       /* Invoice Cancellation */
@@ -221,10 +231,49 @@ create or replace package body lads_atllad18_monitor as
       end if;
       close csr_lads_inv_org_01;
 
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
       /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
+      /* Flattening logic
+      /* **note** - delete and replace
+      /*-*/  
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - EXECUTE_BEFORE - Invoice (' || par_belnr || ')' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_belnr in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+   
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+      
+      return;
 
    /*-------------------*/
    /* Exception handler */
@@ -244,12 +293,12 @@ create or replace package body lads_atllad18_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - Invoice (' || par_belnr || ')' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - EXECUTE_AFTER - Invoice (' || par_belnr || ')' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_after;
 
 end lads_atllad18_monitor;
 /

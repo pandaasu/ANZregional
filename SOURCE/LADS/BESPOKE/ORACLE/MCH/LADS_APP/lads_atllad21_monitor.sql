@@ -23,13 +23,15 @@ create or replace package lads_atllad21_monitor as
     -------   ------         -----------
     2004/01   Steve Gregan   Created
     2006/11   Linden Glen    Included LADS FLATTENING callout
+    2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_atnam in varchar2);
+   procedure execute_before(par_atnam in varchar2);
+   procedure execute_after(par_atnam in varchar2);
 
 end lads_atllad21_monitor;
 /
@@ -48,7 +50,7 @@ create or replace package body lads_atllad21_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_atnam in varchar2) is
+   procedure execute_before(par_atnam in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -58,7 +60,6 @@ create or replace package body lads_atllad21_monitor as
       /*---------------------------*/
       /* 1. LADS transaction logic */
       /*---------------------------*/
-
       /*-*/
       /* Transaction logic
       /* **note** - changes to the LADS data (eg. delivery deletion)
@@ -67,21 +68,11 @@ create or replace package body lads_atllad21_monitor as
       /*---------------------------*/
       /* 2. LADS flattening logic  */
       /*---------------------------*/
-
       /*-*/
       /* Flattening logic
       /* **note** - delete and replace
       /*-*/
       bds_atllad21_flatten.execute('*DOCUMENT',par_atnam);
-
-      /*---------------------------*/
-      /* 3. Triggered procedures   */
-      /*---------------------------*/
-
-      /*-*/
-      /* Triggered procedures
-      /* **note** - must be last (potentially use flattened data)
-      /*-*/
 
    /*-------------------*/
    /* Exception handler */
@@ -96,12 +87,48 @@ create or replace package body lads_atllad21_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD21_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD21_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_atnam in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD21_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_after;
 
 end lads_atllad21_monitor;
 /

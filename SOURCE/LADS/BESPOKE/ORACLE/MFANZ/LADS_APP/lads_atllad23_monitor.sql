@@ -21,13 +21,15 @@ create or replace package lads_atllad23_monitor as
     -------   ------            -----------
     2004/11   Megan Henderson   Created
     2007/03   Steve Gregan      Included LADS FLATTENING callout
+    2008/05   Trevor Keon       Changed to use execute_before and execute_after
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_werks in varchar2);
+   procedure execute_before(par_werks in varchar2);
+   procedure execute_after(par_werks in varchar2);
 
 end lads_atllad23_monitor;
 /
@@ -46,7 +48,7 @@ create or replace package body lads_atllad23_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_werks in varchar2) is
+   procedure execute_before(par_werks in varchar2) is
 
       /*-*/
       /* Local cursors
@@ -77,7 +79,6 @@ create or replace package body lads_atllad23_monitor as
       /*---------------------------*/
       /* 1. LADS transaction logic */
       /*---------------------------*/
-
       /*-*/
       /* Transaction logic
       /* **note** - changes to the LADS data
@@ -86,15 +87,44 @@ create or replace package body lads_atllad23_monitor as
       /*---------------------------*/
       /* 2. LADS flattening logic  */
       /*---------------------------*/
-
       /*-*/
       /* Flattening logic
       /* **note** - delete and replace
       /*-*/
-      bds_atllad23_flatten.execute('*DOCUMENT',par_werks);
+      bds_atllad23_flatten.execute('*DOCUMENT',par_werks);   
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD23_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_werks in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*---------------------------*/
-      /* 3. Triggered procedures   */
+      /* 1. Triggered procedures   */
       /*---------------------------*/
       lics_trigger_loader.execute('MFANZ Plant In-Transit Data Inteface',
                             'plant_intransit_extract.execute(''*PLANT'',''' || par_werks || ''',''*REL'')',
@@ -115,12 +145,12 @@ create or replace package body lads_atllad23_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD23_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD23_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_after;
 
 end lads_atllad23_monitor;
 /

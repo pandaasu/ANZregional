@@ -21,6 +21,7 @@ create or replace package lads_atllad01 as
     2004/01   Steve Gregan   Created
     2007/04   Steve Gregan      Updated locking strategy
                                 Changed IDOC timestamp check from < to <=
+    2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
    *******************************************************************************/
 
@@ -274,12 +275,6 @@ create or replace package body lads_atllad01 as
          var_accepted := true;
 
          /*-*/
-         /* Commit the IDOC transaction and successful monitor code
-         /* **note** - releases transaction lock
-         /*-*/
-         commit;
-
-         /*-*/
          /* Execute the interface monitor/flattening
          /* **note** - savepoint is established to ensure IDOC transaction commit
          /*          - child procedure can see IDOC transaction data as part of same commit cycle
@@ -290,10 +285,23 @@ create or replace package body lads_atllad01 as
          /*-*/
          savepoint transaction_savepoint;
          begin
-            lads_atllad01_monitor.execute(rcd_lads_ctl_rec_hpi.cntl_rec_id);
+            lads_atllad01_monitor.execute_before(rcd_lads_ctl_rec_hpi.cntl_rec_id);
          exception
             when others then
                rollback to transaction_savepoint;
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;
+
+         /*-*/
+         /* Commit the IDOC transaction and successful monitor code
+         /* **note** - releases transaction lock
+         /*-*/
+         commit;
+         
+         begin
+            lads_atllad01_monitor.execute_after(rcd_lads_ctl_rec_hpi.cntl_rec_id);
+         exception
+            when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
 

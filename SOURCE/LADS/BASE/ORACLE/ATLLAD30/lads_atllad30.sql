@@ -11,10 +11,10 @@
  -----------
  Local Atlas Data Store - atllad30 - Financial Accounts Receivable
 
- YYYY/MM   Author                       Description
- -------   ------                       -----------
- 2007/07   Sunil Mandalika              Created
-                                        
+ YYYY/MM   Author               Description
+ -------   ------               -----------
+ 2007/07   Sunil Mandalika      Created
+ 2008/05   Trevor Keon          Added calls to monitor before and after procedure                                        
 
 *******************************************************************************/
 
@@ -514,7 +514,7 @@ CREATE OR REPLACE package body lads_atllad30 as
          /*-*/
          savepoint transaction_savepoint;
          begin
-            lads_atllad30_monitor.execute(rcd_lads_far_hdr.BELNR);
+            lads_atllad30_monitor.execute_before(rcd_lads_far_hdr.BELNR);
          exception
             when others then
                rollback to transaction_savepoint;
@@ -526,6 +526,13 @@ CREATE OR REPLACE package body lads_atllad30 as
          /* **note** - releases transaction lock
          /*-*/
          commit;
+         
+         begin
+            lads_atllad30_monitor.execute_after(rcd_lads_far_hdr.BELNR);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
 
       end if;      
       

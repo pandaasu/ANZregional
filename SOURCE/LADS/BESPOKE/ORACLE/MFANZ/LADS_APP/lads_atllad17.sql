@@ -23,6 +23,7 @@ create or replace package lads_atllad17 as
                              Updated locking strategy
                              Changed IDOC timestamp check from < to <=
     2007/05   Steve Gregan   Changed the BDS invoke logic to cover all HDR rows
+    2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
    *******************************************************************************/
 
@@ -267,7 +268,7 @@ create or replace package body lads_atllad17 as
          savepoint transaction_savepoint;
          begin
             for idx in 1..tbl_bds.count loop
-               lads_atllad17_monitor.execute(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
+               lads_atllad17_monitor.execute_before(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
             end loop;
          exception
             when others then
@@ -280,6 +281,15 @@ create or replace package body lads_atllad17 as
          /* **note** - releases transaction lock
          /*-*/
          commit;
+         
+         begin
+            for idx in 1..tbl_bds.count loop
+               lads_atllad17_monitor.execute_after(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
+            end loop;
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
 
       end if;
 

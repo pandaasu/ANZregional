@@ -21,13 +21,15 @@ create or replace package lads_atllad10_monitor as
  2004/01   Steve Gregan   Created
  2006/12   Linden Glen    Included LADS FLATTENING callout 
  2008/04   Trevor Keon    Added call to plant reference data extract 
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_z_tabname in varchar2);
+   procedure execute_before(par_z_tabname in varchar2);
+   procedure execute_after(par_z_tabname in varchar2);
 
 end lads_atllad10_monitor;
 /
@@ -46,7 +48,7 @@ create or replace package body lads_atllad10_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_z_tabname in varchar2) is
+   procedure execute_before(par_z_tabname in varchar2) is
 
       /*-*/
       /* Local cursors
@@ -77,33 +79,50 @@ create or replace package body lads_atllad10_monitor as
       /*---------------------------*/
       /* 1. LADS transaction logic */
       /*---------------------------*/
-
       /*-*/
       /* Transaction logic
       /* **note** - changes to the LADS data (eg. delivery deletion)
       /*-*/
 
-
       /*---------------------------*/
       /* 2. LADS flattening logic  */
       /*---------------------------*/
-
       /*-*/
       /* Flattening logic
       /* **note** - delete and replace
       /*-*/
       bds_atllad10_flatten.execute('*DOCUMENT',par_z_tabname);
 
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
 
+      /**/
+      /* Exception trap
+      /**/
+      when others then
 
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD10_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_before;
+   
+   procedure execute_after(par_z_tabname in varchar2) is
+    
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+   
       /*---------------------------*/
-      /* 3. Triggered procedures   */
+      /* 1. Triggered procedures   */
       /*---------------------------*/
-
-      /*-*/
-      /* Triggered procedures
-      /* **note** - must be last (potentially use flattened data)
-      /*-*/
       lics_trigger_loader.execute('MFANZ Plant Reference Data Inteface',
                             'plant_reference_data_extract.execute(''' || par_z_tabname || ''',''*ALL'')',
                             lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','PLANT_INTERFACE'),
@@ -123,12 +142,12 @@ create or replace package body lads_atllad10_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD10_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD10_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_after;   
 
 end lads_atllad10_monitor;
 /

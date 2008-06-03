@@ -21,6 +21,7 @@ create or replace package lads_atllad08 as
  2004/01   Steve Gregan   Created
  2006/12   Steve Gregan   Updated locking strategy
                           Changed IDOC timestamp check from < to <=
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -254,7 +255,7 @@ create or replace package body lads_atllad08 as
          /*-*/
          savepoint transaction_savepoint;
          begin
-            lads_atllad08_monitor.execute(rcd_lads_mat_bom_hdr.stlnr, rcd_lads_mat_bom_hdr.stlal);
+            lads_atllad08_monitor.execute_before(rcd_lads_mat_bom_hdr.stlnr, rcd_lads_mat_bom_hdr.stlal);
          exception
             when others then
                rollback to transaction_savepoint;
@@ -266,6 +267,13 @@ create or replace package body lads_atllad08 as
          /* **note** - releases transaction lock
          /*-*/
          commit;
+         
+         begin
+            lads_atllad08_monitor.execute_after(rcd_lads_mat_bom_hdr.stlnr, rcd_lads_mat_bom_hdr.stlal);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
 
       end if;
 

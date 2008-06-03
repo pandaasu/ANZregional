@@ -242,7 +242,7 @@ create or replace package body lads_saplad02 as
          /* Execute the ATLLAD10 Monitor
          /*-*/
          begin
-            lads_atllad10_monitor.execute(rcd_lads_ref_hdr.z_tabname);
+            lads_atllad10_monitor.execute_before(rcd_lads_ref_hdr.z_tabname);
          exception
             when others then
                rollback to transaction_savepoint;
@@ -254,6 +254,13 @@ create or replace package body lads_saplad02 as
          /* **note** - releases transaction lock
          /*-*/
          commit;
+         
+         begin
+            lads_atllad10_monitor.execute_after(rcd_lads_ref_hdr.z_tabname);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
 
       end if;
 

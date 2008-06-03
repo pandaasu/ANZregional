@@ -15,6 +15,7 @@
  -------   ------            -----------
  2004/11   Megan Henderson   Created
  2005/01   Linden Glen       Added processing for exidv2,inhalt,exti1,signi
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -244,13 +245,22 @@ create or replace package body lads_atllad23 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad23_monitor.execute(rcd_lads_int_stk_hdr.werks);
+            lads_atllad23_monitor.execute_before(rcd_lads_int_stk_hdr.werks);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad23_monitor.execute_after(rcd_lads_int_stk_hdr.werks);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

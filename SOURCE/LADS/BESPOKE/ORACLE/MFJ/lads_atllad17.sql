@@ -3,29 +3,26 @@
 /******************************************************************************/
 /**
  System  : lads
- Package : lads_atllad03
+ Package : lads_atllad17
  Owner   : lads_app
- Author  : Matthew Hardinge
+ Author  : Steve Gregan
 
  Description
  -----------
- Local Atlas Data Store - atllad03 - Inbound ICB LLT Intransit Interface
+ Local Atlas Data Store - atllad17 - Inbound Bill Of Material Interface
 
- * NOTE : This interface must be run in serial
-
-
- YYYY/MM   Author             Description
- -------   ------             -----------
- 2006/05   Matthew Hardinge   Created
- 2006/05   Linden Glen        ADD: Batch receiving/processing logic
- 2008/05   Trevor Keon        Added calls to monitor before and after procedure
+ YYYY/MM   Author         Description
+ -------   ------         -----------
+ 2004/01   Steve Gregan   Created
+ 2006/12   Linden Glen    Added STLST field to header processing
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
 /******************/
 /* Package Header */
 /******************/
-create or replace package lads_atllad03 as
+create or replace package lads_atllad17 as
 
    /*-*/
    /* Public declarations
@@ -34,13 +31,13 @@ create or replace package lads_atllad03 as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end lads_atllad03;
+end lads_atllad17;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lads_atllad03 as
+create or replace package body lads_atllad17 as
 
    /*-*/
    /* Private exceptions
@@ -63,8 +60,8 @@ create or replace package body lads_atllad03 as
    var_trn_ignore boolean;
    var_trn_error boolean;
    rcd_lads_control lads_definition.idoc_control;
-   rcd_lads_icb_llt_hdr lads_icb_llt_hdr%rowtype;
-   rcd_lads_icb_llt_det lads_icb_llt_det%rowtype;
+   rcd_lads_bom_hdr lads_bom_hdr%rowtype;
+   rcd_lads_bom_det lads_bom_det%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -95,37 +92,30 @@ create or replace package body lads_atllad03 as
       lics_inbound_utility.set_definition('CTL','IDOC_TIME',6);
       /*-*/
       lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);
-      lics_inbound_utility.set_definition('HDR','VENUM',10);
-      lics_inbound_utility.set_definition('HDR','EXIDV',20);
-      lics_inbound_utility.set_definition('HDR','BUKRS',4);
-      lics_inbound_utility.set_definition('HDR','EXIDV2',20);
-      lics_inbound_utility.set_definition('HDR','WHARDAT',8);
-      lics_inbound_utility.set_definition('HDR','EINDT',8);
-      lics_inbound_utility.set_definition('HDR','ZFWRD',10);
-      lics_inbound_utility.set_definition('HDR','EXTI1',20);
-      lics_inbound_utility.set_definition('HDR','SIGNI',20);
-      lics_inbound_utility.set_definition('HDR','ZFNAM',35);
-      lics_inbound_utility.set_definition('HDR','LIFNR',10);
-      lics_inbound_utility.set_definition('HDR','EBELN',10);
-      lics_inbound_utility.set_definition('HDR','ZHUSTAT',1);
-      lics_inbound_utility.set_definition('HDR','HUDAT',8);
-      lics_inbound_utility.set_definition('HDR','DATUM',8);
-      lics_inbound_utility.set_definition('HDR','UZEIT',6);
-      lics_inbound_utility.set_definition('HDR','SLFDT',8);
-      lics_inbound_utility.set_definition('HDR','NAME1',35);
-      lics_inbound_utility.set_definition('HDR','ZZSEAL',40);
-      lics_inbound_utility.set_definition('HDR','VHILM',18);
-      lics_inbound_utility.set_definition('HDR','ZCOUNT',8);
+      lics_inbound_utility.set_definition('HDR','MSGFN',3);
+      lics_inbound_utility.set_definition('HDR','STLNR',8);
+      lics_inbound_utility.set_definition('HDR','STLAL',2);
+      lics_inbound_utility.set_definition('HDR','MATNR',18);
+      lics_inbound_utility.set_definition('HDR','WERKS',4);
+      lics_inbound_utility.set_definition('HDR','STLAN',1);
+      lics_inbound_utility.set_definition('HDR','DATUV',8);
+      lics_inbound_utility.set_definition('HDR','DATUB',8);
+      lics_inbound_utility.set_definition('HDR','BMENG',14);
+      lics_inbound_utility.set_definition('HDR','BMEIN',3);
+--      lics_inbound_utility.set_definition('HDR','STLST',2);
       /*-*/
       lics_inbound_utility.set_definition('DET','IDOC_DET',3);
-      lics_inbound_utility.set_definition('DET','VENUM1',10);
+      lics_inbound_utility.set_definition('DET','MSGFN',3);
       lics_inbound_utility.set_definition('DET','MATNR',18);
-      lics_inbound_utility.set_definition('DET','VEMNG',17);
-      lics_inbound_utility.set_definition('DET','CHARG',10);
-      lics_inbound_utility.set_definition('DET','VFDAT',8);
+      lics_inbound_utility.set_definition('DET','STLAL',2);
       lics_inbound_utility.set_definition('DET','WERKS',4);
-      lics_inbound_utility.set_definition('DET','LGORT',4);
+      lics_inbound_utility.set_definition('DET','POSNR',4);
+      lics_inbound_utility.set_definition('DET','POSTP',1);
+      lics_inbound_utility.set_definition('DET','IDNRK',18);
+      lics_inbound_utility.set_definition('DET','MENGE',14);
       lics_inbound_utility.set_definition('DET','MEINS',3);
+      lics_inbound_utility.set_definition('DET','DATUV',8);
+      lics_inbound_utility.set_definition('DET','DATUB',8);
 
       /*-*/
       /* Start the IDOC acknowledgement
@@ -195,6 +185,11 @@ create or replace package body lads_atllad03 as
       /*-*/
       complete_transaction;
 
+      /*-*/
+      /* End the IDOC acknowledgement
+      /*-*/
+      ics_cisatl16.end_acknowledgement;
+
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -209,7 +204,7 @@ create or replace package body lads_atllad03 as
       /* Local definitions
       /*-*/
       con_ack_group constant varchar2(32) := 'LADS_IDOC_ACK';
-      con_ack_code constant varchar2(32) := 'ATLLAD03';
+      con_ack_code constant varchar2(32) := 'ATLLAD17';
       var_accepted boolean;
 
    /*-------------*/
@@ -239,7 +234,7 @@ create or replace package body lads_atllad03 as
          var_accepted := true;
          
          begin
-            lads_atllad03_monitor.execute_after(rcd_lads_icb_llt_hdr.venum);
+            lads_atllad17_monitor.execute_before(rcd_lads_bom_hdr.stlal, rcd_lads_bom_hdr.matnr, rcd_lads_bom_hdr.werks);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -248,7 +243,7 @@ create or replace package body lads_atllad03 as
          commit;
          
          begin
-            lads_atllad03_monitor.execute_before(rcd_lads_icb_llt_hdr.venum);
+            lads_atllad17_monitor.execute_after(rcd_lads_bom_hdr.stlal, rcd_lads_bom_hdr.matnr, rcd_lads_bom_hdr.werks);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -352,20 +347,17 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lads_icb_llt_hdr_01 is
+      cursor csr_lads_bom_hdr_01 is
          select
-            t01.venum,
+            t01.stlnr,
+            t01.stlal,
             t01.idoc_number,
             t01.idoc_timestamp
-         from lads_icb_llt_hdr t01
-         where t01.venum = rcd_lads_icb_llt_hdr.venum;
-      rcd_lads_icb_llt_hdr_01 csr_lads_icb_llt_hdr_01%rowtype;
-
-      cursor csr_batch is
-         select nvl(min(datum||uzeit),0) as curr_batch
-         from lads_icb_llt_hdr;
-      rcd_batch csr_batch%rowtype;
-
+         from lads_bom_hdr t01
+         where t01.stlal = rcd_lads_bom_hdr.stlal
+           and t01.matnr = rcd_lads_bom_hdr.matnr
+           and t01.werks = rcd_lads_bom_hdr.werks;
+      rcd_lads_bom_hdr_01 csr_lads_bom_hdr_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -385,33 +377,22 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_lads_icb_llt_hdr.venum := lics_inbound_utility.get_variable('VENUM');
-      rcd_lads_icb_llt_hdr.exidv := lics_inbound_utility.get_variable('EXIDV');
-      rcd_lads_icb_llt_hdr.bukrs := lics_inbound_utility.get_variable('BUKRS');
-      rcd_lads_icb_llt_hdr.exidv2 := lics_inbound_utility.get_variable('EXIDV2');
-      rcd_lads_icb_llt_hdr.slfdt := lics_inbound_utility.get_variable('SLFDT');
-      rcd_lads_icb_llt_hdr.eindt := lics_inbound_utility.get_variable('EINDT');
-      rcd_lads_icb_llt_hdr.zfwrd := lics_inbound_utility.get_variable('ZFWRD');
-      rcd_lads_icb_llt_hdr.exti1 := lics_inbound_utility.get_variable('EXTI1');
-      rcd_lads_icb_llt_hdr.signi := lics_inbound_utility.get_variable('SIGNI');
-      rcd_lads_icb_llt_hdr.zfnam := lics_inbound_utility.get_variable('ZFNAM');
-      rcd_lads_icb_llt_hdr.lifnr := lics_inbound_utility.get_variable('LIFNR');
-      rcd_lads_icb_llt_hdr.ebeln := lics_inbound_utility.get_variable('EBELN');
-      rcd_lads_icb_llt_hdr.zhustat := lics_inbound_utility.get_variable('ZHUSTAT');
-      rcd_lads_icb_llt_hdr.hudat := lics_inbound_utility.get_variable('HUDAT');
-      rcd_lads_icb_llt_hdr.datum := lics_inbound_utility.get_variable('DATUM');
-      rcd_lads_icb_llt_hdr.uzeit := lics_inbound_utility.get_variable('UZEIT');
-      rcd_lads_icb_llt_hdr.whardat := lics_inbound_utility.get_variable('WHARDAT');
-      rcd_lads_icb_llt_hdr.name1 := lics_inbound_utility.get_variable('NAME1');
-      rcd_lads_icb_llt_hdr.zzseal := lics_inbound_utility.get_variable('ZZSEAL');
-      rcd_lads_icb_llt_hdr.vhilm := lics_inbound_utility.get_variable('VHILM');
-      rcd_lads_icb_llt_hdr.zcount := lics_inbound_utility.get_variable('ZCOUNT');
-
-      rcd_lads_icb_llt_hdr.idoc_name:= rcd_lads_control.idoc_name;
-      rcd_lads_icb_llt_hdr.idoc_number := rcd_lads_control.idoc_number;
-      rcd_lads_icb_llt_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
-      rcd_lads_icb_llt_hdr.lads_date := sysdate;
-      rcd_lads_icb_llt_hdr.lads_status := '1';
+      rcd_lads_bom_hdr.msgfn := lics_inbound_utility.get_variable('MSGFN');
+      rcd_lads_bom_hdr.stlnr := lics_inbound_utility.get_variable('STLNR');
+      rcd_lads_bom_hdr.stlal := lics_inbound_utility.get_variable('STLAL');
+      rcd_lads_bom_hdr.matnr := lics_inbound_utility.get_variable('MATNR');
+      rcd_lads_bom_hdr.werks := lics_inbound_utility.get_variable('WERKS');
+      rcd_lads_bom_hdr.stlan := lics_inbound_utility.get_variable('STLAN');
+      rcd_lads_bom_hdr.datuv := lics_inbound_utility.get_variable('DATUV');
+      rcd_lads_bom_hdr.datub := lics_inbound_utility.get_variable('DATUB');
+      rcd_lads_bom_hdr.bmeng := lics_inbound_utility.get_number('BMENG',null);
+      rcd_lads_bom_hdr.bmein := lics_inbound_utility.get_variable('BMEIN');
+--      rcd_lads_bom_hdr.stlst := lics_inbound_utility.get_variable('STLST');
+      rcd_lads_bom_hdr.idoc_name := rcd_lads_control.idoc_name;
+      rcd_lads_bom_hdr.idoc_number := rcd_lads_control.idoc_number;
+      rcd_lads_bom_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
+      rcd_lads_bom_hdr.lads_date := sysdate;
+      rcd_lads_bom_hdr.lads_status := '1';
 
       /*-*/
       /* Retrieve exceptions raised
@@ -423,7 +404,7 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Reset child sequences
       /*-*/
-      rcd_lads_icb_llt_det.detseq := 0;
+      rcd_lads_bom_det.detseq := 0;
 
       /*----------------------------------------*/
       /* VALIDATION - Validate the field values */
@@ -432,64 +413,41 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Validate the primary keys
       /*-*/
-      if rcd_lads_icb_llt_hdr.venum is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - HDR.VENUM');
+      if rcd_lads_bom_hdr.stlal is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - HDR.STLAL');
+         var_trn_error := true;
+      end if;
+      if rcd_lads_bom_hdr.matnr is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - HDR.MATNR');
+         var_trn_error := true;
+      end if;
+      if rcd_lads_bom_hdr.werks is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - HDR.WERKS');
          var_trn_error := true;
       end if;
 
       /*-*/
       /* Validate the IDOC sequence when primary key supplied
       /*-*/
-      if not(rcd_lads_icb_llt_hdr.venum is null) then
+      if not(rcd_lads_bom_hdr.stlal is null) and
+         not(rcd_lads_bom_hdr.matnr is null) and
+         not(rcd_lads_bom_hdr.werks is null) then
          var_exists := true;
-
-         /*-*/
-         /* Define current batch code
-         /*   note : batch code is based on the concatination of DATUM and UZEIT
-         /*          these variables will be consistent for each header in the batch
-         /*-*/
-         open csr_batch;
-         fetch csr_batch into rcd_batch;
-         close csr_batch;
-     
-
-         /*-*/
-         /* The following receival scenarios exist
-         /*   1. HDR record is part of current batch - allow to load into tables
-         /*   2. HDR record is newer than current batch - indicates a newer batch exists
-         /*      and is most likely the first HDR of the batch, therefore, purge tables
-         /*      and load
-         /*   3. HDR record is older than current batch - ignore transaction
-         /*-*/    
-         case
-
-            when rcd_lads_icb_llt_hdr.datum||rcd_lads_icb_llt_hdr.uzeit = rcd_batch.curr_batch then
-
-               open csr_lads_icb_llt_hdr_01;
-               fetch csr_lads_icb_llt_hdr_01 into rcd_lads_icb_llt_hdr_01;
-               if csr_lads_icb_llt_hdr_01%notfound then
-                  var_exists := false;
-               end if;
-               close csr_lads_icb_llt_hdr_01;
-
-               if var_exists = true then
-                  if rcd_lads_icb_llt_hdr.idoc_timestamp > rcd_lads_icb_llt_hdr_01.idoc_timestamp then
-                     delete from lads_icb_llt_det where venum = rcd_lads_icb_llt_hdr.venum;
-                  else
-                     var_trn_ignore := true;
-                  end if;
-               end if;
-
-            when rcd_lads_icb_llt_hdr.datum||rcd_lads_icb_llt_hdr.uzeit > rcd_batch.curr_batch then
-
-               delete from lads_icb_llt_det;
-               delete from lads_icb_llt_hdr;
-
-            when rcd_lads_icb_llt_hdr.datum||rcd_lads_icb_llt_hdr.uzeit < rcd_batch.curr_batch then     
+         open csr_lads_bom_hdr_01;
+         fetch csr_lads_bom_hdr_01 into rcd_lads_bom_hdr_01;
+         if csr_lads_bom_hdr_01%notfound then
+            var_exists := false;
+         end if;
+         close csr_lads_bom_hdr_01;
+         if var_exists = true then
+            if rcd_lads_bom_hdr.idoc_timestamp > rcd_lads_bom_hdr_01.idoc_timestamp then
+               delete from lads_bom_det where stlal = rcd_lads_bom_hdr.stlal
+                                          and matnr = rcd_lads_bom_hdr.matnr
+                                          and werks = rcd_lads_bom_hdr.werks;
+            else
                var_trn_ignore := true;
-
-         end case;
-
+            end if;
+         end if;
       end if;
 
       /*--------------------------------------------*/
@@ -512,88 +470,58 @@ create or replace package body lads_atllad03 as
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      update lads_icb_llt_hdr set
-         exidv = rcd_lads_icb_llt_hdr.exidv,
-         bukrs = rcd_lads_icb_llt_hdr.bukrs,
-         exidv2 = rcd_lads_icb_llt_hdr.exidv2,
-         slfdt = rcd_lads_icb_llt_hdr.slfdt,
-         eindt = rcd_lads_icb_llt_hdr.eindt,
-         zfwrd = rcd_lads_icb_llt_hdr.zfwrd,
-         exti1 = rcd_lads_icb_llt_hdr.exti1,
-         signi = rcd_lads_icb_llt_hdr.signi,
-         zfnam = rcd_lads_icb_llt_hdr.zfnam,
-         lifnr = rcd_lads_icb_llt_hdr.lifnr,
-         ebeln = rcd_lads_icb_llt_hdr.ebeln,
-         zhustat = rcd_lads_icb_llt_hdr.zhustat,
-         hudat = rcd_lads_icb_llt_hdr.hudat,
-         datum = rcd_lads_icb_llt_hdr.datum,
-         uzeit = rcd_lads_icb_llt_hdr.uzeit,
-         whardat = rcd_lads_icb_llt_hdr.whardat,
-         name1 = rcd_lads_icb_llt_hdr.name1,
-         zzseal = rcd_lads_icb_llt_hdr.zzseal,
-         vhilm = rcd_lads_icb_llt_hdr.vhilm,
-         zcount = rcd_lads_icb_llt_hdr.zcount,
-         idoc_name = rcd_lads_icb_llt_hdr.idoc_name,
-         idoc_number = rcd_lads_icb_llt_hdr.idoc_number,
-         idoc_timestamp = rcd_lads_icb_llt_hdr.idoc_timestamp,
-         lads_date = rcd_lads_icb_llt_hdr.lads_date,
-         lads_status = rcd_lads_icb_llt_hdr.lads_status
-      where venum = rcd_lads_icb_llt_hdr.venum;
+      update lads_bom_hdr set
+         msgfn = rcd_lads_bom_hdr.msgfn,
+         stlnr = rcd_lads_bom_hdr.stlnr,
+         stlan = rcd_lads_bom_hdr.stlan,
+         datuv = rcd_lads_bom_hdr.datuv,
+         datub = rcd_lads_bom_hdr.datub,
+         bmeng = rcd_lads_bom_hdr.bmeng,
+         bmein = rcd_lads_bom_hdr.bmein,
+--         stlst = rcd_lads_bom_hdr.stlst,
+         idoc_name = rcd_lads_bom_hdr.idoc_name,
+         idoc_number = rcd_lads_bom_hdr.idoc_number,
+         idoc_timestamp = rcd_lads_bom_hdr.idoc_timestamp,
+         lads_date = rcd_lads_bom_hdr.lads_date,
+         lads_status = rcd_lads_bom_hdr.lads_status
+      where stlal = rcd_lads_bom_hdr.stlal
+        and matnr = rcd_lads_bom_hdr.matnr
+        and werks = rcd_lads_bom_hdr.werks;
       if sql%notfound then
-         insert into lads_icb_llt_hdr
-            (venum,
-	     exidv,
-             bukrs,
-             exidv2,
-             slfdt,
-             eindt,
-             zfwrd,
-             exti1,
-             signi,
-             zfnam,
-             lifnr,
-             ebeln,
-             zhustat,
-             hudat,
-             datum,
-             uzeit,
-	     whardat,
-	     name1,
-	     zzseal,
-	     vhilm,
-	     zcount,
+         insert into lads_bom_hdr
+            (msgfn,
+             stlnr,
+             stlal,
+             matnr,
+             werks,
+             stlan,
+             datuv,
+             datub,
+             bmeng,
+             bmein,
+--             stlst,
              idoc_name,
              idoc_number,
              idoc_timestamp,
              lads_date,
              lads_status)
          values
-            (rcd_lads_icb_llt_hdr.venum,
-	     rcd_lads_icb_llt_hdr.exidv,
-             rcd_lads_icb_llt_hdr.bukrs,
-             rcd_lads_icb_llt_hdr.exidv2,
-             rcd_lads_icb_llt_hdr.slfdt,
-             rcd_lads_icb_llt_hdr.eindt,
-             rcd_lads_icb_llt_hdr.zfwrd,
-             rcd_lads_icb_llt_hdr.exti1,
-             rcd_lads_icb_llt_hdr.signi,
-             rcd_lads_icb_llt_hdr.zfnam,
-             rcd_lads_icb_llt_hdr.lifnr,
-             rcd_lads_icb_llt_hdr.ebeln,
-             rcd_lads_icb_llt_hdr.zhustat,
-             rcd_lads_icb_llt_hdr.hudat,
-             rcd_lads_icb_llt_hdr.datum,
-             rcd_lads_icb_llt_hdr.uzeit,
-             rcd_lads_icb_llt_hdr.whardat,
-             rcd_lads_icb_llt_hdr.name1,
-             rcd_lads_icb_llt_hdr.zzseal,
-             rcd_lads_icb_llt_hdr.vhilm,
-             rcd_lads_icb_llt_hdr.zcount,
-             rcd_lads_icb_llt_hdr.idoc_name,
-             rcd_lads_icb_llt_hdr.idoc_number,
-             rcd_lads_icb_llt_hdr.idoc_timestamp,
-             rcd_lads_icb_llt_hdr.lads_date,
-             rcd_lads_icb_llt_hdr.lads_status);
+            (rcd_lads_bom_hdr.msgfn,
+             rcd_lads_bom_hdr.stlnr,
+             rcd_lads_bom_hdr.stlal,
+             rcd_lads_bom_hdr.matnr,
+             rcd_lads_bom_hdr.werks,
+             rcd_lads_bom_hdr.stlan,
+             rcd_lads_bom_hdr.datuv,
+             rcd_lads_bom_hdr.datub,
+             rcd_lads_bom_hdr.bmeng,
+             rcd_lads_bom_hdr.bmein,
+--             rcd_lads_bom_hdr.stlst,
+             rcd_lads_bom_hdr.idoc_name,
+             rcd_lads_bom_hdr.idoc_number,
+             rcd_lads_bom_hdr.idoc_timestamp,
+             rcd_lads_bom_hdr.lads_date,
+             rcd_lads_bom_hdr.lads_status);
       end if;
 
    /*-------------*/
@@ -632,16 +560,18 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_lads_icb_llt_det.venum := rcd_lads_icb_llt_hdr.venum;
-      rcd_lads_icb_llt_det.detseq := rcd_lads_icb_llt_det.detseq + 1;
-      rcd_lads_icb_llt_det.matnr := lics_inbound_utility.get_variable('MATNR');
-      rcd_lads_icb_llt_det.vemng := lics_inbound_utility.get_number('VEMNG',null);
-      rcd_lads_icb_llt_det.charg := lics_inbound_utility.get_variable('CHARG');
-      rcd_lads_icb_llt_det.vfdat := lics_inbound_utility.get_variable('VFDAT');
-      rcd_lads_icb_llt_det.werks := lics_inbound_utility.get_variable('WERKS');
-      rcd_lads_icb_llt_det.lgort := lics_inbound_utility.get_variable('LGORT');
-      rcd_lads_icb_llt_det.venum1 := lics_inbound_utility.get_variable('VENUM1');
-      rcd_lads_icb_llt_det.meins := lics_inbound_utility.get_variable('MEINS');
+      rcd_lads_bom_det.detseq := rcd_lads_bom_det.detseq + 1;
+      rcd_lads_bom_det.msgfn := lics_inbound_utility.get_variable('MSGFN');
+      rcd_lads_bom_det.matnr := lics_inbound_utility.get_variable('MATNR');
+      rcd_lads_bom_det.stlal := lics_inbound_utility.get_variable('STLAL');
+      rcd_lads_bom_det.werks := lics_inbound_utility.get_variable('WERKS');
+      rcd_lads_bom_det.posnr := lics_inbound_utility.get_variable('POSNR');
+      rcd_lads_bom_det.postp := lics_inbound_utility.get_variable('POSTP');
+      rcd_lads_bom_det.idnrk := lics_inbound_utility.get_variable('IDNRK');
+      rcd_lads_bom_det.menge := lics_inbound_utility.get_number('MENGE',null);
+      rcd_lads_bom_det.meins := lics_inbound_utility.get_variable('MEINS');
+      rcd_lads_bom_det.datuv := lics_inbound_utility.get_variable('DATUV');
+      rcd_lads_bom_det.datub := lics_inbound_utility.get_variable('DATUB');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -657,8 +587,16 @@ create or replace package body lads_atllad03 as
       /*-*/
       /* Validate the primary keys
       /*-*/
-      if rcd_lads_icb_llt_det.venum is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - DET.VENUM');
+      if rcd_lads_bom_det.stlal is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - DET.STLAL');
+         var_trn_error := true;
+      end if;
+      if rcd_lads_bom_det.matnr is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - DET.MATNR');
+         var_trn_error := true;
+      end if;
+      if rcd_lads_bom_det.werks is null then
+         lics_inbound_utility.add_exception('Missing Primary Key - DET.WERKS');
          var_trn_error := true;
       end if;
 
@@ -674,39 +612,43 @@ create or replace package body lads_atllad03 as
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      insert into lads_icb_llt_det
-         (venum,
-          detseq,
+      insert into lads_bom_det
+         (msgfn,
           matnr,
-          vemng,
-          charg,
-	  vfdat,
+          stlal,
           werks,
-          lgort,
-	  venum1,
-	  meins)
+          detseq,
+          posnr,
+          postp,
+          idnrk,
+          menge,
+          meins,
+          datuv,
+          datub)
       values
-         (rcd_lads_icb_llt_det.venum,
-          rcd_lads_icb_llt_det.detseq,
-          rcd_lads_icb_llt_det.matnr,
-          rcd_lads_icb_llt_det.vemng,
-          rcd_lads_icb_llt_det.charg,
-	  rcd_lads_icb_llt_det.vfdat,
-          rcd_lads_icb_llt_det.werks,
-          rcd_lads_icb_llt_det.lgort,
-	  rcd_lads_icb_llt_det.venum1,
-	  rcd_lads_icb_llt_det.meins);
+         (rcd_lads_bom_det.msgfn,
+          rcd_lads_bom_det.matnr,
+          rcd_lads_bom_det.stlal,
+          rcd_lads_bom_det.werks,
+          rcd_lads_bom_det.detseq,
+          rcd_lads_bom_det.posnr,
+          rcd_lads_bom_det.postp,
+          rcd_lads_bom_det.idnrk,
+          rcd_lads_bom_det.menge,
+          rcd_lads_bom_det.meins,
+          rcd_lads_bom_det.datuv,
+          rcd_lads_bom_det.datub);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end process_record_det;
 
-end lads_atllad03;
+end lads_atllad17;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym lads_atllad03 for lads_app.lads_atllad03;
-grant execute on lads_atllad03 to lics_app;
+create or replace public synonym lads_atllad17 for lads_app.lads_atllad17;
+grant execute on lads_atllad17 to lics_app;

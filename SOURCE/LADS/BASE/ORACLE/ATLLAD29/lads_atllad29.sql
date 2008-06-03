@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2005/11   ISI            Created
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -215,13 +216,22 @@ create or replace package body lads_atllad29 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad29_monitor.execute(rcd_lads_ppo_hdr.order_id);
+            lads_atllad29_monitor.execute_before(rcd_lads_ppo_hdr.order_id);
          exception
             when others then
                 lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad29_monitor.execute_after(rcd_lads_ppo_hdr.order_id);
+         exception
+            when others then
+                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

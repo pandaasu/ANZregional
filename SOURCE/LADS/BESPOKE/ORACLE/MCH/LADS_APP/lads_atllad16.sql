@@ -948,8 +948,8 @@ create or replace package body lads_atllad16 as
       cursor csr_lads_del_hdr_01 is
          select
             t01.vbeln,
-            t01.idoc_number,
-            t01.idoc_timestamp,
+            t01.pod_idoc_number,
+            t01.pod_idoc_timestamp,
             t01.mesfct
          from lads_del_hdr t01
          where t01.vbeln = rcd_lads_del_hdr.vbeln;
@@ -1082,10 +1082,10 @@ create or replace package body lads_atllad16 as
       rcd_lads_del_hdr.zzweightpal_f := lics_inbound_utility.get_number('ZZWEIGHTPAL_F',null);
       rcd_lads_del_hdr.mescod := var_ctl_mescod;
       rcd_lads_del_hdr.mesfct := var_ctl_mesfct;
-      rcd_lads_del_hdr.idoc_name := rcd_lads_control.idoc_name;
-      rcd_lads_del_hdr.idoc_number := rcd_lads_control.idoc_number;
-      rcd_lads_del_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
-      rcd_lads_del_hdr.lads_date := sysdate;
+      rcd_lads_del_hdr.pod_idoc_name := rcd_lads_control.idoc_name;
+      rcd_lads_del_hdr.pod_idoc_number := rcd_lads_control.idoc_number;
+      rcd_lads_del_hdr.pod_idoc_timestamp := rcd_lads_control.idoc_timestamp;
+      rcd_lads_del_hdr.pod_lads_date := sysdate;
       rcd_lads_del_hdr.lads_status := '1';
 
       /*-*/
@@ -1139,7 +1139,7 @@ create or replace package body lads_atllad16 as
          end if;
          close csr_lads_del_hdr_01;
          if var_exists = true then
-            if rcd_lads_del_hdr.idoc_timestamp > rcd_lads_del_hdr_01.idoc_timestamp then
+            if rcd_lads_del_hdr.pod_idoc_timestamp > rcd_lads_del_hdr_01.pod_idoc_timestamp then
                delete from lads_del_huc where vbeln = rcd_lads_del_hdr.vbeln;
                delete from lads_del_huh where vbeln = rcd_lads_del_hdr.vbeln;
                delete from lads_del_dtp where vbeln = rcd_lads_del_hdr.vbeln;
@@ -1292,10 +1292,10 @@ create or replace package body lads_atllad16 as
          zzweightpal_f = rcd_lads_del_hdr.zzweightpal_f,
          mescod = rcd_lads_del_hdr.mescod,
          mesfct = rcd_lads_del_hdr.mesfct,
-         idoc_name = rcd_lads_del_hdr.idoc_name,
-         idoc_number = rcd_lads_del_hdr.idoc_number,
-         idoc_timestamp = rcd_lads_del_hdr.idoc_timestamp,
-         lads_date = rcd_lads_del_hdr.lads_date,
+         pod_idoc_name = rcd_lads_del_hdr.pod_idoc_name,
+         pod_idoc_number = rcd_lads_del_hdr.pod_idoc_number,
+         pod_idoc_timestamp = rcd_lads_del_hdr.pod_idoc_timestamp,
+         pod_lads_date = rcd_lads_del_hdr.pod_lads_date,
          lads_status = rcd_lads_del_hdr.lads_status
       where vbeln = rcd_lads_del_hdr.vbeln;
       if sql%notfound then
@@ -1409,10 +1409,10 @@ create or replace package body lads_atllad16 as
              zzweightpal_f,
              mescod,
              mesfct,
-             idoc_name,
-             idoc_number,
-             idoc_timestamp,
-             lads_date,
+             pod_idoc_name,
+             pod_idoc_number,
+             pod_idoc_timestamp,
+             pod_lads_date,
              lads_status)
          values
             (rcd_lads_del_hdr.vbeln,
@@ -1524,10 +1524,10 @@ create or replace package body lads_atllad16 as
              rcd_lads_del_hdr.zzweightpal_f,
              rcd_lads_del_hdr.mescod,
              rcd_lads_del_hdr.mesfct,
-             rcd_lads_del_hdr.idoc_name,
-             rcd_lads_del_hdr.idoc_number,
-             rcd_lads_del_hdr.idoc_timestamp,
-             rcd_lads_del_hdr.lads_date,
+             rcd_lads_del_hdr.pod_idoc_name,
+             rcd_lads_del_hdr.pod_idoc_number,
+             rcd_lads_del_hdr.pod_idoc_timestamp,
+             rcd_lads_del_hdr.pod_lads_date,
              rcd_lads_del_hdr.lads_status);
       end if;
 
@@ -3229,7 +3229,6 @@ create or replace package body lads_atllad16 as
       /* Retrieve field values
       /*-*/
       rcd_lads_del_pod.vbeln := rcd_lads_del_det.vbeln;
-      rcd_lads_del_pod.detseq := rcd_lads_del_det.detseq;
       rcd_lads_del_pod.podseq := rcd_lads_del_pod.podseq + 1;
       rcd_lads_del_pod.grund := lics_inbound_utility.get_variable('GRUND');
       rcd_lads_del_pod.podmg := lics_inbound_utility.get_number('PODMG',null);
@@ -3271,7 +3270,6 @@ create or replace package body lads_atllad16 as
 
       insert into lads_del_pod
          (vbeln,
-          detseq,
           podseq,
           grund,
           podmg,
@@ -3281,7 +3279,6 @@ create or replace package body lads_atllad16 as
           meins)
       values
          (rcd_lads_del_pod.vbeln,
-          rcd_lads_del_pod.detseq,
           rcd_lads_del_pod.podseq,
           rcd_lads_del_pod.grund,
           rcd_lads_del_pod.podmg,

@@ -15,6 +15,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2008/04   Steve Gregan   Added CLIO company check for sales aggregation
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -26,7 +27,8 @@ create or replace package lads_atllad12_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2);
+   procedure execute_before(par_fkdat in varchar2, par_bukrs in varchar2);
+   procedure execute_after(par_fkdat in varchar2, par_bukrs in varchar2);
 
 end lads_atllad12_monitor;
 /
@@ -60,7 +62,55 @@ create or replace package body lads_atllad12_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_fkdat in varchar2, par_bukrs in varchar2) is
+   procedure execute_before(par_fkdat in varchar2, par_bukrs in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data
+      /*-*/
+
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
+      /*-*/
+      /* Flattening logic
+      /* **note** - delete and replace
+      /*-*/
+      
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD12_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_fkdat in varchar2, par_bukrs in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -85,9 +135,9 @@ create or replace package body lads_atllad12_monitor as
    /*-------------*/
    begin
 
-      /*----------------------*/
-      /* Triggered procedures */
-      /*----------------------*/
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
 
       /*-*/
       /* Only process CLIO company code
@@ -145,19 +195,14 @@ create or replace package body lads_atllad12_monitor as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD12_MONITOR - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD12_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_after;
 
 end lads_atllad12_monitor;
 /

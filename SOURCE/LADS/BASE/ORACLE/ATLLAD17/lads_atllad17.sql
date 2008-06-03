@@ -15,6 +15,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2006/12   Linden Glen    Added STLST field to header processing
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -231,13 +232,22 @@ create or replace package body lads_atllad17 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad17_monitor.execute(rcd_lads_bom_hdr.stlal, rcd_lads_bom_hdr.matnr, rcd_lads_bom_hdr.werks);
+            lads_atllad17_monitor.execute_before(rcd_lads_bom_hdr.stlal, rcd_lads_bom_hdr.matnr, rcd_lads_bom_hdr.werks);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad17_monitor.execute_after(rcd_lads_bom_hdr.stlal, rcd_lads_bom_hdr.matnr, rcd_lads_bom_hdr.werks);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

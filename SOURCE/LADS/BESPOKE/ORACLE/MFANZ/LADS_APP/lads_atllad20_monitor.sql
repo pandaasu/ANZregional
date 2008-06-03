@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -25,7 +26,8 @@ create or replace package lads_atllad20_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_hdrdat in varchar2, par_hdrseq in number);
+   procedure execute_before(par_hdrdat in varchar2, par_hdrseq in number);
+   procedure execute_after(par_hdrdat in varchar2, par_hdrseq in number);
 
 end lads_atllad20_monitor;
 /
@@ -44,12 +46,66 @@ create or replace package body lads_atllad20_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_hdrdat in varchar2, par_hdrseq in number) is
+   procedure execute_before(par_hdrdat in varchar2, par_hdrseq in number) is
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data
+      /*-*/
+
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
+      /*-*/
+      /* Flattening logic
+      /* **note** - delete and replace
+      /*-*/
+      
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD20_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_before;
+
+   procedure execute_after(par_hdrdat in varchar2, par_hdrseq in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
 
       return;
 
@@ -71,12 +127,12 @@ create or replace package body lads_atllad20_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD20_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD20_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_after;
 
 end lads_atllad20_monitor;
 /

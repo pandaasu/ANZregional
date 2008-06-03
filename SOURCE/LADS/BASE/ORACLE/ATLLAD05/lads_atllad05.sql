@@ -19,6 +19,7 @@
                           Primary Key now includes KNUMH
  2005/05   Linden Glen    Added logic to handle sequencing around date range
                           Added DATAB to primary key
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -417,13 +418,22 @@ create or replace package body lads_atllad05 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad05_monitor.execute(rcd_lads_prc_lst_hdr.vakey, rcd_lads_prc_lst_hdr.kschl, rcd_lads_prc_lst_hdr.datab, rcd_lads_prc_lst_hdr.knumh);
+            lads_atllad05_monitor.execute_before(rcd_lads_prc_lst_hdr.vakey, rcd_lads_prc_lst_hdr.kschl, rcd_lads_prc_lst_hdr.datab, rcd_lads_prc_lst_hdr.knumh);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad05_monitor.execute_after(rcd_lads_prc_lst_hdr.vakey, rcd_lads_prc_lst_hdr.kschl, rcd_lads_prc_lst_hdr.datab, rcd_lads_prc_lst_hdr.knumh);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

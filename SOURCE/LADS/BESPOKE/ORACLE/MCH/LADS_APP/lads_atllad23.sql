@@ -22,6 +22,7 @@ create or replace package lads_atllad23 as
     2005/01   Linden Glen       Added processing for exidv2,inhalt,exti1,signi
     2007/03   Steve Gregan      Updated locking strategy
                                 Changed IDOC timestamp check from < to <
+    2008/05   Trevor Keon       Added calls to monitor before and after procedure
 
    *******************************************************************************/
 
@@ -273,7 +274,7 @@ create or replace package body lads_atllad23 as
          /*-*/
          savepoint transaction_savepoint;
          begin
-            lads_atllad23_monitor.execute(rcd_lads_int_stk_hdr.werks);
+            lads_atllad23_monitor.execute_before(rcd_lads_int_stk_hdr.werks);
          exception
             when others then
                rollback to transaction_savepoint;
@@ -285,6 +286,13 @@ create or replace package body lads_atllad23 as
          /* **note** - releases transaction lock
          /*-*/
          commit;
+
+         begin
+            lads_atllad23_monitor.execute_after(rcd_lads_int_stk_hdr.werks);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;
 
       end if;
 

@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -25,7 +26,8 @@ create or replace package lads_atllad18_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_belnr in varchar2);
+   procedure execute_before(par_belnr in varchar2);
+   procedure execute_after(par_belnr in varchar2);
 
 end lads_atllad18_monitor;
 /
@@ -44,7 +46,7 @@ create or replace package body lads_atllad18_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_belnr in varchar2) is
+   procedure execute_before(par_belnr in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -99,6 +101,15 @@ create or replace package body lads_atllad18_monitor as
          raise_application_error(-20000, 'Invoice (' || par_belnr || ') not found');
       end if;
       close csr_lads_inv_hdr_01;
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data (eg. delivery deletion)
+      /*-*/
 
       /*----------------------*/
       /* Invoice Cancellation */
@@ -221,23 +232,14 @@ create or replace package body lads_atllad18_monitor as
       end if;
       close csr_lads_inv_org_01;
 
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*----------------------*/
-      /* Triggered procedures */
-      /*----------------------*/
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
 
       /*-*/
-      /* Trigger the TRIDENT interface
+      /* Flattening logic
+      /* **note** - delete and replace
       /*-*/
-      lics_trigger_loader.execute('TRIDENT Interface',
-                                  'site_app.trident_extract_pkg.idoc_monitor(''INV'',''' || rcd_lads_inv_hdr_01.belnr || ''')',
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
 
    /*-------------------*/
    /* Exception handler */
@@ -250,19 +252,55 @@ create or replace package body lads_atllad18_monitor as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_belnr in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+--      lics_trigger_loader.execute('TRIDENT Interface',
+--                                  'site_app.trident_extract_pkg.idoc_monitor(''INV'',''' || par_belnr || ''')',
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD18_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_after;
 
 end lads_atllad18_monitor;
 /

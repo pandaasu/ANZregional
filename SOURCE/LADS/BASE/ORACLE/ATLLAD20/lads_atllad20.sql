@@ -17,6 +17,7 @@
  2006/11   Steve Gregan   Added columns (DET): ZZCURRENTFLAG
                                                ZZFUTUREFLAG
                                                ZZMARKETACCTFLAG
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -227,9 +228,18 @@ create or replace package body lads_atllad20 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad20_monitor.execute(rcd_lads_hie_cus_hdr.hdrdat, rcd_lads_hie_cus_hdr.hdrseq);
+            lads_atllad20_monitor.execute_before(rcd_lads_hie_cus_hdr.hdrdat, rcd_lads_hie_cus_hdr.hdrseq);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;
+         
+         commit;
+         
+         begin
+            lads_atllad20_monitor.execute_after(rcd_lads_hie_cus_hdr.hdrdat, rcd_lads_hie_cus_hdr.hdrseq);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));

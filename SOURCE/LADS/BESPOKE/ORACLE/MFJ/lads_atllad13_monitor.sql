@@ -15,6 +15,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2006/06   Steve Gregan   Modified order line rejection logic to ignore reason ZA
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -26,7 +27,8 @@ create or replace package lads_atllad13_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_belnr in varchar2);
+   procedure execute_before(par_belnr in varchar2);
+   procedure execute_after(par_belnr in varchar2);
 
 end lads_atllad13_monitor;
 /
@@ -45,7 +47,7 @@ create or replace package body lads_atllad13_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_belnr in varchar2) is
+   procedure execute_before(par_belnr in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -98,6 +100,14 @@ create or replace package body lads_atllad13_monitor as
          raise_application_error(-20000, 'Sales order (' || par_belnr || ') not found');
       end if;
       close csr_lads_sal_ord_hdr_01;
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data
+      /*-*/
 
       /*-----------------------------------*/
       /* Sales Order and Delivery Deletion */
@@ -186,11 +196,14 @@ create or replace package body lads_atllad13_monitor as
                 lads_status = '4'
           where belnr = rcd_lads_sal_ord_hdr_01.belnr;
       end if;
-
+      
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
       /*-*/
-      /* Commit the database
+      /* Flattening logic
+      /* **note** - delete and replace
       /*-*/
-      commit;
 
    /*-------------------*/
    /* Exception handler */
@@ -203,19 +216,50 @@ create or replace package body lads_atllad13_monitor as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_before;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_belnr in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+      
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_after;
 
 end lads_atllad13_monitor;
 /

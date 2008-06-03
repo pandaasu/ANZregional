@@ -15,6 +15,7 @@
  -------   ------         ----------- 
  2004/01   Steve Gregan   Created 
  2008/02   Trevor Keon    Added update to GEN lines for ZRK invoices 
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -920,13 +921,22 @@ create or replace package body lads_atllad18 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad18_monitor.execute(rcd_lads_inv_hdr.belnr);
+            lads_atllad18_monitor.execute_before(rcd_lads_inv_hdr.belnr);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad18_monitor.execute_after(rcd_lads_inv_hdr.belnr);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

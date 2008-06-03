@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
 
@@ -254,13 +255,22 @@ create or replace package body lads_atllad01 as
          rollback;
       else
          var_accepted := true;
-         commit;
+         
          begin
-            lads_atllad01_monitor.execute(rcd_lads_ctl_rec_hpi.cntl_rec_id);
+            lads_atllad01_monitor.execute_before(rcd_lads_ctl_rec_hpi.cntl_rec_id);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
          end;
+         
+         commit;
+         
+         begin
+            lads_atllad01_monitor.execute_after(rcd_lads_ctl_rec_hpi.cntl_rec_id);
+         exception
+            when others then
+               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         end;         
       end if;
 
       /*-*/

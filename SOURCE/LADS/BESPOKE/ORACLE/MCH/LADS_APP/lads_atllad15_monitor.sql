@@ -20,13 +20,15 @@ create or replace package lads_atllad15_monitor as
     -------   ------         -----------
     2004/01   Steve Gregan   Created
     2007/03   Steve Gregan   Included LADS FLATTENING callout
+    2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number);
+   procedure execute_before(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number);
+   procedure execute_after(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number);
 
 end lads_atllad15_monitor;
 /
@@ -45,7 +47,7 @@ create or replace package body lads_atllad15_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number) is
+   procedure execute_before(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number) is
 
       /*-*/
       /* Local cursors
@@ -94,9 +96,6 @@ create or replace package body lads_atllad15_monitor as
       /*-*/
       bds_atllad15_flatten.execute('*DOCUMENT',par_obj_type,par_obj_id,par_context);
 
-      /*---------------------------*/
-      /* 3. Triggered procedures   */
-      /*---------------------------*/
 
    /*-------------------*/
    /* Exception handler */
@@ -111,12 +110,49 @@ create or replace package body lads_atllad15_monitor as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD15_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD15_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_before;
+
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute_after(par_obj_type in varchar2, par_obj_id in varchar2, par_context in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD15_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_after;
 
 end lads_atllad15_monitor;
 /

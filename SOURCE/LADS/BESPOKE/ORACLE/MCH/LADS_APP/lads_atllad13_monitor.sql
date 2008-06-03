@@ -16,6 +16,7 @@
  2004/01   Steve Gregan   Created
  2005/04   Linden Glen    Added Trident Global Triggering
  2006/06   Steve Gregan   Modified order line rejection logic to ignore reason ZA
+ 2008/05   Trevor Keon    Changed to use execute_before and execute_after
 
 *******************************************************************************/
 
@@ -27,7 +28,8 @@ create or replace package lads_atllad13_monitor as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_belnr in varchar2);
+   procedure execute_before(par_belnr in varchar2);
+   procedure execute_after(par_belnr in varchar2);
 
 end lads_atllad13_monitor;
 /
@@ -46,7 +48,7 @@ create or replace package body lads_atllad13_monitor as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_belnr in varchar2) is
+   procedure execute_before(par_belnr in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -99,6 +101,14 @@ create or replace package body lads_atllad13_monitor as
          raise_application_error(-20000, 'Sales order (' || par_belnr || ') not found');
       end if;
       close csr_lads_sal_ord_hdr_01;
+
+      /*---------------------------*/
+      /* 1. LADS transaction logic */
+      /*---------------------------*/
+      /*-*/
+      /* Transaction logic
+      /* **note** - changes to the LADS data
+      /*-*/
 
       /*-----------------------------------*/
       /* Sales Order and Delivery Deletion */
@@ -161,7 +171,7 @@ create or replace package body lads_atllad13_monitor as
                /* 1. Any one delivery line will cause the deletion of the whole delivery
                /*-*/
                update lads_del_hdr
-                  set lads_date = sysdate,
+                  set pod_lads_date = sysdate,
                       lads_status = '4'
                 where vbeln = rcd_lads_del_irf_01.vbeln;
 
@@ -188,23 +198,13 @@ create or replace package body lads_atllad13_monitor as
           where belnr = rcd_lads_sal_ord_hdr_01.belnr;
       end if;
 
+      /*---------------------------*/
+      /* 2. LADS flattening logic  */
+      /*---------------------------*/
       /*-*/
-      /* Commit the database
+      /* Flattening logic
+      /* **note** - delete and replace
       /*-*/
-      commit;
-
-      /*------------*/
-      /* Triggering */
-      /*------------*/
-
-      /*-*/
-      /* Trigger the TRIDENT interface
-      /*-*/
-      lics_trigger_loader.execute('TRIDENT Interface',
-                                  'site_app.trident_extract_pkg.idoc_monitor(''ORD_SO'',''' || rcd_lads_sal_ord_hdr_01.belnr || ''')',
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
 
    /*-------------------*/
    /* Exception handler */
@@ -217,19 +217,52 @@ create or replace package body lads_atllad13_monitor as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE_BEFORE - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end execute_before;
+   
+   procedure execute_after(par_belnr in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*---------------------------*/
+      /* 1. Triggered procedures   */
+      /*---------------------------*/
+--      lics_trigger_loader.execute('TRIDENT Interface',
+--                                  'site_app.trident_extract_pkg.idoc_monitor(''ORD_SO'',''' || par_belnr || ''')',
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
+
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'LADS_ATLLAD13_MONITOR - EXECUTE_AFTER - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute_after;   
 
 end lads_atllad13_monitor;
 /
