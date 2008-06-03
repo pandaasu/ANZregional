@@ -31,28 +31,48 @@ public final class cSapLad02 implements iSapInterface {
          throw new Exception("SAPLAD02 - SAP tables not supplied");
       }
       String[] strTableNames = strSapTables.split(",");
+      String strSapFilters = (String)objParameters.get("SAPFILTERS");
+      if (strSapFilters == null) {
+         throw new Exception("SAPLAD02 - SAP filters not supplied");
+      }
+      String[] strTableFilters = strSapFilters.split(",");
       
       //
       // Process the interface request
       //
-      cSapQuery objSapQuery = null;
-      cSapExecution objExecution = null;
-      cSapResultSet objSapResultSet = null;
+      cSapSingleQuery objSapSingleQuery = null;
+      cSapSingleResultSet objSapSingleResultSet = null;
       boolean bolAppend = false;
       try {
          for (int i=0; i<strTableNames.length; i++) {
-            objSapQuery = new cSapQuery(objSAPConnection);
-            objExecution = objSapQuery.setPrimaryExecution(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[0]);
-            objSapResultSet = objSapQuery.execute();
-            objSapResultSet.toInterface(strOutputFile, "SAPLAD02", true, bolAppend);
+            boolean bolData = false;
+            int intRowSkips = 0;
+            int intRowCount = 10000;
+            boolean bolRead = true;
+            while (bolRead) {
+               objSapSingleQuery = new cSapSingleQuery(objSAPConnection);
+               objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[]{strTableFilters[i]}, intRowSkips, intRowCount);
+               objSapSingleResultSet = objSapSingleQuery.getResultSet();
+               if (!bolData) {
+                  objSapSingleResultSet.toInterfaceMeta(strOutputFile, "SAPLAD02", strTableNames[i].toUpperCase(), bolAppend);
+                  bolAppend = true;
+                  bolData = true;
+               } else {
+                  objSapSingleResultSet.appendToInterface(strOutputFile);
+               }
+               if (objSapSingleResultSet.getRowCount() < intRowCount) {
+                  bolRead = false;
+               } else {
+                  intRowSkips = intRowSkips + intRowCount;
+               }
+            }
             bolAppend = true;
          }
       } catch(Exception objException) {
          throw new Exception("SAPLAD02 - SAP query failed - " + objException.getMessage());
       } finally {
-         objSapResultSet = null;
-         objExecution = null;
-         objSapQuery = null;
+         objSapSingleResultSet = null;
+         objSapSingleQuery = null;
       }
       
    }
