@@ -226,7 +226,7 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
         t01.special_stock_indctr as special_stock_indctr
       from bds_refrnc_purchasing_src t01
       where par_action = '*ALL'
-          or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0')); 
+          or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))
       order by t01.sap_material_code;
         
     rcd_refrnc_purchasing_src csr_refrnc_purchasing_src%rowtype;
