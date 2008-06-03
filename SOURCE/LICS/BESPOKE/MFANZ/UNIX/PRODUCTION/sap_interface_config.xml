@@ -24,7 +24,8 @@
         SapLanguage="EN"               
         SapServer="sapapp.na.mars"               
         SapSystem="11"               
-        SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911,T415A"/>     
+        SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911,T415A"
+        SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"/>     
     <interface identifier="SAPLAD03#01"               
         description="SAP to LADS Customer Hierarchy Interface"               
         class="com.isi.lad.cSapLad03"               
@@ -43,5 +44,7 @@
         SapPassword="*PROMPTED" 
         SapLanguage="EN" 
         SapServer="sapapp.na.mars" 
-        SapSystem="11" SapTables="T415A,EORD"/>  
+        SapSystem="11"
+        SapTables="T415A,EORD"
+        SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"/>  
 </configuration>
