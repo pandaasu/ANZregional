@@ -3,7 +3,7 @@
  <!-- SAP Interface Configuration File -->
  <!-- -->
  <configuration>
-     <interface identifier="SAPLAD01#01"
+    <interface identifier="SAPLAD01#01"
                description="SAP to LADS Audit Trail Interface"
                class="com.isi.lad.cSapLad01"
                SapClient="002"
@@ -15,7 +15,7 @@
                SapEnvironment="APB"
                SapObject="LIKP"
                SapDate="TODAY-3"/>
-     <interface identifier="SAPLAD02#01"
+    <interface identifier="SAPLAD02#01"
                description="SAP to LADS Material Determination Interface"
                class="com.isi.lad.cSapLad02"
                SapClient="002"
@@ -24,8 +24,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911"/>
-     <interface identifier="SAPLAD02#02"
+               SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911"
+               SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"/>
+    <interface identifier="SAPLAD02#02"
                description="SAP to LADS SRC Interface"
                class="com.isi.lad.cSapLad02"
                SapClient="002"
@@ -34,8 +35,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="/MARS/IN_SRCID,/MARS/IN_SRC_VAL,MAPL,MKAL"/>
-     <interface identifier="SAPLAD02#03"
+               SapTables="/MARS/IN_SRCID,/MARS/IN_SRC_VAL,MAPL,MKAL"
+               SapFilters="*NONE,*NONE,*NONE,*NONE"/>
+    <interface identifier="SAPLAD02#03"
                description="SAP to LADS SRC Interface"
                class="com.isi.lad.cSapLad02"
                SapClient="002"
@@ -44,8 +46,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="MKAL"/>
-     <interface identifier="SAPLAD02#04"
+               SapTables="MKAL"
+               SapFilters="*NONE"/>
+    <interface identifier="SAPLAD02#04"
                description="SAP to LADS Fix Interface"
                class="com.isi.lad.cSapLad02"
                SapClient="002"
@@ -54,8 +57,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="T415A,EORD"/>
-     <interface identifier="SAPLAD02#05"
+               SapTables="T415A,EORD"
+               SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"/>
+    <interface identifier="SAPLAD02#05"
                description="SAP to LADS Recipe Interface"
                class="com.isi.lad.cSapLad02"
                SapClient="002"
@@ -64,8 +68,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="AFPO"/>
-     <interface identifier="SAPLAD03#01"
+               SapTables="AFPO"
+               SapFilters="*NONE"/>
+    <interface identifier="SAPLAD03#01"
                description="SAP to LADS Customer Hierarchy Interface"
                class="com.isi.lad.cSapLad03"
                SapClient="002"
@@ -89,4 +94,4 @@
                LadsPassword="justreading"
                LadsHistoryDays="30"
                Logging="0"/>
-  </configuration>
+ </configuration>
