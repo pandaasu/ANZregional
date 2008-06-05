@@ -97,7 +97,7 @@ create or replace package body dw_alignment as
       /*           2. Related invoice without billing date (unposted)
       /*-*/
       update dw_purch_order_base
-         set purch_order_line_status := '*CANCELLED',
+         set purch_order_line_status = '*CANCELLED',
              out_qty = 0,
              out_qty_base_uom = 0,
              out_qty_gross_tonnes = 0,
@@ -446,7 +446,7 @@ create or replace package body dw_alignment as
       /*           2. Related invoice without billing date (unposted)
       /*-*/
       update dw_order_base
-         set order_line_status := '*CANCELLED';
+         set order_line_status = '*CANCELLED',
              out_qty = 0,
              out_qty_base_uom = 0,
              out_qty_gross_tonnes = 0,
@@ -666,7 +666,7 @@ create or replace package body dw_alignment as
          /*-*/
          /* Set the order line status
          /*-*/
- //        rcd_order_base.order_line_status := rcd_order_base.atlas_line_status;
+ --        rcd_order_base.order_line_status := rcd_order_base.atlas_line_status;
 
          /*-*/
          /* Calculate the outstanding values when required
@@ -1033,8 +1033,8 @@ create or replace package body dw_alignment as
          fetch csr_dlvry_lookup into rcd_dlvry_lookup;
          if csr_dlvry_lookup%found then
             update dw_sales_base
-               set dlvry_doc_num := rcd_dlvry_lookup.dlvry_doc_num;
-                   dlvry_doc_line_num := rcd_dlvry_lookup.dlvry_doc_line_num;
+               set dlvry_doc_num = rcd_dlvry_lookup.dlvry_doc_num,
+                   dlvry_doc_line_num = rcd_dlvry_lookup.dlvry_doc_line_num
              where billing_doc_num = rcd_sales_base.billing_doc_num
                and billing_doc_line_num = rcd_sales_base.billing_doc_line_num;
          end if;
