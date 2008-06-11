@@ -1,4 +1,4 @@
-create or replace package ladims01_material as
+CREATE OR REPLACE package ladims01_material as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -31,13 +31,11 @@ create or replace package ladims01_material as
    /*-*/
    procedure execute(par_ema_recipient in varchar2, par_plant_code in varchar2);
 
-end ladims01_material;
+end ladims01_material; 
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body ladims01_material as
+
+CREATE OR REPLACE package body ladims01_material as
 
    /*-*/
    /* Private exceptions
@@ -62,14 +60,14 @@ create or replace package body ladims01_material as
       /* Local cursors
       /*-*/
       cursor csr_matl_master is
-         select ltrim(a.sap_material_code,'0') || ',' ||
-                a.bds_material_desc_zh || ',' ||
-                decode(a.material_type,'ROH','RAW/SFG',
-                                       'FERT','FG',
-                                       'VERP','PACK',a.material_type) || ',' ||
-                decode(b.special_procurement_type,'50','YES','NO') || ',' ||
-                a.base_uom || ',' ||
-                decode(b.plant_specific_status,'99','Retired','New') as extract_line
+         select '<td align=center>'||ltrim(a.sap_material_code,'0')||'</td>'||
+                '<td align=center>'||a.bds_material_desc_zh||'</td>'||
+                '<td align=center>'||decode(a.material_type,'ROH','RAW/SFG',
+                                                            'FERT','FG',
+                                                            'VERP','PACK',a.material_type)||'</td>'||
+                '<td align=center>'||decode(b.special_procurement_type,'50','YES','NO')||'</td>'||
+                '<td align=center>'||a.base_uom||'</td>'||
+                '<td align=center>'||decode(b.plant_specific_status,'99','Retired','New')||'</td>' as extract_line
          from bds_material_hdr a,
               bds_material_plant_hdr b
          where a.sap_material_code = b.sap_material_code
@@ -103,10 +101,17 @@ create or replace package body ladims01_material as
       end if;
 
       /*-*/
-      /* Create Email
+      /* Create the new email and create the email text header part
       /*-*/
-      isi_mailer.create_email(par_ema_recipient,var_subject,null,null);
-      isi_mailer.append_data('GRD Material Changes for Plant ' || par_plant_code);
+      lics_mailer.create_email(var_sender,
+                               par_ema_recipient,
+                               var_subject,
+                               null,
+                               null);
+      lics_mailer.create_part(null);
+      lics_mailer.append_data('GRD Material Changes for Plant ' || par_plant_code);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
 
       /*-*/
       /* Open Cursor for output
@@ -124,10 +129,19 @@ create or replace package body ladims01_material as
          if (var_start) then
 
             /*-*/
-            /* Create attachment
+            /* Create the email file and output the header data (character set UTF-8)
             /*-*/
-            isi_mailer.create_attachment('grd_extract_' || to_char(sysdate,'yyyymmddhh24miss') || '.csv');
-            isi_mailer.append_attachment('MATERIAL_CODE,DESCRIPTION,MATERIAL_TYPE,PHANTOM,UOM,STATUS');
+            lics_mailer.create_part('grd_extract_' || to_char(sysdate,'yyyymmddhh24miss') || '.xls');
+            lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+            lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+            lics_mailer.append_data('<tr>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">MATERIAL_CODE</td>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">DESCRIPTION</td>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">MATERIAL_TYPE</td>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">PHANTOM</td>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">UOM</td>');
+            lics_mailer.append_data('<td align=right style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">STATUS</td>');
+            lics_mailer.append_data('</tr>');
 
             var_start := false;
 
@@ -136,7 +150,7 @@ create or replace package body ladims01_material as
          /*-*/
          /* Append attachment records
          /*-*/
-         isi_mailer.append_attachment(rec_matl_master.extract_line);
+         lics_mailer.append_data('<tr>'||rec_matl_master.extract_line||'</tr>');
 
       end loop;
       close csr_matl_master;
@@ -145,15 +159,26 @@ create or replace package body ladims01_material as
       /* Notify in email if no attachment generated
       /*-*/
       if (var_start) then
-         isi_mailer.append_data('<NO GRD CHANGES AVAILABLE>');
+         lics_mailer.append_data('<tr><td colspan=6 align=center>NO GRD CHANGES AVAILABLE</td></tr>');
       end if;
 
       /*-*/
-      /* Finalise and send email
+      /* Output the email file part trailer data
       /*-*/
-      isi_mailer.finalise_email(var_sender);
+      lics_mailer.append_data('</table>');
 
+      /*-*/
+      /* Create the email end part
+      /*-*/
+      lics_mailer.create_part(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data('** Email End **');
 
+      /*-*/
+      /* Finalise and send email (character set UTF-8)
+      /*-*/
+      lics_mailer.finalise_email('utf-8');
 
    /*-------------------*/
    /* Exception handler */
@@ -173,9 +198,10 @@ create or replace package body ladims01_material as
          /*-*/
          /* Finalise the email
          /*-*/
-         if (isi_mailer.is_created) then
-             isi_mailer.append_data('** FATAL ERROR DURING EXTRACT ** - Please notify support');
-             isi_mailer.finalise_email(var_sender);
+         if (lics_mailer.is_created) then
+             lics_mailer.create_part(null);
+             lics_mailer.append_data('** FATAL ERROR DURING EXTRACT ** - Please notify support');
+             lics_mailer.finalise_email('utf-8');
          end if;
 
          /*-*/
@@ -188,7 +214,7 @@ create or replace package body ladims01_material as
    /*-------------*/
    end execute;
 
-end ladims01_material;
+end ladims01_material; 
 /
 
 /**************************/
