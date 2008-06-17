@@ -65,7 +65,7 @@ create or replace package body dw_alignment as
          select t01.*
            from dw_purch_base t01
           where t01.company_code = par_company_code
-            and t01.purch_order_line_status = '*OUTSTANDING';
+            and t01.purch_order_line_status = '*OPEN';
       rcd_purch_base csr_purch_base%rowtype;
 
       cursor csr_dlvry_base is
@@ -82,44 +82,26 @@ create or replace package body dw_alignment as
             and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
+      cursor csr_sap_doc_status is
+         select 'x'
+           from sap_doc_status t01
+          where t01.doc_type = 'PURCHASE_ORDER_LINE'
+            and t01.doc_number = rcd_purch_base.purch_order_doc_num
+            and t01.doc_line = rcd_purch_base.purch_order_doc_line_num
+            and doc_status = '*CLOSED';
+      rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
-
-      /*-------------------------*/
-      /* PURCH_BASE Cancellation */
-      /*-------------------------*/
-
-      /*-*/
-      /* Update the purchase base rows with *CANCELLED status when required
-      /* **notes** 1. Select all purchase orders that have an outstanding status
-      /*           2. Related invoice without billing date (unposted)
-      /*-*/
-      update dw_purch_order_base
-         set purch_order_line_status = '*CANCELLED',
-             out_qty = 0,
-             out_qty_base_uom = 0,
-             out_qty_gross_tonnes = 0,
-             out_qty_net_tonnes = 0,
-             out_gsv = 0,
-             out_gsv_xactn = 0,
-             out_gsv_aud = 0,
-             out_gsv_usd = 0,
-             out_gsv_eur = 0
-       where company_code = par_company_code
-         and purch_order_line_status in ('*OUTSTANDING')
-         and (purch_order_doc_num, purch_order_doc_line_num) in (select purch_order_doc_num, purch_order_doc_line_num
-                                                                   from sap_inv_trace
-                                                                  where company_code = par_company_code
-                                                                    and trace_status = '*UNPOSTED');
 
       /*----------------------*/
       /* PURCH_BASE Retrieval */
       /*----------------------*/
 
       /*-*/
-      /* Retrieve the PURCH_BASE rows with a *OUTSTANDING status
+      /* Retrieve the PURCH_BASE rows with a *OPEN status
       /*-*/
       open csr_purch_base;
       loop
@@ -135,15 +117,6 @@ create or replace package body dw_alignment as
          /*-*/
          /* Reset the purchase order values
          /*-*/
-         rcd_purch_base.req_qty := 0;
-         rcd_purch_base.req_qty_base_uom := 0;
-         rcd_purch_base.req_qty_gross_tonnes := 0;
-         rcd_purch_base.req_qty_net_tonnes := 0;
-         rcd_purch_base.req_gsv := 0;
-         rcd_purch_base.req_gsv_xactn := 0;
-         rcd_purch_base.req_gsv_aud := 0;
-         rcd_purch_base.req_gsv_usd := 0;
-         rcd_purch_base.req_gsv_eur := 0;
          rcd_purch_base.del_qty := 0;
          rcd_purch_base.del_qty_base_uom := 0;
          rcd_purch_base.del_qty_gross_tonnes := 0;
@@ -203,21 +176,6 @@ create or replace package body dw_alignment as
             var_delivered := true;
 
             /*-*/
-            /* Delivery request values
-            /*-*/
-            if (rcd_purch_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
-                rcd_purch_base.purch_order_uom_code = rcd_dlvry_base.dlvry_uom_code) then
-               rcd_purch_base.req_qty := rcd_purch_base.req_qty + rcd_dlvry_base.req_qty;
-            else
-               rcd_purch_base.req_qty := rcd_purch_base.req_qty + dw_utility.convert_buom_to_uom(rcd_purch_base.ods_matl_code, rcd_purch_base.purch_order_uom_code, rcd_dlvry_base.req_qty_base_uom);
-            end if;
-            rcd_purch_base.req_gsv := rcd_purch_base.req_gsv + rcd_dlvry_base.req_gsv;
-            rcd_purch_base.req_gsv_xactn := rcd_purch_base.req_gsv_xactn + rcd_dlvry_base.req_gsv_xactn;
-            rcd_purch_base.req_gsv_aud := rcd_purch_base.req_gsv_aud + rcd_dlvry_base.req_gsv_aud;
-            rcd_purch_base.req_gsv_usd := rcd_purch_base.req_gsv_usd + rcd_dlvry_base.req_gsv_usd;
-            rcd_purch_base.req_gsv_eur := rcd_purch_base.req_gsv_eur + rcd_dlvry_base.req_gsv_eur;
-
-            /*-*/
             /* Delivery confirm values
             /*-*/
             if (rcd_purch_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
@@ -234,17 +192,6 @@ create or replace package body dw_alignment as
 
          end loop;
          close csr_dlvry_base;
-
-         /*-*/
-         /* Update the GRD delivery request quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_purch_base.purch_order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_purch_base.req_qty;
-         dw_utility.calculate_quantity;
-         rcd_purch_base.req_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_purch_base.req_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_purch_base.req_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
          /*-*/
          /* Update the GRD delivery confirm quantities
@@ -317,26 +264,35 @@ create or replace package body dw_alignment as
          /*-*/
          /* Set the purchase order line status
          /*-*/
+         if var_delivered = true then
+            rcd_purch_base.purch_order_line_status := '*DELIVERED';
+         end if;
          if var_invoiced = true then
             rcd_purch_base.purch_order_line_status := '*CLOSED';
          end if;
+         open csr_sap_doc_status;
+         fetch csr_sap_doc_status into rcd_sap_doc_status;
+         if csr_sap_doc_status%found then
+            rcd_purch_base.purch_order_line_status := '*CLOSED';
+         end if;
+         close csr_sap_doc_status;
 
          /*-*/
          /* Calculate the outstanding values when required
          /* 1. Closed purchase order lines have no outstanding values
          /* 2. Purchase order line only becomes outstanding when confirmed
          /*-*/
-         if rcd_purch_base.purch_order_line_status = '*OUTSTANDING' then
+         if rcd_purch_base.purch_order_line_status != '*CLOSED' then
             if not(rcd_purch_base.confirmed_date is null) then
-               rcd_purch_base.out_qty := rcd_purch_base.con_qty - rcd_purch_base.req_qty;
-               rcd_purch_base.out_qty_base_uom := rcd_purch_base.con_qty_base_uom - rcd_purch_base.req_qty_base_uom;
-               rcd_purch_base.out_qty_gross_tonnes := rcd_purch_base.con_qty_gross_tonnes - rcd_purch_base.req_qty_gross_tonnes;
-               rcd_purch_base.out_qty_net_tonnes := rcd_purch_base.con_qty_net_tonnes - rcd_purch_base.req_qty_net_tonnes;
-               rcd_purch_base.out_gsv := rcd_purch_base.con_gsv - rcd_purch_base.req_gsv;
-               rcd_purch_base.out_gsv_xactn := rcd_purch_base.con_gsv_xactn - rcd_purch_base.req_gsv_xactn;
-               rcd_purch_base.out_gsv_aud := rcd_purch_base.con_gsv_aud - rcd_purch_base.req_gsv_aud;
-               rcd_purch_base.out_gsv_usd := rcd_purch_base.con_gsv_usd - rcd_purch_base.req_gsv_usd;
-               rcd_purch_base.out_gsv_eur := rcd_purch_base.con_gsv_eur - rcd_purch_base.req_gsv_eur;
+               rcd_purch_base.out_qty := rcd_purch_base.con_qty;
+               rcd_purch_base.out_qty_base_uom := rcd_purch_base.con_qty_base_uom;
+               rcd_purch_base.out_qty_gross_tonnes := rcd_purch_base.con_qty_gross_tonnes;
+               rcd_purch_base.out_qty_net_tonnes := rcd_purch_base.con_qty_net_tonnes;
+               rcd_purch_base.out_gsv := rcd_purch_base.con_gsv;
+               rcd_purch_base.out_gsv_xactn := rcd_purch_base.con_gsv_xactn;
+               rcd_purch_base.out_gsv_aud := rcd_purch_base.con_gsv_aud;
+               rcd_purch_base.out_gsv_usd := rcd_purch_base.con_gsv_usd;
+               rcd_purch_base.out_gsv_eur := rcd_purch_base.con_gsv_eur;
             end if;
          end if;
 
@@ -349,15 +305,6 @@ create or replace package body dw_alignment as
          /*-*/
          update dw_purch_base
             set purch_order_line_status = rcd_purch_base.purch_order_line_status,
-                req_qty = rcd_purch_base.req_qty,
-                req_qty_base_uom = rcd_purch_base.req_qty_base_uom,
-                req_qty_gross_tonnes = rcd_purch_base.req_qty_gross_tonnes,
-                req_qty_net_tonnes = rcd_purch_base.req_qty_net_tonnes,
-                req_gsv = rcd_purch_base.req_gsv,
-                req_gsv_xactn = rcd_purch_base.req_gsv_xactn,
-                req_gsv_aud = rcd_purch_base.req_gsv_aud,
-                req_gsv_usd = rcd_purch_base.req_gsv_usd,
-                req_gsv_eur = rcd_purch_base.req_gsv_eur,
                 del_qty = rcd_purch_base.del_qty,
                 del_qty_base_uom = rcd_purch_base.del_qty_base_uom,
                 del_qty_gross_tonnes = rcd_purch_base.del_qty_gross_tonnes,
@@ -414,7 +361,7 @@ create or replace package body dw_alignment as
          select t01.*
            from dw_order_base t01
           where t01.company_code = par_company_code
-            and t01.order_line_status = '*OUTSTANDING';
+            and t01.order_line_status = '*OPEN';
       rcd_order_base csr_order_base%rowtype;
 
       cursor csr_dlvry_base is
@@ -431,44 +378,26 @@ create or replace package body dw_alignment as
             and t01.order_doc_line_num = rcd_order_base.order_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
+      cursor csr_sap_doc_status is
+         select 'x'
+           from sap_doc_status t01
+          where t01.doc_type = 'SALES_ORDER_LINE'
+            and t01.doc_number = rcd_order_base.order_doc_num
+            and t01.doc_line = rcd_order_base.order_doc_line_num
+            and doc_status = '*CLOSED';
+      rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
-
-      /*-------------------------*/
-      /* ORDER_BASE Cancellation */
-      /*-------------------------*/
-
-      /*-*/
-      /* Update the order base rows with *CANCELLED status when required
-      /* **notes** 1. Select all orders that have an outstanding status
-      /*           2. Related invoice without billing date (unposted)
-      /*-*/
-      update dw_order_base
-         set order_line_status = '*CANCELLED',
-             out_qty = 0,
-             out_qty_base_uom = 0,
-             out_qty_gross_tonnes = 0,
-             out_qty_net_tonnes = 0,
-             out_gsv = 0,
-             out_gsv_xactn = 0,
-             out_gsv_aud = 0,
-             out_gsv_usd = 0,
-             out_gsv_eur = 0
-       where company_code = par_company_code
-         and order_line_status in ('*OUTSTANDING')
-         and (order_doc_num, order_doc_line_num) in (select order_doc_num, order_doc_line_num
-                                                       from sap_inv_trace
-                                                      where company_code = par_company_code
-                                                        and trace_status = '*UNPOSTED');
 
       /*----------------------*/
       /* ORDER_BASE Retrieval */
       /*----------------------*/
 
       /*-*/
-      /* Retrieve the ORDER_BASE rows with a *OUTSTANDING status
+      /* Retrieve the ORDER_BASE rows with a *OPEN status
       /*-*/
       open csr_order_base;
       loop
@@ -484,15 +413,6 @@ create or replace package body dw_alignment as
          /*-*/
          /* Reset the order values
          /*-*/
-         rcd_order_base.req_qty := 0;
-         rcd_order_base.req_qty_base_uom := 0;
-         rcd_order_base.req_qty_gross_tonnes := 0;
-         rcd_order_base.req_qty_net_tonnes := 0;
-         rcd_order_base.req_gsv := 0;
-         rcd_order_base.req_gsv_xactn := 0;
-         rcd_order_base.req_gsv_aud := 0;
-         rcd_order_base.req_gsv_usd := 0;
-         rcd_order_base.req_gsv_eur := 0;
          rcd_order_base.del_qty := 0;
          rcd_order_base.del_qty_base_uom := 0;
          rcd_order_base.del_qty_gross_tonnes := 0;
@@ -552,21 +472,6 @@ create or replace package body dw_alignment as
             var_delivered := true;
 
             /*-*/
-            /* Delivery request values
-            /*-*/
-            if (rcd_order_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
-                rcd_order_base.order_uom_code = rcd_dlvry_base.dlvry_uom_code) then
-               rcd_order_base.req_qty := rcd_order_base.req_qty + rcd_dlvry_base.req_qty;
-            else
-               rcd_order_base.req_qty := rcd_order_base.req_qty + dw_utility.convert_buom_to_uom(rcd_order_base.ods_matl_code, rcd_order_base.order_uom_code, rcd_dlvry_base.req_qty_base_uom);
-            end if;
-            rcd_order_base.req_gsv := rcd_order_base.req_gsv + rcd_dlvry_base.req_gsv;
-            rcd_order_base.req_gsv_xactn := rcd_order_base.req_gsv_xactn + rcd_dlvry_base.req_gsv_xactn;
-            rcd_order_base.req_gsv_aud := rcd_order_base.req_gsv_aud + rcd_dlvry_base.req_gsv_aud;
-            rcd_order_base.req_gsv_usd := rcd_order_base.req_gsv_usd + rcd_dlvry_base.req_gsv_usd;
-            rcd_order_base.req_gsv_eur := rcd_order_base.req_gsv_eur + rcd_dlvry_base.req_gsv_eur;
-
-            /*-*/
             /* Delivery confirm values
             /*-*/
             if (rcd_order_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
@@ -583,17 +488,6 @@ create or replace package body dw_alignment as
 
          end loop;
          close csr_dlvry_base;
-
-         /*-*/
-         /* Update the GRD delivery request quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_order_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_order_base.order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_order_base.req_qty;
-         dw_utility.calculate_quantity;
-         rcd_order_base.req_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_order_base.req_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_order_base.req_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
          /*-*/
          /* Update the GRD delivery confirm quantities
@@ -666,24 +560,35 @@ create or replace package body dw_alignment as
          /*-*/
          /* Set the order line status
          /*-*/
- --        rcd_order_base.order_line_status := rcd_order_base.atlas_line_status;
+         if var_delivered = true  then
+            rcd_order_base.order_line_status := '*DELIVERED';
+         end if;
+         if var_invoiced = true then
+            rcd_order_base.order_line_status := '*CLOSED';
+         end if;
+         open csr_sap_doc_status;
+         fetch csr_sap_doc_status into rcd_sap_doc_status;
+         if csr_sap_doc_status%found then
+            rcd_order_base.order_line_status := '*CLOSED';
+         end if;
+         close csr_sap_doc_status;
 
          /*-*/
          /* Calculate the outstanding values when required
          /* 1. Closed order lines have no outstanding values
          /* 2. Order line only becomes outstanding when confirmed
          /*-*/
-         if rcd_order_base.order_line_status = '*OUTSTANDING' then
+         if rcd_order_base.order_line_status = '*OPEN' then
             if not(rcd_order_base.confirmed_date is null) then
-               rcd_order_base.out_qty := rcd_order_base.con_qty - rcd_order_base.req_qty;
-               rcd_order_base.out_qty_base_uom := rcd_order_base.con_qty_base_uom - rcd_order_base.req_qty_base_uom;
-               rcd_order_base.out_qty_gross_tonnes := rcd_order_base.con_qty_gross_tonnes - rcd_order_base.req_qty_gross_tonnes;
-               rcd_order_base.out_qty_net_tonnes := rcd_order_base.con_qty_net_tonnes - rcd_order_base.req_qty_net_tonnes;
-               rcd_order_base.out_gsv := rcd_order_base.con_gsv - rcd_order_base.req_gsv;
-               rcd_order_base.out_gsv_xactn := rcd_order_base.con_gsv_xactn - rcd_order_base.req_gsv_xactn;
-               rcd_order_base.out_gsv_aud := rcd_order_base.con_gsv_aud - rcd_order_base.req_gsv_aud;
-               rcd_order_base.out_gsv_usd := rcd_order_base.con_gsv_usd - rcd_order_base.req_gsv_usd;
-               rcd_order_base.out_gsv_eur := rcd_order_base.con_gsv_eur - rcd_order_base.req_gsv_eur;
+               rcd_order_base.out_qty := rcd_order_base.con_qty - rcd_order_base.del_qty;
+               rcd_order_base.out_qty_base_uom := rcd_order_base.con_qty_base_uom - rcd_order_base.del_qty_base_uom;
+               rcd_order_base.out_qty_gross_tonnes := rcd_order_base.con_qty_gross_tonnes - rcd_order_base.del_qty_gross_tonnes;
+               rcd_order_base.out_qty_net_tonnes := rcd_order_base.con_qty_net_tonnes - rcd_order_base.del_qty_net_tonnes;
+               rcd_order_base.out_gsv := rcd_order_base.con_gsv - rcd_order_base.del_gsv;
+               rcd_order_base.out_gsv_xactn := rcd_order_base.con_gsv_xactn - rcd_order_base.del_gsv_xactn;
+               rcd_order_base.out_gsv_aud := rcd_order_base.con_gsv_aud - rcd_order_base.del_gsv_aud;
+               rcd_order_base.out_gsv_usd := rcd_order_base.con_gsv_usd - rcd_order_base.del_gsv_usd;
+               rcd_order_base.out_gsv_eur := rcd_order_base.con_gsv_eur - rcd_order_base.del_gsv_eur;
             end if;
          end if;
 
@@ -696,15 +601,6 @@ create or replace package body dw_alignment as
          /*-*/
          update dw_order_base
             set order_line_status = rcd_order_base.order_line_status,
-                req_qty = rcd_order_base.req_qty,
-                req_qty_base_uom = rcd_order_base.req_qty_base_uom,
-                req_qty_gross_tonnes = rcd_order_base.req_qty_gross_tonnes,
-                req_qty_net_tonnes = rcd_order_base.req_qty_net_tonnes,
-                req_gsv = rcd_order_base.req_gsv,
-                req_gsv_xactn = rcd_order_base.req_gsv_xactn,
-                req_gsv_aud = rcd_order_base.req_gsv_aud,
-                req_gsv_usd = rcd_order_base.req_gsv_usd,
-                req_gsv_eur = rcd_order_base.req_gsv_eur,
                 del_qty = rcd_order_base.del_qty,
                 del_qty_base_uom = rcd_order_base.del_qty_base_uom,
                 del_qty_gross_tonnes = rcd_order_base.del_qty_gross_tonnes,
@@ -760,7 +656,7 @@ create or replace package body dw_alignment as
          select t01.*
            from dw_dlvry_base t01
           where t01.company_code = par_company_code
-            and t01.dlvry_line_status = '*OUTSTANDING';
+            and t01.dlvry_line_status = '*OPEN';
       rcd_dlvry_base csr_dlvry_base%rowtype;
 
       cursor csr_sales_base is
@@ -770,44 +666,26 @@ create or replace package body dw_alignment as
             and t01.dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
+      cursor csr_sap_doc_status is
+         select 'x'
+           from sap_doc_status t01
+          where t01.doc_type = 'DELIVERY_LINE'
+            and t01.doc_number = rcd_dlvry_base.dlvry_doc_num
+            and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num
+            and doc_status = '*CLOSED';
+      rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
-
-      /*-------------------------*/
-      /* DLVRY_BASE Cancellation */
-      /*-------------------------*/
-
-      /*-*/
-      /* Update the delivery base rows with *CANCELLED status when required
-      /* **notes** 1. Select all deliveries that have an outstanding status
-      /*           2. Related invoice without billing date (unposted)
-      /*-*/
-      update dw_dlvry_base
-         set dlvry_line_status = '*CANCELLED',
-             out_qty = 0,
-             out_qty_base_uom = 0,
-             out_qty_gross_tonnes = 0,
-             out_qty_net_tonnes = 0,
-             out_gsv = 0,
-             out_gsv_xactn = 0,
-             out_gsv_aud = 0,
-             out_gsv_usd = 0,
-             out_gsv_eur = 0
-       where company_code = par_company_code
-         and dlvry_line_status in ('*OUTSTANDING')
-         and (dlvry_doc_num, dlvry_doc_line_num) in (select dlvry_doc_num, dlvry_doc_line_num
-                                                       from sap_inv_trace
-                                                      where company_code = par_company_code
-                                                        and trace_status = '*UNPOSTED');
 
       /*----------------------*/
       /* DLVRY_BASE Retrieval */
       /*----------------------*/
 
       /*-*/
-      /* Retrieve the DLVRY_BASE rows with a *OUTSTANDING status
+      /* Retrieve the DLVRY_BASE rows with a *OPEN status
       /*-*/
       open csr_dlvry_base;
       loop
@@ -832,15 +710,6 @@ create or replace package body dw_alignment as
          rcd_dlvry_base.inv_gsv_aud := 0;
          rcd_dlvry_base.inv_gsv_usd := 0;
          rcd_dlvry_base.inv_gsv_eur := 0;
-         rcd_dlvry_base.out_qty := 0;
-         rcd_dlvry_base.out_qty_base_uom := 0;
-         rcd_dlvry_base.out_qty_gross_tonnes := 0;
-         rcd_dlvry_base.out_qty_net_tonnes := 0;
-         rcd_dlvry_base.out_gsv := 0;
-         rcd_dlvry_base.out_gsv_xactn := 0;
-         rcd_dlvry_base.out_gsv_aud := 0;
-         rcd_dlvry_base.out_gsv_usd := 0;
-         rcd_dlvry_base.out_gsv_eur := 0;
 
          /*-*/
          /* Reset the related indicators
@@ -907,34 +776,12 @@ create or replace package body dw_alignment as
          if var_invoiced = true then
             rcd_dlvry_base.dlvry_line_status := '*CLOSED';
          end if;
-
-         /*-*/
-         /* Calculate the outstanding values when required
-         /* 1. Closed delivery lines have no outstanding values
-         /* 2. Delivery line outstanding is based on the processing stage
-         /*-*/
-         if rcd_dlvry_base.dlvry_line_status = '*OUTSTANDING' then
-            rcd_dlvry_base.out_qty := rcd_dlvry_base.req_qty;
-            rcd_dlvry_base.out_qty_base_uom := rcd_dlvry_base.req_qty_base_uom;
-            rcd_dlvry_base.out_qty_gross_tonnes := rcd_dlvry_base.req_qty_gross_tonnes;
-            rcd_dlvry_base.out_qty_net_tonnes := rcd_dlvry_base.req_qty_net_tonnes;
-            rcd_dlvry_base.out_gsv := rcd_dlvry_base.req_gsv;
-            rcd_dlvry_base.out_gsv_xactn := rcd_dlvry_base.req_gsv_xactn;
-            rcd_dlvry_base.out_gsv_aud := rcd_dlvry_base.req_gsv_aud;
-            rcd_dlvry_base.out_gsv_usd := rcd_dlvry_base.req_gsv_usd;
-            rcd_dlvry_base.out_gsv_eur := rcd_dlvry_base.req_gsv_eur;
-            if upper(rcd_dlvry_base.dlvry_procg_stage) = 'CONFIRMED' then
-               rcd_dlvry_base.out_qty := rcd_dlvry_base.del_qty;
-               rcd_dlvry_base.out_qty_base_uom := rcd_dlvry_base.del_qty_base_uom;
-               rcd_dlvry_base.out_qty_gross_tonnes := rcd_dlvry_base.del_qty_gross_tonnes;
-               rcd_dlvry_base.out_qty_net_tonnes := rcd_dlvry_base.del_qty_net_tonnes;
-               rcd_dlvry_base.out_gsv := rcd_dlvry_base.del_gsv;
-               rcd_dlvry_base.out_gsv_xactn := rcd_dlvry_base.del_gsv_xactn;
-               rcd_dlvry_base.out_gsv_aud := rcd_dlvry_base.del_gsv_aud;
-               rcd_dlvry_base.out_gsv_usd := rcd_dlvry_base.del_gsv_usd;
-               rcd_dlvry_base.out_gsv_eur := rcd_dlvry_base.del_gsv_eur;
-            end if;
+         open csr_sap_doc_status;
+         fetch csr_sap_doc_status into rcd_sap_doc_status;
+         if csr_sap_doc_status%found then
+            rcd_dlvry_base.dlvry_line_status := '*CLOSED';
          end if;
+         close csr_sap_doc_status;
 
          /*-------------------*/
          /* DLVRY_BASE Update */
@@ -953,16 +800,7 @@ create or replace package body dw_alignment as
                 inv_gsv_xactn = rcd_dlvry_base.inv_gsv_xactn,
                 inv_gsv_aud = rcd_dlvry_base.inv_gsv_aud,
                 inv_gsv_usd = rcd_dlvry_base.inv_gsv_usd,
-                inv_gsv_eur = rcd_dlvry_base.inv_gsv_eur,
-                out_qty = rcd_dlvry_base.out_qty,
-                out_qty_base_uom = rcd_dlvry_base.out_qty_base_uom,
-                out_qty_gross_tonnes = rcd_dlvry_base.out_qty_gross_tonnes,
-                out_qty_net_tonnes = rcd_dlvry_base.out_qty_net_tonnes,
-                out_gsv = rcd_dlvry_base.out_gsv,
-                out_gsv_xactn = rcd_dlvry_base.out_gsv_xactn,
-                out_gsv_aud = rcd_dlvry_base.out_gsv_aud,
-                out_gsv_usd = rcd_dlvry_base.out_gsv_usd,
-                out_gsv_eur = rcd_dlvry_base.out_gsv_eur
+                inv_gsv_eur = rcd_dlvry_base.inv_gsv_eur
           where dlvry_doc_num = rcd_dlvry_base.dlvry_doc_num
             and dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num;
 
@@ -989,7 +827,9 @@ create or replace package body dw_alignment as
                 t01.order_doc_line_num
            from dw_sales_base t01
           where t01.company_code = par_company_code
-            and t01.order_doc_num = t01.dlvry_doc_num;
+            and (t01.billing_doc_num, t01.billing_doc_line_num) in (select billing_doc_num, billing_doc_line_num
+                                                                      from dw_sales_base
+                                                                     where order_doc_num = dlvry_doc_num);
       rcd_sales_base csr_sales_base%rowtype;
 
       cursor csr_dlvry_lookup is
