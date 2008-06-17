@@ -25,7 +25,7 @@ create table ods.sap_doc_status
     doc_number                        varchar2(30 char)        not null,
     doc_line                          varchar2(30 char)        not null,
     doc_status                        varchar2(20 char)        not null,
-    lads_date                         date                     not null);
+    ods_date                          date                     not null);
 
 /**/
 /* Comments
@@ -33,9 +33,9 @@ create table ods.sap_doc_status
 comment on table ods.sap_doc_status is 'SAP Document Status';
 comment on column ods.sap_doc_status.doc_type is 'Document type';
 comment on column ods.sap_doc_status.doc_number is 'Document number';
-comment on column ods.sap_doc_status.doc_line is 'Document line';
-comment on column ods.sap_doc_status.doc_status is 'Document status (*OPEN, *CLOSED)';
-comment on column ods.sap_doc_status.doc_date is 'LADS date loaded';
+comment on column ods.sap_doc_status.doc_line is 'Document line (*NONE)';
+comment on column ods.sap_doc_status.doc_status is 'Document status (*DELETED, *OPEN, *CLOSED)';
+comment on column ods.sap_doc_status.ods_date is 'ODS date inserted/updated';
 
 /**/
 /* Primary Key Constraint
