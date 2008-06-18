@@ -10,6 +10,7 @@
 # Date          Who         Change History
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
+# 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
 #
 # ---------------------------------------------------------------------------
 
@@ -248,6 +249,7 @@ initialise_utilities()
     read_variable "STATISTICS_PATH"
     read_variable "ICS_CLASS_PATH"
     read_variable "JAVA_PATH"
+    read_variable "SHLIB_PATH"
     read_variable "BIN_PATH"
     read_variable "ENV_VAR"
     read_variable "DATABASE"

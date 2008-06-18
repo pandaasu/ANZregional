@@ -13,6 +13,7 @@
 # 07-MAR-2008   L. Glen     Added set_permission call within process_passthru_mqft
 # 13-MAY-2008   S. Gregan   Added pipe to TMP_OUT for java calls within get_file_from_sap
 # 13-MAY-2008   S. Gregan   Added oracle classes12.jar to java calls within get_file_from_sap
+# 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
 #
 # ---------------------------------------------------------------------------
 
@@ -150,14 +151,14 @@ get_file_from_sap()
     TYPE_INT=$1    
     log_file "INFO: [get_file_from_sap] Getting file from SAP : [${INTERFACE_ID}]" "HARMLESS"
 
-    export SHLIB_PATH=/ics/lad/sapjco32 
+    export SHLIB_PATH=${SHLIB_PATH} 
 
     if [[ $TYPE_INT -eq 0 ]] ; then
-        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
-        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password ${SAP_PWD} >> ${TMP_OUT} 2>&1
+        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
+        ${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password ${SAP_PWD} >> ${TMP_OUT} 2>&1
     else
-        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 xxx -user02 ${SAP_USER_02} -password02 xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
-        ${JAVA_PATH} -Xmx512m -cp /ics/lad/sapjco32:${ICS_CLASS_PATH}:/ics/lad/sapjco32/marsap.jar:/ics/lad/sapjco32/classes12.jar:/ics/lad/sapjco32/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 ${SAP_PWD_01} -user02 ${SAP_USER_02} -password02 ${SAP_PWD_02} >> ${TMP_OUT} 2>&1
+        log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 xxx -user02 ${SAP_USER_02} -password02 xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"
+        ${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.sap.cSapDualInterface -identifier ${CFG_ID} -configuration ${VDS_CFG} -output ${OUT_FILE} -user01 ${SAP_USER_01} -password01 ${SAP_PWD_01} -user02 ${SAP_USER_02} -password02 ${SAP_PWD_02} >> ${TMP_OUT} 2>&1
     fi
     
     rc=$?
