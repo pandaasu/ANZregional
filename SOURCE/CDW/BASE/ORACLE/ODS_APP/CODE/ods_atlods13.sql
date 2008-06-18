@@ -3422,8 +3422,6 @@ create or replace package body ods_atlods13 as
          /*           reason code is not equal 'ZA'
          /*              OR
          /*           quantity ordered equal zero
-         /*              OR
-         /*           material code equal 'EDI_ERROR'
          /*-*/
          if rcd_ods_data.order_doc_line_num is null then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
