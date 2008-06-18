@@ -680,7 +680,8 @@ create or replace package body ods_atlods16 as
             t01.vbeln,
             t01.idoc_number,
             t01.idoc_timestamp,
-            t01.mesfct
+            t01.mesfct,
+            t01.dlvry_procg_stage
          from sap_del_hdr t01
          where t01.vbeln = rcd_sap_del_hdr.vbeln;
       rcd_sap_del_hdr_01 csr_sap_del_hdr_01%rowtype;
@@ -861,6 +862,7 @@ create or replace package body ods_atlods16 as
            /*-*/
            if (rcd_sap_del_hdr_01.mesfct = 'PCK') then
              rcd_sap_del_hdr.mesfct := rcd_sap_del_hdr_01.mesfct;
+             rcd_sap_del_hdr.dlvry_procg_stage := rcd_sap_del_hdr_01.dlvry_procg_stage;
            end if;
 
          end if;
@@ -2272,7 +2274,7 @@ create or replace package body ods_atlods16 as
                   from (select t01.vbeln,
                                max(case when t01.qualf = '015' then dw_to_date(nvl(ltrim(t01.isdd,'0'),ltrim(t01.ntanf,'0')),'yyyymmdd') end) as creatn_date,
                                max(case when t01.qualf = '007' then dw_to_date(nvl(ltrim(t01.isdd,'0'),ltrim(t01.ntanf,'0')),'yyyymmdd') end) as dlvry_eff_date,
-                               max(case when t01.qualf = '006' then dw_to_date(nvl(ltrim(t01.isdd,'0'),ltrim(t01.ntanf,'0')),'yyyymmdd') end) as goods_issue_date
+                               max(case when t01.qualf = '006' then dw_to_date(ltrim(t01.isdd,'0'),'yyyymmdd') end) as goods_issue_date
                           from sap_del_tim t01
                          where vbeln = par_vbeln
                            and t01.qualf in ('006','007','015')
@@ -2316,17 +2318,17 @@ create or replace package body ods_atlods16 as
                        t02.dlvry_weight_unit
                   from sap_del_det t01,
                        (select t01.vbeln,
-                               t01.hipos,
+                               decode(t01.hievw,'1',t01.hipos,t01.posnr) as posnr,
                                sum(nvl(t01.zzlfimg,0)) as allocated_qty,
                                sum(nvl(t01.brgew,0)) as dlvry_gross_weight,
                                sum(nvl(t01.ntgew,0)) as dlvry_net_weight,
                                max(t01.gewei) as dlvry_weight_unit
                           from sap_del_det t01
                          where t01.vbeln = par_vbeln
-                           and t01.posnr > '900000'
-                         group by t01.vbeln, t01.hipos) t02
+                         group by t01.vbeln,
+                                  decode(t01.hievw,'1',t01.hipos,t01.posnr)) t02
                  where t01.vbeln = t02.vbeln(+)
-                   and t01.posnr = t02.hipos(+)
+                   and t01.posnr = t02.posnr(+)
                    and t01.vbeln = par_vbeln
                    and nvl(t01.lfimg,0) != 0
                    and t01.posnr < '900000') t04,

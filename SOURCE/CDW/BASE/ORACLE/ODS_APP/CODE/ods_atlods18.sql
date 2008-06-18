@@ -3402,6 +3402,14 @@ create or replace package body ods_atlods18 as
          end if;
 
          /*-*/
+         /* Unposted invoice line
+         /* **notes** creation date is null
+         /*-*/
+         if rcd_ods_data.creatn_date is null then
+            rcd_sap_inv_trace.trace_status := '*UNPOSTED';
+         end if;
+
+         /*-*/
          /* Initialise the invoice trace row
          /*-*/
          rcd_sap_inv_trace.company_code := rcd_ods_data.company_code;
@@ -3455,7 +3463,7 @@ create or replace package body ods_atlods18 as
          rcd_sap_inv_trace.order_doc_line_num := null;
          rcd_sap_inv_trace.dlvry_doc_num := rcd_ods_data.dlvry_doc_num;
          rcd_sap_inv_trace.dlvry_doc_line_num := rcd_ods_data.dlvry_doc_line_num;
-         rcd_sap_inv_trace.billed_gsv := rcd_ods_data.billed_gsv;
+         rcd_sap_inv_trace.billed_gsv := nvl(rcd_ods_data.billed_gsv,0);
          if rcd_sap_inv_trace.invc_type_code in ('ZIV','ZIVR','ZIVS') then
             rcd_sap_inv_trace.purch_order_doc_num := rcd_ods_data.order_doc_num;
             rcd_sap_inv_trace.purch_order_doc_line_num := lpad(ltrim(rcd_ods_data.order_doc_line_num,'0'),5,'0');

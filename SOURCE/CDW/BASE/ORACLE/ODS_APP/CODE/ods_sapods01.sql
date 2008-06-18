@@ -14,7 +14,7 @@ create or replace package ods_sapods01 as
 
     Description
     -----------
-    Operational Data Store - sapod04 - Inbound SAP Document Interface
+    Operational Data Store - sapod01 - Inbound SAP Document Interface
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -78,7 +78,7 @@ create or replace package body ods_sapods01 as
       var_trn_start := false;
       var_trn_ignore := false;
       var_trn_error := false;
-      var_company := null;
+      var_company_code := null;
       var_transaction := null;
 
       /*-*/
@@ -171,7 +171,7 @@ create or replace package body ods_sapods01 as
       /*-*/
       /* Trigger the data warehouse alignment stream when required
       /*-*/
-      if not(var_company is null) then
+      if not(var_company_code is null) then
          lics_stream_loader.execute('ALIGNMENT_STREAM_'||var_company_code,null);
       end if;
 
@@ -496,43 +496,43 @@ create or replace package body ods_sapods01 as
       /*-*/
       case trim(upper(var_transaction))
          when 'PURCHASE_ORDER_DELETED' then
-            if case trim(upper(var_doc_type)) != 'PURCHASE_ORDER' then
+            if trim(upper(var_doc_type)) != 'PURCHASE_ORDER' then
                lics_inbound_utility.add_exception('Document (' || trim(upper(var_doc_type)) || ') not recognised for transaction PURCHASE_ORDER_DELETED');
                var_trn_error := true;
             else
                var_wrk_status := '*DELETED';
             end if;
          when 'SALES_ORDER_DELETED' then
-            if case trim(upper(var_doc_type)) != 'SALES_ORDER' then
+            if trim(upper(var_doc_type)) != 'SALES_ORDER' then
                lics_inbound_utility.add_exception('Document (' || trim(upper(var_doc_type)) || ') not recognised for transaction SALES_ORDER_DELETED');
                var_trn_error := true;
             else
                var_wrk_status := '*DELETED';
             end if;
          when 'DELIVERY_DELETED' then
-            if case trim(upper(var_doc_type)) != 'DELIVERY' then
+            if trim(upper(var_doc_type)) != 'DELIVERY' then
                lics_inbound_utility.add_exception('Document (' || trim(upper(var_doc_type)) || ') not recognised for transaction DELIVERY_DELETED');
                var_trn_error := true;
             else
                var_wrk_status := '*DELETED';
             end if;
          when 'SALES_ORDER_LINE_STATUS' then
-            if case trim(upper(var_doc_type)) != 'SALES_ORDER_LINE' then
+            if trim(upper(var_doc_type)) != 'SALES_ORDER_LINE' then
                lics_inbound_utility.add_exception('Document (' || trim(upper(var_doc_type)) || ') not recognised for transaction SALES_ORDER_LINE_STATUS');
                var_trn_error := true;
             else
                var_wrk_status := '*OPEN';
-               if var_doc_status is null or var_doc_status 'C' then
+               if var_doc_status is null or var_doc_status = 'C' then
                   var_wrk_status := '*CLOSED';
                end if;
             end if;
          when 'DELIVERY_LINE_STATUS' then
-            if case trim(upper(var_doc_type)) != 'DELIVERY_LINE' then
+            if trim(upper(var_doc_type)) != 'DELIVERY_LINE' then
                lics_inbound_utility.add_exception('Document (' || trim(upper(var_doc_type)) || ') not recognised for transaction DELIVERY_LINE_STATUS');
                var_trn_error := true;
             else
                var_wrk_status := '*OPEN';
-               if var_doc_status is null or var_doc_status 'C' then
+               if var_doc_status is null or var_doc_status = 'C' then
                   var_wrk_status := '*CLOSED';
                end if;
             end if;
@@ -567,11 +567,11 @@ create or replace package body ods_sapods01 as
    /*-------------*/
    end process_record_dat;
 
-end ods_sapod04;
+end ods_sapods01;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ods_sapod04 for ods_app.ods_sapod04;
-grant execute on ods_sapod04 to lics_app;
+create or replace public synonym ods_sapod01 for ods_app.ods_sapod01;
+grant execute on ods_sapods01 to lics_app;

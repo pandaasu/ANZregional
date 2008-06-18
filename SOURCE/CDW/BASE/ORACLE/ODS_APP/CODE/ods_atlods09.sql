@@ -2875,7 +2875,7 @@ create or replace package body ods_atlods09 as
          /*              OR
          /*           sold to reference equal '*DELETED'
          /*              OR
-         /*           vendor reference equal '*EXCLUDED'
+         /*           vendor reference is not null
          /*-*/
          if rcd_ods_data.purch_order_doc_line_num is null then
             rcd_sap_sto_po_trace.trace_status := '*DELETED';

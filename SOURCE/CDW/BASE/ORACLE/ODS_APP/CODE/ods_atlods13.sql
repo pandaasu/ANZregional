@@ -3422,6 +3422,8 @@ create or replace package body ods_atlods13 as
          /*           reason code is not equal 'ZA'
          /*              OR
          /*           quantity ordered equal zero
+         /*              OR
+         /*           material code equal 'EDI_ERROR'
          /*-*/
          if rcd_ods_data.order_doc_line_num is null then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
@@ -3430,7 +3432,7 @@ create or replace package body ods_atlods13 as
              rcd_ods_data.order_line_rejectn_code != 'ZA') then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
          end if;
-         if (rcd_sap_sal_ord_gen.order_qty = 0) then
+         if nvl(rcd_ods_data.order_qty,0) = 0 then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
          end if;
 
@@ -3485,7 +3487,7 @@ create or replace package body ods_atlods13 as
          rcd_sap_sal_ord_trace.gen_bill_to_cust_code := rcd_ods_data.gen_bill_to_cust_code;
          rcd_sap_sal_ord_trace.gen_payer_cust_code := rcd_ods_data.gen_payer_cust_code;
          rcd_sap_sal_ord_trace.gen_ship_to_cust_code := rcd_ods_data.gen_ship_to_cust_code;
-         rcd_sap_sal_ord_trace.order_gsv := rcd_ods_data.order_gsv;
+         rcd_sap_sal_ord_trace.order_gsv := nvl(rcd_ods_data.order_gsv,0);
 
          /*-*/
          /* Insert the sales order trace row
