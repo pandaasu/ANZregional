@@ -162,7 +162,8 @@ alter table dds.dw_nzmkt_base
 /**/
 /* Indexes
 /**/
-create index dds.dw_nzmkt_base_ix01 on dds.dw_nzmkt_base (company_code, purch_order_trace_seqn);
+create index dds.dw_nzmkt_base_ix01 on dds.dw_nzmkt_base (company_code, purch_order_doc_num, purch_order_doc_line_num);
+create index dds.dw_nzmkt_base_ix02 on dds.dw_nzmkt_base (company_code, purch_order_trace_seqn);
 
 /**/
 /* Authority

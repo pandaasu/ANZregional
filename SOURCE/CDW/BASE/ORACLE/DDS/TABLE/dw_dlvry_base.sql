@@ -1,3 +1,5 @@
+drop table dds.dw_dlvry_base;
+
 /******************************************************************************/
 /* Table Definition                                                           */
 /******************************************************************************/
@@ -65,15 +67,6 @@ create table dds.dw_dlvry_base
     dlvry_net_weight                  number                not null,
     dlvry_uom_code                    varchar2(10 char)     null,
     dlvry_base_uom_code               varchar2(10 char)     null,
-    req_qty                           number                not null,
-    req_qty_base_uom                  number                not null,
-    req_qty_gross_tonnes              number                not null,
-    req_qty_net_tonnes                number                not null,
-    req_gsv                           number                not null,
-    req_gsv_xactn                     number                not null,
-    req_gsv_aud                       number                not null,
-    req_gsv_usd                       number                not null,
-    req_gsv_eur                       number                not null,
     del_qty                           number                not null,
     del_qty_base_uom                  number                not null,
     del_qty_gross_tonnes              number                not null,
@@ -92,15 +85,6 @@ create table dds.dw_dlvry_base
     inv_gsv_aud                       number                not null,
     inv_gsv_usd                       number                not null,
     inv_gsv_eur                       number                not null,
-    out_qty                           number                not null,
-    out_qty_base_uom                  number                not null,
-    out_qty_gross_tonnes              number                not null,
-    out_qty_net_tonnes                number                not null,
-    out_gsv                           number                not null,
-    out_gsv_xactn                     number                not null,
-    out_gsv_aud                       number                not null,
-    out_gsv_usd                       number                not null,
-    out_gsv_eur                       number                not null,
     mfanz_icb_flag                    varchar2(1 char)      not null,
     demand_plng_grp_division_code     varchar2(2 char)      null);
 
@@ -110,7 +94,7 @@ create table dds.dw_dlvry_base
 comment on table dds.dw_dlvry_base is 'Delivery Base Fact Table';
 comment on column dds.dw_dlvry_base.dlvry_doc_num is 'Delivery document number';
 comment on column dds.dw_dlvry_base.dlvry_doc_line_num is 'Delivery document line number';
-comment on column dds.dw_dlvry_base.dlvry_line_status is 'Delivery document line status - *OUTSTANDING, *INVOICED';
+comment on column dds.dw_dlvry_base.dlvry_line_status is 'Delivery document line status - *OPEN, *CLOSED';
 comment on column dds.dw_dlvry_base.dlvry_trace_seqn is 'Delivery document ODS trace sequence';
 comment on column dds.dw_dlvry_base.creatn_date is 'Creation date';
 comment on column dds.dw_dlvry_base.creatn_yyyyppdd is 'Creation MARS day';
@@ -154,15 +138,6 @@ comment on column dds.dw_dlvry_base.dlvry_gross_weight is 'Delivery line gross w
 comment on column dds.dw_dlvry_base.dlvry_net_weight is 'Delivery line nett weight';
 comment on column dds.dw_dlvry_base.dlvry_uom_code is 'Delivery line unit of measure code';
 comment on column dds.dw_dlvry_base.dlvry_base_uom_code is 'Delivery line base unit of measure code';
-comment on column dds.dw_dlvry_base.req_qty is 'Requested quantity';
-comment on column dds.dw_dlvry_base.req_qty_base_uom is 'Requested quantity in base unit of measure';
-comment on column dds.dw_dlvry_base.req_qty_gross_tonnes is 'Requested quantity in gross tonnes';
-comment on column dds.dw_dlvry_base.req_qty_net_tonnes is 'Requested quantity in nett tonnes';
-comment on column dds.dw_dlvry_base.req_gsv is 'Requested gross sales value';
-comment on column dds.dw_dlvry_base.req_gsv_xactn is 'Requested gross sales value on transaction';
-comment on column dds.dw_dlvry_base.req_gsv_aud is 'Requested gross sales value in AUD';
-comment on column dds.dw_dlvry_base.req_gsv_usd is 'Requested gross sales value in USD';
-comment on column dds.dw_dlvry_base.req_gsv_eur is 'Requested gross sales value in EUR';
 comment on column dds.dw_dlvry_base.del_qty is 'Delivered quantity';
 comment on column dds.dw_dlvry_base.del_qty_base_uom is 'Delivered quantity in base unit of measure';
 comment on column dds.dw_dlvry_base.del_qty_gross_tonnes is 'Delivered quantity in gross tonnes';
@@ -181,15 +156,6 @@ comment on column dds.dw_dlvry_base.inv_gsv_xactn is 'Invoiced gross sales value
 comment on column dds.dw_dlvry_base.inv_gsv_aud is 'Invoiced gross sales value in AUD';
 comment on column dds.dw_dlvry_base.inv_gsv_usd is 'Invoiced gross sales value in USD';
 comment on column dds.dw_dlvry_base.inv_gsv_eur is 'Invoiced gross sales value in EUR';
-comment on column dds.dw_dlvry_base.out_qty is 'Outstanding quantity';
-comment on column dds.dw_dlvry_base.out_qty_base_uom is 'Outstanding quantity in base unit of measure';
-comment on column dds.dw_dlvry_base.out_qty_gross_tonnes is 'Outstanding quantity in gross tonnes';
-comment on column dds.dw_dlvry_base.out_qty_net_tonnes is 'Outstanding quantity in nett tonnes';
-comment on column dds.dw_dlvry_base.out_gsv is 'Outstanding gross sales value';
-comment on column dds.dw_dlvry_base.out_gsv_xactn is 'Outstanding gross sales value on transaction';
-comment on column dds.dw_dlvry_base.out_gsv_aud is 'Outstanding gross sales value in AUD';
-comment on column dds.dw_dlvry_base.out_gsv_usd is 'Outstanding gross sales value in USD';
-comment on column dds.dw_dlvry_base.out_gsv_eur is 'Outstanding gross sales value in EUR';
 comment on column dds.dw_dlvry_base.mfanz_icb_flag is 'MFANZ ICB flag';
 comment on column dds.dw_dlvry_base.demand_plng_grp_division_code is 'Demand planning group division code';
 
@@ -202,10 +168,11 @@ alter table dds.dw_dlvry_base
 /**/
 /* Indexes
 /**/
-create index dds.dw_dlvry_base_ix01 on dds.dw_dlvry_base (company_code, dlvry_trace_seqn);
-create index dds.dw_dlvry_base_ix02 on dds.dw_dlvry_base (order_doc_num, order_doc_line_num);
-create index dds.dw_dlvry_base_ix03 on dds.dw_dlvry_base (purch_order_doc_num, purch_order_doc_line_num);
-create index dds.dw_dlvry_base_ix04 on dds.dw_dlvry_base (purch_order_doc_num, order_doc_num, dlvry_doc_num);
+create index dds.dw_dlvry_base_ix01 on dds.dw_dlvry_base (company_code, dlvry_doc_num, dlvry_doc_line_num);
+create index dds.dw_dlvry_base_ix02 on dds.dw_dlvry_base (company_code, dlvry_trace_seqn);
+create index dds.dw_dlvry_base_ix03 on dds.dw_dlvry_base (company_code, dlvry_line_status);
+create index dds.dw_dlvry_base_ix04 on dds.dw_dlvry_base (company_code, order_doc_num, order_doc_line_num);
+create index dds.dw_dlvry_base_ix05 on dds.dw_dlvry_base (company_code, purch_order_doc_num, purch_order_doc_line_num);
 
 /**/
 /* Authority

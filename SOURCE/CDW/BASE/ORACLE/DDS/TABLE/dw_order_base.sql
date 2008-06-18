@@ -1,3 +1,5 @@
+drop table dds.dw_order_base;
+
 /******************************************************************************/
 /* Table Definition                                                           */
 /******************************************************************************/
@@ -84,15 +86,6 @@ create table dds.dw_order_base
     con_gsv_aud                       number                not null,
     con_gsv_usd                       number                not null,
     con_gsv_eur                       number                not null,
-    req_qty                           number                not null,
-    req_qty_base_uom                  number                not null,
-    req_qty_gross_tonnes              number                not null,
-    req_qty_net_tonnes                number                not null,
-    req_gsv                           number                not null,
-    req_gsv_xactn                     number                not null,
-    req_gsv_aud                       number                not null,
-    req_gsv_usd                       number                not null,
-    req_gsv_eur                       number                not null,
     del_qty                           number                not null,
     del_qty_base_uom                  number                not null,
     del_qty_gross_tonnes              number                not null,
@@ -129,7 +122,7 @@ create table dds.dw_order_base
 comment on table dds.dw_order_base is 'Order Base Fact Table';
 comment on column dds.dw_order_base.order_doc_num is 'Order document number';
 comment on column dds.dw_order_base.order_doc_line_num is 'Order document line number';
-comment on column dds.dw_order_base.order_line_status is 'Order document line status - *OUTSTANDING, *UNALLOCATED, *DELIVERED, *INVOICED';
+comment on column dds.dw_order_base.order_line_status is 'Order document line status - *OPEN, *DELIVERED, *UNALLOCATED, *CLOSED';
 comment on column dds.dw_order_base.order_trace_seqn is 'Order document ODS trace sequence';
 comment on column dds.dw_order_base.creatn_date is 'Creation date';
 comment on column dds.dw_order_base.creatn_yyyyppdd is 'Creation MARS day';
@@ -192,15 +185,6 @@ comment on column dds.dw_order_base.con_gsv_xactn is 'Confirmed gross sales valu
 comment on column dds.dw_order_base.con_gsv_aud is 'Confirmed gross sales value in AUD';
 comment on column dds.dw_order_base.con_gsv_usd is 'Confirmed gross sales value in USD';
 comment on column dds.dw_order_base.con_gsv_eur is 'Confirmed gross sales value in EUR';
-comment on column dds.dw_order_base.req_qty is 'Delivery requested quantity';
-comment on column dds.dw_order_base.req_qty_base_uom is 'Delivery requested quantity in base unit of measure';
-comment on column dds.dw_order_base.req_qty_gross_tonnes is 'Delivery requested quantity in gross tonnes';
-comment on column dds.dw_order_base.req_qty_net_tonnes is 'Delivery requested quantity in nett tonnes';
-comment on column dds.dw_order_base.req_gsv is 'Delivery requested gross sales value';
-comment on column dds.dw_order_base.req_gsv_xactn is 'Delivery requested gross sales value on transaction';
-comment on column dds.dw_order_base.req_gsv_aud is 'Delivery requested gross sales value in AUD';
-comment on column dds.dw_order_base.req_gsv_usd is 'Delivery requested gross sales value in USD';
-comment on column dds.dw_order_base.req_gsv_eur is 'Delivery requested gross sales value in EUR';
 comment on column dds.dw_order_base.del_qty is 'Delivery confirmed quantity';
 comment on column dds.dw_order_base.del_qty_base_uom is 'Delivery confirmed quantity in base unit of measure';
 comment on column dds.dw_order_base.del_qty_gross_tonnes is 'Delivery confirmed quantity in gross tonnes';
@@ -240,7 +224,9 @@ alter table dds.dw_order_base
 /**/
 /* Indexes
 /**/
-create index dds.dw_order_base_ix01 on dds.dw_order_base (company_code, order_trace_seqn);
+create index dds.dw_order_base_ix01 on dds.dw_order_base (company_code, order_doc_num, order_doc_line_num);
+create index dds.dw_order_base_ix02 on dds.dw_order_base (company_code, order_trace_seqn);
+create index dds.dw_order_base_ix03 on dds.dw_order_base (company_code, order_line_status);
 
 /**/
 /* Authority
