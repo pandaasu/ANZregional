@@ -70,7 +70,9 @@ create table sap_sto_po_trace
 /* Indexes
 /**/
 create index sap_sto_po_trace_ix01 on sap_sto_po_trace
-   (purch_order_doc_num, purch_order_doc_line_num, company_code, trace_seqn, trace_date);
+   (company_code, purch_order_doc_num, purch_order_doc_line_num);
+create index sap_sto_po_trace_ix02 on sap_sto_po_trace
+   (company_code, trace_date, trace_seqn, purch_order_type_code);
 
 /**/
 /* Authority

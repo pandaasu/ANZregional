@@ -71,11 +71,9 @@ create table sap_del_trace
 /* Indexes
 /**/
 create index sap_del_trace_ix01 on sap_del_trace
-   (dlvry_doc_num, dlvry_doc_line_num, company_code, trace_seqn, trace_date);
+   (company_code, dlvry_doc_num, dlvry_doc_line_num);
 create index sap_del_trace_ix02 on sap_del_trace
-   (trace_seqn, trace_date, company_code, purch_order_doc_num);
-create index sap_del_trace_ix03 on sap_del_trace
-   (trace_seqn, trace_date, company_code, order_doc_num);
+   (company_code, trace_date, trace_seqn);
 
 /**/
 /* Authority

@@ -81,7 +81,9 @@ create table sap_inv_trace
 /* Indexes
 /**/
 create index sap_inv_trace_ix01 on sap_inv_trace
-   (billing_doc_num, billing_doc_line_num, company_code, trace_seqn, trace_date);
+   (company_code, billing_doc_num, billing_doc_line_num);
+create index sap_inv_trace_ix02 on sap_inv_trace
+   (company_code, creatn_date);
 
 /**/
 /* Authority

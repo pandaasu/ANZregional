@@ -44,6 +44,12 @@ alter table ods.sap_doc_status
    add constraint ods.sap_doc_status_pk primary key (doc_type, doc_number, doc_line);
 
 /**/
+/* Indexes
+/**/
+create index sap_doc_status_ix01 on sap_doc_status
+   (doc_type, doc_number, doc_line, doc_status);
+
+/**/
 /* Authority
 /**/
 grant select, insert, update, delete on ods.sap_doc_status to ods_app;

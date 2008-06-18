@@ -78,7 +78,9 @@ create table sap_sal_ord_trace
 /* Indexes
 /**/
 create index sap_sal_ord_trace_ix01 on sap_sal_ord_trace
-   (order_doc_num, order_doc_line_num, company_code, trace_seqn, trace_date);
+   (company_code, order_doc_num, order_doc_line_num);
+create index sap_sal_ord_trace_ix02 on sap_sal_ord_trace
+   (company_code, trace_date, trace_seqn);
 
 /**/
 /* Authority
