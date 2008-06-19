@@ -1,3 +1,4 @@
+create or replace package ics_app.plant_material_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -50,8 +51,6 @@
   2008/04   T. Keon       Added option to extract data since last run only  
 
 *******************************************************************************/ 
-
-create or replace package ics_app.plant_material_extract as
 
   /*-*/
   /* Public declarations 
@@ -525,10 +524,10 @@ as
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.price_unit),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.future_planned_price_1),' '),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.vltn_class),' '),4,' ')
-        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom),'0'),42,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_item_code),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_interntl_article_no),' '),18,' ')
-        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_sb_factor_from_base_uom),' '),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_sb_factor_from_base_uom),' '),42,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_sb_item_code),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.effective_out_date),' '),14,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.discontinuation_indctr),' '),1,' ')
@@ -600,7 +599,7 @@ as
             || rpad(nvl(to_char(rcd_bds_material_uom.base_uom_numerator),'0'),38,' ')
             || rpad(nvl(to_char(rcd_bds_material_uom.base_uom_denominator),'0'),38,' ')
             || rpad(nvl(to_char(rcd_bds_material_uom.bds_factor_to_base_uom),'0'),38,' ')
-            || rpad(nvl(to_char(rcd_bds_material_uom.bds_factor_from_base_uom),'0'),38,' ')
+            || rpad(nvl(to_char(rcd_bds_material_uom.bds_factor_from_base_uom),'0'),42,' ')
             || rpad(nvl(to_char(rcd_bds_material_uom.interntl_article_no),' '),18,' ')
             || rpad(nvl(to_char(rcd_bds_material_uom.interntl_article_no_ctgry),' '),2,' ')
             || rpad(nvl(to_char(rcd_bds_material_uom.length),'0'),38,' ')

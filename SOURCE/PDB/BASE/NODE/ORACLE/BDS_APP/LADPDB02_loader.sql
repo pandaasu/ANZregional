@@ -138,10 +138,10 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','BDS_UNIT_COST', 38);
     lics_inbound_utility.set_definition('HDR','FUTURE_PLANNED_PRICE_1', 38);
     lics_inbound_utility.set_definition('HDR','VLTN_CLASS', 4);
-    lics_inbound_utility.set_definition('HDR','BDS_PCE_FACTOR_FROM_BASE_UOM', 38);
+    lics_inbound_utility.set_definition('HDR','BDS_PCE_FACTOR_FROM_BASE_UOM', 42);
     lics_inbound_utility.set_definition('HDR','MARS_PCE_ITEM_CODE', 18);
     lics_inbound_utility.set_definition('HDR','MARS_PCE_INTERNTL_ARTICLE_NO', 18);
-    lics_inbound_utility.set_definition('HDR','BDS_SB_FACTOR_FROM_BASE_UOM', 38);
+    lics_inbound_utility.set_definition('HDR','BDS_SB_FACTOR_FROM_BASE_UOM', 42);
     lics_inbound_utility.set_definition('HDR','MARS_SB_ITEM_CODE', 18);
     lics_inbound_utility.set_definition('HDR','EFFECTIVE_OUT_DATE',14);
     lics_inbound_utility.set_definition('HDR','DISCONTINUATION_INDCTR', 1);
@@ -189,7 +189,7 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('UOM','BASE_UOM_NUMERATOR',38);
     lics_inbound_utility.set_definition('UOM','BASE_UOM_DENOMINATOR',38);
     lics_inbound_utility.set_definition('UOM','BDS_FACTOR_TO_BASE_UOM',38);
-    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_FROM_BASE_UOM',38);
+    lics_inbound_utility.set_definition('UOM','BDS_FACTOR_FROM_BASE_UOM',42);
     lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO',18);
     lics_inbound_utility.set_definition('UOM','INTERNTL_ARTICLE_NO_CTGRY',2);
     lics_inbound_utility.set_definition('UOM','LENGTH',38);

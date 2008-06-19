@@ -1,3 +1,4 @@
+create or replace package ics_app.plant_bom_alternative_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -24,8 +25,6 @@
   2008/03   Trevor Keon    Created 
 
 *******************************************************************************/
-
-create or replace package ics_app.plant_bom_alternative_extract as
 
   /*-*/
   /* Public declarations 

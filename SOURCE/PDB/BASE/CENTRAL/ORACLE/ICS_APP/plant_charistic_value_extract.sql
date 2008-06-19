@@ -1,3 +1,4 @@
+create or replace package ics_app.plant_charistic_value_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -41,8 +42,6 @@
   2008/05   Trevor Keon    Created 
 
 *******************************************************************************/
-
-create or replace package ics_app.plant_charistic_value_extract as
 
   /*-*/
   /* Public declarations 
