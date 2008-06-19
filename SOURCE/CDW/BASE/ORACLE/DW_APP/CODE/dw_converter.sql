@@ -72,8 +72,7 @@ create or replace package body dw_converter as
             and t01.purch_order_eff_date = t03.calendar_date(+)
             and substr(t01.purch_order_eff_yyyyppdd,1,6) >= fr_yyyypp
             and substr(t01.purch_order_eff_yyyyppdd,1,6) <= to_yyyypp
-            and t01.purch_order_doc_num not in (select purch_order_doc_num from dw_purch_base)
-          order by t01.purch_order_eff_yyyyppdd asc;
+            and t01.purch_order_doc_num not in (select purch_order_doc_num from dw_purch_base);
       rcd_source csr_source%rowtype;
 
    /*-------------*/
@@ -187,14 +186,11 @@ create or replace package body dw_converter as
             tab_dw_purch_base(var_work).out_gsv_eur := rcd_source.gsv_eur;
             tab_dw_purch_base(var_work).mfanz_icb_flag := rcd_source.mfanz_icb_flag;
             tab_dw_purch_base(var_work).demand_plng_grp_division_code := rcd_source.demand_plng_grp_division_code;
-            if rcd_source.purch_order_line_status = 'DELIVERED' then
-               tab_dw_purch_base(var_work).purch_order_line_status := '*DELIVERED';
-            end if;
             if rcd_source.purch_order_line_status = 'INVOICED' then
                tab_dw_purch_base(var_work).purch_order_line_status := '*CLOSED';
             end if;
-            if (tab_dw_purch_base(var_work).purch_order_line_status = '*DELIVERED' or
-                tab_dw_purch_base(var_work).purch_order_line_status = '*CLOSED') then
+            if (rcd_source.purch_order_line_status = 'DELIVERED' or
+                rcd_source.purch_order_line_status = 'INVOICED') then
                tab_dw_purch_base(var_work).del_qty := tab_dw_purch_base(var_work).ord_qty;
                tab_dw_purch_base(var_work).del_qty_base_uom := tab_dw_purch_base(var_work).ord_qty_base_uom;
                tab_dw_purch_base(var_work).del_qty_gross_tonnes := tab_dw_purch_base(var_work).ord_qty_gross_tonnes;
@@ -214,7 +210,7 @@ create or replace package body dw_converter as
                tab_dw_purch_base(var_work).out_gsv_usd := 0;
                tab_dw_purch_base(var_work).out_gsv_eur := 0;
             end if;
-            if tab_dw_purch_base(var_work).purch_order_line_status = '*CLOSED' then
+            if rcd_source.purch_order_line_status = 'INVOICED' then
                tab_dw_purch_base(var_work).inv_qty := tab_dw_purch_base(var_work).ord_qty;
                tab_dw_purch_base(var_work).inv_qty_base_uom := tab_dw_purch_base(var_work).ord_qty_base_uom;
                tab_dw_purch_base(var_work).inv_qty_gross_tonnes := tab_dw_purch_base(var_work).ord_qty_gross_tonnes;
@@ -301,9 +297,8 @@ create or replace package body dw_converter as
                 mars_date t03
           where t01.creatn_date = t02.calendar_date(+)
             and t01.order_eff_date = t03.calendar_date(+)
-            and substr(t01.creatn_yyyyppdd,1,6) >= fr_yyyypp
-            and substr(t01.creatn_yyyyppdd,1,6) <= to_yyyypp
-          order by t01.creatn_yyyyppdd asc;
+            and t01.creatn_date >= trunc(sysdate-7)
+            and t01.order_doc_num not in (select order_doc_num from dw_order_base);
       rcd_source csr_source%rowtype;
 
    /*-------------*/
@@ -426,15 +421,12 @@ create or replace package body dw_converter as
             if rcd_source.order_line_rejectn_code = 'ZA' then
                tab_dw_order_base(var_work).order_line_status := '*UNALLOCATED';
             else
-               if rcd_source.order_line_status = 'DELIVERED' then
-                  tab_dw_order_base(var_work).order_line_status := '*DELIVERED';
-               end if;
                if rcd_source.order_line_status = 'INVOICED' then
                   tab_dw_order_base(var_work).order_line_status := '*CLOSED';
                end if;
             end if;
-            if (tab_dw_order_base(var_work).order_line_status = '*DELIVERED' or
-                tab_dw_order_base(var_work).order_line_status = '*CLOSED') then
+            if (rcd_source.order_line_status = 'DELIVERED' or
+                rcd_source.order_line_status = 'INVOICED') then
                tab_dw_order_base(var_work).del_qty := tab_dw_order_base(var_work).con_qty;
                tab_dw_order_base(var_work).del_qty_base_uom := tab_dw_order_base(var_work).con_qty_base_uom;
                tab_dw_order_base(var_work).del_qty_gross_tonnes := tab_dw_order_base(var_work).con_qty_gross_tonnes;
@@ -454,7 +446,7 @@ create or replace package body dw_converter as
                tab_dw_order_base(var_work).out_gsv_usd := 0;
                tab_dw_order_base(var_work).out_gsv_eur := 0;
             end if;
-            if tab_dw_order_base(var_work).order_line_status = '*CLOSED' then
+            if rcd_source.order_line_status = 'INVOICED' then
                tab_dw_order_base(var_work).inv_qty := tab_dw_order_base(var_work).con_qty;
                tab_dw_order_base(var_work).inv_qty_base_uom := tab_dw_order_base(var_work).con_qty_base_uom;
                tab_dw_order_base(var_work).inv_qty_gross_tonnes := tab_dw_order_base(var_work).con_qty_gross_tonnes;
@@ -546,9 +538,8 @@ create or replace package body dw_converter as
           where t01.creatn_date = t02.calendar_date(+)
             and t01.dlvry_eff_date = t03.calendar_date(+)
             and t01.goods_issue_date = t04.calendar_date(+)
-            and substr(t01.creatn_yyyyppdd,1,6) >= fr_yyyypp
-            and substr(t01.creatn_yyyyppdd,1,6) <= to_yyyypp
-          order by t01.creatn_yyyyppdd asc;
+            and t01.creatn_date >= trunc(sysdate-7)
+            and t01.dlvry_doc_num not in (select dlvry_doc_num from dw_dlvry_base);
       rcd_source csr_source%rowtype;
 
    /*-------------*/
@@ -643,7 +634,7 @@ create or replace package body dw_converter as
             if rcd_source.dlvry_line_status = 'INVOICED' then
                tab_dw_dlvry_base(var_work).dlvry_line_status := '*CLOSED';
             end if;
-            if tab_dw_dlvry_base(var_work).dlvry_line_status = '*CLOSED' then
+            if rcd_source.dlvry_line_status = 'INVOICED' then
                tab_dw_dlvry_base(var_work).inv_qty := rcd_source.dlvry_qty;
                tab_dw_dlvry_base(var_work).inv_qty_base_uom := rcd_source.base_uom_dlvry_qty;
                tab_dw_dlvry_base(var_work).inv_qty_gross_tonnes := rcd_source.dlvry_qty_gross_tonnes;
