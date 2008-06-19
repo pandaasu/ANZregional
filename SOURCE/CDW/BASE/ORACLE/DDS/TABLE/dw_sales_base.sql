@@ -158,7 +158,7 @@ create index dds.dw_sales_base_ix03 on dds.dw_sales_base (company_code, billing_
 create index dds.dw_sales_base_ix04 on dds.dw_sales_base (company_code, billing_doc_num, billing_doc_line_num);
 create index dds.dw_sales_base_ix05 on dds.dw_sales_base (company_code, order_doc_num, order_doc_line_num);
 create index dds.dw_sales_base_ix06 on dds.dw_sales_base (company_code, purch_order_doc_num, purch_order_doc_line_num);
-create index dds.dw_sales_base_ix07 on dds.dw_sales_base (company_code, dlvry_doc_num, dlvry_doc_num);
+create index dds.dw_sales_base_ix07 on dds.dw_sales_base (company_code, dlvry_doc_num, dlvry_doc_line_num);
 create index dds.dw_sales_base_ix08 on dds.dw_sales_base (company_code, order_doc_num, dlvry_doc_num, billing_doc_num, billing_doc_line_num);
 
 /**/
