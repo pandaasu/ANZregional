@@ -1,5 +1,3 @@
-DROP PACKAGE CR_APP.CARE_GRDCAR01;
-
 CREATE OR REPLACE PACKAGE CR_APP.care_grdcar01 as
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -20,6 +18,7 @@ CREATE OR REPLACE PACKAGE CR_APP.care_grdcar01 as
            Linden Glen    Added MSTAE (Material Status)
            Linden Glen    Added LCM Segment processing
  2006/04   Linden Glen    Added LCM SEQ to overcome null legacy_code values
+ 2008/06   Trevor Keon    Added MKTSGMNT (Market Segment)
 
 *******************************************************************************/
 
@@ -32,9 +31,6 @@ CREATE OR REPLACE PACKAGE CR_APP.care_grdcar01 as
 
 end care_grdcar01;
 /
-
-
-DROP PACKAGE BODY CR_APP.CARE_GRDCAR01;
 
 CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
 
@@ -133,6 +129,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
       sil_inbound_utility.set_definition('HDR','SPPLYSGMNT',4);
       sil_inbound_utility.set_definition('HDR','SPPLYSGMNTDESC',12);
       sil_inbound_utility.set_definition('HDR','SPPLYSGMNTDESCL',30);
+      sil_inbound_utility.set_definition('HDR','MKTSGMNT',4);
+      sil_inbound_utility.set_definition('HDR','MKTSGMNTDESC',12);
+      sil_inbound_utility.set_definition('HDR','MKTSGMNTDESCL',30);
       /*-*/
       sil_inbound_utility.set_definition('DET','IDOC_DET',3);
       sil_inbound_utility.set_definition('DET','MATNR',18);
@@ -352,6 +351,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
       rcd_grd_mat_hdr.SPPLYSGMNT := sil_inbound_utility.get_variable('SPPLYSGMNT');
       rcd_grd_mat_hdr.SPPLYSGMNTDESC := sil_inbound_utility.get_variable('SPPLYSGMNTDESC');
       rcd_grd_mat_hdr.SPPLYSGMNTDESCL := sil_inbound_utility.get_variable('SPPLYSGMNTDESCL');
+      rcd_grd_mat_hdr.MKTSGMNT := sil_inbound_utility.get_variable('MKTSGMNT');
+      rcd_grd_mat_hdr.MKTSGMNTDESC := sil_inbound_utility.get_variable('MKTSGMNTDESC');
+      rcd_grd_mat_hdr.MKTSGMNTDESCL := sil_inbound_utility.get_variable('MKTSGMNTDESCL');
       rcd_grd_mat_hdr.idoc_name := rcd_grd_control.idoc_name;
       rcd_grd_mat_hdr.idoc_number := rcd_grd_control.idoc_number;
       rcd_grd_mat_hdr.idoc_timestamp := rcd_grd_control.idoc_timestamp;
@@ -459,7 +461,10 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
          idoc_number = rcd_grd_mat_hdr.idoc_number,
          idoc_timestamp = rcd_grd_mat_hdr.idoc_timestamp,
          sil_date = rcd_grd_mat_hdr.sil_date,
-         sil_status = rcd_grd_mat_hdr.sil_status
+         sil_status = rcd_grd_mat_hdr.sil_status,
+         mktsgmnt = rcd_grd_mat_hdr.mktsgmnt,
+         mktsgmntdesc = rcd_grd_mat_hdr.mktsgmntdesc,
+         mktsgmntdescl = rcd_grd_mat_hdr.mktsgmntdescl
       where matnr = rcd_grd_mat_hdr.matnr;
       if sql%notfound then
          insert into grd_mat_hdr
@@ -516,7 +521,10 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
              idoc_number,
              idoc_timestamp,
              sil_date,
-             sil_status)
+             sil_status,
+             mktsgmnt,
+             mktsgmntdesc,
+             mktsgmntdescl)
          values
             (rcd_grd_mat_hdr.matnr,
              rcd_grd_mat_hdr.maktx,
@@ -571,7 +579,10 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
              rcd_grd_mat_hdr.idoc_number,
              rcd_grd_mat_hdr.idoc_timestamp,
              rcd_grd_mat_hdr.sil_date,
-             rcd_grd_mat_hdr.sil_status);
+             rcd_grd_mat_hdr.sil_status,
+             rcd_grd_mat_hdr.mktsgmnt,
+             rcd_grd_mat_hdr.mktsgmntdesc,
+             rcd_grd_mat_hdr.mktsgmntdescl);
       end if;
 
    /*-------------*/
@@ -721,9 +732,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_grdcar01 as
 end care_grdcar01;
 /
 
+GRANT EXECUTE ON CR_APP.CARE_GRDCAR01 TO PUBLIC;
 
-DROP PUBLIC SYNONYM CARE_GRDCAR01;
-
-CREATE PUBLIC SYNONYM CARE_GRDCAR01 FOR CR_APP.CARE_GRDCAR01;
+CREATE OR REPLACE PUBLIC SYNONYM CARE_GRDCAR01 FOR CR_APP.CARE_GRDCAR01;
 
 

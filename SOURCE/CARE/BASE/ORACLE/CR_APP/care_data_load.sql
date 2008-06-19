@@ -1,5 +1,3 @@
-DROP PACKAGE CR_APP.CARE_DATA_LOAD;
-
 CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -40,6 +38,7 @@ CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
                                removed and increase load speed.
                           MOD: Allow SELL MOE codes to be passed in
                           MOD: Disallow executing only one load component (ie. manu menu or hierachy)
+ 2008/06   Trevor Keon    Added support for SSG and MSG                         
 
 *******************************************************************************/
 
@@ -50,9 +49,6 @@ CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
 
 end care_data_load;
 /
-
-
-DROP PACKAGE BODY CR_APP.CARE_DATA_LOAD;
 
 CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
 
@@ -88,6 +84,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
    var_pty_cnt number(4,0);
    var_igv_cnt number(4,0);
    var_sze_cnt number(4,0);
+   var_ssg_cnt number(4,0);
+   var_msg_cnt number(4,0);
    var_other_cnt number(4,0);
 
    type typ_msg is table of varchar2(4000) index by binary_integer;
@@ -217,6 +215,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
       isi_mailer.append_data('                   ' || var_pty_cnt || ' records PTY');
       isi_mailer.append_data('                   ' || var_igv_cnt || ' records IGV');
       isi_mailer.append_data('                   ' || var_sze_cnt || ' records SZE');
+      isi_mailer.append_data('                   ' || var_ssg_cnt || ' records SSG');
+      isi_mailer.append_data('                   ' || var_msg_cnt || ' records MSG');
       isi_mailer.append_data('                   ' || var_other_cnt || ' records OTHER');
       isi_mailer.append_data('--------------------------------------------');
       /*-*/
@@ -692,8 +692,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
             b.keyw_keyword_07,
             b.keyw_keyword_08,
             b.keyw_keyword_09,
-            b.keyw_keyword_11,
-            b.keyw_keyword_12
+            b.keyw_keyword_10,
+            b.keyw_keyword_11
          from care_tdu_tmp b
          where b.grd_tdu = par_tdu
          minus
@@ -707,8 +707,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
             trim(a.keyw_keyword_07) as keyw_keyword_07,
             trim(a.keyw_keyword_08) as keyw_keyword_08,
             trim(a.keyw_keyword_09) as keyw_keyword_09,
-            a.keyw_keyword_11 as keyw_keyword_11,
-            a.keyw_keyword_12 as keyw_keyword_12
+            trim(a.keyw_keyword_10) as keyw_keyword_10,
+            trim(a.keyw_keyword_11) as keyw_keyword_11
          from sfi.keywrd a
          where a.keyw_keyword = rpad(par_rsu,10)
            and a.keyw_type = 'PROD      ';
@@ -872,9 +872,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
                keyw_keyword_07 = rec_tdu.keyw_keyword_07,
                keyw_keyword_08 = rec_tdu.keyw_keyword_08,
                keyw_keyword_09 = rec_tdu.keyw_keyword_09,
-               keyw_keyword_10 = par_rsu,
+               keyw_keyword_10 = rec_tdu.keyw_keyword_10,
                keyw_keyword_11 = rec_tdu.keyw_keyword_11,
-               keyw_keyword_12 = rec_tdu.keyw_keyword_12,
+               keyw_keyword_12 = par_rsu,
                keyw_misc1_x = rec_tdu.keyw_misc1_x,
                keyw_maint_user = sys_context('USERENV','CURRENT_USER'),
                keyw_maint_date = to_char(sysdate,'YYYYMMDD'),
@@ -905,8 +905,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
                                                 || ',' || nvl(trim(rec_rsu.keyw_keyword_07),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_07),'null')
                                                 || ',' || nvl(trim(rec_rsu.keyw_keyword_08),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_08),'null')
                                                 || ',' || nvl(trim(rec_rsu.keyw_keyword_09),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_09),'null')
+                                                || ',' || nvl(trim(rec_rsu.keyw_keyword_10),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_10),'null')
                                                 || ',' || nvl(trim(rec_rsu.keyw_keyword_11),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_11),'null')
-                                                || ',' || nvl(trim(rec_rsu.keyw_keyword_12),'null') || '/' || nvl(trim(rec_tdu.keyw_keyword_12),'null')
                                                 || ',' || nvl(trim(rec_rsu.keyw_misc1_x),'null') || '/' || nvl(trim(rec_tdu.keyw_misc1_x),'null');
 
 
@@ -966,9 +966,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
                       rec_tdu.keyw_keyword_07,
                       rec_tdu.keyw_keyword_08,
                       rec_tdu.keyw_keyword_09,
-                      par_rsu,
+                      rec_tdu.keyw_keyword_10,
                       rec_tdu.keyw_keyword_11,
-                      rec_tdu.keyw_keyword_12,
+                      par_rsu,
                       rec_tdu.keyw_misc1_x,
                       rec_tdu.keyw_misc2,
                       rec_tdu.keyw_misc3,
@@ -1000,9 +1000,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
                                              || ',' || nvl(trim(rec_tdu.keyw_keyword_07),'null')
                                              || ',' || nvl(trim(rec_tdu.keyw_keyword_08),'null')
                                              || ',' || nvl(trim(rec_tdu.keyw_keyword_09),'null')
-                                             || ',' || nvl(trim(par_rsu),'null')
+                                             || ',' || nvl(trim(rec_tdu.keyw_keyword_10),'null')
                                              || ',' || nvl(trim(rec_tdu.keyw_keyword_11),'null')
-                                             || ',' || nvl(trim(rec_tdu.keyw_keyword_12),'null')
+                                             || ',' || nvl(trim(par_rsu),'null')
                                              || ',' || nvl(trim(rec_tdu.keyw_misc1_x),'null');
 
       end if;
@@ -1077,6 +1077,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
       var_pty_cnt := 0;
       var_igv_cnt := 0;
       var_sze_cnt := 0;
+      var_ssg_cnt := 0;
+      var_msg_cnt := 0;
       var_other_cnt := 0;
 
       /*-*/
@@ -1173,6 +1175,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
             when 'PTY' then var_pty_cnt := var_pty_cnt+1;
             when 'IGV' then var_igv_cnt := var_igv_cnt+1;
             when 'SZE' then var_sze_cnt := var_sze_cnt+1;
+            when 'SSG' then var_ssg_cnt := var_ssg_cnt+1;
+            when 'MSG' then var_msg_cnt := var_msg_cnt+1;
             else var_other_cnt := var_other_cnt+1;
          end case;
 
@@ -1499,9 +1503,8 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
 end care_data_load;
 /
 
+GRANT EXECUTE ON CR_APP.CARE_DATA_LOAD TO PUBLIC;
 
-DROP PUBLIC SYNONYM CARE_DATA_LOAD;
-
-CREATE PUBLIC SYNONYM CARE_DATA_LOAD FOR CR_APP.CARE_DATA_LOAD;
+CREATE OR REPLACE PUBLIC SYNONYM CARE_DATA_LOAD FOR CR_APP.CARE_DATA_LOAD;
 
 
