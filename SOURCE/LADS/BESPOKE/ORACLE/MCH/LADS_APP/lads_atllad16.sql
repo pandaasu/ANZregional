@@ -1,4 +1,5 @@
-/******************************************************************************/
+create or replace package lads_atllad16 as
+/*****************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
@@ -15,22 +16,30 @@
  -----
  1. The delivery is NOT acknowledged in LADS. The acknowledgement comes from
     the warehouse management system.
- 2. The field LADS_DEL_HDR.MESFCT can not be updated once value is PCK. 
-    e.g. if the IDOC is resent, this field may come through as 'RSD'.
+ 2. The field LADS_DEL_HDR.MESFCT has 4 status'. They are :
+       null : IDOC first send
+       RSD  : IDOC resend
+       PCK  : Delivery = Picked
+       POD  : Delivery = Proof of Delivery received (final status)
+
+    The logic ensures the status change from RSD -> PCK -> POD is enforced, and
+    does not allow resetting of the field with a prior value. ie. PCK cannot be set
+    to RSD.
 
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2005/02   Linden Glen    Added logic to maintain LADS_DEL_HDR.MESFCT
                           as 'PCK' once set.
+ 2006/03   Linden Glen    MOD: combine STPPOD (POD) and SHPORD (Delivery) IDOCs
+                               into single set of LADS_DEL_xxx tables.
+ 2006/04   Linden Glen    ADD: allow LADS_DEL_HDR.MESFCT to change (only in this sequence)
+                               from RSD -> PCK -> POD.
+ 2006/06   Linden Glen    MOD: Include HIPOS and POSNR on LADS_DEL_POD and remove MATNR
+ 2006/06   Linden Glen    ADD: HIEVW column
  2008/05   Trevor Keon    Added calls to monitor before and after procedure
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lads_atllad16 as
 
    /*-*/
    /* Public declarations
@@ -40,11 +49,7 @@ create or replace package lads_atllad16 as
    procedure on_end;
 
 end lads_atllad16;
-/
 
-/****************/
-/* Package Body */
-/****************/
 create or replace package body lads_atllad16 as
 
    /*-*/
@@ -85,6 +90,7 @@ create or replace package body lads_atllad16 as
    var_trn_error boolean;
    var_ctl_mescod varchar2(3);
    var_ctl_mesfct varchar2(3);
+   var_ctl_mestyp varchar2(30);
    rcd_lads_control lads_definition.idoc_control;
    rcd_lads_del_hdr lads_del_hdr%rowtype;
    rcd_lads_del_add lads_del_add%rowtype;
@@ -134,6 +140,7 @@ create or replace package body lads_atllad16 as
       lics_inbound_utility.set_definition('CTL','IDOC_TIME',6);
       lics_inbound_utility.set_definition('CTL','IDOC_MESCOD',3);
       lics_inbound_utility.set_definition('CTL','IDOC_MESFCT',3);
+      lics_inbound_utility.set_definition('CTL','IDOC_MESTYP',30);
       /*-*/
       lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);
       lics_inbound_utility.set_definition('HDR','VBELN',10);
@@ -727,28 +734,59 @@ create or replace package body lads_atllad16 as
       /* Process the data based on record identifier
       /*-*/
       var_record_identifier := substr(par_record,1,3);
-      case var_record_identifier
-         when 'CTL' then process_record_ctl(par_record);
-         when 'HDR' then process_record_hdr(par_record);
-         when 'ADD' then process_record_add(par_record);
-         when 'ADL' then process_record_adl(par_record);
-         when 'TIM' then process_record_tim(par_record);
-         when 'HTX' then process_record_htx(par_record);
-         when 'HTP' then process_record_htp(par_record);
-         when 'RTE' then process_record_rte(par_record);
-         when 'STG' then process_record_stg(par_record);
-         when 'NOD' then process_record_nod(par_record);
-         when 'DET' then process_record_det(par_record);
-         when 'POD' then process_record_pod(par_record);
-         when 'INT' then process_record_int(par_record);
-         when 'IRF' then process_record_irf(par_record);
-         when 'ERF' then process_record_erf(par_record);
-         when 'DTX' then process_record_dtx(par_record);
-         when 'DTP' then process_record_dtp(par_record);
-         when 'HUH' then process_record_huh(par_record);
-         when 'HUC' then process_record_huc(par_record);
-         else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
-      end case;
+
+      if (var_record_identifier = 'CTL') then
+         process_record_ctl(par_record);
+      else
+
+         case var_ctl_mestyp
+            when 'SHPORD' then
+               case var_record_identifier
+                  when 'HDR' then process_record_hdr(par_record);
+                  when 'ADD' then process_record_add(par_record);
+                  when 'ADL' then process_record_adl(par_record);
+                  when 'TIM' then process_record_tim(par_record);
+                  when 'HTX' then process_record_htx(par_record);
+                  when 'HTP' then process_record_htp(par_record);
+                  when 'RTE' then process_record_rte(par_record);
+                  when 'STG' then process_record_stg(par_record);
+                  when 'NOD' then process_record_nod(par_record);
+                  when 'DET' then process_record_det(par_record);
+                  when 'POD' then null;
+                  when 'INT' then process_record_int(par_record);
+                  when 'IRF' then process_record_irf(par_record);
+                  when 'ERF' then process_record_erf(par_record);
+                  when 'DTX' then process_record_dtx(par_record);
+                  when 'DTP' then process_record_dtp(par_record);
+                  when 'HUH' then process_record_huh(par_record);
+                  when 'HUC' then process_record_huc(par_record);
+                  else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
+               end case;
+            when 'STPPOD' then
+               case var_record_identifier
+                  when 'HDR' then process_record_hdr(par_record);
+                  when 'ADD' then null;
+                  when 'ADL' then null;
+                  when 'TIM' then null;
+                  when 'HTX' then null;
+                  when 'HTP' then null;
+                  when 'RTE' then null;
+                  when 'STG' then null;
+                  when 'NOD' then null;
+                  when 'DET' then process_record_det(par_record);
+                  when 'POD' then process_record_pod(par_record);
+                  when 'INT' then null;
+                  when 'IRF' then null;
+                  when 'ERF' then null;
+                  when 'DTX' then null;
+                  when 'DTP' then null;
+                  when 'HUH' then null;
+                  when 'HUC' then null;
+                  else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
+               end case;
+            else raise_application_error(-20000, 'IDOC Message Type (' || var_ctl_mestyp || ') not recognised');
+         end case;
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -824,22 +862,26 @@ create or replace package body lads_atllad16 as
          rollback;
       else
          var_accepted := true;
-         
-         begin
-            lads_atllad16_monitor.execute_before(rcd_lads_del_hdr.vbeln);
-         exception
-            when others then
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;
-         
+
+         if (var_ctl_mestyp = 'SHPORD') then
+            begin
+               lads_atllad16_monitor.execute_before(rcd_lads_del_hdr.vbeln);
+            exception
+               when others then
+                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+            end;
+         end if;
+
          commit;
          
-         begin
-            lads_atllad16_monitor.execute_after(rcd_lads_del_hdr.vbeln);
-         exception
-            when others then
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;
+         if (var_ctl_mestyp = 'SHPORD') then
+            begin
+               lads_atllad16_monitor.execute_after(rcd_lads_del_hdr.vbeln);
+            exception
+               when others then
+                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+            end;
+         end if;
       end if;
 
       /*-*/
@@ -926,6 +968,7 @@ create or replace package body lads_atllad16 as
       /*-*/
       var_ctl_mescod := lics_inbound_utility.get_variable('IDOC_MESCOD');
       var_ctl_mesfct := lics_inbound_utility.get_variable('IDOC_MESFCT');
+      var_ctl_mestyp := lics_inbound_utility.get_variable('IDOC_MESTYP');
 
    /*-------------*/
    /* End routine */
@@ -948,6 +991,8 @@ create or replace package body lads_atllad16 as
       cursor csr_lads_del_hdr_01 is
          select
             t01.vbeln,
+            t01.del_idoc_number,
+            t01.del_idoc_timestamp,
             t01.pod_idoc_number,
             t01.pod_idoc_timestamp,
             t01.mesfct
@@ -966,570 +1011,676 @@ create or replace package body lads_atllad16 as
 
       lics_inbound_utility.parse_record('HDR', par_record);
 
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
+      if (var_ctl_mestyp = 'SHPORD') then
 
-      /*-*/
-      /* Retrieve field values
-      /*-*/
-      rcd_lads_del_hdr.vbeln := lics_inbound_utility.get_variable('VBELN');
-      rcd_lads_del_hdr.vstel := lics_inbound_utility.get_variable('VSTEL');
-      rcd_lads_del_hdr.vkorg := lics_inbound_utility.get_variable('VKORG');
-      rcd_lads_del_hdr.lstel := lics_inbound_utility.get_variable('LSTEL');
-      rcd_lads_del_hdr.vkbur := lics_inbound_utility.get_variable('VKBUR');
-      rcd_lads_del_hdr.lgnum := lics_inbound_utility.get_variable('LGNUM');
-      rcd_lads_del_hdr.ablad := lics_inbound_utility.get_variable('ABLAD');
-      rcd_lads_del_hdr.inco1 := lics_inbound_utility.get_variable('INCO1');
-      rcd_lads_del_hdr.inco2 := lics_inbound_utility.get_variable('INCO2');
-      rcd_lads_del_hdr.route := lics_inbound_utility.get_variable('ROUTE');
-      rcd_lads_del_hdr.vsbed := lics_inbound_utility.get_variable('VSBED');
-      rcd_lads_del_hdr.btgew := lics_inbound_utility.get_number('BTGEW',null);
-      rcd_lads_del_hdr.ntgew := lics_inbound_utility.get_number('NTGEW',null);
-      rcd_lads_del_hdr.gewei := lics_inbound_utility.get_variable('GEWEI');
-      rcd_lads_del_hdr.volum := lics_inbound_utility.get_number('VOLUM',null);
-      rcd_lads_del_hdr.voleh := lics_inbound_utility.get_variable('VOLEH');
-      rcd_lads_del_hdr.anzpk := lics_inbound_utility.get_number('ANZPK',null);
-      rcd_lads_del_hdr.bolnr := lics_inbound_utility.get_variable('BOLNR');
-      rcd_lads_del_hdr.traty := lics_inbound_utility.get_variable('TRATY');
-      rcd_lads_del_hdr.traid := lics_inbound_utility.get_variable('TRAID');
-      rcd_lads_del_hdr.xabln := lics_inbound_utility.get_variable('XABLN');
-      rcd_lads_del_hdr.lifex := lics_inbound_utility.get_variable('LIFEX');
-      rcd_lads_del_hdr.parid := lics_inbound_utility.get_variable('PARID');
-      rcd_lads_del_hdr.podat := lics_inbound_utility.get_variable('PODAT');
-      rcd_lads_del_hdr.potim := lics_inbound_utility.get_variable('POTIM');
-      rcd_lads_del_hdr.vstel_bez := lics_inbound_utility.get_variable('VSTEL_BEZ');
-      rcd_lads_del_hdr.vkorg_bez := lics_inbound_utility.get_variable('VKORG_BEZ');
-      rcd_lads_del_hdr.lstel_bez := lics_inbound_utility.get_variable('LSTEL_BEZ');
-      rcd_lads_del_hdr.vkbur_bez := lics_inbound_utility.get_variable('VKBUR_BEZ');
-      rcd_lads_del_hdr.lgnum_bez := lics_inbound_utility.get_variable('LGNUM_BEZ');
-      rcd_lads_del_hdr.inco1_bez := lics_inbound_utility.get_variable('INCO1_BEZ');
-      rcd_lads_del_hdr.route_bez := lics_inbound_utility.get_variable('ROUTE_BEZ');
-      rcd_lads_del_hdr.vsbed_bez := lics_inbound_utility.get_variable('VSBED_BEZ');
-      rcd_lads_del_hdr.traty_bez := lics_inbound_utility.get_variable('TRATY_BEZ');
-      rcd_lads_del_hdr.lfart := lics_inbound_utility.get_variable('LFART');
-      rcd_lads_del_hdr.bzirk := lics_inbound_utility.get_variable('BZIRK');
-      rcd_lads_del_hdr.autlf := lics_inbound_utility.get_variable('AUTLF');
-      rcd_lads_del_hdr.lifsk := lics_inbound_utility.get_variable('LIFSK');
-      rcd_lads_del_hdr.lprio := lics_inbound_utility.get_number('LPRIO',null);
-      rcd_lads_del_hdr.kdgrp := lics_inbound_utility.get_variable('KDGRP');
-      rcd_lads_del_hdr.berot := lics_inbound_utility.get_variable('BEROT');
-      rcd_lads_del_hdr.tragr := lics_inbound_utility.get_variable('TRAGR');
-      rcd_lads_del_hdr.trspg := lics_inbound_utility.get_variable('TRSPG');
-      rcd_lads_del_hdr.aulwe := lics_inbound_utility.get_variable('AULWE');
-      rcd_lads_del_hdr.lfart_bez := lics_inbound_utility.get_variable('LFART_BEZ');
-      rcd_lads_del_hdr.lprio_bez := lics_inbound_utility.get_variable('LPRIO_BEZ');
-      rcd_lads_del_hdr.bzirk_bez := lics_inbound_utility.get_variable('BZIRK_BEZ');
-      rcd_lads_del_hdr.lifsk_bez := lics_inbound_utility.get_variable('LIFSK_BEZ');
-      rcd_lads_del_hdr.kdgrp_bez := lics_inbound_utility.get_variable('KDGRP_BEZ');
-      rcd_lads_del_hdr.tragr_bez := lics_inbound_utility.get_variable('TRAGR_BEZ');
-      rcd_lads_del_hdr.trspg_bez := lics_inbound_utility.get_variable('TRSPG_BEZ');
-      rcd_lads_del_hdr.aulwe_bez := lics_inbound_utility.get_variable('AULWE_BEZ');
-      rcd_lads_del_hdr.zztarif := lics_inbound_utility.get_variable('ZZTARIF');
-      rcd_lads_del_hdr.werks := lics_inbound_utility.get_variable('WERKS');
-      rcd_lads_del_hdr.name1 := lics_inbound_utility.get_variable('NAME1');
-      rcd_lads_del_hdr.stras := lics_inbound_utility.get_variable('STRAS');
-      rcd_lads_del_hdr.pstlz := lics_inbound_utility.get_variable('PSTLZ');
-      rcd_lads_del_hdr.ort01 := lics_inbound_utility.get_variable('ORT01');
-      rcd_lads_del_hdr.land1 := lics_inbound_utility.get_variable('LAND1');
-      rcd_lads_del_hdr.zztarif1 := lics_inbound_utility.get_variable('ZZTARIF1');
-      rcd_lads_del_hdr.zzbrgew := lics_inbound_utility.get_number('ZZBRGEW',null);
-      rcd_lads_del_hdr.zzweightuom := lics_inbound_utility.get_variable('ZZWEIGHTUOM');
-      rcd_lads_del_hdr.zzpalspace := lics_inbound_utility.get_number('ZZPALSPACE',null);
-      rcd_lads_del_hdr.zzpalbas01 := lics_inbound_utility.get_number('ZZPALBAS01',null);
-      rcd_lads_del_hdr.zzmeins01 := lics_inbound_utility.get_variable('ZZMEINS01');
-      rcd_lads_del_hdr.zzpalbas02 := lics_inbound_utility.get_number('ZZPALBAS02',null);
-      rcd_lads_del_hdr.zzmeins02 := lics_inbound_utility.get_variable('ZZMEINS02');
-      rcd_lads_del_hdr.zzpalbas03 := lics_inbound_utility.get_number('ZZPALBAS03',null);
-      rcd_lads_del_hdr.zzmeins03 := lics_inbound_utility.get_variable('ZZMEINS03');
-      rcd_lads_del_hdr.zzpalbas04 := lics_inbound_utility.get_number('ZZPALBAS04',null);
-      rcd_lads_del_hdr.zzmeins04 := lics_inbound_utility.get_variable('ZZMEINS04');
-      rcd_lads_del_hdr.zzpalbas05 := lics_inbound_utility.get_number('ZZPALBAS05',null);
-      rcd_lads_del_hdr.zzmeins05 := lics_inbound_utility.get_variable('ZZMEINS05');
-      rcd_lads_del_hdr.zzpalspace_f := lics_inbound_utility.get_number('ZZPALSPACE_F',null);
-      rcd_lads_del_hdr.zzpalbas01_f := lics_inbound_utility.get_number('ZZPALBAS01_F',null);
-      rcd_lads_del_hdr.zzpalbas02_f := lics_inbound_utility.get_number('ZZPALBAS02_F',null);
-      rcd_lads_del_hdr.zzpalbas03_f := lics_inbound_utility.get_number('ZZPALBAS03_F',null);
-      rcd_lads_del_hdr.zzpalbas04_f := lics_inbound_utility.get_number('ZZPALBAS04_F',null);
-      rcd_lads_del_hdr.zzpalbas05_f := lics_inbound_utility.get_number('ZZPALBAS05_F',null);
-      rcd_lads_del_hdr.zztknum := lics_inbound_utility.get_variable('ZZTKNUM');
-      rcd_lads_del_hdr.zzexpectpb := lics_inbound_utility.get_variable('ZZEXPECTPB');
-      rcd_lads_del_hdr.zzgaranteedbpr := lics_inbound_utility.get_variable('ZZGARANTEEDBPR');
-      rcd_lads_del_hdr.zzgroupbpr := lics_inbound_utility.get_variable('ZZGROUPBPR');
-      rcd_lads_del_hdr.zzorbdpr := lics_inbound_utility.get_variable('ZZORBDPR');
-      rcd_lads_del_hdr.zzmanbpr := lics_inbound_utility.get_variable('ZZMANBPR');
-      rcd_lads_del_hdr.zzdelbpr := lics_inbound_utility.get_variable('ZZDELBPR');
-      rcd_lads_del_hdr.zzpalspace_deliv := lics_inbound_utility.get_number('ZZPALSPACE_DELIV',null);
-      rcd_lads_del_hdr.zzpalbase_del01 := lics_inbound_utility.get_number('ZZPALBASE_DEL01',null);
-      rcd_lads_del_hdr.zzpalbase_del02 := lics_inbound_utility.get_number('ZZPALBASE_DEL02',null);
-      rcd_lads_del_hdr.zzpalbase_del03 := lics_inbound_utility.get_number('ZZPALBASE_DEL03',null);
-      rcd_lads_del_hdr.zzpalbase_del04 := lics_inbound_utility.get_number('ZZPALBASE_DEL04',null);
-      rcd_lads_del_hdr.zzpalbase_del05 := lics_inbound_utility.get_number('ZZPALBASE_DEL05',null);
-      rcd_lads_del_hdr.zzmeins_del01 := lics_inbound_utility.get_variable('ZZMEINS_DEL01');
-      rcd_lads_del_hdr.zzmeins_del02 := lics_inbound_utility.get_variable('ZZMEINS_DEL02');
-      rcd_lads_del_hdr.zzmeins_del03 := lics_inbound_utility.get_variable('ZZMEINS_DEL03');
-      rcd_lads_del_hdr.zzmeins_del04 := lics_inbound_utility.get_variable('ZZMEINS_DEL04');
-      rcd_lads_del_hdr.zzmeins_del05 := lics_inbound_utility.get_variable('ZZMEINS_DEL05');
-      rcd_lads_del_hdr.atwrt1 := lics_inbound_utility.get_variable('ATWRT1');
-      rcd_lads_del_hdr.atwrt2 := lics_inbound_utility.get_variable('ATWRT2');
-      rcd_lads_del_hdr.mtimefrom := lics_inbound_utility.get_variable('MTIMEFROM');
-      rcd_lads_del_hdr.mtimeto := lics_inbound_utility.get_variable('MTIMETO');
-      rcd_lads_del_hdr.atimefrom := lics_inbound_utility.get_variable('ATIMEFROM');
-      rcd_lads_del_hdr.atimeto := lics_inbound_utility.get_variable('ATIMETO');
-      rcd_lads_del_hdr.werks2 := lics_inbound_utility.get_variable('WERKS2');
-      rcd_lads_del_hdr.zzbrgew_f := lics_inbound_utility.get_number('ZZBRGEW_F',null);
-      rcd_lads_del_hdr.zzweightpal := lics_inbound_utility.get_number('ZZWEIGHTPAL',null);
-      rcd_lads_del_hdr.zzweightpal_f := lics_inbound_utility.get_number('ZZWEIGHTPAL_F',null);
-      rcd_lads_del_hdr.mescod := var_ctl_mescod;
-      rcd_lads_del_hdr.mesfct := var_ctl_mesfct;
-      rcd_lads_del_hdr.pod_idoc_name := rcd_lads_control.idoc_name;
-      rcd_lads_del_hdr.pod_idoc_number := rcd_lads_control.idoc_number;
-      rcd_lads_del_hdr.pod_idoc_timestamp := rcd_lads_control.idoc_timestamp;
-      rcd_lads_del_hdr.pod_lads_date := sysdate;
-      rcd_lads_del_hdr.lads_status := '1';
+         /*-*/
+         /* Retrieve field values
+         /*-*/
+         rcd_lads_del_hdr.vbeln := lics_inbound_utility.get_variable('VBELN');
+         rcd_lads_del_hdr.vstel := lics_inbound_utility.get_variable('VSTEL');
+         rcd_lads_del_hdr.vkorg := lics_inbound_utility.get_variable('VKORG');
+         rcd_lads_del_hdr.lstel := lics_inbound_utility.get_variable('LSTEL');
+         rcd_lads_del_hdr.vkbur := lics_inbound_utility.get_variable('VKBUR');
+         rcd_lads_del_hdr.lgnum := lics_inbound_utility.get_variable('LGNUM');
+         rcd_lads_del_hdr.ablad := lics_inbound_utility.get_variable('ABLAD');
+         rcd_lads_del_hdr.inco1 := lics_inbound_utility.get_variable('INCO1');
+         rcd_lads_del_hdr.inco2 := lics_inbound_utility.get_variable('INCO2');
+         rcd_lads_del_hdr.route := lics_inbound_utility.get_variable('ROUTE');
+         rcd_lads_del_hdr.vsbed := lics_inbound_utility.get_variable('VSBED');
+         rcd_lads_del_hdr.btgew := lics_inbound_utility.get_number('BTGEW',null);
+         rcd_lads_del_hdr.ntgew := lics_inbound_utility.get_number('NTGEW',null);
+         rcd_lads_del_hdr.gewei := lics_inbound_utility.get_variable('GEWEI');
+         rcd_lads_del_hdr.volum := lics_inbound_utility.get_number('VOLUM',null);
+         rcd_lads_del_hdr.voleh := lics_inbound_utility.get_variable('VOLEH');
+         rcd_lads_del_hdr.anzpk := lics_inbound_utility.get_number('ANZPK',null);
+         rcd_lads_del_hdr.bolnr := lics_inbound_utility.get_variable('BOLNR');
+         rcd_lads_del_hdr.traty := lics_inbound_utility.get_variable('TRATY');
+         rcd_lads_del_hdr.traid := lics_inbound_utility.get_variable('TRAID');
+         rcd_lads_del_hdr.xabln := lics_inbound_utility.get_variable('XABLN');
+         rcd_lads_del_hdr.lifex := lics_inbound_utility.get_variable('LIFEX');
+         rcd_lads_del_hdr.parid := lics_inbound_utility.get_variable('PARID');
+         rcd_lads_del_hdr.podat := lics_inbound_utility.get_variable('PODAT');
+         rcd_lads_del_hdr.potim := lics_inbound_utility.get_variable('POTIM');
+         rcd_lads_del_hdr.vstel_bez := lics_inbound_utility.get_variable('VSTEL_BEZ');
+         rcd_lads_del_hdr.vkorg_bez := lics_inbound_utility.get_variable('VKORG_BEZ');
+         rcd_lads_del_hdr.lstel_bez := lics_inbound_utility.get_variable('LSTEL_BEZ');
+         rcd_lads_del_hdr.vkbur_bez := lics_inbound_utility.get_variable('VKBUR_BEZ');
+         rcd_lads_del_hdr.lgnum_bez := lics_inbound_utility.get_variable('LGNUM_BEZ');
+         rcd_lads_del_hdr.inco1_bez := lics_inbound_utility.get_variable('INCO1_BEZ');
+         rcd_lads_del_hdr.route_bez := lics_inbound_utility.get_variable('ROUTE_BEZ');
+         rcd_lads_del_hdr.vsbed_bez := lics_inbound_utility.get_variable('VSBED_BEZ');
+         rcd_lads_del_hdr.traty_bez := lics_inbound_utility.get_variable('TRATY_BEZ');
+         rcd_lads_del_hdr.lfart := lics_inbound_utility.get_variable('LFART');
+         rcd_lads_del_hdr.bzirk := lics_inbound_utility.get_variable('BZIRK');
+         rcd_lads_del_hdr.autlf := lics_inbound_utility.get_variable('AUTLF');
+         rcd_lads_del_hdr.lifsk := lics_inbound_utility.get_variable('LIFSK');
+         rcd_lads_del_hdr.lprio := lics_inbound_utility.get_number('LPRIO',null);
+         rcd_lads_del_hdr.kdgrp := lics_inbound_utility.get_variable('KDGRP');
+         rcd_lads_del_hdr.berot := lics_inbound_utility.get_variable('BEROT');
+         rcd_lads_del_hdr.tragr := lics_inbound_utility.get_variable('TRAGR');
+         rcd_lads_del_hdr.trspg := lics_inbound_utility.get_variable('TRSPG');
+         rcd_lads_del_hdr.aulwe := lics_inbound_utility.get_variable('AULWE');
+         rcd_lads_del_hdr.lfart_bez := lics_inbound_utility.get_variable('LFART_BEZ');
+         rcd_lads_del_hdr.lprio_bez := lics_inbound_utility.get_variable('LPRIO_BEZ');
+         rcd_lads_del_hdr.bzirk_bez := lics_inbound_utility.get_variable('BZIRK_BEZ');
+         rcd_lads_del_hdr.lifsk_bez := lics_inbound_utility.get_variable('LIFSK_BEZ');
+         rcd_lads_del_hdr.kdgrp_bez := lics_inbound_utility.get_variable('KDGRP_BEZ');
+         rcd_lads_del_hdr.tragr_bez := lics_inbound_utility.get_variable('TRAGR_BEZ');
+         rcd_lads_del_hdr.trspg_bez := lics_inbound_utility.get_variable('TRSPG_BEZ');
+         rcd_lads_del_hdr.aulwe_bez := lics_inbound_utility.get_variable('AULWE_BEZ');
+         rcd_lads_del_hdr.zztarif := lics_inbound_utility.get_variable('ZZTARIF');
+         rcd_lads_del_hdr.werks := lics_inbound_utility.get_variable('WERKS');
+         rcd_lads_del_hdr.name1 := lics_inbound_utility.get_variable('NAME1');
+         rcd_lads_del_hdr.stras := lics_inbound_utility.get_variable('STRAS');
+         rcd_lads_del_hdr.pstlz := lics_inbound_utility.get_variable('PSTLZ');
+         rcd_lads_del_hdr.ort01 := lics_inbound_utility.get_variable('ORT01');
+         rcd_lads_del_hdr.land1 := lics_inbound_utility.get_variable('LAND1');
+         rcd_lads_del_hdr.zztarif1 := lics_inbound_utility.get_variable('ZZTARIF1');
+         rcd_lads_del_hdr.zzbrgew := lics_inbound_utility.get_number('ZZBRGEW',null);
+         rcd_lads_del_hdr.zzweightuom := lics_inbound_utility.get_variable('ZZWEIGHTUOM');
+         rcd_lads_del_hdr.zzpalspace := lics_inbound_utility.get_number('ZZPALSPACE',null);
+         rcd_lads_del_hdr.zzpalbas01 := lics_inbound_utility.get_number('ZZPALBAS01',null);
+         rcd_lads_del_hdr.zzmeins01 := lics_inbound_utility.get_variable('ZZMEINS01');
+         rcd_lads_del_hdr.zzpalbas02 := lics_inbound_utility.get_number('ZZPALBAS02',null);
+         rcd_lads_del_hdr.zzmeins02 := lics_inbound_utility.get_variable('ZZMEINS02');
+         rcd_lads_del_hdr.zzpalbas03 := lics_inbound_utility.get_number('ZZPALBAS03',null);
+         rcd_lads_del_hdr.zzmeins03 := lics_inbound_utility.get_variable('ZZMEINS03');
+         rcd_lads_del_hdr.zzpalbas04 := lics_inbound_utility.get_number('ZZPALBAS04',null);
+         rcd_lads_del_hdr.zzmeins04 := lics_inbound_utility.get_variable('ZZMEINS04');
+         rcd_lads_del_hdr.zzpalbas05 := lics_inbound_utility.get_number('ZZPALBAS05',null);
+         rcd_lads_del_hdr.zzmeins05 := lics_inbound_utility.get_variable('ZZMEINS05');
+         rcd_lads_del_hdr.zzpalspace_f := lics_inbound_utility.get_number('ZZPALSPACE_F',null);
+         rcd_lads_del_hdr.zzpalbas01_f := lics_inbound_utility.get_number('ZZPALBAS01_F',null);
+         rcd_lads_del_hdr.zzpalbas02_f := lics_inbound_utility.get_number('ZZPALBAS02_F',null);
+         rcd_lads_del_hdr.zzpalbas03_f := lics_inbound_utility.get_number('ZZPALBAS03_F',null);
+         rcd_lads_del_hdr.zzpalbas04_f := lics_inbound_utility.get_number('ZZPALBAS04_F',null);
+         rcd_lads_del_hdr.zzpalbas05_f := lics_inbound_utility.get_number('ZZPALBAS05_F',null);
+         rcd_lads_del_hdr.zztknum := lics_inbound_utility.get_variable('ZZTKNUM');
+         rcd_lads_del_hdr.zzexpectpb := lics_inbound_utility.get_variable('ZZEXPECTPB');
+         rcd_lads_del_hdr.zzgaranteedbpr := lics_inbound_utility.get_variable('ZZGARANTEEDBPR');
+         rcd_lads_del_hdr.zzgroupbpr := lics_inbound_utility.get_variable('ZZGROUPBPR');
+         rcd_lads_del_hdr.zzorbdpr := lics_inbound_utility.get_variable('ZZORBDPR');
+         rcd_lads_del_hdr.zzmanbpr := lics_inbound_utility.get_variable('ZZMANBPR');
+         rcd_lads_del_hdr.zzdelbpr := lics_inbound_utility.get_variable('ZZDELBPR');
+         rcd_lads_del_hdr.zzpalspace_deliv := lics_inbound_utility.get_number('ZZPALSPACE_DELIV',null);
+         rcd_lads_del_hdr.zzpalbase_del01 := lics_inbound_utility.get_number('ZZPALBASE_DEL01',null);
+         rcd_lads_del_hdr.zzpalbase_del02 := lics_inbound_utility.get_number('ZZPALBASE_DEL02',null);
+         rcd_lads_del_hdr.zzpalbase_del03 := lics_inbound_utility.get_number('ZZPALBASE_DEL03',null);
+         rcd_lads_del_hdr.zzpalbase_del04 := lics_inbound_utility.get_number('ZZPALBASE_DEL04',null);
+         rcd_lads_del_hdr.zzpalbase_del05 := lics_inbound_utility.get_number('ZZPALBASE_DEL05',null);
+         rcd_lads_del_hdr.zzmeins_del01 := lics_inbound_utility.get_variable('ZZMEINS_DEL01');
+         rcd_lads_del_hdr.zzmeins_del02 := lics_inbound_utility.get_variable('ZZMEINS_DEL02');
+         rcd_lads_del_hdr.zzmeins_del03 := lics_inbound_utility.get_variable('ZZMEINS_DEL03');
+         rcd_lads_del_hdr.zzmeins_del04 := lics_inbound_utility.get_variable('ZZMEINS_DEL04');
+         rcd_lads_del_hdr.zzmeins_del05 := lics_inbound_utility.get_variable('ZZMEINS_DEL05');
+         rcd_lads_del_hdr.atwrt1 := lics_inbound_utility.get_variable('ATWRT1');
+         rcd_lads_del_hdr.atwrt2 := lics_inbound_utility.get_variable('ATWRT2');
+         rcd_lads_del_hdr.mtimefrom := lics_inbound_utility.get_variable('MTIMEFROM');
+         rcd_lads_del_hdr.mtimeto := lics_inbound_utility.get_variable('MTIMETO');
+         rcd_lads_del_hdr.atimefrom := lics_inbound_utility.get_variable('ATIMEFROM');
+         rcd_lads_del_hdr.atimeto := lics_inbound_utility.get_variable('ATIMETO');
+         rcd_lads_del_hdr.werks2 := lics_inbound_utility.get_variable('WERKS2');
+         rcd_lads_del_hdr.zzbrgew_f := lics_inbound_utility.get_number('ZZBRGEW_F',null);
+         rcd_lads_del_hdr.zzweightpal := lics_inbound_utility.get_number('ZZWEIGHTPAL',null);
+         rcd_lads_del_hdr.zzweightpal_f := lics_inbound_utility.get_number('ZZWEIGHTPAL_F',null);
+         rcd_lads_del_hdr.mescod := var_ctl_mescod;
+         rcd_lads_del_hdr.mesfct := var_ctl_mesfct;
+         rcd_lads_del_hdr.del_idoc_name := rcd_lads_control.idoc_name;
+         rcd_lads_del_hdr.del_idoc_number := rcd_lads_control.idoc_number;
+         rcd_lads_del_hdr.del_idoc_timestamp := rcd_lads_control.idoc_timestamp;
+         rcd_lads_del_hdr.del_lads_date := sysdate;
+         rcd_lads_del_hdr.lads_status := '1';
 
-      /*-*/
-      /* Retrieve exceptions raised
-      /*-*/
-      if lics_inbound_utility.has_errors = true then
-         var_trn_error := true;
-      end if;
-
-      /*-*/
-      /* Reset child sequences
-      /*-*/
-      rcd_lads_del_add.addseq := 0;
-      rcd_lads_del_tim.timseq := 0;
-      rcd_lads_del_htx.htxseq := 0;
-      rcd_lads_del_rte.rteseq := 0;
-      rcd_lads_del_det.detseq := 0;
-      rcd_lads_del_huh.huhseq := 0;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Validate the primary keys
-      /*-*/
-      if rcd_lads_del_hdr.vbeln is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - HDR.VBELN');
-         var_trn_error := true;
-      end if;
-
-      /*-*/
-      /* Validate the IDOC sequence when primary key supplied
-      /*-*/
-      if not(rcd_lads_del_hdr.vbeln is null) then
-         var_exists := true;
-         open csr_lads_del_hdr_01;
-         fetch csr_lads_del_hdr_01 into rcd_lads_del_hdr_01;
-         if csr_lads_del_hdr_01%notfound then
-            var_exists := false;
-         else
-
-            /*-*/
-            /* IF the MESFCT field is already set to PCK, don't overwrite with 
-            /* incoming field value, which could be RSD if IDOC is resent.
-            /*-*/
-            if (rcd_lads_del_hdr_01.mesfct = 'PCK') then
-               rcd_lads_del_hdr.mesfct := rcd_lads_del_hdr_01.mesfct;
-            end if;   
-    
+         /*-*/
+         /* Retrieve exceptions raised
+         /*-*/
+         if lics_inbound_utility.has_errors = true then
+            var_trn_error := true;
          end if;
-         close csr_lads_del_hdr_01;
-         if var_exists = true then
-            if rcd_lads_del_hdr.pod_idoc_timestamp > rcd_lads_del_hdr_01.pod_idoc_timestamp then
-               delete from lads_del_huc where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_huh where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_dtp where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_dtx where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_erf where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_irf where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_int where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_pod where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_det where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_nod where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_stg where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_rte where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_htp where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_htx where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_tim where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_adl where vbeln = rcd_lads_del_hdr.vbeln;
-               delete from lads_del_add where vbeln = rcd_lads_del_hdr.vbeln;
+
+         /*-*/
+         /* Reset child sequences
+         /*-*/
+         rcd_lads_del_add.addseq := 0;
+         rcd_lads_del_tim.timseq := 0;
+         rcd_lads_del_htx.htxseq := 0;
+         rcd_lads_del_rte.rteseq := 0;
+         rcd_lads_del_det.detseq := 0;
+         rcd_lads_del_huh.huhseq := 0;
+
+         /*----------------------------------------*/
+         /* VALIDATION - Validate the field values */
+         /*----------------------------------------*/
+
+         /*-*/
+         /* Validate the primary keys
+         /*-*/
+         if rcd_lads_del_hdr.vbeln is null then
+            lics_inbound_utility.add_exception('Missing Primary Key - HDR.VBELN');
+            var_trn_error := true;
+         end if;
+
+         /*-*/
+         /* Validate the IDOC sequence when primary key supplied
+         /*-*/
+         if not(rcd_lads_del_hdr.vbeln is null) then
+            var_exists := true;
+            open csr_lads_del_hdr_01;
+            fetch csr_lads_del_hdr_01 into rcd_lads_del_hdr_01;
+            if csr_lads_del_hdr_01%notfound then
+               var_exists := false;
             else
-               var_trn_ignore := true;
+
+               /*-*/
+               /* CASE MESFCT = 'POD' : cannot be changed - must remain POD
+               /* CASE MESFCT = 'PCK' : can only change to POD or remain PCK
+               /*-*/
+               case rcd_lads_del_hdr_01.mesfct
+                  when 'POD' then rcd_lads_del_hdr.mesfct := 'POD';
+                  when 'PCK' then
+                     if (rcd_lads_del_hdr.mesfct not in ('PCK','POD')) then
+                        rcd_lads_del_hdr.mesfct := rcd_lads_del_hdr_01.mesfct;
+                     end if;
+                  else null;
+               end case;
+
+            end if;
+            close csr_lads_del_hdr_01;
+
+            if var_exists = true then
+               if rcd_lads_del_hdr.del_idoc_timestamp > nvl(rcd_lads_del_hdr_01.del_idoc_timestamp,'00000000000000') then
+                  delete from lads_del_huc where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_huh where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_dtp where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_dtx where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_erf where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_irf where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_int where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_det where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_nod where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_stg where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_rte where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_htp where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_htx where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_tim where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_adl where vbeln = rcd_lads_del_hdr.vbeln;
+                  delete from lads_del_add where vbeln = rcd_lads_del_hdr.vbeln;
+               else
+                  var_trn_ignore := true;
+               end if;
             end if;
          end if;
+
+         /*--------------------------------------------*/
+         /* IGNORE - Ignore the data row when required */
+         /*--------------------------------------------*/
+
+         if var_trn_ignore = true then
+            return;
+         end if;
+
+         /*----------------------------------------*/
+         /* ERROR- Bypass the update when required */
+         /*----------------------------------------*/
+
+         if var_trn_error = true then
+            return;
+         end if;
+
+         /*------------------------------*/
+         /* UPDATE - Update the database */
+         /*------------------------------*/
+         update lads_del_hdr set
+            vstel = rcd_lads_del_hdr.vstel,
+            vkorg = rcd_lads_del_hdr.vkorg,
+            lstel = rcd_lads_del_hdr.lstel,
+            vkbur = rcd_lads_del_hdr.vkbur,
+            lgnum = rcd_lads_del_hdr.lgnum,
+            ablad = rcd_lads_del_hdr.ablad,
+            inco1 = rcd_lads_del_hdr.inco1,
+            inco2 = rcd_lads_del_hdr.inco2,
+            route = rcd_lads_del_hdr.route,
+            vsbed = rcd_lads_del_hdr.vsbed,
+            btgew = rcd_lads_del_hdr.btgew,
+            ntgew = rcd_lads_del_hdr.ntgew,
+            gewei = rcd_lads_del_hdr.gewei,
+            volum = rcd_lads_del_hdr.volum,
+            voleh = rcd_lads_del_hdr.voleh,
+            anzpk = rcd_lads_del_hdr.anzpk,
+            bolnr = rcd_lads_del_hdr.bolnr,
+            traty = rcd_lads_del_hdr.traty,
+            traid = rcd_lads_del_hdr.traid,
+            xabln = rcd_lads_del_hdr.xabln,
+            lifex = rcd_lads_del_hdr.lifex,
+            parid = rcd_lads_del_hdr.parid,
+            podat = rcd_lads_del_hdr.podat,
+            potim = rcd_lads_del_hdr.potim,
+            vstel_bez = rcd_lads_del_hdr.vstel_bez,
+            vkorg_bez = rcd_lads_del_hdr.vkorg_bez,
+            lstel_bez = rcd_lads_del_hdr.lstel_bez,
+            vkbur_bez = rcd_lads_del_hdr.vkbur_bez,
+            lgnum_bez = rcd_lads_del_hdr.lgnum_bez,
+            inco1_bez = rcd_lads_del_hdr.inco1_bez,
+            route_bez = rcd_lads_del_hdr.route_bez,
+            vsbed_bez = rcd_lads_del_hdr.vsbed_bez,
+            traty_bez = rcd_lads_del_hdr.traty_bez,
+            lfart = rcd_lads_del_hdr.lfart,
+            bzirk = rcd_lads_del_hdr.bzirk,
+            autlf = rcd_lads_del_hdr.autlf,
+            lifsk = rcd_lads_del_hdr.lifsk,
+            lprio = rcd_lads_del_hdr.lprio,
+            kdgrp = rcd_lads_del_hdr.kdgrp,
+            berot = rcd_lads_del_hdr.berot,
+            tragr = rcd_lads_del_hdr.tragr,
+            trspg = rcd_lads_del_hdr.trspg,
+            aulwe = rcd_lads_del_hdr.aulwe,
+            lfart_bez = rcd_lads_del_hdr.lfart_bez,
+            lprio_bez = rcd_lads_del_hdr.lprio_bez,
+            bzirk_bez = rcd_lads_del_hdr.bzirk_bez,
+            lifsk_bez = rcd_lads_del_hdr.lifsk_bez,
+            kdgrp_bez = rcd_lads_del_hdr.kdgrp_bez,
+            tragr_bez = rcd_lads_del_hdr.tragr_bez,
+            trspg_bez = rcd_lads_del_hdr.trspg_bez,
+            aulwe_bez = rcd_lads_del_hdr.aulwe_bez,
+            zztarif = rcd_lads_del_hdr.zztarif,
+            werks = rcd_lads_del_hdr.werks,
+            name1 = rcd_lads_del_hdr.name1,
+            stras = rcd_lads_del_hdr.stras,
+            pstlz = rcd_lads_del_hdr.pstlz,
+            ort01 = rcd_lads_del_hdr.ort01,
+            land1 = rcd_lads_del_hdr.land1,
+            zztarif1 = rcd_lads_del_hdr.zztarif1,
+            zzbrgew = rcd_lads_del_hdr.zzbrgew,
+            zzweightuom = rcd_lads_del_hdr.zzweightuom,
+            zzpalspace = rcd_lads_del_hdr.zzpalspace,
+            zzpalbas01 = rcd_lads_del_hdr.zzpalbas01,
+            zzmeins01 = rcd_lads_del_hdr.zzmeins01,
+            zzpalbas02 = rcd_lads_del_hdr.zzpalbas02,
+            zzmeins02 = rcd_lads_del_hdr.zzmeins02,
+            zzpalbas03 = rcd_lads_del_hdr.zzpalbas03,
+            zzmeins03 = rcd_lads_del_hdr.zzmeins03,
+            zzpalbas04 = rcd_lads_del_hdr.zzpalbas04,
+            zzmeins04 = rcd_lads_del_hdr.zzmeins04,
+            zzpalbas05 = rcd_lads_del_hdr.zzpalbas05,
+            zzmeins05 = rcd_lads_del_hdr.zzmeins05,
+            zzpalspace_f = rcd_lads_del_hdr.zzpalspace_f,
+            zzpalbas01_f = rcd_lads_del_hdr.zzpalbas01_f,
+            zzpalbas02_f = rcd_lads_del_hdr.zzpalbas02_f,
+            zzpalbas03_f = rcd_lads_del_hdr.zzpalbas03_f,
+            zzpalbas04_f = rcd_lads_del_hdr.zzpalbas04_f,
+            zzpalbas05_f = rcd_lads_del_hdr.zzpalbas05_f,
+            zztknum = rcd_lads_del_hdr.zztknum,
+            zzexpectpb = rcd_lads_del_hdr.zzexpectpb,
+            zzgaranteedbpr = rcd_lads_del_hdr.zzgaranteedbpr,
+            zzgroupbpr = rcd_lads_del_hdr.zzgroupbpr,
+            zzorbdpr = rcd_lads_del_hdr.zzorbdpr,
+            zzmanbpr = rcd_lads_del_hdr.zzmanbpr,
+            zzdelbpr = rcd_lads_del_hdr.zzdelbpr,
+            zzpalspace_deliv = rcd_lads_del_hdr.zzpalspace_deliv,
+            zzpalbase_del01 = rcd_lads_del_hdr.zzpalbase_del01,
+            zzpalbase_del02 = rcd_lads_del_hdr.zzpalbase_del02,
+            zzpalbase_del03 = rcd_lads_del_hdr.zzpalbase_del03,
+            zzpalbase_del04 = rcd_lads_del_hdr.zzpalbase_del04,
+            zzpalbase_del05 = rcd_lads_del_hdr.zzpalbase_del05,
+            zzmeins_del01 = rcd_lads_del_hdr.zzmeins_del01,
+            zzmeins_del02 = rcd_lads_del_hdr.zzmeins_del02,
+            zzmeins_del03 = rcd_lads_del_hdr.zzmeins_del03,
+            zzmeins_del04 = rcd_lads_del_hdr.zzmeins_del04,
+            zzmeins_del05 = rcd_lads_del_hdr.zzmeins_del05,
+            atwrt1 = rcd_lads_del_hdr.atwrt1,
+            atwrt2 = rcd_lads_del_hdr.atwrt2,
+            mtimefrom = rcd_lads_del_hdr.mtimefrom,
+            mtimeto = rcd_lads_del_hdr.mtimeto,
+            atimefrom = rcd_lads_del_hdr.atimefrom,
+            atimeto = rcd_lads_del_hdr.atimeto,
+            werks2 = rcd_lads_del_hdr.werks2,
+            zzbrgew_f = rcd_lads_del_hdr.zzbrgew_f,
+            zzweightpal = rcd_lads_del_hdr.zzweightpal,
+            zzweightpal_f = rcd_lads_del_hdr.zzweightpal_f,
+            mescod = rcd_lads_del_hdr.mescod,
+            mesfct = rcd_lads_del_hdr.mesfct,
+            del_idoc_name = rcd_lads_del_hdr.del_idoc_name,
+            del_idoc_number = rcd_lads_del_hdr.del_idoc_number,
+            del_idoc_timestamp = rcd_lads_del_hdr.del_idoc_timestamp,
+            del_lads_date = rcd_lads_del_hdr.del_lads_date,
+            lads_status = rcd_lads_del_hdr.lads_status
+         where vbeln = rcd_lads_del_hdr.vbeln;
+         if sql%notfound then
+            insert into lads_del_hdr
+               (vbeln,
+                vstel,
+                vkorg,
+                lstel,
+                vkbur,
+                lgnum,
+                ablad,
+                inco1,
+                inco2,
+                route,
+                vsbed,
+                btgew,
+                ntgew,
+                gewei,
+                volum,
+                voleh,
+                anzpk,
+                bolnr,
+                traty,
+                traid,
+                xabln,
+                lifex,
+                parid,
+                podat,
+                potim,
+                vstel_bez,
+                vkorg_bez,
+                lstel_bez,
+                vkbur_bez,
+                lgnum_bez,
+                inco1_bez,
+                route_bez,
+                vsbed_bez,
+                traty_bez,
+                lfart,
+                bzirk,
+                autlf,
+                lifsk,
+                lprio,
+                kdgrp,
+                berot,
+                tragr,
+                trspg,
+                aulwe,
+                lfart_bez,
+                lprio_bez,
+                bzirk_bez,
+                lifsk_bez,
+                kdgrp_bez,
+                tragr_bez,
+                trspg_bez,
+                aulwe_bez,
+                zztarif,
+                werks,
+                name1,
+                stras,
+                pstlz,
+                ort01,
+                land1,
+                zztarif1,
+                zzbrgew,
+                zzweightuom,
+                zzpalspace,
+                zzpalbas01,
+                zzmeins01,
+                zzpalbas02,
+                zzmeins02,
+                zzpalbas03,
+                zzmeins03,
+                zzpalbas04,
+                zzmeins04,
+                zzpalbas05,
+                zzmeins05,
+                zzpalspace_f,
+                zzpalbas01_f,
+                zzpalbas02_f,
+                zzpalbas03_f,
+                zzpalbas04_f,
+                zzpalbas05_f,
+                zztknum,
+                zzexpectpb,
+                zzgaranteedbpr,
+                zzgroupbpr,
+                zzorbdpr,
+                zzmanbpr,
+                zzdelbpr,
+                zzpalspace_deliv,
+                zzpalbase_del01,
+                zzpalbase_del02,
+                zzpalbase_del03,
+                zzpalbase_del04,
+                zzpalbase_del05,
+                zzmeins_del01,
+                zzmeins_del02,
+                zzmeins_del03,
+                zzmeins_del04,
+                zzmeins_del05,
+                atwrt1,
+                atwrt2,
+                mtimefrom,
+                mtimeto,
+                atimefrom,
+                atimeto,
+                werks2,
+                zzbrgew_f,
+                zzweightpal,
+                zzweightpal_f,
+                mescod,
+                mesfct,
+                del_idoc_name,
+                del_idoc_number,
+                del_idoc_timestamp,
+                del_lads_date,
+                lads_status)
+            values
+               (rcd_lads_del_hdr.vbeln,
+                rcd_lads_del_hdr.vstel,
+                rcd_lads_del_hdr.vkorg,
+                rcd_lads_del_hdr.lstel,
+                rcd_lads_del_hdr.vkbur,
+                rcd_lads_del_hdr.lgnum,
+                rcd_lads_del_hdr.ablad,
+                rcd_lads_del_hdr.inco1,
+                rcd_lads_del_hdr.inco2,
+                rcd_lads_del_hdr.route,
+                rcd_lads_del_hdr.vsbed,
+                rcd_lads_del_hdr.btgew,
+                rcd_lads_del_hdr.ntgew,
+                rcd_lads_del_hdr.gewei,
+                rcd_lads_del_hdr.volum,
+                rcd_lads_del_hdr.voleh,
+                rcd_lads_del_hdr.anzpk,
+                rcd_lads_del_hdr.bolnr,
+                rcd_lads_del_hdr.traty,
+                rcd_lads_del_hdr.traid,
+                rcd_lads_del_hdr.xabln,
+                rcd_lads_del_hdr.lifex,
+                rcd_lads_del_hdr.parid,
+                rcd_lads_del_hdr.podat,
+                rcd_lads_del_hdr.potim,
+                rcd_lads_del_hdr.vstel_bez,
+                rcd_lads_del_hdr.vkorg_bez,
+                rcd_lads_del_hdr.lstel_bez,
+                rcd_lads_del_hdr.vkbur_bez,
+                rcd_lads_del_hdr.lgnum_bez,
+                rcd_lads_del_hdr.inco1_bez,
+                rcd_lads_del_hdr.route_bez,
+                rcd_lads_del_hdr.vsbed_bez,
+                rcd_lads_del_hdr.traty_bez,
+                rcd_lads_del_hdr.lfart,
+                rcd_lads_del_hdr.bzirk,
+                rcd_lads_del_hdr.autlf,
+                rcd_lads_del_hdr.lifsk,
+                rcd_lads_del_hdr.lprio,
+                rcd_lads_del_hdr.kdgrp,
+                rcd_lads_del_hdr.berot,
+                rcd_lads_del_hdr.tragr,
+                rcd_lads_del_hdr.trspg,
+                rcd_lads_del_hdr.aulwe,
+                rcd_lads_del_hdr.lfart_bez,
+                rcd_lads_del_hdr.lprio_bez,
+                rcd_lads_del_hdr.bzirk_bez,
+                rcd_lads_del_hdr.lifsk_bez,
+                rcd_lads_del_hdr.kdgrp_bez,
+                rcd_lads_del_hdr.tragr_bez,
+                rcd_lads_del_hdr.trspg_bez,
+                rcd_lads_del_hdr.aulwe_bez,
+                rcd_lads_del_hdr.zztarif,
+                rcd_lads_del_hdr.werks,
+                rcd_lads_del_hdr.name1,
+                rcd_lads_del_hdr.stras,
+                rcd_lads_del_hdr.pstlz,
+                rcd_lads_del_hdr.ort01,
+                rcd_lads_del_hdr.land1,
+                rcd_lads_del_hdr.zztarif1,
+                rcd_lads_del_hdr.zzbrgew,
+                rcd_lads_del_hdr.zzweightuom,
+                rcd_lads_del_hdr.zzpalspace,
+                rcd_lads_del_hdr.zzpalbas01,
+                rcd_lads_del_hdr.zzmeins01,
+                rcd_lads_del_hdr.zzpalbas02,
+                rcd_lads_del_hdr.zzmeins02,
+                rcd_lads_del_hdr.zzpalbas03,
+                rcd_lads_del_hdr.zzmeins03,
+                rcd_lads_del_hdr.zzpalbas04,
+                rcd_lads_del_hdr.zzmeins04,
+                rcd_lads_del_hdr.zzpalbas05,
+                rcd_lads_del_hdr.zzmeins05,
+                rcd_lads_del_hdr.zzpalspace_f,
+                rcd_lads_del_hdr.zzpalbas01_f,
+                rcd_lads_del_hdr.zzpalbas02_f,
+                rcd_lads_del_hdr.zzpalbas03_f,
+                rcd_lads_del_hdr.zzpalbas04_f,
+                rcd_lads_del_hdr.zzpalbas05_f,
+                rcd_lads_del_hdr.zztknum,
+                rcd_lads_del_hdr.zzexpectpb,
+                rcd_lads_del_hdr.zzgaranteedbpr,
+                rcd_lads_del_hdr.zzgroupbpr,
+                rcd_lads_del_hdr.zzorbdpr,
+                rcd_lads_del_hdr.zzmanbpr,
+                rcd_lads_del_hdr.zzdelbpr,
+                rcd_lads_del_hdr.zzpalspace_deliv,
+                rcd_lads_del_hdr.zzpalbase_del01,
+                rcd_lads_del_hdr.zzpalbase_del02,
+                rcd_lads_del_hdr.zzpalbase_del03,
+                rcd_lads_del_hdr.zzpalbase_del04,
+                rcd_lads_del_hdr.zzpalbase_del05,
+                rcd_lads_del_hdr.zzmeins_del01,
+                rcd_lads_del_hdr.zzmeins_del02,
+                rcd_lads_del_hdr.zzmeins_del03,
+                rcd_lads_del_hdr.zzmeins_del04,
+                rcd_lads_del_hdr.zzmeins_del05,
+                rcd_lads_del_hdr.atwrt1,
+                rcd_lads_del_hdr.atwrt2,
+                rcd_lads_del_hdr.mtimefrom,
+                rcd_lads_del_hdr.mtimeto,
+                rcd_lads_del_hdr.atimefrom,
+                rcd_lads_del_hdr.atimeto,
+                rcd_lads_del_hdr.werks2,
+                rcd_lads_del_hdr.zzbrgew_f,
+                rcd_lads_del_hdr.zzweightpal,
+                rcd_lads_del_hdr.zzweightpal_f,
+                rcd_lads_del_hdr.mescod,
+                rcd_lads_del_hdr.mesfct,
+                rcd_lads_del_hdr.del_idoc_name,
+                rcd_lads_del_hdr.del_idoc_number,
+                rcd_lads_del_hdr.del_idoc_timestamp,
+                rcd_lads_del_hdr.del_lads_date,
+                rcd_lads_del_hdr.lads_status);
+         end if;
+
+      else
+
+         /*-*/
+         /* Retrieve field values
+         /*-*/
+         rcd_lads_del_hdr.vbeln := lics_inbound_utility.get_variable('VBELN');
+         rcd_lads_del_hdr.pod_idoc_name := rcd_lads_control.idoc_name;
+         rcd_lads_del_hdr.pod_idoc_number := rcd_lads_control.idoc_number;
+         rcd_lads_del_hdr.pod_idoc_timestamp := rcd_lads_control.idoc_timestamp;
+         rcd_lads_del_hdr.pod_lads_date := sysdate;
+         rcd_lads_del_hdr.lads_status := '1';
+
+
+         /*-*/
+         /* Retrieve exceptions raised
+         /*-*/
+         if lics_inbound_utility.has_errors = true then
+            var_trn_error := true;
+         end if;
+
+         /*-*/
+         /* Reset child sequences
+         /*-*/
+         rcd_lads_del_pod.podseq := 0;
+
+         /*----------------------------------------*/
+         /* VALIDATION - Validate the field values */
+         /*----------------------------------------*/
+
+         /*-*/
+         /* Validate the primary keys
+         /*-*/
+         if rcd_lads_del_hdr.vbeln is null then
+            lics_inbound_utility.add_exception('Missing Primary Key - HDR.VBELN');
+            var_trn_error := true;
+         end if;
+
+         /*-*/
+         /* Validate the IDOC sequence when primary key supplied
+         /*-*/
+         if not(rcd_lads_del_hdr.vbeln is null) then
+            var_exists := true;
+            open csr_lads_del_hdr_01;
+            fetch csr_lads_del_hdr_01 into rcd_lads_del_hdr_01;
+            if csr_lads_del_hdr_01%notfound then
+               var_exists := false;
+               rcd_lads_del_hdr.lads_status := '4';
+            end if;
+            close csr_lads_del_hdr_01;
+
+            if var_exists = true then
+               if rcd_lads_del_hdr.pod_idoc_timestamp > nvl(rcd_lads_del_hdr_01.pod_idoc_timestamp,'00000000000000') then
+                  delete from lads_del_pod where vbeln = rcd_lads_del_hdr.vbeln;
+               else
+                  var_trn_ignore := true;
+               end if;
+            end if;
+         end if;
+
+         /*--------------------------------------------*/
+         /* IGNORE - Ignore the data row when required */
+         /*--------------------------------------------*/
+
+         if var_trn_ignore = true then
+            return;
+         end if;
+
+         /*----------------------------------------*/
+         /* ERROR- Bypass the update when required */
+         /*----------------------------------------*/
+
+         if var_trn_error = true then
+            return;
+         end if;
+
+         /*------------------------------*/
+         /* UPDATE - Update the database */
+         /*------------------------------*/
+         update lads_del_hdr set
+            pod_idoc_name = rcd_lads_del_hdr.pod_idoc_name,
+            pod_idoc_number = rcd_lads_del_hdr.pod_idoc_number,
+            pod_idoc_timestamp = rcd_lads_del_hdr.pod_idoc_timestamp,
+            pod_lads_date = rcd_lads_del_hdr.pod_lads_date,
+            lads_status = rcd_lads_del_hdr.lads_status
+         where vbeln = rcd_lads_del_hdr.vbeln;
+         if sql%notfound then
+            insert into lads_del_hdr
+               (vbeln,
+                pod_idoc_name,
+                pod_idoc_number,
+                pod_idoc_timestamp,
+                pod_lads_date,
+                lads_status)
+            values
+               (rcd_lads_del_hdr.vbeln,
+                rcd_lads_del_hdr.pod_idoc_name,
+                rcd_lads_del_hdr.pod_idoc_number,
+                rcd_lads_del_hdr.pod_idoc_timestamp,
+                rcd_lads_del_hdr.pod_lads_date,
+                rcd_lads_del_hdr.lads_status);
+         end if;
       end if;
 
-      /*--------------------------------------------*/
-      /* IGNORE - Ignore the data row when required */
-      /*--------------------------------------------*/
-
-      if var_trn_ignore = true then
-         return;
-      end if;
-
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-
-      if var_trn_error = true then
-         return;
-      end if;
-
-      /*------------------------------*/
-      /* UPDATE - Update the database */
-      /*------------------------------*/
-
-      update lads_del_hdr set
-         vstel = rcd_lads_del_hdr.vstel,
-         vkorg = rcd_lads_del_hdr.vkorg,
-         lstel = rcd_lads_del_hdr.lstel,
-         vkbur = rcd_lads_del_hdr.vkbur,
-         lgnum = rcd_lads_del_hdr.lgnum,
-         ablad = rcd_lads_del_hdr.ablad,
-         inco1 = rcd_lads_del_hdr.inco1,
-         inco2 = rcd_lads_del_hdr.inco2,
-         route = rcd_lads_del_hdr.route,
-         vsbed = rcd_lads_del_hdr.vsbed,
-         btgew = rcd_lads_del_hdr.btgew,
-         ntgew = rcd_lads_del_hdr.ntgew,
-         gewei = rcd_lads_del_hdr.gewei,
-         volum = rcd_lads_del_hdr.volum,
-         voleh = rcd_lads_del_hdr.voleh,
-         anzpk = rcd_lads_del_hdr.anzpk,
-         bolnr = rcd_lads_del_hdr.bolnr,
-         traty = rcd_lads_del_hdr.traty,
-         traid = rcd_lads_del_hdr.traid,
-         xabln = rcd_lads_del_hdr.xabln,
-         lifex = rcd_lads_del_hdr.lifex,
-         parid = rcd_lads_del_hdr.parid,
-         podat = rcd_lads_del_hdr.podat,
-         potim = rcd_lads_del_hdr.potim,
-         vstel_bez = rcd_lads_del_hdr.vstel_bez,
-         vkorg_bez = rcd_lads_del_hdr.vkorg_bez,
-         lstel_bez = rcd_lads_del_hdr.lstel_bez,
-         vkbur_bez = rcd_lads_del_hdr.vkbur_bez,
-         lgnum_bez = rcd_lads_del_hdr.lgnum_bez,
-         inco1_bez = rcd_lads_del_hdr.inco1_bez,
-         route_bez = rcd_lads_del_hdr.route_bez,
-         vsbed_bez = rcd_lads_del_hdr.vsbed_bez,
-         traty_bez = rcd_lads_del_hdr.traty_bez,
-         lfart = rcd_lads_del_hdr.lfart,
-         bzirk = rcd_lads_del_hdr.bzirk,
-         autlf = rcd_lads_del_hdr.autlf,
-         lifsk = rcd_lads_del_hdr.lifsk,
-         lprio = rcd_lads_del_hdr.lprio,
-         kdgrp = rcd_lads_del_hdr.kdgrp,
-         berot = rcd_lads_del_hdr.berot,
-         tragr = rcd_lads_del_hdr.tragr,
-         trspg = rcd_lads_del_hdr.trspg,
-         aulwe = rcd_lads_del_hdr.aulwe,
-         lfart_bez = rcd_lads_del_hdr.lfart_bez,
-         lprio_bez = rcd_lads_del_hdr.lprio_bez,
-         bzirk_bez = rcd_lads_del_hdr.bzirk_bez,
-         lifsk_bez = rcd_lads_del_hdr.lifsk_bez,
-         kdgrp_bez = rcd_lads_del_hdr.kdgrp_bez,
-         tragr_bez = rcd_lads_del_hdr.tragr_bez,
-         trspg_bez = rcd_lads_del_hdr.trspg_bez,
-         aulwe_bez = rcd_lads_del_hdr.aulwe_bez,
-         zztarif = rcd_lads_del_hdr.zztarif,
-         werks = rcd_lads_del_hdr.werks,
-         name1 = rcd_lads_del_hdr.name1,
-         stras = rcd_lads_del_hdr.stras,
-         pstlz = rcd_lads_del_hdr.pstlz,
-         ort01 = rcd_lads_del_hdr.ort01,
-         land1 = rcd_lads_del_hdr.land1,
-         zztarif1 = rcd_lads_del_hdr.zztarif1,
-         zzbrgew = rcd_lads_del_hdr.zzbrgew,
-         zzweightuom = rcd_lads_del_hdr.zzweightuom,
-         zzpalspace = rcd_lads_del_hdr.zzpalspace,
-         zzpalbas01 = rcd_lads_del_hdr.zzpalbas01,
-         zzmeins01 = rcd_lads_del_hdr.zzmeins01,
-         zzpalbas02 = rcd_lads_del_hdr.zzpalbas02,
-         zzmeins02 = rcd_lads_del_hdr.zzmeins02,
-         zzpalbas03 = rcd_lads_del_hdr.zzpalbas03,
-         zzmeins03 = rcd_lads_del_hdr.zzmeins03,
-         zzpalbas04 = rcd_lads_del_hdr.zzpalbas04,
-         zzmeins04 = rcd_lads_del_hdr.zzmeins04,
-         zzpalbas05 = rcd_lads_del_hdr.zzpalbas05,
-         zzmeins05 = rcd_lads_del_hdr.zzmeins05,
-         zzpalspace_f = rcd_lads_del_hdr.zzpalspace_f,
-         zzpalbas01_f = rcd_lads_del_hdr.zzpalbas01_f,
-         zzpalbas02_f = rcd_lads_del_hdr.zzpalbas02_f,
-         zzpalbas03_f = rcd_lads_del_hdr.zzpalbas03_f,
-         zzpalbas04_f = rcd_lads_del_hdr.zzpalbas04_f,
-         zzpalbas05_f = rcd_lads_del_hdr.zzpalbas05_f,
-         zztknum = rcd_lads_del_hdr.zztknum,
-         zzexpectpb = rcd_lads_del_hdr.zzexpectpb,
-         zzgaranteedbpr = rcd_lads_del_hdr.zzgaranteedbpr,
-         zzgroupbpr = rcd_lads_del_hdr.zzgroupbpr,
-         zzorbdpr = rcd_lads_del_hdr.zzorbdpr,
-         zzmanbpr = rcd_lads_del_hdr.zzmanbpr,
-         zzdelbpr = rcd_lads_del_hdr.zzdelbpr,
-         zzpalspace_deliv = rcd_lads_del_hdr.zzpalspace_deliv,
-         zzpalbase_del01 = rcd_lads_del_hdr.zzpalbase_del01,
-         zzpalbase_del02 = rcd_lads_del_hdr.zzpalbase_del02,
-         zzpalbase_del03 = rcd_lads_del_hdr.zzpalbase_del03,
-         zzpalbase_del04 = rcd_lads_del_hdr.zzpalbase_del04,
-         zzpalbase_del05 = rcd_lads_del_hdr.zzpalbase_del05,
-         zzmeins_del01 = rcd_lads_del_hdr.zzmeins_del01,
-         zzmeins_del02 = rcd_lads_del_hdr.zzmeins_del02,
-         zzmeins_del03 = rcd_lads_del_hdr.zzmeins_del03,
-         zzmeins_del04 = rcd_lads_del_hdr.zzmeins_del04,
-         zzmeins_del05 = rcd_lads_del_hdr.zzmeins_del05,
-         atwrt1 = rcd_lads_del_hdr.atwrt1,
-         atwrt2 = rcd_lads_del_hdr.atwrt2,
-         mtimefrom = rcd_lads_del_hdr.mtimefrom,
-         mtimeto = rcd_lads_del_hdr.mtimeto,
-         atimefrom = rcd_lads_del_hdr.atimefrom,
-         atimeto = rcd_lads_del_hdr.atimeto,
-         werks2 = rcd_lads_del_hdr.werks2,
-         zzbrgew_f = rcd_lads_del_hdr.zzbrgew_f,
-         zzweightpal = rcd_lads_del_hdr.zzweightpal,
-         zzweightpal_f = rcd_lads_del_hdr.zzweightpal_f,
-         mescod = rcd_lads_del_hdr.mescod,
-         mesfct = rcd_lads_del_hdr.mesfct,
-         pod_idoc_name = rcd_lads_del_hdr.pod_idoc_name,
-         pod_idoc_number = rcd_lads_del_hdr.pod_idoc_number,
-         pod_idoc_timestamp = rcd_lads_del_hdr.pod_idoc_timestamp,
-         pod_lads_date = rcd_lads_del_hdr.pod_lads_date,
-         lads_status = rcd_lads_del_hdr.lads_status
-      where vbeln = rcd_lads_del_hdr.vbeln;
-      if sql%notfound then
-         insert into lads_del_hdr
-            (vbeln,
-             vstel,
-             vkorg,
-             lstel,
-             vkbur,
-             lgnum,
-             ablad,
-             inco1,
-             inco2,
-             route,
-             vsbed,
-             btgew,
-             ntgew,
-             gewei,
-             volum,
-             voleh,
-             anzpk,
-             bolnr,
-             traty,
-             traid,
-             xabln,
-             lifex,
-             parid,
-             podat,
-             potim,
-             vstel_bez,
-             vkorg_bez,
-             lstel_bez,
-             vkbur_bez,
-             lgnum_bez,
-             inco1_bez,
-             route_bez,
-             vsbed_bez,
-             traty_bez,
-             lfart,
-             bzirk,
-             autlf,
-             lifsk,
-             lprio,
-             kdgrp,
-             berot,
-             tragr,
-             trspg,
-             aulwe,
-             lfart_bez,
-             lprio_bez,
-             bzirk_bez,
-             lifsk_bez,
-             kdgrp_bez,
-             tragr_bez,
-             trspg_bez,
-             aulwe_bez,
-             zztarif,
-             werks,
-             name1,
-             stras,
-             pstlz,
-             ort01,
-             land1,
-             zztarif1,
-             zzbrgew,
-             zzweightuom,
-             zzpalspace,
-             zzpalbas01,
-             zzmeins01,
-             zzpalbas02,
-             zzmeins02,
-             zzpalbas03,
-             zzmeins03,
-             zzpalbas04,
-             zzmeins04,
-             zzpalbas05,
-             zzmeins05,
-             zzpalspace_f,
-             zzpalbas01_f,
-             zzpalbas02_f,
-             zzpalbas03_f,
-             zzpalbas04_f,
-             zzpalbas05_f,
-             zztknum,
-             zzexpectpb,
-             zzgaranteedbpr,
-             zzgroupbpr,
-             zzorbdpr,
-             zzmanbpr,
-             zzdelbpr,
-             zzpalspace_deliv,
-             zzpalbase_del01,
-             zzpalbase_del02,
-             zzpalbase_del03,
-             zzpalbase_del04,
-             zzpalbase_del05,
-             zzmeins_del01,
-             zzmeins_del02,
-             zzmeins_del03,
-             zzmeins_del04,
-             zzmeins_del05,
-             atwrt1,
-             atwrt2,
-             mtimefrom,
-             mtimeto,
-             atimefrom,
-             atimeto,
-             werks2,
-             zzbrgew_f,
-             zzweightpal,
-             zzweightpal_f,
-             mescod,
-             mesfct,
-             pod_idoc_name,
-             pod_idoc_number,
-             pod_idoc_timestamp,
-             pod_lads_date,
-             lads_status)
-         values
-            (rcd_lads_del_hdr.vbeln,
-             rcd_lads_del_hdr.vstel,
-             rcd_lads_del_hdr.vkorg,
-             rcd_lads_del_hdr.lstel,
-             rcd_lads_del_hdr.vkbur,
-             rcd_lads_del_hdr.lgnum,
-             rcd_lads_del_hdr.ablad,
-             rcd_lads_del_hdr.inco1,
-             rcd_lads_del_hdr.inco2,
-             rcd_lads_del_hdr.route,
-             rcd_lads_del_hdr.vsbed,
-             rcd_lads_del_hdr.btgew,
-             rcd_lads_del_hdr.ntgew,
-             rcd_lads_del_hdr.gewei,
-             rcd_lads_del_hdr.volum,
-             rcd_lads_del_hdr.voleh,
-             rcd_lads_del_hdr.anzpk,
-             rcd_lads_del_hdr.bolnr,
-             rcd_lads_del_hdr.traty,
-             rcd_lads_del_hdr.traid,
-             rcd_lads_del_hdr.xabln,
-             rcd_lads_del_hdr.lifex,
-             rcd_lads_del_hdr.parid,
-             rcd_lads_del_hdr.podat,
-             rcd_lads_del_hdr.potim,
-             rcd_lads_del_hdr.vstel_bez,
-             rcd_lads_del_hdr.vkorg_bez,
-             rcd_lads_del_hdr.lstel_bez,
-             rcd_lads_del_hdr.vkbur_bez,
-             rcd_lads_del_hdr.lgnum_bez,
-             rcd_lads_del_hdr.inco1_bez,
-             rcd_lads_del_hdr.route_bez,
-             rcd_lads_del_hdr.vsbed_bez,
-             rcd_lads_del_hdr.traty_bez,
-             rcd_lads_del_hdr.lfart,
-             rcd_lads_del_hdr.bzirk,
-             rcd_lads_del_hdr.autlf,
-             rcd_lads_del_hdr.lifsk,
-             rcd_lads_del_hdr.lprio,
-             rcd_lads_del_hdr.kdgrp,
-             rcd_lads_del_hdr.berot,
-             rcd_lads_del_hdr.tragr,
-             rcd_lads_del_hdr.trspg,
-             rcd_lads_del_hdr.aulwe,
-             rcd_lads_del_hdr.lfart_bez,
-             rcd_lads_del_hdr.lprio_bez,
-             rcd_lads_del_hdr.bzirk_bez,
-             rcd_lads_del_hdr.lifsk_bez,
-             rcd_lads_del_hdr.kdgrp_bez,
-             rcd_lads_del_hdr.tragr_bez,
-             rcd_lads_del_hdr.trspg_bez,
-             rcd_lads_del_hdr.aulwe_bez,
-             rcd_lads_del_hdr.zztarif,
-             rcd_lads_del_hdr.werks,
-             rcd_lads_del_hdr.name1,
-             rcd_lads_del_hdr.stras,
-             rcd_lads_del_hdr.pstlz,
-             rcd_lads_del_hdr.ort01,
-             rcd_lads_del_hdr.land1,
-             rcd_lads_del_hdr.zztarif1,
-             rcd_lads_del_hdr.zzbrgew,
-             rcd_lads_del_hdr.zzweightuom,
-             rcd_lads_del_hdr.zzpalspace,
-             rcd_lads_del_hdr.zzpalbas01,
-             rcd_lads_del_hdr.zzmeins01,
-             rcd_lads_del_hdr.zzpalbas02,
-             rcd_lads_del_hdr.zzmeins02,
-             rcd_lads_del_hdr.zzpalbas03,
-             rcd_lads_del_hdr.zzmeins03,
-             rcd_lads_del_hdr.zzpalbas04,
-             rcd_lads_del_hdr.zzmeins04,
-             rcd_lads_del_hdr.zzpalbas05,
-             rcd_lads_del_hdr.zzmeins05,
-             rcd_lads_del_hdr.zzpalspace_f,
-             rcd_lads_del_hdr.zzpalbas01_f,
-             rcd_lads_del_hdr.zzpalbas02_f,
-             rcd_lads_del_hdr.zzpalbas03_f,
-             rcd_lads_del_hdr.zzpalbas04_f,
-             rcd_lads_del_hdr.zzpalbas05_f,
-             rcd_lads_del_hdr.zztknum,
-             rcd_lads_del_hdr.zzexpectpb,
-             rcd_lads_del_hdr.zzgaranteedbpr,
-             rcd_lads_del_hdr.zzgroupbpr,
-             rcd_lads_del_hdr.zzorbdpr,
-             rcd_lads_del_hdr.zzmanbpr,
-             rcd_lads_del_hdr.zzdelbpr,
-             rcd_lads_del_hdr.zzpalspace_deliv,
-             rcd_lads_del_hdr.zzpalbase_del01,
-             rcd_lads_del_hdr.zzpalbase_del02,
-             rcd_lads_del_hdr.zzpalbase_del03,
-             rcd_lads_del_hdr.zzpalbase_del04,
-             rcd_lads_del_hdr.zzpalbase_del05,
-             rcd_lads_del_hdr.zzmeins_del01,
-             rcd_lads_del_hdr.zzmeins_del02,
-             rcd_lads_del_hdr.zzmeins_del03,
-             rcd_lads_del_hdr.zzmeins_del04,
-             rcd_lads_del_hdr.zzmeins_del05,
-             rcd_lads_del_hdr.atwrt1,
-             rcd_lads_del_hdr.atwrt2,
-             rcd_lads_del_hdr.mtimefrom,
-             rcd_lads_del_hdr.mtimeto,
-             rcd_lads_del_hdr.atimefrom,
-             rcd_lads_del_hdr.atimeto,
-             rcd_lads_del_hdr.werks2,
-             rcd_lads_del_hdr.zzbrgew_f,
-             rcd_lads_del_hdr.zzweightpal,
-             rcd_lads_del_hdr.zzweightpal_f,
-             rcd_lads_del_hdr.mescod,
-             rcd_lads_del_hdr.mesfct,
-             rcd_lads_del_hdr.pod_idoc_name,
-             rcd_lads_del_hdr.pod_idoc_number,
-             rcd_lads_del_hdr.pod_idoc_timestamp,
-             rcd_lads_del_hdr.pod_lads_date,
-             rcd_lads_del_hdr.lads_status);
-      end if;
 
    /*-------------*/
    /* End routine */
@@ -2745,452 +2896,467 @@ create or replace package body lads_atllad16 as
 
       lics_inbound_utility.parse_record('DET', par_record);
 
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
 
-      /*-*/
-      /* Retrieve field values
-      /*-*/
-      rcd_lads_del_det.vbeln := rcd_lads_del_hdr.vbeln;
-      rcd_lads_del_det.detseq := rcd_lads_del_det.detseq + 1;
-      rcd_lads_del_det.posnr := lics_inbound_utility.get_variable('POSNR');
-      rcd_lads_del_det.matnr := lics_inbound_utility.get_variable('MATNR');
-      rcd_lads_del_det.matwa := lics_inbound_utility.get_variable('MATWA');
-      rcd_lads_del_det.arktx := lics_inbound_utility.get_variable('ARKTX');
-      rcd_lads_del_det.orktx := lics_inbound_utility.get_variable('ORKTX');
-      rcd_lads_del_det.sugrd := lics_inbound_utility.get_variable('SUGRD');
-      rcd_lads_del_det.sudru := lics_inbound_utility.get_variable('SUDRU');
-      rcd_lads_del_det.matkl := lics_inbound_utility.get_variable('MATKL');
-      rcd_lads_del_det.werks := lics_inbound_utility.get_variable('WERKS');
-      rcd_lads_del_det.lgort := lics_inbound_utility.get_variable('LGORT');
-      rcd_lads_del_det.charg := lics_inbound_utility.get_variable('CHARG');
-      rcd_lads_del_det.kdmat := lics_inbound_utility.get_variable('KDMAT');
-      rcd_lads_del_det.lfimg := lics_inbound_utility.get_number('LFIMG',null);
-      rcd_lads_del_det.vrkme := lics_inbound_utility.get_variable('VRKME');
-      rcd_lads_del_det.lgmng := lics_inbound_utility.get_number('LGMNG',null);
-      rcd_lads_del_det.meins := lics_inbound_utility.get_variable('MEINS');
-      rcd_lads_del_det.ntgew := lics_inbound_utility.get_number('NTGEW',null);
-      rcd_lads_del_det.brgew := lics_inbound_utility.get_number('BRGEW',null);
-      rcd_lads_del_det.gewei := lics_inbound_utility.get_variable('GEWEI');
-      rcd_lads_del_det.volum := lics_inbound_utility.get_number('VOLUM',null);
-      rcd_lads_del_det.voleh := lics_inbound_utility.get_variable('VOLEH');
-      rcd_lads_del_det.lgpbe := lics_inbound_utility.get_variable('LGPBE');
-      rcd_lads_del_det.hipos := lics_inbound_utility.get_variable('HIPOS');
-      rcd_lads_del_det.hievw := lics_inbound_utility.get_variable('HIEVW');
-      rcd_lads_del_det.ladgr := lics_inbound_utility.get_variable('LADGR');
-      rcd_lads_del_det.tragr := lics_inbound_utility.get_variable('TRAGR');
-      rcd_lads_del_det.vkbur := lics_inbound_utility.get_variable('VKBUR');
-      rcd_lads_del_det.vkgrp := lics_inbound_utility.get_variable('VKGRP');
-      rcd_lads_del_det.vtweg := lics_inbound_utility.get_variable('VTWEG');
-      rcd_lads_del_det.spart := lics_inbound_utility.get_variable('SPART');
-      rcd_lads_del_det.grkor := lics_inbound_utility.get_variable('GRKOR');
-      rcd_lads_del_det.ean11 := lics_inbound_utility.get_variable('EAN11');
-      rcd_lads_del_det.sernr := lics_inbound_utility.get_variable('SERNR');
-      rcd_lads_del_det.aeskd := lics_inbound_utility.get_variable('AESKD');
-      rcd_lads_del_det.empst := lics_inbound_utility.get_variable('EMPST');
-      rcd_lads_del_det.mfrgr := lics_inbound_utility.get_variable('MFRGR');
-      rcd_lads_del_det.vbrst := lics_inbound_utility.get_variable('VBRST');
-      rcd_lads_del_det.labnk := lics_inbound_utility.get_variable('LABNK');
-      rcd_lads_del_det.abrdt := lics_inbound_utility.get_variable('ABRDT');
-      rcd_lads_del_det.mfrpn := lics_inbound_utility.get_variable('MFRPN');
-      rcd_lads_del_det.mfrnr := lics_inbound_utility.get_variable('MFRNR');
-      rcd_lads_del_det.abrvw := lics_inbound_utility.get_variable('ABRVW');
-      rcd_lads_del_det.kdmat35 := lics_inbound_utility.get_variable('KDMAT35');
-      rcd_lads_del_det.kannr := lics_inbound_utility.get_variable('KANNR');
-      rcd_lads_del_det.posex := lics_inbound_utility.get_variable('POSEX');
-      rcd_lads_del_det.lieffz := lics_inbound_utility.get_number('LIEFFZ',null);
-      rcd_lads_del_det.usr01 := lics_inbound_utility.get_variable('USR01');
-      rcd_lads_del_det.usr02 := lics_inbound_utility.get_variable('USR02');
-      rcd_lads_del_det.usr03 := lics_inbound_utility.get_variable('USR03');
-      rcd_lads_del_det.usr04 := lics_inbound_utility.get_variable('USR04');
-      rcd_lads_del_det.usr05 := lics_inbound_utility.get_variable('USR05');
-      rcd_lads_del_det.matnr_external := lics_inbound_utility.get_variable('MATNR_EXTERNAL');
-      rcd_lads_del_det.matnr_version := lics_inbound_utility.get_variable('MATNR_VERSION');
-      rcd_lads_del_det.matnr_guid := lics_inbound_utility.get_variable('MATNR_GUID');
-      rcd_lads_del_det.matwa_external := lics_inbound_utility.get_variable('MATWA_EXTERNAL');
-      rcd_lads_del_det.matwa_version := lics_inbound_utility.get_variable('MATWA_VERSION');
-      rcd_lads_del_det.matwa_guid := lics_inbound_utility.get_variable('MATWA_GUID');
-      rcd_lads_del_det.zudat := lics_inbound_utility.get_variable('ZUDAT');
-      rcd_lads_del_det.vfdat := lics_inbound_utility.get_variable('VFDAT');
-      rcd_lads_del_det.zzmeins01 := lics_inbound_utility.get_variable('ZZMEINS01');
-      rcd_lads_del_det.zzpalbas01_f := lics_inbound_utility.get_number('ZZPALBAS01_F',null);
-      rcd_lads_del_det.vbelv := lics_inbound_utility.get_variable('VBELV');
-      rcd_lads_del_det.posnv := lics_inbound_utility.get_variable('POSNV');
-      rcd_lads_del_det.zzhalfpal := lics_inbound_utility.get_variable('ZZHALFPAL');
-      rcd_lads_del_det.zzstackable := lics_inbound_utility.get_variable('ZZSTACKABLE');
-      rcd_lads_del_det.zznbrhompal := lics_inbound_utility.get_number('ZZNBRHOMPAL',null);
-      rcd_lads_del_det.zzpalbase_deliv := lics_inbound_utility.get_number('ZZPALBASE_DELIV',null);
-      rcd_lads_del_det.zzpalspace_deliv := lics_inbound_utility.get_number('ZZPALSPACE_DELIV',null);
-      rcd_lads_del_det.zzmeins_deliv := lics_inbound_utility.get_variable('ZZMEINS_DELIV');
-      rcd_lads_del_det.value1 := lics_inbound_utility.get_number('VALUE1',null);
-      rcd_lads_del_det.zrsp := lics_inbound_utility.get_number('ZRSP',null);
-      rcd_lads_del_det.rate := lics_inbound_utility.get_number('RATE',null);
-      rcd_lads_del_det.kostl := lics_inbound_utility.get_variable('KOSTL');
-      rcd_lads_del_det.vfdat1 := lics_inbound_utility.get_variable('VFDAT1');
-      rcd_lads_del_det.value := lics_inbound_utility.get_number('VALUE',null);
-      rcd_lads_del_det.zzbb4 := lics_inbound_utility.get_variable('ZZBB4');
-      rcd_lads_del_det.zzpi_id := lics_inbound_utility.get_variable('ZZPI_ID');
-      rcd_lads_del_det.insmk := lics_inbound_utility.get_variable('INSMK');
-      rcd_lads_del_det.spart1 := lics_inbound_utility.get_variable('SPART1');
-      rcd_lads_del_det.lgort_bez := lics_inbound_utility.get_variable('LGORT_BEZ');
-      rcd_lads_del_det.ladgr_bez := lics_inbound_utility.get_variable('LADGR_BEZ');
-      rcd_lads_del_det.tragr_bez := lics_inbound_utility.get_variable('TRAGR_BEZ');
-      rcd_lads_del_det.vkbur_bez := lics_inbound_utility.get_variable('VKBUR_BEZ');
-      rcd_lads_del_det.vkgrp_bez := lics_inbound_utility.get_variable('VKGRP_BEZ');
-      rcd_lads_del_det.vtweg_bez := lics_inbound_utility.get_variable('VTWEG_BEZ');
-      rcd_lads_del_det.spart_bez := lics_inbound_utility.get_variable('SPART_BEZ');
-      rcd_lads_del_det.mfrgr_bez := lics_inbound_utility.get_variable('MFRGR_BEZ');
-      rcd_lads_del_det.pstyv := lics_inbound_utility.get_variable('PSTYV');
-      rcd_lads_del_det.matkl1 := lics_inbound_utility.get_variable('MATKL1');
-      rcd_lads_del_det.prodh := lics_inbound_utility.get_variable('PRODH');
-      rcd_lads_del_det.umvkz := lics_inbound_utility.get_number('UMVKZ',null);
-      rcd_lads_del_det.umvkn := lics_inbound_utility.get_number('UMVKN',null);
-      rcd_lads_del_det.kztlf := lics_inbound_utility.get_variable('KZTLF');
-      rcd_lads_del_det.uebtk := lics_inbound_utility.get_variable('UEBTK');
-      rcd_lads_del_det.uebto := lics_inbound_utility.get_number('UEBTO',null);
-      rcd_lads_del_det.untto := lics_inbound_utility.get_number('UNTTO',null);
-      rcd_lads_del_det.chspl := lics_inbound_utility.get_variable('CHSPL');
-      rcd_lads_del_det.xchbw := lics_inbound_utility.get_variable('XCHBW');
-      rcd_lads_del_det.posar := lics_inbound_utility.get_variable('POSAR');
-      rcd_lads_del_det.sobkz := lics_inbound_utility.get_variable('SOBKZ');
-      rcd_lads_del_det.pckpf := lics_inbound_utility.get_variable('PCKPF');
-      rcd_lads_del_det.magrv := lics_inbound_utility.get_variable('MAGRV');
-      rcd_lads_del_det.shkzg := lics_inbound_utility.get_variable('SHKZG');
-      rcd_lads_del_det.koqui := lics_inbound_utility.get_variable('KOQUI');
-      rcd_lads_del_det.aktnr := lics_inbound_utility.get_variable('AKTNR');
-      rcd_lads_del_det.kzumw := lics_inbound_utility.get_variable('KZUMW');
-      rcd_lads_del_det.kvgr1 := lics_inbound_utility.get_variable('KVGR1');
-      rcd_lads_del_det.kvgr2 := lics_inbound_utility.get_variable('KVGR2');
-      rcd_lads_del_det.kvgr3 := lics_inbound_utility.get_variable('KVGR3');
-      rcd_lads_del_det.kvgr4 := lics_inbound_utility.get_variable('KVGR4');
-      rcd_lads_del_det.kvgr5 := lics_inbound_utility.get_variable('KVGR5');
-      rcd_lads_del_det.mvgr1 := lics_inbound_utility.get_variable('MVGR1');
-      rcd_lads_del_det.mvgr2 := lics_inbound_utility.get_variable('MVGR2');
-      rcd_lads_del_det.mvgr3 := lics_inbound_utility.get_variable('MVGR3');
-      rcd_lads_del_det.mvgr4 := lics_inbound_utility.get_variable('MVGR4');
-      rcd_lads_del_det.mvgr5 := lics_inbound_utility.get_variable('MVGR5');
-      rcd_lads_del_det.pstyv_bez := lics_inbound_utility.get_variable('PSTYV_BEZ');
-      rcd_lads_del_det.matkl_bez := lics_inbound_utility.get_variable('MATKL_BEZ');
-      rcd_lads_del_det.prodh_bez := lics_inbound_utility.get_variable('PRODH_BEZ');
-      rcd_lads_del_det.werks_bez := lics_inbound_utility.get_variable('WERKS_BEZ');
-      rcd_lads_del_det.kvgr1_bez := lics_inbound_utility.get_variable('KVGR1_BEZ');
-      rcd_lads_del_det.kvgr2_bez := lics_inbound_utility.get_variable('KVGR2_BEZ');
-      rcd_lads_del_det.kvgr3_bez := lics_inbound_utility.get_variable('KVGR3_BEZ');
-      rcd_lads_del_det.kvgr4_bez := lics_inbound_utility.get_variable('KVGR4_BEZ');
-      rcd_lads_del_det.kvgr5_bez := lics_inbound_utility.get_variable('KVGR5_BEZ');
-      rcd_lads_del_det.mvgr1_bez := lics_inbound_utility.get_variable('MVGR1_BEZ');
-      rcd_lads_del_det.mvgr2_bez := lics_inbound_utility.get_variable('MVGR2_BEZ');
-      rcd_lads_del_det.mvgr3_bez := lics_inbound_utility.get_variable('MVGR3_BEZ');
-      rcd_lads_del_det.mvgr4_bez := lics_inbound_utility.get_variable('MVGR4_BEZ');
-      rcd_lads_del_det.mvgr5_bez := lics_inbound_utility.get_variable('MVGR5_BEZ');
+      if (var_ctl_mestyp = 'SHPORD') then
 
-      /*-*/
-      /* Retrieve exceptions raised
-      /*-*/
-      if lics_inbound_utility.has_errors = true then
-         var_trn_error := true;
+         /*-*/
+         /* Retrieve field values
+         /*-*/
+         rcd_lads_del_det.vbeln := rcd_lads_del_hdr.vbeln;
+         rcd_lads_del_det.detseq := rcd_lads_del_det.detseq + 1;
+         rcd_lads_del_det.posnr := lics_inbound_utility.get_variable('POSNR');
+         rcd_lads_del_det.matnr := lics_inbound_utility.get_variable('MATNR');
+         rcd_lads_del_det.matwa := lics_inbound_utility.get_variable('MATWA');
+         rcd_lads_del_det.arktx := lics_inbound_utility.get_variable('ARKTX');
+         rcd_lads_del_det.orktx := lics_inbound_utility.get_variable('ORKTX');
+         rcd_lads_del_det.sugrd := lics_inbound_utility.get_variable('SUGRD');
+         rcd_lads_del_det.sudru := lics_inbound_utility.get_variable('SUDRU');
+         rcd_lads_del_det.matkl := lics_inbound_utility.get_variable('MATKL');
+         rcd_lads_del_det.werks := lics_inbound_utility.get_variable('WERKS');
+         rcd_lads_del_det.lgort := lics_inbound_utility.get_variable('LGORT');
+         rcd_lads_del_det.charg := lics_inbound_utility.get_variable('CHARG');
+         rcd_lads_del_det.kdmat := lics_inbound_utility.get_variable('KDMAT');
+         rcd_lads_del_det.lfimg := lics_inbound_utility.get_number('LFIMG',null);
+         rcd_lads_del_det.vrkme := lics_inbound_utility.get_variable('VRKME');
+         rcd_lads_del_det.lgmng := lics_inbound_utility.get_number('LGMNG',null);
+         rcd_lads_del_det.meins := lics_inbound_utility.get_variable('MEINS');
+         rcd_lads_del_det.ntgew := lics_inbound_utility.get_number('NTGEW',null);
+         rcd_lads_del_det.brgew := lics_inbound_utility.get_number('BRGEW',null);
+         rcd_lads_del_det.gewei := lics_inbound_utility.get_variable('GEWEI');
+         rcd_lads_del_det.volum := lics_inbound_utility.get_number('VOLUM',null);
+         rcd_lads_del_det.voleh := lics_inbound_utility.get_variable('VOLEH');
+         rcd_lads_del_det.lgpbe := lics_inbound_utility.get_variable('LGPBE');
+         rcd_lads_del_det.hipos := lics_inbound_utility.get_variable('HIPOS');
+         rcd_lads_del_det.hievw := lics_inbound_utility.get_variable('HIEVW');
+         rcd_lads_del_det.ladgr := lics_inbound_utility.get_variable('LADGR');
+         rcd_lads_del_det.tragr := lics_inbound_utility.get_variable('TRAGR');
+         rcd_lads_del_det.vkbur := lics_inbound_utility.get_variable('VKBUR');
+         rcd_lads_del_det.vkgrp := lics_inbound_utility.get_variable('VKGRP');
+         rcd_lads_del_det.vtweg := lics_inbound_utility.get_variable('VTWEG');
+         rcd_lads_del_det.spart := lics_inbound_utility.get_variable('SPART');
+         rcd_lads_del_det.grkor := lics_inbound_utility.get_variable('GRKOR');
+         rcd_lads_del_det.ean11 := lics_inbound_utility.get_variable('EAN11');
+         rcd_lads_del_det.sernr := lics_inbound_utility.get_variable('SERNR');
+         rcd_lads_del_det.aeskd := lics_inbound_utility.get_variable('AESKD');
+         rcd_lads_del_det.empst := lics_inbound_utility.get_variable('EMPST');
+         rcd_lads_del_det.mfrgr := lics_inbound_utility.get_variable('MFRGR');
+         rcd_lads_del_det.vbrst := lics_inbound_utility.get_variable('VBRST');
+         rcd_lads_del_det.labnk := lics_inbound_utility.get_variable('LABNK');
+         rcd_lads_del_det.abrdt := lics_inbound_utility.get_variable('ABRDT');
+         rcd_lads_del_det.mfrpn := lics_inbound_utility.get_variable('MFRPN');
+         rcd_lads_del_det.mfrnr := lics_inbound_utility.get_variable('MFRNR');
+         rcd_lads_del_det.abrvw := lics_inbound_utility.get_variable('ABRVW');
+         rcd_lads_del_det.kdmat35 := lics_inbound_utility.get_variable('KDMAT35');
+         rcd_lads_del_det.kannr := lics_inbound_utility.get_variable('KANNR');
+         rcd_lads_del_det.posex := lics_inbound_utility.get_variable('POSEX');
+         rcd_lads_del_det.lieffz := lics_inbound_utility.get_number('LIEFFZ',null);
+         rcd_lads_del_det.usr01 := lics_inbound_utility.get_variable('USR01');
+         rcd_lads_del_det.usr02 := lics_inbound_utility.get_variable('USR02');
+         rcd_lads_del_det.usr03 := lics_inbound_utility.get_variable('USR03');
+         rcd_lads_del_det.usr04 := lics_inbound_utility.get_variable('USR04');
+         rcd_lads_del_det.usr05 := lics_inbound_utility.get_variable('USR05');
+         rcd_lads_del_det.matnr_external := lics_inbound_utility.get_variable('MATNR_EXTERNAL');
+         rcd_lads_del_det.matnr_version := lics_inbound_utility.get_variable('MATNR_VERSION');
+         rcd_lads_del_det.matnr_guid := lics_inbound_utility.get_variable('MATNR_GUID');
+         rcd_lads_del_det.matwa_external := lics_inbound_utility.get_variable('MATWA_EXTERNAL');
+         rcd_lads_del_det.matwa_version := lics_inbound_utility.get_variable('MATWA_VERSION');
+         rcd_lads_del_det.matwa_guid := lics_inbound_utility.get_variable('MATWA_GUID');
+         rcd_lads_del_det.zudat := lics_inbound_utility.get_variable('ZUDAT');
+         rcd_lads_del_det.vfdat := lics_inbound_utility.get_variable('VFDAT');
+         rcd_lads_del_det.zzmeins01 := lics_inbound_utility.get_variable('ZZMEINS01');
+         rcd_lads_del_det.zzpalbas01_f := lics_inbound_utility.get_number('ZZPALBAS01_F',null);
+         rcd_lads_del_det.vbelv := lics_inbound_utility.get_variable('VBELV');
+         rcd_lads_del_det.posnv := lics_inbound_utility.get_variable('POSNV');
+         rcd_lads_del_det.zzhalfpal := lics_inbound_utility.get_variable('ZZHALFPAL');
+         rcd_lads_del_det.zzstackable := lics_inbound_utility.get_variable('ZZSTACKABLE');
+         rcd_lads_del_det.zznbrhompal := lics_inbound_utility.get_number('ZZNBRHOMPAL',null);
+         rcd_lads_del_det.zzpalbase_deliv := lics_inbound_utility.get_number('ZZPALBASE_DELIV',null);
+         rcd_lads_del_det.zzpalspace_deliv := lics_inbound_utility.get_number('ZZPALSPACE_DELIV',null);
+         rcd_lads_del_det.zzmeins_deliv := lics_inbound_utility.get_variable('ZZMEINS_DELIV');
+         rcd_lads_del_det.value1 := lics_inbound_utility.get_number('VALUE1',null);
+         rcd_lads_del_det.zrsp := lics_inbound_utility.get_number('ZRSP',null);
+         rcd_lads_del_det.rate := lics_inbound_utility.get_number('RATE',null);
+         rcd_lads_del_det.kostl := lics_inbound_utility.get_variable('KOSTL');
+         rcd_lads_del_det.vfdat1 := lics_inbound_utility.get_variable('VFDAT1');
+         rcd_lads_del_det.value := lics_inbound_utility.get_number('VALUE',null);
+         rcd_lads_del_det.zzbb4 := lics_inbound_utility.get_variable('ZZBB4');
+         rcd_lads_del_det.zzpi_id := lics_inbound_utility.get_variable('ZZPI_ID');
+         rcd_lads_del_det.insmk := lics_inbound_utility.get_variable('INSMK');
+         rcd_lads_del_det.spart1 := lics_inbound_utility.get_variable('SPART1');
+         rcd_lads_del_det.lgort_bez := lics_inbound_utility.get_variable('LGORT_BEZ');
+         rcd_lads_del_det.ladgr_bez := lics_inbound_utility.get_variable('LADGR_BEZ');
+         rcd_lads_del_det.tragr_bez := lics_inbound_utility.get_variable('TRAGR_BEZ');
+         rcd_lads_del_det.vkbur_bez := lics_inbound_utility.get_variable('VKBUR_BEZ');
+         rcd_lads_del_det.vkgrp_bez := lics_inbound_utility.get_variable('VKGRP_BEZ');
+         rcd_lads_del_det.vtweg_bez := lics_inbound_utility.get_variable('VTWEG_BEZ');
+         rcd_lads_del_det.spart_bez := lics_inbound_utility.get_variable('SPART_BEZ');
+         rcd_lads_del_det.mfrgr_bez := lics_inbound_utility.get_variable('MFRGR_BEZ');
+         rcd_lads_del_det.pstyv := lics_inbound_utility.get_variable('PSTYV');
+         rcd_lads_del_det.matkl1 := lics_inbound_utility.get_variable('MATKL1');
+         rcd_lads_del_det.prodh := lics_inbound_utility.get_variable('PRODH');
+         rcd_lads_del_det.umvkz := lics_inbound_utility.get_number('UMVKZ',null);
+         rcd_lads_del_det.umvkn := lics_inbound_utility.get_number('UMVKN',null);
+         rcd_lads_del_det.kztlf := lics_inbound_utility.get_variable('KZTLF');
+         rcd_lads_del_det.uebtk := lics_inbound_utility.get_variable('UEBTK');
+         rcd_lads_del_det.uebto := lics_inbound_utility.get_number('UEBTO',null);
+         rcd_lads_del_det.untto := lics_inbound_utility.get_number('UNTTO',null);
+         rcd_lads_del_det.chspl := lics_inbound_utility.get_variable('CHSPL');
+         rcd_lads_del_det.xchbw := lics_inbound_utility.get_variable('XCHBW');
+         rcd_lads_del_det.posar := lics_inbound_utility.get_variable('POSAR');
+         rcd_lads_del_det.sobkz := lics_inbound_utility.get_variable('SOBKZ');
+         rcd_lads_del_det.pckpf := lics_inbound_utility.get_variable('PCKPF');
+         rcd_lads_del_det.magrv := lics_inbound_utility.get_variable('MAGRV');
+         rcd_lads_del_det.shkzg := lics_inbound_utility.get_variable('SHKZG');
+         rcd_lads_del_det.koqui := lics_inbound_utility.get_variable('KOQUI');
+         rcd_lads_del_det.aktnr := lics_inbound_utility.get_variable('AKTNR');
+         rcd_lads_del_det.kzumw := lics_inbound_utility.get_variable('KZUMW');
+         rcd_lads_del_det.kvgr1 := lics_inbound_utility.get_variable('KVGR1');
+         rcd_lads_del_det.kvgr2 := lics_inbound_utility.get_variable('KVGR2');
+         rcd_lads_del_det.kvgr3 := lics_inbound_utility.get_variable('KVGR3');
+         rcd_lads_del_det.kvgr4 := lics_inbound_utility.get_variable('KVGR4');
+         rcd_lads_del_det.kvgr5 := lics_inbound_utility.get_variable('KVGR5');
+         rcd_lads_del_det.mvgr1 := lics_inbound_utility.get_variable('MVGR1');
+         rcd_lads_del_det.mvgr2 := lics_inbound_utility.get_variable('MVGR2');
+         rcd_lads_del_det.mvgr3 := lics_inbound_utility.get_variable('MVGR3');
+         rcd_lads_del_det.mvgr4 := lics_inbound_utility.get_variable('MVGR4');
+         rcd_lads_del_det.mvgr5 := lics_inbound_utility.get_variable('MVGR5');
+         rcd_lads_del_det.pstyv_bez := lics_inbound_utility.get_variable('PSTYV_BEZ');
+         rcd_lads_del_det.matkl_bez := lics_inbound_utility.get_variable('MATKL_BEZ');
+         rcd_lads_del_det.prodh_bez := lics_inbound_utility.get_variable('PRODH_BEZ');
+         rcd_lads_del_det.werks_bez := lics_inbound_utility.get_variable('WERKS_BEZ');
+         rcd_lads_del_det.kvgr1_bez := lics_inbound_utility.get_variable('KVGR1_BEZ');
+         rcd_lads_del_det.kvgr2_bez := lics_inbound_utility.get_variable('KVGR2_BEZ');
+         rcd_lads_del_det.kvgr3_bez := lics_inbound_utility.get_variable('KVGR3_BEZ');
+         rcd_lads_del_det.kvgr4_bez := lics_inbound_utility.get_variable('KVGR4_BEZ');
+         rcd_lads_del_det.kvgr5_bez := lics_inbound_utility.get_variable('KVGR5_BEZ');
+         rcd_lads_del_det.mvgr1_bez := lics_inbound_utility.get_variable('MVGR1_BEZ');
+         rcd_lads_del_det.mvgr2_bez := lics_inbound_utility.get_variable('MVGR2_BEZ');
+         rcd_lads_del_det.mvgr3_bez := lics_inbound_utility.get_variable('MVGR3_BEZ');
+         rcd_lads_del_det.mvgr4_bez := lics_inbound_utility.get_variable('MVGR4_BEZ');
+         rcd_lads_del_det.mvgr5_bez := lics_inbound_utility.get_variable('MVGR5_BEZ');
+
+         /*-*/
+         /* Retrieve exceptions raised
+         /*-*/
+         if lics_inbound_utility.has_errors = true then
+            var_trn_error := true;
+         end if;
+
+         /*-*/
+         /* Reset child sequences
+         /*-*/
+         rcd_lads_del_int.intseq := 0;
+         rcd_lads_del_irf.irfseq := 0;
+         rcd_lads_del_erf.erfseq := 0;
+         rcd_lads_del_dtx.dtxseq := 0;
+
+         /*----------------------------------------*/
+         /* VALIDATION - Validate the field values */
+         /*----------------------------------------*/
+
+         /*-*/
+         /* Validate the primary keys
+         /*-*/
+         if rcd_lads_del_det.vbeln is null then
+            lics_inbound_utility.add_exception('Missing Primary Key - DET.VBELN');
+            var_trn_error := true;
+         end if;
+
+         /*----------------------------------------*/
+         /* ERROR- Bypass the update when required */
+         /*----------------------------------------*/
+
+         if var_trn_error = true then
+            return;
+         end if;
+
+         /*------------------------------*/
+         /* UPDATE - Update the database */
+         /*------------------------------*/
+
+         insert into lads_del_det
+            (vbeln,
+             detseq,
+             posnr,
+             matnr,
+             matwa,
+             arktx,
+             orktx,
+             sugrd,
+             sudru,
+             matkl,
+             werks,
+             lgort,
+             charg,
+             kdmat,
+             lfimg,
+             vrkme,
+             lgmng,
+             meins,
+             ntgew,
+             brgew,
+             gewei,
+             volum,
+             voleh,
+             lgpbe,
+             hipos,
+             hievw,
+             ladgr,
+             tragr,
+             vkbur,
+             vkgrp,
+             vtweg,
+             spart,
+             grkor,
+             ean11,
+             sernr,
+             aeskd,
+             empst,
+             mfrgr,
+             vbrst,
+             labnk,
+             abrdt,
+             mfrpn,
+             mfrnr,
+             abrvw,
+             kdmat35,
+             kannr,
+             posex,
+             lieffz,
+             usr01,
+             usr02,
+             usr03,
+             usr04,
+             usr05,
+             matnr_external,
+             matnr_version,
+             matnr_guid,
+             matwa_external,
+             matwa_version,
+             matwa_guid,
+             zudat,
+             vfdat,
+             zzmeins01,
+             zzpalbas01_f,
+             vbelv,
+             posnv,
+             zzhalfpal,
+             zzstackable,
+             zznbrhompal,
+             zzpalbase_deliv,
+             zzpalspace_deliv,
+             zzmeins_deliv,
+             value1,
+             zrsp,
+             rate,
+             kostl,
+             vfdat1,
+             value,
+             zzbb4,
+             zzpi_id,
+             insmk,
+             spart1,
+             lgort_bez,
+             ladgr_bez,
+             tragr_bez,
+             vkbur_bez,
+             vkgrp_bez,
+             vtweg_bez,
+             spart_bez,
+             mfrgr_bez,
+             pstyv,
+             matkl1,
+             prodh,
+             umvkz,
+             umvkn,
+             kztlf,
+             uebtk,
+             uebto,
+             untto,
+             chspl,
+             xchbw,
+             posar,
+             sobkz,
+             pckpf,
+             magrv,
+             shkzg,
+             koqui,
+             aktnr,
+             kzumw,
+             kvgr1,
+             kvgr2,
+             kvgr3,
+             kvgr4,
+             kvgr5,
+             mvgr1,
+             mvgr2,
+             mvgr3,
+             mvgr4,
+             mvgr5,
+             pstyv_bez,
+             matkl_bez,
+             prodh_bez,
+             werks_bez,
+             kvgr1_bez,
+             kvgr2_bez,
+             kvgr3_bez,
+             kvgr4_bez,
+             kvgr5_bez,
+             mvgr1_bez,
+             mvgr2_bez,
+             mvgr3_bez,
+             mvgr4_bez,
+             mvgr5_bez)
+         values
+            (rcd_lads_del_det.vbeln,
+             rcd_lads_del_det.detseq,
+             rcd_lads_del_det.posnr,
+             rcd_lads_del_det.matnr,
+             rcd_lads_del_det.matwa,
+             rcd_lads_del_det.arktx,
+             rcd_lads_del_det.orktx,
+             rcd_lads_del_det.sugrd,
+             rcd_lads_del_det.sudru,
+             rcd_lads_del_det.matkl,
+             rcd_lads_del_det.werks,
+             rcd_lads_del_det.lgort,
+             rcd_lads_del_det.charg,
+             rcd_lads_del_det.kdmat,
+             rcd_lads_del_det.lfimg,
+             rcd_lads_del_det.vrkme,
+             rcd_lads_del_det.lgmng,
+             rcd_lads_del_det.meins,
+             rcd_lads_del_det.ntgew,
+             rcd_lads_del_det.brgew,
+             rcd_lads_del_det.gewei,
+             rcd_lads_del_det.volum,
+             rcd_lads_del_det.voleh,
+             rcd_lads_del_det.lgpbe,
+             rcd_lads_del_det.hipos,
+             rcd_lads_del_det.hievw,
+             rcd_lads_del_det.ladgr,
+             rcd_lads_del_det.tragr,
+             rcd_lads_del_det.vkbur,
+             rcd_lads_del_det.vkgrp,
+             rcd_lads_del_det.vtweg,
+             rcd_lads_del_det.spart,
+             rcd_lads_del_det.grkor,
+             rcd_lads_del_det.ean11,
+             rcd_lads_del_det.sernr,
+             rcd_lads_del_det.aeskd,
+             rcd_lads_del_det.empst,
+             rcd_lads_del_det.mfrgr,
+             rcd_lads_del_det.vbrst,
+             rcd_lads_del_det.labnk,
+             rcd_lads_del_det.abrdt,
+             rcd_lads_del_det.mfrpn,
+             rcd_lads_del_det.mfrnr,
+             rcd_lads_del_det.abrvw,
+             rcd_lads_del_det.kdmat35,
+             rcd_lads_del_det.kannr,
+             rcd_lads_del_det.posex,
+             rcd_lads_del_det.lieffz,
+             rcd_lads_del_det.usr01,
+             rcd_lads_del_det.usr02,
+             rcd_lads_del_det.usr03,
+             rcd_lads_del_det.usr04,
+             rcd_lads_del_det.usr05,
+             rcd_lads_del_det.matnr_external,
+             rcd_lads_del_det.matnr_version,
+             rcd_lads_del_det.matnr_guid,
+             rcd_lads_del_det.matwa_external,
+             rcd_lads_del_det.matwa_version,
+             rcd_lads_del_det.matwa_guid,
+             rcd_lads_del_det.zudat,
+             rcd_lads_del_det.vfdat,
+             rcd_lads_del_det.zzmeins01,
+             rcd_lads_del_det.zzpalbas01_f,
+             rcd_lads_del_det.vbelv,
+             rcd_lads_del_det.posnv,
+             rcd_lads_del_det.zzhalfpal,
+             rcd_lads_del_det.zzstackable,
+             rcd_lads_del_det.zznbrhompal,
+             rcd_lads_del_det.zzpalbase_deliv,
+             rcd_lads_del_det.zzpalspace_deliv,
+             rcd_lads_del_det.zzmeins_deliv,
+             rcd_lads_del_det.value1,
+             rcd_lads_del_det.zrsp,
+             rcd_lads_del_det.rate,
+             rcd_lads_del_det.kostl,
+             rcd_lads_del_det.vfdat1,
+             rcd_lads_del_det.value,
+             rcd_lads_del_det.zzbb4,
+             rcd_lads_del_det.zzpi_id,
+             rcd_lads_del_det.insmk,
+             rcd_lads_del_det.spart1,
+             rcd_lads_del_det.lgort_bez,
+             rcd_lads_del_det.ladgr_bez,
+             rcd_lads_del_det.tragr_bez,
+             rcd_lads_del_det.vkbur_bez,
+             rcd_lads_del_det.vkgrp_bez,
+             rcd_lads_del_det.vtweg_bez,
+             rcd_lads_del_det.spart_bez,
+             rcd_lads_del_det.mfrgr_bez,
+             rcd_lads_del_det.pstyv,
+             rcd_lads_del_det.matkl1,
+             rcd_lads_del_det.prodh,
+             rcd_lads_del_det.umvkz,
+             rcd_lads_del_det.umvkn,
+             rcd_lads_del_det.kztlf,
+             rcd_lads_del_det.uebtk,
+             rcd_lads_del_det.uebto,
+             rcd_lads_del_det.untto,
+             rcd_lads_del_det.chspl,
+             rcd_lads_del_det.xchbw,
+             rcd_lads_del_det.posar,
+             rcd_lads_del_det.sobkz,
+             rcd_lads_del_det.pckpf,
+             rcd_lads_del_det.magrv,
+             rcd_lads_del_det.shkzg,
+             rcd_lads_del_det.koqui,
+             rcd_lads_del_det.aktnr,
+             rcd_lads_del_det.kzumw,
+             rcd_lads_del_det.kvgr1,
+             rcd_lads_del_det.kvgr2,
+             rcd_lads_del_det.kvgr3,
+             rcd_lads_del_det.kvgr4,
+             rcd_lads_del_det.kvgr5,
+             rcd_lads_del_det.mvgr1,
+             rcd_lads_del_det.mvgr2,
+             rcd_lads_del_det.mvgr3,
+             rcd_lads_del_det.mvgr4,
+             rcd_lads_del_det.mvgr5,
+             rcd_lads_del_det.pstyv_bez,
+             rcd_lads_del_det.matkl_bez,
+             rcd_lads_del_det.prodh_bez,
+             rcd_lads_del_det.werks_bez,
+             rcd_lads_del_det.kvgr1_bez,
+             rcd_lads_del_det.kvgr2_bez,
+             rcd_lads_del_det.kvgr3_bez,
+             rcd_lads_del_det.kvgr4_bez,
+             rcd_lads_del_det.kvgr5_bez,
+             rcd_lads_del_det.mvgr1_bez,
+             rcd_lads_del_det.mvgr2_bez,
+             rcd_lads_del_det.mvgr3_bez,
+             rcd_lads_del_det.mvgr4_bez,
+             rcd_lads_del_det.mvgr5_bez);
+      else
+
+         /*-*/
+         /* Retrieve field values
+         /*-*/
+         rcd_lads_del_det.posnr := lics_inbound_utility.get_variable('POSNR');
+         rcd_lads_del_det.hipos := lics_inbound_utility.get_variable('HIPOS');
+         rcd_lads_del_det.hievw := lics_inbound_utility.get_variable('HIEVW');
+
+         /*-*/
+         /* Retrieve exceptions raised
+         /*-*/
+         if lics_inbound_utility.has_errors = true then
+            var_trn_error := true;
+         end if;
+
       end if;
-
-      /*-*/
-      /* Reset child sequences
-      /*-*/
-      rcd_lads_del_pod.podseq := 0;
-      rcd_lads_del_int.intseq := 0;
-      rcd_lads_del_irf.irfseq := 0;
-      rcd_lads_del_erf.erfseq := 0;
-      rcd_lads_del_dtx.dtxseq := 0;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Validate the primary keys
-      /*-*/
-      if rcd_lads_del_det.vbeln is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - DET.VBELN');
-         var_trn_error := true;
-      end if;
-
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-
-      if var_trn_error = true then
-         return;
-      end if;
-
-      /*------------------------------*/
-      /* UPDATE - Update the database */
-      /*------------------------------*/
-
-      insert into lads_del_det
-         (vbeln,
-          detseq,
-          posnr,
-          matnr,
-          matwa,
-          arktx,
-          orktx,
-          sugrd,
-          sudru,
-          matkl,
-          werks,
-          lgort,
-          charg,
-          kdmat,
-          lfimg,
-          vrkme,
-          lgmng,
-          meins,
-          ntgew,
-          brgew,
-          gewei,
-          volum,
-          voleh,
-          lgpbe,
-          hipos,
-          hievw,
-          ladgr,
-          tragr,
-          vkbur,
-          vkgrp,
-          vtweg,
-          spart,
-          grkor,
-          ean11,
-          sernr,
-          aeskd,
-          empst,
-          mfrgr,
-          vbrst,
-          labnk,
-          abrdt,
-          mfrpn,
-          mfrnr,
-          abrvw,
-          kdmat35,
-          kannr,
-          posex,
-          lieffz,
-          usr01,
-          usr02,
-          usr03,
-          usr04,
-          usr05,
-          matnr_external,
-          matnr_version,
-          matnr_guid,
-          matwa_external,
-          matwa_version,
-          matwa_guid,
-          zudat,
-          vfdat,
-          zzmeins01,
-          zzpalbas01_f,
-          vbelv,
-          posnv,
-          zzhalfpal,
-          zzstackable,
-          zznbrhompal,
-          zzpalbase_deliv,
-          zzpalspace_deliv,
-          zzmeins_deliv,
-          value1,
-          zrsp,
-          rate,
-          kostl,
-          vfdat1,
-          value,
-          zzbb4,
-          zzpi_id,
-          insmk,
-          spart1,
-          lgort_bez,
-          ladgr_bez,
-          tragr_bez,
-          vkbur_bez,
-          vkgrp_bez,
-          vtweg_bez,
-          spart_bez,
-          mfrgr_bez,
-          pstyv,
-          matkl1,
-          prodh,
-          umvkz,
-          umvkn,
-          kztlf,
-          uebtk,
-          uebto,
-          untto,
-          chspl,
-          xchbw,
-          posar,
-          sobkz,
-          pckpf,
-          magrv,
-          shkzg,
-          koqui,
-          aktnr,
-          kzumw,
-          kvgr1,
-          kvgr2,
-          kvgr3,
-          kvgr4,
-          kvgr5,
-          mvgr1,
-          mvgr2,
-          mvgr3,
-          mvgr4,
-          mvgr5,
-          pstyv_bez,
-          matkl_bez,
-          prodh_bez,
-          werks_bez,
-          kvgr1_bez,
-          kvgr2_bez,
-          kvgr3_bez,
-          kvgr4_bez,
-          kvgr5_bez,
-          mvgr1_bez,
-          mvgr2_bez,
-          mvgr3_bez,
-          mvgr4_bez,
-          mvgr5_bez)
-      values
-         (rcd_lads_del_det.vbeln,
-          rcd_lads_del_det.detseq,
-          rcd_lads_del_det.posnr,
-          rcd_lads_del_det.matnr,
-          rcd_lads_del_det.matwa,
-          rcd_lads_del_det.arktx,
-          rcd_lads_del_det.orktx,
-          rcd_lads_del_det.sugrd,
-          rcd_lads_del_det.sudru,
-          rcd_lads_del_det.matkl,
-          rcd_lads_del_det.werks,
-          rcd_lads_del_det.lgort,
-          rcd_lads_del_det.charg,
-          rcd_lads_del_det.kdmat,
-          rcd_lads_del_det.lfimg,
-          rcd_lads_del_det.vrkme,
-          rcd_lads_del_det.lgmng,
-          rcd_lads_del_det.meins,
-          rcd_lads_del_det.ntgew,
-          rcd_lads_del_det.brgew,
-          rcd_lads_del_det.gewei,
-          rcd_lads_del_det.volum,
-          rcd_lads_del_det.voleh,
-          rcd_lads_del_det.lgpbe,
-          rcd_lads_del_det.hipos,
-          rcd_lads_del_det.hievw,
-          rcd_lads_del_det.ladgr,
-          rcd_lads_del_det.tragr,
-          rcd_lads_del_det.vkbur,
-          rcd_lads_del_det.vkgrp,
-          rcd_lads_del_det.vtweg,
-          rcd_lads_del_det.spart,
-          rcd_lads_del_det.grkor,
-          rcd_lads_del_det.ean11,
-          rcd_lads_del_det.sernr,
-          rcd_lads_del_det.aeskd,
-          rcd_lads_del_det.empst,
-          rcd_lads_del_det.mfrgr,
-          rcd_lads_del_det.vbrst,
-          rcd_lads_del_det.labnk,
-          rcd_lads_del_det.abrdt,
-          rcd_lads_del_det.mfrpn,
-          rcd_lads_del_det.mfrnr,
-          rcd_lads_del_det.abrvw,
-          rcd_lads_del_det.kdmat35,
-          rcd_lads_del_det.kannr,
-          rcd_lads_del_det.posex,
-          rcd_lads_del_det.lieffz,
-          rcd_lads_del_det.usr01,
-          rcd_lads_del_det.usr02,
-          rcd_lads_del_det.usr03,
-          rcd_lads_del_det.usr04,
-          rcd_lads_del_det.usr05,
-          rcd_lads_del_det.matnr_external,
-          rcd_lads_del_det.matnr_version,
-          rcd_lads_del_det.matnr_guid,
-          rcd_lads_del_det.matwa_external,
-          rcd_lads_del_det.matwa_version,
-          rcd_lads_del_det.matwa_guid,
-          rcd_lads_del_det.zudat,
-          rcd_lads_del_det.vfdat,
-          rcd_lads_del_det.zzmeins01,
-          rcd_lads_del_det.zzpalbas01_f,
-          rcd_lads_del_det.vbelv,
-          rcd_lads_del_det.posnv,
-          rcd_lads_del_det.zzhalfpal,
-          rcd_lads_del_det.zzstackable,
-          rcd_lads_del_det.zznbrhompal,
-          rcd_lads_del_det.zzpalbase_deliv,
-          rcd_lads_del_det.zzpalspace_deliv,
-          rcd_lads_del_det.zzmeins_deliv,
-          rcd_lads_del_det.value1,
-          rcd_lads_del_det.zrsp,
-          rcd_lads_del_det.rate,
-          rcd_lads_del_det.kostl,
-          rcd_lads_del_det.vfdat1,
-          rcd_lads_del_det.value,
-          rcd_lads_del_det.zzbb4,
-          rcd_lads_del_det.zzpi_id,
-          rcd_lads_del_det.insmk,
-          rcd_lads_del_det.spart1,
-          rcd_lads_del_det.lgort_bez,
-          rcd_lads_del_det.ladgr_bez,
-          rcd_lads_del_det.tragr_bez,
-          rcd_lads_del_det.vkbur_bez,
-          rcd_lads_del_det.vkgrp_bez,
-          rcd_lads_del_det.vtweg_bez,
-          rcd_lads_del_det.spart_bez,
-          rcd_lads_del_det.mfrgr_bez,
-          rcd_lads_del_det.pstyv,
-          rcd_lads_del_det.matkl1,
-          rcd_lads_del_det.prodh,
-          rcd_lads_del_det.umvkz,
-          rcd_lads_del_det.umvkn,
-          rcd_lads_del_det.kztlf,
-          rcd_lads_del_det.uebtk,
-          rcd_lads_del_det.uebto,
-          rcd_lads_del_det.untto,
-          rcd_lads_del_det.chspl,
-          rcd_lads_del_det.xchbw,
-          rcd_lads_del_det.posar,
-          rcd_lads_del_det.sobkz,
-          rcd_lads_del_det.pckpf,
-          rcd_lads_del_det.magrv,
-          rcd_lads_del_det.shkzg,
-          rcd_lads_del_det.koqui,
-          rcd_lads_del_det.aktnr,
-          rcd_lads_del_det.kzumw,
-          rcd_lads_del_det.kvgr1,
-          rcd_lads_del_det.kvgr2,
-          rcd_lads_del_det.kvgr3,
-          rcd_lads_del_det.kvgr4,
-          rcd_lads_del_det.kvgr5,
-          rcd_lads_del_det.mvgr1,
-          rcd_lads_del_det.mvgr2,
-          rcd_lads_del_det.mvgr3,
-          rcd_lads_del_det.mvgr4,
-          rcd_lads_del_det.mvgr5,
-          rcd_lads_del_det.pstyv_bez,
-          rcd_lads_del_det.matkl_bez,
-          rcd_lads_del_det.prodh_bez,
-          rcd_lads_del_det.werks_bez,
-          rcd_lads_del_det.kvgr1_bez,
-          rcd_lads_del_det.kvgr2_bez,
-          rcd_lads_del_det.kvgr3_bez,
-          rcd_lads_del_det.kvgr4_bez,
-          rcd_lads_del_det.kvgr5_bez,
-          rcd_lads_del_det.mvgr1_bez,
-          rcd_lads_del_det.mvgr2_bez,
-          rcd_lads_del_det.mvgr3_bez,
-          rcd_lads_del_det.mvgr4_bez,
-          rcd_lads_del_det.mvgr5_bez);
 
    /*-------------*/
    /* End routine */
@@ -3221,71 +3387,80 @@ create or replace package body lads_atllad16 as
 
       lics_inbound_utility.parse_record('POD', par_record);
 
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
 
-      /*-*/
-      /* Retrieve field values
-      /*-*/
-      rcd_lads_del_pod.vbeln := rcd_lads_del_det.vbeln;
-      rcd_lads_del_pod.podseq := rcd_lads_del_pod.podseq + 1;
-      rcd_lads_del_pod.grund := lics_inbound_utility.get_variable('GRUND');
-      rcd_lads_del_pod.podmg := lics_inbound_utility.get_number('PODMG',null);
-      rcd_lads_del_pod.lfimg_diff := lics_inbound_utility.get_number('LFIMG_DIFF',null);
-      rcd_lads_del_pod.vrkme := lics_inbound_utility.get_variable('VRKME');
-      rcd_lads_del_pod.lgmng_diff := lics_inbound_utility.get_number('LGMNG_DIFF',null);
-      rcd_lads_del_pod.meins := lics_inbound_utility.get_variable('MEINS');
+      if (var_ctl_mestyp = 'STPPOD') then
 
-      /*-*/
-      /* Retrieve exceptions raised
-      /*-*/
-      if lics_inbound_utility.has_errors = true then
-         var_trn_error := true;
+         /*-*/
+         /* Retrieve field values
+         /*-*/
+         rcd_lads_del_pod.vbeln := rcd_lads_del_hdr.vbeln;
+         rcd_lads_del_pod.posnr := rcd_lads_del_det.posnr;
+         rcd_lads_del_pod.hipos := rcd_lads_del_det.hipos;
+         rcd_lads_del_pod.hievw := rcd_lads_del_det.hievw;
+         rcd_lads_del_pod.podseq := rcd_lads_del_pod.podseq + 1;
+         rcd_lads_del_pod.grund := lics_inbound_utility.get_variable('GRUND');
+         rcd_lads_del_pod.podmg := lics_inbound_utility.get_number('PODMG',null);
+         rcd_lads_del_pod.lfimg_diff := lics_inbound_utility.get_number('LFIMG_DIFF',null);
+         rcd_lads_del_pod.vrkme := lics_inbound_utility.get_variable('VRKME');
+         rcd_lads_del_pod.lgmng_diff := lics_inbound_utility.get_number('LGMNG_DIFF',null);
+         rcd_lads_del_pod.meins := lics_inbound_utility.get_variable('MEINS');
+
+         /*-*/
+         /* Retrieve exceptions raised
+         /*-*/
+         if lics_inbound_utility.has_errors = true then
+            var_trn_error := true;
+         end if;
+
+         /*----------------------------------------*/
+         /* VALIDATION - Validate the field values */
+         /*----------------------------------------*/
+
+         /*-*/
+         /* Validate the primary keys
+         /*-*/
+         if rcd_lads_del_pod.vbeln is null then
+            lics_inbound_utility.add_exception('Missing Primary Key - POD.VBELN');
+            var_trn_error := true;
+         end if;
+
+         /*----------------------------------------*/
+         /* ERROR- Bypass the update when required */
+         /*----------------------------------------*/
+
+         if var_trn_error = true then
+            return;
+         end if;
+
+         /*------------------------------*/
+         /* UPDATE - Update the database */
+         /*------------------------------*/
+         insert into lads_del_pod
+            (vbeln,
+             posnr,
+             hipos,
+             hievw,
+             podseq,
+             grund,
+             podmg,
+             lfimg_diff,
+             vrkme,
+             lgmng_diff,
+             meins)
+         values
+            (rcd_lads_del_pod.vbeln,
+             rcd_lads_del_pod.posnr,
+             rcd_lads_del_pod.hipos,
+             rcd_lads_del_pod.hievw,
+             rcd_lads_del_pod.podseq,
+             rcd_lads_del_pod.grund,
+             rcd_lads_del_pod.podmg,
+             rcd_lads_del_pod.lfimg_diff,
+             rcd_lads_del_pod.vrkme,
+             rcd_lads_del_pod.lgmng_diff,
+             rcd_lads_del_pod.meins);
+
       end if;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Validate the primary keys
-      /*-*/
-      if rcd_lads_del_pod.vbeln is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - POD.VBELN');
-         var_trn_error := true;
-      end if;
-
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-
-      if var_trn_error = true then
-         return;
-      end if;
-
-      /*------------------------------*/
-      /* UPDATE - Update the database */
-      /*------------------------------*/
-
-      insert into lads_del_pod
-         (vbeln,
-          podseq,
-          grund,
-          podmg,
-          lfimg_diff,
-          vrkme,
-          lgmng_diff,
-          meins)
-      values
-         (rcd_lads_del_pod.vbeln,
-          rcd_lads_del_pod.podseq,
-          rcd_lads_del_pod.grund,
-          rcd_lads_del_pod.podmg,
-          rcd_lads_del_pod.lfimg_diff,
-          rcd_lads_del_pod.vrkme,
-          rcd_lads_del_pod.lgmng_diff,
-          rcd_lads_del_pod.meins);
 
    /*-------------*/
    /* End routine */
@@ -4196,10 +4371,10 @@ create or replace package body lads_atllad16 as
    end process_record_huc;
 
 end lads_atllad16;
-/
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
 create or replace public synonym lads_atllad16 for lads_app.lads_atllad16;
 grant execute on lads_atllad16 to lics_app;
+

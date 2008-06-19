@@ -31,7 +31,6 @@ create or replace package lads_atllad16_monitor as
    procedure execute_after(par_vbeln in varchar2);
 
 end lads_atllad16_monitor;
-/
 
 /****************/
 /* Package Body */
@@ -74,7 +73,7 @@ create or replace package body lads_atllad16_monitor as
 
       cursor csr_lads_del_irf_02 is
          select t02.vbeln,
-                t02.pod_idoc_timestamp
+                t02.del_idoc_timestamp
            from lads_del_irf t01,
                 lads_del_hdr t02
           where t01.vbeln = t02.vbeln(+)
@@ -149,7 +148,7 @@ create or replace package body lads_atllad16_monitor as
          if csr_lads_sal_ord_gen_01%found then
             var_so_deleted := true;
             update lads_del_hdr
-               set pod_lads_date = sysdate,
+               set del_lads_date = sysdate,
                    lads_status = '4'
              where vbeln = rcd_lads_del_hdr_01.vbeln;
          end if;
@@ -172,15 +171,13 @@ create or replace package body lads_atllad16_monitor as
             /* 1. The older delivery is flagged as deleted
             /* 2. Any one delivery line will cause the deletion of the whole delivery
             /*-*/
-            if rcd_lads_del_hdr_01.pod_idoc_timestamp >= rcd_lads_del_irf_02.pod_idoc_timestamp then
+            if rcd_lads_del_hdr_01.del_idoc_timestamp >= rcd_lads_del_irf_02.del_idoc_timestamp then
                update lads_del_hdr
-                  set pod_lads_date = sysdate,
+                  set del_lads_date = sysdate,
                       lads_status = '4'
                 where vbeln = rcd_lads_del_irf_02.vbeln;
             else
-               update lads_del_hdr
-                  set pod_lads_date = sysdate,
-                      lads_status = '4'
+               update lads_del_hdr set lads_status = '4'
                 where vbeln = rcd_lads_del_hdr_01.vbeln;
             end if;
 
@@ -189,7 +186,7 @@ create or replace package body lads_atllad16_monitor as
             /*-*/
             if var_so_deleted = true then
                update lads_del_hdr
-                  set pod_lads_date = sysdate,
+                  set del_lads_date = sysdate,
                       lads_status = '4'
                 where vbeln = rcd_lads_del_irf_02.vbeln;
             end if;
@@ -282,3 +279,4 @@ end lads_atllad16_monitor;
 /**************************/
 create or replace public synonym lads_atllad16_monitor for lads_app.lads_atllad16_monitor;
 grant execute on lads_atllad16_monitor to lics_app;
+

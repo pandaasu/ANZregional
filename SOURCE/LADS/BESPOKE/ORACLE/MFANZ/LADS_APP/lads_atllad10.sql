@@ -293,6 +293,7 @@ create or replace package body lads_atllad10 as
                   exit;
             end;
          end loop;
+         close csr_lads_ref_grp;
 
          /*-*/
          /* Commit the IDOC transaction and successful monitor code
@@ -314,7 +315,8 @@ create or replace package body lads_atllad10 as
                   lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
                   exit;
             end;
-         end loop;         
+         end loop;  
+         close csr_lads_ref_grp;       
 
       end if;
 

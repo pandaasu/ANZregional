@@ -206,11 +206,11 @@ create or replace package body lads_atllad25_monitor as
       /*---------------------------*/
       /* 1. Triggered procedures   */
       /*---------------------------*/
---      lics_trigger_loader.execute('TRIDENT Interface V2',
---                                  'site_app.trident_export_idoc_pkg.run_extract(''' || par_zzgrpnr || ''')',
---                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
---                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
---                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
+      lics_trigger_loader.execute('TRIDENT Interface V2',
+                                  'site_app.trident_export_idoc_pkg.run_extract(''' || par_zzgrpnr || ''')',
+                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
+                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
+                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
       return;
 
    /*-------------------*/

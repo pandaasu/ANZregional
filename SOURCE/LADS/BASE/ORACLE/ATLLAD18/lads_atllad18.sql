@@ -891,23 +891,23 @@ create or replace package body lads_atllad18 as
          return;
       end if;
 
-      /*-*/
-      /* Update GEN lines for ZRK invoice when required
-      /*-*/
-      if var_trn_ignore = false and
-        var_trn_error = false then
-        if (rcd_lads_inv_hdr.auart = 'ZRK') then
-          update lads_inv_gen
-          set menge = nvl(menge,0)*-1,
-            ntgew = nvl(ntgew,0)*-1,
-            brgew = nvl(brgew,0)*-1,
-            volum = nvl(volum,0)*-1,
-            fklmg = nvl(fklmg,0)*-1,
-            kwmeng = nvl(kwmeng,0)*-1
-          where belnr = rcd_lads_inv_hdr.belnr
-            and pstyv = 'ZCR2';
-        end if;
-      end if;
+--      /*-*/
+--      /* Update GEN lines for ZRK invoice when required
+--      /*-*/
+--      if var_trn_ignore = false and
+--        var_trn_error = false then
+--        if (rcd_lads_inv_hdr.auart = 'ZRK') then
+--          update lads_inv_gen
+--          set menge = nvl(menge,0)*-1,
+--            ntgew = nvl(ntgew,0)*-1,
+--            brgew = nvl(brgew,0)*-1,
+--            volum = nvl(volum,0)*-1,
+--            fklmg = nvl(fklmg,0)*-1,
+--            kwmeng = nvl(kwmeng,0)*-1
+--          where belnr = rcd_lads_inv_hdr.belnr
+--            and pstyv = 'ZCR2';
+--        end if;
+--      end if;
 
       /*-*/
       /* Commit/rollback the IDOC as required

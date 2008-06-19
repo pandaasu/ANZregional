@@ -124,12 +124,12 @@ create or replace package body lads_atllad09_monitor as
 
       /*----------------------*/
       /* Triggered procedures */
-      /*----------------------*/                                  
-      lics_trigger_loader.execute('TRIDENT Interface',
-                                  'site_app.trident_extract_pkg.idoc_monitor(''ORD_PO'',''' || par_belnr || ''')',
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
-                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
+      /*----------------------*/                                 
+--      lics_trigger_loader.execute('TRIDENT Interface',
+--                                  'site_app.trident_extract_pkg.idoc_monitor(''ORD_PO'',''' || par_belnr || ''')',
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TRIDENT_LADTRI01'),
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TRIDENT_LADTRI01'));
 
 --      /*-*/
 --      /* Trigger the MFG/PRO interface
@@ -147,7 +147,9 @@ create or replace package body lads_atllad09_monitor as
 --                                  'ics_app.ics_ladtola02.execute(''' || par_belnr || ''')',
 --                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','TOLAS_LADTOLA02'),
 --                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','TOLAS_LADTOLA02'),
---                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TOLAS_LADTOLA02'));                                  
+--                                  lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','TOLAS_LADTOLA02'));    
+      return;
+                                  
 
    /*-------------------*/
    /* Exception handler */

@@ -171,7 +171,7 @@ create or replace package body lads_atllad13_monitor as
                /* 1. Any one delivery line will cause the deletion of the whole delivery
                /*-*/
                update lads_del_hdr
-                  set pod_lads_date = sysdate,
+                  set del_lads_date = sysdate,
                       lads_status = '4'
                 where vbeln = rcd_lads_del_irf_01.vbeln;
 

@@ -239,7 +239,7 @@ create or replace package body lads_atllad03 as
          var_accepted := true;
          
          begin
-            lads_atllad03_monitor.execute_after(rcd_lads_icb_llt_hdr.venum);
+            lads_atllad03_monitor.execute_before(rcd_lads_icb_llt_hdr.venum);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -248,7 +248,7 @@ create or replace package body lads_atllad03 as
          commit;
          
          begin
-            lads_atllad03_monitor.execute_before(rcd_lads_icb_llt_hdr.venum);
+            lads_atllad03_monitor.execute_after(rcd_lads_icb_llt_hdr.venum);
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
