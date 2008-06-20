@@ -79,10 +79,9 @@ comment on column dw_mart_sales02_hdr.triggered_yyyypp is 'Triggered extract per
 comment on column dw_mart_sales02_hdr.current_yyyy is 'Current year';
 comment on column dw_mart_sales02_hdr.current_yyyypp is 'Current period';
 comment on column dw_mart_sales02_hdr.current_yyyyppw is 'Current week';
-comment on column dw_mart_sales01_hdr.current_pp is 'Current period number';
-comment on column dw_mart_sales01_hdr.current_yw is 'Current year week number';
-comment on column dw_mart_sales01_hdr.current_pw is 'Current period week number';
-comment on column dw_mart_sales01_hdr.current_pd is 'Current period day number';
+comment on column dw_mart_sales02_hdr.current_pp is 'Current period number';
+comment on column dw_mart_sales02_hdr.current_yw is 'Current year week number';
+comment on column dw_mart_sales02_hdr.current_pw is 'Current period week number';
 comment on column dw_mart_sales02_hdr.p01_heading is 'P01 heading';
 comment on column dw_mart_sales02_hdr.p02_heading is 'P02 heading';
 comment on column dw_mart_sales02_hdr.p03_heading is 'P03 heading';
