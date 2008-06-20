@@ -181,6 +181,7 @@ sub ProcessForm()
    strQuery = strQuery & " t01.dcd_whs_palt_qty,"
    strQuery = strQuery & " t01.dcd_whs_palt_lay,"
    strQuery = strQuery & " t01.dcd_whs_layr_unt,"
+   strQuery = strQuery & " t01.dcd_whs_matl_code,"
    strQuery = strQuery & " t01.dcd_whs_cust_gtin"
    strQuery = strQuery & " from asn_dcs_det t01"
    strQuery = strQuery & " where t01.dcd_mars_cde = '" & objForm.Fields("QRY_MarsCode").Value & "'"
