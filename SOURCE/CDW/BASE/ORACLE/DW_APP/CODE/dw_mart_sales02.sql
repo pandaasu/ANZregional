@@ -82,6 +82,7 @@ create or replace package body dw_mart_sales02 as
    rcd_detail dw_mart_sales02_det%rowtype;
    var_current_yyyypp number(6,0);
    var_current_yyyyppw number(7,0);
+   var_current_date date;
 
    /***********************************************/
    /* This procedure performs the refresh routine */
@@ -259,9 +260,11 @@ create or replace package body dw_mart_sales02 as
          select t01.mars_year,
                 t01.mars_period,
                 t01.mars_week,
+                t01.mars_yyyyppdd,
                 t01.period_num,
                 t01.mars_week_of_year,
-                t01.mars_week_of_period
+                t01.mars_week_of_period,
+                trunc(t01.calendar_date) as calendar_date
            from mars_date_dim t01
           where trunc(t01.calendar_date) = trunc(sysdate-1);
       rcd_period csr_period%rowtype;
@@ -299,6 +302,7 @@ create or replace package body dw_mart_sales02 as
          rcd_header.current_yyyy := rcd_period.mars_year;
          rcd_header.current_yyyypp := rcd_period.mars_period;
          rcd_header.current_yyyyppw := rcd_period.mars_week;
+         rcd_header.current_yyyyppdd := rcd_period.mars_yyyyppdd;
          rcd_header.current_pp := rcd_period.period_num;
          rcd_header.current_yw := rcd_period.mars_week_of_year;
          rcd_header.current_pw := rcd_period.mars_week_of_period;
@@ -467,6 +471,7 @@ create or replace package body dw_mart_sales02 as
              current_yyyy = rcd_header.current_yyyy,
              current_yyyypp = rcd_header.current_yyyypp,
              current_yyyyppw = rcd_header.current_yyyyppw,
+             current_yyyyppdd = rcd_header.current_yyyyppdd,
              current_pp = rcd_header.current_pp,
              current_yw = rcd_header.current_yw,
              current_pw = rcd_header.current_pw,
@@ -506,6 +511,7 @@ create or replace package body dw_mart_sales02 as
       /*-*/
       var_current_yyyypp := rcd_period.mars_period;
       var_current_yyyyppw := rcd_period.mars_week;
+      var_current_date := rcd_period.calendar_date;
 
    /*-------------*/
    /* End routine */
@@ -623,6 +629,33 @@ create or replace package body dw_mart_sales02 as
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
+
+      cursor csr_sales_extract_02 is 
+         select t01.company_code,
+                t01.matl_code,
+                nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(t01.billed_qty_base_uom),0) as cur_qty,
+                nvl(sum(t01.billed_gsv),0) as cur_gsv,
+                nvl(sum(t01.billed_qty_net_tonnes),0) as cur_ton
+           from dw_sales_base t01,
+                demand_plng_grp_sales_area_dim t02,
+                cust_sales_area_dim t03
+          where t01.ship_to_cust_code = t02.cust_code(+)
+            and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
+            and t01.demand_plng_grp_division_code = t02.division_code(+)
+            and t01.hdr_sales_org_code = t02.sales_org_code(+)
+            and t01.sold_to_cust_code = t03.cust_code(+)
+            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.hdr_division_code = t03.division_code(+) 
+            and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.company_code = par_company_code
+            and t01.billing_eff_date = var_current_date
+          group by t01.company_code,
+                   t01.matl_code,
+                   t03.acct_assgnmnt_grp_code,
+                   t02.demand_plng_grp_code;
+      rcd_sales_extract_02 csr_sales_extract_02%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -773,6 +806,68 @@ create or replace package body dw_mart_sales02 as
 
       end loop;
       close csr_sales_extract_01;
+
+      /*-*/
+      /* Extract the daily sales values
+      /*-*/
+      open csr_sales_extract_02;
+      loop
+         fetch csr_sales_extract_02 into rcd_sales_extract_02;
+         if csr_sales_extract_02%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_sales_extract_02.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_sales_extract_02.matl_code,
+                       rcd_sales_extract_02.acct_assgnmnt_grp_code,
+                       rcd_sales_extract_02.demand_plng_grp_code);
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_qty
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_gsv
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_ton
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*TON';
+
+      end loop;
+      close csr_sales_extract_02;
 
    /*-------------*/
    /* End routine */
@@ -1440,9 +1535,9 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.purch_order_eff_yyyypp = var_cpd_yyyypp then t01.ord_qty_base_uom end),0) as cur_qty,
                 nvl(sum(case when t01.purch_order_eff_yyyypp = var_cpd_yyyypp then t01.ord_gsv end),0) as cur_gsv,
                 nvl(sum(case when t01.purch_order_eff_yyyypp = var_cpd_yyyypp then t01.ord_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.billed_qty_base_uom end),0) as fut_qty,
-                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.billed_gsv end),0) as fut_gsv,
-                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.billed_qty_net_tonnes end),0) as fut_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.ord_qty_base_uom end),0) as fut_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.ord_gsv end),0) as fut_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp > var_cpd_yyyypp then t01.ord_qty_net_tonnes end),0) as fut_ton,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_base_uom end),0) as lyr_qty,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_gsv end),0) as lyr_gsv,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_net_tonnes end),0) as lyr_ton,
@@ -1510,6 +1605,35 @@ create or replace package body dw_mart_sales02 as
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
+
+      cursor csr_sales_extract_02 is 
+         select t01.company_code,
+                t01.nzmkt_matl_group,
+                t01.matl_code,
+                nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(t01.ord_qty_base_uom),0) as cur_qty,
+                nvl(sum(t01.ord_gsv),0) as cur_gsv,
+                nvl(sum(t01.ord_qty_net_tonnes),0) as cur_ton
+           from dw_nzmkt_base t01,
+                demand_plng_grp_sales_area_dim t02,
+                cust_sales_area_dim t03
+          where t01.nzmkt_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
+            and t01.demand_plng_grp_division_code = t02.division_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.nzmkt_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.company_code = par_company_code
+            and t01.purch_order_eff_date = var_current_date
+          group by t01.company_code,
+                   t01.nzmkt_matl_group,
+                   t01.matl_code,
+                   t03.acct_assgnmnt_grp_code,
+                   t02.demand_plng_grp_code;
+      rcd_sales_extract_02 csr_sales_extract_02%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1661,6 +1785,68 @@ create or replace package body dw_mart_sales02 as
       end loop;
       close csr_sales_extract_01;
 
+      /*-*/
+      /* Extract the daily sales values
+      /*-*/
+      open csr_sales_extract_02;
+      loop
+         fetch csr_sales_extract_02 into rcd_sales_extract_02;
+         if csr_sales_extract_02%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_sales_extract_02.company_code,
+                       par_data_segment,
+                       rcd_sales_extract_02.nzmkt_matl_group,
+                       rcd_sales_extract_02.matl_code,
+                       rcd_sales_extract_02.acct_assgnmnt_grp_code,
+                       rcd_sales_extract_02.demand_plng_grp_code);
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_qty
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_gsv
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_day_inv_value = cur_day_inv_value + rcd_sales_extract_02.cur_ton
+          where company_code = rcd_sales_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and matl_code = rcd_sales_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+            and data_type = '*TON';
+
+      end loop;
+      close csr_sales_extract_02;
+
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -1810,90 +1996,90 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
                 nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value end),0) as cur_gsv,
                 nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value end),0) as ytg_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
                 nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value end),0) as nyr_gsv,
                 nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p02_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p03_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p04_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p05_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p06_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p07_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p08_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p09_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p10_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p11_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p12_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p13_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p14_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p15_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p16_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p17_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p18_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p19_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as p20_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p21_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p22_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p23_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p24_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p25_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p26_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p27_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value end),0) as p02_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value end),0) as p03_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value end),0) as p04_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value end),0) as p05_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value end),0) as p06_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value end),0) as p07_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value end),0) as p08_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value end),0) as p09_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value end),0) as p10_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value end),0) as p11_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value end),0) as p12_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value end),0) as p13_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value end),0) as p14_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value end),0) as p15_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value end),0) as p16_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value end),0) as p17_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value end),0) as p18_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value end),0) as p19_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value end),0) as p20_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value end),0) as p21_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value end),0) as p22_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value end),0) as p23_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value end),0) as p24_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value end),0) as p25_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value end),0) as p26_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value end),0) as p27_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyyppw and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p26_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p27_ton
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value end),0) as p01_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value end),0) as p02_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value end),0) as p03_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value end),0) as p04_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value end),0) as p05_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value end),0) as p06_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value end),0) as p07_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value end),0) as p08_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value end),0) as p09_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value end),0) as p10_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value end),0) as p11_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value end),0) as p12_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value end),0) as p13_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value end),0) as p14_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value end),0) as p15_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value end),0) as p16_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value end),0) as p17_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value end),0) as p18_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value end),0) as p19_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value end),0) as p20_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value end),0) as p21_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value end),0) as p22_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value end),0) as p23_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value end),0) as p24_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value end),0) as p25_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value end),0) as p26_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
            from fcst_fact t01,
                 matl_dim t02
           where t01.matl_zrep_code = t02.matl_code(+)
