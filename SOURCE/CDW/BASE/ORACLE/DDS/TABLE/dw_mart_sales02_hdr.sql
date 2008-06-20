@@ -36,7 +36,6 @@ create table dw_mart_sales02_hdr
     current_pp number(2,0) not null,
     current_yw number(2,0) not null,
     current_pw number(2,0) not null,
-    current_pd number(2,0) not null,
     p01_heading varchar2(50 char) not null,
     p02_heading varchar2(50 char) not null,
     p03_heading varchar2(50 char) not null,
@@ -80,7 +79,6 @@ comment on column dw_mart_sales02_hdr.triggered_yyyypp is 'Triggered extract per
 comment on column dw_mart_sales02_hdr.current_yyyy is 'Current year';
 comment on column dw_mart_sales02_hdr.current_yyyypp is 'Current period';
 comment on column dw_mart_sales02_hdr.current_yyyyppw is 'Current week';
-comment on column dw_mart_sales01_hdr.current_yyyyppdd is 'Current day';
 comment on column dw_mart_sales01_hdr.current_pp is 'Current period number';
 comment on column dw_mart_sales01_hdr.current_yw is 'Current year week number';
 comment on column dw_mart_sales01_hdr.current_pw is 'Current period week number';
