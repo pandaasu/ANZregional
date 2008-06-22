@@ -573,5 +573,6 @@ end ods_sapods01;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ods_sapod01 for ods_app.ods_sapod01;
+create or replace public synonym ods_sapods01 for ods_app.ods_sapods01;
 grant execute on ods_sapods01 to lics_app;
+grant execute on ods_sapods01 to ics_app;
