@@ -47,12 +47,13 @@ create or replace package dw_triggered_aggregation as
 
     3. All requested fact tables will attempt to be aggregated and and errors logged.
 
-    4. This package shares the same lock string as the scheduled aggregation package. This is required
-       to prevent a deadly embrace as both packages call the same base status routines.
+    4. A deadly embrace with scheduled aggregation is avoided by all data warehouse components
+       use the same process isolation locking string and sharing the same ICS stream code.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/08   Steve Gregan   Created
+    2008/05   Steve Gregan   Modified for NZ demand planning group division
 
    *******************************************************************************/
 
@@ -692,29 +693,21 @@ create or replace package body dw_triggered_aggregation as
       cursor csr_trace is
          select t01.*,
                 t02.atwrt as mat_bus_sgmnt_code
-           from sap_inv_trace t01,
+           from (select t01.*
+                   from (select t01.*,
+                                rank() over (partition by t01.billing_doc_num
+                                                 order by t01.trace_seqn desc) as rnkseq
+                           from sap_inv_trace t01
+                          where t01.company_code = par_company
+                            and t01.creatn_date = trunc(par_date)) t01
+                  where t01.rnkseq = 1) t01,
                 sap_cla_chr t02
-          where t01.trace_seqn in (select max(t01.trace_seqn)
-                                     from sap_inv_trace t01
-                                    where t01.company_code = par_company
-                                      and trunc(t01.creatn_date) = trunc(par_date)
-                                    group by t01.billing_doc_num)
-            and t01.trace_status = '*ACTIVE'
-            and t01.matl_code = t02.objek(+)
+          where t01.matl_code = t02.objek(+)
             and 'MARA' = t02.obtab(+)
             and '001' = t02.klart(+)
             and 'CLFFERT01' = t02.atnam(+)
-          order by t01.billing_doc_num asc,
-                   t01.billing_doc_line_num asc;
+            and t01.trace_status = '*ACTIVE';
       rcd_trace csr_trace%rowtype;
-
-  --    cursor csr_dlvry_base is
-  --       select t01.dlvry_doc_num,
-  --              t01.dlvry_doc_line_num
-  --         from dw_dlvry_base t01
-  --        where t01.order_doc_num = rcd_sales_base.order_doc_num
-  --          and t01.order_doc_line_num = rcd_sales_base.order_doc_line_num;
-  --    rcd_dlvry_base csr_dlvry_base%rowtype;
 
       cursor csr_invc_type is
          select decode(t01.invc_type_sign,'-',-1,1) as invoice_type_factor
@@ -747,20 +740,72 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* STEP #1
       /*
-      /* Delete any existing sales base rows 
-      /* **notes** 1. Delete all sales base rows for the company and creation date.
+      /* Update the DLVRY_BASE rows to *OPEN when related to an existing
+      /* sales line for the requested creation date. Ensures that the DLVRY_BASE
+      /* row invoice values are updated for reruns (invoice could be removed)
       /*-*/
-      delete from dw_sales_base
-       where trunc(creatn_date) = trunc(par_date)
-         and company_code = par_company;
+      lics_logging.write_log('--> Reopening related delivery base data before sales base load');
+      update dw_dlvry_base
+         set dlvry_line_status = '*OPEN'
+       where company_code = par_company
+         and (dlvry_doc_num, dlvry_doc_line_num) in (select dlvry_doc_num, dlvry_doc_line_num
+                                                       from dw_sales_base
+                                                      where company_code = par_company
+                                                        and creatn_date = trunc(par_date));
 
       /*-*/
       /* STEP #2
+      /*
+      /* Update the ORDER_BASE rows to *OPEN when related to an existing
+      /* sales line for the requested creation date. Ensures that the ORDER_BASE
+      /* row delivery values are updated for reruns (invoice could be removed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related order base data before sales base load');
+      update dw_order_base
+         set order_line_status = '*OPEN'
+       where company_code = par_company
+         and (order_doc_num, order_doc_line_num) in (select order_doc_num, order_doc_line_num
+                                                       from dw_sales_base
+                                                      where company_code = par_company
+                                                        and creatn_date = trunc(par_date)
+                                                        and order_doc_num is not null);
+
+      /*-*/
+      /* STEP #3
+      /*
+      /* Update the PURCH_BASE rows to *OPEN when related to an existing
+      /* sales line for the requested creation date. Ensures that the PURCH_BASE
+      /* row delivery values are updated for reruns (invoice could be removed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related purchase base data before sales base load');
+      update dw_purch_base
+         set purch_order_line_status = '*OPEN'
+       where company_code = par_company
+         and (purch_order_doc_num, purch_order_doc_line_num) in (select purch_order_doc_num, purch_order_doc_line_num
+                                                                   from dw_sales_base
+                                                                  where company_code = par_company
+                                                                    and creatn_date = trunc(par_date)
+                                                                    and purch_order_doc_num is not null);
+
+      /*-*/
+      /* STEP #4
+      /*
+      /* Delete any existing sales base rows 
+      /* **notes** 1. Delete all sales base rows for the company and creation date.
+      /*-*/
+      lics_logging.write_log('--> Deleting existing sales base data');
+      delete from dw_sales_base
+       where company_code = par_company
+         and creatn_date = trunc(par_date);
+
+      /*-*/
+      /* STEP #5
       /*
       /* Load the sales base fact rows from the ODS trace data
       /* **notes** 1. Select all sales base rows for the company and creation date.
       /*           2. Only valid invoices are selected (TRACE_STATUS = *ACTIVE)
       /*-*/
+      lics_logging.write_log('--> Loading new sales base data');
       open csr_trace;
       loop
          fetch csr_trace into rcd_trace;
@@ -778,12 +823,12 @@ create or replace package body dw_triggered_aggregation as
          rcd_sales_base.billing_doc_num := rcd_trace.billing_doc_num;
          rcd_sales_base.billing_doc_line_num := rcd_trace.billing_doc_line_num;
          rcd_sales_base.billing_trace_seqn := rcd_trace.trace_seqn;
-         rcd_sales_base.creatn_date := rcd_trace.creatn_date;
+         rcd_sales_base.creatn_date := trunc(rcd_trace.creatn_date);
          rcd_sales_base.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
          rcd_sales_base.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
          rcd_sales_base.creatn_yyyypp := rcd_trace.creatn_yyyypp;
          rcd_sales_base.creatn_yyyymm := rcd_trace.creatn_yyyymm;
-         rcd_sales_base.billing_eff_date := rcd_trace.billing_eff_date;
+         rcd_sales_base.billing_eff_date := trunc(rcd_trace.billing_eff_date);
          rcd_sales_base.billing_eff_yyyyppdd := rcd_trace.billing_eff_yyyyppdd;
          rcd_sales_base.billing_eff_yyyyppw := rcd_trace.billing_eff_yyyyppw;
          rcd_sales_base.billing_eff_yyyypp := rcd_trace.billing_eff_yyyypp;
@@ -834,27 +879,21 @@ create or replace package body dw_triggered_aggregation as
          rcd_sales_base.billed_gsv_eur := 0;
          rcd_sales_base.mfanz_icb_flag := 'N';
          rcd_sales_base.demand_plng_grp_division_code := rcd_trace.hdr_division_code;
-         if rcd_sales_base.demand_plng_grp_division_code = '57' then
-            if rcd_trace.mat_bus_sgmnt_code = '05' then
+         if rcd_sales_base.company_code = '149' then
+            if rcd_trace.mat_bus_sgmnt_code = '01' then
+               rcd_sales_base.demand_plng_grp_division_code := '55';
+            elsif rcd_trace.mat_bus_sgmnt_code = '02' then
+               rcd_sales_base.demand_plng_grp_division_code := '57';
+            elsif rcd_trace.mat_bus_sgmnt_code = '05' then
                rcd_sales_base.demand_plng_grp_division_code := '56';
             end if;
+         else
+            if rcd_sales_base.demand_plng_grp_division_code = '57' then
+               if rcd_trace.mat_bus_sgmnt_code = '05' then
+                  rcd_sales_base.demand_plng_grp_division_code := '56';
+               end if;
+            end if;
          end if;
-
-    --     /*-*/
-    --     /* Lookup the delivery line from DLVRY_BASE when required
-    --     /* **note** delivery number is not stored on the sap_inv_irf table for a return invoice
-    --     /*-*/
-    --     if not(rcd_sales_base.order_doc_num is null) then
-    --        if rcd_sales_base.dlvry_doc_num = rcd_sales_base.order_doc_num then
-    --           open csr_dlvry_base;
-    --           fetch csr_dlvry_base into rcd_dlvry_base;
-    --           if csr_dlvry_base%found then
-    --              rcd_sales_base.dlvry_doc_num := rcd_dlvry_base.dlvry_doc_num;
-    --              rcd_sales_base.dlvry_doc_line_num := rcd_dlvry_base.dlvry_doc_line_num;
-    --           end if;
-    --           close csr_dlvry_base;
-    --        end if;
-    --     end if;
 
          /*-*/
          /* Retrieve the invoice type factor
@@ -967,53 +1006,92 @@ create or replace package body dw_triggered_aggregation as
             /*-*/
             insert into dw_sales_base values rcd_sales_base;
 
-            /*-------------------*/
-            /* DLVRY_BASE Status */
-            /*-------------------*/
-
-            /*-*/
-            /* Update the delivery base status
-            /* **notes**
-            /* 1. A deadly embrace with scheduled aggregation is avoided by both
-            /*    triggered and scheduled aggregation using the same process isolation locking
-            /*    string and sharing the same ICS stream code
-            /*-*/
-        --    dw_utility.dlvry_base_status(rcd_sales_base.dlvry_doc_num, rcd_sales_base.dlvry_doc_line_num);
-
-            /*-------------------*/
-            /* ORDER_BASE Status */
-            /*-------------------*/
-
-            /*-*/
-            /* Update the order base status when required
-            /* **notes**
-            /* 1. A deadly embrace with scheduled aggregation is avoided by both
-            /*    triggered and scheduled aggregation using the same process isolation locking
-            /*    string and sharing the same ICS stream code
-            /*-*/
-        --    if not(rcd_sales_base.order_doc_num is null) then
-        --       dw_utility.order_base_status(rcd_sales_base.order_doc_num, rcd_sales_base.order_doc_line_num);
-        --    end if;
-
-            /*-------------------*/
-            /* PURCH_BASE Status */
-            /*-------------------*/
-
-            /*-*/
-            /* Update the purchase base status when required
-            /* **notes**
-            /* 1. A deadly embrace with scheduled aggregation is avoided by both
-            /*    triggered and scheduled aggregation using the same process isolation locking
-            /*    string and sharing the same ICS stream code
-            /*-*/
-        --    if not(rcd_sales_base.purch_order_doc_num is null) then
-        --       dw_utility.purch_base_status(rcd_sales_base.purch_order_doc_num, rcd_sales_base.purch_order_doc_line_num);
-        --    end if;
-
          end if;
 
       end loop;
       close csr_trace;
+
+      /*-*/
+      /* STEP #6
+      /*
+      /* Update the sales base row delivery pointers for returns
+      /*-*/
+      lics_logging.write_log('--> Updating sales base data delivery pointers for returns');
+      dw_alignment.sales_base_return(par_company);
+
+      /*-*/
+      /* STEP #7
+      /*
+      /* Update the DLVRY_BASE rows to *OPEN when related to a new
+      /* sales line for the requested creation date. Ensures that the DLVRY_BASE
+      /* row invoice values are updated for current execution (document pointers changed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related delivery base data after sales base load');
+      update dw_dlvry_base
+         set dlvry_line_status = '*OPEN'
+       where company_code = par_company
+         and (dlvry_doc_num, dlvry_doc_line_num) in (select dlvry_doc_num, dlvry_doc_line_num
+                                                       from dw_sales_base
+                                                      where company_code = par_company
+                                                        and creatn_date = trunc(par_date));
+
+      /*-*/
+      /* STEP #8
+      /*
+      /* Update the ORDER_BASE rows to *OPEN when related to a new
+      /* sales line for the requested creation date. Ensures that the ORDER_BASE
+      /* row delivery values are updated for current execution (document pointers changed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related order base data after sales base load');
+      update dw_order_base
+         set order_line_status = '*OPEN'
+       where company_code = par_company
+         and (order_doc_num, order_doc_line_num) in (select order_doc_num, order_doc_line_num
+                                                       from dw_sales_base
+                                                      where company_code = par_company
+                                                        and creatn_date = trunc(par_date)
+                                                        and order_doc_num is not null);
+
+      /*-*/
+      /* STEP #9
+      /*
+      /* Update the PURCH_BASE rows to *OPEN when related to a new
+      /* sales line for the requested creation date. Ensures that the PURCH_BASE
+      /* row delivery values are updated for current execution (document pointers changed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related purchase base data after sales base load');
+      update dw_purch_base
+         set purch_order_line_status = '*OPEN'
+       where company_code = par_company
+         and (purch_order_doc_num, purch_order_doc_line_num) in (select purch_order_doc_num, purch_order_doc_line_num
+                                                                   from dw_sales_base
+                                                                  where company_code = par_company
+                                                                    and creatn_date = trunc(par_date)
+                                                                    and purch_order_doc_num is not null);
+
+      /*-*/
+      /* STEP #10
+      /*
+      /* Update the open delivery base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open delivery base data');
+      dw_alignment.dlvry_base_status(par_company);
+
+      /*-*/
+      /* STEP #11
+      /*
+      /* Update the open order base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open order base data');
+      dw_alignment.order_base_status(par_company);
+
+      /*-*/
+      /* STEP #12
+      /*
+      /* Update the open purchase base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open purchase base data');
+      dw_alignment.purch_base_status(par_company);
 
       /*-*/
       /* Commit the database
@@ -1090,7 +1168,7 @@ create or replace package body dw_triggered_aggregation as
       /* 1. Partition with data may not have new data so will always be truncated
       /* 2. par_yyyymm = 999999 truncates all partitions
       /*-*/
-      lics_logging.write_log('SALES_MONTH01 Aggregation - Truncating the partition(s)');
+      lics_logging.write_log('--> Truncating the partition(s)');
       dds_partition.truncate('dw_sales_month01',par_yyyymm,par_company,'m');
 
       /*-*/
@@ -1109,13 +1187,13 @@ create or replace package body dw_triggered_aggregation as
          /*-*/
          /* Check that a partition exists for the current month
          /*-*/
-         lics_logging.write_log('SALES_MONTH01 Aggregation - Check/create partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
+         lics_logging.write_log('--> Check/create partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
          dds_partition.check_create('dw_sales_month01',rcd_source.billing_eff_yyyymm,par_company,'m');
 
          /*-*/
          /* Build the partition for the current month 
          /*-*/
-         lics_logging.write_log('SALES_MONTH01 Aggregation - Building the partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
+         lics_logging.write_log('--> Building the partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
          insert into dw_sales_month01
             (company_code,
              order_type_code,
@@ -1299,7 +1377,7 @@ create or replace package body dw_triggered_aggregation as
       /* 1. Partition with data may not have new data so will always be truncated
       /* 2. par_yyyypp = 999999 truncates all partitions
       /*-*/
-      lics_logging.write_log('SALES_PERIOD01 Aggregation - Truncating the partition(s)');
+      lics_logging.write_log('--> Truncating the partition(s)');
       dds_partition.truncate('dw_sales_period01',par_yyyypp,par_company,'p');
 
       /*-*/
@@ -1318,13 +1396,13 @@ create or replace package body dw_triggered_aggregation as
          /*-*/
          /* Check that a partition exists for the current period
          /*-*/
-         lics_logging.write_log('SALES_PERIOD01 Aggregation - Check/create partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
+         lics_logging.write_log('--> Check/create partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
          dds_partition.check_create('dw_sales_period01',rcd_source.billing_eff_yyyypp,par_company,'p');
 
          /*-*/
          /* Build the partition for the current period
          /*-*/
-         lics_logging.write_log('SALES_PERIOD01 Aggregation - Building the partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
+         lics_logging.write_log('--> Building the partition - Period(' || to_char(rcd_source.billing_eff_yyyypp) || ')');
          insert into dw_sales_period01
             (company_code,
              order_type_code,

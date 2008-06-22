@@ -71,24 +71,25 @@ create or replace package body dw_alignment as
       cursor csr_dlvry_base is
          select t01.*
            from dw_dlvry_base t01
-          where t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
+          where t01.company_code = par_company_code
+            and t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
             and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num;
       rcd_dlvry_base csr_dlvry_base%rowtype;
 
       cursor csr_sales_base is
          select t01.*
            from dw_sales_base t01
-          where t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
+          where t01.company_code = par_company_code
+            and t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
             and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
       cursor csr_sap_doc_status is
-         select 'x'
+         select t01.doc_status
            from sap_doc_status t01
           where t01.doc_type = 'PURCHASE_ORDER_LINE'
             and t01.doc_number = rcd_purch_base.purch_order_doc_num
-            and t01.doc_line = rcd_purch_base.purch_order_doc_line_num
-            and doc_status = '*CLOSED';
+            and t01.doc_line = rcd_purch_base.purch_order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
 
    /*-------------*/
@@ -264,16 +265,15 @@ create or replace package body dw_alignment as
          /*-*/
          /* Set the purchase order line status
          /*-*/
-         if var_delivered = true then
-            rcd_purch_base.purch_order_line_status := '*DELIVERED';
-         end if;
          if var_invoiced = true then
             rcd_purch_base.purch_order_line_status := '*CLOSED';
          end if;
          open csr_sap_doc_status;
          fetch csr_sap_doc_status into rcd_sap_doc_status;
          if csr_sap_doc_status%found then
-            rcd_purch_base.purch_order_line_status := '*CLOSED';
+            if rcd_sap_doc_status.doc_status = '*CLOSED' then
+               rcd_purch_base.purch_order_line_status := '*CLOSED';
+            end if;
          end if;
          close csr_sap_doc_status;
 
@@ -282,17 +282,17 @@ create or replace package body dw_alignment as
          /* 1. Closed purchase order lines have no outstanding values
          /* 2. Purchase order line only becomes outstanding when confirmed
          /*-*/
-         if rcd_purch_base.purch_order_line_status != '*CLOSED' then
+         if rcd_purch_base.purch_order_line_status = '*OPEN' then
             if not(rcd_purch_base.confirmed_date is null) then
-               rcd_purch_base.out_qty := rcd_purch_base.con_qty;
-               rcd_purch_base.out_qty_base_uom := rcd_purch_base.con_qty_base_uom;
-               rcd_purch_base.out_qty_gross_tonnes := rcd_purch_base.con_qty_gross_tonnes;
-               rcd_purch_base.out_qty_net_tonnes := rcd_purch_base.con_qty_net_tonnes;
-               rcd_purch_base.out_gsv := rcd_purch_base.con_gsv;
-               rcd_purch_base.out_gsv_xactn := rcd_purch_base.con_gsv_xactn;
-               rcd_purch_base.out_gsv_aud := rcd_purch_base.con_gsv_aud;
-               rcd_purch_base.out_gsv_usd := rcd_purch_base.con_gsv_usd;
-               rcd_purch_base.out_gsv_eur := rcd_purch_base.con_gsv_eur;
+               rcd_purch_base.out_qty := rcd_purch_base.con_qty - rcd_purch_base.del_qty;
+               rcd_purch_base.out_qty_base_uom := rcd_purch_base.con_qty_base_uom - rcd_purch_base.del_qty_base_uom;
+               rcd_purch_base.out_qty_gross_tonnes := rcd_purch_base.con_qty_gross_tonnes - rcd_purch_base.del_qty_gross_tonnes;
+               rcd_purch_base.out_qty_net_tonnes := rcd_purch_base.con_qty_net_tonnes - rcd_purch_base.del_qty_net_tonnes;
+               rcd_purch_base.out_gsv := rcd_purch_base.con_gsv - rcd_purch_base.del_gsv;
+               rcd_purch_base.out_gsv_xactn := rcd_purch_base.con_gsv_xactn - rcd_purch_base.del_gsv_xactn;
+               rcd_purch_base.out_gsv_aud := rcd_purch_base.con_gsv_aud - rcd_purch_base.del_gsv_aud;
+               rcd_purch_base.out_gsv_usd := rcd_purch_base.con_gsv_usd - rcd_purch_base.del_gsv_usd;
+               rcd_purch_base.out_gsv_eur := rcd_purch_base.con_gsv_eur - rcd_purch_base.del_gsv_eur;
             end if;
          end if;
 
@@ -367,24 +367,25 @@ create or replace package body dw_alignment as
       cursor csr_dlvry_base is
          select t01.*
            from dw_dlvry_base t01
-          where t01.order_doc_num = rcd_order_base.order_doc_num
+          where t01.company_code = par_company_code
+            and t01.order_doc_num = rcd_order_base.order_doc_num
             and t01.order_doc_line_num = rcd_order_base.order_doc_line_num;
       rcd_dlvry_base csr_dlvry_base%rowtype;
 
       cursor csr_sales_base is
          select t01.*
            from dw_sales_base t01
-          where t01.order_doc_num = rcd_order_base.order_doc_num
+          where t01.company_code = par_company_code
+            and t01.order_doc_num = rcd_order_base.order_doc_num
             and t01.order_doc_line_num = rcd_order_base.order_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
       cursor csr_sap_doc_status is
-         select 'x'
+         select t01.doc_status
            from sap_doc_status t01
           where t01.doc_type = 'SALES_ORDER_LINE'
             and t01.doc_number = rcd_order_base.order_doc_num
-            and t01.doc_line = rcd_order_base.order_doc_line_num
-            and doc_status = '*CLOSED';
+            and t01.doc_line = rcd_order_base.order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
 
    /*-------------*/
@@ -560,16 +561,12 @@ create or replace package body dw_alignment as
          /*-*/
          /* Set the order line status
          /*-*/
-         if var_delivered = true  then
-            rcd_order_base.order_line_status := '*DELIVERED';
-         end if;
-         if var_invoiced = true then
-            rcd_order_base.order_line_status := '*CLOSED';
-         end if;
          open csr_sap_doc_status;
          fetch csr_sap_doc_status into rcd_sap_doc_status;
          if csr_sap_doc_status%found then
-            rcd_order_base.order_line_status := '*CLOSED';
+            if rcd_sap_doc_status.doc_status = '*CLOSED' then
+               rcd_order_base.order_line_status := '*CLOSED';
+            end if;
          end if;
          close csr_sap_doc_status;
 
@@ -662,17 +659,17 @@ create or replace package body dw_alignment as
       cursor csr_sales_base is
          select t01.*
            from dw_sales_base t01
-          where t01.dlvry_doc_num = rcd_dlvry_base.dlvry_doc_num
+          where t01.company_code = par_company_code
+            and t01.dlvry_doc_num = rcd_dlvry_base.dlvry_doc_num
             and t01.dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
       cursor csr_sap_doc_status is
-         select 'x'
+         select t01.doc_status
            from sap_doc_status t01
           where t01.doc_type = 'DELIVERY_LINE'
             and t01.doc_number = rcd_dlvry_base.dlvry_doc_num
-            and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num
-            and doc_status = '*CLOSED';
+            and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
 
    /*-------------*/
@@ -779,7 +776,9 @@ create or replace package body dw_alignment as
          open csr_sap_doc_status;
          fetch csr_sap_doc_status into rcd_sap_doc_status;
          if csr_sap_doc_status%found then
-            rcd_dlvry_base.dlvry_line_status := '*CLOSED';
+            if rcd_sap_doc_status.doc_status = '*CLOSED' then
+               rcd_dlvry_base.dlvry_line_status := '*CLOSED';
+            end if;
          end if;
          close csr_sap_doc_status;
 
@@ -829,14 +828,16 @@ create or replace package body dw_alignment as
           where t01.company_code = par_company_code
             and (t01.billing_doc_num, t01.billing_doc_line_num) in (select billing_doc_num, billing_doc_line_num
                                                                       from dw_sales_base
-                                                                     where order_doc_num = dlvry_doc_num);
+                                                                     where company_code = par_company_code
+                                                                       and order_doc_num = dlvry_doc_num);
       rcd_sales_base csr_sales_base%rowtype;
 
       cursor csr_dlvry_lookup is
          select t01.dlvry_doc_num,
                 t01.dlvry_doc_line_num
            from dw_dlvry_base t01
-          where t01.order_doc_num = rcd_sales_base.order_doc_num
+          where t01.company_code = par_company_code
+            and t01.order_doc_num = rcd_sales_base.order_doc_num
             and t01.order_doc_line_num = rcd_sales_base.order_doc_line_num;
       rcd_dlvry_lookup csr_dlvry_lookup%rowtype;
 
@@ -877,6 +878,10 @@ create or replace package body dw_alignment as
                    dlvry_doc_line_num = rcd_dlvry_lookup.dlvry_doc_line_num
              where billing_doc_num = rcd_sales_base.billing_doc_num
                and billing_doc_line_num = rcd_sales_base.billing_doc_line_num;
+            update dw_dlvry_base
+               set dlvry_line_status = '*OPEN'
+             where dlvry_doc_num = rcd_dlvry_lookup.dlvry_doc_num
+               and dlvry_doc_line_num = rcd_dlvry_lookup.dlvry_doc_line_num;
          end if;
          close csr_dlvry_lookup;
 
