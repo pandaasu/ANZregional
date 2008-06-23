@@ -90,6 +90,8 @@ create or replace package body dw_scheduled_aggregation as
       var_company_code company.company_code%type;
       var_company_currcy company.company_currcy%type;
       var_date date;
+      var_test date;
+      var_next date;
 
       /*-*/
       /* Local constants
@@ -142,7 +144,18 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* Aggregation date is always based on the previous day (converted using the company timezone)
       /*-*/
-      var_date := dw_to_timezone(trunc(sysdate),'Australia/NSW',rcd_company.company_timezone_code);
+      var_date := trunc(sysdate);
+      if rcd_company.company_timezone_code != 'Australia/NSW' then
+         var_test := sysdate;
+         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
+         loop
+            var_date := var_next;
+            var_next := var_next + 1;
+            if var_next > var_test then
+               exit;
+            end if;
+         end loop;
+      end if;
 
       /*-*/
       /* Log start
@@ -152,7 +165,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Scheduled Aggregation - Parameters(' || var_company_code || ')');
+      lics_logging.write_log('Begin - Scheduled Aggregation - Parameters(' || var_company_code || ' + ' || to_char(var_date,'yyyy/mm/dd hh24:mi:ss') || ')');
 
       /*-*/
       /* Request the lock on the aggregation
@@ -725,7 +738,7 @@ create or replace package body dw_scheduled_aggregation as
                 t01.purch_order_doc_line_num as doc_line_num
            from sap_sto_po_trace t01
           where t01.company_code = par_company_code
-            and trunc(t01.trace_date) <= trunc(par_date)
+            and t01.trace_date <= par_date
             and t01.trace_seqn > var_purch_max_seqn
             and t01.purch_order_type_code = 'ZNB';
       rcd_work csr_work%rowtype;
@@ -738,7 +751,7 @@ create or replace package body dw_scheduled_aggregation as
           where t01.trace_seqn in (select max(t01.trace_seqn)
                                      from sap_sto_po_trace t01
                                     where t01.company_code = par_company_code
-                                      and trunc(t01.trace_date) <= trunc(par_date)
+                                      and t01.trace_date <= par_date
                                       and t01.trace_seqn > var_purch_max_seqn
                                       and t01.purch_order_type_code = 'ZNB'
                                     group by t01.purch_order_doc_num)
@@ -1172,7 +1185,7 @@ create or replace package body dw_scheduled_aggregation as
                 t01.order_doc_line_num as doc_line_num
            from sap_sal_ord_trace t01
           where t01.company_code = par_company_code
-            and trunc(t01.trace_date) <= trunc(par_date)
+            and t01.trace_date <= par_date
             and t01.trace_seqn > var_order_max_seqn;
       rcd_work csr_work%rowtype;
 
@@ -1184,7 +1197,7 @@ create or replace package body dw_scheduled_aggregation as
           where t01.trace_seqn in (select max(t01.trace_seqn)
                                      from sap_sal_ord_trace t01
                                     where t01.company_code = par_company_code
-                                      and trunc(t01.trace_date) <= trunc(par_date)
+                                      and t01.trace_date <= par_date
                                       and t01.trace_seqn > var_order_max_seqn
                                     group by t01.order_doc_num)
             and t01.trace_status = '*ACTIVE'
@@ -1640,7 +1653,7 @@ create or replace package body dw_scheduled_aggregation as
                 t01.dlvry_doc_line_num as doc_line_num
            from sap_del_trace t01
           where t01.company_code = par_company_code
-            and trunc(t01.trace_date) <= trunc(par_date)
+            and t01.trace_date <= par_date
             and t01.trace_seqn > var_dlvry_max_seqn;
       rcd_work csr_work%rowtype;
 
@@ -1652,7 +1665,7 @@ create or replace package body dw_scheduled_aggregation as
           where t01.trace_seqn in (select max(t01.trace_seqn)
                                      from sap_del_trace t01
                                     where t01.company_code = par_company_code
-                                      and trunc(t01.trace_date) <= trunc(par_date)
+                                      and t01.trace_date <= par_date
                                       and t01.trace_seqn > var_dlvry_max_seqn
                                     group by t01.dlvry_doc_num)
             and t01.trace_status = '*ACTIVE'
@@ -2109,7 +2122,7 @@ create or replace package body dw_scheduled_aggregation as
                 t01.purch_order_doc_line_num as doc_line_num
            from sap_sto_po_trace t01
           where t01.company_code = par_company_code
-            and trunc(t01.trace_date) <= trunc(par_date)
+            and t01.trace_date <= par_date
             and t01.trace_seqn > var_nzmkt_max_seqn
             and t01.purch_order_type_code = 'ZUB';
       rcd_work csr_work%rowtype;
@@ -2126,7 +2139,7 @@ create or replace package body dw_scheduled_aggregation as
           where t01.trace_seqn in (select max(t01.trace_seqn)
                                      from sap_sto_po_trace t01
                                     where t01.company_code = par_company_code
-                                      and trunc(t01.trace_date) <= trunc(par_date)
+                                      and t01.trace_date <= par_date
                                       and t01.trace_seqn > var_nzmkt_max_seqn
                                       and t01.purch_order_type_code = 'ZUB'
                                     group by t01.purch_order_doc_num)

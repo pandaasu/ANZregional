@@ -248,12 +248,23 @@ create or replace package body dw_mart_sales02 as
    procedure extract_header(par_company_code in varchar2) is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_date date;
+
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_header is
          select t01.*
            from dw_mart_sales02_hdr t01
           where t01.company_code = par_company_code;
+
+      cursor csr_company is
+         select t01.*
+           from company t01
+          where t01.company_code = par_company_code;
+      rcd_company csr_company%rowtype;
 
       cursor csr_period is
          select t01.mars_year,
@@ -265,7 +276,7 @@ create or replace package body dw_mart_sales02 as
                 t01.mars_week_of_period,
                 trunc(t01.calendar_date) as calendar_date
            from mars_date_dim t01
-          where trunc(t01.calendar_date) = trunc(sysdate-1);
+          where trunc(t01.calendar_date) = var_date;
       rcd_period csr_period%rowtype;
 
    /*-------------*/
@@ -274,12 +285,30 @@ create or replace package body dw_mart_sales02 as
    begin
 
       /*-*/
+      /* Retrieve the company information
+      /*-*/
+      open csr_company;
+      fetch csr_company into rcd_company;
+      if csr_company%notfound then
+         raise_application_error(-20000, 'Company ' || par_company_code || ' not found on the company table');
+      end if;
+      close csr_company;
+
+      /*-*/
+      /* Current date is always based on the previous day (converted using the company timezone)
+      /*-*/
+      var_date := trunc(sysdate);
+      if rcd_company.company_timezone_code != 'Australia/NSW' then
+         var_date := trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1);
+      end if;
+
+      /*-*/
       /* Retrieve the current period information based on previous day
       /*-*/
       open csr_period;
       fetch csr_period into rcd_period;
       if csr_period%notfound then
-         raise_application_error(-20000, 'No mars date found for ' || to_char(trunc(sysdate-1),'yyyy/mm/dd'));
+         raise_application_error(-20000, 'No mars date found for ' || to_char(var_date,'yyyy/mm/dd'));
       end if;
       close csr_period;
 
