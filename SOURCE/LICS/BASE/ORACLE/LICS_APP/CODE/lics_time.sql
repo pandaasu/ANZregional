@@ -59,6 +59,7 @@ create or replace package lics_time as
  2006/07   Linden Glen          Created
  2006/12   Steve Gregan         Added Mars day selection
  2007/09   Steve Gregan         Added week day selection
+ 2008/06   Steve Gregan         Fixed timezone conversion
 
 *******************************************************************************/
 
@@ -216,9 +217,9 @@ create or replace package body lics_time as
       /*-*/
       /* Determine next date of next execution
       /*-*/    
-      var_next_exec := get_tz_time(trunc(var_date_01)+numtodsinterval(par_hour,'HOUR'),par_from_timezone);
+      var_next_exec := get_tz_time(trunc(var_date_01)+numtodsinterval(par_hour,'HOUR'),par_to_timezone,par_from_timezone);
       if var_next_exec <= sysdate then
-         var_next_exec := get_tz_time(trunc(var_date_02)+numtodsinterval(par_hour,'HOUR'),par_from_timezone);
+         var_next_exec := get_tz_time(trunc(var_date_02)+numtodsinterval(par_hour,'HOUR'),par_to_timezone,par_from_timezone);
       end if;
 
       /*-*/
