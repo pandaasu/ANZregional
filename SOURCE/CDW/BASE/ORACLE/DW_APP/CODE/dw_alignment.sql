@@ -157,11 +157,7 @@ create or replace package body dw_alignment as
          /*----------------------*/
 
          /*-*/
-         /* Retrieve the related DLVRY_BASE rows and update the PURCH_BASE row values
-         /* 1. Purchase order material and UOM is same as delivered material and UOM then purchase order delivery quantity is increased by delivery quantity
-         /* 2. Purchase order material or UOM differs from delivered material or UOM then purchase order delivery quantity is increased by delivery base UOM quantity
-         /*    converted into the ordered material UOM. This assumes that both materials belong to the same representative material
-         /*    and that the conversion is logical. 
+         /* Retrieve the related DLVRY_BASE rows and update the PURCH_BASE row values 
          /*-*/
          open csr_dlvry_base;
          loop
@@ -177,14 +173,12 @@ create or replace package body dw_alignment as
             var_delivered := true;
 
             /*-*/
-            /* Delivery confirm values
+            /* Delivery values
             /*-*/
-            if (rcd_purch_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
-                rcd_purch_base.purch_order_uom_code = rcd_dlvry_base.dlvry_uom_code) then
-               rcd_purch_base.del_qty := rcd_purch_base.del_qty + rcd_dlvry_base.del_qty;
-            else
-               rcd_purch_base.del_qty := rcd_purch_base.del_qty + dw_utility.convert_buom_to_uom(rcd_purch_base.ods_matl_code, rcd_purch_base.purch_order_uom_code, rcd_dlvry_base.del_qty_base_uom);
-            end if;
+            rcd_purch_base.del_qty := rcd_purch_base.del_qty + rcd_dlvry_base.del_qty;
+            rcd_purch_base.del_qty_base_uom := rcd_purch_base.del_qty_base_uom + rcd_dlvry_base.del_qty_base_uom;
+            rcd_purch_base.del_qty_gross_tonnes := rcd_purch_base.del_qty_gross_tonnes + rcd_dlvry_base.del_qty_gross_tonnes;
+            rcd_purch_base.del_qty_net_tonnes := rcd_purch_base.del_qty_net_tonnes + rcd_dlvry_base.del_qty_net_tonnes;
             rcd_purch_base.del_gsv := rcd_purch_base.del_gsv + rcd_dlvry_base.del_gsv;
             rcd_purch_base.del_gsv_xactn := rcd_purch_base.del_gsv_xactn + rcd_dlvry_base.del_gsv_xactn;
             rcd_purch_base.del_gsv_aud := rcd_purch_base.del_gsv_aud + rcd_dlvry_base.del_gsv_aud;
@@ -194,27 +188,12 @@ create or replace package body dw_alignment as
          end loop;
          close csr_dlvry_base;
 
-         /*-*/
-         /* Update the GRD delivery confirm quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_purch_base.purch_order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_purch_base.del_qty;
-         dw_utility.calculate_quantity;
-         rcd_purch_base.del_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_purch_base.del_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_purch_base.del_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
-
          /*----------------------*/
          /* SALES_BASE Alignment */
          /*----------------------*/
 
          /*-*/
          /* Retrieve the related SALES_BASE rows and update the PURCH_BASE row values
-         /* 1. Purchase order material and UOM is same as billed material and UOM then purchase order billed quantity is increased by billed quantity
-         /* 2. Purchase order material or UOM differs from billed material or UOM then purchase order billed quantity is increased by billed base UOM quantity
-         /*    converted into the ordered material UOM. This assumes that both materials belong to the same representative material
-         /*    and that the conversion is logical. 
          /*-*/
          open csr_sales_base;
          loop
@@ -232,12 +211,10 @@ create or replace package body dw_alignment as
             /*-*/
             /* Invoice billed values
             /*-*/
-            if (rcd_purch_base.ods_matl_code = rcd_sales_base.ods_matl_code and
-                rcd_purch_base.purch_order_uom_code = rcd_sales_base.billed_uom_code) then
-               rcd_purch_base.inv_qty := rcd_purch_base.inv_qty + rcd_sales_base.billed_qty;
-            else
-               rcd_purch_base.inv_qty := rcd_purch_base.inv_qty + dw_utility.convert_buom_to_uom(rcd_purch_base.ods_matl_code, rcd_purch_base.purch_order_uom_code, rcd_sales_base.billed_qty_base_uom);
-            end if;
+            rcd_purch_base.inv_qty := rcd_purch_base.inv_qty + rcd_sales_base.billed_qty;
+            rcd_purch_base.inv_qty_base_uom := rcd_purch_base.inv_qty_base_uom + rcd_sales_base.billed_qty_base_uom;
+            rcd_purch_base.inv_qty_gross_tonnes := rcd_purch_base.inv_qty_gross_tonnes + rcd_sales_base.billed_qty_gross_tonnes;
+            rcd_purch_base.inv_qty_net_tonnes := rcd_purch_base.inv_qty_net_tonnes + rcd_sales_base.billed_qty_net_tonnes;
             rcd_purch_base.inv_gsv := rcd_purch_base.inv_gsv + rcd_sales_base.billed_gsv;
             rcd_purch_base.inv_gsv_xactn := rcd_purch_base.inv_gsv_xactn + rcd_sales_base.billed_gsv_xactn;
             rcd_purch_base.inv_gsv_aud := rcd_purch_base.inv_gsv_aud + rcd_sales_base.billed_gsv_aud;
@@ -246,17 +223,6 @@ create or replace package body dw_alignment as
 
          end loop;
          close csr_sales_base;
-
-         /*-*/
-         /* Update the GRD billed quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_purch_base.purch_order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_purch_base.inv_qty;
-         dw_utility.calculate_quantity;
-         rcd_purch_base.inv_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_purch_base.inv_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_purch_base.inv_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
          /*------------------------*/
          /* PURCH_BASE Outstanding */
@@ -454,10 +420,6 @@ create or replace package body dw_alignment as
 
          /*-*/
          /* Retrieve the related DLVRY_BASE rows and update the ORDER_BASE row values
-         /* 1. Order material and UOM is same as delivered material and UOM then order delivery quantity is increased by delivery quantity
-         /* 2. Order material or UOM differs from delivered material or UOM then order delivery quantity is increased by delivery base UOM quantity
-         /*    converted into the ordered material UOM. This assumes that both materials belong to the same representative material
-         /*    and that the conversion is logical. 
          /*-*/
          open csr_dlvry_base;
          loop
@@ -473,14 +435,12 @@ create or replace package body dw_alignment as
             var_delivered := true;
 
             /*-*/
-            /* Delivery confirm values
+            /* Delivery values
             /*-*/
-            if (rcd_order_base.ods_matl_code = rcd_dlvry_base.ods_matl_code and
-                rcd_order_base.order_uom_code = rcd_dlvry_base.dlvry_uom_code) then
-               rcd_order_base.del_qty := rcd_order_base.del_qty + rcd_dlvry_base.del_qty;
-            else
-               rcd_order_base.del_qty := rcd_order_base.del_qty + dw_utility.convert_buom_to_uom(rcd_order_base.ods_matl_code, rcd_order_base.order_uom_code, rcd_dlvry_base.del_qty_base_uom);
-            end if;
+            rcd_order_base.del_qty := rcd_order_base.del_qty + rcd_dlvry_base.del_qty;
+            rcd_order_base.del_qty_base_uom := rcd_order_base.del_qty_base_uom + rcd_dlvry_base.del_qty_base_uom;
+            rcd_order_base.del_qty_gross_tonnes := rcd_order_base.del_qty_gross_tonnes + rcd_dlvry_base.del_qty_gross_tonnes;
+            rcd_order_base.del_qty_net_tonnes := rcd_order_base.del_qty_net_tonnes + rcd_dlvry_base.del_qty_net_tonnes;
             rcd_order_base.del_gsv := rcd_order_base.del_gsv + rcd_dlvry_base.del_gsv;
             rcd_order_base.del_gsv_xactn := rcd_order_base.del_gsv_xactn + rcd_dlvry_base.del_gsv_xactn;
             rcd_order_base.del_gsv_aud := rcd_order_base.del_gsv_aud + rcd_dlvry_base.del_gsv_aud;
@@ -490,27 +450,12 @@ create or replace package body dw_alignment as
          end loop;
          close csr_dlvry_base;
 
-         /*-*/
-         /* Update the GRD delivery confirm quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_order_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_order_base.order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_order_base.del_qty;
-         dw_utility.calculate_quantity;
-         rcd_order_base.del_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_order_base.del_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_order_base.del_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
-
          /*----------------------*/
          /* SALES_BASE Alignment */
          /*----------------------*/
 
          /*-*/
-         /* Retrieve the related SALES_BASE rows and update the ORDER_BASE row values
-         /* 1. Order material and UOM is same as billed material and UOM then order billed quantity is increased by billed quantity
-         /* 2. Order material or UOM differs from billed material or UOM then order billed quantity is increased by billed base UOM quantity
-         /*    converted into the ordered material UOM. This assumes that both materials belong to the same representative material
-         /*    and that the conversion is logical. 
+         /* Retrieve the related SALES_BASE rows and update the ORDER_BASE row values 
          /*-*/
          open csr_sales_base;
          loop
@@ -528,12 +473,10 @@ create or replace package body dw_alignment as
             /*-*/
             /* Invoice billed values
             /*-*/
-            if (rcd_order_base.ods_matl_code = rcd_sales_base.ods_matl_code and
-                rcd_order_base.order_uom_code = rcd_sales_base.billed_uom_code) then
-               rcd_order_base.inv_qty := rcd_order_base.inv_qty + rcd_sales_base.billed_qty;
-            else
-               rcd_order_base.inv_qty := rcd_order_base.inv_qty + dw_utility.convert_buom_to_uom(rcd_order_base.ods_matl_code, rcd_order_base.order_uom_code, rcd_sales_base.billed_qty_base_uom);
-            end if;
+            rcd_order_base.inv_qty := rcd_order_base.inv_qty + rcd_sales_base.billed_qty;
+            rcd_order_base.inv_qty_base_uom := rcd_order_base.inv_qty_base_uom + rcd_sales_base.billed_qty_base_uom;
+            rcd_order_base.inv_qty_gross_tonnes := rcd_order_base.inv_qty_gross_tonnes + rcd_sales_base.billed_qty_gross_tonnes;
+            rcd_order_base.inv_qty_net_tonnes := rcd_order_base.inv_qty_net_tonnes + rcd_sales_base.billed_qty_net_tonnes;
             rcd_order_base.inv_gsv := rcd_order_base.inv_gsv + rcd_sales_base.billed_gsv;
             rcd_order_base.inv_gsv_xactn := rcd_order_base.inv_gsv_xactn + rcd_sales_base.billed_gsv_xactn;
             rcd_order_base.inv_gsv_aud := rcd_order_base.inv_gsv_aud + rcd_sales_base.billed_gsv_aud;
@@ -542,17 +485,6 @@ create or replace package body dw_alignment as
 
          end loop;
          close csr_sales_base;
-
-         /*-*/
-         /* Update the GRD billed quantities
-         /*-*/
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_order_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_order_base.order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_order_base.inv_qty;
-         dw_utility.calculate_quantity;
-         rcd_order_base.inv_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_order_base.inv_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_order_base.inv_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
          /*------------------------*/
          /* ORDER_BASE Outstanding */
@@ -719,11 +651,7 @@ create or replace package body dw_alignment as
 
          /*-*/
          /* Retrieve the related SALES_BASE row and update the DLVRY_BASE row values
-         /* 1. Delivery material and UOM is same as billed material and UOM then delivery billed quantity is set to billed quantity
-         /* 2. Delivery material or UOM differs from billed material or UOM then delivery billed quantity is set to billed base UOM quantity
-         /*    converted into the ordered material UOM. This assumes that both materials belong to the same representative material
-         /*    and that the conversion is logical. 
-         /* 3. This logic continues to assume that there will always be a one to one relationship between the delivery line and the invoice line.
+         /* 1. This logic continues to assume that there will always be a one to one relationship between the delivery line and the invoice line.
          /*-*/
          open csr_sales_base;
          if csr_sales_base%found then
@@ -737,28 +665,15 @@ create or replace package body dw_alignment as
             /*-*/
             /* Invoice billed values
             /*-*/
-            if (rcd_dlvry_base.ods_matl_code = rcd_sales_base.ods_matl_code and
-                rcd_dlvry_base.dlvry_uom_code = rcd_sales_base.billed_uom_code) then
-               rcd_dlvry_base.inv_qty := rcd_sales_base.billed_qty;
-            else
-               rcd_dlvry_base.inv_qty := dw_utility.convert_buom_to_uom(rcd_dlvry_base.ods_matl_code, rcd_dlvry_base.dlvry_uom_code, rcd_sales_base.billed_qty_base_uom);
-            end if;
+            rcd_dlvry_base.inv_qty := rcd_sales_base.billed_qty;
+            rcd_dlvry_base.inv_qty_base_uom := rcd_sales_base.billed_qty_base_uom;
+            rcd_dlvry_base.inv_qty_gross_tonnes := rcd_sales_base.billed_qty_gross_tonnes;
+            rcd_dlvry_base.inv_qty_net_tonnes := rcd_sales_base.billed_qty_net_tonnes;
             rcd_dlvry_base.inv_gsv := rcd_sales_base.billed_gsv;
             rcd_dlvry_base.inv_gsv_xactn := rcd_sales_base.billed_gsv_xactn;
             rcd_dlvry_base.inv_gsv_aud := rcd_sales_base.billed_gsv_aud;
             rcd_dlvry_base.inv_gsv_usd := rcd_sales_base.billed_gsv_usd;
             rcd_dlvry_base.inv_gsv_eur := rcd_sales_base.billed_gsv_eur;
-
-            /*-*/
-            /* Update the GRD billed quantities
-            /*-*/
-            dw_utility.pkg_qty_fact.ods_matl_code := rcd_dlvry_base.ods_matl_code;
-            dw_utility.pkg_qty_fact.uom_code := rcd_dlvry_base.dlvry_uom_code;
-            dw_utility.pkg_qty_fact.uom_qty := rcd_dlvry_base.inv_qty;
-            dw_utility.calculate_quantity;
-            rcd_dlvry_base.inv_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-            rcd_dlvry_base.inv_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-            rcd_dlvry_base.inv_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
 
          end if;
          close csr_sales_base;

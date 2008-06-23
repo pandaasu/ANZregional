@@ -89,6 +89,9 @@ create or replace package body dw_utility as
       /*-*/
       /* Calculate the quantity values from the material GRD data
       /*-*/
+      pkg_qty_fact.qty_base_uom := pkg_qty_fact.uom_qty;
+      pkg_qty_fact.qty_gross_tonnes := 0;
+      pkg_qty_fact.qty_net_tonnes := 0;
       open csr_material;
       fetch csr_material into rcd_material;
       if csr_material%found then
@@ -144,7 +147,7 @@ create or replace package body dw_utility as
       /*-*/
       /* Convert the base uom quantity to the requested uom quantity
       /*-*/
-      var_result := 0;
+      var_result := par_qty_buom;
       open csr_material;
       fetch csr_material into rcd_material;
       if csr_material%found then
@@ -191,7 +194,7 @@ create or replace package body dw_utility as
       /*-*/
       /* Convert the uom quantity to the base uom quantity
       /*-*/
-      var_result := 0;
+      var_result := par_qty_uom;
       open csr_material;
       fetch csr_material into rcd_material;
       if csr_material%found then

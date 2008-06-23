@@ -420,6 +420,16 @@ create or replace package body dw_scheduled_aggregation as
       var_locked := false;
 
       /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Scheduled SAP Retrieval');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+      /*-*/
       /* Errors
       /*-*/
       if var_errors = true then
@@ -602,6 +612,16 @@ create or replace package body dw_scheduled_aggregation as
 
       end if;
       var_locked := false;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Scheduled SAP Alignment');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
 
       /*-*/
       /* Errors
