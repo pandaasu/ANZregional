@@ -100,7 +100,7 @@ create or replace package body ods_atlods12_monitor as
       /*-*/
       if var_rec_return = '*OK' or 
          var_rec_return = '*VAR_ACCEPT' then
-         lics_stream_loader.execute('TRIGGERED_STREAM_'||par_bukrs,
+         lics_stream_loader.execute('DW_TRIGGERED_STREAM_'||par_bukrs,
                                     'dw_app.dw_triggered_aggregation.execute(''*DATE'',''*ALL'','''||par_fkdat||''','''||par_bukrs||''')');
       end if;
 

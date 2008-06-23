@@ -441,9 +441,12 @@ create or replace package body ods_sapods01 as
       var_doc_type := lics_inbound_utility.get_variable('INT_DOC_TYPE');
       var_doc_number := lics_inbound_utility.get_variable('INT_DOC_NUMBER');
       var_doc_line := lics_inbound_utility.get_variable('INT_DOC_LINE');
-      var_doc_status  := lics_inbound_utility.get_variable('INT_DOC_LINE');
+      var_doc_status  := lics_inbound_utility.get_variable('INT_DOC_STATUS');
       if var_doc_line is null then
          var_doc_line := '*NONE';
+      end if;
+      if var_doc_status is null then
+         var_doc_status := 'C';
       end if;
 
       /*-*/
@@ -516,7 +519,7 @@ create or replace package body ods_sapods01 as
                var_trn_error := true;
             else
                var_wrk_status := '*OPEN';
-               if var_doc_status is null or var_doc_status = 'C' then
+               if var_doc_status = 'C' then
                   var_wrk_status := '*CLOSED';
                end if;
             end if;
@@ -526,7 +529,7 @@ create or replace package body ods_sapods01 as
                var_trn_error := true;
             else
                var_wrk_status := '*OPEN';
-               if var_doc_status is null or var_doc_status = 'C' then
+               if var_doc_status = 'C' then
                   var_wrk_status := '*CLOSED';
                end if;
             end if;
