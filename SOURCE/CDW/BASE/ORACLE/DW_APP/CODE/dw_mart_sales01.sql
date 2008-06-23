@@ -153,13 +153,12 @@ create or replace package body dw_mart_sales01 as
 
       /*-*/
       /* Process the triggered action
-      /* **note** 1. the triggered action has been requested
-      /*          2. the scheduled action has been requested and the triggered period is less than the scheduled period
-      /*             (this is required because triggered aggregation may not run on day one of the period and therefore
-      /*              the last period sales would remain in the data mart)
+      /* **note** 1. the triggered action or the scheduled action has been requested
+      /*          2. the scheduled action is required because triggered aggregation may not run on day one of the period and therefore
+      /*             the last period sales would remain in the data mart or the triggered action may run (company 149) before midnight
+      /*             and select the previous processing day
       /*-*/
-      if par_action = '*TRIGGERED' or
-         (par_action = '*SCHEDULED' and rcd_header.triggered_yyyypp < rcd_header.scheduled_yyyypp) then
+      if par_action = '*TRIGGERED' or par_action = '*SCHEDULED' then
 
          /*-*/
          /* Update the triggered header data
