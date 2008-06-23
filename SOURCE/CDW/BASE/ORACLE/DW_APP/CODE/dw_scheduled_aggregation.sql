@@ -404,15 +404,9 @@ create or replace package body dw_scheduled_aggregation as
          /*-*/
          lics_logging.write_log('Begin - SAP retrieval');
          begin
-            java_utility.execute_external_procedure(lics_parameter.inbound_sap_script
-                                                    || ' ' || 'SAPODS01'
-                                                    || ' ' || 'SAPODS01#'||var_company_code
-                                                    || ' ' || '*NONE'
-                                                    || ' ' || '*NONE'
-                                                    || ' ' || '*NONE');
+            lics_sap_processor.execute_inbound('SAPODS01','SAPODS01#'||var_company_code,'*NONE','*NONE','*NONE');
          exception
             when others then
-              lics_logging.write_log('**JAVA ERROR** - ' || substr(SQLERRM, 1, 3048));
                var_errors := true;
          end;
          lics_logging.write_log('End - SAP retrieval');
