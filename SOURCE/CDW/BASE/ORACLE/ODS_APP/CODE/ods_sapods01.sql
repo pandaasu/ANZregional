@@ -172,7 +172,7 @@ create or replace package body ods_sapods01 as
       /* Trigger the data warehouse alignment stream when required
       /*-*/
       if not(var_company_code is null) then
-         lics_stream_loader.execute('ALIGNMENT_STREAM_'||var_company_code,null);
+         lics_stream_loader.execute('DW_ALIGNMENT_STREAM_'||var_company_code,null);
       end if;
 
    /*-------------*/
@@ -354,11 +354,6 @@ create or replace package body ods_sapods01 as
    /**************************************************/
    procedure process_record_nod(par_record in varchar2) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_query varchar2(30);
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -411,7 +406,6 @@ create or replace package body ods_sapods01 as
       /*-*/
       /* Local definitions
       /*-*/
-      var_transaction varchar2(30);
       var_doc_type varchar2(128);
       var_doc_number varchar2(128);
       var_doc_line varchar2(128);
