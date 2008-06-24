@@ -206,6 +206,10 @@ create or replace package body lads_atllad10 as
       con_ack_group constant varchar2(32) := 'LADS_IDOC_ACK';
       con_ack_code constant varchar2(32) := 'ATLLAD10';
       var_accepted boolean;
+      var_index number(8,0);
+      
+      type typ_definition is table of lads_ref_hdr.z_tabname%type index by binary_integer;
+      tbl_definition typ_definition;
 
       /*-*/
       /* Local Cursor
@@ -216,8 +220,6 @@ create or replace package body lads_atllad10 as
          where (t01.z_tabgrp = rcd_lads_ref_hdr.z_tabgrp or
                 t01.z_tabname = rcd_lads_ref_hdr.z_tabname)
            and nvl(t01.lads_flattened,'0') = '0';
-      rcd_lads_ref_grp  csr_lads_ref_grp%rowtype;
-
 
    /*-------------*/
    /* Begin block */
@@ -260,6 +262,7 @@ create or replace package body lads_atllad10 as
          /* Set the transaction accepted indicator
          /*-*/
          var_accepted := true;
+         tbl_definition.delete;
 
          /*-*/
          /* Execute the interface monitor/flattening
@@ -278,14 +281,13 @@ create or replace package body lads_atllad10 as
          /*            if they belong to the same Z_TABGRP they are not split by a CTL record.
          /*-*/
          open csr_lads_ref_grp;
+         fetch csr_lads_ref_grp bulk collect into tbl_definition;   
+         close csr_lads_ref_grp;   
+         
+         for idx in 1..tbl_definition.count
          loop
-            fetch csr_lads_ref_grp into rcd_lads_ref_grp;
-            if (csr_lads_ref_grp%notfound) then
-               exit;
-            end if;
-
             begin
-               lads_atllad10_monitor.execute_before(rcd_lads_ref_grp.z_tabname);
+               lads_atllad10_monitor.execute_before(tbl_definition(idx));
             exception
                when others then
                   rollback to transaction_savepoint;
@@ -293,7 +295,6 @@ create or replace package body lads_atllad10 as
                   exit;
             end;
          end loop;
-         close csr_lads_ref_grp;
 
          /*-*/
          /* Commit the IDOC transaction and successful monitor code
@@ -301,23 +302,16 @@ create or replace package body lads_atllad10 as
          /*-*/
          commit;
          
-         open csr_lads_ref_grp;
+         for idx in 1..tbl_definition.count
          loop
-            fetch csr_lads_ref_grp into rcd_lads_ref_grp;
-            if (csr_lads_ref_grp%notfound) then
-               exit;
-            end if;
-
             begin
-               lads_atllad10_monitor.execute_after(rcd_lads_ref_grp.z_tabname);
+               lads_atllad10_monitor.execute_after(tbl_definition(idx));
             exception
                when others then
                   lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
                   exit;
             end;
-         end loop;  
-         close csr_lads_ref_grp;       
-
+         end loop;
       end if;
 
 
