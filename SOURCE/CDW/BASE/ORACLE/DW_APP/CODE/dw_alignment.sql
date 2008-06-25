@@ -738,7 +738,8 @@ create or replace package body dw_alignment as
          select t01.billing_doc_num,
                 t01.billing_doc_line_num,
                 t01.order_doc_num,
-                t01.order_doc_line_num
+                t01.order_doc_line_num,
+                t01.billing_eff_date
            from dw_sales_base t01
           where t01.company_code = par_company_code
             and (t01.billing_doc_num, t01.billing_doc_line_num) in (select billing_doc_num, billing_doc_line_num
@@ -797,6 +798,14 @@ create or replace package body dw_alignment as
                set dlvry_line_status = '*OPEN'
              where dlvry_doc_num = rcd_dlvry_lookup.dlvry_doc_num
                and dlvry_doc_line_num = rcd_dlvry_lookup.dlvry_doc_line_num;
+         else
+            if rcd_sales_base.billing_eff_date < (sysdate - 20) then
+               update dw_sales_base
+                  set dlvry_doc_num = '*ORDER',
+                      dlvry_doc_line_num = '*ORDER'
+                where billing_doc_num = rcd_sales_base.billing_doc_num
+                  and billing_doc_line_num = rcd_sales_base.billing_doc_line_num;
+            end if;
          end if;
          close csr_dlvry_lookup;
 
