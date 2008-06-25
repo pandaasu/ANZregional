@@ -41,7 +41,7 @@ comment on column ods.sap_doc_status.ods_date is 'ODS date inserted/updated';
 /* Primary Key Constraint
 /**/
 alter table ods.sap_doc_status
-   add constraint ods.sap_doc_status_pk primary key (doc_type, doc_number, doc_line);
+   add constraint sap_doc_status_pk primary key (doc_type, doc_number, doc_line);
 
 /**/
 /* Indexes
