@@ -1,28 +1,21 @@
 
-logon as dds
-
 /**/
 /* Indexes
 /**/
-create index fcst_fact_ix01 on fcst_fact
-   (company_code, fcst_yyyypp, fcst_type_code);
+--create index fcst_fact_ix01 on fcst_fact
+--   (company_code, fcst_yyyypp, fcst_type_code);
 
-create index sales_fact_ix01 on sales_fact
-   (company_code, billing_eff_yyyypp);
+--create index sales_fact_ix01 on sales_fact
+--   (company_code, billing_eff_yyyypp);
 
-create index sales_period_01_fact_ix01 on sales_period_01_fact
-   (company_code, billing_eff_yyyypp);
-
-
-grant select, insert, update, delete on mars_date_dim to dw_app;
-grant select, insert, update, delete on demand_plng_grp_sales_area_dim to dw_app;
-grant select, insert, update, delete on cust_sales_area_dim to dw_app;
-grant select, insert, update, delete on sales_fact to dw_app;
-grant select, insert, update, delete on fcst_fact to dw_app;
-grant select, insert, update, delete on sales_period_01_fact to dw_app;
-grant select, insert, update, delete on sales_month_01_fact to dw_app;
+--create index sales_period_01_fact_ix01 on sales_period_01_fact
+--   (company_code, billing_eff_yyyypp);
 
 
+grant select on mars_date_dim to dw_app;
+grant select on demand_plng_grp_sales_area_dim to dw_app;
+grant select on cust_sales_area_dim to dw_app;
+grant select on fcst_fact to dw_app;
 grant select on ACCRLS_FACT to dw_app;
 grant select on ACCT_ASSGNMNT_GRP_DIM to dw_app;
 grant select on ACCT_MGR_DIM to dw_app;
