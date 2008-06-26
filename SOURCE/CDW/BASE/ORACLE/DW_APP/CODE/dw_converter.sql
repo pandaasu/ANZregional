@@ -27,6 +27,7 @@ create or replace package dw_converter as
    procedure execute_order_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
    procedure execute_dlvry_fact(fr_yyyypp in varchar2, to_yyyypp in varchar2);
    procedure update_dlvry_fact;
+   procedure update_sales_base;
 
 end dw_converter;
 /
@@ -786,6 +787,102 @@ create or replace package body dw_converter as
    /* End routine */
    /*-------------*/
    end update_dlvry_fact;
+
+   /**********************************************************/
+   /* This procedure performs the execute sales fact routine */
+   /**********************************************************/
+   procedure update_sales_base is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_size number(5,0);
+      var_work number(5,0);
+      var_exit boolean;
+      type typ_work is table of varchar2(10 char) index by binary_integer;
+      tbl_doc typ_work;
+      tbl_lin typ_work;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_source is 
+         select t01.billing_doc_num,
+                t01.billing_doc_line_num
+           from dw_sales_base t01
+          where t01.dlvry_doc_line_num is not null
+            and t01.dlvry_doc_line_num != '*ORDER';
+      rcd_source csr_source%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve rows from the source
+      /*-*/
+      var_size := 5000;
+      var_work := 0;
+      var_exit := false;
+      open csr_source;
+      loop
+         fetch csr_source into rcd_source;
+         if csr_source%notfound then
+            var_exit := true;
+         end if;
+
+         if var_exit = false then
+            var_work := var_work + 1;
+            tbl_doc(var_work) := rcd_source.billing_doc_num;
+            tbl_lin(var_work) := rcd_source.billing_doc_line_num;
+         end if;
+
+         if (var_exit = false and var_work = var_size) or
+            (var_exit = true and var_work > 0) then
+            forall idx in 1..var_work
+               update dw_sales_base set dlvry_doc_line_num = to_char(to_number(dlvry_doc_line_num),'fm000000')
+                where billing_doc_num = tbl_doc(idx)
+                  and billing_doc_line_num = tbl_lin(idx);
+            commit;
+            var_work := 0;
+            tbl_doc.delete;
+            tbl_lin.delete;
+         end if;
+
+         /*-*/
+         /* Exit the loop when required
+         /*-*/
+         if var_exit = true then
+            exit;
+         end if;
+
+      end loop;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+   
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - CDW - CONVERTER - UPDATE - SALES_BASE Procedure -' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_sales_base;
 
 end dw_converter;
 /  
