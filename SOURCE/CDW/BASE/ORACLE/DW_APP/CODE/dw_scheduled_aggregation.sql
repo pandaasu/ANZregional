@@ -1683,7 +1683,7 @@ create or replace package body dw_scheduled_aggregation as
            from dw_order_base t01,
                 order_type t02
           where t01.order_type_code = t02.order_type_code(+)
-            and t01.order_doc_num = rcd_trace.order_doc_line_num
+            and t01.order_doc_num = rcd_trace.order_doc_num
             and t01.order_doc_line_num = rcd_trace.order_doc_line_num;
       rcd_order_base csr_order_base%rowtype;
 
@@ -1693,7 +1693,7 @@ create or replace package body dw_scheduled_aggregation as
            from dw_purch_base t01,
                 purch_order_type t02
           where t01.purch_order_type_code = t02.purch_order_type_code(+)
-            and t01.purch_order_doc_num = rcd_trace.purch_order_doc_line_num
+            and t01.purch_order_doc_num = rcd_trace.purch_order_doc_num
             and t01.purch_order_doc_line_num = rcd_trace.purch_order_doc_line_num;
       rcd_purch_base csr_purch_base%rowtype;
 
