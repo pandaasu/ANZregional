@@ -37,6 +37,7 @@ create or replace package regl_dbp_reporting as
  -------   ------            -----------
  2008/01   Linden Glen       Created
  2008/03   Linden Glen       Removed Thailand footnote - now ex-shipment, not ex-distributor
+ 2008/06   Linden Glen       Removed 149 inclusion for Australia Petcare, based on Jacob Bell Chambers request
 
 *******************************************************************************/
 
@@ -395,8 +396,8 @@ create or replace package body ods_app.regl_dbp_reporting as
                from dds_dbp_week_mart a,
                     grd_matl_dim b
                where a.dbp_matl_code = b.matl_code(+)
-                 and ((a.dbp_company_code = '147' and b.bus_sgmnt_code = '05' and a.dbp_aag_code in ('01','02','03')) or
-                      (a.dbp_company_code = '149' and b.bus_sgmnt_code = '05' and a.dbp_aag_code in ('02','03')))
+                 and ((a.dbp_company_code = '147' and b.bus_sgmnt_code = '05' and a.dbp_aag_code in ('01','02','03'))) 
+    --              or (a.dbp_company_code = '149' and b.bus_sgmnt_code = '05' and a.dbp_aag_code in ('02','03')))
                  and a.dbp_yyyyppw = par_mars_yyyyppw)
          group by dbp_aag_code;
       rec_anz_pet_sales csr_anz_pet_sales%rowtype;
@@ -787,8 +788,8 @@ create or replace package body ods_app.regl_dbp_reporting as
       isi_mailer.append_data('   * This is an automated report sourced from market Datawarehouses.');
       isi_mailer.append_data('     Please email "AP Web/Notes Support" for any support issues/queries you may have');
 	  isi_mailer.append_data('  ');
-      isi_mailer.append_data('   * Australia Petcare - Affiliate: does not include NZ Factory sales to NZ Market.');
-      isi_mailer.append_data('                       - Birdcare figures are not included.');
+      isi_mailer.append_data('   * Australia Petcare - Does not include NZ Factory and Birdcare affiliate sales.');
+      isi_mailer.append_data('                       - Does not include foreign exchange gains or losses');
 	  isi_mailer.append_data('  ');
       isi_mailer.append_data('   * Singapore, Malaysia, Brunei, Indochina, Vietnam');
       isi_mailer.append_data('                       - values are ex-distributor (not ex-shipment)');
