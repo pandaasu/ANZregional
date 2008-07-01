@@ -110,14 +110,9 @@ create or replace package body ods_purging as
       cursor csr_header is
          select t01.fcst_hdr_code
            from fcst_hdr t01
-          where ((t01.casting_year*100)+t01.casting_period) < (select case when (substr(to_char((mars_period-var_history),'fm000000'),5,6) >= '01' and
-                                                                                  substr(to_char((mars_period-var_history),'fm000000'),5,6) <= '13')
-                                                                            then mars_period-var_history
-                                                                            else (mars_period-var_history-87)
-                                                                             end
-                                                                  from mars_date
-                                                                 where trunc(calendar_date) = trunc(sysdate));
-
+          where ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history-(87*(round(var_history/13,0)))
+                                                                 from mars_date
+                                                                where trunc(calendar_date) = trunc(sysdate));
       rcd_header csr_header%rowtype;
 
       cursor csr_lock is
