@@ -181,8 +181,9 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
       var_sql := var_sql || ' max(keyw_keyword_05_descl), max(keyw_keyword_06),max(keyw_keyword_06_desc), max(keyw_keyword_06_descl),';
       var_sql := var_sql || ' max(keyw_keyword_07),max(keyw_keyword_07_desc), max(keyw_keyword_07_descl), max(keyw_keyword_08),';
       var_sql := var_sql || ' max(keyw_keyword_08_desc), max(keyw_keyword_08_descl), max(keyw_keyword_09),max(keyw_keyword_09_desc),';
-      var_sql := var_sql || ' max(keyw_keyword_09_descl), max(keyw_keyword_10),max(keyw_keyword_11), max(keyw_keyword_12), max(keyw_misc1_x),';
-      var_sql := var_sql || ' max(keyw_misc2), max(keyw_misc3) from care_tdu_vw';
+      var_sql := var_sql || ' max(keyw_keyword_09_descl), max(keyw_keyword_10), max(keyw_keyword_10_desc),max(keyw_keyword_10_descl),';
+      var_sql := var_sql || ' max(keyw_keyword_11), max(keyw_keyword_11_desc), max(keyw_keyword_11_descl),max(keyw_keyword_12),';
+      var_sql := var_sql || ' max(keyw_misc1_x), max(keyw_misc2), max(keyw_misc3) from care_tdu_vw';
 
       if (upper(par_action) != '*ALL') then
          var_sql := var_sql || ' where sell_moe = ''' || par_action || '''';
@@ -431,7 +432,11 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
                 keyw_keyword_09_desc,
                 keyw_keyword_09_descl,
                 keyw_keyword_10,
+                keyw_keyword_10_desc,
+                keyw_keyword_10_descl,
                 keyw_keyword_11,
+                keyw_keyword_11_desc,
+                keyw_keyword_11_descl,
                 keyw_keyword_12,
                 keyw_misc1_x,
                 keyw_misc2,
