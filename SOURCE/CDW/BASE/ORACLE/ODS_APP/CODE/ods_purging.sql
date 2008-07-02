@@ -203,6 +203,7 @@ create or replace package body ods_purging as
          if csr_header%notfound then
             exit;
          end if;
+         close csr_header;
 
          /*-*/
          /* Attempt to lock the header
