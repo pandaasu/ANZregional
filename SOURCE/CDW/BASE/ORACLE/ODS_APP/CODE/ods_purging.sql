@@ -152,7 +152,7 @@ create or replace package body ods_purging as
       /*-*/
       /* Retrieve the history periods
       /*-*/
-      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','*DEFAULT'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','*DEFAULT'));
       begin
          var_history_default := to_number(var_work);
       exception
@@ -160,7 +160,7 @@ create or replace package body ods_purging as
             var_history_default := 36;
       end;
 
-      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','BR'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','BR'));
       begin
          var_history_br := to_number(var_work);
       exception
@@ -168,7 +168,7 @@ create or replace package body ods_purging as
             var_history_br := var_history_default;
       end;
 
-      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','ROB'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','ROB'));
       begin
          var_history_rob := to_number(var_work);
       exception
@@ -176,7 +176,7 @@ create or replace package body ods_purging as
             var_history_rob := var_history_default;
       end;
 
-      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','OP'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','OP'));
       begin
          var_history_op := to_number(var_work);
       exception
@@ -184,7 +184,7 @@ create or replace package body ods_purging as
             var_history_op := var_history_default;
       end;
 
-      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','FCST'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','FCST'));
       begin
          var_history_fcst := to_number(var_work);
       exception
