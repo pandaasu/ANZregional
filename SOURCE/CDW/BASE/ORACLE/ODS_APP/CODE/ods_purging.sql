@@ -152,40 +152,44 @@ create or replace package body ods_purging as
       /*-*/
       /* Retrieve the history periods
       /*-*/
-      select dsv_value into var_default_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'*DEFAULT'));
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','*DEFAULT'));
       begin
-         var_default_history := to_number(var_work);
+         var_history_default := to_number(var_work);
       exception
-         when others
-            var_default_history := 36;
-      end;    
-      select dsv_value into var_br_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'BR'));
-      begin
-         var_br_history := to_number(var_work);
-      exception
-         when others
-            var_br_history := var_default_history;
+         when others then
+            var_history_default := 36;
       end;
-      select dsv_value into var_rob_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'ROB'));
+
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','BR'));
       begin
-         var_rob_history := to_number(var_work);
+         var_history_br := to_number(var_work);
       exception
-         when others
-            var_rob_history := var_default_history;
+         when others then
+            var_history_br := var_history_default;
       end;
-      select dsv_value into var_op_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'OP'));
+
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','ROB'));
       begin
-         var_op_history := to_number(var_work);
+         var_history_rob := to_number(var_work);
       exception
-         when others
-            var_op_history := var_default_history;
+         when others then
+            var_history_rob := var_history_default;
       end;
-      select dsv_value into var_fcst_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'FCST'));
+
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','OP'));
       begin
-         var_fcst_history := to_number(var_work);
+         var_history_op := to_number(var_work);
       exception
-         when others
-            var_fcst_history := var_default_history;
+         when others then
+            var_history_op := var_history_default;
+      end;
+
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_PURGING','FCST'));
+      begin
+         var_history_fcst := to_number(var_work);
+      exception
+         when others then
+            var_history_fcst := var_history_default;
       end;
 
       /*-*/
