@@ -100,7 +100,12 @@ create or replace package body ods_purging as
       /*-*/
       /* Local definitions
       /*-*/
-      var_history number;
+      var_work varchar2(64);
+      var_history_default number;
+      var_history_br number;
+      var_history_rob number;
+      var_history_op number;
+      var_history_fcst number;
       var_count number;
       var_available boolean;
 
@@ -110,9 +115,26 @@ create or replace package body ods_purging as
       cursor csr_header is
          select t01.fcst_hdr_code
            from fcst_hdr t01
-          where ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history-(87*(round(var_history/13,0)))
-                                                                 from mars_date
-                                                                where trunc(calendar_date) = trunc(sysdate));
+          where (t01.fcst_type_code = 'BR' and
+                 ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history_br-(87*(round(var_history_br/13,0)))
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'ROB' and
+                 ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history_rob-(87*(round(var_history_rob/13,0)))
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'OP' and
+                 ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history_op-(87*(round(var_history_op/13,0)))
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'FCST' and
+                 ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history_fcst-(87*(round(var_history_fcst/13,0)))
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code not in('BR','ROB','OP','FCST') and
+                 ((t01.casting_year*100)+t01.casting_period) < (select mars_period-var_history_default-(87*(round(var_history_default/13,0)))
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)));
       rcd_header csr_header%rowtype;
 
       cursor csr_lock is
@@ -130,31 +152,53 @@ create or replace package body ods_purging as
       /*-*/
       /* Retrieve the history periods
       /*-*/
-      var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'FCST_HDR'));
+      select dsv_value into var_default_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'*DEFAULT'));
+      begin
+         var_default_history := to_number(var_work);
+      exception
+         when others
+            var_default_history := 36;
+      end;    
+      select dsv_value into var_br_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'BR'));
+      begin
+         var_br_history := to_number(var_work);
+      exception
+         when others
+            var_br_history := var_default_history;
+      end;
+      select dsv_value into var_rob_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'ROB'));
+      begin
+         var_rob_history := to_number(var_work);
+      exception
+         when others
+            var_rob_history := var_default_history;
+      end;
+      select dsv_value into var_op_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'OP'));
+      begin
+         var_op_history := to_number(var_work);
+      exception
+         when others
+            var_op_history := var_default_history;
+      end;
+      select dsv_value into var_fcst_history from table(lics_datastore.retrieve_value('ODS','ODS_PURGING,'FCST'));
+      begin
+         var_fcst_history := to_number(var_work);
+      exception
+         when others
+            var_fcst_history := var_default_history;
+      end;
 
       /*-*/
       /* Retrieve the headers
+      /* **note** the header cursor is reopened after each delete
       /*-*/
-      var_count := 0;
-      open csr_header;
+      var_count := 10000;
       loop
-         if var_count >= cnt_process_count then
-            if csr_header%isopen then
-               close csr_header;
-            end if;
-            commit;
-            open csr_header;
-            var_count := 0;
-         end if;
+         open csr_header;
          fetch csr_header into rcd_header;
          if csr_header%notfound then
             exit;
          end if;
-
-         /*-*/
-         /* Increment the count
-         /*-*/
-         var_count := var_count + 1;
 
          /*-*/
          /* Attempt to lock the header
@@ -178,17 +222,23 @@ create or replace package body ods_purging as
          /* Delete the header and related data when available
          /*-*/
          if var_available = true then
-            delete from fcst_dtl where fcst_hdr_code = rcd_lock.fcst_hdr_code;
+            loop
+               delete from fcst_dtl where fcst_hdr_code = rcd_lock.fcst_hdr_code and rownum <= var_count;
+               if sql%rowcount = 0 then
+                  exit;
+               end if;
+               commit;
+            end loop;
             delete from fcst_hdr where fcst_hdr_code = rcd_lock.fcst_hdr_code;
          end if;
 
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
+
       end loop;
       close csr_header;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
 
    /*-------------*/
    /* End routine */
