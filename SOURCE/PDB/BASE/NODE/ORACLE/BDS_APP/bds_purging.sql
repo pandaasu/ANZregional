@@ -19,6 +19,7 @@ create or replace package bds_purging as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/05   Trevor Keon    Created 
+  2008/07   Trevor Keon    Added recipe_purge into purge_ladpdb01 procedure
 
 *******************************************************************************/ 
 
@@ -214,6 +215,11 @@ create or replace package body bds_purging as
     /* Commit the database
     /*-*/
     commit;
+    
+    /*-*/
+    /* Remove any impacted recpe table data
+    /*-*/    
+    recipe_purge;
 
   /*-------------*/
   /* End routine */
