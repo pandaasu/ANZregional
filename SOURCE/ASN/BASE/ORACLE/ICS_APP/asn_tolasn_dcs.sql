@@ -28,6 +28,7 @@ create or replace package asn_tolasn_dcs as
                               Changed outbound acknowledgement interface to unique file name
     2007/11   Steve Gregan    Added sales order creation date to the DCS header table
     2008/02   Steve Gregan    Added the customer GTIN to the DCS detail table
+    2008/06   Steve Gregan    Added the material code to the DCS detail table
 
    *******************************************************************************/
 
@@ -117,6 +118,7 @@ create or replace package body asn_tolasn_dcs as
       lics_inbound_utility.set_definition('DET','DET_PLTCAS',4);
       lics_inbound_utility.set_definition('DET','DET_TIHILP',4);
       lics_inbound_utility.set_definition('DET','DET_TIHICL',4);
+      lics_inbound_utility.set_definition('DET','DET_MATCDE',8);
 
       /*-*/
       /* Retrieve the interface identifier from the inbound processor
@@ -593,6 +595,7 @@ create or replace package body asn_tolasn_dcs as
       rcd_asn_dcs_det.dcd_whs_palt_lay := lics_inbound_utility.get_number('DET_TIHILP',null);
       rcd_asn_dcs_det.dcd_whs_layr_unt := lics_inbound_utility.get_number('DET_TIHICL',null);
       rcd_asn_dcs_det.dcd_whs_cust_gtin := lics_inbound_utility.get_variable('DET_GTIN');
+      rcd_asn_dcs_det.dcd_whs_matl_code := lics_inbound_utility.get_variable('DET_MATCDE');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -639,7 +642,8 @@ create or replace package body asn_tolasn_dcs as
              dcd_whs_palt_qty,
              dcd_whs_palt_lay,
              dcd_whs_layr_unt,
-             dcd_whs_cust_gtin)
+             dcd_whs_cust_gtin,
+             dcd_whs_matl_code)
          values
             (rcd_asn_dcs_det.dcd_mars_cde,
              rcd_asn_dcs_det.dcd_pick_nbr,
@@ -654,7 +658,8 @@ create or replace package body asn_tolasn_dcs as
              rcd_asn_dcs_det.dcd_whs_palt_qty,
              rcd_asn_dcs_det.dcd_whs_palt_lay,
              rcd_asn_dcs_det.dcd_whs_layr_unt,
-             rcd_asn_dcs_det.dcd_whs_cust_gtin);
+             rcd_asn_dcs_det.dcd_whs_cust_gtin,
+             rcd_asn_dcs_det.dcd_whs_matl_code);
 
       end if;
 

@@ -79,6 +79,7 @@ create or replace package asn_dcs_processor as
     2007/11   Steve Gregan   Removed AS400 code
                              Added sales order creation date
     2008/02   Steve Gregan   Added the customer GTIN to the DCS detail table
+    2008/06   Steve Gregan   Added the material code to the DCS detail table
 
    *******************************************************************************/
 
@@ -158,17 +159,12 @@ create or replace package body asn_dcs_processor as
          select t01.dcd_mars_cde,
                 t01.dcd_pick_nbr,
                 t01.dcd_seqn_nbr,
-                t02.kdmat
+                t02.ean11
            from asn_dcs_det t01,
-                (select t01.charg,
-                        max(t01.kdmat) as kdmat
-                   from lads_del_det t01
-                  where t01.vbeln = rcd_asn_dcs_hdr.dch_pick_nbr
-                    and not(t01.kdmat is null)
-                  group by t01.charg) t02
+                lads_mat_hdr t02
           where t01.dcd_mars_cde = rcd_asn_dcs_hdr.dch_mars_cde
             and t01.dcd_pick_nbr = rcd_asn_dcs_hdr.dch_pick_nbr
-            and trim(t01.dcd_whs_btch) = trim(t02.charg);
+            and t01.dcd_whs_matl_code = lads_trim_code(t02.matnr);
       rcd_asn_dcs_det csr_asn_dcs_det%rowtype;
 
       cursor csr_lads_del_hdr is
@@ -595,7 +591,7 @@ create or replace package body asn_dcs_processor as
                               exit;
                            end if;
                            update asn_dcs_det
-                              set dcd_whs_cust_gtin = trim(rcd_asn_dcs_det.kdmat)
+                              set dcd_whs_cust_gtin = trim(rcd_asn_dcs_det.ean11)
                             where dcd_mars_cde = rcd_asn_dcs_det.dcd_mars_cde
                               and dcd_pick_nbr = rcd_asn_dcs_det.dcd_pick_nbr
                               and dcd_seqn_nbr = rcd_asn_dcs_det.dcd_seqn_nbr;

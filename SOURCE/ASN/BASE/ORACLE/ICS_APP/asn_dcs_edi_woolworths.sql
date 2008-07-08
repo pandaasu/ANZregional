@@ -37,6 +37,8 @@ create or replace package asn_dcs_edi_woolworths as
     2007/11   Steve Gregan   Created
     2008/02   Steve Gregan   Changed the interface file name
     2008/02   Steve Gregan   Changed the GTIN to the customer GTIN
+    2008/06   Steve Gregan   Changed the outbound interface to ASNEDI02
+                             and to use the interface generated file name
 
    *******************************************************************************/
 
@@ -362,7 +364,7 @@ create or replace package body asn_dcs_edi_woolworths as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ASNEDI02',null,'ASNWOOLWORTHS'||to_char(sysdate,'yyyymmddhh24miss')||'.xml');
+      var_instance := lics_outbound_loader.create_interface('ASNEDI02',null,null);
 
       /*-*/
       /* Append the interface data
