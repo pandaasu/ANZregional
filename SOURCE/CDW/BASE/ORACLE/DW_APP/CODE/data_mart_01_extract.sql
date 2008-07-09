@@ -487,9 +487,9 @@ create or replace package body data_mart_01_extract as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_sales_extract_01 is 
+      cursor csr_sales_extract_01 is
          select t01.company_code,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.base_uom_billed_qty end),0) as lyr_qty,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.gsv end),0) as lyr_gsv,
@@ -541,27 +541,29 @@ create or replace package body data_mart_01_extract as
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
            from sales_period_01_fact t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.ship_to_cust_code = t02.cust_code(+)
             and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
             and t01.hdr_sales_org_code = t02.sales_org_code(+)
             and t01.sold_to_cust_code = t03.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
-            and t01.hdr_division_code = t03.division_code(+) 
+            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+)
+            and t01.hdr_division_code = t03.division_code(+)
             and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.billing_eff_yyyypp >= var_str_yyyypp
             and t01.billing_eff_yyyypp <= var_end_yyyypp
             and t03.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t02.demand_plng_grp_code;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
 
-      cursor csr_sales_extract_02 is 
+      cursor csr_sales_extract_02 is
          select t01.company_code,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.base_uom_billed_qty),0) as ytw_qty,
                 nvl(sum(t01.gsv),0) as ytw_gsv,
@@ -607,21 +609,23 @@ create or replace package body data_mart_01_extract as
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
            from sales_fact t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.ship_to_cust_code = t02.cust_code(+)
             and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
             and t01.hdr_sales_org_code = t02.sales_org_code(+)
             and t01.sold_to_cust_code = t03.cust_code(+)
-            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
-            and t01.hdr_division_code = t03.division_code(+) 
+            and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+)
+            and t01.hdr_division_code = t03.division_code(+)
             and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.billing_eff_yyyyppw >= var_str_yyyyppw
             and t01.billing_eff_yyyyppw <= var_end_yyyyppw
             and t03.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t02.demand_plng_grp_code;
       rcd_sales_extract_02 csr_sales_extract_02%rowtype;
 
@@ -905,9 +909,9 @@ create or replace package body data_mart_01_extract as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_extract_01 is 
+      cursor csr_fcst_extract_01 is
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
                 nvl(sum(t01.fcst_value),0) as yee_gsv,
@@ -919,13 +923,13 @@ create or replace package body data_mart_01_extract as
             and t01.fcst_type_code = 'OP'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
 
-      cursor csr_fcst_extract_02 is 
+      cursor csr_fcst_extract_02 is
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
                 nvl(sum(t01.fcst_value),0) as yee_gsv,
@@ -937,13 +941,13 @@ create or replace package body data_mart_01_extract as
             and t01.fcst_type_code = 'ROB'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_02 csr_fcst_extract_02%rowtype;
 
-      cursor csr_fcst_extract_03 is 
+      cursor csr_fcst_extract_03 is
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value end),0) as ytg_gsv,
@@ -958,13 +962,13 @@ create or replace package body data_mart_01_extract as
             and t01.fcst_type_code = 'BR'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_03 csr_fcst_extract_03%rowtype;
 
-      cursor csr_fcst_extract_04 is 
+      cursor csr_fcst_extract_04 is
          select t01.company_code,
-                t01.matl_code,
+                t01.matl_zrep_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.fcst_yyyyppw >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_cyr_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
                 nvl(sum(case when t01.fcst_yyyyppw >= var_ytg_str_yyyyppw and t01.fcst_yyyypp <= var_cyr_end_yyyypp then t01.fcst_value end),0) as ytg_gsv,
@@ -1057,7 +1061,7 @@ create or replace package body data_mart_01_extract as
             and t01.fcst_type_code = 'FCST'
             and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
-                   t01.matl_code,
+                   t01.matl_zrep_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_04 csr_fcst_extract_04%rowtype;
 
@@ -1118,7 +1122,7 @@ create or replace package body data_mart_01_extract as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_01.company_code,
-                       rcd_fcst_extract_01.matl_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.demand_plng_grp_code);
 
          /*-*/
@@ -1127,7 +1131,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_qty
           where company_code = rcd_fcst_extract_01.company_code
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = 'QTY';
 
@@ -1137,7 +1141,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_gsv
           where company_code = rcd_fcst_extract_01.company_code
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = 'GSV';
 
@@ -1147,7 +1151,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_op_value = cyr_yte_op_value + rcd_fcst_extract_01.yee_ton
           where company_code = rcd_fcst_extract_01.company_code
-            and matl_code = rcd_fcst_extract_01.matl_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
             and data_type = 'TON';
 
@@ -1168,7 +1172,7 @@ create or replace package body data_mart_01_extract as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_02.company_code,
-                       rcd_fcst_extract_02.matl_code,
+                       rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.demand_plng_grp_code);
 
          /*-*/
@@ -1177,7 +1181,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_qty
           where company_code = rcd_fcst_extract_02.company_code
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = 'QTY';
 
@@ -1187,7 +1191,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_gsv
           where company_code = rcd_fcst_extract_02.company_code
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = 'GSV';
 
@@ -1197,7 +1201,7 @@ create or replace package body data_mart_01_extract as
          update data_mart_01_det
             set cyr_yte_rob_value = cyr_yte_rob_value + rcd_fcst_extract_02.yee_ton
           where company_code = rcd_fcst_extract_02.company_code
-            and matl_code = rcd_fcst_extract_02.matl_code
+            and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
             and data_type = 'TON';
 
@@ -1218,7 +1222,7 @@ create or replace package body data_mart_01_extract as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_03.company_code,
-                       rcd_fcst_extract_03.matl_code,
+                       rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.demand_plng_grp_code);
 
          /*-*/
@@ -1229,7 +1233,7 @@ create or replace package body data_mart_01_extract as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_qty,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_qty
           where company_code = rcd_fcst_extract_03.company_code
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = 'QTY';
 
@@ -1241,7 +1245,7 @@ create or replace package body data_mart_01_extract as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_gsv,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_gsv
           where company_code = rcd_fcst_extract_03.company_code
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = 'GSV';
 
@@ -1253,7 +1257,7 @@ create or replace package body data_mart_01_extract as
                 nyr_yte_br_value = nyr_yte_br_value + rcd_fcst_extract_03.nyr_ton,
                 cyr_yee_inv_br_value = cyr_yee_inv_br_value + rcd_fcst_extract_03.ytg_ton
           where company_code = rcd_fcst_extract_03.company_code
-            and matl_code = rcd_fcst_extract_03.matl_code
+            and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
             and data_type = 'TON';
 
@@ -1274,7 +1278,7 @@ create or replace package body data_mart_01_extract as
          /* Create the data mart detail
          /*-*/
          create_detail(rcd_fcst_extract_04.company_code,
-                       rcd_fcst_extract_04.matl_code,
+                       rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.demand_plng_grp_code);
 
          /*-*/
@@ -1311,7 +1315,7 @@ create or replace package body data_mart_01_extract as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_qty,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_qty
           where company_code = rcd_fcst_extract_04.company_code
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = 'QTY';
 
@@ -1349,7 +1353,7 @@ create or replace package body data_mart_01_extract as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_gsv,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_gsv
           where company_code = rcd_fcst_extract_04.company_code
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = 'GSV';
 
@@ -1387,7 +1391,7 @@ create or replace package body data_mart_01_extract as
                 p26_value = p26_value + rcd_fcst_extract_04.p26_ton,
                 p27_value = p27_value + rcd_fcst_extract_04.p27_ton
           where company_code = rcd_fcst_extract_04.company_code
-            and matl_code = rcd_fcst_extract_04.matl_code
+            and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
             and data_type = 'TON';
 
@@ -1414,7 +1418,7 @@ create or replace package body data_mart_01_extract as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_data_mart_01_det is 
+      cursor csr_data_mart_01_det is
          select 'x'
            from data_mart_01_det t01
           where t01.company_code = par_company_code
