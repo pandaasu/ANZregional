@@ -60,9 +60,8 @@ function GetUser()
    '// Returns the current logon user
    '//
    dim strUser
- ''  strUser = UCase(request.ServerVariables("LOGON_USER"))
- ''  GetUser = strUser
-   GetUser = "gregaste"
+   strUser = UCase(request.ServerVariables("LOGON_USER"))
+   GetUser = strUser
 
 end function
 
