@@ -628,7 +628,7 @@ create or replace package body xlxml_object as
       /* Variable definitions */
       /**/
       strBuffer varchar2(4000 char);
-      intSize binary_integer := 4000;
+      intSize binary_integer := 2000;
 
    /*-------------*/
    /* Begin block */
