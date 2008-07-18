@@ -132,6 +132,7 @@ create or replace package body dw_mart_aggregation as
          exception
             when others then
                var_errors := true;
+               lics_logging.write_log(substr(SQLERRM, 1, 3000));
          end;
 
          /*-*/
