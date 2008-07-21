@@ -34,6 +34,7 @@ create or replace package bds_atllad21_flatten as
  2006/11   Linden Glen    Created
  2006/11   Linden Glen    Changed sap_classfctn_code to sap_charistic_value_code
  2007/08   Steve Gregan   Changed to ignore descriptions with no language key
+ 2008/07   Linden Glen    Added *NONE decode to LANGUAGE on SAP_CHARISTIC_VALUE
 
 *******************************************************************************/
 
@@ -169,7 +170,7 @@ create or replace package body bds_atllad21_flatten as
 
       cursor csr_lads_chr_mas_value is
          select nvl(t01.atwrt,'*NONE') as atwrt,
-                t02.spras_iso as spras_iso,
+                nvl(t02.spras_iso,'*NONE') as spras_iso,
                 max(t02.atwtb) as atwtb
          from lads_chr_mas_val t01,
               lads_chr_mas_dsc t02
@@ -177,7 +178,7 @@ create or replace package body bds_atllad21_flatten as
            and t01.valseq = t02.valseq(+)
            and t01.atzhl = t02.atzhl(+)
            and t01.atnam = rcd_lads_chr_mas_hdr.atnam
-         group by nvl(t01.atwrt,'*NONE'), t02.spras_iso;
+         group by nvl(t01.atwrt,'*NONE'), nvl(t02.spras_iso,'*NONE');
       rcd_lads_chr_mas_value  csr_lads_chr_mas_value%rowtype;
 
       cursor csr_lads_chr_mas_det is

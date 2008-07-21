@@ -15,6 +15,7 @@
  -------   ------         -----------
  2006/11   Linden Glen    Created
  2006/11   Linden Glen    Changed sap_classfctn_code to sap_charistic_value_code
+ 2008/07   Linden Glen    Altered LANG column to 5 from 2 to allow for *NONE
 
 *******************************************************************************/
 
@@ -25,7 +26,7 @@
 create table bds_charistic_value
    (sap_charistic_code                varchar2(30 char)     not null,
     sap_charistic_value_code          varchar2(30 char)     not null, 
-    sap_charistic_value_lang          varchar2(2 char)      not null,
+    sap_charistic_value_lang          varchar2(5 char)      not null,
     sap_charistic_value_desc          varchar2(30 char)     null);
     
     
