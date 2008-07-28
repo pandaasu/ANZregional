@@ -26,8 +26,6 @@
    dim objSecurity
    dim objSelection
    dim objFunction
-   dim seiInterface
-   dim seiUser
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -143,7 +141,7 @@ sub ProcessSelect()
    strQuery = strQuery & " t01.sei_interface,"
    strQuery = strQuery & " t01.sei_user"
    strQuery = strQuery & " from lics_sec_interface t01"
-   strQuery = strQuery & " order by t01.sei_user"
+   strQuery = strQuery & " order by t01.sei_interface"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -185,15 +183,14 @@ sub ProcessInsertAccept()
    '//
    '// Insert the interface
    '//
-   strStatement = "lics_security_configuration.insert_user("
+   strStatement = "lics_security_configuration.insert_int_sec("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiInterface").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiUser").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
-      strError = FormatError(strReturn)
-      strMode = "SELECT"
-      call ProcessSelect
+      strMode = "INSERT"
+      strReturn = FormatError(strReturn)
       exit sub
    end if
 
@@ -236,14 +233,17 @@ sub ProcessUpdateLoad()
       exit sub
    end if
 
-   seiInterface = objSelection.ListValue01("LIST",objSelection.ListLower("LIST"))
-   seiUser = objSelection.ListValue02("LIST",objSelection.ListLower("LIST"))
-
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_SeiInterface", seiInterface)
-   call objForm.AddField("DTA_SeiUser", seiUser)
+   call objForm.AddField("DTA_SeiInterface", objSelection.ListValue01("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_SeiUser", objSelection.ListValue02("LIST",objSelection.ListLower("LIST")))
+   
+   '//
+   '// Initialise the hidden data fields
+   '//
+   call objForm.AddField("DTA_SeiInterfaceOld", objSelection.ListValue01("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_SeiUserOld", objSelection.ListValue02("LIST",objSelection.ListLower("LIST")))   
 
    '//
    '// Set the mode
@@ -268,9 +268,9 @@ sub ProcessUpdateAccept()
    '//
    '// Update the interface
    '//
-   strStatement = "lics_interface_configuration.update_int_sec("
-   strStatement = strStatement & "'" & seiInterface & "',"
-   strStatement = strStatement & "'" & seiUser & "',"
+   strStatement = "lics_security_configuration.update_int_sec("
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiInterfaceOld").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiUserOld").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiInterface").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiUser").Value) & "'"
    strStatement = strStatement & ")"
@@ -349,7 +349,7 @@ sub ProcessDeleteAccept()
    '//
    '// Delete the interface
    '//
-   strStatement = "lics_interface_configuration.delete_interface("
+   strStatement = "lics_security_configuration.delete_int_sec("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiInterface").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeiUser").Value) & "'"
    strStatement = strStatement & ")"

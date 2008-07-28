@@ -106,6 +106,8 @@
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_SeiInterface" value="<%=objForm.Fields("DTA_SeiInterface").Value%>">
    <input type="hidden" name="DTA_SeiUser" value="<%=objForm.Fields("DTA_SeiUser").Value%>">
+   <input type="hidden" name="DTA_SeiInterfaceOld" value="<%=objForm.Fields("DTA_SeiInterfaceOld").Value%>">
+   <input type="hidden" name="DTA_SeiUserOld" value="<%=objForm.Fields("DTA_SeiUserOld").Value%>">
 </form>
 </body>
 </html>
