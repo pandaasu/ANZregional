@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   22-Apr-2008  Trevor Keon      Created 
+  22-Jul-2008  Trevor Keon      Changed precision for case_qty
 *******************************************************************************/
 
 create or replace package ics_app.ics_sbwics01 as
@@ -74,7 +75,7 @@ create or replace package body ics_app.ics_sbwics01 as
     (
       v_id                      varchar2(3),
       trad_unit_code            varchar2(18),
-      case_qty                  number(20)
+      case_qty                  number
     ); 
   
   rcd_hdr hdr_type;
