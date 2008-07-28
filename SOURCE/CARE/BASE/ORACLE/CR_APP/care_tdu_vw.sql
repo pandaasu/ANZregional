@@ -204,9 +204,10 @@ CREATE OR REPLACE FORCE VIEW cr_app.care_tdu_vw AS
     FROM grd_mat_hdr a, grd_mat_det b
    WHERE a.matnr = b.matnr
      AND b.orgentity IN
-           ('0021', '0042', '0196', '0168', '0177', '0199', '0201', '0222',
-            '0200', '0085', '0083', '0246', '0009', '0086', '0021', '0370',
-            '0085', '0200')
+     (
+       '0009', '0021', '0042', '0083', '0085', '0086', '0168', '0177', 
+       '0196', '0199', '0200', '0201', '0222', '0246', '0370'
+     )
      AND b.usagecode = 'SEL'
      AND a.brnd IS NOT NULL
      AND a.brndsub IS NOT NULL
