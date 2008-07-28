@@ -20,8 +20,8 @@
    function checkChange() {
       var bolChange = false;
       var bolReturn;
-      if (document.main.INP_SeiInterface.value != document.main.DTA_SeiInterface.value) {bolChange = true;}
-      if (document.main.INP_SeiUser.value != document.main.DTA_SeiUser.value) {bolChange = true;}
+      if (document.main.DTA_SeiInterface.value != '') {bolChange = true;}
+      if (document.main.DTA_SeiUser.value != '') {bolChange = true;}
       if (bolChange == true) {
          bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
          return bolReturn;
@@ -37,11 +37,11 @@
    function doAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.main.INP_SeiInterface.value == '') {
+      if (document.main.DTA_SeiInterface.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Interface identifier must be entered';
       }
-      if (document.main.INP_SeiUser.value == '') {
+      if (document.main.DTA_SeiUser.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'User must be entered';
       }
@@ -49,8 +49,6 @@
          alert(strMessage);
          return;
       }
-      document.main.DTA_SeiInterface.value = document.main.INP_SeiInterface.value;
-      document.main.DTA_SeiUser.value = document.main.INP_SeiUser.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'INSERT_ACCEPT';
       document.main.submit();
@@ -65,6 +63,12 @@
    function setSelect(objInput) {
       objInput.select();
    }
+   function selectBasicInterface(objSelect) {
+      document.main.DTA_SeiInterface.value = objSelect.options[objSelect.selectedIndex].value;
+   }   
+   function selectBasicUser(objSelect) {
+      document.main.DTA_SeiUser.value = objSelect.options[objSelect.selectedIndex].value;
+   }  
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -77,17 +81,23 @@
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Identifier:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_SeiInterface" size="32" maxlength="32" value="<%=objForm.Fields("DTA_SeiInterface").Value%>" onFocus="setSelect(this);">
+         <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Interface Identifier:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="sltBasicInterface" onChange="selectBasicInterface(this);">
+               <option value=""<%if objForm.Fields("DTA_SeiInterface").Value = "" then%> selected<%end if%>>Please select interface<%for i = 0 to objSelection.ListCount("INTERFACE") - 1%>
+               <option value="<%=objSelection.ListValue01("INTERFACE",i)%>"<%if objForm.Fields("DTA_SeiInterface").Value = objSelection.ListValue01("INTERFACE",i) then%> selected<%end if%>>(<%=objSelection.ListValue01("INTERFACE",i)%>) <%=objSelection.ListValue02("INTERFACE",i)%><%next%>
+            </select>
          </nobr></td>
-      </tr>
+      </tr>     
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;User:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_SeiUser" size="64" maxlength="128" value="<%=objForm.Fields("DTA_SeiUser").Value%>" onFocus="setSelect(this);">
+         <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;User:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="sltBasicUser" onChange="selectBasicUser(this);">
+               <option value=""<%if objForm.Fields("DTA_SeiUser").Value = "" then%> selected<%end if%>>Please select user<%for i = 0 to objSelection.ListCount("USER") - 1%>
+               <option value="<%=objSelection.ListValue01("USER",i)%>"<%if objForm.Fields("DTA_SeiUser").Value = objSelection.ListValue01("USER",i) then%> selected<%end if%>>(<%=objSelection.ListValue01("USER",i)%>) <%=objSelection.ListValue02("USER",i)%><%next%>
+            </select>
          </nobr></td>
-      </tr>
+      </tr> 
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>

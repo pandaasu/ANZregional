@@ -37,7 +37,7 @@
    '// Initialise the script
    '//
    strTarget = "ics_sec_int_configuration.asp"
-   strHeading = "Interface Configuration"
+   strHeading = "Interface Security Configuration"
    aryIntStatus(0) = "Inactive"
    aryIntStatus(1) = "Active"
 
@@ -155,6 +155,11 @@ end sub
 sub ProcessInsertLoad()
 
    '//
+   '// Load required data for the form
+   '//
+   call LoadRequiredData
+
+   '//
    '// Initialise the data fields
    '//
    call objForm.AddField("DTA_SeiInterface", "")
@@ -209,12 +214,11 @@ sub ProcessUpdateLoad()
 
    dim strQuery
    dim lngSize
-
+   
    '//
-   '// Create the selection object
+   '// Load required data for the form
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   call LoadRequiredData   
 
    '//
    '// Retrieve the interface data
@@ -365,6 +369,47 @@ sub ProcessDeleteAccept()
    '//
    strMode = "SELECT"
    call ProcessSelect
+
+end sub
+
+'///////////////////////////////////////////
+'// Load required data for insert/updates //
+'///////////////////////////////////////////
+sub LoadRequiredData()
+
+   dim strQuery
+   
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Execute the interface selection
+   '//
+   strQuery = "select t01.int_interface,"
+   strQuery = strQuery & " t01.int_description"
+   strQuery = strQuery & " from lics_interface t01"
+   strQuery = strQuery & " order by t01.int_interface asc"
+   strReturn = objSelection.Execute("INTERFACE", strQuery, 0)
+   if strReturn <> "*OK" then
+      strReturn = FormatError(strReturn)
+      exit sub
+   end if
+   
+   '//
+   '// Execute the user selection
+   '//
+   strQuery = "select t01.seu_user,"
+   strQuery = strQuery & " t01.seu_description"
+   strQuery = strQuery & " from lics_sec_user t01"
+   strQuery = strQuery & " order by t01.seu_user asc"
+   strReturn = objSelection.Execute("USER", strQuery, 0)
+   if strReturn <> "*OK" then
+      strReturn = FormatError(strReturn)
+      exit sub
+   end if   
 
 end sub
 
