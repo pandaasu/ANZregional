@@ -21,6 +21,7 @@ create or replace package lics_security_configuration as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/06   Steve Gregan   Created
+    2008/07   Trevor Keon    Added interface security support
 
    *******************************************************************************/
 
@@ -55,6 +56,14 @@ create or replace package lics_security_configuration as
                           par_script in varchar2,
                           par_status in varchar2) return varchar2;
    function delete_option(par_option in varchar2) return varchar2;
+   function insert_int_sec(par_interface in varchar2,
+                           par_user in varchar2) return varchar2;
+   function update_int_sec(par_interface in varchar2,
+                           par_user in varchar2,
+                           par_interface_new in varchar2,
+                           par_user_new in varchar2) return varchar2;
+   function delete_int_sec(par_interface in varchar2,
+                           par_user in varchar2) return varchar2;                                                      
 
 end lics_security_configuration;
 /
@@ -77,6 +86,7 @@ create or replace package body lics_security_configuration as
    rcd_lics_sec_menu lics_sec_menu%rowtype;
    rcd_lics_sec_link lics_sec_link%rowtype;
    rcd_lics_sec_option lics_sec_option%rowtype;
+   rcd_lics_sec_interface lics_sec_interface%rowtype;
 
    /**************************************************/
    /* This function performs the insert user routine */
@@ -1406,6 +1416,321 @@ create or replace package body lics_security_configuration as
    /* End routine */
    /*-------------*/
    end delete_option;
+   
+   function insert_int_sec(par_interface in varchar2,
+                           par_user in varchar2) return varchar2 is
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_lics_sec_interface_01 is 
+         select *
+           from lics_sec_interface t01
+          where t01.sei_interface = rcd_lics_sec_interface.sei_interface
+            and t01.sei_user = rcd_lics_sec_interface.sei_user;
+      rcd_lics_sec_interface_01 csr_lics_sec_interface_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Interface Control System - Security Configuration - Insert Interface Security';
+      var_message := null;
+
+      /*-*/
+      /* Set the private variables
+      /**/
+      rcd_lics_sec_interface.sei_interface := upper(par_interface);
+      rcd_lics_sec_interface.sei_user := upper(par_user);
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      if rcd_lics_sec_interface.sei_interface is null then
+         var_message := var_message || chr(13) || 'Interface must be specified';
+      end if;
+      if rcd_lics_sec_interface.sei_user is null then
+         var_message := var_message || chr(13) || 'User must be specified';
+      end if;
+
+      /*-*/
+      /* Interface security must not already exist
+      /*-*/
+      open csr_lics_sec_interface_01;
+      fetch csr_lics_sec_interface_01 into rcd_lics_sec_interface_01;
+      if csr_lics_sec_interface_01%found then
+         var_message := var_message || chr(13) || 'Security on interface (' || rcd_lics_sec_interface.sei_interface || ') already exists for user (' || rcd_lics_sec_interface.sei_user || ')';
+      end if;
+      close csr_lics_sec_interface_01;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Create the new option
+      /*-*/
+      insert into lics_sec_interface
+         (sei_interface,
+          sei_user)
+         values(rcd_lics_sec_interface.sei_interface,
+                rcd_lics_sec_interface.sei_user);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end insert_int_sec;
+                              
+   function update_int_sec(par_interface in varchar2,
+                           par_user in varchar2,
+                           par_interface_new in varchar2,
+                           par_user_new in varchar2) return varchar2 is
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_lics_sec_interface_01 is 
+         select *
+           from lics_sec_interface t01
+          where t01.sei_interface = rcd_lics_sec_interface.sei_interface
+            and t01.sei_user = rcd_lics_sec_interface.sei_user;
+      rcd_lics_sec_interface_01 csr_lics_sec_interface_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Interface Control System - Security Configuration - Update Interface Security';
+      var_message := null;
+
+      /*-*/
+      /* Set the private variables
+      /**/
+      rcd_lics_sec_interface.sei_interface := upper(par_interface);
+      rcd_lics_sec_interface.sei_user := upper(par_user);
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      if rcd_lics_sec_interface.sei_interface is null then
+         var_message := var_message || chr(13) || 'Interface must be specified';
+      end if;
+      if rcd_lics_sec_interface.sei_user is null then
+         var_message := var_message || chr(13) || 'User must be specified';
+      end if;
+
+      /*-*/
+      /* Option must already exist
+      /*-*/
+      open csr_lics_sec_interface_01;
+      fetch csr_lics_sec_interface_01 into rcd_lics_sec_interface_01;
+      if csr_lics_sec_interface_01%notfound then
+         var_message := var_message || chr(13) || 'Security on interface (' || rcd_lics_sec_interface.sei_interface || ') does not exists for user (' || rcd_lics_sec_interface.sei_user || ')';
+      end if;
+      close csr_lics_sec_interface_01;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Update the existing interface
+      /*-*/
+      update lics_sec_interface
+         set sei_interface = upper(par_interface_new),
+             sei_user = upper(par_user_new)
+         where sei_interface = rcd_lics_sec_interface.sei_interface
+          and sei_user = rcd_lics_sec_interface.sei_user;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_int_sec;    
+                          
+   function delete_int_sec(par_interface in varchar2,
+                           par_user in varchar2) return varchar2 is
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_title varchar2(128);
+      var_message varchar2(4000);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_lics_sec_interface_01 is 
+         select *
+           from lics_sec_interface t01
+          where t01.sei_interface = rcd_lics_sec_interface.sei_interface
+            and t01.sei_user = rcd_lics_sec_interface.sei_user;
+      rcd_lics_sec_interface_01 csr_lics_sec_interface_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the message
+      /*-*/
+      var_title := 'Interface Control System - Security Configuration - Delete Interface Security';
+      var_message := null;
+
+      /*-*/
+      /* Set the private variables
+      /**/
+      rcd_lics_sec_interface.sei_interface := upper(par_interface);
+      rcd_lics_sec_interface.sei_user := upper(par_user);
+
+      /*-*/
+      /* Validate the parameter values
+      /*-*/
+      if rcd_lics_sec_interface.sei_interface is null or rcd_lics_sec_interface.sei_user is null then
+         var_message := var_message || chr(13) || 'Interface and user must be specified';
+      end if;
+
+      /*-*/
+      /* interface must already exist
+      /*-*/
+      open csr_lics_sec_interface_01;
+      fetch csr_lics_sec_interface_01 into rcd_lics_sec_interface_01;
+      if csr_lics_sec_interface_01%notfound then
+         var_message := var_message || chr(13) || 'Interface security for interface (' || rcd_lics_sec_interface.sei_interface || ') and user (' || rcd_lics_sec_interface.sei_user || ') does not exist';
+      end if;
+      close csr_lics_sec_interface_01;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
+      /* Delete the existing interface
+      /*-*/
+      delete from lics_sec_interface
+         where sei_interface = rcd_lics_sec_interface.sei_interface
+           and sei_user = rcd_lics_sec_interface.sei_user;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return '*OK';
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, var_title || chr(13) || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end delete_int_sec;                                   
 
 end lics_security_configuration;
 /  

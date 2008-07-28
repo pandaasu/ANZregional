@@ -37,7 +37,7 @@
    '// Initialise the script
    '//
    strTarget = "ics_sec_int_configuration.asp"
-   strHeading = "Interface Security Configuration"
+   strHeading = "Security Interface Configuration"
    aryIntStatus(0) = "Inactive"
    aryIntStatus(1) = "Active"
 
