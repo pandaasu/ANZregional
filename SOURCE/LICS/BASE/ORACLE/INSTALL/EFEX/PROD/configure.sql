@@ -7,9 +7,9 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define database = ap0070p.ap.mars
+define database = ap0085p.ap.mars
 define datauser = lics_app
-define data_password = licsapp0218p
+define data_password = licsfexapp
 
 /**/
 /* Create the configuration data
@@ -20,10 +20,11 @@ connect ^datauser/^data_password@^database
 
 prompt CREATING JOB CONFIGURATION ...
 
-insert into lics_job values('INBOUND_NORMAL','Inbound Interfaces (Normal Priority) #01',null,20,null,'mfanz.cdw.support','*INBOUND','IB_NORM#01',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_NORMAL02','Inbound Interfaces (Normal Priority) #02',null,20,null,'mfanz.cdw.support','*INBOUND','IB_NORM#02',null,'sysdate',null,'1');
-insert into lics_job values('OUTBOUND_NORMAL','Outbound Interfaces (Normal Priority)',null,20,null,'mfanz.cdw.support','*OUTBOUND','OB_NORM',null,'sysdate',null,'1');
-insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'mfanz.cdw.support','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('INBOUND_NORMAL01','Inbound Interfaces (Normal Priority) #01',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*INBOUND','IB_NORM#01',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_NORMAL02','Inbound Interfaces (Normal Priority) #02',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*INBOUND','IB_NORM#02',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_NORMAL01','Outbound Interfaces (Normal Priority)',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*OUTBOUND','OB_NORM#01',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_NORMAL02','Outbound Interfaces (Normal Priority)',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*OUTBOUND','OB_NORM#02',null,'sysdate',null,'1');
+insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...

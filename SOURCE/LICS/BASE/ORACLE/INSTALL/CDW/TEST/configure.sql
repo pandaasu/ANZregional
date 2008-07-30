@@ -7,9 +7,9 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define database = ap0070p.ap.mars
+define database = ap0066t.ap.mars
 define datauser = lics_app
-define data_password = licsapp0218p
+define data_password = licsgold
 
 /**/
 /* Create the configuration data

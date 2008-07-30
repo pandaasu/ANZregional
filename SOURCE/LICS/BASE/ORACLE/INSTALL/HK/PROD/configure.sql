@@ -7,9 +7,10 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define database = db0767d.ap.mars
+define database = ap0115p.ap.mars
 define datauser = lics_app
-define data_password = licsapp_dev
+define data_password = licsappcup
+
 /**/
 /* Create the configuration data
 /**/
@@ -19,24 +20,32 @@ connect ^datauser/^data_password@^database
 
 prompt CREATING JOB CONFIGURATION ...
 
-insert into lics_job values('INBOUND_REF01','Inbound Reference Interfaces (Processor 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#01',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF02','Inbound Reference Interfaces (Processor 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#02',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF03','Inbound Reference Interfaces (Processor 03)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#03',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF04','Inbound Reference Interfaces (Processor 04)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#04',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_TRN01','Inbound Transactional Interfaces (Processor 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_TRN#01',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_TRN02','Inbound Transactional Interfaces (Processor 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_TRN#02',null,'sysdate',null,'1');
-insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('INBOUND_REF01','Inbound Reference Interfaces (Processor 01)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_REF#01',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF02','Inbound Reference Interfaces (Processor 02)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_REF#02',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF03','Inbound Reference Interfaces (Processor 03)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_REF#03',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF04','Inbound Reference Interfaces (Processor 04)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_REF#04',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_SERIAL','Inbound Serial Interfaces',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_SERIAL',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_TRN01','Inbound Transactional Interfaces (Processor 01)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_TRN#01',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_TRN02','Inbound Transactional Interfaces (Processor 02)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_TRN#02',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_TRN03','Inbound Transactional Interfaces (Processor 03)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_TRN#03',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_TRN04','Inbound Transactional Interfaces (Processor 04)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*INBOUND','IB_TRN#04',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_PRC01','Outbound Interfaces (Processor 01)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*OUTBOUND','OB_PRC#01',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_PRC02','Outbound Interfaces (Processor 02)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*OUTBOUND','OB_PRC#02',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_PRC03','Outbound Interfaces (Processor 03)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*OUTBOUND','OB_PRC#03',null,'sysdate',null,'1');
+insert into lics_job values('PASSTHRU_PRC01','Passthru Interfaces (Processor 01)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*PASSTHRU','PT_PRC#01',null,'sysdate',null,'1');
+insert into lics_job values('PASSTHRU_PRC02','Passthru Interfaces (Processor 02)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*PASSTHRU','PT_PRC#02',null,'sysdate',null,'1');
+insert into lics_job values('PASSTHRU_PRC03','Passthru Interfaces (Processor 03)',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*PASSTHRU','PT_PRC#03',null,'sysdate',null,'1');
+insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*PROCEDURE',null,'lics_purging.execute','lics_schedule_tz(''*ALL'',7,''Asia/Hong_Kong'')','lics_schedule_tz(''*ALL'',7,''Asia/Hong_Kong'')','1');
+insert into lics_job values('LADS_PURGING','LADS Purging',null,20,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars','*PROCEDURE',null,'lads_purging.execute','lics_schedule_tz(''*ALL'',7,''Asia/Hong_Kong'')','lics_schedule_tz(''*ALL'',7,''Asia/Hong_Kong'')','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...
 
 insert into lics_sec_user values('*GUEST','Guest','GUEST','1');
 insert into lics_sec_user values('GREGASTE','Steve Gregan','ICS_ADMIN','1');
-insert into lics_sec_user values('HENDEMEG','Megan Henderson','ICS_ADMIN','1');
+insert into lics_sec_user values('GIRLIJON','Jonathan Girling','ICS_ADMIN','1');
 insert into lics_sec_user values('GLENLIN','Linden Glen','ICS_ADMIN','1');
 insert into lics_sec_user values('KEONTRE','Trevor Keon','ICS_ADMIN','1');
-insert into lics_sec_user values('GIRLIJON','Jonathan Girling','ICS_ADMIN','1');
-insert into lics_sec_user values('MANDASUN','Sunil Mandalika','ICS_ADMIN','1');
 
 insert into lics_sec_menu values('*SECURITY','Security');
 insert into lics_sec_link values('*SECURITY',1,'*OPT','ICS_USR_CONFIG');
