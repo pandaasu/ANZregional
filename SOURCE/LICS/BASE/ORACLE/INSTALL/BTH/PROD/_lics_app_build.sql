@@ -19,11 +19,11 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define pro_path = C:\ISI_REPOSITORY\SOURCE\ISI_LICS\BASE\ORACLE\LICS_APP\CODE
-define spl_path = C:\ISI_REPOSITORY\SOURCE\ISI_LICS\BASE\ORACLE
-define database = db0719p.ap.mars
+define pro_path = C:\TEMP\BTH\LICS_APP\CODE
+define spl_path = C:\TEMP\BTH
+define database = bth001.ap.mars
 define codeuser = lics_app
-define code_password = acorn23
+define code_password = riddoch96
 
 /**/
 /* Start the spool process

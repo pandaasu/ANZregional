@@ -19,11 +19,11 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define tab_path = C:\<PATH>\LICS\TABLE
-define spl_path = C:\<PATH>
-define database = <DATABASE>.ap.mars
+define tab_path = <DBA TO ENTER>\LICS\TABLE
+define spl_path = <DBA TO ENTER>
+define database = bthlx001.ap.mars
 define datauser = lics
-define data_password = <PASSWORD>
+define data_password = <DBA TO ENTER>
 
 /**/
 /* Start the spool process
