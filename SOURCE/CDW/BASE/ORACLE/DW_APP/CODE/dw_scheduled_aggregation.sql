@@ -37,7 +37,8 @@ create or replace package dw_scheduled_aggregation as
     2007/08   Steve Gregan   Created
     2008/02   Steve Gregan   Added NZ market sales aggregation
     2008/05   Steve Gregan   Modified for NZ demand planning group division
-    2008/06   Steve Gregan   Added SAP retrieval and SAP alignment 
+    2008/06   Steve Gregan   Added SAP retrieval and SAP alignment
+    2008/08   Steve Gregan   Included APO rejection code Z9
 
    *******************************************************************************/
 
@@ -1539,7 +1540,8 @@ create or replace package body dw_scheduled_aggregation as
             /*-*/
             /* Update the order base row status
             /*-*/
-            if rcd_order_base.order_line_rejectn_code = 'ZA' then
+            if rcd_order_base.order_line_rejectn_code = 'ZA' or
+               rcd_order_base.order_line_rejectn_code = 'Z9' then
                rcd_order_base.order_line_status := '*UNALLOCATED';
             end if;
 
