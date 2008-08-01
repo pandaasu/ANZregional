@@ -28,7 +28,7 @@ create or replace package lics_parameter as
    system_code constant varchar2(10) := 'ICS';
    system_unit constant varchar2(10) := 'MFJ';
    system_environment constant varchar2(20) := 'LAD_TEST';
-   system_url constant varchar2(128) := 'http://xxxxxxxxxxxx.ap.mars/';
+   system_url constant varchar2(128) := 'http://mfj-lads-test.ap.mars/';
    system_startup constant varchar2(128) := '/ics/lad/test/bin/restart_jobs.sh';
 
    /*-*/

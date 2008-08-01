@@ -7,9 +7,9 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define database = db0720p.ap.mars
+define database = wod013.ap.mars
 define datauser = lics_app
-define data_password = acorn23
+define data_password = riddoch96
 
 /**/
 /* Create the configuration data
@@ -27,20 +27,36 @@ insert into lics_job values('INBOUND_REF04','Inbound Reference Interfaces (Proce
 insert into lics_job values('INBOUND_TRN01','Inbound Transactional Interfaces (Processor 01)',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*INBOUND','IB_TRN#01',null,'sysdate',null,'1');
 insert into lics_job values('INBOUND_TRN02','Inbound Transactional Interfaces (Processor 02)',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*INBOUND','IB_TRN#02',null,'sysdate',null,'1');
 insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('BDS_PURGING','BDS Purging - DAILY 2:30',null,20,null,'"Global ISI ICS-LADS Application Support"@esosn1','*PROCEDURE',null,'bds_purging.execute','lics_time.schedule_next(''*ALL'',2.3)','lics_time.schedule_next(''*ALL'',2.3)','1');
 commit;
 
 prompt CREATING INBOUND INTERFACE CONFIGURATION ...
 
-insert into lics_interface values('LADPDB01.6','LADS to Scoresby Plant Database - Process Orders','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,0,null,null,'jeff.phillipson@esosn1',null,'bds_app.recipe_loader','1');
+insert into lics_interface values('LADPDB01.3','LADS to WOD Plant Database - Process Orders','*INBOUND','IB_TRN',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb01_loader','1');
+insert into lics_interface values('LADPDB02.3','LADS to WOD Plant Database - Material Data','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb02_loader','1');
+insert into lics_interface values('LADPDB03.3','LADS to WOD Plant Database - Customer Address','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb03_loader','1');
+insert into lics_interface values('LADPDB04.3','LADS to WOD Plant Database - BOM Detail','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb04_loader','1');
+insert into lics_interface values('LADPDB05.3','LADS to WOD Plant Database - BOM Alternative','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb05_loader','1');
+insert into lics_interface values('LADPDB06.3','LADS to WOD Plant Database - Production Resources','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb06_loader','1');
+insert into lics_interface values('LADPDB07.3','LADS to WOD Plant Database - Reference Characteristics','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb07_loader','1');
+insert into lics_interface values('LADPDB08.3','LADS to WOD Plant Database - Reference Data','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb08_loader','1');
+insert into lics_interface values('LADPDB09.3','LADS to WOD Plant Database - Reference Purchasing Source','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb09_loader','1');
+insert into lics_interface values('LADPDB10.3','LADS to WOD Plant Database - Customer Sales Area','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb10_loader','1');
+insert into lics_interface values('LADPDB11.3','LADS to WOD Plant Database - Material Classifications','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb11_loader','1');
+insert into lics_interface values('LADPDB12.3','LADS to WOD Plant Database - Vendor Company','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb12_loader','1');
+insert into lics_interface values('LADPDB13.3','LADS to WOD Plant Database - Material BOM','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb13_loader','1');
+insert into lics_interface values('LADPDB14.3','LADS to WOD Plant Database - Stock Balance','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb14_loader','1');
+insert into lics_interface values('LADPDB15.3','LADS to WOD Plant Database - In Transit','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb15_loader','1');
+insert into lics_interface values('LADPDB16.3','LADS to WOD Plant Database - Characteristic Values','*INBOUND','IB_REF',1,5,5,'ICS_INBOUND',null,0,null,null,'"2005 Site Team"@smtp.ap.mars',null,'bds_app.ladpdb16_loader','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...
 
 insert into lics_sec_user values('*GUEST','Guest','GUEST','1');
 insert into lics_sec_user values('GREGASTE','Steve Gregan','ICS_ADMIN','1');
-insert into lics_sec_user values('HENDEMEG','Megan Henderson','ICS_ADMIN','1');
+insert into lics_sec_user values('GIRLIJON','Jonathan Girling','ICS_ADMIN','1');
 insert into lics_sec_user values('GLENLIN','Linden Glen','ICS_ADMIN','1');
-insert into lics_sec_user values('MANDASUN','Sunil Mandalika','ICS_ADMIN','1');
+insert into lics_sec_user values('KEONTRE','Trevor Keon','ICS_ADMIN','1');
 
 insert into lics_sec_menu values('*SECURITY','Security');
 insert into lics_sec_link values('*SECURITY',1,'*OPT','ICS_USR_CONFIG');
