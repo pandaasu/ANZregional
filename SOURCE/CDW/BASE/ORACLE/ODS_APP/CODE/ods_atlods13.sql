@@ -20,6 +20,8 @@ create or replace package ods_atlods13 as
     -------   ------         -----------
     2004      ISI            Created
     2007/10   Steve Gregan   Included SAP_SAL_ORD_TRACE table
+    2008/08   Steve Gregan   Included SAP_SAL_ORD_TRACE deleted status for null material code
+                             Modified SAP_SAL_ORD_TRACE deleted status for APO rejection code Z9
 
    *******************************************************************************/
 
@@ -3421,12 +3423,19 @@ create or replace package body ods_atlods13 as
          /*              OR
          /*           reason code is not null
          /*           reason code is not equal 'ZA'
+         /*           reason code is not equal 'Z9'
+         /*              OR
+         /*           material code is null
          /*-*/
          if rcd_ods_data.order_doc_line_num is null then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
          end if;
          if (not(rcd_ods_data.order_line_rejectn_code is null) and
-             rcd_ods_data.order_line_rejectn_code != 'ZA') then
+             rcd_ods_data.order_line_rejectn_code != 'ZA' and
+             rcd_ods_data.order_line_rejectn_code != 'Z9') then
+            rcd_sap_sal_ord_trace.trace_status := '*DELETED';
+         end if;
+         if rcd_ods_data.matl_code is null then
             rcd_sap_sal_ord_trace.trace_status := '*DELETED';
          end if;
 
