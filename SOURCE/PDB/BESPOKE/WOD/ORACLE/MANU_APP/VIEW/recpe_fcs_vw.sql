@@ -40,15 +40,15 @@ create or replace force view manu_app.recpe_fcs_vw as
       ltrim (t03.matl_code, '0') as code,
       t03.matl_desc as description,
       case
-      when t04.bom_qty is null and pan_size_flag <> 'Y'
-        then to_char(round(to_number(t03.qty), 3), '9999990.999')
-      when t04.bom_qty is null and pan_size_flag = 'Y' and pan_qty = 1
-        then to_char(round(to_number(pan_size), 3), '9999990.999')
-      when t04.bom_qty is null and pan_size_flag = 'Y' and pan_qty > 1
-        then to_char(round(to_number((pan_size * (pan_qty - 1)) + last_pan_size), 3), '9999990.999')
-      when t04.bom_qty is null and pan_size_flag = 'Y' and (pan_qty is null or pan_qty = '')
-        then to_char(round(to_number(pan_size), 3), '9999990.999')
-      else to_char(t04.bom_qty, '999990D999')
+        when t04.bom_qty is null and pan_size_flag <> 'Y'
+          then to_char(round(to_number(t03.qty), 3), '9999990.999')
+        when t04.bom_qty is null and pan_size_flag = 'Y' and pan_qty = 1
+          then to_char(round(to_number(pan_size), 3), '9999990.999')
+        when t04.bom_qty is null and pan_size_flag = 'Y' and pan_qty > 1
+          then to_char(round(to_number((pan_size * (pan_qty - 1)) + last_pan_size), 3), '9999990.999')
+        when t04.bom_qty is null and pan_size_flag = 'Y' and (pan_qty is null or pan_qty = '')
+          then to_char(round(to_number(pan_size), 3), '9999990.999')
+        else to_char(t04.bom_qty, '999990D999')
       end as value,
       t03.uom, 
       'M' as mpi_type, 
