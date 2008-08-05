@@ -24,7 +24,7 @@ create or replace force view manu_app.recpe_fcs_vw as
     t01.used_made, 
     t01.pan_size,
     t01.last_pan_size, 
-    t01.plant, 
+    t01.plant,
     t01.m, 
     t01.opertn_header
   from 
@@ -33,7 +33,8 @@ create or replace force view manu_app.recpe_fcs_vw as
       t01.cntl_rec_id,
       ltrim (t01.matl_code, '0') as matl_code, 
       t01.matl_text,
-      t02.resrce_code, t03.opertn, 
+      t02.resrce_code, 
+      t03.opertn, 
       to_number (t03.phase) as phase,
       to_number (lpad (t03.seq, 4, 0)) as seq,
       ltrim (t03.matl_code, '0') as code,
@@ -65,10 +66,10 @@ create or replace force view manu_app.recpe_fcs_vw as
           then to_char(pan_qty)
         else to_char(round((pan_size * (pan_qty - 1) + last_pan_size) / pan_size, 1))
       end as pans,
-      t03.phantom AS used_made,
+      t03.phantom as used_made,
       to_char(t03.pan_size, '999999.999') as pan_size,
       to_char(t03.last_pan_size, '999999.999') as last_pan_size,
-      t03.plant, 
+      t03.plant,
       to_char(t04.pans) as m, 
       t04.opertn_header
     from cntl_rec_bom t03,
@@ -76,15 +77,15 @@ create or replace force view manu_app.recpe_fcs_vw as
       cntl_rec t01,
       (
         select proc_order, 
-          rd.opertn, 
-          rd.phase, 
+          rd.opertn,
+          rd.phase,
           rd.matl_code,
-          bom_qty, 
+          bom_qty,
           rr.pan_qty as pans,
           'Op:' || rd.opertn || ' ' || resrce_desc 
             || decode(matl_made, null, '', ' for ' || matl_made || ': ' || matl_made_desc || ' ' || matl_made_qty || 'kg') as opertn_header
         from recpe_hdr rh, 
-          recpe_dtl rd, 
+          recpe_dtl rd,
           recpe_resrce rr
         where rh.cntl_rec_id = rd.cntl_rec_id
           and rd.cntl_rec_id = rr.cntl_rec_id
@@ -98,7 +99,7 @@ create or replace force view manu_app.recpe_fcs_vw as
       and t03.phase = t04.phase(+)
       and ltrim (t03.matl_code, '0') = t04.matl_code(+)
       and t01.teco_stat = 'NO'
-      and ltrim (t03.matl_code, '0') not in (select matl_code from recpe_phantom)      
+      and ltrim (t03.matl_code, '0') not in (select matl_code from recpe_phantom)
     union all
     select ltrim (t02.proc_order, 0) as proc_order, 
       t01.cntl_rec_id,
@@ -133,7 +134,7 @@ create or replace force view manu_app.recpe_fcs_vw as
       (
         select proc_order, 
           rd.opertn,
-          rd.phase, 
+          rd.phase,
           rd.mpi_tag,
           rr.pan_qty as pans,
           'Op:' || rd.opertn || ' ' || resrce_desc 
@@ -164,13 +165,13 @@ create or replace force view manu_app.recpe_fcs_vw as
         eff_start_date,
         rank () over (partition by matl_code, plant order by eff_start_date desc, alt desc) as rnkseq
       from bom
-      where trunc (eff_start_date) <= trunc (sysdate)
+      where trunc(eff_start_date) <= trunc(sysdate)
     ) t01
     where rnkseq = 1
   ) t02
   where t01.matl_code = t02.matl_code
     and t01.plant = t02.plant
-    and t01.run_start_datime between (trunc (sysdate) - 2) and (trunc (sysdate) + 20)
+    and t01.run_start_datime between (trunc(sysdate) - 2) and (trunc(sysdate) + 20)
     and substr (t01.proc_order, 1, 1) = '%';
 
 create or replace public synonym recpe_fcs_vw_test for manu_app.recpe_fcs_vw;
