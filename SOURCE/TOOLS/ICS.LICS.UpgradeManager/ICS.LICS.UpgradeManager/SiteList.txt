@@ -1,0 +1,12 @@
+BTH~Bathurst~riddoch96~bth001.ap.mars~cask2007~licpop~bth005.ap.mars
+CDW~Venus~licsapp0218p~ap0070p.ap.mars~licsgold~licssilver~ap0066t.ap.mars
+EFEX~Efex~licsfexapp~ap0085p.ap.mars~licsroof~licsfloor~ap0088t.ap.mars
+HK~Hong-Kong~licsappcup~ap0115p.ap.mars~licscell~licswall~ap0112t.ap.mars
+HUA~China~<unknown>~db0794p.ap.mars~<unknown>~<unknown>~db0767d.ap.mars
+MCA~Ballarat~riddoch96~db0719p.ap.mars~cask2007~licpop~ap0126d.ap.mars
+MFA~Wyong~riddoch96~mfa005.ap.mars~cask2007~licpop~mfa002.ap.mars
+MFANZ~Australia-New Zealand~monkey12~ap0064p.ap.mars~licice~licpop~ap0052t.ap.mars
+MFJ~Japan~licice~ap0093p.ap.mars~licice~<unknown>~ap0080t.ap.mars
+SCO~Scoresby~riddoch96~db0720p.ap.mars~cask2007~licpop~ap0132d.ap.mars
+WGI~Wanganui~riddoch96~ap0065p.ap.mars~cask2007~licpop~ap0068t.ap.mars
+WOD~Wodonga~riddoch96~wod013.ap.mars~cask2007~licpop~wod023.ap.mars
