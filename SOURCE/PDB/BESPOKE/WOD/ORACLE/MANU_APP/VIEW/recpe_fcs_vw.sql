@@ -24,9 +24,7 @@ create or replace force view manu_app.recpe_fcs_vw as
     t01.used_made, 
     t01.pan_size,
     t01.last_pan_size, 
-    t01.plant,
-    t01.m, 
-    t01.opertn_header
+    t01.plant
   from 
   (
     select ltrim (t03.proc_order, 0) as proc_order, 
@@ -69,27 +67,19 @@ create or replace force view manu_app.recpe_fcs_vw as
       t03.phantom as used_made,
       to_char(t03.pan_size, '999999.999') as pan_size,
       to_char(t03.last_pan_size, '999999.999') as last_pan_size,
-      t03.plant,
-      to_char(t04.pans) as m, 
-      t04.opertn_header
+      t03.plant
     from cntl_rec_bom t03,
       cntl_rec_resrce t02,
       cntl_rec t01,
       (
-        select proc_order, 
+        select proc_order,
           rd.opertn,
           rd.phase,
           rd.matl_code,
-          bom_qty,
-          rr.pan_qty as pans,
-          'Op:' || rd.opertn || ' ' || resrce_desc 
-            || decode(matl_made, null, '', ' for ' || matl_made || ': ' || matl_made_desc || ' ' || matl_made_qty || 'kg') as opertn_header
+          bom_qty
         from recpe_hdr rh, 
-          recpe_dtl rd,
-          recpe_resrce rr
+          recpe_dtl rd
         where rh.cntl_rec_id = rd.cntl_rec_id
-          and rd.cntl_rec_id = rr.cntl_rec_id
-          and rd.opertn = rr.opertn
       ) t04
     where t02.proc_order = t03.proc_order
       and t02.opertn = t03.opertn
@@ -125,35 +115,14 @@ create or replace force view manu_app.recpe_fcs_vw as
       '', 
       '',
       '', 
-      t01.plant, 
-      to_char (t04.pans) as m, 
-      t04.opertn_header
-    from cntl_rec_mpi_val t03,
-      cntl_rec_resrce t02,
-      cntl_rec t01,
-      (
-        select proc_order, 
-          rd.opertn,
-          rd.phase,
-          rd.mpi_tag,
-          rr.pan_qty as pans,
-          'Op:' || rd.opertn || ' ' || resrce_desc 
-            || decode (matl_made, null, '', ' for ' || matl_made || ': ' || matl_made_desc || ' ' || matl_made_qty || 'kg') as opertn_header
-        from recpe_hdr rh, 
-          recpe_val rd, 
-          recpe_resrce rr
-        where rh.cntl_rec_id = rd.cntl_rec_id
-          and rd.cntl_rec_id = rr.cntl_rec_id
-          and rd.opertn = rr.opertn
-      ) t04
-      where t02.proc_order = t03.proc_order
-        and t02.opertn = t03.opertn
-        and t02.proc_order = t01.proc_order
-        and ltrim (t03.proc_order, '0') = t04.proc_order(+)
-        and t03.opertn = t04.opertn(+)
-        and t03.phase = t04.phase(+)
-        and ltrim (t03.mpi_tag, '0') = t04.mpi_tag(+)
-        and t01.teco_stat = 'NO'
+      t01.plant
+    from cntl_rec_mpi_val t03, 
+      cntl_rec_resrce t02, 
+      cntl_rec t01
+    where t02.proc_order = t03.proc_order
+      and t02.opertn = t03.opertn
+      and t02.proc_order = t01.proc_order
+      and t01.teco_stat = 'NO'
   ) t01,
   (
     select t01.*
@@ -172,7 +141,11 @@ create or replace force view manu_app.recpe_fcs_vw as
   where t01.matl_code = t02.matl_code
     and t01.plant = t02.plant
     and t01.run_start_datime between (trunc(sysdate) - 2) and (trunc(sysdate) + 20)
-    and substr (t01.proc_order, 1, 1) = '%';
+    and substr (t01.proc_order, 1, 1) between '0' and '9';
 
-create or replace public synonym recpe_fcs_vw_test for manu_app.recpe_fcs_vw;
+grant select on manu_app.recpe_fcs_vw to appsupport;
+grant select on manu_app.recpe_fcs_vw to citsrv1 with grant option;
+grant select on manu_app.recpe_fcs_vw to manu_maint;
+grant select on manu_app.recpe_fcs_vw to manu_user;
 
+create or replace public synonym recpe_fcs_vw for manu_app.recpe_fcs_vw;
