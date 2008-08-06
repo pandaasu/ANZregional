@@ -259,6 +259,7 @@ create or replace package body ladefx01_chn_item as
          /*-*/
          if (var_start) then
             var_instance := lics_outbound_loader.create_interface('LADEFX01',null,'LADEFX01.dat');
+            lics_outbound_loader.append_data('CTL');
             var_start := false;
          end if;
 

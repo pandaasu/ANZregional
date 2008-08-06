@@ -63,10 +63,10 @@ create or replace package body ladefx03_chn_std_hierarchy as
                 t01.sap_cust_code_level_2 as sap_cust_code_level_2,
                 t01.sap_cust_code_level_3 as sap_cust_code_level_3,
                 t01.sap_cust_code_level_4 as sap_cust_code_level_4,
-                max(t01.cust_name_en_level_1) as cust_name_en_level_1,
-                max(t01.cust_name_en_level_2) as cust_name_en_level_2,
-                max(t01.cust_name_en_level_3) as cust_name_en_level_3,
-                max(t01.cust_name_en_level_4) as cust_name_en_level_4
+                nvl(max(t01.cust_name_en_level_1),'*UNKNOWN') as cust_name_en_level_1,
+                nvl(max(t01.cust_name_en_level_2),'*UNKNOWN') as cust_name_en_level_2,
+                nvl(max(t01.cust_name_en_level_3),'*UNKNOWN') as cust_name_en_level_3,
+                nvl(max(t01.cust_name_en_level_4),'*UNKNOWN') as cust_name_en_level_4
          from std_hier t01
          where t01.sap_sales_org_code = '135'
            and not(t01.sap_cust_code_level_1 is null)
@@ -104,6 +104,7 @@ create or replace package body ladefx03_chn_std_hierarchy as
          /*-*/
          if (var_start) then
             var_instance := lics_outbound_loader.create_interface('LADEFX03',null,'LADEFX03.dat');
+            lics_outbound_loader.append_data('CTL');
             var_start := false;
          end if;
 
@@ -111,10 +112,10 @@ create or replace package body ladefx03_chn_std_hierarchy as
          /* Append data lines
          /*-*/
          lics_outbound_loader.append_data('HDR' ||
-                                          rpad(nvl(rcd_std_hierarchy.sap_cust_code_level_1,' '),10,' ') ||
-                                          rpad(nvl(rcd_std_hierarchy.sap_cust_code_level_2,' '),10,' ') ||
-                                          rpad(nvl(rcd_std_hierarchy.sap_cust_code_level_3,' '),10,' ') ||
-                                          rpad(nvl(rcd_std_hierarchy.sap_cust_code_level_4,' '),10,' ') ||
+                                          nvl(rcd_std_hierarchy.sap_cust_code_level_1,' ')||rpad(' ',10-length(nvl(rcd_std_hierarchy.sap_cust_code_level_1,' ')),' ') ||
+                                          nvl(rcd_std_hierarchy.sap_cust_code_level_2,' ')||rpad(' ',10-length(nvl(rcd_std_hierarchy.sap_cust_code_level_2,' ')),' ') ||
+                                          nvl(rcd_std_hierarchy.sap_cust_code_level_3,' ')||rpad(' ',10-length(nvl(rcd_std_hierarchy.sap_cust_code_level_3,' ')),' ') ||
+                                          nvl(rcd_std_hierarchy.sap_cust_code_level_4,' ')||rpad(' ',10-length(nvl(rcd_std_hierarchy.sap_cust_code_level_4,' ')),' ') ||
                                           nvl(substr(rcd_std_hierarchy.cust_name_en_level_1,1,50),' ')||rpad(' ',50-length(nvl(substr(rcd_std_hierarchy.cust_name_en_level_1,1,50),' ')),' ') ||
                                           nvl(substr(rcd_std_hierarchy.cust_name_en_level_2,1,50),' ')||rpad(' ',50-length(nvl(substr(rcd_std_hierarchy.cust_name_en_level_2,1,50),' ')),' ') ||
                                           nvl(substr(rcd_std_hierarchy.cust_name_en_level_3,1,50),' ')||rpad(' ',50-length(nvl(substr(rcd_std_hierarchy.cust_name_en_level_3,1,50),' ')),' ') ||
