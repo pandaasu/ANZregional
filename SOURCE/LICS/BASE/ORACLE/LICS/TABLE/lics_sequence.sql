@@ -81,9 +81,9 @@ grant select on lics_stream_sequence to lics_app;
 /**/
 /* Synonym
 /**/
-create public synonym lics_header_sequence for lics.lics_header_sequence;
-create public synonym lics_execution_sequence for lics.lics_execution_sequence;
-create public synonym lics_triggered_sequence for lics.lics_triggered_sequence;
-create public synonym lics_event_sequence for lics.lics_event_sequence;
-create public synonym lics_log_sequence for lics.lics_log_sequence;
-create public synonym lics_stream_sequence for lics.lics_stream_sequence;
+create or replace public synonym lics_header_sequence for lics.lics_header_sequence;
+create or replace public synonym lics_execution_sequence for lics.lics_execution_sequence;
+create or replace public synonym lics_triggered_sequence for lics.lics_triggered_sequence;
+create or replace public synonym lics_event_sequence for lics.lics_event_sequence;
+create or replace public synonym lics_log_sequence for lics.lics_log_sequence;
+create or replace public synonym lics_stream_sequence for lics.lics_stream_sequence;

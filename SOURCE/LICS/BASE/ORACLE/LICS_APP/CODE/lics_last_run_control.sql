@@ -43,6 +43,7 @@ create or replace package lics_last_run_control as
    procedure set_last_run(par_identifier in varchar2, par_date in date);
 
 end lics_last_run_control;
+/
 
 /****************/
 /* Package Body */
@@ -139,6 +140,7 @@ create or replace package body lics_last_run_control as
   end set_last_run;
 
 end lics_last_run_control;
+/
 
 /**************************/
 /* Package Synonym/Grants */

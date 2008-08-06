@@ -61,6 +61,7 @@ insert into lics_sec_menu values('*SECURITY','Security');
 insert into lics_sec_link values('*SECURITY',1,'*OPT','ICS_USR_CONFIG');
 insert into lics_sec_link values('*SECURITY',2,'*OPT','ICS_MNU_CONFIG');
 insert into lics_sec_link values('*SECURITY',3,'*OPT','ICS_OPT_CONFIG');
+insert into lics_sec_link values('*SECURITY',4,'*OPT','ICS_INS_CONFIG');
 
 insert into lics_sec_menu values('ICS_MONITOR','Monitoring');
 insert into lics_sec_link values('ICS_MONITOR',1,'*OPT','ICS_JOB_MONITOR');
@@ -90,6 +91,7 @@ insert into lics_sec_link values('ICS_ADMIN',3,'*MNU','ICS_CONFIG');
 insert into lics_sec_option values('ICS_USR_CONFIG','Security User Configuration','ics_sec_usr_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_MNU_CONFIG','Security Menu Configuration','ics_sec_mnu_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_OPT_CONFIG','Security Option Configuration','ics_sec_opt_configuration.asp?Mode=SELECT','1');
+insert into lics_sec_option values('ICS_INS_CONFIG','Security Interface Configuration','ics_sec_int_configuration.asp?Mode=SELECT','1');
 
 insert into lics_sec_option values('ICS_JOB_MONITOR','Job Monitoring','ics_job_monitor.asp?Mode=SEARCH','1');
 insert into lics_sec_option values('ICS_INT_MONITOR','Interface Monitoring','ics_int_monitor.asp?Mode=SEARCH','1');

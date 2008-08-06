@@ -46,12 +46,15 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_data.sql;
 @^tab_path\lics_dta_message.sql;
 @^tab_path\lics_event.sql;
+@^tab_path\lics_event_sequence.sql;
+@^tab_path\lics_execution_sequence.sql;
 @^tab_path\lics_group.sql;
 @^tab_path\lics_grp_interface.sql;
 @^tab_path\lics_hdr_message.sql;
 @^tab_path\lics_hdr_search.sql;
 @^tab_path\lics_hdr_trace.sql;
 @^tab_path\lics_header.sql;
+@^tab_path\lics_header_sequence.sql;
 @^tab_path\lics_int_reference.sql;
 @^tab_path\lics_int_sequence.sql;
 @^tab_path\lics_interface.sql;
@@ -60,6 +63,7 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_last_run.sql;
 @^tab_path\lics_lock.sql;
 @^tab_path\lics_log.sql;
+@^tab_path\lics_log_sequence.sql;
 @^tab_path\lics_pro_check.sql;
 @^tab_path\lics_pro_group.sql;
 @^tab_path\lics_pro_process.sql;
@@ -71,14 +75,15 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_sec_menu.sql;
 @^tab_path\lics_sec_option.sql;
 @^tab_path\lics_sec_user.sql;
-@^tab_path\lics_sequence.sql;
 @^tab_path\lics_setting.sql;
 @^tab_path\lics_str_action.sql;
 @^tab_path\lics_str_event.sql;
 @^tab_path\lics_str_header.sql;
 @^tab_path\lics_str_task.sql;
+@^tab_path\lics_stream_sequence.sql;
 @^tab_path\lics_temp.sql;
 @^tab_path\lics_triggered.sql;
+@^tab_path\lics_triggered_sequence.sql;
 
 prompt CREATING LICS CONSTRAINTS ...
 

@@ -13,10 +13,6 @@ Please create the following a new database on [server name] ...
 
          LICS
          LICS_APP
-         LADS
-         LADS_APP
-         ICS_APP
-         ICS_READER
 
    - Please execute the following commands .....
 
