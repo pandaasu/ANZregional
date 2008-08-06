@@ -71,13 +71,13 @@ create or replace package body efxcad01_customer as
       /*-*/
       cursor csr_customer is
          select t05.market_name as market_name,
-                t11.business_unit_name as busines_unit_name,
+                t11.business_unit_name as business_unit_name,
                 t10.segment_name as segment_name,
                 t03.cust_trade_channel_name as cust_trade_channel_name,
                 t04.cust_channel_name as cust_channel_name,
                 t02.cust_type_name as cust_type_name,
                 t12.cust_grade_name as cust_grade_name,
-                decode(t01.outlet_flg,'Y',t01.customer_code,t01.std_level1_code) as cust_code,
+                decode(t01.outlet_flg,'N',t01.customer_code,to_char(t01.customer_id)) as cust_code,
                 t01.customer_name as cust_name,
                 t01.city as cust_city,
                 t01.postcode as cust_postcode,
@@ -210,10 +210,10 @@ create or replace package body efxcad01_customer as
       /*-*/
       /* Open cursor for output
       /*-*/
-      open csr_cust_master;
+      open csr_customer;
       loop
-         fetch csr_cust_master into rcd_cust_master;
-         if csr_cust_master%notfound then
+         fetch csr_customer into rcd_customer;
+         if csr_customer%notfound then
             exit;
          end if;
 
@@ -222,73 +222,87 @@ create or replace package body efxcad01_customer as
          /*-*/
          if (var_start) then
             var_instance := lics_outbound_loader.create_interface('EFXCAD01',null,'EFXCAD01.dat');
+            lics_outbound_loader.append_data('CTL');
             var_start := false;
          end if;
 
          /*-*/
-         /* Append data lines
+         /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('HDR' ||
-                                          nvl(rcd_customer.market_name,' ')||rpad(' ',50-length(nvl(rcd_customer.market_name,' ')),' ') ||
-                                          nvl(rcd_customer.business_unit_name,' ')||rpad(' ',50-length(nvl(rcd_customer.business_unit_name,' ')),' ') ||
-                                          nvl(rcd_customer.segment_name,' ')||rpad(' ',50-length(nvl(rcd_customer.segment_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_trade_channel_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_trade_channel_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_channel_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_channel_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_type_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_type_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_grade_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_grade_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_name,' ')||rpad(' ',100-length(nvl(rcd_customer.cust_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_city,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_city,' ')),' ') ||
-                                          nvl(rcd_customer.cust_postcode,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_postcode,' ')),' ') ||
-                                          nvl(rcd_customer.cust_postal_addr,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_postal_addr,' ')),' ') ||
-                                          nvl(rcd_customer.cust_phone,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_phone,' ')),' ') ||
-                                          nvl(rcd_customer.cust_fax,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_fax,' ')),' ') ||
-                                          nvl(rcd_customer.cust_email,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_email,' ')),' ') ||
-                                          nvl(rcd_customer.cust_address,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_address,' ')),' ') ||
-                                          nvl(rcd_customer.cust_distributor_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_distributor_flag,' ')),' ') ||
-                                          nvl(rcd_customer.cust_outlet_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_outlet_flag,' ')),' ') ||
-                                          nvl(rcd_customer.cust_active_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_active_flag,' ')),' ') ||
-                                          nvl(rcd_customer.cust_status,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_status,' ')),' ') ||
-                                          nvl(rcd_customer.cust_mp,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_mp,' ')),' ') ||
-                                          nvl(to_char(rcd_customer.cust_created_on,'yyyymmdd'),' ')||rpad(' ',8-length(nvl(to_char(rcd_customer.cust_created_on,'yyyymmdd'),' ')),' ') ||
-                                          nvl(rcd_customer.cust_created_by,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_created_by,' ')),' ') ||
-                                          nvl(to_char(rcd_customer.cust_updated_on,'yyyymmdd'),' ')||rpad(' ',8-length(nvl(to_char(rcd_customer.cust_updated_on,'yyyymmdd'),' ')),' ') ||
-                                          nvl(rcd_customer.cust_updated_by,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_updated_by,' ')),' ') ||
-                                          nvl(rcd_customer.cust_otl_location,' ')||rpad(' ',100-length(nvl(rcd_customer.cust_otl_location,' ')),' ') ||
-                                          nvl(rcd_customer.cust_country_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_country_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_country_name,' ')||rpad(' ',50-length(nvl(rcd_customer.market_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_region_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_region_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_region_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_region_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_cluster_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_cluster_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_cluster_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_cluster_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_area_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_area_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_area_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_area_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_city_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_city_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_account_type_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_account_type_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_account_type_desc,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_account_type_desc,' ')),' ') ||
-                                          nvl(rcd_customer.sales_territory_code,' ')||rpad(' ',10-length(nvl(rcd_customer.sales_territory_code,' ')),' ') ||
-                                          nvl(rcd_customer.sales_territory_name,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_territory_name,' ')),' ') ||
-                                          nvl(rcd_customer.sales_area,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_area,' ')),' ') ||
-                                          nvl(rcd_customer.sales_region,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_region,' ')),' ') ||
-                                          nvl(rcd_customer.sales_person_associate_code,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_associate_code,' ')),' ') ||
-                                          nvl(rcd_customer.sales_person_last_name,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_last_name,' ')),' ') ||
-                                          nvl(rcd_customer.sales_person_title,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_title,' ')),' ') ||
-                                          nvl(rcd_customer.sales_person_status,' ')||rpad(' ',1-length(nvl(rcd_customer.sales_person_status,' ')),' ') ||
-                                          nvl(rcd_customer.sales_city,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_city,' ')),' ') ||
-                                          nvl(rcd_customer.cust_contact_first_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_first_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_contact_last_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_last_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_contact_phone,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_phone,' ')),' ') ||
-                                          nvl(rcd_customer.cust_contact_email,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_email,' ')),' ') ||
-                                          nvl(rcd_customer.cust_indirect_cust_banner,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_indirect_cust_banner,' ')),' ') ||
-                                          nvl(rcd_customer.cust_parent_banner_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_parent_banner_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_parent_banner_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_parent_banner_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_direct_banner_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_direct_banner_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_name,' ')),' ') ||
-                                          nvl(rcd_customer.cust_belongs_to_ws_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_code,' ')),' ') ||
-                                          nvl(rcd_customer.cust_belongs_to_ws_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_name,' ')),' '));
+         if not(trim(rcd_customer.market_name) is null) and
+            not(trim(rcd_customer.business_unit_name) is null) and
+            not(trim(rcd_customer.segment_name) is null) and
+            not(trim(rcd_customer.cust_type_name) is null) and
+            not(trim(rcd_customer.cust_code) is null) and
+            not(trim(rcd_customer.cust_name) is null) and
+            not(rcd_customer.cust_created_on is null) and
+            not(trim(rcd_customer.cust_created_by) is null) and
+            not(rcd_customer.cust_updated_on is null) and
+            not(trim(rcd_customer.cust_updated_by) is null) then
+
+            lics_outbound_loader.append_data('HDR' ||
+                                             nvl(rcd_customer.market_name,' ')||rpad(' ',50-length(nvl(rcd_customer.market_name,' ')),' ') ||
+                                             nvl(rcd_customer.business_unit_name,' ')||rpad(' ',50-length(nvl(rcd_customer.business_unit_name,' ')),' ') ||
+                                             nvl(rcd_customer.segment_name,' ')||rpad(' ',50-length(nvl(rcd_customer.segment_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_trade_channel_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_trade_channel_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_channel_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_channel_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_type_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_type_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_grade_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_grade_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_name,' ')||rpad(' ',100-length(nvl(rcd_customer.cust_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_city,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_city,' ')),' ') ||
+                                             nvl(rcd_customer.cust_postcode,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_postcode,' ')),' ') ||
+                                             nvl(rcd_customer.cust_postal_addr,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_postal_addr,' ')),' ') ||
+                                             nvl(rcd_customer.cust_phone,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_phone,' ')),' ') ||
+                                             nvl(rcd_customer.cust_fax,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_fax,' ')),' ') ||
+                                             nvl(rcd_customer.cust_email,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_email,' ')),' ') ||
+                                             nvl(rcd_customer.cust_address,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_address,' ')),' ') ||
+                                             nvl(rcd_customer.cust_distributor_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_distributor_flag,' ')),' ') ||
+                                             nvl(rcd_customer.cust_outlet_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_outlet_flag,' ')),' ') ||
+                                             nvl(rcd_customer.cust_active_flag,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_active_flag,' ')),' ') ||
+                                             nvl(rcd_customer.cust_status,' ')||rpad(' ',1-length(nvl(rcd_customer.cust_status,' ')),' ') ||
+                                             nvl(rcd_customer.cust_mp,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_mp,' ')),' ') ||
+                                             nvl(to_char(rcd_customer.cust_created_on,'yyyymmdd'),' ')||rpad(' ',8-length(nvl(to_char(rcd_customer.cust_created_on,'yyyymmdd'),' ')),' ') ||
+                                             nvl(rcd_customer.cust_created_by,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_created_by,' ')),' ') ||
+                                             nvl(to_char(rcd_customer.cust_updated_on,'yyyymmdd'),' ')||rpad(' ',8-length(nvl(to_char(rcd_customer.cust_updated_on,'yyyymmdd'),' ')),' ') ||
+                                             nvl(rcd_customer.cust_updated_by,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_updated_by,' ')),' ') ||
+                                             nvl(rcd_customer.cust_otl_location,' ')||rpad(' ',100-length(nvl(rcd_customer.cust_otl_location,' ')),' ') ||
+                                             nvl(rcd_customer.cust_country_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_country_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_country_name,' ')||rpad(' ',50-length(nvl(rcd_customer.market_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_region_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_region_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_region_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_region_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_cluster_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_cluster_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_cluster_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_cluster_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_area_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_area_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_area_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_area_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_city_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_city_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_account_type_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_account_type_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_account_type_desc,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_account_type_desc,' ')),' ') ||
+                                             nvl(rcd_customer.sales_territory_code,' ')||rpad(' ',10-length(nvl(rcd_customer.sales_territory_code,' ')),' ') ||
+                                             nvl(rcd_customer.sales_territory_name,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_territory_name,' ')),' ') ||
+                                             nvl(rcd_customer.sales_area,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_area,' ')),' ') ||
+                                             nvl(rcd_customer.sales_region,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_region,' ')),' ') ||
+                                             nvl(rcd_customer.sales_person_associate_code,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_associate_code,' ')),' ') ||
+                                             nvl(rcd_customer.sales_person_last_name,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_last_name,' ')),' ') ||
+                                             nvl(rcd_customer.sales_person_title,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_person_title,' ')),' ') ||
+                                             nvl(rcd_customer.sales_person_status,' ')||rpad(' ',1-length(nvl(rcd_customer.sales_person_status,' ')),' ') ||
+                                             nvl(rcd_customer.sales_city,' ')||rpad(' ',50-length(nvl(rcd_customer.sales_city,' ')),' ') ||
+                                             nvl(rcd_customer.cust_contact_first_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_first_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_contact_last_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_last_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_contact_phone,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_phone,' ')),' ') ||
+                                             nvl(rcd_customer.cust_contact_email,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_contact_email,' ')),' ') ||
+                                             nvl(rcd_customer.cust_indirect_cust_banner,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_indirect_cust_banner,' ')),' ') ||
+                                             nvl(rcd_customer.cust_parent_banner_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_parent_banner_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_parent_banner_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_parent_banner_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_direct_banner_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_direct_banner_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_belongs_to_ws_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_code,' ')),' ') ||
+                                             nvl(rcd_customer.cust_belongs_to_ws_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_name,' ')),' '));
+
+         end if;
 
       end loop;
-      close csr_cust_master;
+      close csr_customer;
 
       /*-*/
       /* Finalise Interface
