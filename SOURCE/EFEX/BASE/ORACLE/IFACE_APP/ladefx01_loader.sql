@@ -44,6 +44,8 @@ create or replace package body ladefx01_loader as
    /*-*/
    /* Private declarations
    /*-*/
+   procedure complete_transaction;
+   procedure process_record_ctl(par_record in varchar2);
    procedure process_record_hdr(par_record in varchar2);
 
    /*-*/
@@ -80,6 +82,8 @@ create or replace package body ladefx01_loader as
       /* Initialise the inbound definitions
       /*-*/
       lics_inbound_utility.clear_definition;
+      /*-*/
+      lics_inbound_utility.set_definition('CTL','IFACE_CTL',3);
       /*-*/
       lics_inbound_utility.set_definition('HDR','IFACE_HDR',3);
       lics_inbound_utility.set_definition('HDR','MARKET_ID',10);
@@ -136,6 +140,7 @@ create or replace package body ladefx01_loader as
       /*-*/
       var_record_identifier := substr(par_record,1,3);
       case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
          when 'HDR' then process_record_hdr(par_record);
          else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
       end case;
@@ -168,6 +173,26 @@ create or replace package body ladefx01_loader as
    begin
 
       /*-*/
+      /* Complete the transaction
+      /*-*/
+      complete_transaction;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_end;
+
+   /************************************************************/
+   /* This procedure performs the complete transaction routine */
+   /************************************************************/
+   procedure complete_transaction is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
       /* No data processed
       /*-*/
       if var_trn_start = false then
@@ -191,7 +216,34 @@ create or replace package body ladefx01_loader as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end on_end;
+   end complete_transaction;
+
+   /**************************************************/
+   /* This procedure performs the record CTL routine */
+   /**************************************************/
+   procedure process_record_ctl(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Complete the previous transaction
+      /*-*/
+      complete_transaction;
+
+      /*-*/
+      /* Reset the transaction variables
+      /*-*/
+      var_trn_start := true;
+      var_trn_ignore := false;
+      var_trn_error := false;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
 
    /**************************************************/
    /* This procedure performs the record HDR routine */
@@ -206,6 +258,7 @@ create or replace package body ladefx01_loader as
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
+
       lics_inbound_utility.parse_record('HDR', par_record);
 
       /*--------------------------------------*/
@@ -302,8 +355,8 @@ create or replace package body ladefx01_loader as
           rcd_iface_item.price4;
           rcd_iface_item.min_order_qty;
           rcd_iface_item.order_multiples;
-          initcap(rcd_iface_item.brand);
-          initcap(rcd_iface_item.sub_brand);
+          rcd_iface_item.brand;
+          rcd_iface_item.sub_brand;
           rcd_iface_item.item_category;
           rcd_iface_item.pack_size;
           rcd_iface_item.pack_type;

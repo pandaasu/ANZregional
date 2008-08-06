@@ -45,7 +45,13 @@ create or replace package body ladefx02_loader as
    /* Private declarations
    /*-*/
    procedure complete_transaction;
+   procedure process_record_ctl(par_record in varchar2);
    procedure process_record_hdr(par_record in varchar2);
+
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_market_id constant number := 4;
 
    /*-*/
    /* Private definitions
@@ -53,7 +59,7 @@ create or replace package body ladefx02_loader as
    var_trn_start boolean;
    var_trn_ignore boolean;
    var_trn_error boolean;
-   rcd_cad_customer_master cad_customer_master%rowtype;
+   rcd_iface_customer iface_customer%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -77,37 +83,42 @@ create or replace package body ladefx02_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);      
-      lics_inbound_utility.set_definition('HDR','SAP_CUSTOMER_CODE',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUSTOMER_NAME',160);
-      lics_inbound_utility.set_definition('HDR','SHIP_TO_CUST_CODE',10);
-      lics_inbound_utility.set_definition('HDR','SHIP_TO_CUST_NAME',40);
-      lics_inbound_utility.set_definition('HDR','BILL_TO_CUST_CODE',10);
-      lics_inbound_utility.set_definition('HDR','BILL_TO_CUST_NAME',40);
-      lics_inbound_utility.set_definition('HDR','SALESMAN_CODE',10);
-      lics_inbound_utility.set_definition('HDR','SALESMAN_NAME',40);
-      lics_inbound_utility.set_definition('HDR','CITY_CODE',10);
-      lics_inbound_utility.set_definition('HDR','CITY_NAME',40);
-      lics_inbound_utility.set_definition('HDR','HUB_CITY_CODE',10);
-      lics_inbound_utility.set_definition('HDR','HUB_CITY_NAME',40);
-      lics_inbound_utility.set_definition('HDR','ADDRESS_STREET_EN',60);
-      lics_inbound_utility.set_definition('HDR','ADDRESS_SORT_EN',20);
-      lics_inbound_utility.set_definition('HDR','REGION_CODE',3);
-      lics_inbound_utility.set_definition('HDR','PLANT_CODE',4);
-      lics_inbound_utility.set_definition('HDR','VAT_REGISTRATION_NUMBER',20);
-      lics_inbound_utility.set_definition('HDR','CUSTOMER_STATUS',1);
-      lics_inbound_utility.set_definition('HDR','INSURANCE_NUMBER',10);
-      lics_inbound_utility.set_definition('HDR','BUYING_GRP_CODE',10);
-      lics_inbound_utility.set_definition('HDR','BUYING_GRP_NAME',120);
-      lics_inbound_utility.set_definition('HDR','KEY_ACCOUNT_CODE',10);
-      lics_inbound_utility.set_definition('HDR','KEY_ACCOUNT_NAME',120);
-      lics_inbound_utility.set_definition('HDR','CHANNEL_CODE',10);
-      lics_inbound_utility.set_definition('HDR','CHANNEL_NAME',120);
-      lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_CODE',10);
-      lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_NAME',120);
-      lics_inbound_utility.set_definition('HDR','SWB_STATUS',8);
-      lics_inbound_utility.set_definition('HDR','LAST_UPDATE_DATE',14);
+      lics_inbound_utility.set_definition('CTL','IFACE_CTL',3);
+      /*-*/
+      lics_inbound_utility.set_definition('HDR','IFACE_HDR',3);
+      lics_inbound_utility.set_definition('HDR','MARKET_ID',10);
+      lics_inbound_utility.set_definition('HDR','CUSTOMER_CODE',50);
+      lics_inbound_utility.set_definition('HDR','CUSTOMER_NAME',100);
+      lics_inbound_utility.set_definition('HDR','ADDRESS_1',100);
+      lics_inbound_utility.set_definition('HDR','CITY',50);
+      lics_inbound_utility.set_definition('HDR','STATE',50);
+      lics_inbound_utility.set_definition('HDR','POSTCODE',50);
+      lics_inbound_utility.set_definition('HDR','PHONE_NUMBER',50);
+      lics_inbound_utility.set_definition('HDR','FAX_NUMBER',50);
+      lics_inbound_utility.set_definition('HDR','AFFILIATION',50);
+      lics_inbound_utility.set_definition('HDR','CUST_TYPE',50);
+      lics_inbound_utility.set_definition('HDR','CUST_STATUS',1);
+      lics_inbound_utility.set_definition('HDR','CONTACT_NAME',50);
+      lics_inbound_utility.set_definition('HDR','SALES_PERSON_CODE',20);
+      lics_inbound_utility.set_definition('HDR','SALES_PERSON_NAME',50);
+      lics_inbound_utility.set_definition('HDR','OUTLET_LOCATION',100);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL1_COD',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL2_CODE',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL3_CODE',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL4_CODE',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL5_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL1_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL2_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL3_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL4_CODE',10);
+      lics_inbound_utility.set_definition('HDR','BUSINESS_UNIT_ID',10);
 
+      /*-*/
+      /* Clear the IFACE customer table for the China market
+      /*-*/
+      delete iface_customer
+       where market_id = con_market_id;
+      commit;
 
    /*-------------*/
    /* End routine */
@@ -134,6 +145,7 @@ create or replace package body ladefx02_loader as
       /*-*/
       var_record_identifier := substr(par_record,1,3);
       case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
          when 'HDR' then process_record_hdr(par_record);
          else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
       end case;
@@ -180,11 +192,6 @@ create or replace package body ladefx02_loader as
    /************************************************************/
    procedure complete_transaction is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_accepted boolean;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -203,14 +210,12 @@ create or replace package body ladefx02_loader as
       /* Execute the interface monitor when required
       /*-*/
       if var_trn_ignore = true then
-         var_accepted := true;
          rollback;
       elsif var_trn_error = true then
-         var_accepted := false;
          rollback;
       else
-         var_accepted := true;
          commit;
+         efex_refresh.refresh_customer(con_market_id);
       end if;
 
    /*-------------*/
@@ -219,27 +224,18 @@ create or replace package body ladefx02_loader as
    end complete_transaction;
 
    /**************************************************/
-   /* This procedure performs the record HDR routine */
+   /* This procedure performs the record CTL routine */
    /**************************************************/
-   procedure process_record_hdr(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-
-
-      /*-*/
-      /* Local cursors
-      /*-*/
+   procedure process_record_ctl(par_record in varchar2) is
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
-      /*-------------------------------*/
-      /* Complete Previous Transaction */
-      /*-------------------------------*/
+      /*-*/
+      /* Complete the previous transaction
+      /*-*/
       complete_transaction;
 
       /*-*/
@@ -249,10 +245,25 @@ create or replace package body ladefx02_loader as
       var_trn_ignore := false;
       var_trn_error := false;
 
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
+
+   /**************************************************/
+   /* This procedure performs the record HDR routine */
+   /**************************************************/
+   procedure process_record_hdr(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
+
       lics_inbound_utility.parse_record('HDR', par_record);
 
       /*--------------------------------------*/
@@ -262,36 +273,32 @@ create or replace package body ladefx02_loader as
       /*-*/
       /* Retrieve field values
       /*-*/      
-      rcd_cad_customer_master.sap_customer_code := lics_inbound_utility.get_variable('SAP_CUSTOMER_CODE');
-      rcd_cad_customer_master.sap_customer_name := lics_inbound_utility.get_variable('SAP_CUSTOMER_NAME');
-      rcd_cad_customer_master.ship_to_cust_code := lics_inbound_utility.get_variable('SHIP_TO_CUST_CODE');
-      rcd_cad_customer_master.ship_to_cust_name := lics_inbound_utility.get_variable('SHIP_TO_CUST_NAME');
-      rcd_cad_customer_master.bill_to_cust_code := lics_inbound_utility.get_variable('BILL_TO_CUST_CODE');
-      rcd_cad_customer_master.bill_to_cust_name := lics_inbound_utility.get_variable('BILL_TO_CUST_NAME');
-      rcd_cad_customer_master.salesman_code := lics_inbound_utility.get_variable('SALESMAN_CODE');
-      rcd_cad_customer_master.salesman_name := lics_inbound_utility.get_variable('SALESMAN_NAME');
-      rcd_cad_customer_master.city_code := lics_inbound_utility.get_variable('CITY_CODE');
-      rcd_cad_customer_master.city_name := lics_inbound_utility.get_variable('CITY_NAME');
-      rcd_cad_customer_master.hub_city_code := lics_inbound_utility.get_variable('HUB_CITY_CODE');
-      rcd_cad_customer_master.hub_city_name := lics_inbound_utility.get_variable('HUB_CITY_NAME');
-      rcd_cad_customer_master.address_street_en := lics_inbound_utility.get_variable('ADDRESS_STREET_EN');
-      rcd_cad_customer_master.address_sort_en := lics_inbound_utility.get_variable('ADDRESS_SORT_EN');
-      rcd_cad_customer_master.region_code := lics_inbound_utility.get_variable('REGION_CODE');
-      rcd_cad_customer_master.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
-      rcd_cad_customer_master.vat_registration_number := lics_inbound_utility.get_variable('VAT_REGISTRATION_NUMBER');
-      rcd_cad_customer_master.customer_status := lics_inbound_utility.get_variable('CUSTOMER_STATUS');
-      rcd_cad_customer_master.insurance_number := lics_inbound_utility.get_variable('INSURANCE_NUMBER');
-      rcd_cad_customer_master.buying_grp_code := lics_inbound_utility.get_variable('BUYING_GRP_CODE');
-      rcd_cad_customer_master.buying_grp_name := lics_inbound_utility.get_variable('BUYING_GRP_NAME');
-      rcd_cad_customer_master.key_account_code := lics_inbound_utility.get_variable('KEY_ACCOUNT_CODE');
-      rcd_cad_customer_master.key_account_name := lics_inbound_utility.get_variable('KEY_ACCOUNT_NAME');
-      rcd_cad_customer_master.channel_code := lics_inbound_utility.get_variable('CHANNEL_CODE');
-      rcd_cad_customer_master.channel_name := lics_inbound_utility.get_variable('CHANNEL_NAME');
-      rcd_cad_customer_master.channel_grp_code := lics_inbound_utility.get_variable('CHANNEL_GRP_CODE');
-      rcd_cad_customer_master.channel_grp_name := lics_inbound_utility.get_variable('CHANNEL_GRP_NAME');
-      rcd_cad_customer_master.last_update_date := lics_inbound_utility.get_variable('LAST_UPDATE_DATE');
-      rcd_cad_customer_master.swb_status := lics_inbound_utility.get_variable('SWB_STATUS');
-      rcd_cad_customer_master.cad_load_date := sysdate;
+      rcd_iface_customer.market_id := lics_inbound_utility.get_number('MARKET_ID',null);
+      rcd_iface_customer.customer_code := lics_inbound_utility.get_variable('CUSTOMER_CODE');
+      rcd_iface_customer.customer_name := lics_inbound_utility.get_variable('CUSTOMER_NAME');
+      rcd_iface_customer.address_1 := lics_inbound_utility.get_variable('ADDRESS_1');
+      rcd_iface_customer.city := lics_inbound_utility.get_variable('CITY');
+      rcd_iface_customer.state := lics_inbound_utility.get_variable('STATE');
+      rcd_iface_customer.postcode := lics_inbound_utility.get_variable('POSTCODE');
+      rcd_iface_customer.phone_number := lics_inbound_utility.get_variable('PHONE_NUMBER');
+      rcd_iface_customer.fax_number := lics_inbound_utility.get_variable('FAX_NUMBER');
+      rcd_iface_customer.affiliation := lics_inbound_utility.get_variable('AFFILIATION');
+      rcd_iface_customer.cust_type := lics_inbound_utility.get_variable('CUST_TYPE');
+      rcd_iface_customer.cust_status := lics_inbound_utility.get_variable('CUST_STATUS');
+      rcd_iface_customer.contact_name := lics_inbound_utility.get_variable('CONTACT_NAME');
+      rcd_iface_customer.sales_person_code := lics_inbound_utility.get_variable('SALES_PERSON_CODE');
+      rcd_iface_customer.sales_person_name := lics_inbound_utility.get_variable('SALES_PERSON_NAME');
+      rcd_iface_customer.outlet_location := lics_inbound_utility.get_variable('OUTLET_LOCATION');
+      rcd_iface_customer.geo_level1_code := lics_inbound_utility.get_variable('GEO_LEVEL1_CODE');
+      rcd_iface_customer.geo_level2_code := lics_inbound_utility.get_variable('GEO_LEVEL2_CODE');
+      rcd_iface_customer.geo_level3_code := lics_inbound_utility.get_variable('GEO_LEVEL3_CODE');
+      rcd_iface_customer.geo_level4_code := lics_inbound_utility.get_variable('GEO_LEVEL4_CODE');
+      rcd_iface_customer.geo_level5_code := lics_inbound_utility.get_variable('GEO_LEVEL5_CODE');
+      rcd_iface_customer.std_level1_code := lics_inbound_utility.get_variable('STD_LEVEL1_CODE');
+      rcd_iface_customer.std_level2_code := lics_inbound_utility.get_variable('STD_LEVEL2_CODE');
+      rcd_iface_customer.std_level3_code := lics_inbound_utility.get_variable('STD_LEVEL3_CODE');
+      rcd_iface_customer.std_level4_code := lics_inbound_utility.get_variable('STD_LEVEL4_CODE');
+      rcd_iface_customer.business_unit_id := lics_inbound_utility.get_number('BUSINESS_UNIT_ID',null);
 
       /*-*/
       /* Retrieve exceptions raised
@@ -307,8 +314,8 @@ create or replace package body ladefx02_loader as
       /*-*/
       /* Validate the primary keys
       /*-*/
-      if rcd_cad_customer_master.sap_customer_code is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - HDR.SAP_CUSTOMER_CODE');
+      if rcd_iface_customer.market_id != con_market_id then
+         lics_inbound_utility.add_exception('Customer market id ('||rcd_iface_customer.market_id||') is not valid for the China market');
          var_trn_error := true;
       end if;
 
@@ -319,74 +326,64 @@ create or replace package body ladefx02_loader as
          return;
       end if;
 
-      /*-*/
-      /* Delete Material master entry if it exists
-      /*-*/
-      delete cad_customer_master
-       where sap_customer_code = rcd_cad_customer_master.sap_customer_code;
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
 
-      insert into cad_customer_master
-         (sap_customer_code,
-          sap_customer_name,
-          ship_to_cust_code,
-          ship_to_cust_name,
-          bill_to_cust_code,
-          bill_to_cust_name,
-          salesman_code,
-          salesman_name,
-          city_code,
-          city_name,
-          hub_city_code,
-          hub_city_name,
-          address_street_en,
-          address_sort_en,
-          region_code,
-          plant_code,
-          vat_registration_number,
-          customer_status,
-          insurance_number,
-          buying_grp_code,
-          buying_grp_name,
-          key_account_code,
-          key_account_name,
-          channel_code,
-          channel_name,
-          channel_grp_code,
-          channel_grp_name,
-          swb_status,
-          last_update_date,
-          cad_load_date)
+      insert into iface_customer
+         (market_id,
+          customer_code,
+          customer_name,
+          address_1,
+          city,
+          state,
+          postcode,
+          phone_number,
+          fax_number,
+          affiliation,
+          cust_type,
+          cust_status,
+          contact_name,
+          sales_person_code,
+          sales_person_name,
+          outlet_location,
+          geo_level1_code,
+          geo_level2_code,
+          geo_level3_code,
+          geo_level4_code,
+          geo_level5_code,
+          std_level1_code,
+          std_level2_code,
+          std_level3_code,
+          std_level4_code,
+          business_unit_id)
       values
-         (rcd_cad_customer_master.sap_customer_code,
-          rcd_cad_customer_master.sap_customer_name,
-          rcd_cad_customer_master.ship_to_cust_code,
-          rcd_cad_customer_master.ship_to_cust_name,
-          rcd_cad_customer_master.bill_to_cust_code,
-          rcd_cad_customer_master.bill_to_cust_name,
-          rcd_cad_customer_master.salesman_code,
-          rcd_cad_customer_master.salesman_name,
-          rcd_cad_customer_master.city_code,
-          rcd_cad_customer_master.city_name,
-          rcd_cad_customer_master.hub_city_code,
-          rcd_cad_customer_master.hub_city_name,
-          rcd_cad_customer_master.address_street_en,
-          rcd_cad_customer_master.address_sort_en,
-          rcd_cad_customer_master.region_code,
-          rcd_cad_customer_master.plant_code,
-          rcd_cad_customer_master.vat_registration_number,
-          rcd_cad_customer_master.customer_status,
-          rcd_cad_customer_master.insurance_number,
-          rcd_cad_customer_master.buying_grp_code,
-          rcd_cad_customer_master.buying_grp_name,
-          rcd_cad_customer_master.key_account_code,
-          rcd_cad_customer_master.key_account_name,
-          rcd_cad_customer_master.channel_code,
-          rcd_cad_customer_master.channel_name,
-          rcd_cad_customer_master.channel_grp_code,
-          rcd_cad_customer_master.channel_grp_name,
-          rcd_cad_customer_master.swb_status,
-          rcd_cad_customer_master.last_update_date,
-          rcd_cad_customer_master.cad_load_date);
+         (rcd_iface_customer.market_id,
+          rcd_iface_customer.customer_code,
+          rcd_iface_customer.customer_name,
+          rcd_iface_customer.address_1,
+          rcd_iface_customer.city,
+          rcd_iface_customer.state,
+          rcd_iface_customer.postcode,
+          rcd_iface_customer.phone_number,
+          rcd_iface_customer.fax_number,
+          rcd_iface_customer.affiliation,
+          rcd_iface_customer.cust_type,
+          rcd_iface_customer.cust_status,
+          rcd_iface_customer.contact_name,
+          rcd_iface_customer.sales_person_code,
+          rcd_iface_customer.sales_person_name,
+          rcd_iface_customer.outlet_location,
+          rcd_iface_customer.geo_level1_code,
+          rcd_iface_customer.geo_level2_code,
+          rcd_iface_customer.geo_level3_code,
+          rcd_iface_customer.geo_level4_code,
+          rcd_iface_customer.geo_level5_code,
+          rcd_iface_customer.std_level1_code,
+          rcd_iface_customer.std_level2_code,
+          rcd_iface_customer.std_level3_code,
+          rcd_iface_customer.std_level4_code,
+          rcd_iface_customer.business_unit_id);
 
    /*-------------*/
    /* End routine */
