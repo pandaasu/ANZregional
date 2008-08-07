@@ -1,4 +1,4 @@
-/******************/
+﻿/******************/
 /* Package Header */
 /******************/
 create or replace package bds_atllad01_flatten as
@@ -37,6 +37,7 @@ create or replace package bds_atllad01_flatten as
     2007/07   Steve Gregan   Included validation process order logic
     2007/08   Steve Gregan   Excluded AU10 and NZ01 from validation process order logic
     2008/01   Jeff Phillipson Allow AU10 validation process orders 
+    2008/08   Trevor Keon    Added send error procedure
 
    *******************************************************************************/
 
@@ -81,7 +82,7 @@ create or replace package body bds_atllad01_flatten AS
    procedure process_zmessrc;
    procedure process_zphpan1;
    procedure process_zphbrq1;
-   procedure send_error(par_err_type in varchar2, par_var_name in varchar2, par_var_value in varchar2);
+   procedure send_error(par_err_type in varchar2, par_var_name in varchar2, par_var_ch in varchar2, par_var_value in varchar2);
 
    /*-*/
    /* Private definitions
@@ -677,7 +678,7 @@ create or replace package body bds_atllad01_flatten AS
          rcd_bds_recipe_header.sched_start_datime := TO_DATE(rcd_lads_ctl_rec_hpi.scheduled_start_date || rcd_lads_ctl_rec_hpi.scheduled_start_time,'YYYYMMDDHH24MISS');
       EXCEPTION
          WHEN OTHERS THEN
-            send_error(con_date_err, 'Scheduled Start Time', rcd_lads_ctl_rec_hpi.scheduled_start_date || rcd_lads_ctl_rec_hpi.scheduled_start_time);
+            send_error(con_date_err, 'Scheduled Start Time', '计划开始时间' , rcd_lads_ctl_rec_hpi.scheduled_start_date || rcd_lads_ctl_rec_hpi.scheduled_start_time);
       END;
 
       rcd_bds_recipe_header.run_start_datime := NULL;
@@ -685,7 +686,7 @@ create or replace package body bds_atllad01_flatten AS
          rcd_bds_recipe_header.run_start_datime := TO_DATE(rcd_lads_ctl_rec_vpi.zpppi_order_start_date || rcd_lads_ctl_rec_vpi.zpppi_order_start_time,'YYYYMMDDHH24MISS');
       EXCEPTION
          WHEN OTHERS THEN
-            send_error(con_date_err, 'Run Start Time', rcd_lads_ctl_rec_vpi.zpppi_order_start_date || rcd_lads_ctl_rec_vpi.zpppi_order_start_time);
+            send_error(con_date_err, 'Run Start Time', '运行开始时间', rcd_lads_ctl_rec_vpi.zpppi_order_start_date || rcd_lads_ctl_rec_vpi.zpppi_order_start_time);
       END;
       IF rcd_bds_recipe_header.run_start_datime IS NULL THEN
          RAISE_APPLICATION_ERROR(-20000, 'Process ZORDINE - Field - RUN_START_DATIME - Must not be null');
@@ -696,7 +697,7 @@ create or replace package body bds_atllad01_flatten AS
          rcd_bds_recipe_header.run_end_datime := TO_DATE(rcd_lads_ctl_rec_vpi.zpppi_order_end_date || rcd_lads_ctl_rec_vpi.zpppi_order_end_time,'YYYYMMDDHH24MISS');
       EXCEPTION
          WHEN OTHERS THEN
-            send_error(con_date_err, 'Run End Time', rcd_lads_ctl_rec_vpi.zpppi_order_end_date || rcd_lads_ctl_rec_vpi.zpppi_order_end_time);
+            send_error(con_date_err, 'Run End Time', '运行结束时间', rcd_lads_ctl_rec_vpi.zpppi_order_end_date || rcd_lads_ctl_rec_vpi.zpppi_order_end_time);
       END;
       IF rcd_bds_recipe_header.run_end_datime IS NULL THEN
          RAISE_APPLICATION_ERROR(-20000,' Process ZORDINE - Field - RUN_END_DATIME - Must not be null');
@@ -2327,7 +2328,7 @@ create or replace package body bds_atllad01_flatten AS
    end process_zphbrq1;
    
 
-  procedure send_error(par_err_type in varchar2, par_var_name in varchar2, par_var_value in varchar2) is
+  procedure send_error(par_err_type in varchar2, par_var_name in varchar2, par_var_ch in varchar2, par_var_value in varchar2) is
      
     /*-*/
     /* Local definitions
@@ -2346,30 +2347,58 @@ create or replace package body bds_atllad01_flatten AS
   
     var_email_group := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
     var_email_msg := '';
-     
+         
     /*-*/
     /* Generate email message for each individual error type
     /*-*/    
     if ( par_err_type = con_date_err ) then -- date error 
-      var_email_msg := 'Invalid date format specified for ''' || par_var_name || '''.  Please ensure the date format matches YYYYMMDDHH24MISS and midnight is entered as 00, not 24.' || chr(13);
-      var_email_msg := var_email_msg || par_var_name || ' = ' || par_var_value || chr(13);
-      var_email_msg := var_email_msg || 'Plant code = ' || rcd_lads_ctl_rec_hpi.plant || chr(13);
-      var_email_msg := var_email_msg || 'Process order = ' || rcd_lads_ctl_rec_hpi.proc_order || chr(13);
-      var_email_msg := var_email_msg || 'Control recipe = ' || rcd_lads_ctl_rec_hpi.cntl_rec_id || chr(13);
-      var_email_msg := var_email_msg || 'Business action required to update the process order with valid data and resend to factory system.';
+      var_email_msg := 'Date format invalid for [' || par_var_name || ' ' || par_var_ch || '].  Format must be [YYYYMMDDHH24MISS].  Midnight must be entered as 00, not 24.' || chr(13);
+      var_email_msg := var_email_msg || 'Plant code (出错工厂) = ' || rcd_lads_ctl_rec_hpi.plant || chr(13);
+      var_email_msg := var_email_msg || par_var_name || '(' || par_var_ch || ') = ' || par_var_value || chr(13);
+      var_email_msg := var_email_msg || 'Process order (工单号) = ' || rcd_lads_ctl_rec_hpi.proc_order || chr(13);
+      var_email_msg := var_email_msg || 'Control recipe (控制指令) = ' || rcd_lads_ctl_rec_hpi.cntl_rec_id || chr(13);
+      var_email_msg := var_email_msg || 'Business action required to update the process order with valid data and resend to Shiftlog.' || chr(13);
+      var_email_msg := var_email_msg || '请将以上错误进行修改后，重新发送到SHIFTLOG里。';
     end if;
     
     /*-*/
     /* Send email message and exit.
     /*-*/       
     if ( trim(var_email_msg) is not null ) then    
-      lics_notification.send_email(lads_parameter.system_code,
-                                  lads_parameter.system_unit,
-                                  lads_parameter.system_environment,
-                                  con_function,
-                                  con_ema_code,
-                                  var_email_group,
-                                  var_email_msg);
+    
+      /*-*/
+      /* Create email
+      /*-*/      
+      lics_mailer.create_email(lads_parameter.system_code || '_' || lads_parameter.system_unit || '_' || lads_parameter.system_environment,
+                                var_email_group,
+                                con_function,
+                                null,
+                                null);
+                                 
+      /*-*/
+      /* Generate email header
+      /*-*/      
+      lics_mailer.create_part(null);
+      lics_mailer.append_data(con_ema_code);
+      lics_mailer.append_data('====================');
+      lics_mailer.append_data(null);
+      lics_mailer.append_data('System        : ' || lads_parameter.system_code);
+      lics_mailer.append_data('Business Unit : ' || lads_parameter.system_unit);
+      lics_mailer.append_data('Environment   : ' || lads_parameter.system_environment);
+      lics_mailer.append_data('Timestamp     : ' || to_char(sysdate, 'yyyy/mm/dd hh24:mi:ss'));
+      lics_mailer.append_data(null);
+      lics_mailer.append_data('Procedure     : ' || con_ema_code);
+      lics_mailer.append_data(null);  
+      
+      /*-*/
+      /* Add email body
+      /*-*/   
+      lics_mailer.append_data(var_email_msg);
+      lics_mailer.finalise_email('utf-8');
+      
+      /*-*/
+      /* Raise exception so no more processing is done.
+      /*-*/        
       raise user_exception;                                   
     end if;                                      
      
