@@ -268,7 +268,7 @@ create or replace package body efxcad01_customer as
                                              nvl(rcd_customer.cust_updated_by,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_updated_by,' ')),' ') ||
                                              nvl(rcd_customer.cust_otl_location,' ')||rpad(' ',100-length(nvl(rcd_customer.cust_otl_location,' ')),' ') ||
                                              nvl(rcd_customer.cust_country_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_country_code,' ')),' ') ||
-                                             nvl(rcd_customer.cust_country_name,' ')||rpad(' ',50-length(nvl(rcd_customer.market_name,' ')),' ') ||
+                                             nvl(rcd_customer.cust_country_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_country_name,' ')),' ') ||
                                              nvl(rcd_customer.cust_region_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_region_code,' ')),' ') ||
                                              nvl(rcd_customer.cust_region_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_region_name,' ')),' ') ||
                                              nvl(rcd_customer.cust_cluster_code,' ')||rpad(' ',10-length(nvl(rcd_customer.cust_cluster_code,' ')),' ') ||
