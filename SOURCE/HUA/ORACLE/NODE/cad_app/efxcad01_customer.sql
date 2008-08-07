@@ -81,18 +81,18 @@ create or replace package body efxcad01_customer as
       lics_inbound_utility.set_definition('CTL','IDOC_CTL',3);
       /*-*/
       lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);
-      lics_inbound_utility.set_definition('HDR','MARKET_NAME',50);
-      lics_inbound_utility.set_definition('HDR','BUSINESS_UNIT_NAME',50);
-      lics_inbound_utility.set_definition('HDR','SEGMENT_NAME',50);
-      lics_inbound_utility.set_definition('HDR','CUST_TRADE_CHANNEL_NAME',50);
-      lics_inbound_utility.set_definition('HDR','CUST_CHANNEL_NAME',50);
-      lics_inbound_utility.set_definition('HDR','CUST_TYPE_NAME',50);
-      lics_inbound_utility.set_definition('HDR','CUST_GRADE_NAME',50);
+      lics_inbound_utility.set_definition('HDR','MARKET',50);
+      lics_inbound_utility.set_definition('HDR','BUSINESS_UNIT',50);
+      lics_inbound_utility.set_definition('HDR','SEGMENT',50);
+      lics_inbound_utility.set_definition('HDR','CUST_TRADE_CHANNEL',50);
+      lics_inbound_utility.set_definition('HDR','CUST_CHANNE',50);
+      lics_inbound_utility.set_definition('HDR','CUST_TYPE',50);
+      lics_inbound_utility.set_definition('HDR','CUST_GRADE',50);
       lics_inbound_utility.set_definition('HDR','CUST_CODE',50);
       lics_inbound_utility.set_definition('HDR','CUST_NAME',100);
       lics_inbound_utility.set_definition('HDR','CUST_CITY',50);
       lics_inbound_utility.set_definition('HDR','CUST_POSTCODE',50);
-      lics_inbound_utility.set_definition('HDR','CUST_POSTAL_ADD',50);
+      lics_inbound_utility.set_definition('HDR','CUST_POSTAL_ADDR',50);
       lics_inbound_utility.set_definition('HDR','CUST_PHONE',50);
       lics_inbound_utility.set_definition('HDR','CUST_FAX',50);
       lics_inbound_utility.set_definition('HDR','CUST_EMAIL',50);
