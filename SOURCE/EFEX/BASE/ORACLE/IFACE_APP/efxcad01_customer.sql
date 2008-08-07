@@ -107,7 +107,7 @@ create or replace package body efxcad01_customer as
                 t01.geo_level5_code as cust_city_code,
                 t01.std_level2_code as cust_account_type_code,
                 t13.std_level2_name as cust_account_type_desc,
-                t06.sales_territory_id as sales_territory_code,
+                to_char(nvl(t06.sales_territory_id,0)) as sales_territory_code,
                 t07.sales_territory_name as sales_territory_name,
                 t08.sales_area_name as sales_area,
                 t09.sales_region_name as sales_region,
