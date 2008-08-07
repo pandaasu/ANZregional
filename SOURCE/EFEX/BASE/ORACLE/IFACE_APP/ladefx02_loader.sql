@@ -111,7 +111,6 @@ create or replace package body ladefx02_loader as
       lics_inbound_utility.set_definition('HDR','STD_LEVEL2_CODE',10);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL3_CODE',10);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL4_CODE',10);
-      lics_inbound_utility.set_definition('HDR','BUSINESS_UNIT_ID',10);
 
       /*-*/
       /* Clear the IFACE customer table for the China market
@@ -298,7 +297,6 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.std_level2_code := lics_inbound_utility.get_variable('STD_LEVEL2_CODE');
       rcd_iface_customer.std_level3_code := lics_inbound_utility.get_variable('STD_LEVEL3_CODE');
       rcd_iface_customer.std_level4_code := lics_inbound_utility.get_variable('STD_LEVEL4_CODE');
-      rcd_iface_customer.business_unit_id := lics_inbound_utility.get_number('BUSINESS_UNIT_ID',null);
 
       /*-*/
       /* Retrieve exceptions raised
@@ -355,8 +353,7 @@ create or replace package body ladefx02_loader as
           std_level1_code,
           std_level2_code,
           std_level3_code,
-          std_level4_code,
-          business_unit_id)
+          std_level4_code)
       values
          (rcd_iface_customer.market_id,
           rcd_iface_customer.customer_code,
@@ -382,8 +379,7 @@ create or replace package body ladefx02_loader as
           rcd_iface_customer.std_level1_code,
           rcd_iface_customer.std_level2_code,
           rcd_iface_customer.std_level3_code,
-          rcd_iface_customer.std_level4_code,
-          rcd_iface_customer.business_unit_id);
+          rcd_iface_customer.std_level4_code);
 
    /*-------------*/
    /* End routine */
