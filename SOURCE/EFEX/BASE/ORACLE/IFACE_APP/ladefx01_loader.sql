@@ -360,7 +360,7 @@ create or replace package body ladefx01_loader as
           rcd_iface_item.item_category;
           rcd_iface_item.pack_size;
           rcd_iface_item.pack_type;
-          rcd_iface_item.item_status;
+          rcd_iface_item.item_status);
 
    /*-------------*/
    /* End routine */

@@ -45,6 +45,7 @@ create or replace package body ladefx03_loader as
    /* Private declarations
    /*-*/
    procedure complete_transaction;
+   procedure process_record_ctl(par_record in varchar2);
    procedure process_record_hdr(par_record in varchar2);
 
    /*-*/
@@ -53,7 +54,7 @@ create or replace package body ladefx03_loader as
    var_trn_start boolean;
    var_trn_ignore boolean;
    var_trn_error boolean;
-   rcd_cad_sales_force_geo_hier cad_sales_force_geo_hier%rowtype;
+   rcd_iface_standard_hierarchy iface_standard_hierarchy%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -77,77 +78,23 @@ create or replace package body ladefx03_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);
-      lics_inbound_utility.set_definition('HDR','SAP_HIER_CUST_CODE',10);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE',2);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_1',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_1',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_1',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_1',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_1',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_1',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_2',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_2',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_2',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_2',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_2',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_2',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_3',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_3',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_3',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_3',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_3',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_3',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_4',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_4',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_4',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_4',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_4',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_4',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_5',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_5',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_5',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_5',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_5',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_5',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_6',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_6',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_6',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_6',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_6',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_6',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_7',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_7',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_7',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_7',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_7',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_7',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_8',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_8',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_8',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_8',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_8',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_8',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_9',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_9',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_9',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_9',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_9',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_9',10);
-      lics_inbound_utility.set_definition('HDR','SAP_CUST_CODE_LEVEL_10',10);
-      lics_inbound_utility.set_definition('HDR','CUST_NAME_EN_LEVEL_10',40);
-      lics_inbound_utility.set_definition('HDR','SAP_SALES_ORG_CODE_LEVEL_10',4);
-      lics_inbound_utility.set_definition('HDR','SAP_DISTBN_CHNL_CODE_LEVEL_10',2);
-      lics_inbound_utility.set_definition('HDR','SAP_DIVISION_CODE_LEVEL_10',2);
-      lics_inbound_utility.set_definition('HDR','CUST_HIER_SORT_LEVEL_10',10);
-
+      lics_inbound_utility.set_definition('CTL','IFACE_CTL',3);
+      /*-*/
+      lics_inbound_utility.set_definition('HDR','IFACE_HDR',3);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL1_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL2_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL3_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL4_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL1_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL2_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL3_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL4_NAME',50);
 
       /*-*/
-      /* Delete Price master entries
+      /* Clear the IFACE standard hierarchy table
       /*-*/
-      delete cad_sales_force_geo_hier;
+      delete iface_standard_hierarchy;
+      commit;
 
    /*-------------*/
    /* End routine */
@@ -174,6 +121,7 @@ create or replace package body ladefx03_loader as
       /*-*/
       var_record_identifier := substr(par_record,1,3);
       case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
          when 'HDR' then process_record_hdr(par_record);
          else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
       end case;
@@ -220,11 +168,6 @@ create or replace package body ladefx03_loader as
    /************************************************************/
    procedure complete_transaction is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_accepted boolean;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -243,14 +186,12 @@ create or replace package body ladefx03_loader as
       /* Execute the interface monitor when required
       /*-*/
       if var_trn_ignore = true then
-         var_accepted := true;
          rollback;
       elsif var_trn_error = true then
-         var_accepted := false;
          rollback;
       else
-         var_accepted := true;
          commit;
+         efex_refresh.refresh_std_hierarchy;
       end if;
 
    /*-------------*/
@@ -259,17 +200,36 @@ create or replace package body ladefx03_loader as
    end complete_transaction;
 
    /**************************************************/
+   /* This procedure performs the record CTL routine */
+   /**************************************************/
+   procedure process_record_ctl(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Complete the previous transaction
+      /*-*/
+      complete_transaction;
+
+      /*-*/
+      /* Reset the transaction variables
+      /*-*/
+      var_trn_start := true;
+      var_trn_ignore := false;
+      var_trn_error := false;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
+
+   /**************************************************/
    /* This procedure performs the record HDR routine */
    /**************************************************/
    procedure process_record_hdr(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-
-      /*-*/
-      /* Local cursors
-      /*-*/
 
    /*-------------*/
    /* Begin block */
@@ -279,6 +239,7 @@ create or replace package body ladefx03_loader as
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
+
       lics_inbound_utility.parse_record('HDR', par_record);
 
       /*--------------------------------------*/
@@ -288,71 +249,14 @@ create or replace package body ladefx03_loader as
       /*-*/
       /* Retrieve field values
       /*-*/      
-      rcd_cad_sales_force_geo_hier.sap_hier_cust_code := lics_inbound_utility.get_variable('SAP_HIER_CUST_CODE');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE');
-      rcd_cad_sales_force_geo_hier.sap_division_code := lics_inbound_utility.get_variable('SAP_DIVISION_CODE');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_1 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_1 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_1 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_1 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_1 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_1 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_1');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_2 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_2 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_2 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_2 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_2 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_2 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_2');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_3 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_3 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_3 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_3 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_3 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_3 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_3');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_4 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_4 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_4 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_4 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_4 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_4 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_4');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_5 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_5 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_5 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_5 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_5 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_5 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_5');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_6 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_6 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_6 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_6 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_6 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_6 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_6');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_7 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_7 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_7 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_7 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_7 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_7 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_7');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_8 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_8 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_8 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_8 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_8 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_8 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_8');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_9 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_9 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_9 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_9 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_9 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_9 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_9');
-      rcd_cad_sales_force_geo_hier.sap_cust_code_level_10 := lics_inbound_utility.get_variable('SAP_CUST_CODE_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.cust_name_en_level_10 := lics_inbound_utility.get_variable('CUST_NAME_EN_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_10 := lics_inbound_utility.get_variable('SAP_SALES_ORG_CODE_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_10 := lics_inbound_utility.get_variable('SAP_DISTBN_CHNL_CODE_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.sap_division_code_level_10 := lics_inbound_utility.get_variable('SAP_DIVISION_CODE_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.cust_hier_sort_level_10 := lics_inbound_utility.get_variable('CUST_HIER_SORT_LEVEL_10');
-      rcd_cad_sales_force_geo_hier.cad_load_date := sysdate;
+      rcd_iface_standard_hierarchy.std_level1_code := lics_inbound_utility.get_variable('STD_LEVEL1_CODE');
+      rcd_iface_standard_hierarchy.std_level2_code := lics_inbound_utility.get_variable('STD_LEVEL2_CODE');
+      rcd_iface_standard_hierarchy.std_level3_code := lics_inbound_utility.get_variable('STD_LEVEL3_CODE');
+      rcd_iface_standard_hierarchy.std_level4_code := lics_inbound_utility.get_variable('STD_LEVEL4_CODE');
+      rcd_iface_standard_hierarchy.std_level1_name := lics_inbound_utility.get_variable('STD_LEVEL1_NAME');
+      rcd_iface_standard_hierarchy.std_level2_name := lics_inbound_utility.get_variable('STD_LEVEL2_NAME');
+      rcd_iface_standard_hierarchy.std_level3_name := lics_inbound_utility.get_variable('STD_LEVEL3_NAME');
+      rcd_iface_standard_hierarchy.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -368,138 +272,28 @@ create or replace package body ladefx03_loader as
          return;
       end if;
 
-      insert into cad_sales_force_geo_hier
-         (sap_hier_cust_code,
-          sap_sales_org_code,
-          sap_distbn_chnl_code,
-          sap_division_code,
-          sap_cust_code_level_1,
-          cust_name_en_level_1,
-          sap_sales_org_code_level_1,
-          sap_distbn_chnl_code_level_1,
-          sap_division_code_level_1,
-          cust_hier_sort_level_1,
-          sap_cust_code_level_2,
-          cust_name_en_level_2,
-          sap_sales_org_code_level_2,
-          sap_distbn_chnl_code_level_2,
-          sap_division_code_level_2,
-          cust_hier_sort_level_2,
-          sap_cust_code_level_3,
-          cust_name_en_level_3,
-          sap_sales_org_code_level_3,
-          sap_distbn_chnl_code_level_3,
-          sap_division_code_level_3,
-          cust_hier_sort_level_3,
-          sap_cust_code_level_4,
-          cust_name_en_level_4,
-          sap_sales_org_code_level_4,
-          sap_distbn_chnl_code_level_4,
-          sap_division_code_level_4,
-          cust_hier_sort_level_4,
-          sap_cust_code_level_5,
-          cust_name_en_level_5,
-          sap_sales_org_code_level_5,
-          sap_distbn_chnl_code_level_5,
-          sap_division_code_level_5,
-          cust_hier_sort_level_5,
-          sap_cust_code_level_6,
-          cust_name_en_level_6,
-          sap_sales_org_code_level_6,
-          sap_distbn_chnl_code_level_6,
-          sap_division_code_level_6,
-          cust_hier_sort_level_6,
-          sap_cust_code_level_7,
-          cust_name_en_level_7,
-          sap_sales_org_code_level_7,
-          sap_distbn_chnl_code_level_7,
-          sap_division_code_level_7,
-          cust_hier_sort_level_7,
-          sap_cust_code_level_8,
-          cust_name_en_level_8,
-          sap_sales_org_code_level_8,
-          sap_distbn_chnl_code_level_8,
-          sap_division_code_level_8,
-          cust_hier_sort_level_8,
-          sap_cust_code_level_9,
-          cust_name_en_level_9,
-          sap_sales_org_code_level_9,
-          sap_distbn_chnl_code_level_9,
-          sap_division_code_level_9,
-          cust_hier_sort_level_9,
-          sap_cust_code_level_10,
-          cust_name_en_level_10,
-          sap_sales_org_code_level_10,
-          sap_distbn_chnl_code_level_10,
-          sap_division_code_level_10,
-          cust_hier_sort_level_10,
-          cad_load_date)
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      insert into iface_standard_hierarchy
+         (std_level1_code,
+          std_level2_code,
+          std_level3_code,
+          std_level4_code,
+          std_level1_name,
+          std_level2_name,
+          std_level3_name,
+          std_level4_name)
       values
-         (rcd_cad_sales_force_geo_hier.sap_hier_cust_code,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code,
-          rcd_cad_sales_force_geo_hier.sap_division_code,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_1,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_1,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_1,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_1,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_1,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_1,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_2,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_2,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_2,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_2,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_2,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_2,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_3,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_3,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_3,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_3,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_3,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_3,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_4,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_4,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_4,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_4,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_4,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_4,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_5,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_5,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_5,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_5,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_5,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_5,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_6,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_6,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_6,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_6,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_6,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_6,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_7,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_7,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_7,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_7,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_7,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_7,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_8,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_8,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_8,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_8,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_8,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_8,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_9,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_9,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_9,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_9,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_9,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_9,
-          rcd_cad_sales_force_geo_hier.sap_cust_code_level_10,
-          rcd_cad_sales_force_geo_hier.cust_name_en_level_10,
-          rcd_cad_sales_force_geo_hier.sap_sales_org_code_level_10,
-          rcd_cad_sales_force_geo_hier.sap_distbn_chnl_code_level_10,
-          rcd_cad_sales_force_geo_hier.sap_division_code_level_10,
-          rcd_cad_sales_force_geo_hier.cust_hier_sort_level_10,
-          rcd_cad_sales_force_geo_hier.cad_load_date);
+         (rcd_iface_standard_hierarchy.std_level1_code,
+          rcd_iface_standard_hierarchy.std_level2_code,
+          rcd_iface_standard_hierarchy.std_level3_code,
+          rcd_iface_standard_hierarchy.std_level4_code,
+          rcd_iface_standard_hierarchy.std_level1_name,
+          rcd_iface_standard_hierarchy.std_level2_name,
+          rcd_iface_standard_hierarchy.std_level3_name,
+          rcd_iface_standard_hierarchy.std_level4_name);
 
    /*-------------*/
    /* End routine */
