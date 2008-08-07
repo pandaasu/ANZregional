@@ -102,7 +102,7 @@ create or replace package body ladefx02_loader as
       lics_inbound_utility.set_definition('HDR','SALES_PERSON_CODE',20);
       lics_inbound_utility.set_definition('HDR','SALES_PERSON_NAME',50);
       lics_inbound_utility.set_definition('HDR','OUTLET_LOCATION',100);
-      lics_inbound_utility.set_definition('HDR','GEO_LEVEL1_COD',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL1_CODE',10);
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL2_CODE',10);
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL3_CODE',10);
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL4_CODE',10);
