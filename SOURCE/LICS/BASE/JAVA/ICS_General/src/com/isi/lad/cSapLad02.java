@@ -36,6 +36,14 @@ public final class cSapLad02 implements iSapInterface {
          throw new Exception("SAPLAD02 - SAP filters not supplied");
       }
       String[] strTableFilters = strSapFilters.split(",");
+      String strRetrievalMode = (String)objParameters.get("RETRIEVALMODE");
+      if (strRetrievalMode == null) {
+         strRetrievalMode = "*ALL";
+      }
+      strRetrievalMode = strRetrievalMode.toUpperCase();
+      if (!strRetrievalMode.equals("*ALL") && !strRetrievalMode.equals("*BATCH")) {
+         throw new Exception("SAPLAD02 - Retrieval mode must be *ALL or *BATCH");
+      }
       
       //
       // Process the interface request
@@ -45,26 +53,33 @@ public final class cSapLad02 implements iSapInterface {
       boolean bolAppend = false;
       try {
          for (int i=0; i<strTableNames.length; i++) {
-            boolean bolData = false;
-            int intRowSkips = 0;
-            int intRowCount = 10000;
-            boolean bolRead = true;
-            while (bolRead) {
+            if (strRetrievalMode.equals("*BATCH")) {
+               boolean bolData = false;
+               int intRowSkips = 0;
+               int intRowCount = 10000;
+               boolean bolRead = true;
+               while (bolRead) {
+                  objSapSingleQuery = new cSapSingleQuery(objSAPConnection);
+                  objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[]{strTableFilters[i]}, intRowSkips, intRowCount);
+                  objSapSingleResultSet = objSapSingleQuery.getResultSet();
+                  if (!bolData) {
+                     objSapSingleResultSet.toInterfaceMeta(strOutputFile, "SAPLAD02", strTableNames[i].toUpperCase(), bolAppend);
+                     bolAppend = true;
+                     bolData = true;
+                  } else {
+                     objSapSingleResultSet.appendToInterface(strOutputFile);
+                  }
+                  if (objSapSingleResultSet.getRowCount() < intRowCount) {
+                     bolRead = false;
+                  } else {
+                     intRowSkips = intRowSkips + intRowCount;
+                  }
+               }
+            } else {
                objSapSingleQuery = new cSapSingleQuery(objSAPConnection);
-               objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[]{strTableFilters[i]}, intRowSkips, intRowCount);
+               objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[]{strTableFilters[i]}, 0, 0);
                objSapSingleResultSet = objSapSingleQuery.getResultSet();
-               if (!bolData) {
-                  objSapSingleResultSet.toInterfaceMeta(strOutputFile, "SAPLAD02", strTableNames[i].toUpperCase(), bolAppend);
-                  bolAppend = true;
-                  bolData = true;
-               } else {
-                  objSapSingleResultSet.appendToInterface(strOutputFile);
-               }
-               if (objSapSingleResultSet.getRowCount() < intRowCount) {
-                  bolRead = false;
-               } else {
-                  intRowSkips = intRowSkips + intRowCount;
-               }
+               objSapSingleResultSet.toInterfaceMeta(strOutputFile, "SAPLAD02", strTableNames[i].toUpperCase(), bolAppend);
             }
             bolAppend = true;
          }
