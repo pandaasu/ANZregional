@@ -47,38 +47,151 @@ PROCEDURE REFRESH_CUSTOMER(p_MarketID IN NUMBER) IS
                     or a.state <> b.state
                     or (a.state is null and b.state is not null))
    and    a.market_id = b.market_id
-   and    a.market_id = p_MarketID;
+   and    a.market_id = p_MarketID; 
+
+   cursor csr_china_customer is
+      select b.customer_code, 
+             b.customer_name, 
+             b.address_1, 
+             b.city, 
+             b.state, 
+             b.cust_status,
+             b.contact_name,
+             b.sales_person_code,
+             b.sales_person_name,
+             b.outlet_location,
+             b.geo_level1_code,
+             b.geo_level2_code,
+             b.geo_level3_code,
+             b.geo_level4_code,
+             b.geo_level5_code,
+             b.std_level1_code,
+             b.std_level2_code,
+             b.std_level3_code,
+             b.std_level4_code,
+             b.geo_level1_name,
+             b.geo_level2_name,
+             b.geo_level3_name,
+             b.geo_level4_name,
+             b.geo_level5_name,
+             b.std_level1_name,
+             b.std_level2_name,
+             b.std_level3_name,
+             b.std_level4_name
+        from customer a,
+             iface.iface_customer b
+       where a.customer_code = b.customer_code
+         and (a.customer_name != b.customer_name
+              or a.status != b.cust_status
+              or a.address_1 != b.address_1
+              or a.city != b.city 
+              or (a.city is null and b.city is not null)
+              or a.state != b.state
+              or (a.state is null and b.state is not null))
+         and a.market_id = b.market_id
+         and a.market_id = p_MarketID;
+   rcd_china_customer csr_china_customer%rowtype;
+
+   cursor csr_affiliation is
+      select t01.*
+        from affiliation t01,
+             affiliation_group t02
+       where t01.affiliation_group_id = t02.affiliation_group_id
+         and t02.business_unit_id = rcd_china_customer.business_unit_id
+         and t01.affiliation_name_en = xxxxx;
+   rcd_affiliation csr_affiliation%rowtype;
+
+   cursor csr_cust_type is
+      select t01.*
+        from cust_type t01,
+             cust_trade_channel t02,
+             cust_channel t03
+       where t01.cust_trade_channel_id = t02.cust_trade_channel_id
+         and t02.cust_channel_id = t03.cust_channel_id
+         and t03.business_unit_id = rcd_china_customer.business_unit_id
+         and t01.cust_type_name_en = xxxxx;
+   rcd_cust_type csr_cust_type%rowtype;
+
+   cursor csr_geo_hierarchy is
+      select t01.*
+        from geo_hierarchy t01
+       where t01.geo_level1_code = xxxxx
+         and t01.geo_level2_code = xxxxx
+         and t01.geo_level3_code = xxxxx
+         and t01.geo_level4_code = xxxxx;
+   rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
+
+   cursor csr_std_hierarchy is
+      select t01.*
+        from standard_hierarchy t01
+       where t01.std_level1_code = xxxxx
+         and t01.std_level2_code = xxxxx
+         and t01.std_level3_code = xxxxx
+         and t01.std_level4_code = xxxxx;
+   rcd_std_hierarchy csr_std_hierarchy%rowtype;
 
 BEGIN
 
-   FOR iface_row IN csrUpdateCust LOOP
-    --We are not updating Hong Kong Names until P10 2006
-        if p_MarketID <> 3 then  
-        update customer
-        set    customer_name = iface_row.customer_name,
-                       address_1 = iface_row.address_1,
-                             city = iface_row.city,
-                             state = iface_row.state
-        where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-        end if;
-        
-        --Check if the customer is a HK customer, if it is then update the extra bits
-        if p_MarketID = 3 then
-            update customer
-          set    status = iface_row.cust_status
-          where  customer_code = iface_row.customer_code
-          and    market_id = p_MarketID;
-        end if;
-             
-    update iface.iface_customer
-      set    iface_status = 'UPDATED'
-    where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-  
-    commit;
+   --
+   -- All marlets except China
+   --
+   if p_MarketID != 4 then
 
-   END LOOP;
+      FOR iface_row IN csrUpdateCust LOOP
+       --We are not updating Hong Kong Names until P10 2006
+           if p_MarketID <> 3 then  
+           update customer
+           set    customer_name = iface_row.customer_name,
+                          address_1 = iface_row.address_1,
+                                city = iface_row.city,
+                                state = iface_row.state
+           where  customer_code = iface_row.customer_code
+           and    market_id = p_MarketID;
+           end if;
+        
+           --Check if the customer is a HK customer, if it is then update the extra bits
+           if p_MarketID = 3 then
+               update customer
+             set    status = iface_row.cust_status
+             where  customer_code = iface_row.customer_code
+             and    market_id = p_MarketID;
+           end if;
+             
+       update iface.iface_customer
+         set    iface_status = 'UPDATED'
+       where  customer_code = iface_row.customer_code
+           and    market_id = p_MarketID;
+  
+       commit;
+
+      END LOOP;
+
+   --
+   -- China market
+   --
+   else
+
+      FOR iface_row IN csrUpdateCust LOOP
+  
+           update customer
+           set    customer_name = iface_row.customer_name,
+                          address_1 = iface_row.address_1,
+                                city = iface_row.city,
+                                state = iface_row.state,
+                    status = iface_row.cust_status
+           where  customer_code = iface_row.customer_code
+           and    market_id = p_MarketID;
+             
+          update iface.iface_customer
+            set    iface_status = 'UPDATED'
+          where  customer_code = iface_row.customer_code
+              and    market_id = p_MarketID;
+  
+          commit;
+
+      END LOOP;
+
+   end if;
 
 EXCEPTION
   WHEN OTHERS THEN
