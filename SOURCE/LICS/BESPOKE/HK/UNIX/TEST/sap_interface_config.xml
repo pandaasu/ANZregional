@@ -27,7 +27,8 @@
               SapServer="sapapb.na.mars"
               SapSystem="02"
               SapTables="KONDD,KOTD002,KOTD501,KOTD880,KOTD907"
-              SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE"/>
+              SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE"
+              RetrievalMode="*BATCH"/>
 
    <interface identifier="SAPLAD02#06"
               description="SAP to LADS T006A Table Interface"
