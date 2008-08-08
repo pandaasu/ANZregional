@@ -107,10 +107,19 @@ create or replace package body ladefx02_loader as
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL3_CODE',10);
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL4_CODE',10);
       lics_inbound_utility.set_definition('HDR','GEO_LEVEL5_CODE',10);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL1_NAME',50);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL2_NAME',50);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL3_NAME',50);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL4_NAME',50);
+      lics_inbound_utility.set_definition('HDR','GEO_LEVEL5_NAME',50);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL1_CODE',10);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL2_CODE',10);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL3_CODE',10);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL4_CODE',10);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL1_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL2_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL3_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STD_LEVEL4_NAME',50);
 
       /*-*/
       /* Clear the IFACE customer table for the China market
@@ -293,10 +302,19 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.geo_level3_code := lics_inbound_utility.get_variable('GEO_LEVEL3_CODE');
       rcd_iface_customer.geo_level4_code := lics_inbound_utility.get_variable('GEO_LEVEL4_CODE');
       rcd_iface_customer.geo_level5_code := lics_inbound_utility.get_variable('GEO_LEVEL5_CODE');
+      rcd_iface_customer.geo_level1_name := lics_inbound_utility.get_variable('GEO_LEVEL1_NAME');
+      rcd_iface_customer.geo_level2_name := lics_inbound_utility.get_variable('GEO_LEVEL2_NAME');
+      rcd_iface_customer.geo_level3_name := lics_inbound_utility.get_variable('GEO_LEVEL3_NAME');
+      rcd_iface_customer.geo_level4_name := lics_inbound_utility.get_variable('GEO_LEVEL4_NAME');
+      rcd_iface_customer.geo_level5_name := lics_inbound_utility.get_variable('GEO_LEVEL5_NAME');
       rcd_iface_customer.std_level1_code := lics_inbound_utility.get_variable('STD_LEVEL1_CODE');
       rcd_iface_customer.std_level2_code := lics_inbound_utility.get_variable('STD_LEVEL2_CODE');
       rcd_iface_customer.std_level3_code := lics_inbound_utility.get_variable('STD_LEVEL3_CODE');
       rcd_iface_customer.std_level4_code := lics_inbound_utility.get_variable('STD_LEVEL4_CODE');
+      rcd_iface_customer.std_level1_name := lics_inbound_utility.get_variable('STD_LEVEL1_NAME');
+      rcd_iface_customer.std_level2_name := lics_inbound_utility.get_variable('STD_LEVEL2_NAME');
+      rcd_iface_customer.std_level3_name := lics_inbound_utility.get_variable('STD_LEVEL3_NAME');
+      rcd_iface_customer.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -353,7 +371,16 @@ create or replace package body ladefx02_loader as
           std_level1_code,
           std_level2_code,
           std_level3_code,
-          std_level4_code)
+          std_level4_code,
+          geo_level1_name,
+          geo_level2_name,
+          geo_level3_name,
+          geo_level4_name,
+          geo_level5_name,
+          std_level1_name,
+          std_level2_name,
+          std_level3_name,
+          std_level4_name)
       values
          (rcd_iface_customer.market_id,
           rcd_iface_customer.customer_code,
@@ -379,7 +406,16 @@ create or replace package body ladefx02_loader as
           rcd_iface_customer.std_level1_code,
           rcd_iface_customer.std_level2_code,
           rcd_iface_customer.std_level3_code,
-          rcd_iface_customer.std_level4_code);
+          rcd_iface_customer.std_level4_code,
+          rcd_iface_customer.geo_level1_name,
+          rcd_iface_customer.geo_level2_name,
+          rcd_iface_customer.geo_level3_name,
+          rcd_iface_customer.geo_level4_name,
+          rcd_iface_customer.geo_level5_name,
+          rcd_iface_customer.std_level1_name,
+          rcd_iface_customer.std_level2_name,
+          rcd_iface_customer.std_level3_name,
+          rcd_iface_customer.std_level4_name);
 
    /*-------------*/
    /* End routine */

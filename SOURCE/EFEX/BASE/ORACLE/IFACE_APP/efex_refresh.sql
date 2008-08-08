@@ -5,8 +5,6 @@ PROCEDURE REFRESH_ITEM(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_BY(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_LIMITS(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_AU_SNACK_ITEM(p_MarketID IN NUMBER);
-PROCEDURE REFRESH_GEO_HIERARCHY(p_MarketID IN NUMBER);
-PROCEDURE REFRESH_STD_HIERARCHY(p_MarketID IN NUMBER);
 
 END EFEX_REFRESH;
 /
@@ -22,11 +20,11 @@ CREATE OR REPLACE PACKAGE BODY EFEX_REFRESH AS
 *  Ver    Date        Author           Description
 *  -----  ----------  ---------------  ------------------------------------
 *  1.0    00-00-2005  GEOFF DODDS       Created View
-*  1.1    01-08-2006  Toui Lepkhammany    Modified to refesh Hong Kong Customers
-                                         This includes customer status
+*  1.1    01-08-2006  Toui Lepkhammany  Modified to refesh Hong Kong Customers
+*                                        This includes customer status
 *  1.2    20-02-2008  Toui Lepkhammany  Mod: check for city and state being null
-                                        in efex.customer.
-                                        
+*                                       in efex.customer.
+*  1.3    08-08-2008  Steve Gregan      Modified to refresh China customers                                     
 ******************************************************************************/
 PROCEDURE REFRESH_CUSTOMER(p_MarketID IN NUMBER) IS
 
@@ -86,7 +84,6 @@ EXCEPTION
   WHEN OTHERS THEN
     Send_Mail(v_error_email, 'eFEX Refresh Interface Error', 'Error in EFEX_REFRESH.REFRESH_CUSTOMER'||chr(13)||SQLERRM,NULL);
 END REFRESH_CUSTOMER;
-
 
 /******************************************************************************
 *  NAME:       REFRESH_ITEM
@@ -564,143 +561,6 @@ EXCEPTION
 
 ||SQLERRM,NULL);
 END REFRESH_AU_SNACK_ITEM;
-
-/******************************************************************************
-*  NAME:       REFRESH_GEO_HIERARCHY
-*  PURPOSE:    EFEX Sales Force Geographic Hierarchy REFESH PROCEDURE
-*  REVISIONS:
-*  Ver    Date        Author           Description
-*  -----  ----------  ---------------  ------------------------------------
-*  1.0    07-08-2008  Steve Gregan     Created
-******************************************************************************/
-PROCEDURE REFRESH_GEO_HIERARCHY(p_MarketID IN NUMBER) IS
-
-     --Cursor modified by T.L (1.1) to include status clause and other details clauses.
-   CURSOR csrUpdateCust IS
-   select b.customer_code, 
-                     b.customer_name, 
-                    b.address_1, 
-                    b.city, 
-                    b.state, 
-                    b.cust_status
-   from   geo_hierarchy a, iface.geo_hierarchy b
-   where  a.customer_code = b.customer_code
-   and    (a.customer_name <> b.customer_name
-                     --Include customers where their status are not the same  
-                     or (a.status <> b.cust_status)
-                    or upper(a.address_1) <> upper(b.address_1)
-                    or a.city <> b.city 
-                    or (a.city is null and b.city is not null)
-                    or a.state <> b.state
-                    or (a.state is null and b.state is not null))
-   and    a.market_id = b.market_id
-   and    a.market_id = p_MarketID;
-
-BEGIN
-
-   FOR iface_row IN csrUpdateCust LOOP
-    --We are not updating Hong Kong Names until P10 2006
-        if p_MarketID <> 3 then  
-        update customer
-        set    customer_name = iface_row.customer_name,
-                       address_1 = iface_row.address_1,
-                             city = iface_row.city,
-                             state = iface_row.state
-        where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-        end if;
-        
-        --Check if the customer is a HK customer, if it is then update the extra bits
-        if p_MarketID = 3 then
-            update customer
-          set    status = iface_row.cust_status
-          where  customer_code = iface_row.customer_code
-          and    market_id = p_MarketID;
-        end if;
-             
-    update iface.iface_customer
-      set    iface_status = 'UPDATED'
-    where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-  
-    commit;
-
-   END LOOP;
-
-EXCEPTION
-  WHEN OTHERS THEN
-    Send_Mail(v_error_email, 'eFEX Refresh Interface Error', 'Error in EFEX_REFRESH.REFRESH_GEO_HIERARCHY'||chr(13)||SQLERRM,NULL);
-END REFRESH_GEO_HIERARCHY;
-
-/******************************************************************************
-*  NAME:       REFRESH_STD_HIERARCHY
-*  PURPOSE:    EFEX Standard Hierarchy REFESH PROCEDURE
-*  REVISIONS:
-*  Ver    Date        Author           Description
-*  -----  ----------  ---------------  ------------------------------------
-*  1.0    07-08-2008  Steve Gregan     Created
-******************************************************************************/
-PROCEDURE REFRESH_STD_HIERARCHY(p_MarketID IN NUMBER) IS
-
-     --Cursor modified by T.L (1.1) to include status clause and other details clauses.
-   CURSOR csrUpdateCust IS
-   select b.customer_code, 
-                     b.customer_name, 
-                    b.address_1, 
-                    b.city, 
-                    b.state, 
-                    b.cust_status
-   from   standard_hierarchy a, iface.standard_hierarchy b
-   where  a.std_level1_code = b.std_level1_code
-   and    a.std_level2_code = b.std_level2_code
-   and    a.std_level3_code = b.std_level3_code
-   and    a.std_level4_code = b.std_level4_code
-   and    (a.customer_name <> b.customer_name
-                     --Include customers where their status are not the same  
-                     or (a.status <> b.cust_status)
-                    or upper(a.address_1) <> upper(b.address_1)
-                    or a.city <> b.city 
-                    or (a.city is null and b.city is not null)
-                    or a.state <> b.state
-                    or (a.state is null and b.state is not null))
-   and    a.market_id = b.market_id
-   and    a.market_id = p_MarketID;
-
-BEGIN
-
-   FOR iface_row IN csrUpdateCust LOOP
-    --We are not updating Hong Kong Names until P10 2006
-        if p_MarketID <> 3 then  
-        update customer
-        set    customer_name = iface_row.customer_name,
-                       address_1 = iface_row.address_1,
-                             city = iface_row.city,
-                             state = iface_row.state
-        where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-        end if;
-        
-        --Check if the customer is a HK customer, if it is then update the extra bits
-        if p_MarketID = 3 then
-            update customer
-          set    status = iface_row.cust_status
-          where  customer_code = iface_row.customer_code
-          and    market_id = p_MarketID;
-        end if;
-             
-    update iface.iface_customer
-      set    iface_status = 'UPDATED'
-    where  customer_code = iface_row.customer_code
-        and    market_id = p_MarketID;
-  
-    commit;
-
-   END LOOP;
-
-EXCEPTION
-  WHEN OTHERS THEN
-    Send_Mail(v_error_email, 'eFEX Refresh Interface Error', 'Error in EFEX_REFRESH.REFRESH_STD_HIERARCHY'||chr(13)||SQLERRM,NULL);
-END REFRESH_STD_HIERARCHY;
    
 END EFEX_REFRESH;
 /
