@@ -25,7 +25,8 @@
         SapServer="sapapp.na.mars"               
         SapSystem="11"               
         SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911,T415A"
-        SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"/>     
+        SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
+        RetrievalMode="*ALL"/>     
     <interface identifier="SAPLAD03#01"               
         description="SAP to LADS Customer Hierarchy Interface"               
         class="com.isi.lad.cSapLad03"               
@@ -46,5 +47,6 @@
         SapServer="sapapp.na.mars" 
         SapSystem="11"
         SapTables="T415A,EORD"
-        SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"/>  
+        SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
+        RetrievalMode="*BATCH"/>  
 </configuration>
