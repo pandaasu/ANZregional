@@ -69,14 +69,8 @@ create or replace package body ladefx02_chn_customer as
                 decode(t03.postcode,null,t02.postcode,t03.postcode) as postcode,
                 decode(t03.phone_number,null,t02.phone_number,t03.phone_number) as phone_number,
                 decode(t03.fax_number,null,t02.fax_number,t03.fax_number) as fax_number,
-
-
-AFFILIATION		VARCHAR2(50)	O	STD LEVEL 4
-CUST_TYPE		VARCHAR2(50)	O	sub_channel_code
-
-                t07.cust_name_en_level_3 as affiliation,
-                t07_hier.cust_name_en_level_2 as cust_type,
-
+                t08.cust_name_en_level_4 as affiliation,
+                t09.sub_channel_desc as cust_type,
                 decode(nvl(t01.deletion_flag,' '),' ','A','X','X') as cust_status,
                 t05.contact_name as contact_name,
                 t04.salesman_code as sales_person_code,
@@ -149,7 +143,15 @@ CUST_TYPE		VARCHAR2(50)	O	sub_channel_code
                     and t01.division_code = '51'
                   group by t01.customer_code) t06,
                 sales_force_geo_hier t07,
-                std_hier t08
+                std_hier t08,
+                (select sap_customer_code as customer_code,
+                        t02.sap_charistic_value_desc as sub_channel_desc
+                   from bds_customer_classfctn t01,
+                        (select t01.sap_charistic_value_code,
+                                t01.sap_charistic_value_desc
+                           from bds_charistic_value_en t01
+                          where t01.sap_charistic_code = 'ZZCNCUST05') t02
+                  where t01.sap_sub_channel_code = t02.sap_charistic_value_code(+)) t09
           where t01.customer_code = t02.customer_code(+)
             and t01.customer_code = t03.customer_code(+)
             and t01.customer_code = t04.customer_code(+)
@@ -160,6 +162,7 @@ CUST_TYPE		VARCHAR2(50)	O	sub_channel_code
             and t06.sales_org_code = t08.sap_sales_org_code(+)
             and t06.distbn_chnl_code = t08.sap_distbn_chnl_code(+)
             and t06.division_code = t08.sap_division_code(+)
+            and t01.customer_code = t09.customer_code(+)
             and t01.account_group_code in ('0001','0002');
       rcd_cust_master csr_cust_master%rowtype;
 
@@ -208,7 +211,7 @@ CUST_TYPE		VARCHAR2(50)	O	sub_channel_code
                                           nvl(rcd_cust_master.affiliation,' ')||rpad(' ',50-length(nvl(rcd_cust_master.affiliation,' ')),' ') ||
                                           nvl(rcd_cust_master.cust_type,' ')||rpad(' ',50-length(nvl(rcd_cust_master.cust_type,' ')),' ') ||
                                           nvl(rcd_cust_master.cust_status,' ')||rpad(' ',1-length(nvl(rcd_cust_master.cust_status,' ')),' ') ||
-                                          nvl(rcd_cust_master.contact_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.contact_code,' ')),' ') ||
+                                          nvl(rcd_cust_master.contact_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.contact_name,' ')),' ') ||
                                           nvl(rcd_cust_master.sales_person_code,' ')||rpad(' ',20-length(nvl(rcd_cust_master.sales_person_code,' ')),' ') ||
                                           nvl(rcd_cust_master.sales_person_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.sales_person_name,' ')),' ') ||
                                           nvl(rcd_cust_master.outlet_location,' ')||rpad(' ',100-length(nvl(rcd_cust_master.outlet_location,' ')),' ') ||
