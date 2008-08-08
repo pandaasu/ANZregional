@@ -341,25 +341,25 @@ create or replace package body ladefx01_loader as
           pack_type,
           item_status)
       values
-         (rcd_iface_item.market_id;
-          rcd_iface_item.item_code;
-          rcd_iface_item.item_name;
-          rcd_iface_item.rsu_ean_code;
-          rcd_iface_item.cases_layer;
-          rcd_iface_item.layers_pallet;
-          rcd_iface_item.units_case;
-          rcd_iface_item.unit_measure;
-          rcd_iface_item.price1;
-          rcd_iface_item.price2;
-          rcd_iface_item.price3;
-          rcd_iface_item.price4;
-          rcd_iface_item.min_order_qty;
-          rcd_iface_item.order_multiples;
-          rcd_iface_item.brand;
-          rcd_iface_item.sub_brand;
-          rcd_iface_item.item_category;
-          rcd_iface_item.pack_size;
-          rcd_iface_item.pack_type;
+         (rcd_iface_item.market_id,
+          rcd_iface_item.item_code,
+          rcd_iface_item.item_name,
+          rcd_iface_item.rsu_ean_code,
+          rcd_iface_item.cases_layer,
+          rcd_iface_item.layers_pallet,
+          rcd_iface_item.units_case,
+          rcd_iface_item.unit_measure,
+          rcd_iface_item.price1,
+          rcd_iface_item.price2,
+          rcd_iface_item.price3,
+          rcd_iface_item.price4,
+          rcd_iface_item.min_order_qty,
+          rcd_iface_item.order_multiples,
+          rcd_iface_item.brand,
+          rcd_iface_item.sub_brand,
+          rcd_iface_item.item_category,
+          rcd_iface_item.pack_size,
+          rcd_iface_item.pack_type,
           rcd_iface_item.item_status);
 
    /*-------------*/
