@@ -46,7 +46,19 @@
         SapLanguage="EN" 
         SapServer="sapapp.na.mars" 
         SapSystem="11"
-        SapTables="T415A,EORD"
-        SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
-        RetrievalMode="*BATCH"/>  
+        SapTables="T415A"
+        SapFilters="*NONE"
+        RetrievalMode="*ALL"/>  
+    <interface identifier="SAPLAD02#05" 
+        description="SAP to LADS Purchasing Source (EORD)" 
+        class="com.isi.lad.cSapLad02" 
+        SapClient="002" 
+        SapUserId="*PROMPTED" 
+        SapPassword="*PROMPTED" 
+        SapLanguage="EN" 
+        SapServer="sapapp.na.mars" 
+        SapSystem="11"
+        SapTables="EORD"
+        SapFilters="WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
+        RetrievalMode="*BATCH"/>          
 </configuration>
