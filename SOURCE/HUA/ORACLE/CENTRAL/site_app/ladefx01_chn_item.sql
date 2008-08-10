@@ -76,7 +76,7 @@ create or replace package body ladefx01_chn_item as
                 0 as order_multiples,
                 t01.brand_flag_desc as brand,
                 t01.brand_sub_flag_desc as sub_brand,
-                to_char(nvl(t01.ntgew,0)) as pack_size,
+                to_char(nvl(t01.ntgew,0))||' '||t01.gewei as pack_size,
                 t01.cnsmr_pack_frmt_desc as pack_type,
                 t01.bus_sgmnt_desc as item_category,
                 decode(t01.item_status,' ','A','X','X') as item_status
@@ -88,6 +88,7 @@ create or replace package body ladefx01_chn_item as
                         t01.ean11 as ean11,
                         t01.meins as meins,
                         t01.ntgew as ntgew,
+                        t01.gewei as gewei,
                         t01.zzrepmatnr as zzrepmatnr,
                         decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN'),t02.maktx) as maktx,
                         nvl(t05.bus_sgmnt_desc,'*UNKNOWN') as bus_sgmnt_desc,
