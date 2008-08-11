@@ -31,18 +31,23 @@ public final class cSapLad02 implements iSapInterface {
          throw new Exception("SAPLAD02 - SAP tables not supplied");
       }
       String[] strTableNames = strSapTables.split(",");
+      
       String strSapFilters = (String)objParameters.get("SAPFILTERS");
       if (strSapFilters == null) {
          throw new Exception("SAPLAD02 - SAP filters not supplied");
       }
       String[] strTableFilters = strSapFilters.split(",");
-      String strRetrievalMode = (String)objParameters.get("RETRIEVALMODE");
-      if (strRetrievalMode == null) {
-         strRetrievalMode = "*ALL";
+      if (strTableFilters.length != strTableNames.length) {
+         throw new Exception("SAPLAD02 - SAP filters count does not match the SAP tables count");
       }
-      strRetrievalMode = strRetrievalMode.toUpperCase();
-      if (!strRetrievalMode.equals("*ALL") && !strRetrievalMode.equals("*BATCH")) {
-         throw new Exception("SAPLAD02 - Retrieval mode must be *ALL or *BATCH");
+      
+      String strRetrievalModes = (String)objParameters.get("RETRIEVALMODES");
+      if (strRetrievalModes == null) {
+         throw new Exception("SAPLAD02 - Retrieval modes not supplied");
+      }
+      String[] strTableModes = strRetrievalModes.split(",");
+      if (strTableModes.length != strTableNames.length) {
+         throw new Exception("SAPLAD02 - Retrieval modes count does not match the SAP tables count");
       }
       
       //
@@ -53,7 +58,7 @@ public final class cSapLad02 implements iSapInterface {
       boolean bolAppend = false;
       try {
          for (int i=0; i<strTableNames.length; i++) {
-            if (strRetrievalMode.equals("*BATCH")) {
+            if (strTableModes[i].toUpperCase().equals("*BATCH")) {
                boolean bolData = false;
                int intRowSkips = 0;
                int intRowCount = 10000;
