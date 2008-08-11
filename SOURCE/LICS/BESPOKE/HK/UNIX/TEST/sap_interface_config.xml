@@ -28,7 +28,7 @@
               SapSystem="02"
               SapTables="KONDD,KOTD002,KOTD501,KOTD880,KOTD907"
               SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE"
-              RetrievalMode="*BATCH"/>
+              RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL"/>
 
    <interface identifier="SAPLAD02#06"
               description="SAP to LADS T006A Table Interface"
@@ -39,7 +39,7 @@
               SapLanguage="EN"
               SapServer="sapapb.na.mars"
               SapSystem="02"
-              SapTables="T006A"/>
+              SapTables="T006A"              RetrievalModes="*ALL"/>
 
    <interface identifier="SAPLAD03#01"
               description="SAP to LADS Customer Hierarchy Interface"
