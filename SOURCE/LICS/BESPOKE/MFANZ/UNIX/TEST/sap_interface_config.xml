@@ -26,7 +26,7 @@
                SapSystem="02"
                SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911"
                SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL"/>
     <interface identifier="SAPLAD02#02"
                description="SAP to LADS SRC Interface"
                class="com.isi.lad.cSapLad02"
@@ -38,7 +38,7 @@
                SapSystem="02"
                SapTables="/MARS/IN_SRCID,/MARS/IN_SRC_VAL,MAPL,MKAL"
                SapFilters="*NONE,*NONE,*NONE,*NONE"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*BATCH,*ALL,*ALL,*ALL"/>
     <interface identifier="SAPLAD02#03"
                description="SAP to LADS SRC Interface"
                class="com.isi.lad.cSapLad02"
@@ -50,7 +50,7 @@
                SapSystem="02"
                SapTables="MKAL"
                SapFilters="*NONE"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*BATCH"/>
     <interface identifier="SAPLAD02#04"
                description="SAP to LADS Fix Interface"
                class="com.isi.lad.cSapLad02"
@@ -62,7 +62,7 @@
                SapSystem="02"
                SapTables="T415A,EORD"
                SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*ALL,*BATCH"/>
     <interface identifier="SAPLAD02#05"
                description="SAP to LADS Recipe Interface"
                class="com.isi.lad.cSapLad02"
@@ -74,7 +74,7 @@
                SapSystem="02"
                SapTables="AFPO"
                SapFilters="*NONE"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*BATCH"/>
     <interface identifier="SAPLAD03#01"
                description="SAP to LADS Customer Hierarchy Interface"
                class="com.isi.lad.cSapLad03"
