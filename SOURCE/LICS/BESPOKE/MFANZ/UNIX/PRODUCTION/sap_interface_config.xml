@@ -26,7 +26,7 @@
         SapSystem="11"               
         SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911,T415A"
         SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
-        RetrievalMode="*BATCH"/>     
+        RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL"/>     
     <interface identifier="SAPLAD03#01"               
         description="SAP to LADS Customer Hierarchy Interface"               
         class="com.isi.lad.cSapLad03"               
@@ -38,7 +38,7 @@
         SapSystem="11"               
         SapWhere="VKORG = '147' OR VKORG = '149'"/>   
     <interface identifier="SAPLAD02#04" 
-        description="SAP to LADS Alternate BOM (T415A)" 
+        description="SAP to LADS Alternate BOM (T415A/EORD)" 
         class="com.isi.lad.cSapLad02" 
         SapClient="002" 
         SapUserId="*PROMPTED" 
@@ -46,19 +46,7 @@
         SapLanguage="EN" 
         SapServer="sapapp.na.mars" 
         SapSystem="11"
-        SapTables="T415A"
-        SapFilters="*NONE"
-        RetrievalMode="*ALL"/>  
-    <interface identifier="SAPLAD02#05" 
-        description="SAP to LADS Purchasing Source (EORD)" 
-        class="com.isi.lad.cSapLad02" 
-        SapClient="002" 
-        SapUserId="*PROMPTED" 
-        SapPassword="*PROMPTED" 
-        SapLanguage="EN" 
-        SapServer="sapapp.na.mars" 
-        SapSystem="11"
-        SapTables="EORD"
-        SapFilters="WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
-        RetrievalMode="*BATCH"/>          
+        SapTables="T415A,EORD"
+        SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
+        RetrievalModes="*ALL,*BATCH"/>          
 </configuration>
