@@ -26,7 +26,7 @@
                SapSystem="11"
                SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911"
                SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
-               RetrievalMode="*BATCH"/>
+               RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL"/>
     <interface identifier="SAPLAD03#01"
                description="SAP to LADS Customer Hierarchy Interface"
                class="com.isi.lad.cSapLad03"
