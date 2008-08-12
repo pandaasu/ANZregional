@@ -80,7 +80,7 @@ create or replace package body ladcad04_order_summary as
                 to_char(a.pod_niv,'fm0000000000.00000') as pod_niv
          from order_fact a
          where a.sap_company_code in ('135','234')
-           and a.ord_lin_status in ('*ORD','*DEL','*POD','*INV')
+           and a.ord_lin_status in ('*ORD','*DEL','*POD','*INV','*NVL')
            and (trunc(a.ord_trn_date) >= trunc(sysdate) - par_history or
                 trunc(a.del_trn_date) >= trunc(sysdate) - par_history or
                 trunc(a.pod_trn_date) >= trunc(sysdate) - par_history);
