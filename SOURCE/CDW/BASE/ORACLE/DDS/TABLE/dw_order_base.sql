@@ -226,6 +226,17 @@ create index dds.dw_order_base_ix01 on dds.dw_order_base (company_code, order_do
 create index dds.dw_order_base_ix02 on dds.dw_order_base (company_code, order_trace_seqn);
 create index dds.dw_order_base_ix03 on dds.dw_order_base (company_code, order_line_status);
 
+create index dds.dw_order_base_ix04 on dds.dw_order_base (CREATN_DATE, COMPANY_CODE);
+create index dds.dw_order_base_ix05 on dds.dw_order_base (ORDER_EFF_DATE, COMPANY_CODE);
+create index dds.dw_order_base_ix06 on dds.dw_order_base (ORDER_EFF_YYYYPPDD, COMPANY_CODE);
+create index dds.dw_order_base_ix07 on dds.dw_order_base (SOLD_TO_CUST_CODE);
+create index dds.dw_order_base_ix08 on dds.dw_order_base (SHIP_TO_CUST_CODE);
+create index dds.dw_order_base_ix09 on dds.dw_order_base (MATL_CODE);
+create bitmap index dds.dw_order_base_ix10 on dds.dw_order_base (ORDER_LINE_STATUS);
+create bitmap index dds.dw_order_base_ix11 on dds.dw_order_base (ORDER_LINE_REJECTN_CODE);
+create index dds.dw_order_base_ix12 on dds.dw_order_base (CREATN_DATE, COMPANY_CODE, MATL_CODE);
+
+
 /**/
 /* Authority
 /**/
