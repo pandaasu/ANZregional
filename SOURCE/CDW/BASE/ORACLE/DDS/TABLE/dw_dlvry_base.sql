@@ -172,6 +172,14 @@ create index dds.dw_dlvry_base_ix03 on dds.dw_dlvry_base (company_code, dlvry_li
 create index dds.dw_dlvry_base_ix04 on dds.dw_dlvry_base (company_code, order_doc_num, order_doc_line_num);
 create index dds.dw_dlvry_base_ix05 on dds.dw_dlvry_base (company_code, purch_order_doc_num, purch_order_doc_line_num);
 
+create index dds.dw_dlvry_base_ix06 on dds.dw_dlvry_base (CREATN_DATE, COMPANY_CODE);
+create index dds.dw_dlvry_base_ix07 on dds.dw_dlvry_base (DLVRY_EFF_DATE, COMPANY_CODE);
+create index dds.dw_dlvry_base_ix08 on dds.dw_dlvry_base (DLVRY_EFF_YYYYPPDD, COMPANY_CODE);
+create index dds.dw_dlvry_base_ix09 on dds.dw_dlvry_base (SOLD_TO_CUST_CODE);
+create index dds.dw_dlvry_base_ix10 on dds.dw_dlvry_base (SHIP_TO_CUST_CODE);
+create index dds.dw_dlvry_base_ix11 on dds.dw_dlvry_base (MATL_CODE);
+create bitmap index dds.dw_dlvry_base_ix12 on dds.dw_dlvry_base (DLVRY_LINE_STATUS);
+
 /**/
 /* Authority
 /**/
