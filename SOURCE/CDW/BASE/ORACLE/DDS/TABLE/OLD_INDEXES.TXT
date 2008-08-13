@@ -1,0 +1,18 @@
+create index dds.SALES_FACT_I1 on dds.SALES_FACT_OLD (BILLING_EFF_YYYYMM, COMPANY_CODE);
+create index dds.SALES_FACT_I2 on dds.SALES_FACT_OLD (BILLING_EFF_YYYYPP, COMPANY_CODE);
+create index dds.SALES_FACT_I3 on dds.SALES_FACT_OLD (CREATN_DATE);
+create index dds.SALES_FACT_I4 on dds.SALES_FACT_OLD (BILLING_EFF_DATE);
+create index dds.SALES_FACT_I5 on dds.SALES_FACT_OLD (BILLING_EFF_YYYYPPDD);
+create index dds.SALES_FACT_I6 on dds.SALES_FACT_OLD (SOLD_TO_CUST_CODE);
+create index dds.SALES_FACT_I7 on dds.SALES_FACT_OLD (SHIP_TO_CUST_CODE);
+create index dds.SALES_FACT_I8 on dds.SALES_FACT_OLD (MATL_CODE);
+
+
+--drop index dds.SALES_FACT_I1;
+--drop index dds.SALES_FACT_I2;
+drop index dds.SALES_FACT_I3;
+drop index dds.SALES_FACT_I4;
+drop index dds.SALES_FACT_I5;
+drop index dds.SALES_FACT_I6;
+drop index dds.SALES_FACT_I7;
+drop index dds.SALES_FACT_I8;
