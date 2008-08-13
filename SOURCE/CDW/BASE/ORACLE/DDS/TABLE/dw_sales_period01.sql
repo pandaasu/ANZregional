@@ -68,6 +68,10 @@ create table dds.dw_sales_period01
 /**/
 create index dds.dw_sales_period01_ix01 on dds.dw_sales_period01 (company_code, billing_eff_yyyypp) local;
 
+create index dds.dw_sales_period01_ix02 on dds.dw_sales_period01 (MATL_CODE) local;
+create index dds.dw_sales_period01_ix03 on dds.dw_sales_period01 (SOLD_TO_CUST_CODE) local;
+create index dds.dw_sales_period01_ix04 on dds.dw_sales_period01 (SHIP_TO_CUST_CODE) local;
+
 /**/
 /* Authority
 /**/
