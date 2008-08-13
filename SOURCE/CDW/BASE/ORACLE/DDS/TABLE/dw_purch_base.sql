@@ -214,6 +214,12 @@ create index dds.dw_purch_base_ix01 on dds.dw_purch_base (company_code, purch_or
 create index dds.dw_purch_base_ix02 on dds.dw_purch_base (company_code, purch_order_trace_seqn);
 create index dds.dw_purch_base_ix03 on dds.dw_purch_base (company_code, purch_order_line_status);
 
+create index dds.dw_purch_base_ix04 on dds.dw_purch_base (CREATN_DATE, COMPANY_CODE);
+create index dds.dw_purch_base_ix05 on dds.dw_purch_base (PURCH_ORDER_EFF_DATE, COMPANY_CODE);
+create index dds.dw_purch_base_ix06 on dds.dw_purch_base (PURCH_ORDER_EFF_YYYYPPDD, COMPANY_CODE);
+create index dds.dw_purch_base_ix07 on dds.dw_purch_base (MATL_CODE);
+create bitmap index dds.dw_purch_base_ix08 on dds.dw_purch_base (PURCH_ORDER_LINE_STATUS);
+
 /**/
 /* Authority
 /**/
