@@ -10,8 +10,8 @@ create index dds.SALES_FACT_I8 on dds.SALES_FACT_OLD (MATL_CODE);
 
 --drop index dds.SALES_FACT_I1;
 --drop index dds.SALES_FACT_I2;
-drop index dds.SALES_FACT_I3;
-drop index dds.SALES_FACT_I4;
+--drop index dds.SALES_FACT_I3;
+--drop index dds.SALES_FACT_I4;
 drop index dds.SALES_FACT_I5;
 drop index dds.SALES_FACT_I6;
 drop index dds.SALES_FACT_I7;
