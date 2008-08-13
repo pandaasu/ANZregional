@@ -54,7 +54,6 @@ create or replace package dw_triggered_aggregation as
     -------   ------         -----------
     2007/08   Steve Gregan   Created
     2008/05   Steve Gregan   Modified for NZ demand planning group division
-    2008/08   Steve Gregan   Added flag file processing
 
    *******************************************************************************/
 
@@ -328,23 +327,6 @@ create or replace package body dw_triggered_aggregation as
                end loop;
             end if;
 
-         end if;
-
-         /*-*/
-         /* Update the flag file status to UNFLAGGED and wake the flag file daemon when required
-         /*-*/
-         if var_errors = false then
-            if upper(par_action) = '*DATE' then
-               lics_logging.write_log('Begin - Flag file creation');
-               update sap_inv_sum_hdr
-                  set flag_file_status = 'UNFLAGGED'
-                where bukrs = par_company
-                  and fkdat = par_date
-                  and flag_file_status = 'LOADED';
-               commit;
-               lics_pipe.spray(lics_constant.type_daemon,'FF',lics_constant.pipe_wake);
-               lics_logging.write_log('End - Flag file creation');
-            end if;
          end if;
 
          /*-*/
