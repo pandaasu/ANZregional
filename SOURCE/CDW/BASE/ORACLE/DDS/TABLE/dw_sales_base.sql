@@ -167,17 +167,6 @@ create index dds.dw_sales_base_ix11 on dds.dw_sales_base (SOLD_TO_CUST_CODE);
 create index dds.dw_sales_base_ix12 on dds.dw_sales_base (SHIP_TO_CUST_CODE);
 create index dds.dw_sales_base_ix13 on dds.dw_sales_base (MATL_CODE);
 
-
-BILLING_EFF_YYYYMM, COMPANY_CODE
-BILLING_EFF_YYYYPP, COMPANY_CODE
-CREATN_DATE
-BILLING_EFF_DATE
-BILLING_EFF_YYYYPPDD
-SOLD_TO_CUST_CODE
-SHIP_TO_CUST_CODE
-MATL_CODE
-COMPANY_CODE, BILLING_DOC_NUM, BILLING_DOC_LINE_NUM
-
 /**/
 /* Authority
 /**/
