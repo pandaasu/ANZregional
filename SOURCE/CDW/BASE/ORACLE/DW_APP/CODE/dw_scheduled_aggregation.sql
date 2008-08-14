@@ -253,9 +253,10 @@ create or replace package body dw_scheduled_aggregation as
          /*-*/
          /* Alert and email
          /*-*/
-         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
-            lics_notification.send_alert(var_alert);
-         end if;
+         ods_app.utils.send_tivoli_alert('CRITICAL','Fatal Error occurred during Scheduled Aggregation.',2,var_company_code);
+        -- if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+        --    lics_notification.send_alert(var_alert);
+        -- end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(dw_parameter.system_code,
                                          dw_parameter.system_unit,
@@ -452,9 +453,10 @@ create or replace package body dw_scheduled_aggregation as
          /*-*/
          /* Alert and email
          /*-*/
-         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
-            lics_notification.send_alert(var_alert);
-         end if;
+         ods_app.utils.send_tivoli_alert('CRITICAL','Fatal Error occurred during Scheduled Aggregation.',2,var_company_code);
+        -- if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+        --    lics_notification.send_alert(var_alert);
+        -- end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(dw_parameter.system_code,
                                          dw_parameter.system_unit,
@@ -646,9 +648,10 @@ create or replace package body dw_scheduled_aggregation as
          /*-*/
          /* Alert and email
          /*-*/
-         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
-            lics_notification.send_alert(var_alert);
-         end if;
+         ods_app.utils.send_tivoli_alert('CRITICAL','Fatal Error occurred during Scheduled Aggregation.',2,var_company_code);
+        -- if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+        --    lics_notification.send_alert(var_alert);
+        -- end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(dw_parameter.system_code,
                                          dw_parameter.system_unit,
