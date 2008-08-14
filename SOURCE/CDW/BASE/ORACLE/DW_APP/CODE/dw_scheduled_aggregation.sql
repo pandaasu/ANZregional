@@ -39,6 +39,7 @@ create or replace package dw_scheduled_aggregation as
     2008/05   Steve Gregan   Modified for NZ demand planning group division
     2008/06   Steve Gregan   Added SAP retrieval and SAP alignment
     2008/08   Steve Gregan   Included APO rejection code Z9
+    2008/08   Steve Gregan   Modified demand planning group division logic
 
    *******************************************************************************/
 
@@ -931,7 +932,8 @@ create or replace package body dw_scheduled_aggregation as
          rcd_purch_base.out_gsv_eur := 0;
          rcd_purch_base.mfanz_icb_flag := 'N';
          rcd_purch_base.demand_plng_grp_division_code := rcd_trace.division_code;
-         if rcd_purch_base.company_code = '149' then
+         if (rcd_purch_base.sales_org_code = '149' and
+             rcd_purch_base.distbn_chnl_code = '10') then
             if rcd_trace.mat_bus_sgmnt_code = '01' then
                rcd_purch_base.demand_plng_grp_division_code := '55';
             elsif rcd_trace.mat_bus_sgmnt_code = '02' then
@@ -941,7 +943,9 @@ create or replace package body dw_scheduled_aggregation as
             end if;
          else
             if rcd_purch_base.demand_plng_grp_division_code = '57' then
-               if rcd_trace.mat_bus_sgmnt_code = '05' then
+               if rcd_trace.mat_bus_sgmnt_code = '02' then
+                  rcd_purch_base.demand_plng_grp_division_code := '57';
+               elsif rcd_trace.mat_bus_sgmnt_code = '05' then
                   rcd_purch_base.demand_plng_grp_division_code := '56';
                end if;
             end if;
@@ -1391,7 +1395,8 @@ create or replace package body dw_scheduled_aggregation as
          rcd_order_base.out_gsv_eur := 0;
          rcd_order_base.mfanz_icb_flag := 'N';
          rcd_order_base.demand_plng_grp_division_code := rcd_trace.division_code;
-         if rcd_order_base.company_code = '149' then
+         if (rcd_order_base.sales_org_code = '149' and
+             rcd_order_base.distbn_chnl_code = '10') then
             if rcd_trace.mat_bus_sgmnt_code = '01' then
                rcd_order_base.demand_plng_grp_division_code := '55';
             elsif rcd_trace.mat_bus_sgmnt_code = '02' then
@@ -1401,7 +1406,9 @@ create or replace package body dw_scheduled_aggregation as
             end if;
          else
             if rcd_order_base.demand_plng_grp_division_code = '57' then
-               if rcd_trace.mat_bus_sgmnt_code = '05' then
+               if rcd_trace.mat_bus_sgmnt_code = '02' then
+                  rcd_order_base.demand_plng_grp_division_code := '57';
+               elsif rcd_trace.mat_bus_sgmnt_code = '05' then
                   rcd_order_base.demand_plng_grp_division_code := '56';
                end if;
             end if;
@@ -2370,7 +2377,8 @@ create or replace package body dw_scheduled_aggregation as
             rcd_nzmkt_base.con_gsv_eur := 0;
             rcd_nzmkt_base.mfanz_icb_flag := 'N';
             rcd_nzmkt_base.demand_plng_grp_division_code := rcd_trace.division_code;
-            if rcd_nzmkt_base.company_code = '149' then
+            if (rcd_nzmkt_base.sales_org_code = '149' and
+                rcd_nzmkt_base.distbn_chnl_code = '10') then
                if rcd_trace.mat_bus_sgmnt_code = '01' then
                   rcd_nzmkt_base.demand_plng_grp_division_code := '55';
                elsif rcd_trace.mat_bus_sgmnt_code = '02' then
@@ -2380,7 +2388,9 @@ create or replace package body dw_scheduled_aggregation as
                end if;
             else
                if rcd_nzmkt_base.demand_plng_grp_division_code = '57' then
-                  if rcd_trace.mat_bus_sgmnt_code = '05' then
+                  if rcd_trace.mat_bus_sgmnt_code = '02' then
+                     rcd_nzmkt_base.demand_plng_grp_division_code := '57';
+                  elsif rcd_trace.mat_bus_sgmnt_code = '05' then
                      rcd_nzmkt_base.demand_plng_grp_division_code := '56';
                   end if;
                end if;

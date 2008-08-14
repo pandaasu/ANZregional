@@ -38,6 +38,7 @@ create or replace package dw_mart_sales02 as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/06   Steve Gregan   Created
+    2008/08   Steve Gregan   Modified sales extracts to consolidate on ZREP
 
    *******************************************************************************/
 
@@ -582,7 +583,7 @@ create or replace package body dw_mart_sales02 as
       /*-*/
       cursor csr_sales_extract_01 is 
          select t01.company_code,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.billing_eff_yyyypp = var_cpd_yyyypp then t01.billed_qty_base_uom end),0) as cur_qty,
@@ -641,7 +642,8 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
            from dw_sales_period01 t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.ship_to_cust_code = t02.cust_code(+)
             and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
@@ -650,17 +652,18 @@ create or replace package body dw_mart_sales02 as
             and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
             and t01.hdr_division_code = t03.division_code(+) 
             and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.billing_eff_yyyypp >= var_str_yyyypp
           group by t01.company_code,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
 
       cursor csr_sales_extract_02 is 
          select t01.company_code,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.billed_qty_base_uom),0) as cur_qty,
@@ -668,7 +671,8 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(t01.billed_qty_net_tonnes),0) as cur_ton
            from dw_sales_base t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.ship_to_cust_code = t02.cust_code(+)
             and t01.hdr_distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
@@ -677,10 +681,11 @@ create or replace package body dw_mart_sales02 as
             and t01.hdr_distbn_chnl_code = t03.distbn_chnl_code(+) 
             and t01.hdr_division_code = t03.division_code(+) 
             and t01.hdr_sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.billing_eff_date = var_current_date
           group by t01.company_code,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_02 csr_sales_extract_02%rowtype;
@@ -1557,7 +1562,7 @@ create or replace package body dw_mart_sales02 as
       cursor csr_sales_extract_01 is 
          select t01.company_code,
                 t01.nzmkt_matl_group,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(case when t01.purch_order_eff_yyyypp = var_cpd_yyyypp then t01.ord_qty_base_uom end),0) as cur_qty,
@@ -1616,7 +1621,8 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as p13_ton
            from dw_nzmkt_base t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.nzmkt_cust_code = t02.cust_code(+)
             and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
@@ -1625,11 +1631,12 @@ create or replace package body dw_mart_sales02 as
             and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
             and t01.division_code = t03.division_code(+) 
             and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.purch_order_eff_yyyypp >= var_str_yyyypp
           group by t01.company_code,
                    t01.nzmkt_matl_group,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
@@ -1637,7 +1644,7 @@ create or replace package body dw_mart_sales02 as
       cursor csr_sales_extract_02 is 
          select t01.company_code,
                 t01.nzmkt_matl_group,
-                t01.matl_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 nvl(sum(t01.ord_qty_base_uom),0) as cur_qty,
@@ -1645,7 +1652,8 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(t01.ord_qty_net_tonnes),0) as cur_ton
            from dw_nzmkt_base t01,
                 demand_plng_grp_sales_area_dim t02,
-                cust_sales_area_dim t03
+                cust_sales_area_dim t03,
+                matl_dim t04
           where t01.nzmkt_cust_code = t02.cust_code(+)
             and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
@@ -1654,11 +1662,12 @@ create or replace package body dw_mart_sales02 as
             and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
             and t01.division_code = t03.division_code(+) 
             and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.purch_order_eff_date = var_current_date
           group by t01.company_code,
                    t01.nzmkt_matl_group,
-                   t01.matl_code,
+                   nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code;
       rcd_sales_extract_02 csr_sales_extract_02%rowtype;

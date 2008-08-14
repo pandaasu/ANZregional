@@ -55,6 +55,7 @@ create or replace package dw_triggered_aggregation as
     2007/08   Steve Gregan   Created
     2008/05   Steve Gregan   Modified for NZ demand planning group division
     2008/08   Steve Gregan   Added flag file processing
+    2008/08   Steve Gregan   Modified demand planning group division logic
 
    *******************************************************************************/
 
@@ -897,7 +898,8 @@ create or replace package body dw_triggered_aggregation as
          rcd_sales_base.billed_gsv_eur := 0;
          rcd_sales_base.mfanz_icb_flag := 'N';
          rcd_sales_base.demand_plng_grp_division_code := rcd_trace.hdr_division_code;
-         if rcd_sales_base.company_code = '149' then
+         if (rcd_sales_base.hdr_sales_org_code = '149' and
+             rcd_sales_base.hdr_distbn_chnl_code = '10') then
             if rcd_trace.mat_bus_sgmnt_code = '01' then
                rcd_sales_base.demand_plng_grp_division_code := '55';
             elsif rcd_trace.mat_bus_sgmnt_code = '02' then
@@ -907,7 +909,9 @@ create or replace package body dw_triggered_aggregation as
             end if;
          else
             if rcd_sales_base.demand_plng_grp_division_code = '57' then
-               if rcd_trace.mat_bus_sgmnt_code = '05' then
+               if rcd_trace.mat_bus_sgmnt_code = '02' then
+                  rcd_sales_base.demand_plng_grp_division_code := '57';
+               elsif rcd_trace.mat_bus_sgmnt_code = '05' then
                   rcd_sales_base.demand_plng_grp_division_code := '56';
                end if;
             end if;
