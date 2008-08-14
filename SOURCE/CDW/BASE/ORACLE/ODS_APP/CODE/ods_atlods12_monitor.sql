@@ -80,9 +80,10 @@ create or replace package body ods_atlods12_monitor as
       var_rec_return := dw_app.dw_reconciliation.reconcile_sales(par_fkdat, par_bukrs, par_hdrseq, var_rec_message);
       if var_rec_return != '*OK' then
          if var_rec_return != '*VAR_ACCEPT' then
-            if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
-               lics_notification.send_alert(var_alert);
-            end if;
+            ods_app.utils.send_tivoli_alert('CRITICAL','Fatal Error occurred during Triggered Aggregation Reconciliation.',1,par_bukrs);
+           -- if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+           --    lics_notification.send_alert(var_alert);
+           -- end if;
          end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(dw_parameter.system_code,
