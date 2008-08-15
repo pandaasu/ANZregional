@@ -13,6 +13,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2007/09   Steve Gregan   Created
+ 2008/08   Steve Gregan   Added ICB_FLAG
 
 *******************************************************************************/
 
@@ -26,6 +27,7 @@ create table dw_mart_sales01_det
     matl_code varchar2(18 char) not null,
     acct_assgnmnt_grp_code varchar2(10 char) not null,
     demand_plng_grp_code varchar2(10 char) not null,
+    mfanz_icb_flag varchar2(10 char) not null,
     data_type varchar2(10 char) not null,
     lyr_yte_inv_value number not null,
     cyr_ytd_inv_value number not null,
@@ -77,6 +79,7 @@ comment on column dw_mart_sales01_det.matl_group is 'Material group - *ALL or gr
 comment on column dw_mart_sales01_det.matl_code is 'Material code';
 comment on column dw_mart_sales01_det.acct_assgnmnt_grp_code is 'Account assignment group code';
 comment on column dw_mart_sales01_det.demand_plng_grp_code is 'Demand planning group code';
+comment on column dw_mart_sales01_det.mfanz_icb_flag is 'MFANZ ICB flag';
 comment on column dw_mart_sales01_det.data_type is 'Data type - *QTY, *TON, *GSV';
 comment on column dw_mart_sales01_det.lyr_yte_inv_value is 'Last year to end invoiced value';
 comment on column dw_mart_sales01_det.cyr_ytd_inv_value is 'Current year to date invoiced value';
@@ -122,7 +125,7 @@ comment on column dw_mart_sales01_det.p27_value is 'P27 value';
 /* Primary Key Constraint
 /**/
 alter table dw_mart_sales01_det
-   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, data_type);
+   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, mfanz_icb_flag, data_type);
 
 /**/
 /* Authority
