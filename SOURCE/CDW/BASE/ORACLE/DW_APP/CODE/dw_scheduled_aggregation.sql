@@ -40,6 +40,7 @@ create or replace package dw_scheduled_aggregation as
     2008/06   Steve Gregan   Added SAP retrieval and SAP alignment
     2008/08   Steve Gregan   Included APO rejection code Z9
     2008/08   Steve Gregan   Modified demand planning group division logic
+    2008/08   Steve Gregan   Fixed salees order material joins (no leading zeros)
 
    *******************************************************************************/
 
@@ -1209,7 +1210,7 @@ create or replace package body dw_scheduled_aggregation as
                                       and t01.trace_seqn > var_order_max_seqn
                                     group by t01.order_doc_num)
             and t01.trace_status = '*ACTIVE'
-            and t01.matl_code = t02.objek(+)
+            and t01.matl_code = dw_trim_code(t02.objek(+))
             and t02.obtab(+) = 'MARA'
             and t02.klart(+) = '001'
             and t02.atnam(+) = 'CLFFERT01'
