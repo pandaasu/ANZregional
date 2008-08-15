@@ -38,6 +38,7 @@ create or replace package dw_mart_sales01 as
     2007/09   Steve Gregan   Created
     2008/02   Steve Gregan   Added NZ market sales
     2008/08   Steve Gregan   Modified sales extracts to consolidate on ZREP
+    2008/08   Steve Gregan   Added ICB_FLAG to detail table
 
    *******************************************************************************/
 
@@ -73,7 +74,8 @@ create or replace package body dw_mart_sales01 as
                            par_matl_group in varchar2,
                            par_matl_code in varchar2,
                            par_acct_assgnmnt_grp_code in varchar2,
-                           par_demand_plng_grp_code in varchar2);
+                           par_demand_plng_grp_code in varchar2,
+                           par_mfanz_icb_flag in varchar2);
 
    /*-*/
    /* Private definitions
@@ -318,12 +320,12 @@ create or replace package body dw_mart_sales01 as
          rcd_header.triggered_str_time := to_date('19000101','yyyymmdd');
          rcd_header.triggered_end_time := to_date('19000101','yyyymmdd');
          rcd_header.triggered_yyyypp := 0;
-         rcd_header.current_yyyy := rcd_period.mars_year;
-         rcd_header.current_yyyypp := rcd_period.mars_period;
-         rcd_header.current_yyyyppw := rcd_period.mars_week;
-         rcd_header.current_pp := rcd_period.period_num;
-         rcd_header.current_yw := rcd_period.mars_week_of_year;
-         rcd_header.current_pw := rcd_period.mars_week_of_period;
+         rcd_header.current_yyyy := null;
+         rcd_header.current_yyyypp := null;
+         rcd_header.current_yyyyppw := null;
+         rcd_header.current_pp := null;
+         rcd_header.current_yw := null;
+         rcd_header.current_pw := null;
          rcd_header.p01_heading := null;
          rcd_header.p02_heading := null;
          rcd_header.p03_heading := null;
@@ -357,6 +359,12 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       /* Set the period headings
       /*-*/
+      rcd_header.current_yyyy := rcd_period.mars_year;
+      rcd_header.current_yyyypp := rcd_period.mars_period;
+      rcd_header.current_yyyyppw := rcd_period.mars_week;
+      rcd_header.current_pp := rcd_period.period_num;
+      rcd_header.current_yw := rcd_period.mars_week_of_year;
+      rcd_header.current_pw := rcd_period.mars_week_of_period;
       rcd_header.p01_heading := 'Actual';
       rcd_header.p02_heading := 'Fcst P1';
       rcd_header.p03_heading := 'Fcst P2';
@@ -593,6 +601,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_qty_base_uom end),0) as lyr_qty,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_gsv end),0) as lyr_gsv,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_lyr_str_yyyypp and t01.billing_eff_yyyypp <= var_lyr_end_yyyypp then t01.billed_qty_net_tonnes end),0) as lyr_ton,
@@ -660,7 +669,8 @@ create or replace package body dw_mart_sales01 as
           group by t01.company_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
-                   t02.demand_plng_grp_code;
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
 
       cursor csr_sales_extract_02 is 
@@ -668,6 +678,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
                 nvl(sum(t01.billed_qty_base_uom),0) as ytw_qty,
                 nvl(sum(t01.billed_gsv),0) as ytw_gsv,
                 nvl(sum(t01.billed_qty_net_tonnes),0) as ytw_ton,
@@ -730,7 +741,8 @@ create or replace package body dw_mart_sales01 as
           group by t01.company_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
-                   t02.demand_plng_grp_code;
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
       rcd_sales_extract_02 csr_sales_extract_02%rowtype;
 
    /*-------------*/
@@ -785,7 +797,8 @@ create or replace package body dw_mart_sales01 as
                        '*ALL',
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_01.demand_plng_grp_code);
+                       rcd_sales_extract_01.demand_plng_grp_code,
+                       rcd_sales_extract_01.mfanz_icb_flag);
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -816,6 +829,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*QTY';
 
          /*-*/
@@ -847,6 +861,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*GSV';
 
          /*-*/
@@ -878,6 +893,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*TON';
 
       end loop;
@@ -903,7 +919,8 @@ create or replace package body dw_mart_sales01 as
                           '*ALL',
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
-                          rcd_sales_extract_02.demand_plng_grp_code);
+                          rcd_sales_extract_02.demand_plng_grp_code,
+                          rcd_sales_extract_02.mfanz_icb_flag);
 
             /*-*/
             /* Update the data mart detail - QTY
@@ -930,6 +947,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*QTY';
 
             /*-*/
@@ -957,6 +975,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*GSV';
 
             /*-*/
@@ -984,6 +1003,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*TON';
 
          end loop;
@@ -1268,7 +1288,8 @@ create or replace package body dw_mart_sales01 as
                        '*ALL',
                        rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code);
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -1281,6 +1302,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -1294,6 +1316,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -1307,6 +1330,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -1330,7 +1354,8 @@ create or replace package body dw_mart_sales01 as
                        '*ALL',
                        rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_02.demand_plng_grp_code);
+                       rcd_fcst_extract_02.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -1343,6 +1368,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -1356,6 +1382,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -1369,6 +1396,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -1392,7 +1420,8 @@ create or replace package body dw_mart_sales01 as
                        '*ALL',
                        rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_03.demand_plng_grp_code);
+                       rcd_fcst_extract_03.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -1407,6 +1436,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -1422,6 +1452,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -1437,6 +1468,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -1460,7 +1492,8 @@ create or replace package body dw_mart_sales01 as
                        '*ALL',
                        rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_04.demand_plng_grp_code);
+                       rcd_fcst_extract_04.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -1501,6 +1534,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -1542,6 +1576,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -1583,6 +1618,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -1636,6 +1672,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_base_uom end),0) as lyr_qty,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_gsv end),0) as lyr_gsv,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_lyr_str_yyyypp and t01.purch_order_eff_yyyypp <= var_lyr_end_yyyypp then t01.ord_qty_net_tonnes end),0) as lyr_ton,
@@ -1704,7 +1741,8 @@ create or replace package body dw_mart_sales01 as
                    t01.nzmkt_matl_group,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
-                   t02.demand_plng_grp_code;
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
       rcd_sales_extract_01 csr_sales_extract_01%rowtype;
 
       cursor csr_sales_extract_02 is 
@@ -1713,6 +1751,7 @@ create or replace package body dw_mart_sales01 as
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
                 nvl(sum(t01.ord_qty_base_uom),0) as ytw_qty,
                 nvl(sum(t01.ord_gsv),0) as ytw_gsv,
                 nvl(sum(t01.ord_qty_net_tonnes),0) as ytw_ton,
@@ -1776,7 +1815,8 @@ create or replace package body dw_mart_sales01 as
                    t01.nzmkt_matl_group,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
-                   t02.demand_plng_grp_code;
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
       rcd_sales_extract_02 csr_sales_extract_02%rowtype;
 
    /*-------------*/
@@ -1831,7 +1871,8 @@ create or replace package body dw_mart_sales01 as
                        rcd_sales_extract_01.nzmkt_matl_group,
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_01.demand_plng_grp_code);
+                       rcd_sales_extract_01.demand_plng_grp_code,
+                       rcd_sales_extract_01.mfanz_icb_flag);
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -1862,6 +1903,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*QTY';
 
          /*-*/
@@ -1893,6 +1935,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*GSV';
 
          /*-*/
@@ -1924,6 +1967,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
             and data_type = '*TON';
 
       end loop;
@@ -1949,7 +1993,8 @@ create or replace package body dw_mart_sales01 as
                           rcd_sales_extract_02.nzmkt_matl_group,
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
-                          rcd_sales_extract_02.demand_plng_grp_code);
+                          rcd_sales_extract_02.demand_plng_grp_code,
+                          rcd_sales_extract_02.mfanz_icb_flag);
 
             /*-*/
             /* Update the data mart detail - QTY
@@ -1976,6 +2021,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*QTY';
 
             /*-*/
@@ -2003,6 +2049,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*GSV';
 
             /*-*/
@@ -2030,6 +2077,7 @@ create or replace package body dw_mart_sales01 as
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
+               and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
                and data_type = '*TON';
 
          end loop;
@@ -2338,7 +2386,8 @@ create or replace package body dw_mart_sales01 as
                        rcd_fcst_extract_01.nzmkt_matl_group,
                        rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code);
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -2351,6 +2400,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -2364,6 +2414,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -2377,6 +2428,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -2400,7 +2452,8 @@ create or replace package body dw_mart_sales01 as
                        rcd_fcst_extract_02.nzmkt_matl_group,
                        rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_02.demand_plng_grp_code);
+                       rcd_fcst_extract_02.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -2413,6 +2466,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -2426,6 +2480,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -2439,6 +2494,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -2462,7 +2518,8 @@ create or replace package body dw_mart_sales01 as
                        rcd_fcst_extract_03.nzmkt_matl_group,
                        rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_03.demand_plng_grp_code);
+                       rcd_fcst_extract_03.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -2477,6 +2534,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -2492,6 +2550,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -2507,6 +2566,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -2530,7 +2590,8 @@ create or replace package body dw_mart_sales01 as
                        rcd_fcst_extract_04.nzmkt_matl_group,
                        rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_04.demand_plng_grp_code);
+                       rcd_fcst_extract_04.demand_plng_grp_code,
+                       'N');
 
          /*-*/
          /* Update the data mart detail - QTY
@@ -2571,6 +2632,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*QTY';
 
          /*-*/
@@ -2612,6 +2674,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*GSV';
 
          /*-*/
@@ -2653,6 +2716,7 @@ create or replace package body dw_mart_sales01 as
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
             and data_type = '*TON';
 
       end loop;
@@ -2671,7 +2735,8 @@ create or replace package body dw_mart_sales01 as
                            par_matl_group in varchar2,
                            par_matl_code in varchar2,
                            par_acct_assgnmnt_grp_code in varchar2,
-                           par_demand_plng_grp_code in varchar2) is
+                           par_demand_plng_grp_code in varchar2,
+                           par_mfanz_icb_flag in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -2689,7 +2754,8 @@ create or replace package body dw_mart_sales01 as
             and t01.matl_group = par_matl_group
             and t01.matl_code = par_matl_code
             and t01.acct_assgnmnt_grp_code = par_acct_assgnmnt_grp_code
-            and t01.demand_plng_grp_code = par_demand_plng_grp_code;
+            and t01.demand_plng_grp_code = par_demand_plng_grp_code
+            and t01.mfanz_icb_flag = par_mfanz_icb_flag;
 
    /*-------------*/
    /* Begin block */
@@ -2712,6 +2778,7 @@ create or replace package body dw_mart_sales01 as
          rcd_detail.matl_code := par_matl_code;
          rcd_detail.acct_assgnmnt_grp_code := par_acct_assgnmnt_grp_code;
          rcd_detail.demand_plng_grp_code := par_demand_plng_grp_code;
+         rcd_detail.mfanz_icb_flag := par_mfanz_icb_flag;
          rcd_detail.data_type := null;
          rcd_detail.lyr_yte_inv_value := 0;
          rcd_detail.cyr_ytd_inv_value := 0;
