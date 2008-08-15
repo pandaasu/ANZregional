@@ -1733,6 +1733,7 @@ create or replace package body mobile_data as
       obj_rte_item_list xmlDom.domNodeList;
       obj_rte_item_node xmlDom.domNode;
       var_data_type varchar2(32 char);
+      var_send_order varchar2(32 char);
 
    /*-------------*/
    /* Begin block */
@@ -1825,12 +1826,14 @@ create or replace package body mobile_data as
 
          obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'/RTE_ORDR');
          for idx in 0..xmlDom.getLength(obj_rte_ordr_list)-1 loop
-
             obj_rte_ordr_node := xmlDom.item(obj_rte_ordr_list,idx);
             upd_orders.total_items := mobile_to_number(xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_LINE_COUNT'));
-            upd_orders.sendfax_flg := xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_SEND_WHSLR');
+            var_send_order := xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_SEND_WHSLR');
+            upd_orders.order_status := 'CLOSED';
+            if var_send_order = '1' then
+               upd_orders.order_status := 'SUBMITTED';
+            end if;
             update_orders_data;
-
             obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'/RTE_ORDR_ITEM');
             for idx in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
                obj_rte_item_node := xmlDom.item(obj_rte_item_list,idx);
@@ -2089,12 +2092,6 @@ create or replace package body mobile_data as
 -- then uploads again, do I delete the order (status = D).
 -- ** MAYBE SHOULD JUST DELETE AND REBUILD???????????
 -- ** WHAT HAPPENS WHEN ORDER DELETED AND THEREFORE SEQUENCE GAP???????
--- also on the mobile how does the user bypass the order function when no rows
--- have an order quantity
--- ** NEW NO ORDER COMMAND ON MOBILE (BYPASSES THE SEND ORDER SCREEN)
--- ** NEW DELETE LINE COMMAND ON MOBILE
--- ** CHECK FOR ALL ZERO LINES AND FORCE NO ORDER COMMAND
--- ** KEEP NON-ZERO LINE COUNT FOR ORDER
 --
 
       /*-*/
@@ -2113,9 +2110,9 @@ create or replace package body mobile_data as
       upd_orders.confirm_flg := null;
       upd_orders.phoned_flg := null;
       upd_orders.delasap_flg := null;
-      upd_orders.sendfax_flg := upd_orders.sendfax_flg;
+      upd_orders.sendfax_flg := null;
       upd_orders.delnext_flg := null;
-      upd_orders.order_status := 'CLOSED';
+      upd_orders.order_status := upd_orders.order_status;
       upd_orders.status := 'A';
       upd_orders.modified_user := user;
       upd_orders.modified_date := sysdate;
