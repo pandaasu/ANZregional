@@ -77,7 +77,7 @@ create or replace package body efxcad01_customer as
                 t04.cust_channel_name as cust_channel_name,
                 t02.cust_type_name as cust_type_name,
                 t12.cust_grade_name as cust_grade_name,
-                decode(t01.outlet_flg,'N',t01.customer_code,to_char(t01.customer_id)) as cust_code,
+                t01.customer_code as cust_code,
                 t01.customer_name as cust_name,
                 t01.city as cust_city,
                 t01.postcode as cust_postcode,
