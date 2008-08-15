@@ -372,6 +372,7 @@ create or replace package body dw_mart_sales02 as
       rcd_header.current_yyyy := rcd_period.mars_year;
       rcd_header.current_yyyypp := rcd_period.mars_period;
       rcd_header.current_yyyyppw := rcd_period.mars_week;
+      rcd_header.current_yyyyppdd := rcd_period.mars_yyyyppdd;
       rcd_header.current_pp := rcd_period.period_num;
       rcd_header.current_yw := rcd_period.mars_week_of_year;
       rcd_header.current_pw := rcd_period.mars_week_of_period;
