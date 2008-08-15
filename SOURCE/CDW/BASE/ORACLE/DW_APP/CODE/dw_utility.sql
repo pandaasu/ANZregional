@@ -76,7 +76,7 @@ create or replace package body dw_utility as
                         t01.umren,
                         t01.umrez
                    from sap_mat_uom t01
-                  where t01.matnr = pkg_qty_fact.ods_matl_code
+                  where t01.matnr = dw_trim_code(pkg_qty_fact.ods_matl_code)
                     and t01.meinh = pkg_qty_fact.uom_code) t02
           where t01.matnr = t02.matnr(+)
             and dw_trim_code(t01.matnr) = dw_trim_code(pkg_qty_fact.ods_matl_code);
