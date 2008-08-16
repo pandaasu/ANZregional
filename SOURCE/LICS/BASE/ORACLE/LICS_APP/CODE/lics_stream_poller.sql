@@ -292,5 +292,5 @@ end lics_stream_poller;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym lics_stream_poller for dw_app.lics_stream_poller;
+create or replace public synonym lics_stream_poller for lics_app.lics_stream_poller;
 grant execute on lics_stream_poller to public;
