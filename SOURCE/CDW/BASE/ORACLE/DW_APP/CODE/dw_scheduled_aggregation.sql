@@ -40,7 +40,7 @@ create or replace package dw_scheduled_aggregation as
     2008/06   Steve Gregan   Added SAP retrieval and SAP alignment
     2008/08   Steve Gregan   Included APO rejection code Z9
     2008/08   Steve Gregan   Modified demand planning group division logic
-    2008/08   Steve Gregan   Fixed salees order material joins (no leading zeros)
+    2008/08   Steve Gregan   Fixed sales order material joins (expand numeric)
 
    *******************************************************************************/
 
@@ -1210,7 +1210,7 @@ create or replace package body dw_scheduled_aggregation as
                                       and t01.trace_seqn > var_order_max_seqn
                                     group by t01.order_doc_num)
             and t01.trace_status = '*ACTIVE'
-            and t01.matl_code = dw_trim_code(t02.objek(+))
+            and dw_expand_code(t01.matl_code) = t02.objek(+)
             and t02.obtab(+) = 'MARA'
             and t02.klart(+) = '001'
             and t02.atnam(+) = 'CLFFERT01'
@@ -1342,7 +1342,7 @@ create or replace package body dw_scheduled_aggregation as
          rcd_order_base.payer_cust_code := nvl(rcd_trace.gen_payer_cust_code, rcd_trace.hdr_payer_cust_code);
          rcd_order_base.ship_to_cust_code := nvl(rcd_trace.gen_ship_to_cust_code, rcd_trace.hdr_ship_to_cust_code);
          rcd_order_base.matl_code := dw_trim_code(rcd_trace.matl_code);
-         rcd_order_base.ods_matl_code := rcd_trace.matl_code;
+         rcd_order_base.ods_matl_code := dw_expand_code(rcd_trace.matl_code);
          rcd_order_base.matl_entd := dw_trim_code(rcd_trace.matl_entd);
          rcd_order_base.plant_code := rcd_trace.plant_code;
          rcd_order_base.storage_locn_code := rcd_trace.storage_locn_code;

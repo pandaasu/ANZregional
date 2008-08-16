@@ -19,7 +19,6 @@ create or replace package dw_utility as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/11   Steve Gregan   Created
-    2008/08   Steve Gregan   Modified to trim material codes (SAP order material code)
 
    *******************************************************************************/
 
@@ -76,10 +75,10 @@ create or replace package body dw_utility as
                         t01.umren,
                         t01.umrez
                    from sap_mat_uom t01
-                  where t01.matnr = dw_trim_code(pkg_qty_fact.ods_matl_code)
+                  where t01.matnr = pkg_qty_fact.ods_matl_code
                     and t01.meinh = pkg_qty_fact.uom_code) t02
           where t01.matnr = t02.matnr(+)
-            and dw_trim_code(t01.matnr) = dw_trim_code(pkg_qty_fact.ods_matl_code);
+            and t01.matnr = pkg_qty_fact.ods_matl_code;
       rcd_material csr_material%rowtype;
 
    /*-------------*/
@@ -136,7 +135,7 @@ create or replace package body dw_utility as
          select nvl(t01.umren,1) as mat_umren,
                 nvl(t01.umrez,1) as mat_umrez
            from sap_mat_uom t01
-          where dw_trim_code(t01.matnr) = dw_trim_code(par_ods_matl_code)
+          where t01.matnr = par_ods_matl_code
             and t01.meinh = par_uom_code;
       rcd_material csr_material%rowtype;
 
@@ -183,7 +182,7 @@ create or replace package body dw_utility as
          select nvl(t01.umren,1) as mat_umren,
                 nvl(t01.umrez,1) as mat_umrez
            from sap_mat_uom t01
-          where dw_trim_code(t01.matnr) = dw_trim_code(par_ods_matl_code)
+          where t01.matnr = par_ods_matl_code
             and t01.meinh = par_uom_code;
       rcd_material csr_material%rowtype;
 
