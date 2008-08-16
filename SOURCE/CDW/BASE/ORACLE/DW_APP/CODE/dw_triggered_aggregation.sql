@@ -882,7 +882,7 @@ create or replace package body dw_triggered_aggregation as
          rcd_sales_base.matl_entd := dw_trim_code(rcd_trace.matl_entd);
          rcd_sales_base.plant_code := rcd_trace.plant_code;
          rcd_sales_base.storage_locn_code := rcd_trace.storage_locn_code;
-         rcd_sales_base.order_qty := 0;
+         rcd_sales_base.order_qty := nvl(rcd_trace.order_qty,0);
          rcd_sales_base.billed_weight_unit := rcd_trace.billed_weight_unit;
          rcd_sales_base.billed_gross_weight := rcd_trace.billed_gross_weight;
          rcd_sales_base.billed_net_weight := rcd_trace.billed_net_weight;
