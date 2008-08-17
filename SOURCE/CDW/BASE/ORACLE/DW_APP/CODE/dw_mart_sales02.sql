@@ -300,7 +300,7 @@ create or replace package body dw_mart_sales02 as
       /*-*/
       /* Current date is always based on the previous day (converted using the company timezone)
       /*-*/
-      var_date := trunc(sysdate);
+      var_date := trunc(sysdate-1);
       if rcd_company.company_timezone_code != 'Australia/NSW' then
          var_date := trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1);
       end if;
