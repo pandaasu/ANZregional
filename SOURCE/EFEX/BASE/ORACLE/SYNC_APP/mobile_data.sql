@@ -1796,11 +1796,11 @@ create or replace package body mobile_data as
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          upd_call.customer_id := mobile_get_customer_id(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_CUSTOMER_ID'));
          upd_call.call_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_DATE'),'yyyymmdd');
-         upd_call.end_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_END_TIME'),'yyyymmdd hh24:mi:ss');
+         upd_call.end_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_END_TIME'),'yyyy/mm/dd hh24:mi:ss');
          upd_distribution_total.total_qty := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STOCK_DIST_COUNT'));
          update_call_data;
 
-         obj_rte_stck_list := xslProcessor.selectNodes(obj_xml_node,'/RTE_STCK_ITEMS/RTE_STCK_ITEM');
+         obj_rte_stck_list := xslProcessor.selectNodes(obj_xml_node,'RTE_STCK_ITEMS/RTE_STCK_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_stck_list)-1 loop
             obj_rte_stck_node := xmlDom.item(obj_rte_stck_list,idy);
             upd_distribution.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_stck_node,'RTE_STCK_ITEM_ID'));
@@ -1808,7 +1808,7 @@ create or replace package body mobile_data as
             update_distribution_data;
          end loop;
 
-         obj_rte_disp_list := xslProcessor.selectNodes(obj_xml_node,'/RTE_DISP_ITEMS/RTE_DISP_ITEM');
+         obj_rte_disp_list := xslProcessor.selectNodes(obj_xml_node,'RTE_DISP_ITEMS/RTE_DISP_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_disp_list)-1 loop
             obj_rte_disp_node := xmlDom.item(obj_rte_disp_list,idy);
             upd_display_distribution.display_item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_disp_node,'RTE_DISP_ITEM_ID'));
@@ -1816,7 +1816,7 @@ create or replace package body mobile_data as
             update_display_data;
          end loop;
 
-         obj_rte_actv_list := xslProcessor.selectNodes(obj_xml_node,'/RTE_ACTV_ITEMS/RTE_ACTV_ITEM');
+         obj_rte_actv_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ACTV_ITEMS/RTE_ACTV_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_actv_list)-1 loop
             obj_rte_actv_node := xmlDom.item(obj_rte_actv_list,idy);
             upd_activity_distribution.activity_item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_actv_node,'RTE_ACTV_ITEM_ID'));
@@ -1824,7 +1824,7 @@ create or replace package body mobile_data as
             update_activity_data;
          end loop;
 
-         obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'/RTE_ORDR');
+         obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
          for idy in 0..xmlDom.getLength(obj_rte_ordr_list)-1 loop
             obj_rte_ordr_node := xmlDom.item(obj_rte_ordr_list,idy);
             upd_orders.total_items := mobile_to_number(xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_LINE_COUNT'));
@@ -1834,7 +1834,7 @@ create or replace package body mobile_data as
                upd_orders.order_status := 'SUBMITTED';
             end if;
             update_orders_data;
-            obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'/RTE_ORDR_ITEM');
+            obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
             for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
                obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
                upd_order_item.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_ID'));
