@@ -50,17 +50,25 @@ create or replace package body dw_process_poller as
       /* Local definitions
       /*-*/
       var_company varchar2(32 char);
+      var_polling_date date;
+      var_today_date date;
       type typ_company is table of varchar2(32 char) index by binary_integer;
       tbl_company typ_company;
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_company is
+         select t01.*
+           from company t01
+          where t01.company_code = var_company;
+      rcd_company csr_company%rowtype;
+
       cursor csr_sap_inv_trace is 
          select count(*) as inv_count
            from sap_inv_trace t01
           where t01.company_code = var_company
-            and trunc(t01.creatn_date) = var_date;
+            and trunc(t01.creatn_date) = trunc(var_polling_date);
       rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
@@ -110,11 +118,6 @@ create or replace package body dw_process_poller as
       end if;
 
       /*-*/
-      /* The polling date is always the previous day
-      /*-*/
-      var_date := trunc(sysdate-1);
-
-      /*-*/
       /* Loop through all polled companies
       /*-*/
       for idx in 1..tbl_company.count loop
@@ -125,12 +128,38 @@ create or replace package body dw_process_poller as
          var_company := tbl_company(idx);
 
          /*-*/
+         /* Retrieve the company information
+         /*-*/
+         open csr_company;
+         fetch csr_company into rcd_company;
+         if csr_company%notfound then
+            raise_application_error(-20000, 'Company ' || var_company || ' not found on the company table');
+         end if;
+         close csr_company;
+
+         /*-*/
+         /* Polling date is always the previous day (converted using the company timezone)
+         /*-*/
+         var_polling_date := trunc(sysdate-1);
+         if rcd_company.company_timezone_code != 'Australia/NSW' then
+            var_polling_date := trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1);
+         end if;
+
+         /*-*/
+         /* Today date is always the current day (converted using the company timezone)
+         /*-*/
+         var_today_date := sysdate;
+         if rcd_company.company_timezone_code != 'Australia/NSW' then
+            var_today_date := dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW');
+         end if;
+
+         /*-*/
          /* Attempt to find invoices when required (01:00 today)
          /* **notes** If no invoices have been received for the polling date (ie. previous day)
          /*           then assume that there was no invoice activity for that date and set the
          /*           triggered aggregation trace so that any dependant processing can proceed 
          /*-*/
-         if sysdate > (trunc(sysdate) + 1/24) then
+         if var_today_date > (trunc(var_today_date) + 1/24) then
             var_inv_count := 0;
             open csr_sap_inv_trace;
             fetch csr_sap_inv_trace into rcd_sap_inv_trace;
@@ -139,7 +168,7 @@ create or replace package body dw_process_poller as
             end if;
             close csr_sap_inv_trace;
             if var_inv_count = 0 then
-               lics_processing.set_trace('TRIGGERED_AGGREGATION_'||var_company,to_char(var_date,'yyyymmdd'));
+               lics_processing.set_trace('TRIGGERED_AGGREGATION_'||var_company,to_char(var_polling_date,'yyyymmdd'));
             end if;
          end if;
 
@@ -147,7 +176,7 @@ create or replace package body dw_process_poller as
          /* Check and process the company data mart trigger
          /*-*/
          bolReturn := lics_processing.check_group('DATAMART_TRIGGER_'||var_company,
-                                                  to_char(var_date,'yyyymmdd'),
+                                                  to_char(var_polling_date,'yyyymmdd'),
                                                   'DATAMART_'||var_company||'_FIRED');
          if bolReturn = true then
             lics_stream_loader.execute('DW_DATAMART_STREAM_'||var_company,null);
@@ -157,7 +186,7 @@ create or replace package body dw_process_poller as
          /* Check and process the company flag file trigger
          /*-*/
          bolReturn := lics_processing.check_group('FLAGFILE_TRIGGER_'||var_company,
-                                                  to_char(var_date,'yyyymmdd'),
+                                                  to_char(var_polling_date,'yyyymmdd'),
                                                   'FLAGFILE_'||var_company||'_FIRED');
          if bolReturn = true then
             dw_flag_file_creation.execute(var_company);
@@ -166,13 +195,15 @@ create or replace package body dw_process_poller as
       end loop;
 
       /*-*/
-      /* Check and process the consolidated flag file trigger
+      /* Check and process the consolidated flag file trigger when required
       /*-*/
-      bolReturn := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
-                                               to_char(var_date,'yyyymmdd'),
-                                               'FLAGFILE_CON_FIRED');
-      if bolReturn = true then
-         dw_flag_file_creation.execute('CONSOLIDATED');
+      if par_consolidated = 'Y' then
+         bolReturn := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
+                                                  to_char(var_polling_date,'yyyymmdd'),
+                                                  'FLAGFILE_CON_FIRED');
+         if bolReturn = true then
+            dw_flag_file_creation.execute('CONSOLIDATED');
+         end if;
       end if;
 
    /*-------------------*/
