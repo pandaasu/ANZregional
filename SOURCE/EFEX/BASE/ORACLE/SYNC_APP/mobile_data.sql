@@ -2092,7 +2092,7 @@ create or replace package body mobile_data as
 -- then uploads again, do I delete the order (status = D).
 -- ** MAYBE SHOULD JUST DELETE AND REBUILD???????????
 -- ** WHAT HAPPENS WHEN ORDER DELETED AND THEREFORE SEQUENCE GAP???????
---
+--  
 
       /*-*/
       /* Set the order values
@@ -2107,11 +2107,11 @@ create or replace package body mobile_data as
       upd_orders.order_notes := null;
       upd_orders.total_items := upd_orders.total_items;
       upd_orders.total_price := null;
-      upd_orders.confirm_flg := null;
-      upd_orders.phoned_flg := null;
-      upd_orders.delasap_flg := null;
-      upd_orders.sendfax_flg := null;
-      upd_orders.delnext_flg := null;
+      upd_orders.confirm_flg := 'N';
+      upd_orders.phoned_flg := 'N';
+      upd_orders.delasap_flg := 'N';
+      upd_orders.sendfax_flg := 'N';
+      upd_orders.delnext_flg := 'N';
       upd_orders.order_status := upd_orders.order_status;
       upd_orders.status := 'A';
       upd_orders.modified_user := user;
@@ -2119,9 +2119,10 @@ create or replace package body mobile_data as
       upd_orders.order_code := null;
       upd_orders.contact_signature := null;
       upd_orders.tp_amount := null;
-      upd_orders.tp_paid_flg := null;
+      upd_orders.tp_paid_flg := 'N';
       upd_orders.delivered_flg := 'Y';
       upd_orders.print_statement_flg := 'N';
+      upd_orders.apply_discount_flg := 'N';
 
       /*-*/
       /* Insert/update the order data
