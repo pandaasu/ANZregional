@@ -1,0 +1,40 @@
+select
+'insert into cad_to_efex_cust_master values(' ||
+'''' || replace(SALES_PRSN_CODE,'''','''''') || ''',' ||
+'''' || replace(SALES_PRSN_NAME,'''','''''') || ''',' ||
+'''' || replace(SALES_PRSN_TYPE,'''','''''') || ''',' ||
+'''' || replace(LINE_MGR_CODE,'''','''''') || ''',' ||
+'''' || replace(LINE_MGR_NAME,'''','''''') || ''',' ||
+'''' || replace(SALES_TEAM,'''','''''') || ''',' ||
+'''' || replace(SALES_PRSN_CITY_CODE,'''','''''') || ''',' ||
+'''' || replace(SALES_PRSN_CITY_NAME,'''','''''') || ''',' ||
+'''' || replace(OTL_CRDT,'''','''''') || ''',' ||
+'''' || replace(OTL_CRDP,'''','''''') || ''',' ||
+'''' || replace(OTL_LUPDT,'''','''''') || ''',' ||
+'''' || replace(OTL_LUPDP,'''','''''') || ''',' ||
+'''' || replace(OTL_STATUS,'''','''''') || ''',' ||
+'''' || replace(OTL_CODE,'''','''''') || ''',' ||
+'''' || replace(OTL_NAME,'''','''''') || ''',' ||
+'''' || replace(OTL_ADDR,'''','''''') || ''',' ||
+'''' || replace(POST_CODE,'''','''''') || ''',' ||
+'''' || replace(CUST_CITY_CODE,'''','''''') || ''',' ||
+'''' || replace(CUST_CITY_NAME,'''','''''') || ''',' ||
+'''' || replace(CONT_NAME,'''','''''') || ''',' ||
+'''' || replace(CONT_MP,'''','''''') || ''',' ||
+'''' || replace(CONT_TEL,'''','''''') || ''',' ||
+'''' || replace(CONT_FAX,'''','''''') || ''',' ||
+'''' || replace(CONT_EMAIL,'''','''''') || ''',' ||
+'''' || replace(CHAIN_STORE_BANNER_CODE,'''','''''') || ''',' ||
+'''' || replace(CHAIN_STORE_BANNER_NAME,'''','''''') || ''',' ||
+'''' || replace(OTL_CHNL_CODE,'''','''''') || ''',' ||
+'''' || replace(OTL_CHNL_NAME,'''','''''') || ''',' ||
+'''' || replace(OUTLET_LOC,'''','''''') || ''',' ||
+'''' || replace(OUTLET_TYPE,'''','''''') || ''',' ||
+'''' || replace(CUST_OTL_CODE,'''','''''') || ''',' ||
+'''' || replace(PUR_FROM_WHOLESALER_CODE,'''','''''') || ''',' ||
+'''' || replace(PUR_FROM_WHOLESALER_NAME,'''','''''') || ''',' ||
+'''' || replace(SALES_VOL_RANGE,'''','''''') || '''' ||
+');' as script
+from cad_to_efex_cust_master;
+
+
