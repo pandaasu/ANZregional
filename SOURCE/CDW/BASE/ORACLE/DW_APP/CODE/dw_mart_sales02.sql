@@ -67,6 +67,7 @@ create or replace package body dw_mart_sales02 as
    /* Private declarations
    /*-*/
    procedure extract_header(par_company_code in varchar2);
+   procedure extract_order(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_sale(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_forecast(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_nzmkt_sale(par_company_code in varchar2, par_data_segment in varchar2);
@@ -665,7 +666,7 @@ create or replace package body dw_mart_sales02 as
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code,
                    t01.mfanz_icb_flag;
-      rcd_order_extract_02 csr_order_extract_02%rowtype;
+      rcd_order_extract_03 csr_order_extract_03%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -772,7 +773,7 @@ create or replace package body dw_mart_sales02 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales02_det
-            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_qty
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_02.out_qty
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
@@ -786,7 +787,7 @@ create or replace package body dw_mart_sales02 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales02_det
-            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_gsv
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_02.out_gsv
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
@@ -800,7 +801,7 @@ create or replace package body dw_mart_sales02 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales02_det
-            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_ton
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_02.out_ton
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
@@ -837,7 +838,7 @@ create or replace package body dw_mart_sales02 as
          /*-*/
          /* Update the data mart detail - QTY
          /*-*/
-         update dw_mart_sales03_det
+         update dw_mart_sales02_det
             set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_qty
           where company_code = rcd_order_extract_03.company_code
             and data_segment = par_data_segment
@@ -851,7 +852,7 @@ create or replace package body dw_mart_sales02 as
          /*-*/
          /* Update the data mart detail - GSV
          /*-*/
-         update dw_mart_sales03_det
+         update dw_mart_sales02_det
             set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_gsv
           where company_code = rcd_order_extract_03.company_code
             and data_segment = par_data_segment
@@ -865,7 +866,7 @@ create or replace package body dw_mart_sales02 as
          /*-*/
          /* Update the data mart detail - TON
          /*-*/
-         update dw_mart_sales03_det
+         update dw_mart_sales02_det
             set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_ton
           where company_code = rcd_order_extract_03.company_code
             and data_segment = par_data_segment
