@@ -40,6 +40,7 @@ create or replace package dw_mart_sales02 as
     2008/06   Steve Gregan   Created
     2008/08   Steve Gregan   Modified sales extracts to consolidate on ZREP
     2008/08   Steve Gregan   Added ICB_FLAG to detail table
+    2008/08   Steve Gregan   Removed assignment group code filter for forecasts
 
    *******************************************************************************/
 
@@ -130,7 +131,7 @@ create or replace package body dw_mart_sales02 as
          /*-*/
          /* Clear the data mart *SCHEDULED data
          /*-*/
-      --   delete from dw_mart_sales02_det where company_code = par_company_code and data_segment = '*ORDER';
+         delete from dw_mart_sales02_det where company_code = par_company_code and data_segment = '*ORDER';
          delete from dw_mart_sales02_det where company_code = par_company_code and data_segment = '*FCST';
          delete from dw_mart_sales02_det where company_code = par_company_code and data_segment = '*NZMKT_SALE';
          delete from dw_mart_sales02_det where company_code = par_company_code and data_segment = '*NZMKT_FCST';
@@ -138,7 +139,7 @@ create or replace package body dw_mart_sales02 as
          /*-*/
          /* Refresh the order data
          /*-*/
-      --   extract_order(par_company_code, '*ORDER');
+         extract_order(par_company_code, '*ORDER');
 
          /*-*/
          /* Refresh the forecast data
@@ -557,6 +558,333 @@ create or replace package body dw_mart_sales02 as
    end extract_header;
 
    /**************************************************/
+   /* This procedure performs the order data routine */
+   /**************************************************/
+   procedure extract_order(par_company_code in varchar2, par_data_segment in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_cpd_yyyypp number(6,0);
+      var_cpd_yyyyppdd number(8,0);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_order_extract_01 is 
+         select t01.company_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
+                nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
+                nvl(sum(case when t01.order_eff_yyyypp = var_cpd_yyyypp then t01.con_qty_base_uom end),0) as cur_qty,
+                nvl(sum(case when t01.order_eff_yyyypp = var_cpd_yyyypp then t01.con_gsv end),0) as cur_gsv,
+                nvl(sum(case when t01.order_eff_yyyypp = var_cpd_yyyypp then t01.con_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.order_eff_yyyypp > var_cpd_yyyypp then t01.con_qty_base_uom end),0) as fut_qty,
+                nvl(sum(case when t01.order_eff_yyyypp > var_cpd_yyyypp then t01.con_gsv end),0) as fut_gsv,
+                nvl(sum(case when t01.order_eff_yyyypp > var_cpd_yyyypp then t01.con_qty_net_tonnes end),0) as fut_ton
+           from dw_order_base t01,
+                demand_plng_grp_sales_area_dim t02,
+                cust_sales_area_dim t03,
+                matl_dim t04
+          where t01.ship_to_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
+            and t01.demand_plng_grp_division_code = t02.division_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.sold_to_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.order_eff_yyyyppdd >= var_cpd_yyyyppdd
+          group by t01.company_code,
+                   nvl(t04.rep_item,t01.matl_code),
+                   t03.acct_assgnmnt_grp_code,
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
+      rcd_order_extract_01 csr_order_extract_01%rowtype;
+
+      cursor csr_order_extract_02 is 
+         select t01.company_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
+                nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
+                nvl(sum(t01.base_uom_qty),0) as out_qty,
+                nvl(sum(t01.gsv),0) as out_gsv,
+                nvl(sum(t01.qty_net_tonnes),0) as out_ton
+           from outstanding_order_fact t01,
+                demand_plng_grp_sales_area_dim t02,
+                cust_sales_area_dim t03,
+                matl_dim t04
+          where t01.ship_to_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
+            and t01.demand_plng_grp_division_code = t02.division_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.sold_to_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.cdw_eff_date = trunc(var_current_date)
+          group by t01.company_code,
+                   nvl(t04.rep_item,t01.matl_code),
+                   t03.acct_assgnmnt_grp_code,
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
+      rcd_order_extract_02 csr_order_extract_02%rowtype;
+
+      cursor csr_order_extract_03 is 
+         select t01.company_code,
+                nvl(t04.rep_item,t01.matl_code) as matl_code,
+                nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                t01.mfanz_icb_flag,
+                nvl(sum(t01.con_qty_base_uom),0) as cur_qty,
+                nvl(sum(t01.con_gsv),0) as cur_gsv,
+                nvl(sum(t01.con_qty_net_tonnes),0) as cur_ton
+           from dw_order_base t01,
+                demand_plng_grp_sales_area_dim t02,
+                cust_sales_area_dim t03,
+                matl_dim t04
+          where t01.ship_to_cust_code = t02.cust_code(+)
+            and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
+            and t01.demand_plng_grp_division_code = t02.division_code(+)
+            and t01.sales_org_code = t02.sales_org_code(+)
+            and t01.sold_to_cust_code = t03.cust_code(+)
+            and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
+            and t01.division_code = t03.division_code(+) 
+            and t01.sales_org_code = t03.sales_org_code(+)
+            and t01.matl_code = t04.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.creatn_date = trunc(var_current_date)
+          group by t01.company_code,
+                   nvl(t04.rep_item,t01.matl_code),
+                   t03.acct_assgnmnt_grp_code,
+                   t02.demand_plng_grp_code,
+                   t01.mfanz_icb_flag;
+      rcd_order_extract_02 csr_order_extract_02%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /*- Calculate the period filters
+      /*-*/
+      var_cpd_yyyypp := var_current_yyyypp;
+      var_cpd_yyyyppdd := var_current_yyyypp * 100;
+
+      /*-*/
+      /* Extract the period order values
+      /*-*/
+      open csr_order_extract_01;
+      loop
+         fetch csr_order_extract_01 into rcd_order_extract_01;
+         if csr_order_extract_01%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_order_extract_01.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_order_extract_01.matl_code,
+                       rcd_order_extract_01.acct_assgnmnt_grp_code,
+                       rcd_order_extract_01.demand_plng_grp_code,
+                       rcd_order_extract_01.mfanz_icb_flag);
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_ord_value = cur_prd_ord_value + rcd_order_extract_01.cur_qty,
+                fut_prd_ord_value = fut_prd_ord_value + rcd_order_extract_01.fut_qty
+          where company_code = rcd_order_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_01.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_ord_value = cur_prd_ord_value + rcd_order_extract_01.cur_gsv,
+                fut_prd_ord_value = fut_prd_ord_value + rcd_order_extract_01.fut_gsv
+          where company_code = rcd_order_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_01.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_ord_value = cur_prd_ord_value + rcd_order_extract_01.cur_ton,
+                fut_prd_ord_value = fut_prd_ord_value + rcd_order_extract_01.fut_ton
+          where company_code = rcd_order_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_01.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
+            and data_type = '*TON';
+
+      end loop;
+      close csr_order_extract_01;
+
+      /*-*/
+      /* Extract the period outstanding values
+      /*-*/
+      open csr_order_extract_02;
+      loop
+         fetch csr_order_extract_02 into rcd_order_extract_02;
+         if csr_order_extract_02%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_order_extract_02.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_order_extract_02.matl_code,
+                       rcd_order_extract_02.acct_assgnmnt_grp_code,
+                       rcd_order_extract_02.demand_plng_grp_code,
+                       rcd_order_extract_02.mfanz_icb_flag);
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_qty
+          where company_code = rcd_order_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_gsv
+          where company_code = rcd_order_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales02_det
+            set cur_prd_out_value = cur_prd_out_value + rcd_order_extract_01.out_ton
+          where company_code = rcd_order_extract_02.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_02.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
+            and data_type = '*TON';
+
+      end loop;
+      close csr_order_extract_02;
+
+      /*-*/
+      /* Extract the daily order values
+      /*-*/
+      open csr_order_extract_03;
+      loop
+         fetch csr_order_extract_03 into rcd_order_extract_03;
+         if csr_order_extract_03%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_order_extract_03.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_order_extract_03.matl_code,
+                       rcd_order_extract_03.acct_assgnmnt_grp_code,
+                       rcd_order_extract_03.demand_plng_grp_code,
+                       rcd_order_extract_03.mfanz_icb_flag);
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales03_det
+            set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_qty
+          where company_code = rcd_order_extract_03.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_03.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales03_det
+            set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_gsv
+          where company_code = rcd_order_extract_03.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_03.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales03_det
+            set cur_day_ord_value = cur_day_ord_value + rcd_order_extract_03.cur_ton
+          where company_code = rcd_order_extract_03.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and matl_code = rcd_order_extract_03.matl_code
+            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
+            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
+            and data_type = '*TON';
+
+      end loop;
+      close csr_order_extract_03;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end extract_order;
+
+   /**************************************************/
    /* This procedure performs the sales data routine */
    /**************************************************/
    procedure extract_sale(par_company_code in varchar2, par_data_segment in varchar2) is
@@ -695,7 +1023,7 @@ create or replace package body dw_mart_sales02 as
             and t01.hdr_sales_org_code = t03.sales_org_code(+)
             and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
-            and t01.billing_eff_date = var_current_date
+            and t01.billing_eff_date = trunc(var_current_date)
           group by t01.company_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
@@ -989,7 +1317,6 @@ create or replace package body dw_mart_sales02 as
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'OP'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1012,7 +1339,6 @@ create or replace package body dw_mart_sales02 as
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'ROB'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1038,7 +1364,6 @@ create or replace package body dw_mart_sales02 as
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'BR'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1142,7 +1467,6 @@ create or replace package body dw_mart_sales02 as
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'FCST'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1704,7 +2028,7 @@ create or replace package body dw_mart_sales02 as
             and t01.sales_org_code = t03.sales_org_code(+)
             and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
-            and t01.purch_order_eff_date = var_current_date
+            and t01.purch_order_eff_date = trunc(var_current_date)
           group by t01.company_code,
                    t01.nzmkt_matl_group,
                    nvl(t04.rep_item,t01.matl_code),

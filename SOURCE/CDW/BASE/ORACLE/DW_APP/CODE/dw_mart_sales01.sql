@@ -39,6 +39,7 @@ create or replace package dw_mart_sales01 as
     2008/02   Steve Gregan   Added NZ market sales
     2008/08   Steve Gregan   Modified sales extracts to consolidate on ZREP
     2008/08   Steve Gregan   Added ICB_FLAG to detail table
+    2008/08   Steve Gregan   Removed assignment group code filter for forecasts
 
    *******************************************************************************/
 
@@ -1075,7 +1076,6 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'OP'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1095,7 +1095,6 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'ROB'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1118,7 +1117,6 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'BR'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
@@ -1220,7 +1218,6 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_yyyyppw >= var_ytg_str_yyyyppw
             and t01.fcst_type_code = 'FCST'
-            and t01.acct_assgnmnt_grp_code = '01'
           group by t01.company_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
