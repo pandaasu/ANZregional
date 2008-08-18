@@ -5,6 +5,8 @@ PROCEDURE REFRESH_ITEM(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_BY(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_LIMITS(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_AU_SNACK_ITEM(p_MarketID IN NUMBER);
+PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER);
+PROCEDURE WRITE_LOG(par_text IN VARCHAR2);
 
 END EFEX_REFRESH;
 /
@@ -12,7 +14,9 @@ END EFEX_REFRESH;
 
 CREATE OR REPLACE PACKAGE BODY EFEX_REFRESH AS
 
-   v_error_email  varchar2(100) := 'asia.pacific.efex.error.messages@ap.effem.com';  
+   v_error_email  varchar2(100) := 'asia.pacific.efex.error.messages@ap.effem.com';
+   var_log_type varchar2(32);
+   var_log_line number; 
 /******************************************************************************
 *  NAME:       REFRESH_CUSTOMER
 *  PURPOSE:    EFEX Customer REFESH PROCEDURE
@@ -20,11 +24,11 @@ CREATE OR REPLACE PACKAGE BODY EFEX_REFRESH AS
 *  Ver    Date        Author           Description
 *  -----  ----------  ---------------  ------------------------------------
 *  1.0    00-00-2005  GEOFF DODDS       Created View
-*  1.1    01-08-2006  Toui Lepkhammany  Modified to refesh Hong Kong Customers
-*                                        This includes customer status
+*  1.1    01-08-2006  Toui Lepkhammany    Modified to refesh Hong Kong Customers
+                                         This includes customer status
 *  1.2    20-02-2008  Toui Lepkhammany  Mod: check for city and state being null
-*                                       in efex.customer.
-*  1.3    08-08-2008  Steve Gregan      Modified to refresh China customers                                     
+                                        in efex.customer.
+                                        
 ******************************************************************************/
 PROCEDURE REFRESH_CUSTOMER(p_MarketID IN NUMBER) IS
 
@@ -47,151 +51,38 @@ PROCEDURE REFRESH_CUSTOMER(p_MarketID IN NUMBER) IS
                     or a.state <> b.state
                     or (a.state is null and b.state is not null))
    and    a.market_id = b.market_id
-   and    a.market_id = p_MarketID; 
-
-   cursor csr_china_customer is
-      select b.customer_code, 
-             b.customer_name, 
-             b.address_1, 
-             b.city, 
-             b.state, 
-             b.cust_status,
-             b.contact_name,
-             b.sales_person_code,
-             b.sales_person_name,
-             b.outlet_location,
-             b.geo_level1_code,
-             b.geo_level2_code,
-             b.geo_level3_code,
-             b.geo_level4_code,
-             b.geo_level5_code,
-             b.std_level1_code,
-             b.std_level2_code,
-             b.std_level3_code,
-             b.std_level4_code,
-             b.geo_level1_name,
-             b.geo_level2_name,
-             b.geo_level3_name,
-             b.geo_level4_name,
-             b.geo_level5_name,
-             b.std_level1_name,
-             b.std_level2_name,
-             b.std_level3_name,
-             b.std_level4_name
-        from customer a,
-             iface.iface_customer b
-       where a.customer_code = b.customer_code
-         and (a.customer_name != b.customer_name
-              or a.status != b.cust_status
-              or a.address_1 != b.address_1
-              or a.city != b.city 
-              or (a.city is null and b.city is not null)
-              or a.state != b.state
-              or (a.state is null and b.state is not null))
-         and a.market_id = b.market_id
-         and a.market_id = p_MarketID;
-   rcd_china_customer csr_china_customer%rowtype;
-
-   cursor csr_affiliation is
-      select t01.*
-        from affiliation t01,
-             affiliation_group t02
-       where t01.affiliation_group_id = t02.affiliation_group_id
-         and t02.business_unit_id = rcd_china_customer.business_unit_id
-         and t01.affiliation_name_en = xxxxx;
-   rcd_affiliation csr_affiliation%rowtype;
-
-   cursor csr_cust_type is
-      select t01.*
-        from cust_type t01,
-             cust_trade_channel t02,
-             cust_channel t03
-       where t01.cust_trade_channel_id = t02.cust_trade_channel_id
-         and t02.cust_channel_id = t03.cust_channel_id
-         and t03.business_unit_id = rcd_china_customer.business_unit_id
-         and t01.cust_type_name_en = xxxxx;
-   rcd_cust_type csr_cust_type%rowtype;
-
-   cursor csr_geo_hierarchy is
-      select t01.*
-        from geo_hierarchy t01
-       where t01.geo_level1_code = xxxxx
-         and t01.geo_level2_code = xxxxx
-         and t01.geo_level3_code = xxxxx
-         and t01.geo_level4_code = xxxxx;
-   rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
-
-   cursor csr_std_hierarchy is
-      select t01.*
-        from standard_hierarchy t01
-       where t01.std_level1_code = xxxxx
-         and t01.std_level2_code = xxxxx
-         and t01.std_level3_code = xxxxx
-         and t01.std_level4_code = xxxxx;
-   rcd_std_hierarchy csr_std_hierarchy%rowtype;
+   and    a.market_id = p_MarketID;
 
 BEGIN
 
-   --
-   -- All marlets except China
-   --
-   if p_MarketID != 4 then
-
-      FOR iface_row IN csrUpdateCust LOOP
-       --We are not updating Hong Kong Names until P10 2006
-           if p_MarketID <> 3 then  
-           update customer
-           set    customer_name = iface_row.customer_name,
-                          address_1 = iface_row.address_1,
-                                city = iface_row.city,
-                                state = iface_row.state
-           where  customer_code = iface_row.customer_code
-           and    market_id = p_MarketID;
-           end if;
+   FOR iface_row IN csrUpdateCust LOOP
+    --We are not updating Hong Kong Names until P10 2006
+        if p_MarketID <> 3 then  
+        update customer
+        set    customer_name = iface_row.customer_name,
+                       address_1 = iface_row.address_1,
+                             city = iface_row.city,
+                             state = iface_row.state
+        where  customer_code = iface_row.customer_code
+        and    market_id = p_MarketID;
+        end if;
         
-           --Check if the customer is a HK customer, if it is then update the extra bits
-           if p_MarketID = 3 then
-               update customer
-             set    status = iface_row.cust_status
-             where  customer_code = iface_row.customer_code
-             and    market_id = p_MarketID;
-           end if;
-             
-       update iface.iface_customer
-         set    iface_status = 'UPDATED'
-       where  customer_code = iface_row.customer_code
-           and    market_id = p_MarketID;
-  
-       commit;
-
-      END LOOP;
-
-   --
-   -- China market
-   --
-   else
-
-      FOR iface_row IN csrUpdateCust LOOP
-  
-           update customer
-           set    customer_name = iface_row.customer_name,
-                          address_1 = iface_row.address_1,
-                                city = iface_row.city,
-                                state = iface_row.state,
-                    status = iface_row.cust_status
-           where  customer_code = iface_row.customer_code
-           and    market_id = p_MarketID;
-             
-          update iface.iface_customer
-            set    iface_status = 'UPDATED'
+        --Check if the customer is a HK customer, if it is then update the extra bits
+        if p_MarketID = 3 then
+            update customer
+          set    status = iface_row.cust_status
           where  customer_code = iface_row.customer_code
-              and    market_id = p_MarketID;
+          and    market_id = p_MarketID;
+        end if;
+             
+    update iface.iface_customer
+      set    iface_status = 'UPDATED'
+    where  customer_code = iface_row.customer_code
+        and    market_id = p_MarketID;
   
-          commit;
+    commit;
 
-      END LOOP;
-
-   end if;
+   END LOOP;
 
 EXCEPTION
   WHEN OTHERS THEN
@@ -674,6 +565,431 @@ EXCEPTION
 
 ||SQLERRM,NULL);
 END REFRESH_AU_SNACK_ITEM;
+
+/******************************************************************************
+*  NAME:       REFRESH_CHINA_CUSTOMER
+*  PURPOSE:    EFEX China Customer REFESH PROCEDURE
+*  REVISIONS:
+*  Ver    Date        Author           Description
+*  -----  ----------  ---------------  ------------------------------------
+*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_CUSTOMER                                   
+******************************************************************************/
+PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
+
+   bol_update boolean;
+   var_affiliation_id number;
+   var_cust_type_id number;
+   var_cust_contact_id number;
+
+   cursor csr_customer is
+      select a.customer_id,
+             a.business_unit_id,
+             a.affiliation_id,
+             a.cust_type_id,
+             a.customer_name as old_customer_name, 
+             a.address_1 as old_address_1, 
+             a.city as old_city, 
+             a.state as old_state, 
+             a.status as old_status,
+             a.outlet_location as old_outlet_location,
+             a.geo_level1_code as old_geo_level1_code,
+             a.geo_level2_code as old_geo_level2_code,
+             a.geo_level3_code as old_geo_level3_code,
+             a.geo_level4_code as old_geo_level4_code,
+             a.geo_level5_code as old_geo_level5_code,
+             a.std_level1_code as old_std_level1_code,
+             a.std_level2_code as old_std_level2_code,
+             a.std_level3_code as old_std_level3_code,
+             a.std_level4_code as old_std_level4_code,
+             b.customer_code, 
+             b.customer_name, 
+             b.address_1, 
+             b.city, 
+             b.state, 
+             b.cust_status,
+             b.contact_name,
+             b.sales_person_code,
+             b.sales_person_name,
+             b.outlet_location,
+             b.cust_type,
+             b.affiliation,
+             b.geo_level1_code,
+             b.geo_level2_code,
+             b.geo_level3_code,
+             b.geo_level4_code,
+             b.geo_level5_code,
+             b.geo_level1_name,
+             b.geo_level2_name,
+             b.geo_level3_name,
+             b.geo_level4_name,
+             b.geo_level5_name,
+             b.std_level1_code,
+             b.std_level2_code,
+             b.std_level3_code,
+             b.std_level4_code,
+             b.std_level1_name,
+             b.std_level2_name,
+             b.std_level3_name,
+             b.std_level4_name
+        from customer a,
+             iface.iface_customer b
+       where a.customer_code = b.customer_code
+         and a.market_id = b.market_id
+         and a.market_id = p_MarketID;
+   rcd_customer csr_customer%rowtype;
+
+   cursor csr_affiliation is
+      select t01.*
+        from affiliation t01,
+             affiliation_group t02
+       where t01.affiliation_group_id = t02.affiliation_group_id
+         and t02.business_unit_id = rcd_customer.business_unit_id
+         and t01.affiliation_name_en = rcd_customer.affiliation;
+   rcd_affiliation csr_affiliation%rowtype;
+
+   cursor csr_cust_type is
+      select t01.*
+        from cust_type t01,
+             cust_trade_channel t02,
+             cust_channel t03
+       where t01.cust_trade_channel_id = t02.cust_trade_channel_id
+         and t02.cust_channel_id = t03.cust_channel_id
+         and t03.business_unit_id = rcd_customer.business_unit_id
+         and t01.cust_type_name_en = rcd_customer.cust_type;
+   rcd_cust_type csr_cust_type%rowtype;
+
+   cursor csr_cust_contact is 
+      select t01.*
+        from cust_contact t01
+       where t01.customer_id = rcd_customer.customer_id
+         and t01.status = 'A'
+       order by t01.cust_contact_id asc;
+   rcd_cust_contact csr_cust_contact%rowtype;
+
+   cursor csr_users is 
+      select t03.*
+        from (select t01.sales_territory_id
+                from (select t01.sales_territory_id,
+                             rank() over (partition by t01.customer_id
+                                              order by t01.sales_territory_id) as rnkseq
+                        from cust_sales_territory t01
+                       where t01.customer_id = rcd_customer.customer_id
+                         and t01.status = 'A'
+                         and t01.primary_flg = 'Y') t01
+               where t01.rnkseq = 1) t01,
+             sales_territory t02,
+             users t03
+       where t01.sales_territory_id = t02.sales_territory_id
+         and t02.user_id = t02.user_id;
+   rcd_users csr_users%rowtype;
+
+   cursor csr_geo_hierarchy is
+      select t01.*
+        from geo_hierarchy t01
+       where t01.geo_level1_code = rcd_customer.geo_level1_code
+         and t01.geo_level2_code = rcd_customer.geo_level2_code
+         and t01.geo_level3_code = rcd_customer.geo_level3_code
+         and t01.geo_level4_code = rcd_customer.geo_level4_code
+         and t01.geo_level5_code = rcd_customer.geo_level5_code;
+   rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
+
+   cursor csr_standard_hierarchy is
+      select t01.*
+        from standard_hierarchy t01
+       where t01.std_level1_code = rcd_customer.std_level1_code
+         and t01.std_level2_code = rcd_customer.std_level2_code
+         and t01.std_level3_code = rcd_customer.std_level3_code
+         and t01.std_level4_code = rcd_customer.std_level4_code;
+   rcd_standard_hierarchy csr_standard_hierarchy%rowtype;
+
+BEGIN
+
+   var_log_type := 'CHINA_CUSTOMER';
+   var_log_line := 0;
+
+   open csr_customer;
+   loop
+      fetch csr_customer into rcd_customer;
+      if csr_customer%notfound then
+         exit;
+      end if;
+
+      --
+      -- set the update indicator
+      --
+      bol_update := false;
+
+      --
+      -- customer changed
+      --
+      if (rcd_customer.old_customer_name != rcd_customer.customer_name or
+          rcd_customer.old_status != rcd_customer.cust_status or
+          nvl(rcd_customer.old_address_1,'*NULL') != nvl(rcd_customer.address_1,'*NULL') or
+          nvl(rcd_customer.old_city,'*NULL') != nvl(rcd_customer.city,'*NULL') or
+          nvl(rcd_customer.old_state,'*NULL') != nvl(rcd_customer.state,'*NULL') or
+          nvl(rcd_customer.old_outlet_location,'*NULL') != nvl(rcd_customer.outlet_location,'*NULL')) then
+         bol_update := true;
+      end if;
+
+      --
+      -- geo hierarchy changed
+      --
+      if (rcd_customer.old_geo_level1_code != rcd_customer.geo_level1_code or
+          rcd_customer.old_geo_level2_code != rcd_customer.geo_level2_code or
+          rcd_customer.old_geo_level3_code != rcd_customer.geo_level3_code or
+          rcd_customer.old_geo_level4_code != rcd_customer.geo_level4_code or
+          rcd_customer.old_geo_level5_code != rcd_customer.geo_level5_code) then
+         bol_update := true;
+      end if;
+
+      --
+      -- standard hierarchy changed
+      --
+      if (rcd_customer.old_std_level1_code != rcd_customer.std_level1_code or
+          rcd_customer.old_std_level2_code != rcd_customer.std_level2_code or
+          rcd_customer.old_std_level3_code != rcd_customer.std_level3_code or
+          rcd_customer.old_std_level4_code != rcd_customer.std_level4_code) then
+         bol_update := true;
+      end if;
+
+      --
+      -- if affiliation name not exist then log error
+      -- if affiliation name is different then update to new id
+      --
+      if not(rcd_customer.affiliation is null) then
+         var_affiliation_id := rcd_customer.affiliation_id;
+         open csr_affiliation;
+         fetch csr_affiliation into rcd_affiliation;
+         if csr_affiliation%notfound then
+            write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - affiliation name ('||rcd_customer.affiliation||') not found on AFFILIATION table using AFFILIATION_NAME_EN');
+         else
+            if rcd_affiliation.affiliation_id != rcd_customer.affiliation_id then
+               var_affiliation_id := rcd_affiliation.affiliation_id;
+               bol_update := true;
+            end if;
+         end if;
+         close csr_affiliation;
+      end if;
+
+      --
+      -- if customer type name not exist then log error
+      -- if customer type name is different then update to new id
+      --
+      if not(rcd_customer.cust_type is null) then
+         var_cust_type_id := rcd_customer.cust_type_id;
+         open csr_cust_type;
+         fetch csr_cust_type into rcd_cust_type;
+         if csr_cust_type%notfound then
+            write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - customer type name ('||rcd_customer.cust_type||') not found on CUST_TYPE table using CUST_TYPE_NAME_EN');
+         else
+            if rcd_cust_type.cust_type_id != rcd_customer.cust_type_id then
+               var_cust_type_id := rcd_cust_type.cust_type_id;
+               bol_update := true;
+            end if;
+         end if;
+        close csr_cust_type;
+      end if;
+
+      --
+      -- if customer contact name is different then update the name
+      -- if customer contact does not exist then create the contact
+      --
+      /*-*/
+      /* Retrieve the existing customer contact
+      /* **notes** 1. The first active customer contact is retrieved
+      /*-*/
+      if not(rcd_customer.contact_name is null) then
+         open csr_cust_contact;
+         fetch csr_cust_contact into rcd_cust_contact;
+         if csr_cust_contact%found then
+            if rcd_cust_contact.first_name != rcd_customer.contact_name then
+               update cust_contact
+                  set first_name = rcd_customer.contact_name,
+                      modified_user = user,
+                      modified_date = sysdate
+                where cust_contact_id = rcd_cust_contact.cust_contact_id;
+               bol_update := true;
+            end if;
+         else
+            select cust_contact_seq.nextval into var_cust_contact_id from dual;
+            insert into cust_contact
+               (cust_contact_id, first_name, customer_id, status, modified_user, modified_date)
+               values(var_cust_contact_id, rcd_customer.contact_name, rcd_customer.customer_id, 'A', user, sysdate);
+            bol_update := true;
+         end if;
+         close csr_cust_contact;
+
+      end if;
+
+      --
+      -- if customer salesperson code is different then update the name
+      -- if customer salesperson code does not exist then log error
+      --
+      /*-*/
+      /* Retrieve the existing customer users relationship
+      /* **notes** 1. The first active primary customer sales territory user is retrieved
+      /*-*/
+      if not(rcd_customer.sales_person_code is null) then
+         open csr_users;
+         fetch csr_users into rcd_users;
+         if csr_users%found then
+            if rcd_users.username = rcd_customer.sales_person_code then
+               if rcd_users.lastname != rcd_customer.sales_person_name then
+                  update users
+                     set lastname = rcd_customer.sales_person_name,
+                         modified_user = user,
+                         modified_date = sysdate
+                   where user_id = rcd_users.user_id;
+                  bol_update := true;
+               end if;
+            end if;
+         else
+            write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - sales person code ('||rcd_customer.sales_person_code||') not found on USERS table using USERNAME');
+         end if;
+         close csr_users;
+      end if;
+
+      --
+      -- if geo hierarchy does not exist then insert
+      -- if any geo hierarchy names are different then update
+      --
+      open csr_geo_hierarchy;
+      fetch csr_geo_hierarchy into rcd_geo_hierarchy;
+      if csr_geo_hierarchy%notfound then
+         insert into geo_hierarchy
+            values(rcd_customer.geo_level1_code,
+                   rcd_customer.geo_level2_code,
+                   rcd_customer.geo_level3_code,
+                   rcd_customer.geo_level4_code,
+                   rcd_customer.geo_level5_code,
+                   rcd_customer.geo_level1_name,
+                   rcd_customer.geo_level2_name,
+                   rcd_customer.geo_level3_name,
+                   rcd_customer.geo_level4_name,
+                   rcd_customer.geo_level5_name);
+         commit;
+      else
+         if (rcd_geo_hierarchy.geo_level1_name != rcd_customer.geo_level1_name or
+             rcd_geo_hierarchy.geo_level2_name != rcd_customer.geo_level2_name or
+             rcd_geo_hierarchy.geo_level3_name != rcd_customer.geo_level3_name or
+             rcd_geo_hierarchy.geo_level4_name != rcd_customer.geo_level4_name or
+             rcd_geo_hierarchy.geo_level5_name != rcd_customer.geo_level5_name) then
+            update geo_hierarchy
+               set geo_level1_name = rcd_customer.geo_level1_name,
+                   geo_level2_name = rcd_customer.geo_level2_name,
+                   geo_level3_name = rcd_customer.geo_level3_name,
+                   geo_level4_name = rcd_customer.geo_level4_name,
+                   geo_level5_name = rcd_customer.geo_level5_name
+             where geo_level1_code = rcd_customer.geo_level1_code
+               and geo_level2_code = rcd_customer.geo_level2_code
+               and geo_level3_code = rcd_customer.geo_level3_code
+               and geo_level4_code = rcd_customer.geo_level4_code
+               and geo_level5_code = rcd_customer.geo_level5_code;
+            commit;
+         end if;
+      end if;
+      close csr_geo_hierarchy;
+
+      --
+      -- if standard hierarchy does not exist then insert
+      -- if any standard hierarchy names are different then update
+      --
+      open csr_standard_hierarchy;
+      fetch csr_standard_hierarchy into rcd_standard_hierarchy;
+      if csr_standard_hierarchy%notfound then
+         insert into standard_hierarchy
+            values(rcd_customer.std_level1_code,
+                   rcd_customer.std_level2_code,
+                   rcd_customer.std_level3_code,
+                   rcd_customer.std_level4_code,
+                   rcd_customer.std_level1_name,
+                   rcd_customer.std_level2_name,
+                   rcd_customer.std_level3_name,
+                   rcd_customer.std_level4_name);
+         commit;
+      else
+         if (rcd_standard_hierarchy.std_level1_name != rcd_customer.std_level1_name or
+             rcd_standard_hierarchy.std_level2_name != rcd_customer.std_level2_name or
+             rcd_standard_hierarchy.std_level3_name != rcd_customer.std_level3_name or
+             rcd_standard_hierarchy.std_level4_name != rcd_customer.std_level4_name) then
+            update standard_hierarchy
+               set std_level1_name = rcd_customer.std_level1_name,
+                   std_level2_name = rcd_customer.std_level2_name,
+                   std_level3_name = rcd_customer.std_level3_name,
+                   std_level4_name = rcd_customer.std_level4_name
+             where std_level1_code = rcd_customer.std_level1_code
+               and std_level2_code = rcd_customer.std_level2_code
+               and std_level3_code = rcd_customer.std_level3_code
+               and std_level4_code = rcd_customer.std_level4_code;
+            commit;
+         end if;
+      end if;
+      close csr_standard_hierarchy;
+
+      --
+      -- update the customer when required
+      --
+      if bol_Update = true then
+
+         --
+         -- update the customer
+         --
+         update customer
+            set customer_name = rcd_customer.customer_name,
+                address_1 = rcd_customer.address_1,
+                city = rcd_customer.city,
+                state = rcd_customer.state,
+                status = rcd_customer.cust_status,
+                outlet_location = rcd_customer.outlet_location,
+                affiliation_id = var_affiliation_id,
+                cust_type_id = var_cust_type_id
+          where customer_id = rcd_customer.customer_id;
+
+         --
+         -- update the IFACE customer
+         --
+         update iface.iface_customer
+            set iface_status = 'UPDATED'
+          where customer_code = rcd_customer.customer_code
+            and market_id = p_MarketID;
+
+         --
+         -- commit the database
+         --
+         commit;
+
+      end if;
+
+   end loop;
+   close csr_customer;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    Send_Mail(v_error_email, 'eFEX Refresh Interface Error', 'Error in EFEX_REFRESH.REFRESH_CHINA_CUSTOMER'||chr(13)||SQLERRM,NULL);
+END REFRESH_CHINA_CUSTOMER;
+
+PROCEDURE WRITE_LOG(par_text IN VARCHAR2) IS
+
+   /*-*/
+   /* Autonomous transaction
+   /*-*/
+   pragma autonomous_transaction;
+
+BEGIN
+
+   /*-*/
+   /* Insert the log row
+   /*-*/
+   var_log_line := var_log_line + 1;
+   insert into iface_log values(var_log_type, var_log_line, sysdate, par_text);
+
+   /*-*/
+   /* Commit the database
+   /* note - isolated commit (autonomous transaction)
+   /*-*/
+   commit;
+
+END WRITE_LOG;
    
 END EFEX_REFRESH;
 /

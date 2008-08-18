@@ -223,7 +223,7 @@ create or replace package body ladefx02_loader as
          rollback;
       else
          commit;
-         efex_refresh.refresh_customer(con_market_id);
+         efex_refresh.refresh_china_customer(con_market_id);
       end if;
 
    /*-------------*/
