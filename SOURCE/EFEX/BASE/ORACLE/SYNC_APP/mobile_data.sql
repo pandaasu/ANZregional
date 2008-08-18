@@ -667,7 +667,7 @@ create or replace package body mobile_data as
             exit;
          end if;
          var_output := '<MSG>';
- -------------------------------    var_output := var_output||'<MSG_ID><![CDATA[' || to_char(rcd_comm.comm_id) || ']]></MSG_ID>';
+         var_output := var_output||'<MSG_ID><![CDATA[' || to_char(rcd_comm.comm_id) || ']]></MSG_ID>';
          var_output := var_output||'<MSG_OWNER><![CDATA[' || rcd_comm.comm_author || ']]></MSG_OWNER>';
          var_output := var_output||'<MSG_TITLE><![CDATA[' || substr(rcd_comm.comm_text,1,50) || ']]></MSG_TITLE>';
          var_output := var_output||'<MSG_TEXT><![CDATA[' || substr(rcd_comm.comm_text,1,1800) || ']]></MSG_TEXT>';
