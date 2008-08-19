@@ -40,6 +40,7 @@ create or replace package dw_mart_sales01 as
     2008/08   Steve Gregan   Modified sales extracts to consolidate on ZREP
     2008/08   Steve Gregan   Added ICB_FLAG to detail table
     2008/08   Steve Gregan   Removed assignment group code filter for forecasts
+    2008/08   Steve Gregan   Added ship to customer code
 
    *******************************************************************************/
 
@@ -73,6 +74,7 @@ create or replace package body dw_mart_sales01 as
    procedure create_detail(par_company_code in varchar2,
                            par_data_segment in varchar2,
                            par_matl_group in varchar2,
+                           par_ship_to_cust_code in varchar2,
                            par_matl_code in varchar2,
                            par_acct_assgnmnt_grp_code in varchar2,
                            par_demand_plng_grp_code in varchar2,
@@ -599,6 +601,7 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       cursor csr_sales_extract_01 is 
          select t01.company_code,
+                nvl(t01.ship_to_cust_code,'*NULL') as ship_to_cust_code,
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -668,6 +671,7 @@ create or replace package body dw_mart_sales01 as
             and t01.billing_eff_yyyypp >= var_str_yyyypp
             and t01.billing_eff_yyyypp <= var_end_yyyypp
           group by t01.company_code,
+                   t01.ship_to_cust_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code,
@@ -676,6 +680,7 @@ create or replace package body dw_mart_sales01 as
 
       cursor csr_sales_extract_02 is 
          select t01.company_code,
+                nvl(t01.ship_to_cust_code,'*NULL') as ship_to_cust_code,
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -740,6 +745,7 @@ create or replace package body dw_mart_sales01 as
             and t01.billing_eff_yyyyppw >= var_cpd_str_yyyyppw
             and t01.billing_eff_yyyyppw <= var_cpd_end_yyyyppw
           group by t01.company_code,
+                   t01.ship_to_cust_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code,
@@ -796,6 +802,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_sales_extract_01.company_code,
                        par_data_segment,
                        '*ALL',
+                       rcd_sales_extract_01.ship_to_cust_code,
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
                        rcd_sales_extract_01.demand_plng_grp_code,
@@ -827,6 +834,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -859,6 +867,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -891,6 +900,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -918,6 +928,7 @@ create or replace package body dw_mart_sales01 as
             create_detail(rcd_sales_extract_02.company_code,
                           par_data_segment,
                           '*ALL',
+                          rcd_sales_extract_02.ship_to_cust_code,
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
                           rcd_sales_extract_02.demand_plng_grp_code,
@@ -945,6 +956,7 @@ create or replace package body dw_mart_sales01 as
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
                and matl_group = '*ALL'
+               and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -973,6 +985,7 @@ create or replace package body dw_mart_sales01 as
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
                and matl_group = '*ALL'
+               and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -1001,6 +1014,7 @@ create or replace package body dw_mart_sales01 as
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
                and matl_group = '*ALL'
+               and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -1065,6 +1079,7 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       cursor csr_fcst_extract_01 is 
          select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1077,6 +1092,7 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'OP'
           group by t01.company_code,
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -1084,6 +1100,7 @@ create or replace package body dw_mart_sales01 as
 
       cursor csr_fcst_extract_02 is 
          select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1096,6 +1113,7 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'ROB'
           group by t01.company_code,
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -1103,6 +1121,7 @@ create or replace package body dw_mart_sales01 as
 
       cursor csr_fcst_extract_03 is 
          select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1118,6 +1137,7 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'BR'
           group by t01.company_code,
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -1125,6 +1145,7 @@ create or replace package body dw_mart_sales01 as
 
       cursor csr_fcst_extract_04 is 
          select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1219,6 +1240,7 @@ create or replace package body dw_mart_sales01 as
             and t01.fcst_yyyyppw >= var_ytg_str_yyyyppw
             and t01.fcst_type_code = 'FCST'
           group by t01.company_code,
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -1283,6 +1305,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_01.company_code,
                        par_data_segment,
                        '*ALL',
+                       rcd_fcst_extract_01.cust_code,
                        rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_01.demand_plng_grp_code,
@@ -1296,6 +1319,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -1310,6 +1334,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -1324,6 +1349,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -1349,6 +1375,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_02.company_code,
                        par_data_segment,
                        '*ALL',
+                       rcd_fcst_extract_02.cust_code,
                        rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_02.demand_plng_grp_code,
@@ -1362,6 +1389,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -1376,6 +1404,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -1390,6 +1419,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -1415,6 +1445,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_03.company_code,
                        par_data_segment,
                        '*ALL',
+                       rcd_fcst_extract_03.cust_code,
                        rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_03.demand_plng_grp_code,
@@ -1430,6 +1461,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -1446,6 +1478,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -1462,6 +1495,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -1487,6 +1521,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_04.company_code,
                        par_data_segment,
                        '*ALL',
+                       rcd_fcst_extract_04.cust_code,
                        rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_04.demand_plng_grp_code,
@@ -1528,6 +1563,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -1570,6 +1606,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -1612,6 +1649,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -1666,6 +1704,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_sales_extract_01 is 
          select t01.company_code,
                 t01.nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1736,6 +1775,7 @@ create or replace package body dw_mart_sales01 as
             and t01.purch_order_eff_yyyypp <= var_end_yyyypp
           group by t01.company_code,
                    t01.nzmkt_matl_group,
+                   t01.cust_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code,
@@ -1745,6 +1785,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_sales_extract_02 is 
          select t01.company_code,
                 t01.nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 nvl(t04.rep_item,t01.matl_code) as matl_code,
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -1810,6 +1851,7 @@ create or replace package body dw_mart_sales01 as
             and t01.purch_order_eff_yyyyppw <= var_cpd_end_yyyyppw
           group by t01.company_code,
                    t01.nzmkt_matl_group,
+                   t01.cust_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
                    t02.demand_plng_grp_code,
@@ -1866,6 +1908,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_sales_extract_01.company_code,
                        par_data_segment,
                        rcd_sales_extract_01.nzmkt_matl_group,
+                       rcd_sales_extract_01.cust_code,
                        rcd_sales_extract_01.matl_code,
                        rcd_sales_extract_01.acct_assgnmnt_grp_code,
                        rcd_sales_extract_01.demand_plng_grp_code,
@@ -1897,6 +1940,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_sales_extract_01.cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -1929,6 +1973,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_sales_extract_01.cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -1961,6 +2006,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_sales_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_sales_extract_01.cust_code
             and matl_code = rcd_sales_extract_01.matl_code
             and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
@@ -1988,6 +2034,7 @@ create or replace package body dw_mart_sales01 as
             create_detail(rcd_sales_extract_02.company_code,
                           par_data_segment,
                           rcd_sales_extract_02.nzmkt_matl_group,
+                          rcd_sales_extract_02.cust_code,
                           rcd_sales_extract_02.matl_code,
                           rcd_sales_extract_02.acct_assgnmnt_grp_code,
                           rcd_sales_extract_02.demand_plng_grp_code,
@@ -2014,7 +2061,8 @@ create or replace package body dw_mart_sales01 as
                    p13_value = p13_value + rcd_sales_extract_02.p13_qty
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
-               and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+               and matl_group = rcd_sales_extract_02.nzmkt_matl_group
+               and ship_to_cust_code = rcd_sales_extract_02.cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -2042,7 +2090,8 @@ create or replace package body dw_mart_sales01 as
                    p13_value = p13_value + rcd_sales_extract_02.p13_gsv
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
-               and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+               and matl_group = rcd_sales_extract_02.nzmkt_matl_group
+               and ship_to_cust_code = rcd_sales_extract_02.cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -2070,7 +2119,8 @@ create or replace package body dw_mart_sales01 as
                    p13_value = p13_value + rcd_sales_extract_02.p13_ton
              where company_code = rcd_sales_extract_02.company_code
                and data_segment = par_data_segment
-               and matl_group = rcd_sales_extract_01.nzmkt_matl_group
+               and matl_group = rcd_sales_extract_02.nzmkt_matl_group
+               and ship_to_cust_code = rcd_sales_extract_02.cust_code
                and matl_code = rcd_sales_extract_02.matl_code
                and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
                and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
@@ -2136,6 +2186,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_01 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -2154,6 +2205,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -2162,6 +2214,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_02 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -2180,6 +2233,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -2188,6 +2242,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_03 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -2209,6 +2264,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -2217,6 +2273,7 @@ create or replace package body dw_mart_sales01 as
       cursor csr_fcst_extract_04 is 
          select t01.company_code,
                 decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
@@ -2317,6 +2374,7 @@ create or replace package body dw_mart_sales01 as
             and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
           group by t01.company_code,
                    decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
                    t01.matl_zrep_code,
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
@@ -2381,6 +2439,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_01.company_code,
                        par_data_segment,
                        rcd_fcst_extract_01.nzmkt_matl_group,
+                       rcd_fcst_extract_01.cust_code,
                        rcd_fcst_extract_01.matl_zrep_code,
                        rcd_fcst_extract_01.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_01.demand_plng_grp_code,
@@ -2394,6 +2453,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -2408,6 +2468,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -2422,6 +2483,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_01.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
             and matl_code = rcd_fcst_extract_01.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
@@ -2447,6 +2509,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_02.company_code,
                        par_data_segment,
                        rcd_fcst_extract_02.nzmkt_matl_group,
+                       rcd_fcst_extract_02.cust_code,
                        rcd_fcst_extract_02.matl_zrep_code,
                        rcd_fcst_extract_02.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_02.demand_plng_grp_code,
@@ -2460,6 +2523,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -2474,6 +2538,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -2488,6 +2553,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
             and matl_code = rcd_fcst_extract_02.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
@@ -2513,6 +2579,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_03.company_code,
                        par_data_segment,
                        rcd_fcst_extract_03.nzmkt_matl_group,
+                       rcd_fcst_extract_03.cust_code,
                        rcd_fcst_extract_03.matl_zrep_code,
                        rcd_fcst_extract_03.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_03.demand_plng_grp_code,
@@ -2528,6 +2595,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -2544,6 +2612,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -2560,6 +2629,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_03.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
             and matl_code = rcd_fcst_extract_03.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
@@ -2585,6 +2655,7 @@ create or replace package body dw_mart_sales01 as
          create_detail(rcd_fcst_extract_04.company_code,
                        par_data_segment,
                        rcd_fcst_extract_04.nzmkt_matl_group,
+                       rcd_fcst_extract_04.cust_code,
                        rcd_fcst_extract_04.matl_zrep_code,
                        rcd_fcst_extract_04.acct_assgnmnt_grp_code,
                        rcd_fcst_extract_04.demand_plng_grp_code,
@@ -2626,6 +2697,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -2668,6 +2740,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -2710,6 +2783,7 @@ create or replace package body dw_mart_sales01 as
           where company_code = rcd_fcst_extract_04.company_code
             and data_segment = par_data_segment
             and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
             and matl_code = rcd_fcst_extract_04.matl_zrep_code
             and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
             and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
@@ -2730,6 +2804,7 @@ create or replace package body dw_mart_sales01 as
    procedure create_detail(par_company_code in varchar2,
                            par_data_segment in varchar2,
                            par_matl_group in varchar2,
+                           par_ship_to_cust_code in varchar2,
                            par_matl_code in varchar2,
                            par_acct_assgnmnt_grp_code in varchar2,
                            par_demand_plng_grp_code in varchar2,
@@ -2749,6 +2824,7 @@ create or replace package body dw_mart_sales01 as
           where t01.company_code = par_company_code
             and t01.data_segment = par_data_segment
             and t01.matl_group = par_matl_group
+            and t01.ship_to_cust_code = par_ship_to_cust_code
             and t01.matl_code = par_matl_code
             and t01.acct_assgnmnt_grp_code = par_acct_assgnmnt_grp_code
             and t01.demand_plng_grp_code = par_demand_plng_grp_code
@@ -2772,6 +2848,7 @@ create or replace package body dw_mart_sales01 as
          rcd_detail.company_code := par_company_code;
          rcd_detail.data_segment := par_data_segment;
          rcd_detail.matl_group := par_matl_group;
+         rcd_detail.ship_to_cust_code := par_ship_to_cust_code;
          rcd_detail.matl_code := par_matl_code;
          rcd_detail.acct_assgnmnt_grp_code := par_acct_assgnmnt_grp_code;
          rcd_detail.demand_plng_grp_code := par_demand_plng_grp_code;
