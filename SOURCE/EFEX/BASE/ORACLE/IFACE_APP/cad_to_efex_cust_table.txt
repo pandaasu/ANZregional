@@ -32,4 +32,7 @@ OUTLET_TYPE                             VARCHAR2(50),
 CUST_OTL_CODE                           VARCHAR2(50),
 PUR_FROM_WHOLESALER_CODE                VARCHAR2(50),
 PUR_FROM_WHOLESALER_NAME                VARCHAR2(100),
-SALES_VOL_RANGE                         VARCHAR2(50));
+SALES_VOL_RANGE                         VARCHAR2(50),
+OUTLET_FLAG                             VARCHAR2(1),
+DISTRIBUTOR_FLAG                        VARCHAR2(1),
+BUSINESS_UNIT_ID                        VARCHAR2(1));    

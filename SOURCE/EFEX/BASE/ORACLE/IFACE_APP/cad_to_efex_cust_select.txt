@@ -34,6 +34,9 @@ select
 '''' || replace(PUR_FROM_WHOLESALER_CODE,'''','''''') || ''',' ||
 '''' || replace(PUR_FROM_WHOLESALER_NAME,'''','''''') || ''',' ||
 '''' || replace(SALES_VOL_RANGE,'''','''''') || '''' ||
+'''' || replace(OUTLET_FLAG,'''','''''') || '''' ||
+'''' || replace(DISTRIBUTOR_FLAG,'''','''''') || '''' ||
+'''' || replace(BUSINESS_UNIT_ID,'''','''''') || '''' ||
 ');' as script
 from cad_to_efex_cust_master;
 
