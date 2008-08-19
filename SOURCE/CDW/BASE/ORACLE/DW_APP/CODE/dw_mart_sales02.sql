@@ -568,6 +568,8 @@ create or replace package body dw_mart_sales02 as
       /*-*/
       var_cpd_yyyypp number(6,0);
       var_cpd_yyyyppdd number(8,0);
+      var_str_yyyyppdd number(8,0);
+      var_end_yyyyppdd number(8,0);
 
       /*-*/
       /* Local cursors
@@ -629,7 +631,8 @@ create or replace package body dw_mart_sales02 as
             and t01.sales_org_code = t03.sales_org_code(+)
             and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
-            and t01.cdw_eff_date = trunc(var_current_date)
+            and t01.cdw_eff_yyyyppdd >= var_str_yyyyppdd
+            and t01.cdw_eff_yyyyppdd <= var_end_yyyyppdd
           group by t01.company_code,
                    nvl(t04.rep_item,t01.matl_code),
                    t03.acct_assgnmnt_grp_code,
@@ -678,6 +681,8 @@ create or replace package body dw_mart_sales02 as
       /*-*/
       var_cpd_yyyypp := var_current_yyyypp;
       var_cpd_yyyyppdd := var_current_yyyypp * 100;
+      var_str_yyyyppdd := var_current_yyyypp * 100;
+      var_end_yyyyppdd := (var_current_yyyypp * 100) + 99;
 
       /*-*/
       /* Extract the period order values
