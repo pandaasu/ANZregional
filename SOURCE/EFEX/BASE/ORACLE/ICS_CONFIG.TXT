@@ -4,37 +4,64 @@
 --
 connect lics_app/licscell@ap0112t.ap.mars
 
-insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars','/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
-insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars','/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
-insert into lics_interface values('LADEFX03','LADS to EFEX - China Standard Hierarchy Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX03',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars','/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
-insert into lics_interface values('LADEFX04','LADS to EFEX - China Sales Force Hierarchy Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX04',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars','/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
 
 commit;
 
 --
 -- EFEX ICS Configuration
 --
-connect lics_app/licsroof@ap0086d.ap.mars
+connect lics_app/licsroof@ap0088t.ap.mars
 
-insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com','ladefx01_loader','1');
-insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com','ladefx02_loader','1');
-insert into lics_interface values('LADEFX03','LADS to EFEX - China Standard Hierarchy Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com','ladefx03_loader','1');
-insert into lics_interface values('LADEFX04','LADS to EFEX - China Sales Force Hierarchy Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com','ladefx04_loader','1');
-insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com','/ics/efex/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx01_loader','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx02_loader','1');
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
 
 commit;
 
 --
 -- CAD ICS Configuration
 --
-connect lics_app/xxxx@db0767d.ap.mars
+connect lics_app/licsapp_dev@db0767d.ap.mars
 
-insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*INBOUND','IB_PRC',1,7,7,'ICS_INBOUND',null,0,null,null,'"HUA Applications Support"@smtp.ap.mars','efxcad01_customer','1');
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - Customer Data','*INBOUND','IB_PRC',1,7,7,'ICS_INBOUND',null,0,null,null,'"HUA Applications Support"@smtp.ap.mars',null,'efxcad01_customer','1');
 
 commit;
 
 
 
+===========================================
+
+--
+-- LADS ICS Configuration
+--
+connect lics_app/licscell@ap0112t.ap.mars
+
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'/ics/lad/hk/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
+
+commit;
+
+--
+-- EFEX ICS Configuration
+--
+connect lics_app/licsroof@ap0088t.ap.mars
+
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx01_loader','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx02_loader','1');
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'/ics/efex/test/bin/ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 QM0120T /ics/test/inbound','1');
+
+commit;
+
+--
+-- CAD ICS Configuration
+--
+connect lics_app/licsapp_dev@db0767d.ap.mars
+
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - Customer Data','*INBOUND','IB_PRC',1,7,7,'ICS_INBOUND',null,0,null,null,'"HUA Applications Support"@smtp.ap.mars',null,'efxcad01_customer','1');
+
+commit;
 
 
 /ics/lad/prod/bin/ics_outbound_mqft.sh <PATH> <MESG> APQM002P QM0121P /ics/prod/inbound *NOCOMPRESS *CMP
