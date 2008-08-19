@@ -14,6 +14,7 @@
  -------   ------         -----------
  2007/09   Steve Gregan   Created
  2008/08   Steve Gregan   Added ICB_FLAG
+ 2008/08   Steve Gregan   Added ship to customer
 
 *******************************************************************************/
 
@@ -24,6 +25,7 @@ create table dw_mart_sales01_det
    (company_code varchar2(6 char) not null,
     data_segment varchar2(32 char) not null,
     matl_group varchar2(20 char) not null,
+    ship_to_cust_code varchar2(10 char) not null,
     matl_code varchar2(18 char) not null,
     acct_assgnmnt_grp_code varchar2(10 char) not null,
     demand_plng_grp_code varchar2(10 char) not null,
@@ -76,6 +78,7 @@ comment on table dw_mart_sales01_det is 'Mart Sales 01 Detail Table';
 comment on column dw_mart_sales01_det.company_code is 'Company code';
 comment on column dw_mart_sales01_det.data_segment is 'Data segment';
 comment on column dw_mart_sales01_det.matl_group is 'Material group - *ALL or group code';
+comment on column dw_mart_sales01_det.ship_to_cust_code is 'Ship to customer code';
 comment on column dw_mart_sales01_det.matl_code is 'Material code';
 comment on column dw_mart_sales01_det.acct_assgnmnt_grp_code is 'Account assignment group code';
 comment on column dw_mart_sales01_det.demand_plng_grp_code is 'Demand planning group code';
@@ -125,7 +128,7 @@ comment on column dw_mart_sales01_det.p27_value is 'P27 value';
 /* Primary Key Constraint
 /**/
 alter table dw_mart_sales01_det
-   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, mfanz_icb_flag, data_type);
+   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, ship_to_cust_code, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, mfanz_icb_flag, data_type);
 
 /**/
 /* Authority
