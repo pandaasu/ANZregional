@@ -106,7 +106,7 @@ create or replace package body ladefx01_loader as
       lics_inbound_utility.set_definition('HDR','PACK_SIZE',30);
       lics_inbound_utility.set_definition('HDR','PACK_TYPE',30);
       lics_inbound_utility.set_definition('HDR','ITEM_CATEGORY',30);
-      lics_inbound_utility.set_definition('HDR','ITEM_STATUS',1);
+      lics_inbound_utility.set_definition('HDR','ITEM_STATUS',1);  
 
       /*-*/
       /* Clear the IFACE item table for the China market
@@ -272,16 +272,36 @@ create or replace package body ladefx01_loader as
       rcd_iface_item.item_code := lics_inbound_utility.get_variable('ITEM_CODE');
       rcd_iface_item.item_name := lics_inbound_utility.get_variable('ITEM_NAME');
       rcd_iface_item.rsu_ean_code := lics_inbound_utility.get_variable('RSU_EAN_CODE');
-      rcd_iface_item.cases_layer := lics_inbound_utility.get_number('CASES_LAYER',null);
-      rcd_iface_item.layers_pallet := lics_inbound_utility.get_number('LAYERS_PALLET',null);
-      rcd_iface_item.units_case := lics_inbound_utility.get_number('UNITS_CASE',null);
+      if lics_inbound_utility.get_number('CASES_LAYER',null) > 9999 then
+         rcd_iface_item.cases_layer := 9999;
+      else
+         rcd_iface_item.cases_layer := lics_inbound_utility.get_number('CASES_LAYER',null);
+      end if;
+      if lics_inbound_utility.get_number('LAYERS_PALLET',null) > 9999 then
+         rcd_iface_item.layers_pallet := 9999;
+      else
+         rcd_iface_item.layers_pallet := lics_inbound_utility.get_number('LAYERS_PALLET',null);
+      end if;
+      if lics_inbound_utility.get_number('UNITS_CASE',null) > 9999 then
+         rcd_iface_item.units_case := 9999;
+      else
+         rcd_iface_item.units_case := lics_inbound_utility.get_number('UNITS_CASE',null);
+      end if;
       rcd_iface_item.unit_measure := lics_inbound_utility.get_variable('UNIT_MEASURE');
       rcd_iface_item.price1 := lics_inbound_utility.get_number('PRICE1',null);
       rcd_iface_item.price2 := lics_inbound_utility.get_number('PRICE2',null);
       rcd_iface_item.price3 := lics_inbound_utility.get_number('PRICE3',null);
       rcd_iface_item.price4 := lics_inbound_utility.get_number('PRICE4',null);
-      rcd_iface_item.min_order_qty := lics_inbound_utility.get_number('MIN_ORD_QTY',null);
-      rcd_iface_item.order_multiples := lics_inbound_utility.get_number('ORDER_MULTIPLES',null);
+      if lics_inbound_utility.get_number('MIN_ORD_QTY',null) > 9999 then
+         rcd_iface_item.min_order_qty := 9999;
+      else
+         rcd_iface_item.min_order_qty := lics_inbound_utility.get_number('MIN_ORD_QTY',null);
+      end if;
+      if lics_inbound_utility.get_number('ORDER_MULTIPLES',null) > 9999 then
+         rcd_iface_item.order_multiples := 9999;
+      else
+         rcd_iface_item.order_multiples := lics_inbound_utility.get_number('ORDER_MULTIPLES',null);
+      end if;
       rcd_iface_item.brand := lics_inbound_utility.get_variable('BRAND');
       rcd_iface_item.sub_brand := lics_inbound_utility.get_variable('SUB_BRAND');
       rcd_iface_item.item_category := lics_inbound_utility.get_variable('PACK_SIZE');
