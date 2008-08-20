@@ -68,7 +68,7 @@ create or replace package body ladefx01_chn_item as
                 0 as layers_pallet,
                 decode(t02.rsu_meinh,null,decode(t02.mcu_meinh,null,t02.tdu_count,t02.mcu_count),t02.rsu_count) as units_case,
                 t02.tdu_meinh as unit_measure,
-                nvl(t03.list_price,0) as price1,
+                round(nvl(t03.list_price,0),2) as price1,
                 0 as price2,
                 0 as price3,
                 0 as price4,
