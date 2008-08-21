@@ -572,7 +572,7 @@ END REFRESH_AU_SNACK_ITEM;
 *  REVISIONS:
 *  Ver    Date        Author           Description
 *  -----  ----------  ---------------  ------------------------------------
-*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_CUSTOMER                                   
+*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_CUSTOMER                               
 ******************************************************************************/
 PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
 
@@ -601,6 +601,7 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
              a.std_level2_code as old_std_level2_code,
              a.std_level3_code as old_std_level3_code,
              a.std_level4_code as old_std_level4_code,
+             a.distributor_flg as old_distributor_flg,
              b.customer_code, 
              b.customer_name, 
              b.address_1, 
@@ -630,7 +631,8 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
              b.std_level1_name,
              b.std_level2_name,
              b.std_level3_name,
-             b.std_level4_name
+             b.std_level4_name,
+             b.distributor_flg
         from customer a,
              iface.iface_customer b
        where a.customer_code = b.customer_code
@@ -704,9 +706,17 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
 
 BEGIN
 
+   --
+   -- clear the log
+   --
    var_log_type := 'CHINA_CUSTOMER';
    var_log_line := 0;
+   delete from iface_log where log_type = var_log_type;
+   commit;
 
+   --
+   -- retrieve the customer data
+   --
    open csr_customer;
    loop
       fetch csr_customer into rcd_customer;
@@ -727,7 +737,8 @@ BEGIN
           nvl(rcd_customer.old_address_1,'*NULL') != nvl(rcd_customer.address_1,'*NULL') or
           nvl(rcd_customer.old_city,'*NULL') != nvl(rcd_customer.city,'*NULL') or
           nvl(rcd_customer.old_state,'*NULL') != nvl(rcd_customer.state,'*NULL') or
-          nvl(rcd_customer.old_outlet_location,'*NULL') != nvl(rcd_customer.outlet_location,'*NULL')) then
+          nvl(rcd_customer.old_outlet_location,'*NULL') != nvl(rcd_customer.outlet_location,'*NULL') or
+          nvl(rcd_customer.old_distributor_flg,'N') != nvl(rcd_customer.distributor_flg,'N')) then
          bol_update := true;
       end if;
 
@@ -941,6 +952,7 @@ BEGIN
                 state = rcd_customer.state,
                 status = rcd_customer.cust_status,
                 outlet_location = rcd_customer.outlet_location,
+                distributor_flg = rcd_customer.distributor_flg,
                 affiliation_id = var_affiliation_id,
                 cust_type_id = var_cust_type_id
           where customer_id = rcd_customer.customer_id;

@@ -315,6 +315,10 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.std_level2_name := lics_inbound_utility.get_variable('STD_LEVEL2_NAME');
       rcd_iface_customer.std_level3_name := lics_inbound_utility.get_variable('STD_LEVEL3_NAME');
       rcd_iface_customer.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
+      rcd_iface_customer.distributor_flg := 'N';
+      if upper(rcd_iface_customer.cust_type) = 'WHOLESALER' then
+         rcd_iface_customer.distributor_flg := 'Y';
+      end if;
 
       /*-*/
       /* Retrieve exceptions raised
@@ -380,7 +384,8 @@ create or replace package body ladefx02_loader as
           std_level1_name,
           std_level2_name,
           std_level3_name,
-          std_level4_name)
+          std_level4_name,
+          distributor_flg)
       values
          (rcd_iface_customer.market_id,
           rcd_iface_customer.customer_code,
@@ -415,7 +420,8 @@ create or replace package body ladefx02_loader as
           rcd_iface_customer.std_level1_name,
           rcd_iface_customer.std_level2_name,
           rcd_iface_customer.std_level3_name,
-          rcd_iface_customer.std_level4_name);
+          rcd_iface_customer.std_level4_name,
+          rcd_iface_customer.distributor_flg);
 
    /*-------------*/
    /* End routine */
