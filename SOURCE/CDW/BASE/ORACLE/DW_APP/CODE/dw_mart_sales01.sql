@@ -114,8 +114,7 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       /* Clear the data mart data
       /*-*/
-      delete from dw_mart_sales01_det where company_code = par_company_code and data_segment = '*MFANZ';
-      delete from dw_mart_sales01_det where company_code = par_company_code and data_segment = '*NZMKT';
+      delete from dw_mart_sales01_det where company_code = par_company_code;
       commit;
 
       /*-*/
