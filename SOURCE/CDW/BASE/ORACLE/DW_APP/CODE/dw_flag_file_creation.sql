@@ -154,9 +154,9 @@ create or replace package body dw_flag_file_creation as
       /* Flag file name
       /*-*/
       if upper(par_company) = 'CON' then
-         var_filename := 'FLAGFILE4749.TXT';
+         var_filename := '4749.txt';
       else
-         var_filename := 'FLAGFILE'||par_company||'.TXT';
+         var_filename := par_company||'.txt';
       end if;
 
       /*-*/
