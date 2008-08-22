@@ -21,14 +21,10 @@
 /**/
 create table dw_mart_sales01_hdr
    (company_code varchar2(6 char) not null,
-    scheduled_extract_date date not null,
-    scheduled_str_time date not null,
-    scheduled_end_time date not null,
-    scheduled_yyyypp number(6,0) not null,
-    triggered_extract_date date not null,
-    triggered_str_time date not null,
-    triggered_end_time date not null,
-    triggered_yyyypp number(6,0) not null,
+    extract_date date not null,
+    extract_str_time date not null,
+    extract_end_time date not null,
+    extract_yyyypp number(6,0) not null,
     current_yyyy number(4,0) not null,
     current_yyyypp number(6,0) not null,
     current_yyyyppw number(7,0) not null,
@@ -68,14 +64,10 @@ create table dw_mart_sales01_hdr
 /**/
 comment on table dw_mart_sales01_hdr is 'Mart Sales 01 Header Table';
 comment on column dw_mart_sales01_hdr.company_code is 'Company code';
-comment on column dw_mart_sales01_hdr.scheduled_extract_date is 'Scheduled extract date';
-comment on column dw_mart_sales01_hdr.scheduled_str_time is 'Scheduled extract start time';
-comment on column dw_mart_sales01_hdr.scheduled_end_time is 'Scheduled extract end time';
-comment on column dw_mart_sales01_hdr.scheduled_yyyypp is 'Scheduled extract period';
-comment on column dw_mart_sales01_hdr.triggered_extract_date is 'Triggered extract date';
-comment on column dw_mart_sales01_hdr.triggered_str_time is 'Triggered extract start time';
-comment on column dw_mart_sales01_hdr.triggered_end_time is 'Triggered extract end time';
-comment on column dw_mart_sales01_hdr.triggered_yyyypp is 'Triggered extract period';
+comment on column dw_mart_sales01_hdr.extract_date is 'Extract date';
+comment on column dw_mart_sales01_hdr.extract_str_time is 'Extract start time';
+comment on column dw_mart_sales01_hdr.extract_end_time is 'Extract end time';
+comment on column dw_mart_sales01_hdr.extract_yyyypp is 'Extract period';
 comment on column dw_mart_sales01_hdr.current_yyyy is 'Current year';
 comment on column dw_mart_sales01_hdr.current_yyyypp is 'Current period';
 comment on column dw_mart_sales01_hdr.current_yyyyppw is 'Current week';
