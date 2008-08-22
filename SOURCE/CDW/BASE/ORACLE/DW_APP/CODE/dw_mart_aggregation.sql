@@ -21,6 +21,14 @@ create or replace package dw_mart_aggregation as
 
        The mart aggregation procedure.
 
+    2. PAR_PROCESS (process string) (MANDATORY)
+
+       The mart aggregation process code used by process polling.
+
+    3. PAR_COMPANY (company code) (MANDATORY)
+
+       The company for which the aggregation is to be performed.
+
     **notes**
     1. A web log is produced under the search value DW_MART_AGGREGATION where all errors are logged.
 
@@ -33,7 +41,7 @@ create or replace package dw_mart_aggregation as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_procedure in varchar2);
+   procedure execute(par_procedure in varchar2, par_process in varchar2, par_company in varchar2);
 
 end dw_mart_aggregation;
 /
@@ -52,7 +60,7 @@ create or replace package body dw_mart_aggregation as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_procedure in varchar2) is
+   procedure execute(par_procedure in varchar2, par_process in varchar2, par_company in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -65,11 +73,26 @@ create or replace package body dw_mart_aggregation as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
+      var_company_code company.company_code%type;
+      var_date date;
+      var_test date;
+      var_next date;
+      var_process_date varchar2(8);
+      var_process_code varchar2(32);
 
       /*-*/
       /* Local constants
       /*-*/
       con_function constant varchar2(128) := 'DW Mart Aggregation';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_company is
+         select t01.*
+           from company t01
+          where t01.company_code = par_company;
+      rcd_company csr_company%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -96,6 +119,38 @@ create or replace package body dw_mart_aggregation as
       if par_procedure is null then
          raise_application_error(-20000, 'Mart procedure must be supplied');
       end if;
+      if par_process is null then
+         raise_application_error(-20000, 'Process code must be supplied');
+      end if;
+      if upper(par_company) is null then
+         raise_application_error(-20000, 'Process company must be supplied');
+      end if;
+      open csr_company;
+      fetch csr_company into rcd_company;
+      if csr_company%notfound then
+         raise_application_error(-20000, 'Company ' || par_company || ' not found on the company table');
+      end if;
+      close csr_company;
+      var_company_code := rcd_company.company_code;
+
+      /*-*/
+      /* Aggregation date is always based on the previous day (converted using the company timezone)
+      /*-*/
+      var_date := trunc(sysdate);
+      var_process_date := to_char(var_date-1,'yyyymmdd');
+      var_process_code := par_process;
+      if rcd_company.company_timezone_code != 'Australia/NSW' then
+         var_test := sysdate;
+         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
+         loop
+            var_date := var_next;
+            var_next := var_next + 1;
+            if var_next > var_test then
+               exit;
+            end if;
+         end loop;
+         var_process_date := to_char(var_date,'yyyymmdd');
+      end if;
 
       /*-*/
       /* Log start
@@ -105,7 +160,7 @@ create or replace package body dw_mart_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Mart Aggregation - Parameters(' || par_procedure || ')');
+      lics_logging.write_log('Begin - Mart Aggregation - Parameters(' || par_procedure || ' + ' || par_process || ' + ' || par_company || ' + ' || to_char(to_date(var_process_date,'yyyymmdd'),'yyyy/mm/dd') || ')');
 
       /*-*/
       /* Request the lock on the event
@@ -178,6 +233,16 @@ create or replace package body dw_mart_aggregation as
          /* Raise an exception to the caller
          /*-*/
          raise_application_error(-20000, '**LOGGED ERROR**');
+
+      /*-*/
+      /* Set processing trace when required
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the data mart aggregation process trace
+         /*-*/
+         lics_processing.set_trace(var_process_code, var_process_date);
 
       end if;
 
