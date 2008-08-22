@@ -996,7 +996,7 @@ create or replace package body mobile_data as
       open csr_cust_contact;
       fetch csr_cust_contact into rcd_cust_contact;
       if csr_cust_contact%found then
-         var_contact_name := rcd_cust_contact.first_name;
+         var_contact_name := rcd_cust_contact.last_name;
       end if;
       close csr_cust_contact;
 
@@ -1077,7 +1077,6 @@ create or replace package body mobile_data as
    /* End routine */
    /*-------------*/
    end get_customer_data;
-
 
    /*************************************************************/
    /* This procedure performs the get communicaton list routine */
@@ -1777,7 +1776,7 @@ create or replace package body mobile_data as
          upd_customer.distributor_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_DISTRIBUTOR_ID'));
          upd_customer.status := xslProcessor.valueOf(obj_xml_node,'CUS_STATUS');
          upd_customer.outlet_location := xslProcessor.valueOf(obj_xml_node,'CUS_OUTLET_LOCATION');
-         upd_cust_contact.first_name := xslProcessor.valueOf(obj_xml_node,'CUS_CONTACT_NAME');
+         upd_cust_contact.last_name := xslProcessor.valueOf(obj_xml_node,'CUS_CONTACT_NAME');
          if var_data_type = '*NEW' then
             create_customer_data(xslProcessor.valueOf(obj_xml_node,'CUS_CUSTOMER_ID'));
          else
@@ -2345,13 +2344,13 @@ create or replace package body mobile_data as
       /* **notes** 1. The first active customer contact is retrieved
       /*           2. Only update when name has changed
       /*-*/
-      if not(upd_cust_contact.first_name) is null then
+      if not(upd_cust_contact.last_name) is null then
          open csr_cust_contact;
          fetch csr_cust_contact into rcd_cust_contact;
          if csr_cust_contact%notfound then
             select cust_contact_seq.nextval into upd_cust_contact.cust_contact_id from dual;
-            upd_cust_contact.first_name := upd_cust_contact.first_name;
-            upd_cust_contact.last_name := null;
+            upd_cust_contact.first_name := null;
+            upd_cust_contact.last_name := upd_cust_contact.last_name;
             upd_cust_contact.phone_number := null;
             upd_cust_contact.email_address := null;
             upd_cust_contact.contact_position_id := null;
@@ -2361,9 +2360,9 @@ create or replace package body mobile_data as
             upd_cust_contact.modified_date := sysdate;
             insert into cust_contact values upd_cust_contact;
          else
-            if rcd_cust_contact.first_name != upd_cust_contact.first_name then
+            if rcd_cust_contact.last_name != upd_cust_contact.last_name then
                update cust_contact
-                  set first_name = upd_cust_contact.first_name,
+                  set last_name = upd_cust_contact.last_name,
                       modified_user = user,
                       modified_date = sysdate
                 where cust_contact_id = rcd_cust_contact.cust_contact_id;
@@ -2474,10 +2473,10 @@ create or replace package body mobile_data as
       /*-*/
       /* Insert the customer contact data when required
       /*-*/
-      if not(upd_cust_contact.first_name) is null then
+      if not(upd_cust_contact.last_name) is null then
          select cust_contact_seq.nextval into upd_cust_contact.cust_contact_id from dual;
-         upd_cust_contact.first_name := upd_cust_contact.first_name;
-         upd_cust_contact.last_name := null;
+         upd_cust_contact.first_name := null;
+         upd_cust_contact.last_name := upd_cust_contact.last_name;
          upd_cust_contact.phone_number := null;
          upd_cust_contact.email_address := null;
          upd_cust_contact.contact_position_id := null;
