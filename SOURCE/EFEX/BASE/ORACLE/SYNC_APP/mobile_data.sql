@@ -97,7 +97,7 @@ create or replace package body mobile_data as
    /* Private declarations
    /*-*/
    procedure get_call_data(par_route_plan_order in number, par_type in varchar2, par_customer_id in number);
-   procedure update_call_data;
+   procedure update_call_data(par_order_flag in varchar2);
    procedure update_distribution_data;
    procedure update_orders_data;
    procedure update_order_item_data;
@@ -572,7 +572,6 @@ create or replace package body mobile_data as
           where t01.customer_id = t02.customer_id
             and t01.distributor_flg = 'Y'
             and t01.status = 'A'
-            and t01.business_unit_id = var_auth_business_unit_id
           order by t01.customer_name asc;
       rcd_distributor csr_distributor%rowtype;
 
@@ -1795,10 +1794,15 @@ create or replace package body mobile_data as
 
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          upd_call.customer_id := mobile_get_customer_id(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_CUSTOMER_ID'));
-         upd_call.call_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_DATE'),'yyyymmdd');
+         upd_call.call_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STR_TIME'),'yyyy/mm/dd hh24:mi:ss');
          upd_call.end_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_END_TIME'),'yyyy/mm/dd hh24:mi:ss');
          upd_distribution_total.total_qty := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STOCK_DIST_COUNT'));
-         update_call_data;
+         obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
+         if xmlDom.getLength(obj_rte_ordr_list) = 0 then
+            update_call_data('0');
+         else
+            update_call_data('1');
+         end if;
 
          obj_rte_stck_list := xslProcessor.selectNodes(obj_xml_node,'RTE_STCK_ITEMS/RTE_STCK_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_stck_list)-1 loop
@@ -1833,6 +1837,12 @@ create or replace package body mobile_data as
             if var_send_order = '1' then
                upd_orders.order_status := 'SUBMITTED';
             end if;
+            upd_orders.total_price := 0;
+            obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
+            for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
+               obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
+               upd_orders.total_price := upd_orders.total_price + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_VALUE'));
+            end loop;
             update_orders_data;
             obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
             for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
@@ -1842,7 +1852,6 @@ create or replace package body mobile_data as
                upd_order_item.uom := xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_UOM');
                update_order_item_data;
             end loop;
-
          end loop;
 
       end loop;
@@ -1885,13 +1894,13 @@ create or replace package body mobile_data as
    /********************************************************/
    /* This procedure performs the update call data routine */
    /********************************************************/
-   procedure update_call_data is
+   procedure update_call_data(par_order_flag in varchar2) is
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_customer is 
-         select t01.customer_id
+         select t01.*
            from customer t01
           where t01.customer_id = upd_call.customer_id;
       rcd_customer csr_customer%rowtype;
@@ -1968,18 +1977,16 @@ create or replace package body mobile_data as
       end;
 
       /*-*/
-      /* Remove related orders and order items
+      /* Inactive related order when no order on call
+      /* **notes** 1. the orders trigger will inactivate the related order items
       /*-*/
-      delete from order_item
-       where order_id in (select order_id
-                            from orders
-                           where customer_id = upd_call.customer_id
-                             and order_date = upd_call.call_date
-                             and user_id = upd_call.user_id);
-      delete from orders
-       where customer_id = upd_call.customer_id
-         and order_date = upd_call.call_date
-         and user_id = upd_call.user_id;
+      if par_order_flag = '0' then
+         update orders
+            set status = 'X'
+          where customer_id = upd_call.customer_id
+            and order_date = upd_call.call_date
+            and user_id = upd_call.user_id;
+      end if;
 
       /*-*/
       /* Remove related display distributions
@@ -2074,6 +2081,12 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_customer is 
+         select t01.*
+           from customer t01
+          where t01.customer_id = upd_call.customer_id;
+      rcd_customer csr_customer%rowtype;
+
       cursor csr_orders is 
          select t01.order_id
            from orders t01
@@ -2087,26 +2100,29 @@ create or replace package body mobile_data as
    /*-------------*/
    begin
 
---
--- what if user uploads then changes the order so that no rows have quantities
--- then uploads again, do I delete the order (status = D).
--- ** MAYBE SHOULD JUST DELETE AND REBUILD???????????
--- ** WHAT HAPPENS WHEN ORDER DELETED AND THEREFORE SEQUENCE GAP???????
---  
+      /*-*/
+      /* Retrieve the call customer
+      /*-*/
+      open csr_customer;
+      fetch csr_customer into rcd_customer;
+      if csr_customer%notfound then
+         raise_application_error(-20000, 'update_orders_data - Customer (' || to_char(upd_call.customer_id) || ') not found');
+      end if;
+      close csr_customer;
 
       /*-*/
       /* Set the order values
       /*-*/
       upd_orders.customer_id := upd_call.customer_id;
       upd_orders.cust_contact_id := null;
-      upd_orders.distributor_id := null;
+      upd_orders.distributor_id := rcd_customer.distributor_id;
       upd_orders.user_id := upd_call.user_id;
       upd_orders.order_date := upd_call.call_date;
       upd_orders.deliver_date := upd_call.call_date;
       upd_orders.purchase_order := null;
       upd_orders.order_notes := null;
       upd_orders.total_items := upd_orders.total_items;
-      upd_orders.total_price := null;
+      upd_orders.total_price := upd_orders.total_price;
       upd_orders.confirm_flg := 'N';
       upd_orders.phoned_flg := 'N';
       upd_orders.delasap_flg := 'N';
@@ -2134,8 +2150,11 @@ create or replace package body mobile_data as
          insert into orders values upd_orders;
       else
          update orders
-            set total_items = upd_orders.total_items,
-                sendfax_flg = upd_orders.sendfax_flg,
+            set distributor_id = upd_orders.distributor_id,
+                deliver_date = upd_orders.deliver_date,
+                total_items = upd_orders.total_items,
+                total_price = upd_orders.total_price,
+                order_status = upd_orders.order_status,
                 status = upd_orders.status,
                 modified_user = upd_orders.modified_user,
                 modified_date = upd_orders.modified_date
@@ -2144,9 +2163,11 @@ create or replace package body mobile_data as
       close csr_orders;
 
       /*-*/
-      /* Remove related order items
+      /* Inactivate related order items
       /*-*/
-      delete from order_item where order_id = upd_orders.order_id;
+      update order_item
+         set status = 'X'
+       where order_id = upd_orders.order_id;
 
    /*-------------*/
    /* End routine */
@@ -2157,6 +2178,16 @@ create or replace package body mobile_data as
    /* This procedure performs the update order item data routine */
    /**************************************************************/
    procedure update_order_item_data is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_order_item is 
+         select t01.order_id
+           from order_item t01
+          where t01.order_id = upd_order_item.order_id
+            and t01.item_id = upd_order_item.item_id;
+      rcd_order_item csr_order_item%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -2175,6 +2206,25 @@ create or replace package body mobile_data as
       upd_order_item.modified_user := user;
       upd_order_item.modified_date := sysdate;
       insert into order_item values upd_order_item;
+
+      /*-*/
+      /* Insert/update the order item data
+      /*-*/
+      open csr_order_item;
+      fetch csr_order_item into rcd_order_item;
+      if csr_order_item%notfound then
+         insert into order_item values upd_order_item;
+      else
+         update order_item
+            set order_qty = upd_order_item.order_qty,
+                uom = upd_order_item.uom,
+                status = upd_order_item.status,
+                modified_user = upd_order_item.modified_user,
+                modified_date = upd_order_item.modified_date
+          where order_id = upd_order_item.order_id
+            and item_id = upd_order_item.item_id;
+      end if;
+      close csr_order_item;
 
    /*-------------*/
    /* End routine */
