@@ -1317,6 +1317,7 @@ create or replace package body mobile_data as
       var_inventory_qty distribution.inventory_qty%type;
       var_order_qty order_item.order_qty%type;
       var_order_uom order_item.uom%type;
+      var_order_value number;
       var_display_in_store display_distribution.display_in_store%type;
       var_activity_in_store activity_distribution.activity_in_store%type;
 
@@ -1672,6 +1673,14 @@ create or replace package body mobile_data as
                end if;
                close csr_last_order_item;
             end if;
+            var_order_value := 0;
+            if upper(var_order_uom) = 'TDU' then
+               var_order_value := round(var_order_qty*rcd_range_item.tdu_price,2);
+            elsif upper(var_order_uom) = 'MCU' then
+               var_order_value := round(var_order_qty*rcd_range_item.mcu_price,2);
+            elsif upper(var_order_uom) = 'RSU' then
+               var_order_value := round(var_order_qty*rcd_range_item.rsu_price,2);
+            end if;
 
             /*-*/
             /* Output the range item
@@ -1687,7 +1696,7 @@ create or replace package body mobile_data as
             var_output := var_output||'<RTE_ORDR_ITEM_REQUIRED><![CDATA[' || rcd_range_item.required_flg || ']]></RTE_ORDR_ITEM_REQUIRED>';
             var_output := var_output||'<RTE_ORDR_ITEM_UOM><![CDATA[' || var_order_uom || ']]></RTE_ORDR_ITEM_UOM>';
             var_output := var_output||'<RTE_ORDR_ITEM_QTY><![CDATA[' || to_char(var_order_qty) || ']]></RTE_ORDR_ITEM_QTY>';
-            var_output := var_output||'<RTE_ORDR_ITEM_VALUE><![CDATA[' || '0' || ']]></RTE_ORDR_ITEM_VALUE>';
+            var_output := var_output||'<RTE_ORDR_ITEM_VALUE><![CDATA[' || to_char(var_order_value) || ']]></RTE_ORDR_ITEM_VALUE>';
             var_output := var_output||'</RTE_ORDR_ITEM>';
             dbms_lob.writeappend(var_clob,length(var_output),var_output);
 
