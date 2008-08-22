@@ -2192,7 +2192,7 @@ create or replace package body mobile_data as
       /* Local cursors
       /*-*/
       cursor csr_order_item is 
-         select t01.order_id
+         select t01.*
            from order_item t01
           where t01.order_id = upd_order_item.order_id
             and t01.item_id = upd_order_item.item_id;
@@ -2214,7 +2214,6 @@ create or replace package body mobile_data as
       upd_order_item.status := 'A';
       upd_order_item.modified_user := user;
       upd_order_item.modified_date := sysdate;
-      insert into order_item values upd_order_item;
 
       /*-*/
       /* Insert/update the order item data
