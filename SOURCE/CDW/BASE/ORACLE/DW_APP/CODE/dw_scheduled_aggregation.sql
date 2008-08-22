@@ -41,6 +41,7 @@ create or replace package dw_scheduled_aggregation as
     2008/08   Steve Gregan   Included APO rejection code Z9
     2008/08   Steve Gregan   Modified demand planning group division logic
     2008/08   Steve Gregan   Fixed sales order material joins (expand numeric)
+    2008/08   Steve Gregan   Added ICS process trace calls
 
    *******************************************************************************/
 
@@ -95,6 +96,8 @@ create or replace package body dw_scheduled_aggregation as
       var_date date;
       var_test date;
       var_next date;
+      var_process_date varchar2(8);
+      var_process_code varchar2(32);
 
       /*-*/
       /* Local constants
@@ -148,6 +151,8 @@ create or replace package body dw_scheduled_aggregation as
       /* Aggregation date is always based on the previous day (converted using the company timezone)
       /*-*/
       var_date := trunc(sysdate);
+      var_process_date := to_char(var_date-1,'yyyymmdd');
+      var_process_code := 'SCHEDULED_AGGREGATION_'||var_company_code;
       if rcd_company.company_timezone_code != 'Australia/NSW' then
          var_test := sysdate;
          var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
@@ -158,6 +163,7 @@ create or replace package body dw_scheduled_aggregation as
                exit;
             end if;
          end loop;
+         var_process_date := to_char(var_date,'yyyymmdd');
       end if;
 
       /*-*/
@@ -168,7 +174,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Scheduled Aggregation - Parameters(' || var_company_code || ' + ' || to_char(var_date,'yyyy/mm/dd hh24:mi:ss') || ')');
+      lics_logging.write_log('Begin - Scheduled Aggregation - Parameters(' || var_company_code || ' + ' || to_char(var_date,'yyyy/mm/dd hh24:mi:ss') || ' + ' || to_char(to_date(var_process_date,'yyyymmdd'),'yyyy/mm/dd') || ')');
 
       /*-*/
       /* Request the lock on the aggregation
@@ -272,6 +278,16 @@ create or replace package body dw_scheduled_aggregation as
          /* Raise an exception to the caller
          /*-*/
          raise_application_error(-20000, '**LOGGED ERROR**');
+
+      /*-*/
+      /* Set processing trace when required
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the scheduled aggregation trace for the current company and date
+         /*-*/
+         lics_processing.set_trace(var_process_code, var_process_date);
 
       end if;
 
@@ -537,6 +553,12 @@ create or replace package body dw_scheduled_aggregation as
       var_locked boolean;
       var_errors boolean;
       var_company_code company.company_code%type;
+      var_company_currcy company.company_currcy%type;
+      var_date date;
+      var_test date;
+      var_next date;
+      var_process_date varchar2(8);
+      var_process_code varchar2(32);
 
       /*-*/
       /* Local constants
@@ -584,6 +606,26 @@ create or replace package body dw_scheduled_aggregation as
       end if;
       close csr_company;
       var_company_code := rcd_company.company_code;
+      var_company_currcy := rcd_company.company_currcy;
+
+      /*-*/
+      /* Alignment date is always based on the previous day (converted using the company timezone)
+      /*-*/
+      var_date := trunc(sysdate);
+      var_process_date := to_char(var_date-1,'yyyymmdd');
+      var_process_code := 'SAP_ALIGNMENT_'||var_company_code;
+      if rcd_company.company_timezone_code != 'Australia/NSW' then
+         var_test := sysdate;
+         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
+         loop
+            var_date := var_next;
+            var_next := var_next + 1;
+            if var_next > var_test then
+               exit;
+            end if;
+         end loop;
+         var_process_date := to_char(var_date,'yyyymmdd');
+      end if;
 
       /*-*/
       /* Log start
@@ -593,7 +635,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Scheduled SAP Alignment - Parameters(' || var_company_code || ')');
+      lics_logging.write_log('Begin - Scheduled SAP Alignment - Parameters(' || var_company_code || ' + ' || to_char(to_date(var_process_date,'yyyymmdd'),'yyyy/mm/dd') || ')');
 
       /*-*/
       /* Request the lock on the SAP alignment
@@ -667,6 +709,16 @@ create or replace package body dw_scheduled_aggregation as
          /* Raise an exception to the caller
          /*-*/
          raise_application_error(-20000, '**LOGGED ERROR**');
+
+      /*-*/
+      /* Set processing trace when required
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the SAP alignment trace for the current company and date
+         /*-*/
+         lics_processing.set_trace(var_process_code, var_process_date);
 
       end if;
 

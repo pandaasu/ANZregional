@@ -56,6 +56,7 @@ create or replace package dw_triggered_aggregation as
     2008/05   Steve Gregan   Modified for NZ demand planning group division
     2008/08   Steve Gregan   Added flag file processing
     2008/08   Steve Gregan   Modified demand planning group division logic
+    2008/08   Steve Gregan   Added ICS process trace call
 
    *******************************************************************************/
 
@@ -124,6 +125,8 @@ create or replace package body dw_triggered_aggregation as
       var_date date;
       var_yyyypp number(6,0);
       var_yyyymm number(6,0);
+      var_process_date varchar2(8);
+      var_process_code varchar2(32);
 
       /*-*/
       /* Local constants
@@ -233,6 +236,14 @@ create or replace package body dw_triggered_aggregation as
       end if;
 
       /*-*/
+      /* Set the process data
+      /*-*/
+      if upper(par_action) = '*DATE' then
+         var_process_date := to_char(var_date,'yyyymmdd');
+         var_process_code := 'TRIGGERED_AGGREGATION_'||var_company_code;
+      end if;
+
+      /*-*/
       /* Log start
       /*-*/
       lics_logging.start_log(var_log_prefix, var_log_search);
@@ -331,9 +342,9 @@ create or replace package body dw_triggered_aggregation as
 
          end if;
 
-         /*-*/
-         /* Update the flag file status to UNFLAGGED and wake the flag file daemon when required
-         /*-*/
+  ------       /*-*/
+  ------       /* Update the flag file status to UNFLAGGED and wake the flag file daemon when required
+  ------       /*-*/
          if var_errors = false then
             if upper(par_action) = '*DATE' then
                lics_logging.write_log('Begin - Flag file creation');
@@ -412,6 +423,23 @@ create or replace package body dw_triggered_aggregation as
          /* Raise an exception to the caller
          /*-*/
          raise_application_error(-20000, '**LOGGED ERROR**');
+
+      /*-*/
+      /* Set processing trace when required
+      /*-*/
+      else
+
+         /*-*/
+         /* Normal daily run
+         /*-*/
+         if upper(par_action) = '*DATE' then
+
+            /*-*/
+            /* Set the triggered aggregation process trace for the current company
+            /*-*/
+            lics_processing.set_trace(var_process_code, var_process_date);
+
+         end if;
 
       end if;
 
