@@ -2157,6 +2157,7 @@ create or replace package body mobile_data as
          select orders_seq.nextval into upd_orders.order_id from dual;
          insert into orders values upd_orders;
       else
+         upd_orders.order_id := rcd_orders.order_id;
          update orders
             set distributor_id = upd_orders.distributor_id,
                 deliver_date = upd_orders.deliver_date,
