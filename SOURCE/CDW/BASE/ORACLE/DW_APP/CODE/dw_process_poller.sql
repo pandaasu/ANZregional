@@ -14,7 +14,7 @@ create or replace package dw_process_poller as
     -----------
     Dimensional Data Store - Process Poller
 
-    This package contain the process polling logoc for the data warehouse streams
+    This package contain the process polling logic for the data warehouse streams
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -52,6 +52,8 @@ create or replace package body dw_process_poller as
       var_company varchar2(32 char);
       var_polling_date date;
       var_today_date date;
+      var_inv_count number;
+      var_return boolean;
       type typ_company is table of varchar2(32 char) index by binary_integer;
       tbl_company typ_company;
 
@@ -159,7 +161,7 @@ create or replace package body dw_process_poller as
          /*           then assume that there was no invoice activity for that date and set the
          /*           triggered aggregation trace so that any dependant processing can proceed 
          /*-*/
-         if var_today_date > (trunc(var_today_date) + 1/24) then
+         if var_today_date > trunc(var_today_date) + (1/24) then
             var_inv_count := 0;
             open csr_sap_inv_trace;
             fetch csr_sap_inv_trace into rcd_sap_inv_trace;
@@ -175,21 +177,21 @@ create or replace package body dw_process_poller as
          /*-*/
          /* Check and process the company data mart trigger
          /*-*/
-         bolReturn := lics_processing.check_group('DATAMART_TRIGGER_'||var_company,
-                                                  to_char(var_polling_date,'yyyymmdd'),
-                                                  'DATAMART_'||var_company||'_FIRED');
-         if bolReturn = true then
+         var_return := lics_processing.check_group('DATAMART_TRIGGER_'||var_company,
+                                                   to_char(var_polling_date,'yyyymmdd'),
+                                                   'DATAMART_'||var_company||'_FIRED');
+         if var_return = true then
             lics_stream_loader.execute('DW_DATAMART_STREAM_'||var_company,null);
          end if;
 
          /*-*/
          /* Check and process the company flag file trigger
          /*-*/
-         bolReturn := lics_processing.check_group('FLAGFILE_TRIGGER_'||var_company,
-                                                  to_char(var_polling_date,'yyyymmdd'),
-                                                  'FLAGFILE_'||var_company||'_FIRED');
-         if bolReturn = true then
-            dw_flag_file_creation.execute(var_company);
+         var_return := lics_processing.check_group('FLAGFILE_TRIGGER_'||var_company,
+                                                   to_char(var_polling_date,'yyyymmdd'),
+                                                   'FLAGFILE_'||var_company||'_FIRED');
+         if var_return = true then
+            lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
          end if;
 
       end loop;
@@ -198,11 +200,11 @@ create or replace package body dw_process_poller as
       /* Check and process the consolidated flag file trigger when required
       /*-*/
       if par_consolidated = 'Y' then
-         bolReturn := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
-                                                  to_char(var_polling_date,'yyyymmdd'),
-                                                  'FLAGFILE_CON_FIRED');
-         if bolReturn = true then
-            dw_flag_file_creation.execute('CONSOLIDATED');
+         var_return := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
+                                                   to_char(var_polling_date,'yyyymmdd'),
+                                                   'FLAGFILE_CON_FIRED');
+         if var_return = true then
+            lics_stream_loader.execute('DW_FLAGFILE_STREAM_CON',null);
          end if;
       end if;
 
