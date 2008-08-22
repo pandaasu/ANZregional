@@ -32,14 +32,14 @@ create or replace package dw_flag_file_creation as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2005/07   Steve Gregan   Created
+    2008/08   Steve Gregan   Created
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_interface in varchar2);
+   procedure execute(par_company in varchar2);
 
 end dw_flag_file_creation;
 /
@@ -58,13 +58,12 @@ create or replace package body dw_flag_file_creation as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_interface in varchar2) is
+   procedure execute(par_company in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_exception varchar2(4000);
-      var_instance number(15,0);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
       var_loc_string varchar2(128);
@@ -72,15 +71,28 @@ create or replace package body dw_flag_file_creation as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
+      var_instance number(15,0);
+      var_filename varchar2(64);
+      var_company_code company.company_code%type;
+      var_date date;
+      var_test date;
+      var_next date;
+      var_process_date varchar2(8);
+      var_process_code varchar2(32);
 
       /*-*/
       /* Local constants
       /*-*/
       con_function constant varchar2(128) := 'DW Flag File Creation';
-      con_alt_group constant varchar2(32) := 'DW_ALERT';
-      con_alt_code constant varchar2(32) := 'FLAG_FILE_CREATION';
-      con_ema_group constant varchar2(32) := 'DW_EMAIL_GROUP';
-      con_ema_code constant varchar2(32) := 'FLAG_FILE_CREATION';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_company is
+         select t01.*
+           from company t01
+          where t01.company_code = par_company;
+      rcd_company csr_company%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -88,15 +100,64 @@ create or replace package body dw_flag_file_creation as
    begin
 
       /*-*/
-      /* Initialise the log variables
+      /* Initialise the log/lock variables
       /*-*/
-      var_log_prefix := 'CLIO - DW_FLAG_FILE_CREATION';
-      var_log_search := 'DW_FLAG_FILE_CREATION';
-      var_loc_string := 'DW_FLAG_FILE_CREATION-' || par_interface;
-      var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
-      var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
+      var_log_prefix := 'DW - FLAG_FILE_CREATION';
+      var_log_search := 'DW_FLAG_FILE_CREATION' || '_' || lics_stream_processor.callback_event;
+      var_loc_string := lics_stream_processor.callback_lock;
+      var_alert := lics_stream_processor.callback_alert;
+      var_email := lics_stream_processor.callback_email;
       var_errors := false;
       var_locked := false;
+      if var_loc_string is null then
+         raise_application_error(-20000, 'Stream lock not returned - must be executed from the ICS Stream Processor');
+      end if;
+
+      /*-*/
+      /* Validate the parameters
+      /*-*/
+      if upper(par_company) is null then
+         raise_application_error(-20000, 'Process company must be supplied');
+      end if;
+      if upper(par_company) != 'CON' then
+         open csr_company;
+         fetch csr_company into rcd_company;
+         if csr_company%notfound then
+            raise_application_error(-20000, 'Company ' || par_company || ' not found on the company table');
+         end if;
+         close csr_company;
+      end if;
+      var_company_code := rcd_company.company_code;
+
+      /*-*/
+      /* Flag file date is always based on the previous day (converted using the company timezone)
+      /*-*/
+      var_date := trunc(sysdate);
+      var_process_date := to_char(var_date-1,'yyyymmdd');
+      var_process_code := 'FLAGFILE_'||var_company_code;
+      if upper(par_company) != 'CON' then
+         if rcd_company.company_timezone_code != 'Australia/NSW' then
+            var_test := sysdate;
+            var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
+            loop
+               var_date := var_next;
+               var_next := var_next + 1;
+               if var_next > var_test then
+                  exit;
+               end if;
+            end loop;
+            var_process_date := to_char(var_date,'yyyymmdd');
+         end if;
+      end if;
+
+      /*-*/
+      /* Flag file name
+      /*-*/
+      if upper(par_company) = 'CON' then
+         var_filename := 'FLAGFILE4749.TXT';
+      else
+         var_filename := 'FLAGFILE'||par_company||'.TXT';
+      end if;
 
       /*-*/
       /* Log start
@@ -104,12 +165,12 @@ create or replace package body dw_flag_file_creation as
       lics_logging.start_log(var_log_prefix, var_log_search);
 
       /*-*/
-      /* Begin log
+      /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Flag File Creation - Parameters(' || upper(par_interface) || ')');
+      lics_logging.write_log('Begin - Flag File Creation - Parameters(' || par_company || ' + ' || to_char(to_date(var_process_date,'yyyymmdd'),'yyyy/mm/dd') || ')');
 
       /*-*/
-      /* Request the lock on the flag file creation
+      /* Request the lock on the event
       /*-*/
       begin
          lics_locking.request(var_loc_string);
@@ -117,27 +178,34 @@ create or replace package body dw_flag_file_creation as
       exception
          when others then
             var_errors := true;
-            lics_logging.write_log(substr(SQLERRM, 1, 1024));
+            lics_logging.write_log(substr(SQLERRM, 1, 3000));
       end;
 
       /*-*/
-      /* Execute the requested procedures
+      /* Execute the requested procedure
       /*-*/
       if var_locked = true then
 
          /*-*/
          /* Create the flag file interface
          /*-*/
-         var_instance := lics_outbound_loader.create_interface(upper(par_interface));
-         lics_outbound_loader.append_data('OK');
-         lics_outbound_loader.finalise_interface;
+       --  begin
+       --     var_instance := lics_outbound_loader.create_interface('CDWBCA01',null,var_filename);
+       --     lics_outbound_loader.append_data('OK');
+       --     lics_outbound_loader.finalise_interface;
+       --  exception
+       --     when others then
+       --        var_errors := true;
+       --        lics_logging.write_log(substr(SQLERRM, 1, 3000));
+       --  end;
 
          /*-*/
-         /* Release the lock on the flag file creation
+         /* Release the lock on the order extract
          /*-*/
          lics_locking.release(var_loc_string);
 
       end if;
+      var_locked := false;
 
       /*-*/
       /* End procedure
@@ -153,18 +221,38 @@ create or replace package body dw_flag_file_creation as
       /* Errors
       /*-*/
       if var_errors = true then
+
+         /*-*/
+         /* Alert and email
+         /*-*/
          if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
             lics_notification.send_alert(var_alert);
          end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
-            lics_notification.send_email(lads_parameter.system_code,
-                                         lads_parameter.system_unit,
-                                         lads_parameter.system_environment,
+            lics_notification.send_email(dw_parameter.system_code,
+                                         dw_parameter.system_unit,
+                                         dw_parameter.system_environment,
                                          con_function,
                                          'DW_FLAG_FILE_CREATION',
                                          var_email,
                                          'One or more errors occurred during the Flag File Creation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
+
+      /*-*/
+      /* Set processing trace when required
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the flag file creation process trace
+         /*-*/
+         lics_processing.set_trace(var_process_code, var_process_date);
+
       end if;
 
    /*-------------------*/
@@ -185,7 +273,22 @@ create or replace package body dw_flag_file_creation as
          /*-*/
          /* Save the exception
          /*-*/
-         var_exception := substr(SQLERRM, 1, 1024);
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         end if;
+
+         /*-*/
+         /* Release the lock when required
+         /*-*/
+         if var_locked = true then
+            lics_locking.release(var_loc_string);
+         end if;
 
          /*-*/
          /* Finalise the outbound loader when required
@@ -196,27 +299,9 @@ create or replace package body dw_flag_file_creation as
          end if;
 
          /*-*/
-         /* Log error
-         /*-*/
-         begin
-            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
-            lics_logging.end_log;
-         exception
-            when others then
-               null;
-         end;
-
-         /*-*/
-         /* Release the lock on the flag file creation
-         /*-*/
-         if var_locked = true then
-            lics_locking.release(var_loc_string);
-         end if;
-
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - CLIO - DW_FLAG_FILE_CREATION - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - DW_FLAG_FILE_CREATION - ' || var_exception);
 
    /*-------------*/
    /* End routine */
