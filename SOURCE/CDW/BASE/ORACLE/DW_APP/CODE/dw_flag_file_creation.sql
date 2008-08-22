@@ -134,7 +134,11 @@ create or replace package body dw_flag_file_creation as
       /*-*/
       var_date := trunc(sysdate);
       var_process_date := to_char(var_date-1,'yyyymmdd');
-      var_process_code := 'FLAGFILE_'||var_company_code;
+      if upper(par_company) != 'CON' then
+         var_process_code := 'FLAGFILE_'||var_company_code;
+      else
+         var_process_code := 'FLAGFILE_CON';
+      end if;
       if upper(par_company) != 'CON' then
          if rcd_company.company_timezone_code != 'Australia/NSW' then
             var_test := sysdate;
