@@ -41,7 +41,8 @@ create table bds.bds_bom_det
   bom_eff_to_date     date,
   bom_base_qty        number,
   bom_base_uom        varchar2(3 char),
-  bom_status          varchar2(2 char)
+  bom_status          varchar2(2 char),
+  msg_timestamp       varchar2(14 byte)
 );
 
 /**/

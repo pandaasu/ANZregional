@@ -93,7 +93,7 @@ create table bds.bds_material_plant_mfanz_test
 /**/
 /* Indexes  
 /**/
-create index bds.bds_material_plant__test_idx04 on bds.bds_material_plant_mfanz_test(mars_plant_material_type);
+create index bds.bds_material_plant_test_idx04 on bds.bds_material_plant_mfanz_test(mars_plant_material_type);
 create index bds.bds_material_plant_test_idx01 on bds.bds_material_plant_mfanz_test(material_type);
 create index bds.bds_material_plant_test_idx02 on bds.bds_material_plant_mfanz_test(plant_code);
 create index bds.bds_material_plant_test_idx03 on bds.bds_material_plant_mfanz_test(procurement_type, special_procurement_type);
