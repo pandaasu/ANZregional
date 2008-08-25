@@ -55,6 +55,7 @@ create or replace package ics_app.plant_bom_det_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/08   Trevor Keon    Grouped extract by alt, matl and plant
 
 *******************************************************************************/
 
@@ -146,9 +147,6 @@ create or replace package body ics_app.plant_bom_det_extract as
          
   begin
   
-    var_material_code := trim(par_material_code);
-    var_alternative := trim(par_alternative);
-    var_plant := trim(par_plant);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
@@ -163,7 +161,7 @@ create or replace package body ics_app.plant_bom_det_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
         
-    var_start := execute_extract(var_alternative, var_material_code, var_plant);
+    var_start := execute_extract(trim(par_alternative), trim(par_material_code), trim(par_plant));
     
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -271,9 +269,9 @@ create or replace package body ics_app.plant_bom_det_extract as
         and t01.bom_alternative = t02.bom_alternative
         and t01.bom_plant = t02.bom_plant
         and t02.bds_lads_status = '1'
-        and (var_alternative is null or t01.bom_alternative = var_alternative)
-        and (var_material_code is null or t01.bom_material_code = var_material_code)
-        and (var_plant is null or t01.bom_plant = var_plant)
+        and (par_alternative is null or t01.bom_alternative = par_alternative)
+        and (par_material_code is null or t01.bom_material_code = par_material_code)
+        and (par_plant is null or t01.bom_plant = par_plant)
         and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date);
         
     rcd_bds_bom_det csr_bds_bom_det%rowtype;
@@ -286,7 +284,7 @@ create or replace package body ics_app.plant_bom_det_extract as
     /*-*/
     /* Initialise variables 
     /*-*/
-    var_result := false;
+    var_result := false;    
 
     /*-*/
     /* Open Cursor for output 
@@ -300,17 +298,24 @@ create or replace package body ics_app.plant_bom_det_extract as
       var_index := tbl_definition.count + 1;
       var_result := true;
       
-      /*-*/
-      /* Store current record details for error message purposes 
-      /*-*/
-      var_material_code := rcd_bds_bom_det.bom_material_code;
-      var_alternative := rcd_bds_bom_det.bom_alternative;
-      var_plant := rcd_bds_bom_det.bom_plant;
-                    
+      if ( (var_material_code is null or var_alternative is null or var_plant is null)
+        or (var_material_code <> rcd_bds_bom_det.bom_material_code or var_alternative <> rcd_bds_bom_det.bom_alternative or var_plant <> rcd_bds_bom_det.bom_plant) ) then
+        
+        var_material_code := rcd_bds_bom_det.bom_material_code;
+        var_alternative := rcd_bds_bom_det.bom_alternative;
+        var_plant := rcd_bds_bom_det.bom_plant;        
+        
+        tbl_definition(var_index).value := 'CTL'
+          || rpad(nvl(to_char(rcd_bds_bom_det.bom_material_code),' '),18,' ')
+          || rpad(nvl(to_char(rcd_bds_bom_det.bom_alternative),' '),2,' ')
+          || rpad(nvl(to_char(rcd_bds_bom_det.bom_plant),' '),4,' ')
+          || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
+          
+        var_index := tbl_definition.count + 1;
+        
+      end if; 
+                               
       tbl_definition(var_index).value := 'HDR'
-        || rpad(nvl(to_char(rcd_bds_bom_det.bom_material_code),' '),18,' ')
-        || rpad(nvl(to_char(rcd_bds_bom_det.bom_alternative),' '),2,' ')
-        || rpad(nvl(to_char(rcd_bds_bom_det.bom_plant),' '),4,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.bom_number),' '),8,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.bom_msg_function),' '),3,' ')
         || rpad(nvl(to_char(rcd_bds_bom_det.bom_usage),' '),1,' ')
