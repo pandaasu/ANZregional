@@ -43,6 +43,7 @@ create or replace package dw_order_aggregation as
     2006/08   Steve Gregan   Modified order date test to last 14 days.
     2006/09   Steve Gregan   Modified order usage code source to the header for order type ZRE.
     2007/04   Steve Gregan   Modified report extract call to include company.
+    2008/08   Trevor Keon    Added log level option
 
    *******************************************************************************/
 
@@ -68,7 +69,7 @@ create or replace package body dw_order_aggregation as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure order_fact_load(par_date in date, par_company in varchar2);
+   procedure order_fact_load(par_date in date, par_company in varchar2, par_log_level in varchar2);
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -84,6 +85,7 @@ create or replace package body dw_order_aggregation as
       var_loc_string varchar2(128);
       var_alert varchar2(256);
       var_email varchar2(256);
+      var_log_level varchar2(128);
       var_locked boolean;
       var_errors boolean;
       var_date date;
@@ -102,6 +104,7 @@ create or replace package body dw_order_aggregation as
       con_rpt_ema_code constant varchar2(32) := 'DW_REPORT_EXTRACT';
       con_rpt_tri_group constant varchar2(32) := 'DW_JOB_GROUP';
       con_rpt_tri_code constant varchar2(32) := 'DW_REPORT_EXTRACT';
+      con_log_lvl_code constant varchar2(32) := 'DW_LOG_LEVEL';
 
    /*-------------*/
    /* Begin block */
@@ -116,6 +119,7 @@ create or replace package body dw_order_aggregation as
       var_loc_string := 'DW_ORDER_AGGREGATION';
       var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
       var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
+      var_log_level := lics_setting_configuration.retrieve_setting(con_alt_group, con_log_lvl_code);
       var_errors := false;
       var_locked := false;
 
@@ -167,7 +171,7 @@ create or replace package body dw_order_aggregation as
          /* ORDER_FACT load
          /*-*/
          begin
-            order_fact_load(var_date, par_company);
+            order_fact_load(var_date, par_company, var_log_level);
          exception
             when others then
                var_errors := true;
@@ -280,7 +284,7 @@ create or replace package body dw_order_aggregation as
    /*******************************************************/
    /* This procedure performs the order fact load routine */
    /*******************************************************/
-   procedure order_fact_load(par_date in date, par_company in varchar2) is
+   procedure order_fact_load(par_date in date, par_company in varchar2, par_log_level in varchar2) is
 
       /*-*/
       /* Local variables
@@ -521,6 +525,10 @@ create or replace package body dw_order_aggregation as
       /* Begin procedure
       /*-*/
       lics_logging.write_log('Begin - ORDER_FACT Load - Parameters(' || to_char(par_date,'yyyy/mm/dd') || ' + ' || par_company || ')');
+      
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('Begin - Delete order fact rows for orders updated up to ' || to_char(par_date,'yyyy/mm/dd'));
+      end if;
 
       /*-*/
       /* STEP #1
@@ -531,7 +539,9 @@ create or replace package body dw_order_aggregation as
       /*              (eg. order line could have been be valid in ORDER_FACT but order line now deleted/rejected in LADS)
       /*-*/
       delete from order_fact
-       where ord_lin_status = '*UPD';
+       where ord_lin_status = '*UPD'
+         and sap_company_code = par_company;
+         
       delete from order_fact
        where (ord_doc_num, ord_doc_line_num)
              in (select t13.ord_doc_num,
@@ -548,6 +558,11 @@ create or replace package body dw_order_aggregation as
                          (not(t12.abgru is null) and t12.abgru != 'ZA') or
                          ((t12.abgru is null or t12.abgru = 'ZA') and t12.menge is null and t12.menee is null)));
       commit;
+
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Delete order fact rows');
+        lics_logging.write_log('Begin - Update order fact rows for orders updated up to ' || to_char(par_date,'yyyy/mm/dd'));
+      end if;
 
       /*-*/
       /* STEP #2
@@ -568,6 +583,11 @@ create or replace package body dw_order_aggregation as
                     and t11.lads_date != t12.ord_trn_date
                     and t12.sap_company_code = par_company);
       commit;
+      
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Update order fact rows for orders');
+        lics_logging.write_log('Begin - Update order fact rows for deliveries updated up to ' || to_char(par_date,'yyyy/mm/dd'));
+      end if;      
 
       /*-*/
       /* STEP #3
@@ -599,6 +619,11 @@ create or replace package body dw_order_aggregation as
                     and not(t13.datum is null)
                     and t14.sap_company_code = par_company);
       commit;
+      
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Update order fact rows for deliveries');
+        lics_logging.write_log('Begin - Insert order fact rows for orders updated up to ' || to_char(par_date,'yyyy/mm/dd'));
+      end if;        
 
       /*-*/
       /* STEP #4
@@ -644,6 +669,11 @@ create or replace package body dw_order_aggregation as
                          t21.ord_doc_line_num as ord_doc_line_num
                     from order_fact t21) t01);
       commit;
+
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Insert order fact rows for orders');
+        lics_logging.write_log('Begin - Retrieve the order fact rows with an update status');
+      end if; 
 
       /*-*/
       /* STEP #5
@@ -1246,6 +1276,11 @@ create or replace package body dw_order_aggregation as
       /*-*/
       commit;
 
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Retrieve the order fact rows with an update status');
+        lics_logging.write_log('Begin - Update order fact rows with the *INV status - invoice with billing date');
+      end if; 
+
       /*-*/
       /* STEP #6
       /*
@@ -1261,6 +1296,11 @@ create or replace package body dw_order_aggregation as
                                                         t01.sales_doc_line_num
                                                    from sales_fact t01);
       commit;
+      
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Update order fact rows with the *INV status');
+        lics_logging.write_log('Begin - Update order fact rows with the *INV status - invoice without billing date');
+      end if;       
 
       /*-*/
       /* STEP #7
@@ -1286,6 +1326,10 @@ create or replace package body dw_order_aggregation as
                                                                             from lads_inv_dat t01
                                                                            where t01.iddat = '015'));
       commit;
+      
+      if ( par_log_level = '1' ) then
+        lics_logging.write_log('End - Update order fact rows with the *INV status');
+      end if;       
 
       /*-*/
       /* End procedure
