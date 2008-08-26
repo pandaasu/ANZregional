@@ -38,6 +38,7 @@ create or replace package regl_dbp_reporting as
  2008/01   Linden Glen       Created
  2008/03   Linden Glen       Removed Thailand footnote - now ex-shipment, not ex-distributor
  2008/06   Linden Glen       Removed 149 inclusion for Australia Petcare, based on Jacob Bell Chambers request
+ 2008/09   Linden Glen       Changed footnote for SEA units from ex-distributor to ex-shipment
 
 *******************************************************************************/
 
@@ -792,7 +793,7 @@ create or replace package body ods_app.regl_dbp_reporting as
       isi_mailer.append_data('                       - Does not include foreign exchange gains or losses');
 	  isi_mailer.append_data('  ');
       isi_mailer.append_data('   * Singapore, Malaysia, Brunei, Indochina, Vietnam');
-      isi_mailer.append_data('                       - values are ex-distributor (not ex-shipment)');
+      isi_mailer.append_data('                       - values are ex-shipment (not ex-distributor)');
 	  isi_mailer.append_data('  ');
       isi_mailer.append_data('   * Taiwan - values are GSV (vs AP Flash report which is Net GSV)');
 	  
