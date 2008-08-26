@@ -35,7 +35,7 @@ create or replace force view bds_app.matl_plt_ics as
     t02.target_qty as crtns_per_pllt,
     t02.rounding_qty as crtns_per_layer,
     t02.uom as uom_qty
-  from bds_material_plant_mfanz_test t01,
+  from bds_material_plant_mfanz t01,
     bds_material_pkg_instr_det_t t02,
     bds_material_bom_hdr t03
   where t01.sap_material_code = t02.sap_material_code (+)

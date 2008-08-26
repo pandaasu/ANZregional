@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view manu.material_pllt_nc_ics as
+create or replace force view bds_app.material_pllt_nc_ics as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t03.bom_eff_date as units_per_case_date,
     t01.mars_pce_interntl_article_no as apn_code,
@@ -35,7 +35,7 @@ create or replace force view manu.material_pllt_nc_ics as
     t02.uom as uom_qty,
     ltrim(t01.mars_pce_item_code,'0') as rsu_code
   from bds_material_plant_mfanz t01,
-    bds_material_pkg_instr_det t02,
+    bds_material_pkg_instr_det_t t02,
     bds_material_bom_hdr t03
   where t01.sap_material_code = t02.sap_material_code (+)
     and t01.sap_material_code = t03.parent_material_code (+)
@@ -63,11 +63,11 @@ create or replace force view manu.material_pllt_nc_ics as
 /**/
 /* Authority 
 /**/
-grant select on manu.material_pllt_nc_ics to bds_app with grant option;
-grant select on manu.material_pllt_nc_ics to pt_app with grant option;
-grant select on manu.material_pllt_nc_ics to manu_app with grant option;
+--grant select on bds_app.material_pllt_nc_ics to bds_app with grant option;
+grant select on bds_app.material_pllt_nc_ics to pt_app with grant option;
+grant select on bds_app.material_pllt_nc_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym material_pllt_nc_ics for manu.material_pllt_nc_ics;
+create or replace public synonym material_pllt_nc_ics for bds_app.material_pllt_nc_ics;

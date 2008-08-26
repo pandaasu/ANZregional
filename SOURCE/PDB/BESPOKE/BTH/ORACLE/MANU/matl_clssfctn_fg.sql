@@ -46,8 +46,8 @@ create or replace force view bds_app.matl_clssfctn_fg_ics as
     t01.sap_onpack_cnsmr_offer_code as on_pack_cnsmr_offer_code,
     t01.sap_onpack_trade_offer_code as on_pack_trade_offer_code,
     t01.sap_cnsmr_pack_frmt_code as cnsmr_pack_frmt_code
-  from bds_material_classfctn_ics t01,
-    bds_material_plant_mfanz_test t02
+  from bds_material_classfctn t01,
+    bds_material_plant_mfanz t02
   where t01.sap_material_code = t02.sap_material_code 
     and t02.material_type in ('FERT', 'ZREP', 'ZHIE')
   group by t01.sap_material_code,

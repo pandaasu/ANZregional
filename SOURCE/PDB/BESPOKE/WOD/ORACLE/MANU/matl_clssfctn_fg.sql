@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view manu.matl_clssfctn_fg_ics as
+create or replace force view bds_app.matl_clssfctn_fg_ics as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.sap_bus_sgmnt_code as bus_sgmnt_code,
     t01.sap_mrkt_sgmnt_code as mkt_sgmnt_code,
@@ -79,11 +79,11 @@ create or replace force view manu.matl_clssfctn_fg_ics as
 /**/
 /* Authority 
 /**/
-grant select on manu.matl_clssfctn_fg_ics to bds_app with grant option;
-grant select on manu.matl_clssfctn_fg_ics to pt_app with grant option;
-grant select on manu.matl_clssfctn_fg_ics to manu_app with grant option;
+--grant select on bds_app.matl_clssfctn_fg_ics to bds_app with grant option;
+grant select on bds_app.matl_clssfctn_fg_ics to pt_app with grant option;
+grant select on bds_app.matl_clssfctn_fg_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_clssfctn_fg_ics for manu.matl_clssfctn_fg_ics;   
+create or replace public synonym matl_clssfctn_fg_ics for bds_app.matl_clssfctn_fg_ics;   

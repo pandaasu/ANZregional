@@ -1,6 +1,3 @@
-DROP VIEW MANU_APP.RECPE_FCS_VW_VALIDATION;
-
-/* Formatted on 2008/06/30 14:33 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_fcs_vw_validation (proc_order,
                                                                cntl_rec_id,
                                                                matl_code,
@@ -56,6 +53,7 @@ AS
 /* 11-Oct-2007 Jeff Phillipson - added function 'convert_complex_number' to SRC section of query
 /*                               to convert target weights
 /* 21-Nov-2007 Jeff Phillipson   changed the method of getting 'VALUE' in the 3rd part of the query
+/* 25-Aug-2008 Trevor Keon     - removed substring for machine code
 /**********************************************************************************/
                                                          t03.cntl_rec_id,
                  LTRIM (t03.material, '0') AS matl_code,
@@ -187,7 +185,7 @@ AS
                         (get_bom_batch_qty (LTRIM (t03.material, '0'))
                         ) AS batch_qty,
                  storage_locn AS strge_locn,
-                 SUBSTR (machine_code, LENGTH (machine_code), 1) AS mc_code,
+                 machine_code AS mc_code,
                  '' AS work_ctr_code, '' AS work_ctr_name, '', '', '', '',
                  t03.plant_code plant, '',
                  CASE
@@ -296,19 +294,10 @@ AS
                  'D'
                 ) = 'D';
 
-
-DROP PUBLIC SYNONYM RECPE_FCS_VW_VALIDATION;
-
-CREATE PUBLIC SYNONYM RECPE_FCS_VW_VALIDATION FOR MANU_APP.RECPE_FCS_VW_VALIDATION;
-
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW_VALIDATION TO APPSUPPORT;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW_VALIDATION TO FCS_READER;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW_VALIDATION TO MANU_MAINT;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW_VALIDATION TO MANU_USER;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW_VALIDATION TO PUBLIC;
 
+CREATE OR REPLACE PUBLIC SYNONYM RECPE_FCS_VW_VALIDATION FOR MANU_APP.RECPE_FCS_VW_VALIDATION;

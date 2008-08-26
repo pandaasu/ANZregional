@@ -39,10 +39,10 @@ create or replace force view bds_app.pet_matl_plt_labl_ics as
     t04.vendor_code as vndr_code,
     t04.vendor_name_01 as vndr_name,
     t02.target_qty as crtns_per_pllt
-  from bds_material_plant_mfanz_test t01,
+  from bds_material_plant_mfanz t01,
     bds_material_pkg_instr_det_t t02,
-    bds_refrnc_prchsing_src_ics t03,
-    bds_vend_comp_ics t04
+    bds_refrnc_prchsing_src t03,
+    bds_vend_comp t04
   where t01.sap_material_code = t02.sap_material_code(+)
     and t01.sap_material_code = t03.sap_material_code
     and t03.vendor_code = t04.vendor_code
@@ -76,7 +76,7 @@ create or replace force view bds_app.pet_matl_plt_labl_ics as
     null as vndr_code,
     null as vndr_name,
     t02.target_qty as crtns_per_pllt
-  from bds_material_plant_mfanz_test t01,
+  from bds_material_plant_mfanz t01,
     bds_material_pkg_instr_det_t t02,
     bds_material_uom t03
   where t01.sap_material_code = t02.sap_material_code(+)

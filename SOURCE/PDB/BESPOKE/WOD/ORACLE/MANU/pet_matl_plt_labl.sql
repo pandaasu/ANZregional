@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view manu.pet_matl_plt_labl_ics as
+create or replace force view bds_app.pet_matl_plt_labl_ics as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.bds_material_desc_en as matl_desc,
     null as plant,
@@ -96,11 +96,11 @@ create or replace force view manu.pet_matl_plt_labl_ics as
 /**/
 /* Authority 
 /**/
-grant select on manu.pet_matl_plt_labl_ics to bds_app with grant option;
-grant select on manu.pet_matl_plt_labl_ics to pt_app with grant option;
-grant select on manu.pet_matl_plt_labl_ics to manu_app with grant option;
+--grant select on bds_app.pet_matl_plt_labl_ics to bds_app with grant option;
+grant select on bds_app.pet_matl_plt_labl_ics to pt_app with grant option;
+grant select on bds_app.pet_matl_plt_labl_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym pet_matl_plt_labl_ics for manu.pet_matl_plt_labl_ics;      
+create or replace public synonym pet_matl_plt_labl_ics for bds_app.pet_matl_plt_labl_ics;      

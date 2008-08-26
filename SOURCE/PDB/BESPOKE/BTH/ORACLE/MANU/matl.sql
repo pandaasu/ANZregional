@@ -62,7 +62,7 @@ create or replace force view bds_app.matl_ics as
     t01.future_planned_price_1 as plnd_price,
     t01.vltn_class as vltn_class,
     t01.backflush_indctr as back_flush_ind
-  from bds_material_plant_mfanz_test t01
+  from bds_material_plant_mfanz t01
   where plant_code IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25');
 
 /**/

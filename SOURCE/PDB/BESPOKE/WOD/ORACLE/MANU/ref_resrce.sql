@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view manu.ref_resrce_ics as
+create or replace force view bds_app.ref_resrce_ics as
   select t01.resrc_code as resrce_code,
     t01.resrc_text as resrce_desc,
     t01.resrc_plant_code as plant,
@@ -31,11 +31,11 @@ create or replace force view manu.ref_resrce_ics as
 /**/
 /* Authority 
 /**/
-grant select on manu.ref_resrce_ics to bds_app with grant option;
-grant select on manu.ref_resrce_ics to pt_app with grant option;
-grant select on manu.ref_resrce_ics to manu_app with grant option;
+--grant select on bds_app.ref_resrce_ics to bds_app with grant option;
+grant select on bds_app.ref_resrce_ics to pt_app with grant option;
+grant select on bds_app.ref_resrce_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym ref_resrce_ics for manu.ref_resrce_ics;  
+create or replace public synonym ref_resrce_ics for bds_app.ref_resrce_ics;  

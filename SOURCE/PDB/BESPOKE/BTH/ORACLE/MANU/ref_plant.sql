@@ -23,7 +23,7 @@
 create or replace force view bds_app.ref_plant_ics as
   select t01.plant_code as plant,
     t01.plant_name as plant_name
-  from bds_refrnc_plant_ics t01;
+  from bds_refrnc_plant t01;
     
 /**/
 /* Authority 

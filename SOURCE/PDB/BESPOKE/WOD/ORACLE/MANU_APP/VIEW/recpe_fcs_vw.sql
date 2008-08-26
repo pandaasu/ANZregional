@@ -1,4 +1,4 @@
-create or replace force view manu_app.recpe_fcs_vw as
+--create or replace force view manu_app.recpe_fcs_vw as
   select t01.proc_order, 
     t01.cntl_rec_id, 
     t01.matl_code, 
@@ -72,9 +72,9 @@ create or replace force view manu_app.recpe_fcs_vw as
       t03.plant_code as plant, 
       to_char (t04.pans) as m,
       t04.opertn_header
-    from bds_recipe_bom t03,
+    from bds_recipe_header t01,
       bds_recipe_resource t02,
-      bds_recipe_header t01,
+      bds_recipe_bom t03,
       (
         select proc_order, 
           rd.opertn, 
@@ -89,13 +89,13 @@ create or replace force view manu_app.recpe_fcs_vw as
           and rd.cntl_rec_id = rr.cntl_rec_id
           and rd.opertn = rr.opertn
       ) t04
-      where t02.proc_order = t03.proc_order
-        and t02.operation = t03.operation
+      where t01.proc_order = t02.proc_order
         and t01.proc_order = t03.proc_order
+        and t02.operation = t03.operation        
         and ltrim (t03.proc_order, '0') = t04.proc_order(+)
-        and t03.operation = t04.opertn(+)
-        and t03.phase = t04.phase(+)
         and ltrim (t03.material_code, '0') = t04.matl_code(+)
+        and t03.operation = t04.opertn(+)
+        and t03.phase = t04.phase(+)        
         and t01.teco_status = 'NO'
         and ltrim (t03.material_code, '0') not in (select matl_code from recpe_phantom)
       union all
@@ -126,9 +126,9 @@ create or replace force view manu_app.recpe_fcs_vw as
         t01.plant_code as plant, 
         to_char (t04.pans) as m,
         t04.opertn_header
-      from bds_recipe_src_value t03,
+      from bds_recipe_header t01,
         bds_recipe_resource t02,
-        bds_recipe_header t01,
+        bds_recipe_src_value t03,
         (
           select proc_order, 
             rd.opertn, 
@@ -144,13 +144,13 @@ create or replace force view manu_app.recpe_fcs_vw as
             and rd.cntl_rec_id = rr.cntl_rec_id
             and rd.opertn = rr.opertn
         ) t04
-        where t02.proc_order = t03.proc_order
-          and t02.operation = t03.operation
-          and t02.proc_order = t01.proc_order
+        where t01.proc_order = t02.proc_order
+          and t01.proc_order = t03.proc_order
+          and t02.operation = t03.operation          
           and ltrim (t03.proc_order, '0') = t04.proc_order(+)
+          and ltrim (t03.src_tag, '0') = t04.mpi_tag(+)
           and t03.operation = t04.opertn(+)
           and t03.phase = t04.phase(+)
-          and ltrim (t03.src_tag, '0') = t04.mpi_tag(+)
           and t01.teco_status = 'NO'
   ) t01,
   (
@@ -169,10 +169,10 @@ create or replace force view manu_app.recpe_fcs_vw as
   ) t02
   where t01.matl_code = t02.matl_code
     and t01.plant = t02.plant
-    and t01.run_start_datime between (trunc(sysdate) - 2) and (trunc (sysdate) + 20)
+    and t01.run_start_datime between (trunc(sysdate) - 2) and (trunc (sysdate) + 20)  -- comment out this line to get 1sec result
     and substr (t01.proc_order, 1, 1) between '0' and '9';
 
-grant select on manu_app.recpe_fcs_vw to appsupport;
-grant select on manu_app.recpe_fcs_vw to public with grant option;
+--grant select on manu_app.recpe_fcs_vw to appsupport;
+--grant select on manu_app.recpe_fcs_vw to public with grant option;
 
-create or replace public synonym recpe_fcs_vw for manu_app.recpe_fcs_vw;
+--create or replace public synonym recpe_fcs_vw for manu_app.recpe_fcs_vw;

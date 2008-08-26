@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view manu.matl_int_plt_ics as
+create or replace force view bds_app.matl_int_plt_ics as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.plant_code as plant,
     t01.plant_specific_status_valid as plant_sts_start,
@@ -55,11 +55,11 @@ create or replace force view manu.matl_int_plt_ics as
 /**/
 /* Authority 
 /**/
-grant select on manu.matl_int_plt_ics to bds_app with grant option;
-grant select on manu.matl_int_plt_ics to pt_app with grant option;
-grant select on manu.matl_int_plt_ics to manu_app with grant option;
+--grant select on bds_app.matl_int_plt_ics to bds_app with grant option;
+grant select on bds_app.matl_int_plt_ics to pt_app with grant option;
+grant select on bds_app.matl_int_plt_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_int_plt_ics for manu.matl_int_plt_ics;     
+create or replace public synonym matl_int_plt_ics for bds_app.matl_int_plt_ics;     

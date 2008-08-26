@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- View   : bds_bom_all_ics  
+ View   : bds_bom_all_tmp  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_bom_all_ics 
+ Business Data Store - bds_bom_all_tmp 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds.bds_bom_all_ics as
+create or replace force view bds_app.bds_bom_all_tmp as
   select t01.bom_material_code, 
     t01.bom_alternative, 
     t01.bom_plant,
@@ -70,16 +70,17 @@ create or replace force view bds.bds_bom_all_ics as
     and t01.bom_plant = t02.bom_plant(+)
     and t01.bom_usage = t02.bom_usage(+)
     and t01.bom_material_code = t03.bom_material_code
-    and t01.bom_plant = t03.bom_plant;
+    and t01.bom_plant = t03.bom_plant
+    and t01.bom_plant in ('AU40','AU42','AU45','AU82','AU83','AU84','AU85','AU86','AU87','AU88','AU89', 'AU90');
     
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_bom_all_ics to bds_app with grant option;
-grant select on bds.bds_bom_all_ics to pt_app with grant option;
-grant select on bds.bds_bom_all_ics to manu_app with grant option;
+--grant select on bds_app.bds_bom_all_tmp to bds_app with grant option;
+grant select on bds_app.bds_bom_all_tmp to pt_app with grant option;
+grant select on bds_app.bds_bom_all_tmp to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_bom_all_ics for bds.bds_bom_all_ics;    
+create or replace public synonym bds_bom_all_tmp for bds_app.bds_bom_all_tmp;    

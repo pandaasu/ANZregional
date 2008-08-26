@@ -27,8 +27,8 @@ create or replace force view bds_app.matl_clssfctn_raw_ics as
     t01.sap_raw_group_code as raw_group_code,
     t01.sap_animal_parts_code as anml_parts_code,
     t01.sap_physical_condtn_code as phuyscl_cndtn_code
-  from bds_material_classfctn_ics t01,
-    bds_material_plant_mfanz_test t02
+  from bds_material_classfctn t01,
+    bds_material_plant_mfanz t02
   where t01.sap_material_code = t02.sap_material_code
     and t02.material_type = 'ROH'
   group by t01.sap_material_code,

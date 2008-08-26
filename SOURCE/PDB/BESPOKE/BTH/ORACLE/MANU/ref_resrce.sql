@@ -25,7 +25,7 @@ create or replace force view bds_app.ref_resrce_ics as
     t01.resrc_text as resrce_desc,
     t01.resrc_plant_code as plant,
     sysdate as upd_datime
-  from bds_prodctn_resrc_en_ics t01
+  from bds_prodctn_resrc_en t01
   where t01.resrc_plant_code in ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25');
     
 /**/

@@ -34,7 +34,7 @@ create or replace force view bds_app.bom_ics as
     t01.item_material_code as sub_matl_code,
     t01.item_base_qty as qty,
     t01.item_base_uom as uom
-  from bds_bom_all_ics t01
+  from bds_bom_all t01
   where t01.bom_plant IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25');
 
 /**/
