@@ -304,9 +304,9 @@ create or replace package body ladefx01_loader as
       end if;
       rcd_iface_item.brand := lics_inbound_utility.get_variable('BRAND');
       rcd_iface_item.sub_brand := lics_inbound_utility.get_variable('SUB_BRAND');
-      rcd_iface_item.item_category := lics_inbound_utility.get_variable('PACK_SIZE');
-      rcd_iface_item.pack_size := lics_inbound_utility.get_variable('PACK_TYPE');
-      rcd_iface_item.pack_type := lics_inbound_utility.get_variable('ITEM_CATEGORY');
+      rcd_iface_item.item_category := lics_inbound_utility.get_variable('ITEM_CATEGORY');
+      rcd_iface_item.pack_size := lics_inbound_utility.get_variable('PACK_SIZE');
+      rcd_iface_item.pack_type := lics_inbound_utility.get_variable('PACK_TYPE');
       rcd_iface_item.item_status := lics_inbound_utility.get_variable('ITEM_STATUS');
 
       /*-*/
