@@ -42,6 +42,7 @@ create or replace package dw_scheduled_aggregation as
     2008/08   Steve Gregan   Modified demand planning group division logic
     2008/08   Steve Gregan   Fixed sales order material joins (expand numeric)
     2008/08   Steve Gregan   Added ICS process trace calls
+    2008/09   Linden Glen    Added NZ16 to NZMKT base load
 
    *******************************************************************************/
 
@@ -2339,7 +2340,7 @@ create or replace package body dw_scheduled_aggregation as
             var_process := true;
          end if;
          if (rcd_trace.source_plant_code in ('NZ01','NZ11') and
-             rcd_trace.plant_code in ('NZ13','NZ14') and
+             rcd_trace.plant_code in ('NZ13','NZ14','NZ16') and
              rcd_trace.mat_type_code = 'FERT' and
              rcd_trace.mat_bus_sgmnt_code = '05' and
              rcd_trace.mat_cnsmr_pack_frmt_code = '45') then
@@ -2347,7 +2348,7 @@ create or replace package body dw_scheduled_aggregation as
             var_nzmkt_factor := 1;
             var_process := true;
          end if;
-         if (rcd_trace.source_plant_code in ('NZ13','NZ14') and
+         if (rcd_trace.source_plant_code in ('NZ13','NZ14','NZ16') and
              rcd_trace.plant_code in ('NZ01','NZ11') and
              rcd_trace.mat_type_code = 'FERT' and
              rcd_trace.mat_bus_sgmnt_code = '05' and
