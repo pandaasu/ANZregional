@@ -113,7 +113,7 @@ create or replace package body ladefx01_chn_item as
                                 nvl(max(case when t32.atnam = 'CLFFERT03' then t32.atwrt end),'000') as sap_brand_flag_code,
                                 nvl(max(case when t32.atnam = 'CLFFERT04' then t32.atwrt end),'000') as sap_brand_sub_flag_code,
                                 nvl(max(case when t32.atnam = 'CLFFERT14' then t32.atwrt end),'000') as sap_prdct_pack_size_code,
-                                nvl(max(case when t32.atnam = 'CLFFERT25' then t32.atwrt end),'00') as sap_cnsmr_pack_frmt_code
+                                nvl(max(case when t32.atnam = 'CLFFERT25' then t32.atwrt end),'000') as sap_cnsmr_pack_frmt_code
                            from lads_cla_hdr t31,
                                 lads_cla_chr t32
                           where t31.obtab = 'MARA'
