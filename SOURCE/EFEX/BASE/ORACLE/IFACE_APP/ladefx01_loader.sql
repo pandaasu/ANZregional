@@ -210,7 +210,7 @@ create or replace package body ladefx01_loader as
          rollback;
       else
          commit;
-         efex_refresh.refresh_item(con_market_id);
+         efex_refresh.refresh_china_item(con_market_id);
       end if;
 
    /*-------------*/

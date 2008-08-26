@@ -5,12 +5,12 @@ PROCEDURE REFRESH_ITEM(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_BY(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_ITEM_ORDER_LIMITS(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_AU_SNACK_ITEM(p_MarketID IN NUMBER);
+PROCEDURE REFRESH_CHINA_ITEM(p_MarketID IN NUMBER);
 PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER);
 PROCEDURE WRITE_LOG(par_text IN VARCHAR2);
 
 END EFEX_REFRESH;
 /
-
 
 CREATE OR REPLACE PACKAGE BODY EFEX_REFRESH AS
 
@@ -565,6 +565,95 @@ EXCEPTION
 
 ||SQLERRM,NULL);
 END REFRESH_AU_SNACK_ITEM;
+
+/******************************************************************************
+*  NAME:       REFRESH_CHINA_ITEM
+*  PURPOSE:    EFEX China Item REFESH PROCEDURE
+*  REVISIONS:
+*  Ver    Date        Author           Description
+*  -----  ----------  ---------------  ------------------------------------
+*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_ITEM 
+******************************************************************************/
+PROCEDURE REFRESH_CHINA_ITEM(p_MarketID IN NUMBER) IS
+
+   CURSOR csrUpdateItem IS
+   SELECT b.item_code,
+          b.item_name,
+          b.rsu_ean_code,
+          b.cases_layer,
+          b.layers_pallet,
+          b.units_case,
+          b.mcu_per_tdu,
+          b.unit_measure,
+          b.price1,
+          b.price2,
+          b.brand,
+          b.sub_brand,
+          b.item_category,
+          b.pack_size,
+          b.pack_type,
+          b.pack_format,
+          b.item_status
+   FROM   
+          item a, 
+          iface.iface_item b
+   WHERE  
+          a.item_code = b.item_code
+     AND  (
+              a.rsu_ean_code     <> b.rsu_ean_code
+              OR a.cases_layer   <> b.cases_layer
+              OR a.layers_pallet <> b.layers_pallet
+              OR a.units_case    <> b.units_case
+              OR (a.unit_measure <> b.unit_measure OR a.unit_measure IS NULL)
+              OR a.tdu_price     <> b.price1
+              OR DECODE(a.rrp_price, null, 0, a.rrp_price) <> DECODE(b.price2, null, 0, b.price2)         
+              OR a.brand         <> b.brand
+              OR a.sub_brand     <> b.sub_brand
+              OR a.item_category <> b.item_category             
+           --   OR a.pack_size   <> b.pack_size
+              OR a.pack_type     <> b.pack_type
+              OR a.pack_format   <> b.pack_format
+              OR a.status        <> DECODE(a.status, 'X', 'X', b.item_status) 
+          )
+     AND  a.market_id = b.market_id
+     AND  a.market_id = p_MarketID;
+
+BEGIN
+
+   FOR iface_row IN csrUpdateItem LOOP
+   
+      UPDATE item
+         SET item_name = iface_row.item_name,
+             rsu_ean_code = iface_row.rsu_ean_code,
+             cases_layer = iface_row.cases_layer,
+             layers_pallet = iface_row.layers_pallet,
+             units_case = iface_row.units_case,
+             tdu_price = iface_row.price1,
+             rrp_price = iface_row.price2,
+             brand = iface_row.brand,
+             sub_brand = iface_row.sub_brand,
+             item_category = iface_row.item_category,
+        --   pack_size = iface_row.pack_size,
+             pack_type = iface_row.pack_type,
+            status = iface_row.item_status				 				 				             			 
+      WHERE item_code = iface_row.item_code
+        AND market_id = p_MarketID;	
+				  
+     UPDATE iface.iface_item
+        SET iface_status = 'UPDATED'
+      WHERE item_code = iface_row.item_code
+        AND market_id = p_MarketID;
+	  
+      COMMIT;	  
+
+   END LOOP;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    Send_Mail(v_error_email, 'eFEX Refresh Interface Error', 'Error in EFEX_REFRESH.REFRESH_CHINA_ITEM'||chr(13)
+
+||SQLERRM,NULL);
+END REFRESH_CHINA_ITEM;
 
 /******************************************************************************
 *  NAME:       REFRESH_CHINA_CUSTOMER
