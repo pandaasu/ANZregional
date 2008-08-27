@@ -12,6 +12,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2006/03   Steve Gregan   Created
+ 2008/08   Steve Gregan   Added new index IX03
 
 *******************************************************************************/
 
@@ -200,6 +201,7 @@ alter table dd.order_fact
 /**/
 create index dd.order_fact_ix01 on dd.order_fact (ord_doc_num, ord_doc_line_num, ord_lin_status);
 create index dd.order_fact_ix02 on dd.order_fact (ord_doc_num, ord_doc_line_num, sap_company_code, ord_lin_status);
+create index dd.order_fact_ix03 on dd.order_fact (sap_company_code, ord_lin_status, ord_doc_num, ord_doc_line_num);
 
 /**/
 /* Authority
