@@ -5,7 +5,12 @@
 /*  Ver    Date        Author           Description                           */
 /*  -----  ----------  ---------------  ------------------------------------  */
 /*  1.0    08-07-2008  Steve Gregan     Created view for China                */
+/*  1.1    05-08-2008  Steve Gregan     Modified packsize to net weight       */
 /******************************************************************************/
+
+?????????????
+CONSUMER PACK FRMT CODE issue in test
+?????????????
 
 create or replace force view ics_app.efex_item_chn_view
    (item_code,
@@ -44,7 +49,7 @@ create or replace force view ics_app.efex_item_chn_view
           0 as order_multiples,
           t01.brand_flag_desc as brand,
           t01.brand_sub_flag_desc as sub_brand,
-          t01.prdct_pack_size_desc as pack_size,
+          to_char(nvl(t01.ntgew,0)) as pack_size,
           t01.cnsmr_pack_frmt_desc as pack_type,
           t01.bus_sgmnt_desc as item_category,
           t02.item_status
@@ -55,6 +60,7 @@ create or replace force view ics_app.efex_item_chn_view
           (select t01.matnr as matnr,
                   t01.ean11 as ean11,
                   t01.meins as meins,
+                  t01.ntgew as ntgew,
                   nvl(t02.maktx,'*UNKNOWN') as maktx,
                   nvl(t04.bus_sgmnt_desc,'*UNKNOWN') as bus_sgmnt_desc,
                   nvl(t05.brand_flag_desc,'*UNKNOWN') as brand_flag_desc,
@@ -235,30 +241,19 @@ create or replace force view ics_app.efex_item_chn_view
                           (select t01.matnr,
                                   t01.ean11,
                                   t01.meins,
-                                  t02.maktx,
-                                  t03.vmsta
+                                  decode(t02.maktx,null,t03.maktx,t02.maktx) as maktx,
+                                  t04.vmsta
                              from lads_mat_hdr t01,
-                                  (select matnr,
-                                          decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as maktx
-                                     from (select t01.matnr,
-                                                  t01.maktx as sls_text,
-                                                  null as mkt_text
-                                             from lads_mat_mkt t01
-                                            where t01.spras_iso = 'EN'
-                                            union all
-                                           select t01.matnr,
-                                                  null as sls_txt,
-                                                  substr(max(t02.tdline),1,40) as mkt_text
-                                             from lads_mat_txh t01,
-                                                  lads_mat_txl t02
-                                            where t01.matnr = t02.matnr(+)
-                                              and t01.txhseq = t02.txhseq(+)
-                                              and trim(substr(t01.tdname,19,6)) = '135 10'
-                                              and t01.tdobject = 'MVKE'
-                                              and t01.spras_iso = 'EN'
-                                              and t02.txlseq = 1
-                                            group by t01.matnr) t01
+                                  (select t01.matnr,
+                                          max(t01.maktx) as maktx
+                                     from lads_mat_mkt t01
+                                    where t01.spras_iso = 'ZH'
                                     group by t01.matnr) t02,
+                                  (select t01.matnr,
+                                          max(t01.maktx) as maktx
+                                     from lads_mat_mkt t01
+                                    where t01.spras_iso = 'EN'
+                                    group by t01.matnr) t03,
                                   (select t01.matnr as matnr,
                                           t01.vmstd as vmstd,
                                           t01.vmsta as vmsta
@@ -273,9 +268,10 @@ create or replace force view ics_app.efex_item_chn_view
                                               and t01.lvorm is null
                                               and (t01.vmsta = '20' or t01.vmsta = '99')
                                               and decode(t01.vmstd,null,'19000101','00000000','19000101',t01.vmstd) <= to_char(sysdate,'yyyymmdd')) t01
-                                    where t01.rnkseq = 1) t03
+                                    where t01.rnkseq = 1) t04
                             where t01.matnr = t02.matnr(+)
                               and t01.matnr = t03.matnr(+)
+                              and t01.matnr = t04.matnr(+)
                               and t01.mtart = 'FERT') t02
                     where t01.smatn = t02.matnr
                       and t01.rnkseq = 1) t01,
@@ -332,7 +328,7 @@ create or replace force view ics_app.efex_item_chn_view
                              and t01.kschl = t02.kschl
                              and t01.datab = t02.datab
                              and t01.knumh = t02.knumh
-                             and t01.kschl = 'ZH00'
+                             and t01.kschl = 'PR00'
                              and t01.vkorg = '135'
                              and (t01.vtweg is null or t01.vtweg = '10')
                              and decode(t01.datab,null,'19000101','00000000','19000101',t01.datab) <= to_char(sysdate,'yyyymmdd')
