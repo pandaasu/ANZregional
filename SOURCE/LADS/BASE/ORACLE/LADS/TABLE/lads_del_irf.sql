@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2008/08   Trevor Keon    Added lads_del_irf_ix01
 
 *******************************************************************************/
 
@@ -50,6 +51,11 @@ comment on column lads_del_irf.reason is 'Order reason (reason for the business 
 /**/
 alter table lads_del_irf
    add constraint lads_del_irf_pk primary key (vbeln, detseq, irfseq);
+
+/**/
+/* Indexes
+/**/
+create index lads.lads_del_irf_ix01 on lads.lads_del_irf (belnr, posnr);
 
 /**/
 /* Authority
