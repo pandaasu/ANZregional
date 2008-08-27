@@ -61,7 +61,7 @@ create or replace package body mobile_data as
    con_customer_comm_type_id constant number := 5;
    con_status_active constant varchar2(1) := 'A';
    con_status_inactive constant varchar2(1) := 'X';
-   con_uom_default constant varchar2(50) := 'TDU';
+   con_uom_default constant varchar2(50) := 'RSU';
    con_list_uom varchar2(50) := 'CHN_UOM';
    con_list_cust_location varchar2(50) := 'CHN_CUST_LOCATION';
 
@@ -1647,17 +1647,6 @@ create or replace package body mobile_data as
             if csr_range_item%notfound then
                exit;
             end if;
-
-            /*-*/
-            /* Retrieve the last item distribution
-            /*-*/
-            var_inventory_qty := 0;
-            open csr_distribution;
-            fetch csr_distribution into rcd_distribution;
-            if csr_distribution%found then
-               var_inventory_qty := rcd_distribution.inventory_qty;
-            end if;
-            close csr_distribution;
 
             /*-*/
             /* Retrieve the last order item when required
