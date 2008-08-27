@@ -44,6 +44,7 @@ create or replace package dw_order_aggregation as
     2006/09   Steve Gregan   Modified order usage code source to the header for order type ZRE.
     2007/04   Steve Gregan   Modified report extract call to include company.
     2008/08   Trevor Keon    Added log level option
+    2008/08   Steve Gregan   Added DW_EXPAND_CODE for performance
 
    *******************************************************************************/
 
@@ -434,17 +435,17 @@ create or replace package body dw_order_aggregation as
                         t21.umren,
                         t21.umrez
                    from lads_mat_uom t21
-                  where lads_trim_code(t21.matnr) = var_matnr
+                  where t21.matnr = var_matnr
                     and t21.meinh = var_meinh) t02,
                 (select t31.matnr,
                         t31.umren,
                         t31.umrez
                    from lads_mat_uom t31
-                  where lads_trim_code(t31.matnr) = var_matnr
+                  where t31.matnr = var_matnr
                     and t31.meinh = 'PCE') t03
           where t01.matnr = t02.matnr(+)
             and t01.matnr = t03.matnr(+)
-            and lads_trim_code(t01.matnr) = var_matnr;
+            and t01.matnr = var_matnr;
       rcd_lads_mat_uom csr_lads_mat_uom%rowtype;
 
       cursor csr_order_type is
@@ -894,7 +895,7 @@ create or replace package body dw_order_aggregation as
                end case;
             end loop;
             close csr_lads_sal_ord_iid;
-            rcd_order_fact.sap_ord_material := rcd_order_fact.sap_material_code;
+            rcd_order_fact.sap_ord_material := dw_expand_code(rcd_order_fact.sap_material_code);
             rcd_order_fact.sap_material_code := lads_trim_code(rcd_order_fact.sap_material_code);
 
             /*-*/
@@ -956,7 +957,7 @@ create or replace package body dw_order_aggregation as
             rcd_order_fact.ord_base_uom_qty := rcd_order_fact.ord_qty;
             rcd_order_fact.ord_pieces_qty := rcd_order_fact.ord_qty;
             rcd_order_fact.ord_tonnes_qty := 0;
-            var_matnr := lads_trim_code(rcd_order_fact.sap_ord_material);
+            var_matnr := rcd_order_fact.sap_ord_material;
             var_meinh := rcd_order_fact.sap_ord_qty_uom_code;
             open csr_lads_mat_uom;
             fetch csr_lads_mat_uom into rcd_lads_mat_uom;
@@ -1073,7 +1074,7 @@ create or replace package body dw_order_aggregation as
                   rcd_order_fact.del_base_uom_qty := rcd_order_fact.del_qty;
                   rcd_order_fact.del_pieces_qty := rcd_order_fact.del_qty;
                   rcd_order_fact.del_tonnes_qty := 0;
-                  var_matnr := lads_trim_code(rcd_order_fact.sap_del_material);
+                  var_matnr := rcd_order_fact.sap_del_material;
                   var_meinh := rcd_order_fact.sap_del_qty_uom_code;
                   open csr_lads_mat_uom;
                   fetch csr_lads_mat_uom into rcd_lads_mat_uom;
