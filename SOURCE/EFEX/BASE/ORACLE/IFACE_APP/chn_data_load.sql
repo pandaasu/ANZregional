@@ -9,8 +9,8 @@ END CHN_DATA_LOAD;
 CREATE OR REPLACE PACKAGE BODY CHN_DATA_LOAD AS
    v_market_id  number := 4;
    v_deliver_within_days int := 3;
-   v_error_email    varchar2(100) := 'asia.pacific.efex.error.messages@ap.effem.com,';
-   v_fe_email       varchar(200)  := 'sandra.dick@ap.effem.com, efex@ap.effem.com,';
+   v_error_email    varchar2(100) := 'asia.pacific.efex.error.messages@ap.effem.com';
+   v_fe_email       varchar(200)  := 'efex@ap.effem.com';
 
 /******************************************************************************
    NAME:       Cust Item Ref
@@ -53,25 +53,22 @@ END CUST_ITEM_REF;
 PROCEDURE EXTRACT_TURNIN_ORDERS IS
 
   v_conn utl_smtp.connection;
- -- v_order_dat             VARCHAR2(32767);
- -- v_order_dat_items       VARCHAR2(32767); --Ver 1.1
-  v_order_dat_items_count VARCHAR2(5);     --Ver 1.1
- -- v_order_dat_end         VARCHAR2(500);   --Ver 1.1
- -- v_order_dat_fax         VARCHAR2(32767); --Ver 1.3
+  v_order_dat_items_count VARCHAR2(5);
   v_line_num              NUMBER(3);
   v_email                 VARCHAR2(100);
-  v_distributor_email     VARCHAR2(255);   --Ver 1.1
-  v_distributor_fax_num   VARCHAR2(50);    --Ver 1.1
-  v_distrib_fax_num_check VARCHAR2(10);    --Ver 1.1
-  v_distributor_zetafax_email VARCHAR(200);--Ver 1.1
-  v_uom                   VARCHAR2(50);    --Ver 1.5
-  v_cust_email            VARCHAR2(255);   --Ver 1.7
-  v_cust_fax_num          VARCHAR2(50);    --Ver 1.7
-  v_cust_fax_num_check    VARCHAR2(50);    --Ver 1.7
-  v_cust_zetafax_email    VARCHAR2(200);   --Ver 1.7
-  v_print_statement_flg   VARCHAR2(1);     --Ver 1.7
-  v_phoned_flg            VARCHAR2(1);     --Ver 1.9
+  v_distributor_email     VARCHAR2(255);
+  v_distributor_fax_num   VARCHAR2(50);
+  v_distrib_fax_num_check VARCHAR2(10);
+  v_distributor_zetafax_email VARCHAR(200);
+  v_uom                   VARCHAR2(50);
+  v_cust_email            VARCHAR2(255);
+  v_cust_fax_num          VARCHAR2(50);
+  v_cust_fax_num_check    VARCHAR2(50);
+  v_cust_zetafax_email    VARCHAR2(200);
+  v_print_statement_flg   VARCHAR2(1);
+  v_phoned_flg            VARCHAR2(1);
   v_total_items           VARCHAR2(100);
+  v_recipient             VARCHAR2(4000);
 
   type typ_output is table of varchar2(2000 char) index by binary_integer;
   tbl_orddat typ_output;
@@ -126,8 +123,7 @@ PROCEDURE EXTRACT_TURNIN_ORDERS IS
     AND    a.cust_contact_id = d.cust_contact_id(+)
     AND    a.distributor_id = e.customer_id(+)
     AND    a.distributor_id IS NOT NULL
-    AND    ( a.order_status in ('SUBMITTED','PROCESSING') OR
-             (a.order_status = 'ONHOLD' AND a.deliver_date < (select sysdate+v_deliver_within_days from dual) ) )
+    AND    a.order_status in ('SUBMITTED','PROCESSING')
     AND    b.market_id = v_market_id;
 
   -- Total Check Cursor gives a total count of the order quantity
@@ -197,9 +193,9 @@ BEGIN
       -- Get email address of the distributor to email this order to.
       v_distributor_email := header_row.distrib_email;
 
-      -- if '+61' replace with '0' to fax number for sending from ap ZETAFAX.
+      -- if '+81' replace with '0' to fax number for sending from ap ZETAFAX.
       v_distrib_fax_num_check := SUBSTR(header_row.distrib_fax,1,3);
-      IF v_distrib_fax_num_check = '+61' THEN
+      IF v_distrib_fax_num_check = '+81' THEN
          v_distributor_fax_num := '0'||RTRIM(SUBSTR(header_row.distrib_fax,4,50));
       ELSE
          v_distributor_fax_num := header_row.distrib_fax;
@@ -222,7 +218,7 @@ BEGIN
 
       IF v_cust_fax_num IS NOT NULL THEN
           v_cust_fax_num_check := SUBSTR(v_cust_fax_num_check,1,3);
-          IF v_cust_fax_num_check = '+61' THEN
+          IF v_cust_fax_num_check = '+81' THEN
              v_cust_fax_num := '0'||RTRIM(SUBSTR(v_cust_fax_num,4,50));
           END IF;
       END IF;
@@ -258,7 +254,7 @@ BEGIN
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Order Date: '||'</TD></B><TD>'||to_char(header_row.order_date,'DD/MM/YYYY')||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Order Taken By: '   ||'</TD></B><TD>'||header_row.firstname||' '||header_row.lastname||'</TD><TD><B>E-Mail Address: '||'</TD></B><TD>'||v_email||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Order Taken By: '   ||'</TD></B><TD>'||header_row.firstname||' '||header_row.lastname||'</TD><TD><B>E-Mail Address: '||'</TD></B><TD>'||nvl(v_email,'No email')||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>PO: '||'</TD></B><TD>'||header_row.purchase_order||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Comments: '||'</TD></B><TD>'||header_row.order_notes||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD></TD><TD>Unit = Single consumer product</TD></TR>';
@@ -275,7 +271,7 @@ BEGIN
       tbl_ordfax(tbl_ordfax.count + 1) := 'Thank you'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'Regards,'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := header_row.firstname||' '||header_row.lastname||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := v_email||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := nvl(v_email,'No email')||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'eFEX Reference #: '||header_row.order_id||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'MARS TURN IN ORDER'||Chr(13);
@@ -293,7 +289,7 @@ BEGIN
       tbl_ordfax(tbl_ordfax.count + 1) := 'Order Date:       '||to_char(header_row.order_date,'DD/MM/YYYY')||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'Order Taken By:   '||header_row.firstname||' '||header_row.lastname||'.'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'E-Mail Address:   '||v_email||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := 'E-Mail Address:   '||nvl(v_email,'No email')||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'PO:               '||header_row.purchase_order||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := 'Comments:         '||header_row.order_notes||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '                  '||'Unit = Single consumer product'||Chr(13);
@@ -357,48 +353,56 @@ BEGIN
 
       -- Check to see if this is an order confirmation only. if it is, don't send it to the wholesaler. Just send it to the ASM and eFEX inbox.
       IF v_phoned_flg = 'Y' THEN
+           v_recipient := v_fe_email;
+           if not(v_email is null) then
+              v_recipient := v_recipient||','||v_email;
+           end if;
            v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                            v_fe_email||v_email,
+                                            v_recipient,
                                             'eFEX TIO CONFIRMATION ONLY for '||header_row.customer_name,
                                             'text/html');
            for idx in 1..tbl_orddat.count loop
               smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
            end loop;
   	   smtp_mailer.end_mail(v_conn);
-         --  SEND_MAIL(v_fe_email||v_email, 'eFEX TIO CONFIRMATION ONLY for '||header_row.customer_name, v_order_dat||v_order_dat_items||v_order_dat_end,'text/html');
       ELSE
           --If the distributor has an e-mail address then send the order as an email.
            IF v_distributor_email IS NOT NULL THEN
+               v_recipient := v_fe_email;
+               if not(v_email is null) then
+                  v_recipient := v_recipient||','||v_email;
+               end if;
+               v_recipient := v_recipient||','||v_distributor_email;
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_fe_email||v_email||','||v_distributor_email,
+                                                v_recipient,
                                                 'eFEX E-MAIL Order For '||header_row.customer_name,
                                                 'text/html');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
                smtp_mailer.end_mail(v_conn);
-               --Send the order email to ASM and to Functional Expert
-               --SEND_MAIL(v_fe_email||v_email||','||v_distributor_email, 'eFEX E-MAIL Order For '||header_row.customer_name, v_order_dat||v_order_dat_items||v_order_dat_end,'text/html');
            ELSE
+               v_recipient := v_fe_email;
+               if not(v_email is null) then
+                  v_recipient := v_recipient||','||v_email;
+               end if;
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_fe_email||v_email,
+                                                v_recipient,
                                                 'eFEX FAX Order has been sent for '||header_row.customer_name,
                                                 'text/html');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
                smtp_mailer.end_mail(v_conn);
-               --SEND_MAIL(v_fe_email||v_email, 'eFEX FAX Order has been sent for '||header_row.customer_name, v_order_dat||v_order_dat_items||v_order_dat_end,'text/html');
+               v_recipient := v_distributor_zetafax_email;
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_distributor_zetafax_email,
+                                                v_recipient,
                                                 'eFEX FAX Order For '||header_row.customer_name||'. Order Taken By '||header_row.firstname||' '||header_row.lastname||' '||header_row.order_date||'.',
                                                 'text/plain');
                for idx in 1..tbl_ordfax.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
                end loop;
                smtp_mailer.end_mail(v_conn);
-               --Send the order to ZETAFAX.
-               --SEND_MAIL(v_distributor_zetafax_email, 'eFEX FAX Order For '||header_row.customer_name||'. Order Taken By '||header_row.firstname||' '||header_row.lastname||' '||header_row.order_date||'.', v_order_dat_fax,NULL);
            END IF;
        END IF;
 
@@ -406,39 +410,36 @@ BEGIN
       IF v_print_statement_flg = 'Y' THEN
           --Check to see if the Customer has an e-mail address and send
           IF v_cust_email IS NOT NULL THEN
+               v_recipient := v_cust_email||',efex@ap.effem.com';
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_cust_email||',efex@ap.effem.com',
+                                                v_recipient,
                                                 'E-MAIL Copy of TIO eFEX Order For '||header_row.customer_name,
                                                 'text/html');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
                smtp_mailer.end_mail(v_conn);
-              --Send customer order copy as e-mail
-              --SEND_MAIL(v_cust_email||',efex@ap.effem.com', 'E-MAIL Copy of TIO eFEX Order For '||header_row.customer_name, v_order_dat||v_order_dat_items||v_order_dat_end,'text/html');
           ELSE
               IF v_cust_fax_num IS NOT NULL THEN
+                  v_recipient := v_cust_zetafax_email||',efex@ap.effem.com';
                   v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                   v_cust_zetafax_email||',efex@ap.effem.com',
+                                                   v_recipient,
                                                    'FAX Copy of TIO eFEX Order For '||header_row.customer_name,
                                                    'text/plain');
                   for idx in 1..tbl_ordfax.count loop
                      smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
                   end loop;
                   smtp_mailer.end_mail(v_conn);
-                  --Else send as fax
-                  --SEND_MAIL(v_cust_zetafax_email||',efex@ap.effem.com', 'FAX Copy of TIO eFEX Order For '||header_row.customer_name, v_order_dat_fax,NULL);
               ELSE
+                  v_recipient := 'efex@ap.effem.com';
                   v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                   'efex@ap.effem.com',
+                                                   v_recipient,
                                                    'POST Copy of eFEX TIO Order For '||header_row.customer_name,
                                                    'text/html');
                   for idx in 1..tbl_orddat.count loop
                      smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                   end loop;
                   smtp_mailer.end_mail(v_conn);
-                  --Else send to efex inbox for posting.
-                  --SEND_MAIL('efex@ap.effem.com', 'POST Copy of eFEX TIO Order For '||header_row.customer_name, v_order_dat||v_order_dat_items||v_order_dat_end,'text/html');
               END IF;
           END IF;
       END IF;
@@ -447,7 +448,6 @@ BEGIN
       UPDATE orders
       SET    order_status = 'CLOSED'
       WHERE  order_id = header_row.order_id;
-
 
     END IF;
 
