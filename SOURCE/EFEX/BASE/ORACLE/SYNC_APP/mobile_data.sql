@@ -2687,7 +2687,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Return the timezone date
       /*-*/
-      return to_char(from_tz(cast(sysdate as timestamp), dbtimezone) at time zone con_timezone,'yyyymmddhhmiss');
+      return from_tz(cast(sysdate as timestamp), dbtimezone) at time zone con_timezone;
 
    /*-------------*/
    /* End routine */
