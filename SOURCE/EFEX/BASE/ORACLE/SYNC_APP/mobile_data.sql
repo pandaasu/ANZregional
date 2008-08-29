@@ -51,6 +51,7 @@ create or replace package body mobile_data as
    /*-*/
    /* Private constants
    /*-*/
+   con_timezone varchar2(64) := 'Asia/Shanghai';
    con_icsf_sync_group_id constant number := 46;
    con_pcmm_sync_group_id constant number := 47;
    con_icsf_segment_id constant number := 13;
@@ -108,6 +109,7 @@ create or replace package body mobile_data as
    function mobile_get_customer_id(par_source in varchar2) return number;
    function mobile_to_number(par_number in varchar2) return number;
    function mobile_to_date(par_date in varchar2, par_format in varchar2) return date;
+   function mobile_to_timezone(par_date in date) return date;
    procedure mobile_event(par_status in varchar2, par_connected varchar2);
 
    /**************************************************************/
@@ -273,7 +275,7 @@ create or replace package body mobile_data as
          select sync_log_seq.nextval into rcd_sync_log.sync_log_id from dual;
          rcd_sync_log.user_id := rcd_users.user_id;
          rcd_sync_log.device_serial_num := rcd_device.device_serial_num;
-         rcd_sync_log.connect_datime := sysdate;
+         rcd_sync_log.connect_datime := mobile_to_timezone(sysdate);
          rcd_sync_log.online_secs := 0;
          rcd_sync_log.status_text := 'Mobile session connected';
          rcd_sync_log.connected_flg := 'Y';
@@ -616,7 +618,7 @@ create or replace package body mobile_data as
       var_output := var_output||'<CTL_USER_LASTNAME><![CDATA[' || var_auth_lastname || ']]></CTL_USER_LASTNAME>';
       var_output := var_output||'<CTL_MOBILE_DATE><![CDATA[' || to_char(sysdate,'yyyy/mm/dd') || ']]></CTL_MOBILE_DATE>';
       var_output := var_output||'<CTL_MOBILE_STATUS><![CDATA[' || '*LOADED' || ']]></CTL_MOBILE_STATUS>';
-      var_output := var_output||'<CTL_MOBILE_LOADED_TIME><![CDATA[' || to_char(sysdate,'yyyy/mm/dd hh24:mi:ss') || ']]></CTL_MOBILE_LOADED_TIME>';
+      var_output := var_output||'<CTL_MOBILE_LOADED_TIME><![CDATA[' || to_char(mobile_to_timezone(sysdate),'yyyy/mm/dd hh24:mi:ss') || ']]></CTL_MOBILE_LOADED_TIME>';
       var_output := var_output||'<CTL_MOBILE_SAVED_TIME><![CDATA[' || '*NOT SAVED' || ']]></CTL_MOBILE_SAVED_TIME>';
       var_output := var_output||'</CTL>';
       dbms_lob.writeappend(var_clob,length(var_output),var_output);
@@ -2410,8 +2412,19 @@ create or replace package body mobile_data as
    procedure create_customer_data(par_customer_id in varchar2) is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_level5_name varchar2(100);
+
+      /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_geo_hierarchy is
+         select t01.*
+           from geo_hierarchy t01
+          where t01.geo_level5_name like var_level5_name;
+      rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
+
       cursor csr_sales_territory is 
          select t01.sales_territory_id
            from sales_territory t01
@@ -2426,11 +2439,31 @@ create or replace package body mobile_data as
    begin
 
       /*-*/
+      /* Attempt to find the related sales force hierarchy based on the authorised user city
+      /*-*/
+      upd_customer.geo_level1_code := null;
+      upd_customer.geo_level2_code := null;
+      upd_customer.geo_level3_code := null;
+      upd_customer.geo_level4_code := null;
+      upd_customer.geo_level5_code := null;
+      var_level5_name := '%'||var_auth_city||'%';
+      open csr_geo_hierarchy;
+      fetch csr_geo_hierarchy into rcd_geo_hierarchy;
+      if csr_geo_hierarchy%found then
+         upd_customer.geo_level1_code := rcd_geo_hierarchy.geo_level1_code;
+         upd_customer.geo_level2_code := rcd_geo_hierarchy.geo_level2_code;
+         upd_customer.geo_level3_code := rcd_geo_hierarchy.geo_level3_code;
+         upd_customer.geo_level4_code := rcd_geo_hierarchy.geo_level4_code;
+         upd_customer.geo_level5_code := rcd_geo_hierarchy.geo_level5_code;
+      end if;
+      close csr_geo_hierarchy;
+
+      /*-*/
       /* Insert the customer data
       /*-*/
       begin
          select customer_seq.nextval into upd_customer.customer_id from dual;
-         upd_customer.customer_code := null;
+         upd_customer.customer_code := '8'||to_char(upd_customer.customer_id,'fm0000000');
          upd_customer.customer_name := upd_customer.customer_name;
          upd_customer.customer_name_en := upd_customer.customer_name;
          upd_customer.address_1 := upd_customer.address_1;
@@ -2466,21 +2499,16 @@ create or replace package body mobile_data as
          upd_customer.merch_code := null;
          upd_customer.vat_reg_num := null;
          upd_customer.discount_pct := null;
-         upd_customer.corporate_flg := null;
+         upd_customer.corporate_flg := 'N';
          upd_customer.mobile_number := null;
          upd_customer.call_week1_day := null;
          upd_customer.call_week2_day := null;
          upd_customer.call_week3_day := null;
          upd_customer.call_week4_day := null;
          upd_customer.vendor_code := null;
-         upd_customer.setup_date := sysdate;
+         upd_customer.setup_date := mobile_to_timezone(sysdate);
          upd_customer.setup_person := var_auth_username;
          upd_customer.outlet_location := upd_customer.outlet_location;
-         upd_customer.geo_level1_code := null;
-         upd_customer.geo_level2_code := null;
-         upd_customer.geo_level3_code := null;
-         upd_customer.geo_level4_code := null;
-         upd_customer.geo_level5_code := null;
          upd_customer.std_level1_code := null;
          upd_customer.std_level2_code := null;
          upd_customer.std_level3_code := null;
@@ -2488,7 +2516,7 @@ create or replace package body mobile_data as
          upd_customer.business_unit_id := var_auth_business_unit_id;
          insert into customer values upd_customer;
       exception
-         when others then
+         when dup_val_on_index then
             raise_application_error(-20000, 'create_customer_data - Customer (' || to_char(upd_customer.customer_id) || ') already exists');
       end;
 
@@ -2646,6 +2674,26 @@ create or replace package body mobile_data as
    /*-------------*/
    end mobile_to_date;
 
+   /******************************************************/
+   /* This procedure performs the mobile sysdate routine */
+   /******************************************************/
+   function mobile_to_timezone(par_date in date) return date is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the timezone date
+      /*-*/
+      return to_char(from_tz(cast(sysdate as timestamp), dbtimezone) at time zone con_timezone,'yyyymmddhhmiss');
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end mobile_to_timezone;
+
    /****************************************************/
    /* This procedure performs the mobile event routine */
    /****************************************************/
@@ -2654,7 +2702,12 @@ create or replace package body mobile_data as
       /*-*/
       /* Autonomous transaction
       /*-*/
-      pragma autonomous_transaction;   
+      pragma autonomous_transaction;
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_now date;
 
    /*-------------*/
    /* Begin block */
@@ -2664,8 +2717,9 @@ create or replace package body mobile_data as
       /*-*/
       /* Update the synchronization log row
       /*-*/
+      var_now := mobile_to_timezone(sysdate);
       update sync_log
-         set online_secs = round(((sysdate - connect_datime) * 86400), 0),
+         set online_secs = round(((var_now - connect_datime) * 86400), 0),
              status_text = par_status,
              connected_flg = decode(par_connected,'Y','Y','N')
        where sync_log_id = var_auth_sync_log_id;
