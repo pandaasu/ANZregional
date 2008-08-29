@@ -562,7 +562,7 @@ create or replace package body mobile_data as
          select t01.customer_id,
                 t01.customer_name
            from customer t01,
-                (select t01.distributor_id
+                (select distinct(t01.distributor_id) as distributor_id
                    from customer t01,
                         (select distinct(t02.customer_id) as customer_id
                            from user_sales_territory t01,
