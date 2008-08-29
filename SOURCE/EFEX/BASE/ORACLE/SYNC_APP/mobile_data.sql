@@ -614,7 +614,7 @@ create or replace package body mobile_data as
       var_output := var_output||'<CTL_MOBILE_DATE><![CDATA[' || to_char(sysdate,'yyyy/mm/dd') || ']]></CTL_MOBILE_DATE>';
       var_output := var_output||'<CTL_MOBILE_STATUS><![CDATA[' || '*LOADED' || ']]></CTL_MOBILE_STATUS>';
       var_output := var_output||'<CTL_MOBILE_LOADED_TIME><![CDATA[' || to_char(sysdate,'yyyy/mm/dd hh24:mi:ss') || ']]></CTL_MOBILE_LOADED_TIME>';
-      var_output := var_output||'<CTL_MOBILE_SAVED_TIME><![CDATA[' || '*NOT_SAVED' || ']]></CTL_MOBILE_SAVED_TIME>';
+      var_output := var_output||'<CTL_MOBILE_SAVED_TIME><![CDATA[' || '*NOT SAVED' || ']]></CTL_MOBILE_SAVED_TIME>';
       var_output := var_output||'</CTL>';
       dbms_lob.writeappend(var_clob,length(var_output),var_output);
 
@@ -1789,6 +1789,9 @@ create or replace package body mobile_data as
       obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/EFEX/RTE_CALLS/RTE_CALL');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
 
+         /*-*/
+         /* Update the call data
+         /*-*/
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          upd_call.customer_id := mobile_get_customer_id(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_CUSTOMER_ID'));
          upd_call.call_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STR_TIME'),'yyyy/mm/dd hh24:mi:ss');
@@ -1801,6 +1804,9 @@ create or replace package body mobile_data as
             update_call_data('1');
          end if;
 
+         /*-*/
+         /* Update the distribution data
+         /*-*/
          obj_rte_stck_list := xslProcessor.selectNodes(obj_xml_node,'RTE_STCK_ITEMS/RTE_STCK_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_stck_list)-1 loop
             obj_rte_stck_node := xmlDom.item(obj_rte_stck_list,idy);
@@ -1809,6 +1815,9 @@ create or replace package body mobile_data as
             update_distribution_data;
          end loop;
 
+         /*-*/
+         /* Update the display data
+         /*-*/
          obj_rte_disp_list := xslProcessor.selectNodes(obj_xml_node,'RTE_DISP_ITEMS/RTE_DISP_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_disp_list)-1 loop
             obj_rte_disp_node := xmlDom.item(obj_rte_disp_list,idy);
@@ -1817,6 +1826,9 @@ create or replace package body mobile_data as
             update_display_data;
          end loop;
 
+         /*-*/
+         /* Update the activity data
+         /*-*/
          obj_rte_actv_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ACTV_ITEMS/RTE_ACTV_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_actv_list)-1 loop
             obj_rte_actv_node := xmlDom.item(obj_rte_actv_list,idy);
@@ -1825,6 +1837,9 @@ create or replace package body mobile_data as
             update_activity_data;
          end loop;
 
+         /*-*/
+         /* Update the order data
+         /*-*/
          obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
          for idy in 0..xmlDom.getLength(obj_rte_ordr_list)-1 loop
             obj_rte_ordr_node := xmlDom.item(obj_rte_ordr_list,idy);
@@ -1841,14 +1856,16 @@ create or replace package body mobile_data as
                upd_orders.total_price := upd_orders.total_price + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_VALUE'));
             end loop;
             update_orders_data;
-            obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
-            for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
-               obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
-               upd_order_item.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_ID'));
-               upd_order_item.order_qty := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY'));
-               upd_order_item.uom := xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_UOM');
-               update_order_item_data;
-            end loop;
+            if upper(upd_orders.order_status) != 'IGNORE' then
+               obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
+               for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
+                  obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
+                  upd_order_item.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_ID'));
+                  upd_order_item.order_qty := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY'));
+                  upd_order_item.uom := xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_UOM');
+                  update_order_item_data;
+               end loop;
+            end if;
          end loop;
 
       end loop;
@@ -2085,7 +2102,7 @@ create or replace package body mobile_data as
       rcd_customer csr_customer%rowtype;
 
       cursor csr_orders is 
-         select t01.order_id
+         select t01.*
            from orders t01
           where t01.user_id = upd_orders.user_id
             and t01.customer_id = upd_orders.customer_id
@@ -2133,12 +2150,22 @@ create or replace package body mobile_data as
       upd_orders.contact_signature := null;
       upd_orders.tp_amount := null;
       upd_orders.tp_paid_flg := 'N';
-      upd_orders.delivered_flg := 'Y';
+      upd_orders.delivered_flg := 'N';
       upd_orders.print_statement_flg := 'N';
       upd_orders.apply_discount_flg := 'N';
+      upd_orders.mobile_control_flg := 'N';
+      if upper(upd_orders.order_status) = 'SUBMITTED' then
+         upd_orders.mobile_control_flg := 'Y';
+      end if;
 
       /*-*/
       /* Insert/update the order data
+      /* **notes** 1. Order updated is bypassed when the existing order has a
+      /*              mobile control flag equal to "Y". This indicates that the
+      /*              order has been sent to the distributor and and such must
+      /*              not be modified or resent.
+      /*           2. Inactivate any existing order lines for the existing order
+      /*              as only new lines will be activated when processed.
       /*-*/
       open csr_orders;
       fetch csr_orders into rcd_orders;
@@ -2146,26 +2173,26 @@ create or replace package body mobile_data as
          select orders_seq.nextval into upd_orders.order_id from dual;
          insert into orders values upd_orders;
       else
-         upd_orders.order_id := rcd_orders.order_id;
-         update orders
-            set distributor_id = upd_orders.distributor_id,
-                deliver_date = upd_orders.deliver_date,
-                total_items = upd_orders.total_items,
-                total_price = upd_orders.total_price,
-                order_status = upd_orders.order_status,
-                status = upd_orders.status,
-                modified_user = upd_orders.modified_user,
-                modified_date = upd_orders.modified_date
-          where order_id = upd_orders.order_id;
+         if rcd_orders.mobile_control_flg != 'Y' then
+            upd_orders.order_id := rcd_orders.order_id;
+            update orders
+               set distributor_id = upd_orders.distributor_id,
+                   deliver_date = upd_orders.deliver_date,
+                   total_items = upd_orders.total_items,
+                   total_price = upd_orders.total_price,
+                   order_status = upd_orders.order_status,
+                   status = upd_orders.status,
+                   modified_user = upd_orders.modified_user,
+                   modified_date = upd_orders.modified_date
+             where order_id = upd_orders.order_id;
+            update order_item
+               set status = 'X'
+             where order_id = upd_orders.order_id;
+         else
+            upd_orders.order_status := 'IGNORE';
+         end if;
       end if;
       close csr_orders;
-
-      /*-*/
-      /* Inactivate related order items
-      /*-*/
-      update order_item
-         set status = 'X'
-       where order_id = upd_orders.order_id;
 
    /*-------------*/
    /* End routine */
