@@ -2687,7 +2687,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Return the timezone date
       /*-*/
-      return from_tz(cast(sysdate as timestamp), dbtimezone) at time zone con_timezone;
+      return from_tz(cast(sysdate as timestamp), 'Australia/NSW') at time zone con_timezone;
 
    /*-------------*/
    /* End routine */
