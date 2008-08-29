@@ -562,15 +562,18 @@ create or replace package body mobile_data as
          select t01.customer_id,
                 t01.customer_name
            from customer t01,
-                (select distinct(t02.customer_id) as customer_id
-                   from user_sales_territory t01,
-                        cust_sales_territory t02
-                  where t01.sales_territory_id = t02.sales_territory_id
-                    and t01.user_id = var_auth_user_id
-                    and t01.status = 'A'
-                    and t02.status = 'A') t02
-          where t01.customer_id = t02.customer_id
-            and t01.distributor_flg = 'Y'
+                (select t01.distributor_id
+                   from customer t01,
+                        (select distinct(t02.customer_id) as customer_id
+                           from user_sales_territory t01,
+                                cust_sales_territory t02
+                          where t01.sales_territory_id = t02.sales_territory_id
+                            and t01.user_id = var_auth_user_id
+                            and t01.status = 'A'
+                            and t02.status = 'A') t02
+                  where t01.customer_id = t02.customer_id
+                    and t01.status = 'A') t02
+          where t01.customer_id = t02.distributor_id
             and t01.status = 'A'
           order by t01.customer_name asc;
       rcd_distributor csr_distributor%rowtype;
