@@ -1,5 +1,3 @@
-DROP PACKAGE MANU_APP.RE_TIMING;
-
 CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing
 IS
 /******************************************************************************
@@ -15,7 +13,7 @@ IS
    1.0        21/11/2005   Jeff Phillipson    1. Created this package.
    1.1        04/02/2008   Jeff Phillipson    Changed for Validation update 
    3.0        27-May-2008  Jeff Phillipson  Obsolete BOM Report procedures added to end of package 
-
+   3.1        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
 ******************************************************************************/
 
    /******************************************************************/
@@ -494,9 +492,6 @@ IS
                             
 END Re_Timing;
 /
-
-
-DROP PACKAGE BODY MANU_APP.RE_TIMING;
 
 CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 /******************************************************************************
@@ -2840,10 +2835,7 @@ END OBS_BOM_RECORDS;
   END Re_Timing;
 /
 
-
-DROP PUBLIC SYNONYM RE_TIMING;
-
-CREATE PUBLIC SYNONYM RE_TIMING FOR MANU_APP.RE_TIMING;
+CREATE OR REPLACE PUBLIC SYNONYM RE_TIMING FOR MANU_APP.RE_TIMING;
 
 
 GRANT EXECUTE ON MANU_APP.RE_TIMING TO APPSUPPORT;

@@ -1,5 +1,3 @@
-DROP PACKAGE MANU_APP.RE_TIMING;
-
 CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing
 IS
 /******************************************************************************
@@ -14,7 +12,8 @@ IS
    ---------  ----------   ---------------    ------------------------------------
    1.0        21/11/2005   Jeff Phillipson    1. Created this package.
    2.0        01/02/2008   Jeff Phillipson    Validation upgrade changes made
-   3.0        27-May-2008  Jeff Phillipson    Obsolete BOM Report procedures added to end of package 
+   3.0        27-May-2008  Jeff Phillipson    Obsolete BOM Report procedures added to end of package
+   3.1        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
 ******************************************************************************/
 
    /***********************************************************/
@@ -493,9 +492,6 @@ IS
                             
 END Re_Timing;
 /
-
-
-DROP PACKAGE BODY MANU_APP.RE_TIMING;
 
 CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 /******************************************************************************
@@ -2266,7 +2262,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 	  o_result_msg := '';
 
 	   OPEN o_retrieve_recipe FOR
-		  SELECT w.waiver_code
+		  SELECT DISTINCT w.waiver_code
 		    FROM WAIVER w, WAIVER_CRTRIA c
 		WHERE w.waiver_code = c.waiver_code
 		  AND eff_start_datime <= SYSDATE
@@ -2970,10 +2966,7 @@ END OBS_BOM_RECORDS;
   END Re_Timing;
 /
 
-
-DROP PUBLIC SYNONYM RE_TIMING;
-
-CREATE PUBLIC SYNONYM RE_TIMING FOR MANU_APP.RE_TIMING;
+CREATE OR REPLACE PUBLIC SYNONYM RE_TIMING FOR MANU_APP.RE_TIMING;
 
 
 GRANT EXECUTE ON MANU_APP.RE_TIMING TO APPSUPPORT;
