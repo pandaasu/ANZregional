@@ -33,6 +33,7 @@ create or replace package mobile_data as
    function get_customer_data(par_customer_id in varchar2) return mobile_stream pipelined;
    function get_communication_list return mobile_code_table pipelined;
    procedure put_mobile_data;
+   function mobile_to_timezone(par_date in date) return date;
 
 end mobile_data;
 /
@@ -109,7 +110,6 @@ create or replace package body mobile_data as
    function mobile_get_customer_id(par_source in varchar2) return number;
    function mobile_to_number(par_number in varchar2) return number;
    function mobile_to_date(par_date in varchar2, par_format in varchar2) return date;
-   function mobile_to_timezone(par_date in date) return date;
    procedure mobile_event(par_status in varchar2, par_connected varchar2);
 
    /**************************************************************/
@@ -471,7 +471,7 @@ create or replace package body mobile_data as
                 customer t02
           where t01.customer_id = t02.customer_id
             and t01.user_id = var_auth_user_id
-            and trunc(t01.route_plan_date) = trunc(sysdate)
+            and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
             and t01.status = 'A'
             and t02.business_unit_id = var_auth_business_unit_id
           order by t01.route_plan_order asc;
@@ -490,7 +490,7 @@ create or replace package body mobile_data as
                     and t02.customer_id not in (select t01.customer_id
                                                   from route_plan t01
                                                  where t01.user_id = var_auth_user_id
-                                                   and trunc(t01.route_plan_date) = trunc(sysdate)
+                                                   and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
                                                    and t01.status = 'A')) t02
           where t01.customer_id = t02.customer_id
             and (t01.distributor_flg is null or t01.distributor_flg = 'N')
@@ -616,7 +616,7 @@ create or replace package body mobile_data as
       var_output := '<CTL>';
       var_output := var_output||'<CTL_USER_FIRSTNAME><![CDATA[' || var_auth_firstname || ']]></CTL_USER_FIRSTNAME>';
       var_output := var_output||'<CTL_USER_LASTNAME><![CDATA[' || var_auth_lastname || ']]></CTL_USER_LASTNAME>';
-      var_output := var_output||'<CTL_MOBILE_DATE><![CDATA[' || to_char(sysdate,'yyyy/mm/dd') || ']]></CTL_MOBILE_DATE>';
+      var_output := var_output||'<CTL_MOBILE_DATE><![CDATA[' || to_char(mobile_to_timezone(sysdate),'yyyy/mm/dd') || ']]></CTL_MOBILE_DATE>';
       var_output := var_output||'<CTL_MOBILE_STATUS><![CDATA[' || '*LOADED' || ']]></CTL_MOBILE_STATUS>';
       var_output := var_output||'<CTL_MOBILE_LOADED_TIME><![CDATA[' || to_char(mobile_to_timezone(sysdate),'yyyy/mm/dd hh24:mi:ss') || ']]></CTL_MOBILE_LOADED_TIME>';
       var_output := var_output||'<CTL_MOBILE_SAVED_TIME><![CDATA[' || '*NOT SAVED' || ']]></CTL_MOBILE_SAVED_TIME>';
@@ -1141,7 +1141,7 @@ create or replace package body mobile_data as
                           where t01.customer_id in (select t01.customer_id
                                                       from route_plan t01
                                                      where t01.user_id = var_auth_user_id
-                                                       and trunc(t01.route_plan_date) = trunc(sysdate)
+                                                       and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
                                                        and t01.status = 'A')
                             and t01.status = 'A'
                             and t01.primary_flg = 'Y') t01
@@ -1157,7 +1157,7 @@ create or replace package body mobile_data as
             and t01.customer_id in (select t01.customer_id
                                       from route_plan t01
                                      where t01.user_id = var_auth_user_id
-                                       and trunc(t01.route_plan_date) = trunc(sysdate)
+                                       and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
                                        and t01.status = 'A')
             and t01.business_unit_id = var_auth_business_unit_id;
       rcd_customer csr_customer%rowtype;
@@ -1168,8 +1168,8 @@ create or replace package body mobile_data as
                 comm t02
           where t01.comm_id = t02.comm_id
             and t01.status = 'A'
-            and trunc(t02.active_date) <= trunc(sysdate)
-            and trunc(t02.inactive_date) >= trunc(sysdate)
+            and trunc(t02.active_date) <= trunc(mobile_to_timezone(sysdate))
+            and trunc(t02.inactive_date) >= trunc(mobile_to_timezone(sysdate))
             and t02.status = 'A'
             and t02.comm_type_id = con_user_comm_type_id
             and (t01.selection_string like var_user_segment or
@@ -1189,8 +1189,8 @@ create or replace package body mobile_data as
                 comm t02
           where t01.comm_id = t02.comm_id
             and t01.status = 'A'
-            and trunc(t02.active_date) <= trunc(sysdate)
-            and trunc(t02.inactive_date) >= trunc(sysdate)
+            and trunc(t02.active_date) <= trunc(mobile_to_timezone(sysdate))
+            and trunc(t02.inactive_date) >= trunc(mobile_to_timezone(sysdate))
             and t02.status = 'A'
             and t02.comm_type_id = con_customer_comm_type_id 
             and (t01.selection_string like var_cust_segment or
@@ -1400,7 +1400,7 @@ create or replace package body mobile_data as
           where t01.item_id = t02.item_id
             and t01.range_id = rcd_call.range_id
             and t01.status = 'A'
-            and trunc(t01.start_date) <= trunc(sysdate)
+            and trunc(t01.start_date) <= trunc(mobile_to_timezone(sysdate))
             and t02.status = 'A';
       rcd_range_item csr_range_item%rowtype;
 
@@ -1428,8 +1428,8 @@ create or replace package body mobile_data as
           where t01.segment_id = rcd_call.segment_id
             and (t01.cust_trade_channel_id is null or t01.cust_trade_channel_id = rcd_call.cust_trade_channel_id)
             and (t01.cust_type_id is null or t01.cust_type_id = rcd_call.cust_type_id)
-            and trunc(t01.start_date) <= trunc(sysdate)
-            and trunc(t01.end_date) >= trunc(sysdate)
+            and trunc(t01.start_date) <= trunc(mobile_to_timezone(sysdate))
+            and trunc(t01.end_date) >= trunc(mobile_to_timezone(sysdate))
             and t01.status = 'A'
           order by t01.display_item_id asc;
       rcd_display_item csr_display_item%rowtype;
@@ -1450,8 +1450,8 @@ create or replace package body mobile_data as
           where t01.segment_id = rcd_call.segment_id
             and (t01.cust_trade_channel_id is null or t01.cust_trade_channel_id = rcd_call.cust_trade_channel_id)
             and (t01.cust_type_id is null or t01.cust_type_id = rcd_call.cust_type_id)
-            and trunc(t01.start_date) <= trunc(sysdate)
-            and trunc(t01.end_date) >= trunc(sysdate)
+            and trunc(t01.start_date) <= trunc(mobile_to_timezone(sysdate))
+            and trunc(t01.end_date) >= trunc(mobile_to_timezone(sysdate))
             and t01.status = 'A'
           order by t01.activity_item_id asc;
       rcd_activity_item csr_activity_item%rowtype;
@@ -1515,7 +1515,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<RTE_CALL_CUSTOMER_TYPE><![CDATA[' || par_type || ']]></RTE_CALL_CUSTOMER_TYPE>';
          var_output := var_output||'<RTE_CALL_MARKET><![CDATA[' || rcd_call.customer_market || ']]></RTE_CALL_MARKET>';
          var_output := var_output||'<RTE_CALL_STATUS><![CDATA[' || '0' || ']]></RTE_CALL_STATUS>';
-         var_output := var_output||'<RTE_CALL_DATE><![CDATA[' || to_char(sysdate,'yyyymmdd') || ']]></RTE_CALL_DATE>';
+         var_output := var_output||'<RTE_CALL_DATE><![CDATA[' || to_char(mobile_to_timezone(sysdate),'yyyymmdd') || ']]></RTE_CALL_DATE>';
          var_output := var_output||'<RTE_CALL_STR_TIME><![CDATA[' || '*NONE' || ']]></RTE_CALL_STR_TIME>';
          var_output := var_output||'<RTE_CALL_END_TIME><![CDATA[' || '*NONE' || ']]></RTE_CALL_END_TIME>';
          var_output := var_output||'<RTE_CALL_ORDER_SEND><![CDATA[' || '0' || ']]></RTE_CALL_ORDER_SEND>';
@@ -1948,7 +1948,7 @@ create or replace package body mobile_data as
       upd_call.accomp_user_id := null;
       upd_call.status := 'A';
       upd_call.modified_user := user;
-      upd_call.modified_date := sysdate;
+      upd_call.modified_date := mobile_to_timezone(sysdate);
       upd_call.call_type := 'In Store';
       upd_call.end_date := upd_call.end_date;
 
@@ -1977,7 +1977,7 @@ create or replace package body mobile_data as
       upd_distribution_total.total_qty := upd_distribution_total.total_qty;
       upd_distribution_total.status := 'A';
       upd_distribution_total.modified_user := user;
-      upd_distribution_total.modified_date := sysdate;
+      upd_distribution_total.modified_date := mobile_to_timezone(sysdate);
 
       /*-*/
       /* Insert/update the distribution total data
@@ -2060,7 +2060,7 @@ create or replace package body mobile_data as
       upd_distribution.required_flg := null;
       upd_distribution.status := 'A';
       upd_distribution.modified_user := user;
-      upd_distribution.modified_date := sysdate;
+      upd_distribution.modified_date := mobile_to_timezone(sysdate);
       upd_distribution.inventory_qty := upd_distribution.inventory_qty;
       upd_distribution.sell_price := null;
       upd_distribution.in_store_date := null;
@@ -2150,7 +2150,7 @@ create or replace package body mobile_data as
       upd_orders.order_status := upd_orders.order_status;
       upd_orders.status := 'A';
       upd_orders.modified_user := user;
-      upd_orders.modified_date := sysdate;
+      upd_orders.modified_date := mobile_to_timezone(sysdate);
       upd_orders.order_code := null;
       upd_orders.contact_signature := null;
       upd_orders.tp_amount := null;
@@ -2234,7 +2234,7 @@ create or replace package body mobile_data as
       upd_order_item.uom := upd_order_item.uom;
       upd_order_item.status := 'A';
       upd_order_item.modified_user := user;
-      upd_order_item.modified_date := sysdate;
+      upd_order_item.modified_date := mobile_to_timezone(sysdate);
 
       /*-*/
       /* Insert/update the order item data
@@ -2279,7 +2279,7 @@ create or replace package body mobile_data as
       upd_display_distribution.call_date := upd_call.call_date;
       upd_display_distribution.display_in_store := upd_display_distribution.display_in_store;
       upd_display_distribution.modified_user := user;
-      upd_display_distribution.modified_date := sysdate;
+      upd_display_distribution.modified_date := mobile_to_timezone(sysdate);
       insert into display_distribution values upd_display_distribution;
 
    /*-------------*/
@@ -2306,7 +2306,7 @@ create or replace package body mobile_data as
       upd_activity_distribution.call_date := upd_call.call_date;
       upd_activity_distribution.activity_in_store := upd_activity_distribution.activity_in_store;
       upd_activity_distribution.modified_user := user;
-      upd_activity_distribution.modified_date := sysdate;
+      upd_activity_distribution.modified_date := mobile_to_timezone(sysdate);
       insert into activity_distribution values upd_activity_distribution;
 
    /*-------------*/
@@ -2365,7 +2365,7 @@ create or replace package body mobile_data as
              distributor_id = upd_customer.distributor_id,
              status = upd_customer.status,
              modified_user = user,
-             modified_date = sysdate,
+             modified_date = mobile_to_timezone(sysdate),
              outlet_location = upd_customer.outlet_location
        where customer_id = rcd_customer.customer_id;
 
@@ -2387,14 +2387,14 @@ create or replace package body mobile_data as
             upd_cust_contact.customer_id := upd_customer.customer_id;
             upd_cust_contact.status := 'A';
             upd_cust_contact.modified_user := user;
-            upd_cust_contact.modified_date := sysdate;
+            upd_cust_contact.modified_date := mobile_to_timezone(sysdate);
             insert into cust_contact values upd_cust_contact;
          else
             if rcd_cust_contact.last_name != upd_cust_contact.last_name then
                update cust_contact
                   set last_name = upd_cust_contact.last_name,
                       modified_user = user,
-                      modified_date = sysdate
+                      modified_date = mobile_to_timezone(sysdate)
                 where cust_contact_id = rcd_cust_contact.cust_contact_id;
             end if;
          end if;
@@ -2493,7 +2493,7 @@ create or replace package body mobile_data as
          upd_customer.cust_grade_id := null;
          upd_customer.status := 'A';
          upd_customer.modified_user := user;
-         upd_customer.modified_date := sysdate;
+         upd_customer.modified_date := mobile_to_timezone(sysdate);
          upd_customer.payee_name := null;
          upd_customer.merch_name := null;
          upd_customer.merch_code := null;
@@ -2539,7 +2539,7 @@ create or replace package body mobile_data as
          upd_cust_contact.customer_id := upd_customer.customer_id;
          upd_cust_contact.status := 'A';
          upd_cust_contact.modified_user := user;
-         upd_cust_contact.modified_date := sysdate;
+         upd_cust_contact.modified_date := mobile_to_timezone(sysdate);
          insert into cust_contact values upd_cust_contact;
       end if;
 
@@ -2561,7 +2561,7 @@ create or replace package body mobile_data as
       upd_cust_sales_territory.sales_territory_id := rcd_sales_territory.sales_territory_id;
       upd_cust_sales_territory.status := 'A';
       upd_cust_sales_territory.modified_user := user;
-      upd_cust_sales_territory.modified_date := sysdate;
+      upd_cust_sales_territory.modified_date := mobile_to_timezone(sysdate);
       upd_cust_sales_territory.primary_flg := 'Y';
       insert into cust_sales_territory values upd_cust_sales_territory;
 
