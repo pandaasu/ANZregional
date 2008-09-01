@@ -922,7 +922,6 @@ BEGIN
       end if;
 
       --
-      -- if customer salesperson code is different then update the name
       -- if customer salesperson code does not exist then log error
       --
       /*-*/
@@ -932,18 +931,7 @@ BEGIN
       if not(rcd_customer.sales_person_code is null) then
          open csr_users;
          fetch csr_users into rcd_users;
-         if csr_users%found then
-            if rcd_users.username = rcd_customer.sales_person_code then
-               if rcd_users.lastname != rcd_customer.sales_person_name then
-                  update users
-                     set lastname = rcd_customer.sales_person_name,
-                         modified_user = user,
-                         modified_date = sysdate
-                   where user_id = rcd_users.user_id;
-                  bol_update := true;
-               end if;
-            end if;
-         else
+         if csr_users%notfound then
             write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - sales person code ('||rcd_customer.sales_person_code||') not found on USERS table using USERNAME');
          end if;
          close csr_users;
