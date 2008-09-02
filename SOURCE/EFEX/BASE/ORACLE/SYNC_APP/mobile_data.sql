@@ -2422,7 +2422,7 @@ create or replace package body mobile_data as
       cursor csr_geo_hierarchy is
          select t01.*
            from geo_hierarchy t01
-          where t01.geo_level5_name like var_level5_name;
+          where upper(t01.geo_level5_name) like var_level5_name;
       rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
       cursor csr_sales_territory is 
@@ -2446,7 +2446,7 @@ create or replace package body mobile_data as
       upd_customer.geo_level3_code := null;
       upd_customer.geo_level4_code := null;
       upd_customer.geo_level5_code := null;
-      var_level5_name := '%'||var_auth_city||'%';
+      var_level5_name := '%'||upper(var_auth_city)||'%';
       open csr_geo_hierarchy;
       fetch csr_geo_hierarchy into rcd_geo_hierarchy;
       if csr_geo_hierarchy%found then
