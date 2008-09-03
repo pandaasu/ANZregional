@@ -1843,16 +1843,17 @@ create or replace package body mobile_data as
          obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
          for idy in 0..xmlDom.getLength(obj_rte_ordr_list)-1 loop
             obj_rte_ordr_node := xmlDom.item(obj_rte_ordr_list,idy);
-            upd_orders.total_items := mobile_to_number(xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_LINE_COUNT'));
             var_send_order := xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_SEND_WHSLR');
             upd_orders.order_status := 'CLOSED';
             if var_send_order = '1' then
                upd_orders.order_status := 'SUBMITTED';
             end if;
+            upd_orders.total_items := 0;
             upd_orders.total_price := 0;
             obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
             for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
                obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
+               upd_orders.total_items := upd_orders.total_items + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY'));
                upd_orders.total_price := upd_orders.total_price + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_VALUE'));
             end loop;
             update_orders_data;
