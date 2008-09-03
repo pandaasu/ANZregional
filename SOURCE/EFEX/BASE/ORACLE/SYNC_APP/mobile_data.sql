@@ -486,12 +486,7 @@ create or replace package body mobile_data as
                   where t01.sales_territory_id = t02.sales_territory_id
                     and t01.user_id = var_auth_user_id
                     and t01.status = 'A'
-                    and t02.status = 'A'
-                    and t02.customer_id not in (select t01.customer_id
-                                                  from route_plan t01
-                                                 where t01.user_id = var_auth_user_id
-                                                   and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
-                                                   and t01.status = 'A')) t02
+                    and t02.status = 'A') t02
           where t01.customer_id = t02.customer_id
             and (t01.distributor_flg is null or t01.distributor_flg = 'N')
             and t01.status = 'A'
