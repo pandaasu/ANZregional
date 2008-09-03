@@ -90,7 +90,7 @@ create or replace package body ladefx01_chn_item as
                         max(t01.ntgew) as ntgew,
                         max(t01.gewei) as gewei,
                         max(t01.zzrepmatnr) as zzrepmatnr,
-                        max(decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN't03.maktx),t02.maktx)) as maktx,
+                        max(decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN',t03.maktx),t02.maktx)) as maktx,
                         max(nvl(t05.bus_sgmnt_desc,'*UNKNOWN')) as bus_sgmnt_desc,
                         max(nvl(t06.brand_flag_desc,'*UNKNOWN')) as brand_flag_desc,
                         max(nvl(t07.brand_sub_flag_desc,'*UNKNOWN')) as brand_sub_flag_desc,
