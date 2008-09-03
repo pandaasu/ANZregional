@@ -834,21 +834,21 @@ BEGIN
       --
       -- geo hierarchy changed
       --
-      if (rcd_customer.old_geo_level1_code != rcd_customer.geo_level1_code or
-          rcd_customer.old_geo_level2_code != rcd_customer.geo_level2_code or
-          rcd_customer.old_geo_level3_code != rcd_customer.geo_level3_code or
-          rcd_customer.old_geo_level4_code != rcd_customer.geo_level4_code or
-          rcd_customer.old_geo_level5_code != rcd_customer.geo_level5_code) then
+      if (nvl(rcd_customer.old_geo_level1_code,'*NULL') != nvl(rcd_customer.geo_level1_code,'*NULL') or
+          nvl(rcd_customer.old_geo_level2_code,'*NULL') != nvl(rcd_customer.geo_level2_code,'*NULL') or
+          nvl(rcd_customer.old_geo_level3_code,'*NULL') != nvl(rcd_customer.geo_level3_code,'*NULL') or
+          nvl(rcd_customer.old_geo_level4_code,'*NULL') != nvl(rcd_customer.geo_level4_code,'*NULL') or
+          nvl(rcd_customer.old_geo_level5_code,'*NULL') != nvl(rcd_customer.geo_level5_code,'*NULL')) then
          bol_update := true;
       end if;
 
       --
       -- standard hierarchy changed
       --
-      if (rcd_customer.old_std_level1_code != rcd_customer.std_level1_code or
-          rcd_customer.old_std_level2_code != rcd_customer.std_level2_code or
-          rcd_customer.old_std_level3_code != rcd_customer.std_level3_code or
-          rcd_customer.old_std_level4_code != rcd_customer.std_level4_code) then
+      if (nvl(rcd_customer.old_std_level1_code,'*NULL') != nvl(rcd_customer.std_level1_code,'*NULL') or
+          nvl(rcd_customer.old_std_level2_code,'*NULL') != nvl(rcd_customer.std_level2_code,'*NULL') or
+          nvl(rcd_customer.old_std_level3_code,'*NULL') != nvl(rcd_customer.std_level3_code,'*NULL') or
+          nvl(rcd_customer.old_std_level4_code,'*NULL') != nvl(rcd_customer.std_level4_code,'*NULL')) then
          bol_update := true;
       end if;
 
@@ -941,78 +941,89 @@ BEGIN
       -- if geo hierarchy does not exist then insert
       -- if any geo hierarchy names are different then update
       --
-      open csr_geo_hierarchy;
-      fetch csr_geo_hierarchy into rcd_geo_hierarchy;
-      if csr_geo_hierarchy%notfound then
-         insert into geo_hierarchy
-            values(rcd_customer.geo_level1_code,
-                   rcd_customer.geo_level2_code,
-                   rcd_customer.geo_level3_code,
-                   rcd_customer.geo_level4_code,
-                   rcd_customer.geo_level5_code,
-                   rcd_customer.geo_level1_name,
-                   rcd_customer.geo_level2_name,
-                   rcd_customer.geo_level3_name,
-                   rcd_customer.geo_level4_name,
-                   rcd_customer.geo_level5_name);
-         commit;
-      else
-         if (rcd_geo_hierarchy.geo_level1_name != rcd_customer.geo_level1_name or
-             rcd_geo_hierarchy.geo_level2_name != rcd_customer.geo_level2_name or
-             rcd_geo_hierarchy.geo_level3_name != rcd_customer.geo_level3_name or
-             rcd_geo_hierarchy.geo_level4_name != rcd_customer.geo_level4_name or
-             rcd_geo_hierarchy.geo_level5_name != rcd_customer.geo_level5_name) then
-            update geo_hierarchy
-               set geo_level1_name = rcd_customer.geo_level1_name,
-                   geo_level2_name = rcd_customer.geo_level2_name,
-                   geo_level3_name = rcd_customer.geo_level3_name,
-                   geo_level4_name = rcd_customer.geo_level4_name,
-                   geo_level5_name = rcd_customer.geo_level5_name
-             where geo_level1_code = rcd_customer.geo_level1_code
-               and geo_level2_code = rcd_customer.geo_level2_code
-               and geo_level3_code = rcd_customer.geo_level3_code
-               and geo_level4_code = rcd_customer.geo_level4_code
-               and geo_level5_code = rcd_customer.geo_level5_code;
+      if (not(rcd_customer.geo_level1_code is null) and
+          not(rcd_customer.geo_level2_code is null) and
+          not(rcd_customer.geo_level3_code is null) and
+          not(rcd_customer.geo_level4_code is null) and
+          not(rcd_customer.geo_level5_code is null)) then
+         open csr_geo_hierarchy;
+         fetch csr_geo_hierarchy into rcd_geo_hierarchy;
+         if csr_geo_hierarchy%notfound then
+            insert into geo_hierarchy
+               values(rcd_customer.geo_level1_code,
+                      rcd_customer.geo_level2_code,
+                      rcd_customer.geo_level3_code,
+                      rcd_customer.geo_level4_code,
+                      rcd_customer.geo_level5_code,
+                      rcd_customer.geo_level1_name,
+                      rcd_customer.geo_level2_name,
+                      rcd_customer.geo_level3_name,
+                      rcd_customer.geo_level4_name,
+                      rcd_customer.geo_level5_name);
             commit;
+         else
+            if (rcd_geo_hierarchy.geo_level1_name != rcd_customer.geo_level1_name or
+                rcd_geo_hierarchy.geo_level2_name != rcd_customer.geo_level2_name or
+                rcd_geo_hierarchy.geo_level3_name != rcd_customer.geo_level3_name or
+                rcd_geo_hierarchy.geo_level4_name != rcd_customer.geo_level4_name or
+                rcd_geo_hierarchy.geo_level5_name != rcd_customer.geo_level5_name) then
+               update geo_hierarchy
+                  set geo_level1_name = rcd_customer.geo_level1_name,
+                      geo_level2_name = rcd_customer.geo_level2_name,
+                      geo_level3_name = rcd_customer.geo_level3_name,
+                      geo_level4_name = rcd_customer.geo_level4_name,
+                      geo_level5_name = rcd_customer.geo_level5_name
+                where geo_level1_code = rcd_customer.geo_level1_code
+                  and geo_level2_code = rcd_customer.geo_level2_code
+                  and geo_level3_code = rcd_customer.geo_level3_code
+                  and geo_level4_code = rcd_customer.geo_level4_code
+                  and geo_level5_code = rcd_customer.geo_level5_code;
+               commit;
+            end if;
          end if;
+         close csr_geo_hierarchy;
       end if;
-      close csr_geo_hierarchy;
 
       --
       -- if standard hierarchy does not exist then insert
       -- if any standard hierarchy names are different then update
       --
-      open csr_standard_hierarchy;
-      fetch csr_standard_hierarchy into rcd_standard_hierarchy;
-      if csr_standard_hierarchy%notfound then
-         insert into standard_hierarchy
-            values(rcd_customer.std_level1_code,
-                   rcd_customer.std_level2_code,
-                   rcd_customer.std_level3_code,
-                   rcd_customer.std_level4_code,
-                   rcd_customer.std_level1_name,
-                   rcd_customer.std_level2_name,
-                   rcd_customer.std_level3_name,
-                   rcd_customer.std_level4_name);
-         commit;
-      else
-         if (rcd_standard_hierarchy.std_level1_name != rcd_customer.std_level1_name or
-             rcd_standard_hierarchy.std_level2_name != rcd_customer.std_level2_name or
-             rcd_standard_hierarchy.std_level3_name != rcd_customer.std_level3_name or
-             rcd_standard_hierarchy.std_level4_name != rcd_customer.std_level4_name) then
-            update standard_hierarchy
-               set std_level1_name = rcd_customer.std_level1_name,
-                   std_level2_name = rcd_customer.std_level2_name,
-                   std_level3_name = rcd_customer.std_level3_name,
-                   std_level4_name = rcd_customer.std_level4_name
-             where std_level1_code = rcd_customer.std_level1_code
-               and std_level2_code = rcd_customer.std_level2_code
-               and std_level3_code = rcd_customer.std_level3_code
-               and std_level4_code = rcd_customer.std_level4_code;
+      if (not(rcd_customer.std_level1_code is null) and
+          not(rcd_customer.std_level2_code is null) and
+          not(rcd_customer.std_level3_code is null) and
+          not(rcd_customer.std_level4_code is null)) then
+         open csr_standard_hierarchy;
+         fetch csr_standard_hierarchy into rcd_standard_hierarchy;
+         if csr_standard_hierarchy%notfound then
+            insert into standard_hierarchy
+               values(rcd_customer.std_level1_code,
+                      rcd_customer.std_level2_code,
+                      rcd_customer.std_level3_code,
+                      rcd_customer.std_level4_code,
+                      rcd_customer.std_level1_name,
+                      rcd_customer.std_level2_name,
+                      rcd_customer.std_level3_name,
+                      rcd_customer.std_level4_name);
             commit;
+         else
+            if (rcd_standard_hierarchy.std_level1_name != rcd_customer.std_level1_name or
+                rcd_standard_hierarchy.std_level2_name != rcd_customer.std_level2_name or
+                rcd_standard_hierarchy.std_level3_name != rcd_customer.std_level3_name or
+                rcd_standard_hierarchy.std_level4_name != rcd_customer.std_level4_name) then
+               update standard_hierarchy
+                  set std_level1_name = rcd_customer.std_level1_name,
+                      std_level2_name = rcd_customer.std_level2_name,
+                      std_level3_name = rcd_customer.std_level3_name,
+                      std_level4_name = rcd_customer.std_level4_name
+                where std_level1_code = rcd_customer.std_level1_code
+                  and std_level2_code = rcd_customer.std_level2_code
+                  and std_level3_code = rcd_customer.std_level3_code
+                  and std_level4_code = rcd_customer.std_level4_code;
+               commit;
+            end if;
          end if;
+         close csr_standard_hierarchy;
       end if;
-      close csr_standard_hierarchy;
 
       --
       -- update the customer when required
@@ -1031,7 +1042,16 @@ BEGIN
                 outlet_location = rcd_customer.outlet_location,
                 distributor_flg = rcd_customer.distributor_flg,
                 affiliation_id = var_affiliation_id,
-                cust_type_id = var_cust_type_id
+                cust_type_id = var_cust_type_id,
+                geo_level1_code = rcd_customer.geo_level1_code,
+                geo_level2_code = rcd_customer.geo_level2_code,
+                geo_level3_code = rcd_customer.geo_level3_code,
+                geo_level4_code = rcd_customer.geo_level4_code,
+                geo_level5_code = rcd_customer.geo_level5_code,
+                std_level1_code = rcd_customer.std_level1_code,
+                std_level2_code = rcd_customer.std_level2_code,
+                std_level3_code = rcd_customer.std_level3_code,
+                std_level4_code = rcd_customer.std_level4_code
           where customer_id = rcd_customer.customer_id;
 
          --
