@@ -85,18 +85,18 @@ create or replace package body ladefx01_chn_item as
                 -- Material information
                 --
                 (select t01.matnr as matnr,
-                        t01.ean11 as ean11,
-                        t01.meins as meins,
-                        t01.ntgew as ntgew,
-                        t01.gewei as gewei,
-                        t01.zzrepmatnr as zzrepmatnr,
-                        decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN'),t02.maktx) as maktx,
-                        nvl(t05.bus_sgmnt_desc,'*UNKNOWN') as bus_sgmnt_desc,
-                        nvl(t06.brand_flag_desc,'*UNKNOWN') as brand_flag_desc,
-                        nvl(t07.brand_sub_flag_desc,'*UNKNOWN') as brand_sub_flag_desc,
-                        nvl(t08.prdct_pack_size_desc,'*UNKNOWN') as prdct_pack_size_desc,
-                        nvl(t09.cnsmr_pack_frmt_desc,'*UNKNOWN') as cnsmr_pack_frmt_desc,
-                        decode(t10.vmsta,'20',' ','99','X') as item_status
+                        max(t01.ean11) as ean11,
+                        max(t01.meins) as meins,
+                        max(t01.ntgew) as ntgew,
+                        max(t01.gewei) as gewei,
+                        max(t01.zzrepmatnr) as zzrepmatnr,
+                        max(decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN't03.maktx),t02.maktx)) as maktx,
+                        max(nvl(t05.bus_sgmnt_desc,'*UNKNOWN')) as bus_sgmnt_desc,
+                        max(nvl(t06.brand_flag_desc,'*UNKNOWN')) as brand_flag_desc,
+                        max(nvl(t07.brand_sub_flag_desc,'*UNKNOWN')) as brand_sub_flag_desc,
+                        max(nvl(t08.prdct_pack_size_desc,'*UNKNOWN')) as prdct_pack_size_desc,
+                        max(nvl(t09.cnsmr_pack_frmt_desc,'*UNKNOWN')) as cnsmr_pack_frmt_desc,
+                        max(decode(t10.vmsta,'20',' ','99','X')) as item_status
                    from lads_mat_hdr t01,
                         (select t01.matnr,
                                 max(t01.maktx) as maktx
@@ -169,7 +169,8 @@ create or replace package body ladefx01_chn_item as
                     and t01.mtart = 'FERT'
                     and t01.zzistdu = 'X'
                     and t01.lvorm is null
-                    and t01.lads_status = '1') t01,
+                    and t01.lads_status = '1'
+                  group by t01.matnr) t01,
                 --
                 -- Material TDU/UOM information
                 --
