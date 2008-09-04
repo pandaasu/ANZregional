@@ -68,6 +68,11 @@ create or replace package body cad_to_efex_cust_loader as
    procedure execute(par_action in varchar2) is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_process boolean;
+
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_cad_cust_data is
@@ -94,10 +99,17 @@ create or replace package body cad_to_efex_cust_loader as
             if csr_cad_cust_data%notfound then
                exit;
             end if;
-            if (not(rcd_cad_cust_data.business_unit_id is null) and
-                rcd_cad_cust_data.otl_status = 'A' and
-                (rcd_cad_cust_data.sales_team = 'MT' or
-                 rcd_cad_cust_data.sales_team = 'IC')) then
+            var_process := true;
+            if rcd_cad_cust_data.business_unit_id is null then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team != 'MT' and rcd_cad_cust_data.sales_team != 'IC') then
+               var_process := false;
+            end if;
+            if rcd_cad_cust_data.otl_status != 'A' then
+               var_process := false;
+            end if;
+            if var_process = true then
                process_user(rcd_cad_cust_data);
             end if;
          end loop;
@@ -118,10 +130,17 @@ create or replace package body cad_to_efex_cust_loader as
             if csr_cad_cust_data%notfound then
                exit;
             end if;
-            if (not(rcd_cad_cust_data.business_unit_id is null) and
-                rcd_cad_cust_data.otl_status != 'A' and
-                (rcd_cad_cust_data.sales_team = 'MT' or
-                 rcd_cad_cust_data.sales_team = 'IC')) then
+            var_process := true;
+            if rcd_cad_cust_data.business_unit_id is null then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team != 'MT' and rcd_cad_cust_data.sales_team != 'IC') then
+               var_process := false;
+            end if;
+            if rcd_cad_cust_data.otl_status = 'A' then
+               var_process := false;
+            end if;
+            if var_process = true then
                process_user(rcd_cad_cust_data);
             end if;
          end loop;
@@ -142,9 +161,20 @@ create or replace package body cad_to_efex_cust_loader as
             if csr_cad_cust_data%notfound then
                exit;
             end if;
-            if (rcd_cad_cust_data.distributor_flag = 'Y' and
-                (trim(rcd_cad_cust_data.business_unit_id) is null or rcd_cad_cust_data.business_unit_id = 5) and
-                (trim(rcd_cad_cust_data.business_unit_id) is null or rcd_cad_cust_data.business_unit_id = 5)) then
+            var_process := true;
+            if rcd_cad_cust_data.business_unit_id = 6 then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team != 'MT' and rcd_cad_cust_data.sales_team != 'IC' and rcd_cad_cust_data.sales_team != 'WS') then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team = 'WS' and rcd_cad_cust_data.outlet_flag = 'Y') then
+               var_process := false;
+            end if;
+            if rcd_cad_cust_data.distributor_flag != 'Y' then
+               var_process := false;
+            end if;
+            if var_process = true then
                process_customer(rcd_cad_cust_data, '5');
             end if;
          end loop;
@@ -165,10 +195,20 @@ create or replace package body cad_to_efex_cust_loader as
             if csr_cad_cust_data%notfound then
                exit;
             end if;
-            if (rcd_cad_cust_data.distributor_flag = 'Y' and
-                rcd_cad_cust_data.sales_team = 'IC' and
-                (trim(rcd_cad_cust_data.business_unit_id) is null or rcd_cad_cust_data.business_unit_id = 5) and
-                (trim(rcd_cad_cust_data.business_unit_id) is null or rcd_cad_cust_data.business_unit_id = 6)) then
+            var_process := true;
+            if rcd_cad_cust_data.business_unit_id = 5 then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team != 'IC' and rcd_cad_cust_data.sales_team != 'WS') then
+               var_process := false;
+            end if;
+            if (rcd_cad_cust_data.sales_team = 'WS' and rcd_cad_cust_data.outlet_flag = 'Y') then
+               var_process := false;
+            end if;
+            if rcd_cad_cust_data.distributor_flag != 'Y' then
+               var_process := false;
+            end if;
+            if var_process = true then
                process_customer(rcd_cad_cust_data, '6');
             end if;
          end loop;
@@ -176,7 +216,7 @@ create or replace package body cad_to_efex_cust_loader as
       end if;
 
       /*-*/
-      /* Process the outlets
+      /* Process the customers
       /*-*/
       if upper(par_action) = '*ALL' or upper(par_action) = '*CUST' then
          var_log_type := 'CAD_CUST_LOAD';
@@ -189,7 +229,14 @@ create or replace package body cad_to_efex_cust_loader as
             if csr_cad_cust_data%notfound then
                exit;
             end if;
-            if rcd_cad_cust_data.distributor_flag = 'N' then
+            var_process := true;
+            if (rcd_cad_cust_data.sales_team != 'MT' and rcd_cad_cust_data.sales_team != 'IC') then
+               var_process := false;
+            end if;
+            if rcd_cad_cust_data.distributor_flag = 'Y' then
+               var_process := false;
+            end if;
+            if var_process = true then
                process_customer(rcd_cad_cust_data, 'N');
             end if;
          end loop;
@@ -214,7 +261,7 @@ create or replace package body cad_to_efex_cust_loader as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - CAD TO EFEX CONVERSION - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - CAD TO EFEX CONVERSION - ' || substr(SQLERRM, 1, 2048));
 
    /*-------------*/
    /* End routine */
@@ -244,35 +291,30 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       cursor csr_users is
          select t01.*,
-                t02.sales_territory_id,
-                t03.sales_area_id,
-                t04.sales_region_id,
-                t04.segment_id
+                t02.sales_territory_id
            from users t01,
-                sales_territory t02,
-                sales_area t03,
-                sales_region t04
+                sales_territory t02
           where t01.user_id = t02.user_id(+)
-            and t02.sales_area_id = t03.sales_area_id(+)
-            and t03.sales_region_id = t04.sales_region_id(+)
             and username = par_cad_cust_data.sales_prsn_code
           order by t02.sales_territory_id asc;
       rcd_users csr_users%rowtype;
 
       cursor csr_manager is
-         select t01.*
-           from users t01
-          where username = par_cad_cust_data.line_mgr_code;
+         select t01.*,
+                t02.sales_area_id
+           from users t01,
+                sales_area t02
+          where t01.user_id = t02.user_id(+)
+            and username = par_cad_cust_data.line_mgr_code;
       rcd_manager csr_manager%rowtype;
 
       cursor csr_sales_region is
-         select t01.*
+         select t01.*,
+                t02.business_unit_id
            from sales_region t01,
                 segment t02
           where t01.segment_id = t02.segment_id
             and t01.user_id = var_manager_id
-            and t01.segment_id = var_segment_id
-            and t02.business_unit_id = var_business_unit_id
           order by t01.sales_region_id asc;
       rcd_sales_region csr_sales_region%rowtype;
 
@@ -289,7 +331,6 @@ create or replace package body cad_to_efex_cust_loader as
            from sales_territory t01
           where t01.sales_area_id = var_sales_area_id
             and t01.user_id = var_user_id
-            and t01.status = 'A'
           order by t01.sales_territory_id asc;
       rcd_sales_territory csr_sales_territory%rowtype;
 
@@ -372,30 +413,16 @@ create or replace package body cad_to_efex_cust_loader as
       end if;
 
       /*-*/
-      /* Ignore when error
-      /*-*/
-      if var_log_save != var_log_line then
-         rollback;
-         return;
-      end if;
-
-      /*-*/
-      /* Only create user once
-      /*-*/
-      open csr_users;
-      fetch csr_users into rcd_users;
-      if csr_users%found then
-         return;
-      end if;
-      close csr_users;
-
-      /*-*/
       /* Create the sales person when required
       /*-*/
       open csr_users;
       fetch csr_users into rcd_users;
       if csr_users%found then
          var_user_id := rcd_users.user_id;
+         if rcd_users.status != 'A' then
+            update users set status = 'A'
+            where user_id = var_user_id;
+         end if;
       else
          select users_seq.nextval into var_user_id from dual;
          insert into users
@@ -431,6 +458,10 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_manager into rcd_manager;
       if csr_manager%found then
          var_manager_id := rcd_manager.user_id;
+         if rcd_manager.status != 'A' then
+            update users set status = 'A'
+            where user_id = var_manager_id;
+         end if;
       else
          select users_seq.nextval into var_manager_id from dual;
          insert into users
@@ -467,10 +498,13 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_sales_region into rcd_sales_region;
       if csr_sales_region%found then
          var_sales_region_id := rcd_sales_region.sales_region_id;
-         if rcd_sales_region.status != 'A' then
-            update sales_region
-               set status = 'A'
-             where sales_region_id = rcd_sales_region.sales_region_id;
+         if rcd_sales_region.segment_id != var_segment_id then
+            var_log_line := var_log_line + 1;
+            write_log(var_log_type, var_log_line, var_text||' - manager already has a sales region in a differemt segment');
+         end if;
+         if rcd_sales_region.business_unit_id != var_business_unit_id then
+            var_log_line := var_log_line + 1;
+            write_log(var_log_type, var_log_line, var_text||' - manager already has a sales region in a differemt business unit');
          end if;
       else
          select sales_region_seq.nextval into var_sales_region_id from dual;
@@ -502,11 +536,6 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_sales_area into rcd_sales_area;
       if csr_sales_area%found then
          var_sales_area_id := rcd_sales_area.sales_area_id;
-         if rcd_sales_area.status != 'A' then
-            update sales_area
-               set status = 'A'
-             where sales_area_id = rcd_sales_area.sales_area_id;
-         end if;
       else
          select sales_area_seq.nextval into var_sales_area_id from dual;
          insert into sales_area
@@ -537,11 +566,6 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_sales_territory into rcd_sales_territory;
       if csr_sales_territory%found then
          var_sales_territory_id := rcd_sales_territory.sales_territory_id;
-         if rcd_sales_territory.status != 'A' then
-            update sales_territory
-               set status = 'A'
-             where sales_territory_id = rcd_sales_territory.sales_territory_id;
-         end if;
       else
          select sales_territory_seq.nextval into var_sales_territory_id from dual;
          insert into sales_territory
@@ -569,14 +593,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       open csr_user_sales_territory;
       fetch csr_user_sales_territory into rcd_user_sales_territory;
-      if csr_user_sales_territory%found then
-         if rcd_user_sales_territory.status != 'A' then
-            update user_sales_territory
-               set status = 'A'
-             where user_id = rcd_user_sales_territory.user_id
-               and sales_territory_id = rcd_user_sales_territory.sales_territory_id;
-         end if;
-      else
+      if csr_user_sales_territory%notfound then
          insert into user_sales_territory
            (user_id,
             sales_territory_id,
@@ -596,14 +613,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       open csr_user_segment;
       fetch csr_user_segment into rcd_user_segment;
-      if csr_user_segment%found then
-         if rcd_user_segment.status != 'A' then
-            update user_segment
-               set status = 'A'
-             where user_id = rcd_user_segment.user_id
-               and segment_id = rcd_user_segment.segment_id;
-         end if;
-      else
+      if csr_user_segment%notfound then
          insert into user_segment
            (user_id,
             segment_id,
@@ -619,9 +629,13 @@ create or replace package body cad_to_efex_cust_loader as
       close csr_user_segment;
 
       /*-*/
-      /* Commit the database
+      /* Commit/rollback the database
       /*-*/
-      commit;
+      if var_log_save != var_log_line then
+         rollback;
+      else
+         commit;
+      end if;
 
    /*-------------*/
    /* End routine */
@@ -772,28 +786,34 @@ create or replace package body cad_to_efex_cust_loader as
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - sales team MT must be business unit id 5 (snack)');
       end if;
-      if par_cad_cust_data.sales_prsn_code is null then
+      if (par_cad_cust_data.sales_team != 'WS' and
+          par_cad_cust_data.pur_from_wholesaler_code is null) then
          var_log_line := var_log_line + 1;
-         write_log(var_log_type, var_log_line, var_text||' - has no sales person code');
+         write_log(var_log_type, var_log_line, var_text||' - sales team MT and IC must have a wholesaler code');
       end if;
 
       /*-*/
-      /* Retrieve the sales person
+      /* Retrieve the sales person when required
       /*-*/
-      open csr_users;
-      fetch csr_users into rcd_users;
-      if csr_users%found then
-         var_user_id := rcd_users.user_id;
-         var_sales_territory_id := rcd_users.sales_territory_id;
-      else
-         var_log_line := var_log_line + 1;
-         write_log(var_log_type, var_log_line, var_text||' - user ('||par_cad_cust_data.sales_prsn_code||') does not exist');
+      var_user_id := null;
+      var_sales_territory_id := null;
+      if par_cad_cust_data.sales_team != 'WS' then
+         open csr_users;
+         fetch csr_users into rcd_users;
+         if csr_users%found then
+            var_user_id := rcd_users.user_id;
+            var_sales_territory_id := rcd_users.sales_territory_id;
+         else
+            var_log_line := var_log_line + 1;
+            write_log(var_log_type, var_log_line, var_text||' - user ('||par_cad_cust_data.sales_prsn_code||') does not exist');
+         end if;
+         close csr_users;
       end if;
-      close csr_users;
 
       /*-*/
       /* Retrieve/create the cust type
       /*-*/
+      var_cust_type_id := null;
       if par_cad_cust_data.outlet_type_name is null then
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - has no outlet type name');
@@ -835,6 +855,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Retrieve the cust grade
       /*-*/
+      var_cust_grade_id := null;
       open csr_cust_grade;
       fetch csr_cust_grade into rcd_cust_grade;
       if csr_cust_grade%found then
@@ -845,22 +866,26 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Retrieve the distributor when required
       /*-*/
-      open csr_distributor;
-      fetch csr_distributor into rcd_distributor;
-      if csr_distributor%found then
-         var_distributor_id := rcd_distributor.customer_id;
-      else
-         if par_cad_cust_data.outlet_flag = 'Y' then
-            var_log_line := var_log_line + 1;
-            write_log(var_log_type, var_log_line, var_text||' - distributor ('||par_cad_cust_data.pur_from_wholesaler_code||') not found on customer table');
+      var_distributor_id := null;
+      if not(par_cad_cust_data.pur_from_wholesaler_code is null) then
+         open csr_distributor;
+         fetch csr_distributor into rcd_distributor;
+         if csr_distributor%found then
+            var_distributor_id := rcd_distributor.customer_id;
+         else
+            if par_cad_cust_data.outlet_flag = 'Y' then
+               var_log_line := var_log_line + 1;
+               write_log(var_log_type, var_log_line, var_text||' - distributor ('||par_cad_cust_data.pur_from_wholesaler_code||') not found on customer table');
+            end if;
          end if;
+         close csr_distributor;
       end if;
-      close csr_distributor;
 
       /*-*/
       /* Retrieve the affiliation when required (indirect customer)
       /*-*/
       if par_cad_cust_data.outlet_flag = 'Y' then
+         var_affiliation_id := null;
          var_std_level1_code := null;
          var_std_level2_code := null;
          var_std_level3_code := null;
@@ -881,6 +906,10 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       if par_cad_cust_data.outlet_flag = 'N' then
          var_affiliation_id := null;
+         var_std_level1_code := null;
+         var_std_level2_code := null;
+         var_std_level3_code := null;
+         var_std_level4_code := null;
          if par_cad_cust_data.distributor_flag = 'Y' then
             open csr_affiliation_direct;
             fetch csr_affiliation_direct into rcd_affiliation_direct;
@@ -909,6 +938,11 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Retrieve the geo hierarchy when required
       /*-*/
+      var_geo_level1_code := null;
+      var_geo_level2_code := null;
+      var_geo_level3_code := null;
+      var_geo_level4_code := null;
+      var_geo_level5_code := null;
       open csr_geo_hierarchy;
       fetch csr_geo_hierarchy into rcd_geo_hierarchy;
       if csr_geo_hierarchy%found then
@@ -1010,21 +1044,22 @@ create or replace package body cad_to_efex_cust_loader as
                   var_std_level4_code,
                   var_business_unit_id);
 
-
-         if par_cad_cust_data.otl_status = 'A' then
-            insert into cust_sales_territory
-              (customer_id,
-               sales_territory_id,
-               status,
-               modified_user,
-               modified_date,
-               primary_flg)
-              values(var_customer_id,
-                     var_sales_territory_id,
-                     'A',
-                     user,
-                     sysdate,
-                     'Y');
+         if par_cad_cust_data.sales_team != 'WS' then
+            if par_cad_cust_data.otl_status = 'A' then
+               insert into cust_sales_territory
+                 (customer_id,
+                  sales_territory_id,
+                  status,
+                  modified_user,
+                  modified_date,
+                  primary_flg)
+                 values(var_customer_id,
+                        var_sales_territory_id,
+                        'A',
+                        user,
+                        sysdate,
+                        'Y');
+            end if;
          end if;
 
          if not(par_cad_cust_data.cont_name) is null then
@@ -1048,7 +1083,7 @@ create or replace package body cad_to_efex_cust_loader as
                      sysdate);
          end if;
 
-         if (not(var_distributor_id) is null and
+         if (not(par_cad_cust_data.pur_from_wholesaler_code is null) and
              not(par_cad_cust_data.cust_otl_code is null)) then
             insert into distributor_cust
               (distributor_id,
