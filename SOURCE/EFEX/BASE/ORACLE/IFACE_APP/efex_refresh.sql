@@ -670,6 +670,29 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
    var_cust_type_id number;
    var_cust_contact_id number;
 
+   cursor csr_iface_customer is
+      select a.geo_level1_code,
+             a.geo_level2_code,
+             a.geo_level3_code,
+             a.geo_level4_code,
+             a.geo_level5_code,
+             a.geo_level1_name,
+             a.geo_level2_name,
+             a.geo_level3_name,
+             a.geo_level4_name,
+             a.geo_level5_name,
+             a.std_level1_code,
+             a.std_level2_code,
+             a.std_level3_code,
+             a.std_level4_code,
+             a.std_level1_name,
+             a.std_level2_name,
+             a.std_level3_name,
+             a.std_level4_name
+        from iface.iface_customer a
+       where a.market_id = p_MarketID;
+   rcd_iface_customer csr_iface_customer%rowtype;
+
    cursor csr_customer is
       select a.customer_id,
              a.business_unit_id,
@@ -804,6 +827,107 @@ BEGIN
    commit;
 
    --
+   -- retrieve the IFACE customer data
+   --
+   open csr_iface_customer;
+   loop
+      fetch csr_iface_customer into rcd_iface_customer;
+      if csr_iface_customer%notfound then
+         exit;
+      end if;
+
+      --
+      -- if geo hierarchy does not exist then insert
+      -- if any geo hierarchy names are different then update
+      --
+      if (not(rcd_iface_customer.geo_level1_code is null) and
+          not(rcd_iface_customer.geo_level2_code is null) and
+          not(rcd_iface_customer.geo_level3_code is null) and
+          not(rcd_iface_customer.geo_level4_code is null) and
+          not(rcd_iface_customer.geo_level5_code is null)) then
+         open csr_geo_hierarchy;
+         fetch csr_geo_hierarchy into rcd_geo_hierarchy;
+         if csr_geo_hierarchy%notfound then
+            insert into geo_hierarchy
+               values(rcd_iface_customer.geo_level1_code,
+                      rcd_iface_customer.geo_level2_code,
+                      rcd_iface_customer.geo_level3_code,
+                      rcd_iface_customer.geo_level4_code,
+                      rcd_iface_customer.geo_level5_code,
+                      rcd_iface_customer.geo_level1_name,
+                      rcd_iface_customer.geo_level2_name,
+                      rcd_iface_customer.geo_level3_name,
+                      rcd_iface_customer.geo_level4_name,
+                      rcd_iface_customer.geo_level5_name);
+            commit;
+         else
+            if (rcd_geo_hierarchy.geo_level1_name != rcd_iface_customer.geo_level1_name or
+                rcd_geo_hierarchy.geo_level2_name != rcd_iface_customer.geo_level2_name or
+                rcd_geo_hierarchy.geo_level3_name != rcd_iface_customer.geo_level3_name or
+                rcd_geo_hierarchy.geo_level4_name != rcd_iface_customer.geo_level4_name or
+                rcd_geo_hierarchy.geo_level5_name != rcd_iface_customer.geo_level5_name) then
+               update geo_hierarchy
+                  set geo_level1_name = rcd_iface_customer.geo_level1_name,
+                      geo_level2_name = rcd_iface_customer.geo_level2_name,
+                      geo_level3_name = rcd_iface_customer.geo_level3_name,
+                      geo_level4_name = rcd_iface_customer.geo_level4_name,
+                      geo_level5_name = rcd_iface_customer.geo_level5_name
+                where geo_level1_code = rcd_iface_customer.geo_level1_code
+                  and geo_level2_code = rcd_iface_customer.geo_level2_code
+                  and geo_level3_code = rcd_iface_customer.geo_level3_code
+                  and geo_level4_code = rcd_iface_customer.geo_level4_code
+                  and geo_level5_code = rcd_iface_customer.geo_level5_code;
+               commit;
+            end if;
+         end if;
+         close csr_geo_hierarchy;
+      end if;
+
+      --
+      -- if standard hierarchy does not exist then insert
+      -- if any standard hierarchy names are different then update
+      --
+      if (not(rcd_iface_customer.std_level1_code is null) and
+          not(rcd_iface_customer.std_level2_code is null) and
+          not(rcd_iface_customer.std_level3_code is null) and
+          not(rcd_iface_customer.std_level4_code is null)) then
+         open csr_standard_hierarchy;
+         fetch csr_standard_hierarchy into rcd_standard_hierarchy;
+         if csr_standard_hierarchy%notfound then
+            insert into standard_hierarchy
+               values(rcd_iface_customer.std_level1_code,
+                      rcd_iface_customer.std_level2_code,
+                      rcd_iface_customer.std_level3_code,
+                      rcd_iface_customer.std_level4_code,
+                      rcd_iface_customer.std_level1_name,
+                      rcd_iface_customer.std_level2_name,
+                      rcd_iface_customer.std_level3_name,
+                      rcd_iface_customer.std_level4_name);
+            commit;
+         else
+            if (rcd_standard_hierarchy.std_level1_name != rcd_iface_customer.std_level1_name or
+                rcd_standard_hierarchy.std_level2_name != rcd_iface_customer.std_level2_name or
+                rcd_standard_hierarchy.std_level3_name != rcd_iface_customer.std_level3_name or
+                rcd_standard_hierarchy.std_level4_name != rcd_iface_customer.std_level4_name) then
+               update standard_hierarchy
+                  set std_level1_name = rcd_iface_customer.std_level1_name,
+                      std_level2_name = rcd_iface_customer.std_level2_name,
+                      std_level3_name = rcd_iface_customer.std_level3_name,
+                      std_level4_name = rcd_iface_customer.std_level4_name
+                where std_level1_code = rcd_iface_customer.std_level1_code
+                  and std_level2_code = rcd_iface_customer.std_level2_code
+                  and std_level3_code = rcd_iface_customer.std_level3_code
+                  and std_level4_code = rcd_iface_customer.std_level4_code;
+               commit;
+            end if;
+         end if;
+         close csr_standard_hierarchy;
+      end if;
+
+   end loop;
+   close csr_iface_customer;
+
+   --
    -- retrieve the customer data
    --
    open csr_customer;
@@ -935,94 +1059,6 @@ BEGIN
             write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - sales person code ('||rcd_customer.sales_person_code||') not found on USERS table using USERNAME');
          end if;
          close csr_users;
-      end if;
-
-      --
-      -- if geo hierarchy does not exist then insert
-      -- if any geo hierarchy names are different then update
-      --
-      if (not(rcd_customer.geo_level1_code is null) and
-          not(rcd_customer.geo_level2_code is null) and
-          not(rcd_customer.geo_level3_code is null) and
-          not(rcd_customer.geo_level4_code is null) and
-          not(rcd_customer.geo_level5_code is null)) then
-         open csr_geo_hierarchy;
-         fetch csr_geo_hierarchy into rcd_geo_hierarchy;
-         if csr_geo_hierarchy%notfound then
-            insert into geo_hierarchy
-               values(rcd_customer.geo_level1_code,
-                      rcd_customer.geo_level2_code,
-                      rcd_customer.geo_level3_code,
-                      rcd_customer.geo_level4_code,
-                      rcd_customer.geo_level5_code,
-                      rcd_customer.geo_level1_name,
-                      rcd_customer.geo_level2_name,
-                      rcd_customer.geo_level3_name,
-                      rcd_customer.geo_level4_name,
-                      rcd_customer.geo_level5_name);
-            commit;
-         else
-            if (rcd_geo_hierarchy.geo_level1_name != rcd_customer.geo_level1_name or
-                rcd_geo_hierarchy.geo_level2_name != rcd_customer.geo_level2_name or
-                rcd_geo_hierarchy.geo_level3_name != rcd_customer.geo_level3_name or
-                rcd_geo_hierarchy.geo_level4_name != rcd_customer.geo_level4_name or
-                rcd_geo_hierarchy.geo_level5_name != rcd_customer.geo_level5_name) then
-               update geo_hierarchy
-                  set geo_level1_name = rcd_customer.geo_level1_name,
-                      geo_level2_name = rcd_customer.geo_level2_name,
-                      geo_level3_name = rcd_customer.geo_level3_name,
-                      geo_level4_name = rcd_customer.geo_level4_name,
-                      geo_level5_name = rcd_customer.geo_level5_name
-                where geo_level1_code = rcd_customer.geo_level1_code
-                  and geo_level2_code = rcd_customer.geo_level2_code
-                  and geo_level3_code = rcd_customer.geo_level3_code
-                  and geo_level4_code = rcd_customer.geo_level4_code
-                  and geo_level5_code = rcd_customer.geo_level5_code;
-               commit;
-            end if;
-         end if;
-         close csr_geo_hierarchy;
-      end if;
-
-      --
-      -- if standard hierarchy does not exist then insert
-      -- if any standard hierarchy names are different then update
-      --
-      if (not(rcd_customer.std_level1_code is null) and
-          not(rcd_customer.std_level2_code is null) and
-          not(rcd_customer.std_level3_code is null) and
-          not(rcd_customer.std_level4_code is null)) then
-         open csr_standard_hierarchy;
-         fetch csr_standard_hierarchy into rcd_standard_hierarchy;
-         if csr_standard_hierarchy%notfound then
-            insert into standard_hierarchy
-               values(rcd_customer.std_level1_code,
-                      rcd_customer.std_level2_code,
-                      rcd_customer.std_level3_code,
-                      rcd_customer.std_level4_code,
-                      rcd_customer.std_level1_name,
-                      rcd_customer.std_level2_name,
-                      rcd_customer.std_level3_name,
-                      rcd_customer.std_level4_name);
-            commit;
-         else
-            if (rcd_standard_hierarchy.std_level1_name != rcd_customer.std_level1_name or
-                rcd_standard_hierarchy.std_level2_name != rcd_customer.std_level2_name or
-                rcd_standard_hierarchy.std_level3_name != rcd_customer.std_level3_name or
-                rcd_standard_hierarchy.std_level4_name != rcd_customer.std_level4_name) then
-               update standard_hierarchy
-                  set std_level1_name = rcd_customer.std_level1_name,
-                      std_level2_name = rcd_customer.std_level2_name,
-                      std_level3_name = rcd_customer.std_level3_name,
-                      std_level4_name = rcd_customer.std_level4_name
-                where std_level1_code = rcd_customer.std_level1_code
-                  and std_level2_code = rcd_customer.std_level2_code
-                  and std_level3_code = rcd_customer.std_level3_code
-                  and std_level4_code = rcd_customer.std_level4_code;
-               commit;
-            end if;
-         end if;
-         close csr_standard_hierarchy;
       end if;
 
       --
