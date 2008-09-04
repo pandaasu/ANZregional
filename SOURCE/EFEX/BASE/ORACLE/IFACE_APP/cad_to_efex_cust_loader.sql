@@ -1148,21 +1148,19 @@ create or replace package body cad_to_efex_cust_loader as
                   var_business_unit_id);
 
          if par_cad_cust_data.sales_team != 'WS' then
-            if par_cad_cust_data.otl_status = 'A' then
-               insert into cust_sales_territory
-                 (customer_id,
-                  sales_territory_id,
-                  status,
-                  modified_user,
-                  modified_date,
-                  primary_flg)
-                 values(var_customer_id,
-                        var_sales_territory_id,
-                        'A',
-                        user,
-                        sysdate,
-                        'Y');
-            end if;
+            insert into cust_sales_territory
+              (customer_id,
+               sales_territory_id,
+               status,
+               modified_user,
+               modified_date,
+               primary_flg)
+              values(var_customer_id,
+                     var_sales_territory_id,
+                     'A',
+                     user,
+                     sysdate,
+                     'Y');
          end if;
 
          if not(par_cad_cust_data.cont_name) is null then
