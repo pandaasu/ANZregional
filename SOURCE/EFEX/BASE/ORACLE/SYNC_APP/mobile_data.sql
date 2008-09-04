@@ -2410,6 +2410,9 @@ create or replace package body mobile_data as
       /*-*/
       /* Local definitions
       /*-*/
+      var_sales_territory_id number;
+      var_segment_id number;
+      var_range_id number;
       var_level5_name varchar2(100);
 
       /*-*/
@@ -2422,17 +2425,61 @@ create or replace package body mobile_data as
       rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
       cursor csr_sales_territory is 
-         select t01.sales_territory_id
-           from sales_territory t01
-          where t01.user_id = var_auth_user_id
+         select t01.sales_territory_id,
+                t03.segment_id
+           from sales_territory t01,
+                sales_area t02,
+                sales_region t03
+          where t01.sales_area_id = t02.sales_area_id(+)
+            and t02.sales_region_id = t03.sales_region_id(+)
+            and t01.user_id = var_auth_user_id
             and t01.status = 'A'
           order by t01.sales_territory_id asc;
       rcd_sales_territory csr_sales_territory%rowtype;
+
+      cursor csr_range is 
+         select t01.range_id
+           from range t01
+          where t01.segment_id = var_segment_id
+            and t01.cust_type_id = upd_customer.cust_type_id
+            and t01.status = 'A'
+          order by t01.range_id asc;
+      rcd_range csr_range%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Retrieve the sales territory
+      /* **notes** 1. The first active authenticated user sales territory is retrieved
+      /*-*/
+      var_sales_territory_id := null;
+      var_segment_id := null;
+      open csr_sales_territory;
+      fetch csr_sales_territory into rcd_sales_territory;
+      if csr_sales_territory%notfound then
+         raise_application_error(-20000, 'update_customer_data - User (' || to_char(var_auth_user_id) || ') has no active sales territory');
+      else
+         var_sales_territory_id := rcd_sales_territory.sales_territory_id;
+         var_segment_id := rcd_sales_territory.segment_id;
+      end if;
+      close csr_sales_territory;
+
+      /*-*/
+      /* Retrieve the range when sales territory segment found
+      /* **notes** 1. The first active range is retrieved
+      /*-*/
+      var_range_id := null;
+      if not(var_segment_id is null) then
+         open csr_range;
+         fetch csr_range into rcd_range;
+         if csr_range%found then
+            var_range_id := rcd_range.range_id;
+         end if;
+         close csr_range;
+      end if;
 
       /*-*/
       /* Attempt to find the related sales force hierarchy based on the authorised user city
@@ -2481,7 +2528,7 @@ create or replace package body mobile_data as
          upd_customer.outlet_flg := 'Y';
          upd_customer.active_flg := 'Y';
          upd_customer.market_id := var_auth_market_id;
-         upd_customer.range_id := null;
+         upd_customer.range_id := var_range_id;
          upd_customer.cust_visit_freq_id := null;
          upd_customer.cust_type_id := upd_customer.cust_type_id;
          upd_customer.affiliation_id := null;
@@ -2540,21 +2587,10 @@ create or replace package body mobile_data as
       end if;
 
       /*-*/
-      /* Retrieve the sales territory
-      /* **notes** 1. The first active authenticated user sales territory is retrieved
-      /*-*/
-      open csr_sales_territory;
-      fetch csr_sales_territory into rcd_sales_territory;
-      if csr_sales_territory%notfound then
-         raise_application_error(-20000, 'update_customer_data - User (' || to_char(var_auth_user_id) || ') has no active sales territory');
-      end if;
-      close csr_sales_territory;
-
-      /*-*/
       /* Insert the customer sales territory data
       /*-*/
       upd_cust_sales_territory.customer_id := upd_customer.customer_id;
-      upd_cust_sales_territory.sales_territory_id := rcd_sales_territory.sales_territory_id;
+      upd_cust_sales_territory.sales_territory_id := var_sales_territory_id;
       upd_cust_sales_territory.status := 'A';
       upd_cust_sales_territory.modified_user := user;
       upd_cust_sales_territory.modified_date := mobile_to_timezone(sysdate);
