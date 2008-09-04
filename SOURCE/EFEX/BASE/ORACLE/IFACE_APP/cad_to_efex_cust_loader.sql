@@ -994,15 +994,14 @@ create or replace package body cad_to_efex_cust_loader as
          var_std_level2_code := null;
          var_std_level3_code := null;
          var_std_level4_code := null;
-         open csr_affiliation_indirect;
-         fetch csr_affiliation_indirect into rcd_affiliation_indirect;
-         if csr_affiliation_indirect%found then
-            var_affiliation_id := rcd_affiliation_indirect.affiliation_id;
-         else
-            var_log_line := var_log_line + 1;
-            write_log(var_log_type, var_log_line, var_text||' - affiliation ('||par_cad_cust_data.chain_store_banner_name||') not found on affiliation table');
+         if not(par_cad_cust_data.chain_store_banner_name is null) then
+            open csr_affiliation_indirect;
+            fetch csr_affiliation_indirect into rcd_affiliation_indirect;
+            if csr_affiliation_indirect%found then
+               var_affiliation_id := rcd_affiliation_indirect.affiliation_id;
+            end if;
+            close csr_affiliation_indirect;
          end if;
-         close csr_affiliation_indirect;
       end if;
 
       /*-*/
