@@ -285,27 +285,48 @@ create or replace package body cad_to_efex_cust_loader as
       var_sales_region_id number;
       var_sales_area_id number;
       var_sales_territory_id number;
+      var_manager_username varchar2(32);
+      var_manager_user_id number;
+      var_manager_territory_id number;
+      var_manager_area_id number;
+      var_manager_region_id number;
+      var_manager_segment_id number;
+      var_manager_business_unit_id number;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_users is
-         select t01.*,
-                t02.sales_territory_id
-           from users t01,
-                sales_territory t02
-          where t01.user_id = t02.user_id(+)
-            and username = par_cad_cust_data.sales_prsn_code
-          order by t02.sales_territory_id asc;
+         select t01.*
+           from users t01
+          where t01.username = par_cad_cust_data.sales_prsn_code;
       rcd_users csr_users%rowtype;
 
+      cursor csr_user_manager is
+         select t01.sales_territory_id as manager_territory_id,
+                t02.sales_area_id as manager_area_id,
+                t03.sales_region_id as manager_region_id,
+                t03.segment_id as manager_segment_id,
+                t05.business_unit_id as manager_business_unit_id,
+                t03.user_id as manager_user_id,
+                t04.username as manager_username
+           from sales_territory t01,
+                sales_area t02,
+                sales_region t03,
+                users t04,
+                segment t05
+          where t01.sales_area_id = t02.sales_area_id(+)
+            and t02.sales_region_id = t03.sales_region_id(+)
+            and t03.user_id = t04.user_id(+)
+            and t03.segment_id = t05.segment_id(+)
+            and t01.user_id = var_user_id
+          order by t01.sales_territory_id asc;
+      rcd_user_manager csr_user_manager%rowtype;
+
       cursor csr_manager is
-         select t01.*,
-                t02.sales_area_id
-           from users t01,
-                sales_area t02
-          where t01.user_id = t02.user_id(+)
-            and username = par_cad_cust_data.line_mgr_code;
+         select t01.*
+           from users t01
+          where t01.username = par_cad_cust_data.line_mgr_code;
       rcd_manager csr_manager%rowtype;
 
       cursor csr_sales_region is
@@ -313,7 +334,7 @@ create or replace package body cad_to_efex_cust_loader as
                 t02.business_unit_id
            from sales_region t01,
                 segment t02
-          where t01.segment_id = t02.segment_id
+          where t01.segment_id = t02.segment_id(+)
             and t01.user_id = var_manager_id
           order by t01.sales_region_id asc;
       rcd_sales_region csr_sales_region%rowtype;
@@ -322,7 +343,6 @@ create or replace package body cad_to_efex_cust_loader as
          select t01.*
            from sales_area t01
           where t01.sales_region_id = var_sales_region_id
-            and t01.user_id = var_manager_id
           order by t01.sales_area_id asc;
       rcd_sales_area csr_sales_area%rowtype;
 
@@ -413,6 +433,14 @@ create or replace package body cad_to_efex_cust_loader as
       end if;
 
       /*-*/
+      /* Rollback the database
+      /*-*/
+      if var_log_save != var_log_line then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Create the sales person when required
       /*-*/
       open csr_users;
@@ -450,6 +478,49 @@ create or replace package body cad_to_efex_cust_loader as
                   var_business_unit_id);
       end if;
       close csr_users;
+
+      /*-*/
+      /* Retrieve the user manager relationship
+      /*-*/
+      var_manager_username := null;
+      var_manager_user_id := null;
+      var_manager_territory_id := null;
+      var_manager_area_id := null;
+      var_manager_region_id := null;
+      var_manager_segment_id := null;
+      var_manager_business_unit_id := null;
+      open csr_user_manager;
+      fetch csr_user_manager into rcd_user_manager;
+      if csr_user_manager%found then
+         var_manager_username := rcd_user_manager.manager_username;
+         var_manager_user_id := rcd_user_manager.manager_user_id;
+         var_manager_territory_id := rcd_user_manager.manager_territory_id;
+         var_manager_area_id := rcd_user_manager.manager_area_id;
+         var_manager_region_id := rcd_user_manager.manager_region_id;
+         var_manager_segment_id := rcd_user_manager.manager_segment_id;
+         var_manager_business_unit_id := rcd_user_manager.manager_business_unit_id;
+      end if;
+      close csr_user_manager;
+
+      /*-*/
+      /* Line manager differs
+      /*-*/
+      if (not(var_manager_username is null) and var_manager_username != par_cad_cust_data.line_mgr_code) then
+         var_log_line := var_log_line + 1;
+         write_log(var_log_type, var_log_line, var_text||' - line manager ('||par_cad_cust_data.line_mgr_code||') differs from existing line manager ('||var_manager_username||')');
+      end if;
+      if (not(var_manager_segment_id is null) and var_manager_segment_id != var_segment_id) then
+         var_log_line := var_log_line + 1;
+         write_log(var_log_type, var_log_line, var_text||' - segment id ('||var_segment_id||') differs from existing segment id ('||var_manager_segment_id||')');
+      end if;
+      if (not(var_manager_business_unit_id is null) and var_manager_business_unit_id != var_business_unit_id) then
+         var_log_line := var_log_line + 1;
+         write_log(var_log_type, var_log_line, var_text||' - business_unit_id ('||var_business_unit_id||') differs from existing business_unit_id ('||var_manager_business_unit_id||')');
+      end if;
+      if var_log_save != var_log_line then
+         rollback;
+         return;
+      end if;
 
       /*-*/
       /* Create the line manager when required
@@ -500,11 +571,11 @@ create or replace package body cad_to_efex_cust_loader as
          var_sales_region_id := rcd_sales_region.sales_region_id;
          if rcd_sales_region.segment_id != var_segment_id then
             var_log_line := var_log_line + 1;
-            write_log(var_log_type, var_log_line, var_text||' - manager already has a sales region in a differemt segment');
+            write_log(var_log_type, var_log_line, var_text||' - segment id ('||var_segment_id||') differs from manager region segment id ('||rcd_sales_region.segment_id||')');
          end if;
-         if rcd_sales_region.business_unit_id != var_business_unit_id then
+         if (rcd_sales_region.business_unit_id is null or rcd_sales_region.business_unit_id != var_business_unit_id) then
             var_log_line := var_log_line + 1;
-            write_log(var_log_type, var_log_line, var_text||' - manager already has a sales region in a differemt business unit');
+            write_log(var_log_type, var_log_line, var_text||' - business_unit_id ('||var_business_unit_id||') differs from manager region business_unit_id ('||rcd_sales_region.business_unit_id||')');
          end if;
       else
          select sales_region_seq.nextval into var_sales_region_id from dual;
@@ -527,6 +598,14 @@ create or replace package body cad_to_efex_cust_loader as
                   sysdate);
       end if;
       close csr_sales_region;
+
+      /*-*/
+      /* Rollback the database
+      /*-*/
+      if var_log_save != var_log_line then
+         rollback;
+         return;
+      end if;
 
       /*-*/
       /* Create the sales area when required
@@ -682,10 +761,11 @@ create or replace package body cad_to_efex_cust_loader as
       rcd_customer csr_customer%rowtype;
 
       cursor csr_users is
-         select t02.*
+         select t01.*,
+                t02.sales_territory_id
            from users t01,
                 sales_territory t02
-          where t01.user_id = t02.user_id
+          where t01.user_id = t02.user_id(+)
             and t01.username = par_cad_cust_data.sales_prsn_code
           order by t01.user_id asc,
                    t02.sales_territory_id asc;
@@ -793,6 +873,14 @@ create or replace package body cad_to_efex_cust_loader as
       end if;
 
       /*-*/
+      /* Rollback the database
+      /*-*/
+      if var_log_save != var_log_line then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Retrieve the sales person when required
       /*-*/
       var_user_id := null;
@@ -803,11 +891,27 @@ create or replace package body cad_to_efex_cust_loader as
          if csr_users%found then
             var_user_id := rcd_users.user_id;
             var_sales_territory_id := rcd_users.sales_territory_id;
+            if (var_sales_territory_id is null) then
+               var_log_line := var_log_line + 1;
+               write_log(var_log_type, var_log_line, var_text||' - sales person ('||par_cad_cust_data.sales_prsn_code||') does not have a related sales territory');
+            end if;
+            if (rcd_users.business_unit_id is null or rcd_users.business_unit_id != var_business_unit_id) then
+               var_log_line := var_log_line + 1;
+               write_log(var_log_type, var_log_line, var_text||' - business unit id ('||var_business_unit_id||') differs from user business unit id ('||rcd_users.business_unit_id||')');
+            end if;
          else
             var_log_line := var_log_line + 1;
             write_log(var_log_type, var_log_line, var_text||' - user ('||par_cad_cust_data.sales_prsn_code||') does not exist');
          end if;
          close csr_users;
+      end if;
+
+      /*-*/
+      /* Rollback the database
+      /*-*/
+      if var_log_save != var_log_line then
+         rollback;
+         return;
       end if;
 
       /*-*/
