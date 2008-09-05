@@ -1,6 +1,3 @@
-DROP VIEW MANU_APP.RECPE_FCS_VW;
-
-/* Formatted on 2008/09/05 10:50 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_fcs_vw (proc_order,
                                                     cntl_rec_id,
                                                     matl_code,
@@ -324,17 +321,9 @@ AS
                  'D'
                 ) = 'D';
 
-
-DROP PUBLIC SYNONYM RECPE_FCS_VW;
-
-CREATE PUBLIC SYNONYM RECPE_FCS_VW FOR MANU_APP.RECPE_FCS_VW;
-
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW TO APPSUPPORT;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW TO IGNUSIAN;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW TO MANU_USER;
-
 GRANT SELECT ON MANU_APP.RECPE_FCS_VW TO PT_APP;
 
+CREATE OR REPLACE PUBLIC SYNONYM RECPE_FCS_VW FOR MANU_APP.RECPE_FCS_VW;
