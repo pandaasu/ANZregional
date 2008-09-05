@@ -473,6 +473,7 @@ create or replace package body mobile_data as
             and t01.user_id = var_auth_user_id
             and trunc(t01.route_plan_date) = trunc(mobile_to_timezone(sysdate))
             and t01.status = 'A'
+            and t02.active_flg = 'Y'
             and t02.business_unit_id = var_auth_business_unit_id
           order by t01.route_plan_order asc;
       rcd_route csr_route%rowtype;
@@ -840,6 +841,15 @@ create or replace package body mobile_data as
       var_exception varchar2(4000);
       var_output varchar2(2000 char);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_customer is
+         select t01.*
+           from customer t01
+          where t01.customer_id = to_number(par_customer_id);
+      rcd_customer csr_customer%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -871,9 +881,15 @@ create or replace package body mobile_data as
       dbms_lob.writeappend(var_clob,length('<EFEX>'),'<EFEX>');
 
       /*-*/
-      /* Retrieve the customer call data
+      /* Retrieve the customer call data (active customer only)
       /*-*/
-      get_call_data(999,'*NONROUTE',to_number(par_customer_id));
+      open csr_customer;
+      fetch csr_customer into rcd_customer;
+      if csr_customer%found then
+         if rcd_customer.active_flg = 'Y' then
+            get_call_data(999,'*NONROUTE',to_number(par_customer_id));
+         end if;
+      end if;
 
       /*-*/
       /* Close the stream
@@ -1151,6 +1167,7 @@ create or replace package body mobile_data as
             and t03.sales_area_id = t04.sales_area_id
             and t04.sales_region_id = t05.sales_region_id
             and t01.status = 'A'
+            and t01.active_flg = 'Y'
             and t01.customer_id in (select t01.customer_id
                                       from route_plan t01
                                      where t01.user_id = var_auth_user_id
@@ -2402,6 +2419,19 @@ create or replace package body mobile_data as
             end if;
          end if;
          close csr_cust_contact;
+      end if;
+
+      /*-*/
+      /* Remove any future route plan data from inactivated customers
+      /*-*/
+      if upd_customer.active_flg = 'N' then
+         update route_plan
+            set status = 'X',
+                modified_user = user,
+                modified_date = mobile_to_timezone(sysdate)
+          where user_id = var_auth_user_id
+            and customer_id = upd_customer.customer_id
+            and trunc(route_plan_date) > trunc(mobile_to_timezone(sysdate));
       end if;
 
    /*-------------*/
