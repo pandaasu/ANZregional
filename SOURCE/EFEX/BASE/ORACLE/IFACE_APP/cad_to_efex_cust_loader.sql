@@ -162,7 +162,7 @@ create or replace package body cad_to_efex_cust_loader as
                exit;
             end if;
             var_process := true;
-            if rcd_cad_cust_data.business_unit_id = 6 then
+            if nvl(rcd_cad_cust_data.business_unit_id,'5') = '6' then
                var_process := false;
             end if;
             if (rcd_cad_cust_data.sales_team != 'MT' and rcd_cad_cust_data.sales_team != 'IC' and rcd_cad_cust_data.sales_team != 'WS') then
@@ -196,7 +196,7 @@ create or replace package body cad_to_efex_cust_loader as
                exit;
             end if;
             var_process := true;
-            if rcd_cad_cust_data.business_unit_id = 5 then
+            if nvl(rcd_cad_cust_data.business_unit_id,'6') = '5' then
                var_process := false;
             end if;
             if (rcd_cad_cust_data.sales_team != 'IC' and rcd_cad_cust_data.sales_team != 'WS') then
@@ -750,6 +750,7 @@ create or replace package body cad_to_efex_cust_loader as
       var_customer_id number;
       var_cust_contact_id number;
       var_active_flg varchar2(10);
+      var_date date;
 
       /*-*/
       /* Local cursors
@@ -822,7 +823,7 @@ create or replace package body cad_to_efex_cust_loader as
       cursor csr_geo_hierarchy is
          select t01.*
            from geo_hierarchy t01
-          where t01.geo_level5_code = par_cad_cust_data.cust_city_code;
+          where t01.geo_level5_code = ltrim(par_cad_cust_data.cust_city_code,'0');
       rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
       cursor csr_std_hierarchy is
@@ -891,7 +892,7 @@ create or replace package body cad_to_efex_cust_loader as
          if csr_users%found then
             var_user_id := rcd_users.user_id;
             var_sales_territory_id := rcd_users.sales_territory_id;
-            if (var_sales_territory_id is null) then
+            if var_sales_territory_id is null then
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - sales person ('||par_cad_cust_data.sales_prsn_code||') does not have a related sales territory');
             end if;
@@ -904,14 +905,6 @@ create or replace package body cad_to_efex_cust_loader as
             write_log(var_log_type, var_log_line, var_text||' - user ('||par_cad_cust_data.sales_prsn_code||') does not exist');
          end if;
          close csr_users;
-      end if;
-
-      /*-*/
-      /* Rollback the database
-      /*-*/
-      if var_log_save != var_log_line then
-         rollback;
-         return;
       end if;
 
       /*-*/
@@ -946,7 +939,6 @@ create or replace package body cad_to_efex_cust_loader as
                         'A',
                         user,
                         sysdate);
-               commit;
             else
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - customer type ('||par_cad_cust_data.outlet_type_name||') does not exist AND customer trade channel ('||par_cad_cust_data.otl_chnl_name||') does not exist');
@@ -1032,8 +1024,10 @@ create or replace package body cad_to_efex_cust_loader as
             var_std_level3_code := rcd_std_hierarchy.std_level3_code;
             var_std_level4_code := rcd_std_hierarchy.std_level4_code;
          else
-            var_log_line := var_log_line + 1;
-            write_log(var_log_type, var_log_line, var_text||' - standard hierarchy level 4 ('||par_cad_cust_data.chain_store_banner_code||') not found on standard hierarchy table');
+            if par_cad_cust_data.sales_team != 'WS' then
+               var_log_line := var_log_line + 1;
+               write_log(var_log_type, var_log_line, var_text||' - standard hierarchy level 4 ('||par_cad_cust_data.chain_store_banner_code||') not found on standard hierarchy table');
+            end if;
          end if;
          close csr_std_hierarchy;
       end if;
@@ -1061,6 +1055,14 @@ create or replace package body cad_to_efex_cust_loader as
       close csr_geo_hierarchy;
 
       /*-*/
+      /* Rollback the database
+      /*-*/
+      if var_log_save != var_log_line then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Create the customer when required
       /*
       /* Create the customer contact data when required
@@ -1075,6 +1077,19 @@ create or replace package body cad_to_efex_cust_loader as
          write_log(var_log_type, var_log_line, var_text||' - customer already exists on customer table');
 
       else
+
+         var_date := null;
+         begin
+            var_date := to_date(par_cad_cust_data.otl_crdt,'yyyymmddhh24miss');
+         exception
+            when others then
+               begin
+                  var_date := to_date(par_cad_cust_data.otl_crdt,'yyyy-mm-dd hh24:mi:ss');
+               exception
+                  when others then
+                     var_date := sysdate;
+               end;
+         end;
 
          if par_cad_cust_data.otl_status = 'A' then
             var_active_flg := 'Y';
@@ -1118,7 +1133,7 @@ create or replace package body cad_to_efex_cust_loader as
            values(var_customer_id,
                   par_cad_cust_data.otl_code,
                   par_cad_cust_data.otl_name,
-                  par_cad_cust_data.otl_name,
+                  null,
                   par_cad_cust_data.otl_addr,
                   par_cad_cust_data.cust_city_name,
                   par_cad_cust_data.post_code,
@@ -1127,13 +1142,13 @@ create or replace package body cad_to_efex_cust_loader as
                   var_active_flg,
                   con_market_id,
                   var_cust_type_id,
-                  var_distributor_id,
                   var_affiliation_id,
+                  var_distributor_id,
                   var_cust_grade_id,
                   'A',
                   user,
                   sysdate,
-                  par_cad_cust_data.otl_crdt,
+                  var_date,
                   par_cad_cust_data.otl_lupdp,
                   par_cad_cust_data.outlet_loc,
                   var_geo_level1_code,
@@ -1178,8 +1193,8 @@ create or replace package body cad_to_efex_cust_loader as
                      par_cad_cust_data.cont_name,
                      par_cad_cust_data.cont_tel,
                      par_cad_cust_data.cont_fax,
-                     var_customer_id,
                      'A',
+                     var_customer_id,
                      user,
                      sysdate);
          end if;
