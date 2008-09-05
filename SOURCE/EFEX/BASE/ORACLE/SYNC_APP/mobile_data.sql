@@ -478,7 +478,8 @@ create or replace package body mobile_data as
       rcd_route csr_route%rowtype;
 
       cursor csr_customer is
-         select t01.*
+         select t01.*,
+                decode(t01.active_flg,'Y','A','N','X',t01.active_flg) as active_status
            from customer t01,
                 (select distinct(t02.customer_id) as customer_id
                    from user_sales_territory t01,
@@ -648,7 +649,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<CUS_DATA_ACTION><![CDATA[' || '*NONE' || ']]></CUS_DATA_ACTION>';
          var_output := var_output||'<CUS_CUSTOMER_ID><![CDATA[' || to_char(rcd_customer.customer_id) || ']]></CUS_CUSTOMER_ID>';
          var_output := var_output||'<CUS_NAME><![CDATA[' || rcd_customer.customer_name || ']]></CUS_NAME>';
-         var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.status || ']]></CUS_STATUS>';
+         var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.active_status || ']]></CUS_STATUS>';
          var_output := var_output||'</CUS>';
          dbms_lob.writeappend(var_clob,length(var_output),var_output);
       end loop;
@@ -945,7 +946,8 @@ create or replace package body mobile_data as
       /* Local cursors
       /*-*/
       cursor csr_customer is
-         select t01.*
+         select t01.*,
+                decode(t01.active_flg,'Y','A','N','X',t01.active_flg) as active_status
            from customer t01
           where t01.customer_id = to_number(par_customer_id);
       rcd_customer csr_customer%rowtype;
@@ -1011,7 +1013,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<CUS_DATA_ACTION><![CDATA[' || '*LOADED' || ']]></CUS_DATA_ACTION>';
          var_output := var_output||'<CUS_CUSTOMER_ID><![CDATA[' || to_char(rcd_customer.customer_id) || ']]></CUS_CUSTOMER_ID>';
          var_output := var_output||'<CUS_NAME><![CDATA[' || rcd_customer.customer_name || ']]></CUS_NAME>';
-         var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.status || ']]></CUS_STATUS>';
+         var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.active_status || ']]></CUS_STATUS>';
          var_output := var_output||'<CUS_ADDRESS><![CDATA[' || rcd_customer.address_1 || ']]></CUS_ADDRESS>';
          var_output := var_output||'<CUS_CONTACT_NAME><![CDATA[' || var_contact_name || ']]></CUS_CONTACT_NAME>';
          var_output := var_output||'<CUS_PHONE_NUMBER><![CDATA[' || rcd_customer.phone_number || ']]></CUS_PHONE_NUMBER>';
@@ -1772,7 +1774,7 @@ create or replace package body mobile_data as
          upd_customer.email_address := xslProcessor.valueOf(obj_xml_node,'CUS_EMAIL_ADDRESS');
          upd_customer.cust_type_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_CUS_TYPE_ID'));
          upd_customer.distributor_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_DISTRIBUTOR_ID'));
-         upd_customer.status := xslProcessor.valueOf(obj_xml_node,'CUS_STATUS');
+         upd_customer.active_flg := xslProcessor.valueOf(obj_xml_node,'CUS_STATUS');
          upd_customer.outlet_location := xslProcessor.valueOf(obj_xml_node,'CUS_OUTLET_LOCATION');
          upd_cust_contact.last_name := xslProcessor.valueOf(obj_xml_node,'CUS_CONTACT_NAME');
          if var_data_type = '*NEW' then
@@ -2350,6 +2352,11 @@ create or replace package body mobile_data as
       /*-*/
       /* Update the customer data
       /*-*/
+      if upd_customer.active_flg = 'A' then
+         upd_customer.active_flg := 'Y';
+      else
+         upd_customer.active_flg := 'N';
+      end if;
       update customer
          set customer_name = upd_customer.customer_name,
              address_1 = upd_customer.address_1,
@@ -2359,7 +2366,7 @@ create or replace package body mobile_data as
              email_address = upd_customer.email_address,
              cust_type_id = upd_customer.cust_type_id,
              distributor_id = upd_customer.distributor_id,
-             status = upd_customer.status,
+             active_flg = upd_customer.active_flg,
              modified_user = user,
              modified_date = mobile_to_timezone(sysdate),
              outlet_location = upd_customer.outlet_location
