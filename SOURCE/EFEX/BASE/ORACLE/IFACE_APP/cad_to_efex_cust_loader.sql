@@ -806,7 +806,7 @@ create or replace package body cad_to_efex_cust_loader as
          select t01.*
            from customer t01
           where t01.customer_code = par_cad_cust_data.pur_from_wholesaler_code
-            and t01.distributor_flag = 'Y';
+            and t01.distributor_flg = 'Y';
       rcd_distributor csr_distributor%rowtype;
 
       cursor csr_affiliation_indirect is
