@@ -360,7 +360,7 @@ BEGIN
            v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                             v_recipient,
                                             'eFEX TIO CONFIRMATION ONLY for '||header_row.customer_name,
-                                            'text/html');
+                                            'text/html; charset=utf-8');
            for idx in 1..tbl_orddat.count loop
               smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
            end loop;
@@ -376,7 +376,7 @@ BEGIN
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                 v_recipient,
                                                 'eFEX E-MAIL Order For '||header_row.customer_name,
-                                                'text/html');
+                                                'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
@@ -389,7 +389,7 @@ BEGIN
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                 v_recipient,
                                                 'eFEX FAX Order has been sent for '||header_row.customer_name,
-                                                'text/html');
+                                                'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
@@ -398,7 +398,7 @@ BEGIN
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                 v_recipient,
                                                 'eFEX FAX Order For '||header_row.customer_name||'. Order Taken By '||header_row.firstname||' '||header_row.lastname||' '||header_row.order_date||'.',
-                                                'text/plain');
+                                                'text/plain; charset=utf-8');
                for idx in 1..tbl_ordfax.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
                end loop;
@@ -414,7 +414,7 @@ BEGIN
                v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                 v_recipient,
                                                 'E-MAIL Copy of TIO eFEX Order For '||header_row.customer_name,
-                                                'text/html');
+                                                'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
                   smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
@@ -425,7 +425,7 @@ BEGIN
                   v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                    v_recipient,
                                                    'FAX Copy of TIO eFEX Order For '||header_row.customer_name,
-                                                   'text/plain');
+                                                   'text/plain; charset=utf-8');
                   for idx in 1..tbl_ordfax.count loop
                      smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
                   end loop;
@@ -435,7 +435,7 @@ BEGIN
                   v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
                                                    v_recipient,
                                                    'POST Copy of eFEX TIO Order For '||header_row.customer_name,
-                                                   'text/html');
+                                                   'text/html; charset=utf-8');
                   for idx in 1..tbl_orddat.count loop
                      smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
                   end loop;
