@@ -29,7 +29,7 @@ create or replace force view bds_app.bom_ics as
     t01.bom_base_uom as batch_uom,
     nvl(t01.bom_eff_from_date, to_date('20000101','yyyymmdd')) as eff_start_date,
     t01.bom_eff_to_date as eff_end_date,
-    t01.item_number as seq,
+    ltrim(t01.item_number, '0') as seq,
     t01.item_sequence as detseq,
     ltrim(t01.item_material_code, '0') as sub_matl,
     t01.item_base_qty as qty,

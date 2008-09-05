@@ -21,7 +21,7 @@
 /* View creation 
 /**/
 create or replace force view bds_app.matl_clssfctn_fg_ics as
-  select ltrim(t01.sap_material_code,'0') as matl_code,
+  select ltrim(t01.sap_material_code,'0') as material_code,
     t01.sap_bus_sgmnt_code as bus_sgmnt_code,
     t01.sap_mrkt_sgmnt_code as mkt_sgmnt_code,
     t01.sap_brand_flag_code as brand_flag_code,

@@ -24,7 +24,7 @@ create or replace force view bds_app.material_plan_ics as
   select ltrim(t01.sap_material_code,'0') as material_code,
     t01.material_type as material_type,
     t01.material_grp as material_grp,
-    ltrim(t01.regional_code_10,'0') as old_material_code,
+    decode(t01.regional_code_10,'*NONE','', ltrim(t01.regional_code_10 ,'0')) as old_material_code,
     t01.base_uom as uom,
     t01.plant_code as plant,
     t01.order_unit as order_uom,
@@ -46,15 +46,29 @@ create or replace force view bds_app.material_plan_ics as
     t01.mars_traded_unit_flag as tdu_code,
     t01.bds_material_desc_en as material_desc,
     t01.mars_plant_material_type as plant_orntd_matl_type,
-    t01.bds_unit_cost as unit_cost,
+    to_char(t01.bds_unit_cost) as unit_cost,
     t01.batch_mngmnt_reqrmnt_indctr as batch_mngmnt_rqrmnt_indctr,
     t01.procurement_type as prcrmnt_type,
     t01.xplant_status as x_plant_matl_sts,
-    t01.xplant_status_valid as x_plant_matl_sts_start,
+    nvl(t01.xplant_status_valid, to_date('19000101','yyyymmdd')) as x_plant_matl_sts_start,
     t01.deletion_indctr as dltn_indctr,
     t01.plant_specific_status as plant_sts
   from bds_material_plant_mfanz t01
-  where plant_code like 'NZ%';
+  where t01.plant_code like 'NZ%'
+    and 
+    (
+      t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE')
+      or
+      (
+        t01.material_type = 'FERT'
+        and 
+        (
+          t01.mars_traded_unit_flag = 'X'
+          or t01.mars_retail_sales_unit_flag = 'X'
+          or t01.mars_intrmdt_prdct_compnt_flag = 'X'
+        )
+      )
+    ); 
 
 /**/
 /* Authority 
