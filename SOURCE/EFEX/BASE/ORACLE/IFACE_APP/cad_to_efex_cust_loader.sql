@@ -1071,12 +1071,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       open csr_customer;
       fetch csr_customer into rcd_customer;
-      if csr_customer%found then
-
-         var_log_line := var_log_line + 1;
-         write_log(var_log_type, var_log_line, var_text||' - customer already exists on customer table');
-
-      else
+      if csr_customer%notfound then
 
          var_date := null;
          begin
