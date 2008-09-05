@@ -316,7 +316,7 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.std_level3_name := lics_inbound_utility.get_variable('STD_LEVEL3_NAME');
       rcd_iface_customer.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
       rcd_iface_customer.distributor_flg := 'N';
-      if upper(rcd_iface_customer.cust_type) = 'WHOLESALER' then
+      if upper(rcd_iface_customer.affiliation) = 'WHOLESALER' then
          rcd_iface_customer.distributor_flg := 'Y';
       end if;
 
