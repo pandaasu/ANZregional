@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CHN_DATA_LOAD AS
+﻿CREATE OR REPLACE PACKAGE CHN_DATA_LOAD AS
 
 FUNCTION CUST_ITEM_REF(p_CustomerID IN NUMBER, p_ItemID IN NUMBER) RETURN NUMBER;
 PROCEDURE EXTRACT_TURNIN_ORDERS;
@@ -229,35 +229,34 @@ BEGIN
       -- Create Order Header Data for e-mail (as HTML)
       tbl_orddat(tbl_orddat.count + 1) := '<HTML>'||chr(13);
       tbl_orddat(tbl_orddat.count + 1) := '<HEAD>'||chr(13);
-      tbl_orddat(tbl_orddat.count + 1) := '<TITLE>MARS Turn In Order</TITLE>'||chr(13);
+      tbl_orddat(tbl_orddat.count + 1) := '<TITLE>玛氏订单</TITLE>'||chr(13);
       tbl_orddat(tbl_orddat.count + 1) := '</HEAD>'||chr(13);
       tbl_orddat(tbl_orddat.count + 1) := '<BODY>'||chr(13);
       tbl_orddat(tbl_orddat.count + 1) := '<P>'||chr(13);
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<B>eFEX Reference #: </B>'||header_row.order_id;
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<B>eFEX系统参考号: </B>'||header_row.order_id;
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><FONT style="FONT-WEIGHT: bold; FONT-SIZE: large"><CENTER>MARS TURN IN ORDER</CENTER></FONT></TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><FONT style="FONT-WEIGHT: bold; FONT-SIZE: large"><CENTER>玛氏订单</CENTER></FONT></TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TABLE>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<P>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Wholesaler Name: '  ||'</TD></B><TD>'||header_row.distrib_name||'</TD><TD><B>Wholesaler Number: '||'</TD></B><TD>'||header_row.distrib_code||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Delivery Date: '    ||'</TD></B><TD>'||to_char(header_row.deliver_date,'DD/MM/YYYY')||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>经销商名称: '  ||'</TD></B><TD>'||header_row.distrib_name||'</TD><TD><B>经销商号: '||'</TD></B><TD>'||header_row.distrib_code||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>建议送货日期: '    ||'</TD></B><TD>'||to_char(header_row.deliver_date,'DD/MM/YYYY')||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Customer Name: '    ||'</TD></B><TD>'||header_row.customer_name||'</TD><TD><B>Order Taken From: ' ||'</TD></B><TD>'||header_row.contact_first_name||' '||header_row.contact_last_name||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Customer Number: '  ||'</TD></B><TD>'||header_row.customer_code||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Delivery Address: ' ||'</TD></B><TD>'||header_row.address_1||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>客户名称: '    ||'</TD></B><TD>'||header_row.customer_name||'</TD><TD><B>客户联系人: ' ||'</TD></B><TD>'||header_row.contact_first_name||' '||header_row.contact_last_name||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>客户号: '  ||'</TD></B><TD>'||header_row.customer_code||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>送货地址: ' ||'</TD></B><TD>'||header_row.address_1||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD></TD><TD>' ||header_row.city ||', '||header_row.state||', '||header_row.postcode||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Customer Phone: '||'</TD></B><TD>'||header_row.phone_number||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Customer Fax: '||'</TD></B><TD>'||header_row.fax_number||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>客户联系电话: '||'</TD></B><TD>'||header_row.phone_number||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>客户传真: '||'</TD></B><TD>'||header_row.fax_number||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Order Date: '||'</TD></B><TD>'||to_char(header_row.order_date,'DD/MM/YYYY')||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>订货日期: '||'</TD></B><TD>'||to_char(header_row.order_date,'DD/MM/YYYY')||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD colSpan=4><HR width="100%"></TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Order Taken By: '   ||'</TD></B><TD>'||header_row.firstname||' '||header_row.lastname||'</TD><TD><B>E-Mail Address: '||'</TD></B><TD>'||nvl(v_email,'No email')||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>PO: '||'</TD></B><TD>'||header_row.purchase_order||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>Comments: '||'</TD></B><TD>'||header_row.order_notes||'</TD></TR>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD></TD><TD>Unit = Single consumer product</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>订货人: '   ||'</TD></B><TD>'||header_row.firstname||' '||header_row.lastname||'</TD><TD><B>E-mail地址: '||'</TD></B><TD>'||v_email||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>采购单号: '||'</TD></B><TD>'||header_row.purchase_order||'</TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD><B>备注: '||'</TD></B><TD>'||header_row.order_notes||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TABLE><BR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD>';
@@ -298,7 +297,7 @@ BEGIN
       tbl_ordfax(tbl_ordfax.count + 1) := chr(13);
 
       v_line_num := 1;
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0><TR bgColor=gray><TD><B>Line#</B></TD><TD><B>Product#</B></TD><TD><B>WHS ID</B></TD><TD><B>Qty</B></TD><TD><B>UoM</B></TD><TD><B>Product</B></TD></TR>';
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0><TR bgColor=gray><TD><B>顺序号</B></TD><TD><B>产品代码</B></TD><TD><B>经销商号</B></TD><TD><B>数量</B></TD><TD><B>单位</B></TD><TD><B>产品描述</B></TD></TR>';
       tbl_ordfax(tbl_ordfax.count + 1) := chr(13)||RPAD('|Line#',6)||RPAD('|Product#',10)||RPAD('|WHS ID',10)||RPAD('|Qty',6)||RPAD('|UoM',7)||'|Product';
       tbl_ordfax(tbl_ordfax.count + 1) := '|------------------------------------------------------------------------------|'||chr(13);
       FOR detail_row IN DETAIL_CRSR(header_row.order_id) LOOP
@@ -306,13 +305,13 @@ BEGIN
         -- work out UOM text to send to wholesalers
         v_uom := detail_row.unit_measure;
         IF v_uom = 'TDU' THEN
-           v_uom := 'Case';
+           v_uom := '箱';
         ELSE
            IF v_uom = 'MCU' THEN
-               v_uom := 'Inner';
+               v_uom := '盒';
            ELSE
                IF v_uom = 'RSU' THEN
-                   v_uom := 'Unit';
+                   v_uom := '块';
                END IF;
            END IF;
         END IF;
@@ -343,7 +342,7 @@ BEGIN
 
       --Build Order End for e-Mail
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TABLE>'||'<P>';
-      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<B>Total Items Count: </B>'||v_total_items;
+      tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<B>总数量: </B>'||v_total_items;
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TD></TR>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</TABLE>';
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</BODY></HTML>';
