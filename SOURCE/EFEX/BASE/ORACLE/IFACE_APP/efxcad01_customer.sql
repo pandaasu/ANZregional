@@ -179,7 +179,7 @@ create or replace package body efxcad01_customer as
             and t01.geo_level2_code = t14.geo_level2_code(+)
             and t01.geo_level3_code = t14.geo_level3_code(+)
             and t01.geo_level4_code = t14.geo_level4_code(+)
-            and t01.geo_level4_code = t14.geo_level4_code(+)
+            and t01.geo_level5_code = t14.geo_level5_code(+)
             and t01.affiliation_id = t15.affiliation_id(+)
             and t01.customer_id = t16.customer_id(+)
             and t01.distributor_id = t17.customer_id(+)
