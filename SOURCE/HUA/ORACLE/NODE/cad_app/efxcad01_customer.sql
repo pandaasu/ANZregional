@@ -286,7 +286,7 @@ create or replace package body efxcad01_customer as
 
       /*--------------------------------------*/
       /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
+      /*--------------------------------------*/   
 
       /*-*/
       /* Retrieve field values
