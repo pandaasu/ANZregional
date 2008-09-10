@@ -138,6 +138,8 @@ create or replace package body efxcad01_customer as
       lics_inbound_utility.set_definition('HDR','CUST_DIRECT_BANNER_NAME',50);
       lics_inbound_utility.set_definition('HDR','CUST_BELONGS_TO_WS_CODE',50);
       lics_inbound_utility.set_definition('HDR','CUST_BELONGS_TO_WS_NAME',50);
+      lics_inbound_utility.set_definition('HDR','LINE_MGR_CODE',20);
+      lics_inbound_utility.set_definition('HDR','LINE_MGR_NAME',60);   
 
    /*-------------*/
    /* End routine */
@@ -348,6 +350,11 @@ create or replace package body efxcad01_customer as
       rcd_cad_efex_cust_master.cust_direct_banner_name := lics_inbound_utility.get_variable('CUST_DIRECT_BANNER_NAME');
       rcd_cad_efex_cust_master.cust_belongs_to_ws_code := lics_inbound_utility.get_variable('CUST_BELONGS_TO_WS_CODE');
       rcd_cad_efex_cust_master.cust_belongs_to_ws_name := lics_inbound_utility.get_variable('CUST_BELONGS_TO_WS_NAME');
+      rcd_cad_efex_cust_master.row_status := null;
+      rcd_cad_efex_cust_master.err_msg := null;
+      rcd_cad_efex_cust_master.line_mgr_code := lics_inbound_utility.get_variable('LINE_MGR_CODE');
+      rcd_cad_efex_cust_master.line_mgr_name := lics_inbound_utility.get_variable('LINE_MGR_NAME');
+      rcd_cad_efex_cust_master.sales_city_code := null;
 
       /*-*/
       /* Retrieve exceptions raised
