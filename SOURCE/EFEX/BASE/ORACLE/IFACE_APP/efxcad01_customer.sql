@@ -75,7 +75,7 @@ create or replace package body efxcad01_customer as
                 t10.segment_name as segment_name,
                 t03.cust_trade_channel_name as cust_trade_channel_name,
                 t04.cust_channel_name as cust_channel_name,
-                t02.cust_type_name as cust_type_name,
+                t02.cust_type_name_en as cust_type_name,
                 t12.cust_grade_name as cust_grade_name,
                 t01.customer_code as cust_code,
                 t01.customer_name as cust_name,
