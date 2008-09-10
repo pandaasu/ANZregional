@@ -114,7 +114,7 @@ create or replace package body efxcad01_customer as
                 t18.associate_code as sales_person_associate_code,
                 t18.lastname as sales_person_last_name,
                 t18.description as sales_person_title,
-                t08.status as sales_person_status,
+                t18.status as sales_person_status,
                 t18.city as sales_city,
                 t16.first_name as cust_contact_first_name,
                 t16.last_name as cust_contact_last_name,
@@ -125,8 +125,10 @@ create or replace package body efxcad01_customer as
                 t13.std_level3_name as cust_parent_banner_name,
                 t01.std_level4_code as cust_direct_banner_code,
                 t13.std_level4_name as cust_direct_banner_name,
-                decode(t01.distributor_flg,'Y',t17.customer_code,null) as cust_belongs_to_ws_code,
-                decode(t01.distributor_flg,'Y',t17.customer_name,null) as cust_belongs_to_ws_name
+                t17.customer_code as cust_belongs_to_ws_code,
+                t17.customer_name as cust_belongs_to_ws_name,
+                t19.associate_code as line_mgr_code,
+                t19.lastname as line_mgr_name
            from customer t01,
                 cust_type t02,
                 cust_trade_channel t03,
@@ -159,7 +161,8 @@ create or replace package body efxcad01_customer as
                           where t01.status = 'A') t01
                   where t01.rnkseq = 1) t16,
                 customer t17,
-                users t18
+                users t18,
+                users t19
           where t01.cust_type_id = t02.cust_type_id(+)
             and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
             and t03.cust_channel_id = t04.cust_channel_id(+)
@@ -184,6 +187,7 @@ create or replace package body efxcad01_customer as
             and t01.customer_id = t16.customer_id(+)
             and t01.distributor_id = t17.customer_id(+)
             and t07.user_id = t18.user_id(+)
+            and t08.user_id = t19.user_id(+)
             and t05.market_id = con_market_id
             and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
       rcd_customer csr_customer%rowtype;
@@ -297,7 +301,9 @@ create or replace package body efxcad01_customer as
                                              nvl(rcd_customer.cust_direct_banner_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_code,' ')),' ') ||
                                              nvl(rcd_customer.cust_direct_banner_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_direct_banner_name,' ')),' ') ||
                                              nvl(rcd_customer.cust_belongs_to_ws_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_code,' ')),' ') ||
-                                             nvl(rcd_customer.cust_belongs_to_ws_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_name,' ')),' '));
+                                             nvl(rcd_customer.cust_belongs_to_ws_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_name,' ')),' ') ||
+                                             nvl(rcd_customer.line_mgr_code,' ')||rpad(' ',20-length(nvl(rcd_customer.line_mgr_code,' ')),' ') ||
+                                             nvl(rcd_customer.line_mgr_name,' ')||rpad(' ',60-length(nvl(rcd_customer.line_mgr_name,' ')),' '));
 
          end if;
 
