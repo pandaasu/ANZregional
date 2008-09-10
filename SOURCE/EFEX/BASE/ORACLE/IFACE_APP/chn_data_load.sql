@@ -262,35 +262,35 @@ BEGIN
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TR><TD>';
 
       --Create Order Header Data for Fax (as Text)
-      tbl_ordfax(tbl_ordfax.count + 1) := chr(10)||'TURN IN ORDER'||chr(13)||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := chr(10)||'玛氏订单'||chr(13)||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Please see the following Turn In Order.'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'PO: '||header_row.purchase_order||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'If there are any queries, please contact me.'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Thank you'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Regards,'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '请查收如下订单。'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '采购单号： '||header_row.purchase_order||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '如有疑问，请及时与我联系。'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '多谢。'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '此致敬礼,'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := header_row.firstname||' '||header_row.lastname||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := nvl(v_email,'No email')||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := v_email||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13)||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'eFEX Reference #: '||header_row.order_id||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'MARS TURN IN ORDER'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := 'eFEX系统参考号： '||header_row.order_id||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '玛氏订单'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Wholesaler Name:  '||header_row.distrib_name||'. Wholesaler Number: '||header_row.distrib_code||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Delivery Date:    '||to_char(header_row.deliver_date,'DD/MM/YYYY')||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '经销商名称:  '||header_row.distrib_name||'. 经销商号: '||header_row.distrib_code||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '建议送货日期:    '||to_char(header_row.deliver_date,'DD/MM/YYYY')||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Customer Name:    '||header_row.customer_name||'. Order Taken From: '||header_row.contact_first_name||' '||header_row.contact_last_name||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Delivery Address: '||header_row.address_1||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '客户名称:            '||header_row.customer_name||'. 客户联系人: '||header_row.contact_first_name||' '||header_row.contact_last_name||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '建议送货日期:         '||header_row.address_1||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '                  '||header_row.city ||', '||header_row.state||', '||header_row.postcode||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Customer Number:  '||header_row.customer_code||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Customer Phone:   '||header_row.phone_number||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Customer Fax:     '||header_row.fax_number||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '客户号:             '||header_row.customer_code||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '客户联系电话:   '||header_row.phone_number||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '客户传真:     '||header_row.fax_number||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Order Date:       '||to_char(header_row.order_date,'DD/MM/YYYY')||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '订货日期:       '||to_char(header_row.order_date,'DD/MM/YYYY')||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Order Taken By:   '||header_row.firstname||' '||header_row.lastname||'.'||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'E-Mail Address:   '||nvl(v_email,'No email')||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'PO:               '||header_row.purchase_order||Chr(13);
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Comments:         '||header_row.order_notes||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '订货人:   '||header_row.firstname||' '||header_row.lastname||'.'||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := 'E-mail地址:   '||nvl(v_email,'No email')||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '采购单号:               '||header_row.purchase_order||Chr(13);
+      tbl_ordfax(tbl_ordfax.count + 1) := '备注:         '||header_row.order_notes||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '                  '||'Unit = Single consumer product'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := '--------------------------------------------------------------'||Chr(13);
       tbl_ordfax(tbl_ordfax.count + 1) := chr(13);
@@ -298,7 +298,7 @@ BEGIN
 
       v_line_num := 1;
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'<TABLE cellSpacing=0 cellPadding=0 width="100%" border=0><TR bgColor=gray><TD><B>顺序号</B></TD><TD><B>产品代码</B></TD><TD><B>经销商号</B></TD><TD><B>数量</B></TD><TD><B>单位</B></TD><TD><B>产品描述</B></TD></TR>';
-      tbl_ordfax(tbl_ordfax.count + 1) := chr(13)||RPAD('|Line#',6)||RPAD('|Product#',10)||RPAD('|WHS ID',10)||RPAD('|Qty',6)||RPAD('|UoM',7)||'|Product';
+      tbl_ordfax(tbl_ordfax.count + 1) := chr(13)||RPAD('|顺序号',6)||RPAD('|产品代码',10)||RPAD('|经销商号',10)||RPAD('|数量',6)||RPAD('|单位',7)||'|产品描述';
       tbl_ordfax(tbl_ordfax.count + 1) := '|------------------------------------------------------------------------------|'||chr(13);
       FOR detail_row IN DETAIL_CRSR(header_row.order_id) LOOP
 
@@ -348,7 +348,7 @@ BEGIN
       tbl_orddat(tbl_orddat.count + 1) := chr(13)||'</BODY></HTML>';
 
       --Build Order End for Fax
-      tbl_ordfax(tbl_ordfax.count + 1) := 'Total Items Count: '||v_total_items;
+      tbl_ordfax(tbl_ordfax.count + 1) := '总数量: '||v_total_items;
 
       -- Check to see if this is an order confirmation only. if it is, don't send it to the wholesaler. Just send it to the ASM and eFEX inbox.
       IF v_phoned_flg = 'Y' THEN
@@ -464,3 +464,9 @@ END EXTRACT_TURNIN_ORDERS;
 
 END CHN_DATA_LOAD;
 /
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym CHN_DATA_LOAD for iface_app.CHN_DATA_LOAD;
+grant execute on CHN_DATA_LOAD to public;
