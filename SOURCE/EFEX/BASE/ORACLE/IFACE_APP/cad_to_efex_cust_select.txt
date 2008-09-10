@@ -1,43 +1,40 @@
-select
-'insert into cad_to_efex_cust_master values(' ||
-'''' || replace(SALES_PRSN_CODE,'''','''''') || ''',' ||
-'''' || replace(SALES_PRSN_NAME,'''','''''') || ''',' ||
-'''' || replace(SALES_PRSN_TYPE,'''','''''') || ''',' ||
-'''' || replace(LINE_MGR_CODE,'''','''''') || ''',' ||
-'''' || replace(LINE_MGR_NAME,'''','''''') || ''',' ||
-'''' || replace(SALES_TEAM,'''','''''') || ''',' ||
-'''' || replace(SALES_PRSN_CITY_CODE,'''','''''') || ''',' ||
-'''' || replace(SALES_PRSN_CITY_NAME,'''','''''') || ''',' ||
-'''' || replace(OTL_CRDT,'''','''''') || ''',' ||
-'''' || replace(OTL_CRDP,'''','''''') || ''',' ||
-'''' || replace(OTL_LUPDT,'''','''''') || ''',' ||
-'''' || replace(OTL_LUPDP,'''','''''') || ''',' ||
-'''' || replace(OTL_STATUS,'''','''''') || ''',' ||
-'''' || replace(OTL_CODE,'''','''''') || ''',' ||
-'''' || replace(OTL_NAME,'''','''''') || ''',' ||
-'''' || replace(OTL_ADDR,'''','''''') || ''',' ||
-'''' || replace(POST_CODE,'''','''''') || ''',' ||
-'''' || replace(CUST_CITY_CODE,'''','''''') || ''',' ||
-'''' || replace(CUST_CITY_NAME,'''','''''') || ''',' ||
-'''' || replace(CONT_NAME,'''','''''') || ''',' ||
-'''' || replace(CONT_MP,'''','''''') || ''',' ||
-'''' || replace(CONT_TEL,'''','''''') || ''',' ||
-'''' || replace(CONT_FAX,'''','''''') || ''',' ||
-'''' || replace(CONT_EMAIL,'''','''''') || ''',' ||
-'''' || replace(CHAIN_STORE_BANNER_CODE,'''','''''') || ''',' ||
-'''' || replace(CHAIN_STORE_BANNER_NAME,'''','''''') || ''',' ||
-'''' || replace(OTL_CHNL_CODE,'''','''''') || ''',' ||
-'''' || replace(OTL_CHNL_NAME,'''','''''') || ''',' ||
-'''' || replace(OUTLET_LOC,'''','''''') || ''',' ||
-'''' || replace(OUTLET_TYPE,'''','''''') || ''',' ||
-'''' || replace(CUST_OTL_CODE,'''','''''') || ''',' ||
-'''' || replace(PUR_FROM_WHOLESALER_CODE,'''','''''') || ''',' ||
-'''' || replace(PUR_FROM_WHOLESALER_NAME,'''','''''') || ''',' ||
-'''' || replace(SALES_VOL_RANGE,'''','''''') || '''' ||
-'''' || replace(OUTLET_FLAG,'''','''''') || '''' ||
-'''' || replace(DISTRIBUTOR_FLAG,'''','''''') || '''' ||
-'''' || replace(BUSINESS_UNIT_ID,'''','''''') || '''' ||
-');' as script
-from cad_to_efex_cust_master;
-
-
+insert into iface.cad_to_efex_cust_master
+select SALES_PRSN_CODE,
+SALES_PRSN_NAME,
+SALES_PRSN_TYPE,
+LINE_MGR_CODE,
+LINE_MGR_NAME,
+SALES_TEAM,
+SALES_PRSN_CITY_CODE,
+SALES_PRSN_CITY_NAME,
+OTL_CRDT,
+OTL_CRDP,
+OTL_LUPDT,
+OTL_LUPDP,
+OTL_STATUS,
+OTL_CODE,
+OTL_NAME,
+OTL_ADDR,
+POST_CODE,
+CUST_CITY_CODE,
+CUST_CITY_NAME,
+CONT_NAME,
+CONT_MP,
+CONT_TEL,
+CONT_FAX,
+CONT_EMAIL,
+CHAIN_STORE_BANNER_CODE,
+CHAIN_STORE_BANNER_NAME,
+OTL_CHNL_CODE,
+OTL_CHNL_NAME,
+OUTLET_LOC,
+OUTLET_TYPE_CODE,
+OUTLET_TYPE_NAME,
+CUST_OTL_CODE,
+PUR_FROM_WHOLESALER_CODE,
+PUR_FROM_WHOLESALER_NAME,
+SALES_VOL_RANGE,
+OUTLET_FLAG,
+DISTRIBUTOR_FLAG,
+BUSINESS_UNIT_ID
+from cad_to_efex_cust_master@db0794p.ap.mars;

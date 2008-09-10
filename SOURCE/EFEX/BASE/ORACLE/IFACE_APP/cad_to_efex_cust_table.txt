@@ -28,7 +28,8 @@ CHAIN_STORE_BANNER_NAME                 VARCHAR2(50),
 OTL_CHNL_CODE                           VARCHAR2(50),
 OTL_CHNL_NAME                           VARCHAR2(50),
 OUTLET_LOC                              VARCHAR2(50),
-OUTLET_TYPE                             VARCHAR2(50),
+OUTLET_TYPE_CODE                        VARCHAR2(50),
+OUTLET_TYPE_NAME                        VARCHAR2(50),
 CUST_OTL_CODE                           VARCHAR2(50),
 PUR_FROM_WHOLESALER_CODE                VARCHAR2(50),
 PUR_FROM_WHOLESALER_NAME                VARCHAR2(100),
@@ -36,3 +37,5 @@ SALES_VOL_RANGE                         VARCHAR2(50),
 OUTLET_FLAG                             VARCHAR2(1),
 DISTRIBUTOR_FLAG                        VARCHAR2(1),
 BUSINESS_UNIT_ID                        VARCHAR2(1));
+
+grant select, insert, update, delete on cad_to_efex_cust_master to iface_app;
