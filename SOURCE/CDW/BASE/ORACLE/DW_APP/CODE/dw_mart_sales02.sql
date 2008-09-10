@@ -35,6 +35,7 @@ create or replace package dw_mart_sales02 as
     2008/08   Steve Gregan   Removed assignment group code filter for forecasts
     2008/08   Steve Gregan   Added ship to customer code
     2008/08   Steve Gregan   Modified to GSV AUD
+    2008/08   Linden Glen    Changed csr_order_extract_02 in order_extract to use hier_link_cust_code in join
 
    *******************************************************************************/
 
@@ -571,7 +572,7 @@ create or replace package body dw_mart_sales02 as
             and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
             and t01.demand_plng_grp_division_code = t02.division_code(+)
             and t01.sales_org_code = t02.sales_org_code(+)
-            and t01.sold_to_cust_code = t03.cust_code(+)
+            and t01.hier_link_cust_code = t03.cust_code(+)
             and t01.distbn_chnl_code = t03.distbn_chnl_code(+) 
             and t01.division_code = t03.division_code(+) 
             and t01.sales_org_code = t03.sales_org_code(+)
