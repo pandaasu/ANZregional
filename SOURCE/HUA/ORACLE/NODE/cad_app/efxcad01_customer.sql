@@ -8,7 +8,7 @@ create or replace package efxcad01_customer as
    /******************************************************************************/
    /**
     Package : efxcad01_customer
-    Owner   : cad_app
+    Owner   : rtm_app
 
     Description
     -----------
@@ -408,5 +408,5 @@ end efxcad01_customer;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym efxcad01_customer for cad_app.efxcad01_customer;
+create or replace public synonym efxcad01_customer for rtm_app.efxcad01_customer;
 grant execute on efxcad01_customer to lics_app;
