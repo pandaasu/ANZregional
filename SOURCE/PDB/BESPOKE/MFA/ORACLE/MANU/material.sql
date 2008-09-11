@@ -45,17 +45,30 @@ create or replace force view bds_app.material_ics as
     t01.mars_traded_unit_flag as tdu_code,
     t01.bds_material_desc_en as material_desc,
     t01.mars_plant_material_type as plant_orntd_matl_type,
-    t01.plant_specific_status_valid as eff_start_date,
-    t01.bds_unit_cost as unit_cost,
+    nvl(t01.plant_specific_status_valid, to_date('19000101','yyyymmdd')) as eff_start_date,
+    to_char(t01.bds_unit_cost) as unit_cost,
     t01.batch_mngmnt_reqrmnt_indctr as batch_mngmnt_rqrmnt_indctr,
     t01.procurement_type as prcrmnt_type,
     t01.xplant_status as x_plant_matl_sts,
-    t01.xplant_status_valid as x_plant_matl_sts_start,
+    nvl(t01.xplant_status_valid, to_date('19000101','yyyymmdd')) as x_plant_matl_sts_start,
     t01.deletion_indctr as dltn_indctr,
     t01.plant_specific_status as plant_sts,
     t01.issue_storage_location as store_locn
   from bds_material_plant_mfanz t01
-  where plant_code = 'AU10';
+  where plant_code = 'AU10'
+    and 
+    (
+      t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE')
+      or
+      (
+        t01.material_type = 'FERT'
+        and 
+        (
+          t01.mars_traded_unit_flag = 'X'
+          or t01.mars_retail_sales_unit_flag = 'X'
+        )
+      )
+    );  
   
 /**/
 /* Authority 

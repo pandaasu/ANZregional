@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
+  21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb08_loader as
@@ -64,9 +65,14 @@ create or replace package body bds_app.ladpdb08_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+
+    /*-*/
+    /* Delete reference data entries
+    /*-*/     
+    delete bds_refrnc_plant_ics;
 
     /*-*/
     /* Initialise the inbound definitions 
@@ -251,18 +257,6 @@ create or replace package body bds_app.ladpdb08_loader as
   /* Begin block */
   /*-------------*/
   begin
-  
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -362,188 +356,124 @@ create or replace package body bds_app.ladpdb08_loader as
       return;
     end if;
     
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_refrnc_plant_ics
-    set plant_code = rcd_hdr.plant_code, 
-      sap_idoc_number = rcd_hdr.sap_idoc_number, 
-      sap_idoc_timestamp = rcd_hdr.sap_idoc_timestamp, 
-      change_flag = rcd_hdr.change_flag,
-      plant_name = rcd_hdr.plant_name, 
-      vltn_area = rcd_hdr.vltn_area, 
-      plant_customer_no = rcd_hdr.plant_customer_no, 
-      plant_vendor_no = rcd_hdr.plant_vendor_no,
-      factory_calendar_key = rcd_hdr.factory_calendar_key, 
-      plant_name_2 = rcd_hdr.plant_name_2, 
-      plant_street = rcd_hdr.plant_street, 
-      plant_po_box = rcd_hdr.plant_po_box,
-      plant_post_code = rcd_hdr.plant_post_code, 
-      plant_city = rcd_hdr.plant_city, 
-      plant_purchasing_organisation = rcd_hdr.plant_purchasing_organisation,
-      plant_sales_organisation = rcd_hdr.plant_sales_organisation, 
-      batch_manage_indctr = rcd_hdr.batch_manage_indctr, 
-      plant_condition_indctr = rcd_hdr.plant_condition_indctr,
-      source_list_indctr = rcd_hdr.source_list_indctr, 
-      activate_reqrmnt_indctr = rcd_hdr.activate_reqrmnt_indctr, 
-      plant_country_key = rcd_hdr.plant_country_key,
-      plant_region = rcd_hdr.plant_region, 
-      plant_country_code = rcd_hdr.plant_country_code, 
-      plant_city_code = rcd_hdr.plant_city_code, 
-      plant_address = rcd_hdr.plant_address,
-      maint_planning_plant = rcd_hdr.maint_planning_plant, 
-      tax_jurisdiction_code = rcd_hdr.tax_jurisdiction_code,
-      dstrbtn_channel = rcd_hdr.dstrbtn_channel, 
-      division = rcd_hdr.division,
-      language_key = rcd_hdr.language_key, 
-      sop_plant = rcd_hdr.sop_plant, 
-      variance_key = rcd_hdr.variance_key, 
-      batch_manage_old_indctr = rcd_hdr.batch_manage_old_indctr,
-      plant_ctgry = rcd_hdr.plant_ctgry, 
-      plant_sales_district = rcd_hdr.plant_sales_district, 
-      plant_supply_region = rcd_hdr.plant_supply_region,
-      plant_tax_indctr = rcd_hdr.plant_tax_indctr, 
-      regular_vendor_indctr = rcd_hdr.regular_vendor_indctr, 
-      first_reminder_days = rcd_hdr.first_reminder_days,
-      second_reminder_days = rcd_hdr.second_reminder_days, 
-      third_reminder_days = rcd_hdr.third_reminder_days, 
-      vendor_declaration_text_1 = rcd_hdr.vendor_declaration_text_1,
-      vendor_declaration_text_2 = rcd_hdr.vendor_declaration_text_2, 
-      vendor_declaration_text_3 = rcd_hdr.vendor_declaration_text_3,
-      po_tolerance_days = rcd_hdr.po_tolerance_days, 
-      plant_business_place = rcd_hdr.plant_business_place, 
-      stock_xfer_rule = rcd_hdr.stock_xfer_rule,
-      plant_dstrbtn_profile = rcd_hdr.plant_dstrbtn_profile, 
-      central_archive_marker = rcd_hdr.central_archive_marker, 
-      dms_type_indctr = rcd_hdr.dms_type_indctr,
-      node_type = rcd_hdr.node_type, 
-      name_formation_structure = rcd_hdr.name_formation_structure, 
-      cost_control_active_indctr = rcd_hdr.cost_control_active_indctr,
-      mixed_costing_active_indctr = rcd_hdr.mixed_costing_active_indctr, 
-      actual_costing_active_indctr = rcd_hdr.actual_costing_active_indctr,
-      transport_point = rcd_hdr.transport_point
-    where plant_code = rcd_hdr.plant_code;
-    
-    if ( sql%notfound ) then    
-      insert into bds_refrnc_plant_ics
-      (
-        plant_code, 
-        sap_idoc_number, 
-        sap_idoc_timestamp, 
-        change_flag,
-        plant_name, 
-        vltn_area, 
-        plant_customer_no, 
-        plant_vendor_no,
-        factory_calendar_key, 
-        plant_name_2, 
-        plant_street, 
-        plant_po_box,
-        plant_post_code, 
-        plant_city, 
-        plant_purchasing_organisation,
-        plant_sales_organisation, 
-        batch_manage_indctr, 
-        plant_condition_indctr,
-        source_list_indctr, 
-        activate_reqrmnt_indctr, 
-        plant_country_key,
-        plant_region, 
-        plant_country_code, 
-        plant_city_code, 
-        plant_address,
-        maint_planning_plant, 
-        tax_jurisdiction_code,
-        dstrbtn_channel, 
-        division,
-        language_key, 
-        sop_plant, 
-        variance_key, 
-        batch_manage_old_indctr,
-        plant_ctgry, 
-        plant_sales_district, 
-        plant_supply_region,
-        plant_tax_indctr, 
-        regular_vendor_indctr, 
-        first_reminder_days,
-        second_reminder_days, 
-        third_reminder_days, 
-        vendor_declaration_text_1,
-        vendor_declaration_text_2, 
-        vendor_declaration_text_3,
-        po_tolerance_days, 
-        plant_business_place, 
-        stock_xfer_rule,
-        plant_dstrbtn_profile, 
-        central_archive_marker, 
-        dms_type_indctr,
-        node_type, 
-        name_formation_structure, 
-        cost_control_active_indctr,
-        mixed_costing_active_indctr, 
-        actual_costing_active_indctr,
-        transport_point
-      )
-      values 
-      (
-        rcd_hdr.plant_code, 
-        rcd_hdr.sap_idoc_number, 
-        rcd_hdr.sap_idoc_timestamp, 
-        rcd_hdr.change_flag,
-        rcd_hdr.plant_name, 
-        rcd_hdr.vltn_area, 
-        rcd_hdr.plant_customer_no, 
-        rcd_hdr.plant_vendor_no,
-        rcd_hdr.factory_calendar_key, 
-        rcd_hdr.plant_name_2, 
-        rcd_hdr.plant_street, 
-        rcd_hdr.plant_po_box,
-        rcd_hdr.plant_post_code, 
-        rcd_hdr.plant_city, 
-        rcd_hdr.plant_purchasing_organisation,
-        rcd_hdr.plant_sales_organisation, 
-        rcd_hdr.batch_manage_indctr, 
-        rcd_hdr.plant_condition_indctr,
-        rcd_hdr.source_list_indctr, 
-        rcd_hdr.activate_reqrmnt_indctr, 
-        rcd_hdr.plant_country_key,
-        rcd_hdr.plant_region, 
-        rcd_hdr.plant_country_code, 
-        rcd_hdr.plant_city_code, 
-        rcd_hdr.plant_address,
-        rcd_hdr.maint_planning_plant, 
-        rcd_hdr.tax_jurisdiction_code,
-        rcd_hdr.dstrbtn_channel, 
-        rcd_hdr.division,
-        rcd_hdr.language_key, 
-        rcd_hdr.sop_plant, 
-        rcd_hdr.variance_key, 
-        rcd_hdr.batch_manage_old_indctr,
-        rcd_hdr.plant_ctgry, 
-        rcd_hdr.plant_sales_district, 
-        rcd_hdr.plant_supply_region,
-        rcd_hdr.plant_tax_indctr, 
-        rcd_hdr.regular_vendor_indctr, 
-        rcd_hdr.first_reminder_days,
-        rcd_hdr.second_reminder_days, 
-        rcd_hdr.third_reminder_days, 
-        rcd_hdr.vendor_declaration_text_1,
-        rcd_hdr.vendor_declaration_text_2, 
-        rcd_hdr.vendor_declaration_text_3,
-        rcd_hdr.po_tolerance_days, 
-        rcd_hdr.plant_business_place, 
-        rcd_hdr.stock_xfer_rule,
-        rcd_hdr.plant_dstrbtn_profile, 
-        rcd_hdr.central_archive_marker, 
-        rcd_hdr.dms_type_indctr,
-        rcd_hdr.node_type, 
-        rcd_hdr.name_formation_structure, 
-        rcd_hdr.cost_control_active_indctr,
-        rcd_hdr.mixed_costing_active_indctr, 
-        rcd_hdr.actual_costing_active_indctr,
-        rcd_hdr.transport_point
-      );
-    end if;
+    insert into bds_refrnc_plant_ics
+    (
+      plant_code, 
+      sap_idoc_number, 
+      sap_idoc_timestamp, 
+      change_flag,
+      plant_name, 
+      vltn_area, 
+      plant_customer_no, 
+      plant_vendor_no,
+      factory_calendar_key, 
+      plant_name_2, 
+      plant_street, 
+      plant_po_box,
+      plant_post_code, 
+      plant_city, 
+      plant_purchasing_organisation,
+      plant_sales_organisation, 
+      batch_manage_indctr, 
+      plant_condition_indctr,
+      source_list_indctr, 
+      activate_reqrmnt_indctr, 
+      plant_country_key,
+      plant_region, 
+      plant_country_code, 
+      plant_city_code, 
+      plant_address,
+      maint_planning_plant, 
+      tax_jurisdiction_code,
+      dstrbtn_channel, 
+      division,
+      language_key, 
+      sop_plant, 
+      variance_key, 
+      batch_manage_old_indctr,
+      plant_ctgry, 
+      plant_sales_district, 
+      plant_supply_region,
+      plant_tax_indctr, 
+      regular_vendor_indctr, 
+      first_reminder_days,
+      second_reminder_days, 
+      third_reminder_days, 
+      vendor_declaration_text_1,
+      vendor_declaration_text_2, 
+      vendor_declaration_text_3,
+      po_tolerance_days, 
+      plant_business_place, 
+      stock_xfer_rule,
+      plant_dstrbtn_profile, 
+      central_archive_marker, 
+      dms_type_indctr,
+      node_type, 
+      name_formation_structure, 
+      cost_control_active_indctr,
+      mixed_costing_active_indctr, 
+      actual_costing_active_indctr,
+      transport_point
+    )
+    values 
+    (
+      rcd_hdr.plant_code, 
+      rcd_hdr.sap_idoc_number, 
+      rcd_hdr.sap_idoc_timestamp, 
+      rcd_hdr.change_flag,
+      rcd_hdr.plant_name, 
+      rcd_hdr.vltn_area, 
+      rcd_hdr.plant_customer_no, 
+      rcd_hdr.plant_vendor_no,
+      rcd_hdr.factory_calendar_key, 
+      rcd_hdr.plant_name_2, 
+      rcd_hdr.plant_street, 
+      rcd_hdr.plant_po_box,
+      rcd_hdr.plant_post_code, 
+      rcd_hdr.plant_city, 
+      rcd_hdr.plant_purchasing_organisation,
+      rcd_hdr.plant_sales_organisation, 
+      rcd_hdr.batch_manage_indctr, 
+      rcd_hdr.plant_condition_indctr,
+      rcd_hdr.source_list_indctr, 
+      rcd_hdr.activate_reqrmnt_indctr, 
+      rcd_hdr.plant_country_key,
+      rcd_hdr.plant_region, 
+      rcd_hdr.plant_country_code, 
+      rcd_hdr.plant_city_code, 
+      rcd_hdr.plant_address,
+      rcd_hdr.maint_planning_plant, 
+      rcd_hdr.tax_jurisdiction_code,
+      rcd_hdr.dstrbtn_channel, 
+      rcd_hdr.division,
+      rcd_hdr.language_key, 
+      rcd_hdr.sop_plant, 
+      rcd_hdr.variance_key, 
+      rcd_hdr.batch_manage_old_indctr,
+      rcd_hdr.plant_ctgry, 
+      rcd_hdr.plant_sales_district, 
+      rcd_hdr.plant_supply_region,
+      rcd_hdr.plant_tax_indctr, 
+      rcd_hdr.regular_vendor_indctr, 
+      rcd_hdr.first_reminder_days,
+      rcd_hdr.second_reminder_days, 
+      rcd_hdr.third_reminder_days, 
+      rcd_hdr.vendor_declaration_text_1,
+      rcd_hdr.vendor_declaration_text_2, 
+      rcd_hdr.vendor_declaration_text_3,
+      rcd_hdr.po_tolerance_days, 
+      rcd_hdr.plant_business_place, 
+      rcd_hdr.stock_xfer_rule,
+      rcd_hdr.plant_dstrbtn_profile, 
+      rcd_hdr.central_archive_marker, 
+      rcd_hdr.dms_type_indctr,
+      rcd_hdr.node_type, 
+      rcd_hdr.name_formation_structure, 
+      rcd_hdr.cost_control_active_indctr,
+      rcd_hdr.mixed_costing_active_indctr, 
+      rcd_hdr.actual_costing_active_indctr,
+      rcd_hdr.transport_point
+    );
   
   /*-------------*/
   /* End routine */

@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
+  21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb09_loader as
@@ -41,7 +42,6 @@ create or replace package body bds_app.ladpdb09_loader as
   /*-*/
   procedure complete_transaction;
   procedure process_record_hdr(par_record in varchar2);
-  procedure process_record_ctl(par_record in varchar2);
 
   /*-*/
   /* Private definitions 
@@ -65,21 +65,23 @@ create or replace package body bds_app.ladpdb09_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
 
+    /*-*/
+    /* Delete reference data entries
+    /*-*/     
+    delete bds_refrnc_prchsing_src_ics;
+    
     /*-*/
     /* Initialise the inbound definitions 
     /*-*/ 
     lics_inbound_utility.clear_definition;
     
     /*-*/  
-    lics_inbound_utility.set_definition('CTL','ID',3);
-    lics_inbound_utility.set_definition('CTL','SAP_MATERIAL_CODE', 18);
-    
-    /*-*/  
     lics_inbound_utility.set_definition('HDR','ID',3);
+    lics_inbound_utility.set_definition('HDR','SAP_MATERIAL_CODE', 18);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);
     lics_inbound_utility.set_definition('HDR','RECORD_NO', 5);
     lics_inbound_utility.set_definition('HDR','CREATN_DATE', 14);
@@ -128,7 +130,6 @@ create or replace package body bds_app.ladpdb09_loader as
     var_record_identifier := substr(par_record,1,3);
     
     case var_record_identifier
-      when 'CTL' then process_record_ctl(par_record);
       when 'HDR' then process_record_hdr(par_record);
       else lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
@@ -217,62 +218,6 @@ create or replace package body bds_app.ladpdb09_loader as
   /*-------------*/
   end complete_transaction;
   
-  procedure process_record_ctl(par_record in varchar2) is
-    /*-*/
-    /* Local cursors 
-    /*-*/
-    cursor csr_bds_refrnc_prchsing_src is
-      select t01.sap_material_code as sap_material_code
-      from bds_refrnc_prchsing_src_ics t01
-      where t01.sap_material_code = rcd_hdr.sap_material_code
-      group by t01.sap_material_code;
-      
-    rcd_bds_refrnc_prchsing_src csr_bds_refrnc_prchsing_src%rowtype;
-    
-  /*-------------*/
-  /* Begin block */
-  /*-------------*/
-  begin
-
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
-
-    /*-*/
-    /* PARSE - Parse the data record 
-    /*-*/    
-    lics_inbound_utility.parse_record('CTL', par_record);
-
-    /*-*/
-    /* RETRIEVE - Retrieve the field values 
-    /*-*/
-    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');
-        
-    /*-*/
-    /* Validate message sequence  
-    /*-*/
-    open csr_bds_refrnc_prchsing_src;
-    fetch csr_bds_refrnc_prchsing_src into rcd_bds_refrnc_prchsing_src;
-    
-    if ( csr_bds_refrnc_prchsing_src%found ) then      
-      delete from bds_refrnc_prchsing_src_ics where sap_material_code = rcd_hdr.sap_material_code;
-    end if;   
-     
-    close csr_bds_refrnc_prchsing_src;
-    
-  /*-------------*/
-  /* End routine */
-  /*-------------*/
-  end process_record_ctl;
-  
   procedure process_record_hdr(par_record in varchar2) is
     
   /*-------------*/
@@ -287,7 +232,8 @@ create or replace package body bds_app.ladpdb09_loader as
     
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */  
-    /*--------------------------------------*/        
+    /*--------------------------------------*/  
+    rcd_hdr.sap_material_code := lics_inbound_utility.get_variable('SAP_MATERIAL_CODE');   
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_hdr.record_no := lics_inbound_utility.get_variable('RECORD_NO');
     rcd_hdr.creatn_date := lics_inbound_utility.get_date('CREATN_DATE','yyyymmddhh24miss');
@@ -354,91 +300,58 @@ create or replace package body bds_app.ladpdb09_loader as
       return;
     end if;
     
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_refrnc_prchsing_src_ics
-    set sap_material_code = rcd_hdr.sap_material_code, 
-      plant_code = rcd_hdr.plant_code, 
-      record_no = rcd_hdr.record_no, 
-      creatn_date = rcd_hdr.creatn_date, 
-      creatn_user = rcd_hdr.creatn_user,
-      src_list_valid_from = rcd_hdr.src_list_valid_from, 
-      src_list_valid_to = rcd_hdr.src_list_valid_to, 
-      vendor_code = rcd_hdr.vendor_code,
-      fixed_vendor_indctr = rcd_hdr.fixed_vendor_indctr, 
-      agreement_no = rcd_hdr.agreement_no, 
-      agreement_item = rcd_hdr.agreement_item,
-      fixed_purchase_agreement_item = rcd_hdr.fixed_purchase_agreement_item, 
-      plant_procured_from = rcd_hdr.plant_procured_from,
-      sto_fixed_issuing_plant = rcd_hdr.sto_fixed_issuing_plant, 
-      manufctr_part_refrnc_material = rcd_hdr.manufctr_part_refrnc_material,
-      blocked_supply_src_flag = rcd_hdr.blocked_supply_src_flag, 
-      purchasing_organisation = rcd_hdr.purchasing_organisation,
-      purchasing_document_ctgry = rcd_hdr.purchasing_document_ctgry, 
-      src_list_ctgry = rcd_hdr.src_list_ctgry, 
-      src_list_planning_usage = rcd_hdr.src_list_planning_usage,
-      order_unit = rcd_hdr.order_unit, 
-      logical_system = rcd_hdr.logical_system, 
-      special_stock_indctr = rcd_hdr.special_stock_indctr
-    where sap_material_code = rcd_hdr.sap_material_code 
-      and plant_code = rcd_hdr.plant_code 
-      and record_no = rcd_hdr.record_no; 
-    
-    if ( sql%notfound ) then    
-      insert into bds_refrnc_prchsing_src_ics
-      (
-        sap_material_code, 
-        plant_code, 
-        record_no, 
-        creatn_date, 
-        creatn_user,
-        src_list_valid_from, 
-        src_list_valid_to, 
-        vendor_code,
-        fixed_vendor_indctr, 
-        agreement_no, 
-        agreement_item,
-        fixed_purchase_agreement_item, 
-        plant_procured_from,
-        sto_fixed_issuing_plant, 
-        manufctr_part_refrnc_material,
-        blocked_supply_src_flag, 
-        purchasing_organisation,
-        purchasing_document_ctgry, 
-        src_list_ctgry, 
-        src_list_planning_usage,
-        order_unit, 
-        logical_system, 
-        special_stock_indctr
-      )
-      values 
-      (
-        rcd_hdr.sap_material_code, 
-        rcd_hdr.plant_code, 
-        rcd_hdr.record_no, 
-        rcd_hdr.creatn_date, 
-        rcd_hdr.creatn_user,
-        rcd_hdr.src_list_valid_from, 
-        rcd_hdr.src_list_valid_to, 
-        rcd_hdr.vendor_code,
-        rcd_hdr.fixed_vendor_indctr, 
-        rcd_hdr.agreement_no, 
-        rcd_hdr.agreement_item,
-        rcd_hdr.fixed_purchase_agreement_item, 
-        rcd_hdr.plant_procured_from,
-        rcd_hdr.sto_fixed_issuing_plant, 
-        rcd_hdr.manufctr_part_refrnc_material,
-        rcd_hdr.blocked_supply_src_flag, 
-        rcd_hdr.purchasing_organisation,
-        rcd_hdr.purchasing_document_ctgry, 
-        rcd_hdr.src_list_ctgry, 
-        rcd_hdr.src_list_planning_usage,
-        rcd_hdr.order_unit, 
-        rcd_hdr.logical_system, 
-        rcd_hdr.special_stock_indctr
-      );
-    end if;
+    insert into bds_refrnc_prchsing_src_ics
+    (
+      sap_material_code, 
+      plant_code, 
+      record_no, 
+      creatn_date, 
+      creatn_user,
+      src_list_valid_from, 
+      src_list_valid_to, 
+      vendor_code,
+      fixed_vendor_indctr, 
+      agreement_no, 
+      agreement_item,
+      fixed_purchase_agreement_item, 
+      plant_procured_from,
+      sto_fixed_issuing_plant, 
+      manufctr_part_refrnc_material,
+      blocked_supply_src_flag, 
+      purchasing_organisation,
+      purchasing_document_ctgry, 
+      src_list_ctgry, 
+      src_list_planning_usage,
+      order_unit, 
+      logical_system, 
+      special_stock_indctr
+    )
+    values 
+    (
+      rcd_hdr.sap_material_code, 
+      rcd_hdr.plant_code, 
+      rcd_hdr.record_no, 
+      rcd_hdr.creatn_date, 
+      rcd_hdr.creatn_user,
+      rcd_hdr.src_list_valid_from, 
+      rcd_hdr.src_list_valid_to, 
+      rcd_hdr.vendor_code,
+      rcd_hdr.fixed_vendor_indctr, 
+      rcd_hdr.agreement_no, 
+      rcd_hdr.agreement_item,
+      rcd_hdr.fixed_purchase_agreement_item, 
+      rcd_hdr.plant_procured_from,
+      rcd_hdr.sto_fixed_issuing_plant, 
+      rcd_hdr.manufctr_part_refrnc_material,
+      rcd_hdr.blocked_supply_src_flag, 
+      rcd_hdr.purchasing_organisation,
+      rcd_hdr.purchasing_document_ctgry, 
+      rcd_hdr.src_list_ctgry, 
+      rcd_hdr.src_list_planning_usage,
+      rcd_hdr.order_unit, 
+      rcd_hdr.logical_system, 
+      rcd_hdr.special_stock_indctr
+    );
   
   /*-------------*/
   /* End routine */

@@ -23,6 +23,7 @@ create or replace package ics_app.plant_bom_alternative_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/07   Trevor Keon    Changed package to do full refreshes only
 
 *******************************************************************************/
 
@@ -30,7 +31,6 @@ create or replace package ics_app.plant_bom_alternative_extract as
   /* Public declarations 
   /*-*/
   procedure execute(par_site in varchar2 default '*ALL');
-  procedure execute(par_material_code in varchar2, par_alternative in varchar2, par_plant in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_bom_alternative_extract;
 /
@@ -49,7 +49,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_material_code in varchar2, par_alternative in varchar2, par_plant in varchar2) return boolean;
+  function execute_extract return boolean;
   procedure execute_send(par_interface in varchar2);
   
   /*-*/
@@ -72,14 +72,6 @@ create or replace package body ics_app.plant_bom_alternative_extract as
   /* This procedure performs the execute routine */
   /***********************************************/
   procedure execute(par_site in varchar2 default '*ALL') is
-  begin
-    execute(null, null, null, par_site);
-  end;
-  
-  /***********************************************/
-  /* This procedure performs the execute routine */
-  /***********************************************/
-  procedure execute(par_material_code in varchar2, par_alternative in varchar2, par_plant in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
     /* Local variables 
@@ -89,9 +81,6 @@ create or replace package body ics_app.plant_bom_alternative_extract as
     var_start     boolean := false;
          
   begin
-    var_material_code := trim(par_material_code);
-    var_alternative := trim(par_alternative);
-    var_plant := trim(par_plant);    
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
@@ -106,7 +95,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
         
-    var_start := execute_extract(var_material_code, var_alternative, var_plant);
+    var_start := execute_extract;
     
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -172,7 +161,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
   end execute;
   
   
-  function execute_extract(par_material_code in varchar2, par_alternative in varchar2, par_plant in varchar2) return boolean is
+  function execute_extract return boolean is
   
     /*-*/
     /* Local variables 
@@ -189,10 +178,7 @@ create or replace package body ics_app.plant_bom_alternative_extract as
         t01.plant_code as bom_plant,
         t01.bom_usage as bom_usage,
         to_char(t01.valid_from_date, 'yyyymmddhh24miss') as bom_eff_from_date
-      from bds_refrnc_bom_altrnt_t415a t01
-      where (par_material_code is null or ltrim(t01.sap_material_code,'0') = ltrim(par_material_code,'0'))
-        and (par_alternative is null or ltrim(t01.altrntv_bom,'0') = ltrim(par_alternative,'0'))
-        and (par_plant is null or t01.plant_code = par_plant);
+      from bds_refrnc_bom_altrnt_t415a t01;
         
     rcd_bds_refrnc_bom_altrnt csr_bds_refrnc_bom_altrnt%rowtype;
 
@@ -217,6 +203,10 @@ create or replace package body ics_app.plant_bom_alternative_extract as
 
       var_index := tbl_definition.count + 1;
       var_result := true;
+      
+      var_material_code := rcd_bds_refrnc_bom_altrnt.bom_material_code;
+      var_alternative := rcd_bds_refrnc_bom_altrnt.bom_alternative;
+      var_plant := rcd_bds_refrnc_bom_altrnt.bom_plant;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(nvl(to_char(rcd_bds_refrnc_bom_altrnt.bom_material_code),' '),18,' ')

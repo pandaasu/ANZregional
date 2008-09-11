@@ -29,13 +29,15 @@ create or replace force view bds_app.cust_ics as
     t01.city_post_code as postcode,
     ltrim(t01.customer_code, '0') as cust_code
   from bds_addr_customer_det t01
-  where exists
-  (
-    select 1
-    from bds_cust_sales_area t02
-    where t01.customer_code = t02.customer_code
-      and t02.sales_org_code = '147'             
-  );
+  where t01.address_version = '*NONE'
+    and exists
+    (
+      select 1
+      from bds_cust_sales_area t02
+      where t01.customer_code = t02.customer_code
+        and t02.sales_org_code = '147'
+        and t02.deletion_flag is null         
+    );
   
 /**/
 /* Authority 

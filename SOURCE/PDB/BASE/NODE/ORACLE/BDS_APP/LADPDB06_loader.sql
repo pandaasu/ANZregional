@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
+  21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb06_loader as
@@ -63,9 +64,14 @@ create or replace package body bds_app.ladpdb06_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+
+    /*-*/
+    /* Delete reference data entries
+    /*-*/     
+    delete bds_prodctn_resrc_en_ics;
 
     /*-*/
     /* Initialise the inbound definitions 
@@ -198,18 +204,6 @@ create or replace package body bds_app.ladpdb06_loader as
   /* Begin block */
   /*-------------*/    
   begin
-  
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -256,33 +250,21 @@ create or replace package body bds_app.ladpdb06_loader as
     if ( var_trn_error = true ) then
       return;
     end if;
-    
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_prodctn_resrc_en_ics
-    set resrc_id = rcd_hdr.resrc_id,
-      resrc_code = rcd_hdr.resrc_code,
-      resrc_text = rcd_hdr.resrc_text,
-      resrc_plant_code = rcd_hdr.resrc_plant_code
-    where resrc_id = rcd_hdr.resrc_id;
-    
-    if ( sql%notfound ) then    
-      insert into bds_prodctn_resrc_en_ics
-      (
-        resrc_id, 
-        resrc_code,
-        resrc_text,        
-        resrc_plant_code
-      )
-      values 
-      (
-        rcd_hdr.resrc_id, 
-        rcd_hdr.resrc_code,
-        rcd_hdr.resrc_text,        
-        rcd_hdr.resrc_plant_code
-      );
-    end if;  
+
+    insert into bds_prodctn_resrc_en_ics
+    (
+      resrc_id, 
+      resrc_code,
+      resrc_text,        
+      resrc_plant_code
+    )
+    values 
+    (
+      rcd_hdr.resrc_id, 
+      rcd_hdr.resrc_code,
+      rcd_hdr.resrc_text,        
+      rcd_hdr.resrc_plant_code
+    ); 
   
   /*-------------*/
   /* End routine */

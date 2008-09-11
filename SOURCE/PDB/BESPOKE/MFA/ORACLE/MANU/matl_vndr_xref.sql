@@ -23,7 +23,7 @@
 create or replace force view bds_app.matl_vndr_xref_ics as
   select t01.plant_code as plant,
     ltrim(t01.sap_material_code,'0') as matl_code,
-    ltrim(t01.vendor_code,'0') as vndr_code,
+    t01.vendor_code as vndr_code,
     nvl(t02.vendor_name_01,'Missing in Atlas') as vndr_name,
     to_char(t01.src_list_valid_from, 'yyyymmdd') as eff_start_date,
     to_char(t01.src_list_valid_to, 'yyyymmdd') as eff_end_date,  

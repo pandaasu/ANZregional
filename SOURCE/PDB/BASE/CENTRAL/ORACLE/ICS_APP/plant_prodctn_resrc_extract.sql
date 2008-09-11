@@ -10,18 +10,7 @@ create or replace package ics_app.plant_prodctn_resrc_extract as
   ----------- 
   Production Resource Data for Plant databases 
 
-  1. PAR_ACTION (MANDATORY) 
-
-    *ALL - send all material data  
-    *RESRC - send production resource data matching a given resource id  
-    
-  2. PAR_DATA (MANDATORY) 
-    
-    Data related to the action specified:
-      - *ALL = null 
-      - *RESRC = resource id 
-
-  3. PAR_SITE (OPTIONAL) 
+  1. PAR_SITE (OPTIONAL) 
   
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
@@ -34,13 +23,14 @@ create or replace package ics_app.plant_prodctn_resrc_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/07   Trevor Keon    Changed package to do full refreshes only
 
 *******************************************************************************/
 
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
+  procedure execute(par_site in varchar2 default '*ALL');
 
 end plant_prodctn_resrc_extract;
 /
@@ -59,7 +49,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
+  function execute_extract return boolean;
   procedure execute_send(par_interface in varchar2);
   
   /*-*/
@@ -79,33 +69,24 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
+  procedure execute(par_site in varchar2 default '*ALL') is
     
     /*-*/
     /* Local variables 
     /*-*/
     var_exception varchar2(4000);
-    var_action    varchar2(10);
-    var_data      varchar2(100);
     var_site      varchar2(10);
     var_start     boolean := false;
          
   begin
   
-    var_action := upper(nvl(trim(par_action), '*NULL'));
-    var_data := trim(par_data);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
     
     /*-*/
     /* validate parameters 
-    /*-*/
-    if ( var_action != '*ALL'
-        and var_action != '*RESRC' ) then
-      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *RESRC');
-    end if;
-    
+    /*-*/   
     if ( var_site != '*ALL'
         and var_site != '*MCA'
         and var_site != '*SCO'
@@ -116,11 +97,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
     
-    if ( var_action = '*RESRC' and var_data is null ) then
-      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *RESRC actions.');
-    end if;
-    
-    var_start := execute_extract(var_action, var_data);
+    var_start := execute_extract;
     
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -185,7 +162,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
    /*-------------*/
   end execute;
 
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
+  function execute_extract return boolean is
 
     /*-*/
     /* Local variables 
@@ -204,12 +181,7 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
       from bds_prodctn_resrc_en t01
       where t01.resrc_deletion_flag is null
         and (t01.resrc_plant_code like 'AU%' or t01.resrc_plant_code like 'NZ%')
-        and substr(upper(resrc_text), 0, 6) <> 'DO NOT'
-        and 
-        (
-          par_action = '*ALL'
-          or (par_action = '*RESRC' and t01.resrc_id = par_data)
-        );
+        and substr(upper(resrc_text), 0, 6) <> 'DO NOT';
         
     rcd_prodctn_resrc_en csr_prodctn_resrc_en%rowtype;
 
@@ -234,6 +206,8 @@ create or replace package body ics_app.plant_prodctn_resrc_extract as
 
       var_index := tbl_definition.count + 1;
       var_result := true;
+      
+      var_resrc_id := rcd_prodctn_resrc_en.resrc_id;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(nvl(to_char(rcd_prodctn_resrc_en.resrc_id),' '),8,' ')

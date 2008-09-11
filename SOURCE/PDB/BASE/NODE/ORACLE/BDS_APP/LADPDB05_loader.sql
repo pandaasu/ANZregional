@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
+  21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb05_loader as
@@ -64,9 +65,14 @@ create or replace package body bds_app.ladpdb05_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+    
+    /*-*/
+    /* Delete alternate BOM entries
+    /*-*/     
+    delete bds_refrnc_hdr_altrnt;
 
     /*-*/
     /* Initialise the inbound definitions 
@@ -200,18 +206,6 @@ create or replace package body bds_app.ladpdb05_loader as
   /* Begin block */
   /*-------------*/
   begin
-  
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -275,38 +269,22 @@ create or replace package body bds_app.ladpdb05_loader as
       return;
     end if;
     
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_refrnc_hdr_altrnt
-    set bom_material_code = rcd_hdr.bom_material_code,
-      bom_alternative = rcd_hdr.bom_alternative,
-      bom_plant = rcd_hdr.bom_plant,
-      bom_usage = rcd_hdr.bom_usage,
-      bom_eff_from_date = rcd_hdr.bom_eff_from_date
-    where bom_material_code = rcd_hdr.bom_material_code
-      and bom_plant = rcd_hdr.bom_plant
-      and bom_usage = rcd_hdr.bom_usage
-      and bom_eff_from_date = rcd_hdr.bom_eff_from_date;
-    
-    if ( sql%notfound ) then    
-      insert into bds_refrnc_hdr_altrnt
-      (
-        bom_material_code, 
-        bom_alternative,
-        bom_plant,  
-        bom_usage,        
-        bom_eff_from_date
-      )
-      values 
-      (
-        rcd_hdr.bom_material_code, 
-        rcd_hdr.bom_alternative,
-        rcd_hdr.bom_plant,
-        rcd_hdr.bom_usage,
-        rcd_hdr.bom_eff_from_date
-      );
-    end if;
+    insert into bds_refrnc_hdr_altrnt
+    (
+      bom_material_code, 
+      bom_alternative,
+      bom_plant,  
+      bom_usage,        
+      bom_eff_from_date
+    )
+    values 
+    (
+      rcd_hdr.bom_material_code, 
+      rcd_hdr.bom_alternative,
+      rcd_hdr.bom_plant,
+      rcd_hdr.bom_usage,
+      rcd_hdr.bom_eff_from_date
+    );
   
   /*-------------*/
   /* End routine */

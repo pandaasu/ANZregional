@@ -27,6 +27,7 @@ create or replace package ics_app.plant_reference_data_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/07   Trevor Keon    Changed package to support full refreshes only
 
 *******************************************************************************/
 
@@ -137,7 +138,7 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       /* Plant Reference Tables                             */
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'T001W') then plant_refrnc_plant_extract.execute('*ALL', null, par_site);
+      when (var_z_tabname = 'T001W') then plant_refrnc_plant_extract.execute(par_site);
       /*----------------------------------------------------*/
       /* BOM Alternate Versions Reference Tables            */
       /*----------------------------------------------------*/
@@ -145,11 +146,11 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       /* Purchasing Source (Vendor/Material) Reference Table*/
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'EORD') then plant_refrnc_prch_src_extract.execute('*ALL', null, par_site);
+      when (var_z_tabname = 'EORD') then plant_refrnc_prch_src_extract.execute(par_site);
       /*----------------------------------------------------*/
       /* Production Resources (Details/Descriptions)        */
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'CRTX' or var_z_tabname = 'CRHD') then plant_prodctn_resrc_extract.execute('*ALL', null, par_site);
+      when (var_z_tabname = 'CRTX' or var_z_tabname = 'CRHD') then plant_prodctn_resrc_extract.execute(par_site);
       /*-*/
       else return;
     end case;

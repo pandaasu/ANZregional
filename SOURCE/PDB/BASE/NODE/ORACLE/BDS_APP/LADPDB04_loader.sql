@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   14-Mar-2008  Trevor Keon      Created 
+  01-Sep-2008  Trevor Keon      Modified to remove BOM details before loading
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb04_loader as
@@ -408,7 +409,8 @@ create or replace package body bds_app.ladpdb04_loader as
       item_base_qty,
       item_base_uom,
       item_eff_from_date,
-      item_eff_to_date
+      item_eff_to_date,
+      msg_timestamp
     )
     values 
     (
@@ -431,7 +433,8 @@ create or replace package body bds_app.ladpdb04_loader as
       rcd_hdr.item_base_qty,
       rcd_hdr.item_base_uom,
       rcd_hdr.item_eff_from_date,
-      rcd_hdr.item_eff_to_date
+      rcd_hdr.item_eff_to_date,
+      rcd_hdr.msg_timestamp
     );
     
   /*-------------*/

@@ -66,4 +66,3 @@ exception
 end update_teco_status;
 
 create or replace public synonym update_teco_status for bds_app.update_teco_status;
-grant execute on bds_app.update_teco_status to appsupport;

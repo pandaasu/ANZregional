@@ -238,7 +238,7 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
         t02.distbn_chnl_code as distbn_chnl_code, 
         t02.division_code as division_code,
         t02.auth_group_code as auth_group_code, 
-        t02.deletion_flag as deletion_flag, 
+        t01.deletion_flag as deletion_flag, 
         t02.statistics_group as statistics_group, 
         t02.order_block_flag as order_block_flag,
         t02.pricing_procedure as pricing_procedure, 
@@ -299,7 +299,6 @@ create or replace package body ics_app.plant_cust_sales_area_extract as
       from bds_cust_header t01,
         bds_cust_sales_area t02        
       where t01.customer_code = t02.customer_code
-        and t02.deletion_flag is null
         and 
         (
           (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))

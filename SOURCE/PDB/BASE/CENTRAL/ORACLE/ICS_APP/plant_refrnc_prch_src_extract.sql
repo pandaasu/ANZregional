@@ -11,20 +11,9 @@ create or replace package ics_app.plant_refrnc_prch_src_extract as
   Purchasing Source Reference Data for Plant databases 
       
   EXECUTE - 
-    Send purchasing source reference data based on the specified action.     
+    Send purchasing source reference data.  
 
-  1. PAR_ACTION (MANDATORY) 
-
-    *ALL - send all purchasing source reference data  
-    *MATERIAL - send purchasing source reference data matching a given material code 
-    
-  2. PAR_DATA (MANDATORY) 
-    
-    Data related to the action specified:
-      - *ALL = null 
-      - *MATERIAL = material code 
-
-  3. PAR_SITE (OPTIONAL) 
+  1. PAR_SITE (OPTIONAL) 
   
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
@@ -37,13 +26,14 @@ create or replace package ics_app.plant_refrnc_prch_src_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/07   Trevor Keon    Changed package to do full refreshes only
 
 *******************************************************************************/
 
   /*-*/
   /* Public declarations 
   /*-*/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL');
+  procedure execute(par_site in varchar2 default '*ALL');
 
 end plant_refrnc_prch_src_extract;
 /
@@ -62,7 +52,7 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
+  function execute_extract return boolean;
   procedure execute_send(par_interface in varchar2);
   
   /*-*/
@@ -82,33 +72,24 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_action in varchar2, par_data in varchar2, par_site in varchar2 default '*ALL') is
+  procedure execute(par_site in varchar2 default '*ALL') is
     
     /*-*/
     /* Local variables 
     /*-*/
     var_exception varchar2(4000);
-    var_action    varchar2(10);
-    var_data      varchar2(100);
     var_site      varchar2(10);
     var_start     boolean := false;
          
   begin
   
-    var_action := upper(nvl(trim(par_action), '*NULL'));
-    var_data := trim(par_data);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
     
     /*-*/
     /* validate parameters 
-    /*-*/
-    if ( var_action != '*ALL'
-        and var_action != '*MATERIAL' ) then
-      raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *ALL or *MATERIAL');
-    end if;
-    
+    /*-*/   
     if ( var_site != '*ALL'
         and var_site != '*MCA'
         and var_site != '*SCO'
@@ -118,12 +99,8 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
         and var_site != '*WGI' ) then
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
-    
-    if ( var_action = '*MATERIAL' and var_data is null ) then
-      raise_application_error(-20000, 'Data parameter (' || par_data || ') must not be null for *MATERIAL actions.');
-    end if;    
 
-    var_start := execute_extract(var_action, var_data);
+    var_start := execute_extract;
         
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -188,7 +165,7 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
    /*-------------*/
   end execute;
    
-  function execute_extract(par_action in varchar2, par_data in varchar2) return boolean is
+  function execute_extract return boolean is
 
     /*-*/
     /* Local variables 
@@ -224,8 +201,6 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
         t01.logical_system as logical_system, 
         t01.special_stock_indctr as special_stock_indctr
       from bds_refrnc_purchasing_src t01
-      where par_action = '*ALL'
-          or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))
       order by t01.sap_material_code;
         
     rcd_refrnc_purchasing_src csr_refrnc_purchasing_src%rowtype;
@@ -253,18 +228,10 @@ create or replace package body ics_app.plant_refrnc_prch_src_extract as
       var_index := tbl_definition.count + 1;
       var_result := true;
       
-      if ( var_material_code is null or var_material_code <> rcd_refrnc_purchasing_src.sap_material_code) then
-      
-        var_material_code := rcd_refrnc_purchasing_src.sap_material_code;
-        
-        tbl_definition(var_index).value := 'CTL'
-          || rpad(nvl(to_char(rcd_refrnc_purchasing_src.sap_material_code),' '),18,' ')
-          || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');
-        
-        var_index := tbl_definition.count + 1;
-      end if;      
+      var_material_code := rcd_refrnc_purchasing_src.sap_material_code;   
               
       tbl_definition(var_index).value := 'HDR'
+        || rpad(nvl(to_char(rcd_refrnc_purchasing_src.sap_material_code),' '),18,' ')
         || rpad(nvl(to_char(rcd_refrnc_purchasing_src.plant_code),' '),4,' ')
         || rpad(nvl(to_char(rcd_refrnc_purchasing_src.record_no),' '),5,' ')
         || rpad(nvl(to_char(rcd_refrnc_purchasing_src.creatn_date),' '),14,' ')

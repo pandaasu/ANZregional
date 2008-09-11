@@ -35,7 +35,8 @@ create or replace force view bds_app.bom_ics as
     t01.item_base_qty as qty,
     t01.item_base_uom as uom
   from bds_bom_all t01
-  where t01.bom_plant in ('AU10', 'AU55', 'AU56');
+  where t01.bom_plant in ('AU10', 'AU55', 'AU56')
+    and t01.item_number is not null; -- ensure child data exists
   
 /**/
 /* Authority 

@@ -22,21 +22,21 @@
 /**/
 create or replace force view bds_app.matl_clssfctn_raw_ics as
   select ltrim(t01.sap_material_code,'0') as material_code,
-    t01.sap_raw_family_code as raw_fmly_code,
-    t01.sap_raw_sub_family_code as raw_sub_fmly_code,
-    t01.sap_raw_group_code as raw_group_code,
-    t01.sap_animal_parts_code as anml_parts_code,
-    t01.sap_physical_condtn_code as physcl_cndtn_code
-  from bds_material_classfctn t01,
-    bds_material_plant_mfanz t02
+    t02.sap_raw_family_code as raw_fmly_code,
+    t02.sap_raw_sub_family_code as raw_sub_fmly_code,
+    t02.sap_raw_group_code as raw_group_code,
+    t02.sap_animal_parts_code as anml_parts_code,
+    t02.sap_physical_condtn_code as physcl_cndtn_code
+  from bds_material_plant_mfanz t01,
+    bds_material_classfctn t02    
   where t01.sap_material_code = t02.sap_material_code
-    and t02.material_type = 'ROH'
+    and t01.material_type = 'ROH'
   group by t01.sap_material_code,
-    t01.sap_raw_family_code,
-    t01.sap_raw_sub_family_code,
-    t01.sap_raw_group_code,
-    t01.sap_animal_parts_code,
-    t01.sap_physical_condtn_code
+    t02.sap_raw_family_code,
+    t02.sap_raw_sub_family_code,
+    t02.sap_raw_group_code,
+    t02.sap_animal_parts_code,
+    t02.sap_physical_condtn_code
   order by t01.sap_material_code;
 
 /**/

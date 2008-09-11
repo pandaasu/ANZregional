@@ -23,6 +23,7 @@ create or replace package ics_app.plant_refrnc_charistic_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/07   Trevor Keon    Changed package to do full refreshes only
 
 *******************************************************************************/
 
@@ -30,7 +31,6 @@ create or replace package ics_app.plant_refrnc_charistic_extract as
   /* Public declarations 
   /*-*/
   procedure execute(par_site in varchar2 default '*ALL');
-  procedure execute(par_charistic_code in varchar2, par_charistic_value_code in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_refrnc_charistic_extract;
 /
@@ -49,7 +49,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_charistic_code in varchar2, par_charistic_value_code in varchar2) return boolean;
+  function execute_extract return boolean;
   procedure execute_send(par_interface in varchar2);
   
   /*-*/
@@ -71,14 +71,6 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
   /* This procedure performs the execute routine */
   /***********************************************/
   procedure execute(par_site in varchar2 default '*ALL') is
-  begin
-    execute(null, null, par_site);
-  end;  
-  
-  /***********************************************/
-  /* This procedure performs the execute routine */
-  /***********************************************/
-  procedure execute(par_charistic_code in varchar2, par_charistic_value_code in varchar2, par_site in varchar2 default '*ALL') is
     
     /*-*/
     /* Local variables 
@@ -89,8 +81,6 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
          
   begin
   
-    var_charistic_code := trim(par_charistic_code);
-    var_charistic_value_code := trim(par_charistic_value_code);
     var_site := upper(nvl(trim(par_site), '*ALL'));
     
     tbl_definition.delete;
@@ -105,7 +95,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
       raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
     
-    var_start := execute_extract(var_charistic_code, var_charistic_value_code);
+    var_start := execute_extract;
         
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
@@ -170,7 +160,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
    /*-------------*/
   end execute;
   
-  function execute_extract(par_charistic_code in varchar2, par_charistic_value_code in varchar2) return boolean is
+  function execute_extract return boolean is
   
     /*-*/
     /* Local variables 
@@ -189,9 +179,7 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
         t01.sap_idoc_number as sap_idoc_number, 
         t01.sap_idoc_timestamp as sap_idoc_timestamp, 
         t01.change_flag as change_flag
-      from bds_refrnc_charistic t01
-      where (par_charistic_code is null or t01.sap_charistic_code = par_charistic_code)
-        and (par_charistic_value_code is null or t01.sap_charistic_value_code = par_charistic_value_code); 
+      from bds_refrnc_charistic t01; 
         
     rcd_refrnc_charistic csr_refrnc_charistic%rowtype;
 
@@ -216,6 +204,9 @@ create or replace package body ics_app.plant_refrnc_charistic_extract as
 
       var_index := tbl_definition.count + 1;
       var_result := true; 
+      
+      var_charistic_code := rcd_refrnc_charistic.sap_charistic_code;
+      var_charistic_value_code := rcd_refrnc_charistic.sap_charistic_value_code;
               
       tbl_definition(var_index).value := 'HDR'
         || rpad(nvl(to_char(rcd_refrnc_charistic.sap_charistic_code),' '),30,' ')

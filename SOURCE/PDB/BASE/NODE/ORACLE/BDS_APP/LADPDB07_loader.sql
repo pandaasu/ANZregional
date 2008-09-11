@@ -14,6 +14,7 @@
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
+  21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb07_loader as
@@ -64,9 +65,14 @@ create or replace package body bds_app.ladpdb07_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+
+    /*-*/
+    /* Delete reference data entries
+    /*-*/     
+    delete bds_refrnc_charistic_ics;
 
     /*-*/
     /* Initialise the inbound definitions 
@@ -202,18 +208,6 @@ create or replace package body bds_app.ladpdb07_loader as
   /* Begin block */
   /*-------------*/    
   begin
-  
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -269,42 +263,26 @@ create or replace package body bds_app.ladpdb07_loader as
       return;
     end if;
     
-    /*------------------------------*/
-    /* UPDATE - Update the database */
-    /*------------------------------*/        
-    update bds_refrnc_charistic_ics
-    set sap_charistic_code = rcd_hdr.sap_charistic_code,
-      sap_charistic_value_code = rcd_hdr.sap_charistic_value_code,
-      sap_charistic_value_shrt_desc = rcd_hdr.sap_charistic_value_shrt_desc,
-      sap_charistic_value_long_desc = rcd_hdr.sap_charistic_value_long_desc,
-      sap_idoc_number = rcd_hdr.sap_idoc_number,
-      sap_idoc_timestamp = rcd_hdr.sap_idoc_timestamp,
-      change_flag = rcd_hdr.change_flag
-    where sap_charistic_code = rcd_hdr.sap_charistic_code
-      and sap_charistic_value_code = rcd_hdr.sap_charistic_value_code;
-    
-    if ( sql%notfound ) then    
-      insert into bds_refrnc_charistic_ics
-      (
-        sap_charistic_code,
-        sap_charistic_value_code,
-        sap_charistic_value_shrt_desc,
-        sap_charistic_value_long_desc,
-        sap_idoc_number,
-        sap_idoc_timestamp,
-        change_flag
-      )
-      values 
-      (
-        rcd_hdr.sap_charistic_code,
-        rcd_hdr.sap_charistic_value_code,
-        rcd_hdr.sap_charistic_value_shrt_desc,
-        rcd_hdr.sap_charistic_value_long_desc,
-        rcd_hdr.sap_idoc_number,
-        rcd_hdr.sap_idoc_timestamp,
-        rcd_hdr.change_flag
-      );
-    end if;    
+    insert into bds_refrnc_charistic_ics
+    (
+      sap_charistic_code,
+      sap_charistic_value_code,
+      sap_charistic_value_shrt_desc,
+      sap_charistic_value_long_desc,
+      sap_idoc_number,
+      sap_idoc_timestamp,
+      change_flag
+    )
+    values 
+    (
+      rcd_hdr.sap_charistic_code,
+      rcd_hdr.sap_charistic_value_code,
+      rcd_hdr.sap_charistic_value_shrt_desc,
+      rcd_hdr.sap_charistic_value_long_desc,
+      rcd_hdr.sap_idoc_number,
+      rcd_hdr.sap_idoc_timestamp,
+      rcd_hdr.change_flag
+    );    
   
   /*-------------*/
   /* End routine */
