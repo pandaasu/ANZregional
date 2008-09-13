@@ -447,10 +447,6 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_users into rcd_users;
       if csr_users%found then
          var_user_id := rcd_users.user_id;
-         if rcd_users.status != 'A' then
-            update users set status = 'A'
-            where user_id = var_user_id;
-         end if;
       else
          select users_seq.nextval into var_user_id from dual;
          insert into users
@@ -529,10 +525,6 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_manager into rcd_manager;
       if csr_manager%found then
          var_manager_id := rcd_manager.user_id;
-         if rcd_manager.status != 'A' then
-            update users set status = 'A'
-            where user_id = var_manager_id;
-         end if;
       else
          select users_seq.nextval into var_manager_id from dual;
          insert into users
