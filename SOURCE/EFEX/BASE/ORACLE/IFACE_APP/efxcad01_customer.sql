@@ -189,7 +189,8 @@ create or replace package body efxcad01_customer as
             and t07.user_id = t18.user_id(+)
             and t08.user_id = t19.user_id(+)
             and t05.market_id = con_market_id
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+            and trunc(t01.modified_date) >= trunc(sysdate) - var_history
+            and trunc(t01.modified_date) > to_date('20080914','yyyymmdd');
       rcd_customer csr_customer%rowtype;
 
    /*-------------*/
@@ -204,6 +205,7 @@ create or replace package body efxcad01_customer as
 
       /*-*/
       /* Define number of days to extract
+      /* **note** the live conversion was on 14/09/2008 so only future rows are included
       /*-*/
       if (par_history = 0) then
          var_history := 99999;
