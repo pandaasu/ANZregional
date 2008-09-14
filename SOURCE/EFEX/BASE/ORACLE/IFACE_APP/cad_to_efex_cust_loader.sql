@@ -766,10 +766,12 @@ create or replace package body cad_to_efex_cust_loader as
       var_std_level2_code varchar2(10);
       var_std_level3_code varchar2(10);
       var_std_level4_code varchar2(10);
+      var_outlet_location varchar2(100);
       var_customer_id number;
       var_cust_contact_id number;
       var_active_flg varchar2(10);
       var_date date;
+      var_user varchar2(10);
 
       /*-*/
       /* Local cursors
@@ -837,7 +839,7 @@ create or replace package body cad_to_efex_cust_loader as
       cursor csr_affiliation_direct is
          select t01.*
            from affiliation t01
-          where t01.affiliation_name = par_cad_cust_data.outlet_type_name;
+          where t01.affiliation_name = par_cad_cust_data.chain_store_banner_name;
       rcd_affiliation_direct csr_affiliation_direct%rowtype;
 
       cursor csr_geo_hierarchy is
@@ -852,6 +854,16 @@ create or replace package body cad_to_efex_cust_loader as
           where t01.std_level4_code = par_cad_cust_data.chain_store_banner_code;
       rcd_std_hierarchy csr_std_hierarchy%rowtype;
 
+      cursor csr_cust_location is 
+         select t01.list_value_name
+           from list_values t01
+          where t01.list_type = 'CHN_CUST_LOCATION'
+            and t01.status = 'A'
+            and t01.market_id = con_market_id
+            and t01.business_unit_id = var_business_unit_id
+            and t01.list_value_text = par_cad_cust_data.outlet_loc;
+      rcd_cust_location csr_cust_location%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -860,7 +872,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Initialise the log data
       /*-*/
-      var_log_save := var_log_line;
+      var_log_save := 0;
       var_text := 'Customer ('||par_cad_cust_data.otl_code||') name ('||par_cad_cust_data.otl_name||')';
 
       /*-*/
@@ -879,16 +891,19 @@ create or replace package body cad_to_efex_cust_loader as
       /* Insert the log row when required
       /*-*/
       if var_business_unit_id is null then
+         var_log_save := 1;
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - has no business unit id');
       end if;
       if (par_cad_cust_data.sales_team = 'MT' and
           var_business_unit_id != con_snack_business_unit_id) then
+         var_log_save := 1;
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - sales team MT must be business unit id 5 (snack)');
       end if;
       if (par_cad_cust_data.sales_team != 'WS' and
           par_cad_cust_data.pur_from_wholesaler_code is null) then
+         var_log_save := 1;
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - sales team MT and IC must have a wholesaler code');
       end if;
@@ -896,7 +911,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Rollback the database
       /*-*/
-      if var_log_save != var_log_line then
+      if var_log_save != 0 then
          rollback;
          return;
       end if;
@@ -913,14 +928,17 @@ create or replace package body cad_to_efex_cust_loader as
             var_user_id := rcd_users.user_id;
             var_sales_territory_id := rcd_users.sales_territory_id;
             if var_sales_territory_id is null then
+               var_log_save := 1;
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - sales person ('||par_cad_cust_data.sales_prsn_code||') does not have a related sales territory');
             end if;
             if (rcd_users.business_unit_id is null or rcd_users.business_unit_id != var_business_unit_id) then
+               var_log_save := 1;
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - business unit id ('||var_business_unit_id||') differs from user business unit id ('||rcd_users.business_unit_id||')');
             end if;
          else
+            var_log_save := 1;
             var_log_line := var_log_line + 1;
             write_log(var_log_type, var_log_line, var_text||' - user ('||par_cad_cust_data.sales_prsn_code||') does not exist');
          end if;
@@ -932,6 +950,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       var_cust_type_id := null;
       if par_cad_cust_data.outlet_type_name is null then
+         var_log_save := 1;
          var_log_line := var_log_line + 1;
          write_log(var_log_type, var_log_line, var_text||' - has no outlet type name');
       else
@@ -960,6 +979,7 @@ create or replace package body cad_to_efex_cust_loader as
                         user,
                         sysdate);
             else
+               var_log_save := 1;
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - customer type ('||par_cad_cust_data.outlet_type_name||') does not exist AND customer trade channel ('||par_cad_cust_data.otl_chnl_name||') does not exist');
             end if;
@@ -990,6 +1010,7 @@ create or replace package body cad_to_efex_cust_loader as
             var_distributor_id := rcd_distributor.customer_id;
          else
             if par_cad_cust_data.outlet_flag = 'Y' then
+               var_log_save := 1;
                var_log_line := var_log_line + 1;
                write_log(var_log_type, var_log_line, var_text||' - distributor ('||par_cad_cust_data.pur_from_wholesaler_code||') not found on customer table');
             end if;
@@ -1032,7 +1053,7 @@ create or replace package body cad_to_efex_cust_loader as
                var_affiliation_id := rcd_affiliation_direct.affiliation_id;
             else
                var_log_line := var_log_line + 1;
-               write_log(var_log_type, var_log_line, var_text||' - affiliation ('||par_cad_cust_data.outlet_type_name||') not found on affiliation table');
+               write_log(var_log_type, var_log_line, var_text||' - **WARNING ONLY** - affiliation ('||par_cad_cust_data.chain_store_banner_name||') not found on affiliation table');
             end if;
             close csr_affiliation_direct;
          end if;
@@ -1046,7 +1067,7 @@ create or replace package body cad_to_efex_cust_loader as
          else
             if par_cad_cust_data.sales_team != 'WS' then
                var_log_line := var_log_line + 1;
-               write_log(var_log_type, var_log_line, var_text||' - standard hierarchy level 4 ('||par_cad_cust_data.chain_store_banner_code||') not found on standard hierarchy table');
+               write_log(var_log_type, var_log_line, var_text||' - **WARNING ONLY** - standard hierarchy level 4 ('||par_cad_cust_data.chain_store_banner_code||') not found on standard hierarchy table');
             end if;
          end if;
          close csr_std_hierarchy;
@@ -1070,14 +1091,30 @@ create or replace package body cad_to_efex_cust_loader as
          var_geo_level5_code := rcd_geo_hierarchy.geo_level5_code;
       else
          var_log_line := var_log_line + 1;
-         write_log(var_log_type, var_log_line, var_text||' - geo hierarchy level 5 ('||par_cad_cust_data.cust_city_code||') not found on geo hierarchy table');
+         write_log(var_log_type, var_log_line, var_text||' - **WARNING ONLY** - geo hierarchy level 5 ('||par_cad_cust_data.cust_city_code||') not found on geo hierarchy table');
       end if;
       close csr_geo_hierarchy;
 
       /*-*/
+      /* Retrieve the outlet location (indirect only)
+      /*-*/
+      var_outlet_location := null;
+      if par_cad_cust_data.outlet_flag = 'Y' then
+         open csr_cust_location;
+         fetch csr_cust_location into rcd_cust_location;
+         if csr_cust_location%found then
+            var_outlet_location := rcd_cust_location.list_value_name;
+         else
+            var_log_line := var_log_line + 1;
+            write_log(var_log_type, var_log_line, var_text||' - **WARNING ONLY** - outlet location ('||par_cad_cust_data.outlet_loc||') not found on list values table');
+         end if;
+         close csr_cust_location;
+      end if;
+
+      /*-*/
       /* Rollback the database
       /*-*/
-      if var_log_save != var_log_line then
+      if var_log_save != 0 then
          rollback;
          return;
       end if;
@@ -1093,7 +1130,11 @@ create or replace package body cad_to_efex_cust_loader as
       fetch csr_customer into rcd_customer;
       if csr_customer%notfound then
 
-         var_date := null;
+         var_user := par_cad_cust_data.otl_crdp;
+         if var_user is null then
+            var_user := user;
+         end if;
+
          begin
             var_date := to_date(par_cad_cust_data.otl_crdt,'yyyymmddhh24miss');
          exception
@@ -1105,6 +1146,9 @@ create or replace package body cad_to_efex_cust_loader as
                      var_date := sysdate;
                end;
          end;
+         if var_date is null then
+            var_date := sysdate;
+         end if;
 
          if par_cad_cust_data.otl_status = 'A' then
             var_active_flg := 'Y';
@@ -1166,8 +1210,8 @@ create or replace package body cad_to_efex_cust_loader as
                   user,
                   sysdate,
                   var_date,
-                  par_cad_cust_data.otl_lupdp,
-                  par_cad_cust_data.outlet_loc,
+                  var_user,
+                  var_outlet_location,
                   var_geo_level1_code,
                   var_geo_level2_code,
                   var_geo_level3_code,
@@ -1239,7 +1283,7 @@ create or replace package body cad_to_efex_cust_loader as
       /*-*/
       /* Commit/rollback the database
       /*-*/
-      if var_log_save != var_log_line then
+      if var_log_save != 0 then
          rollback;
       else
          commit;
