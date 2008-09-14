@@ -368,6 +368,13 @@ create or replace package body cad_to_efex_cust_loader as
             and t01.segment_id = var_segment_id;
       rcd_user_segment csr_user_segment%rowtype;
 
+      cursor csr_manager_segment is
+         select t01.*
+           from user_segment t01
+          where t01.user_id = var_manager_id
+            and t01.segment_id = var_segment_id;
+      rcd_manager_segment csr_manager_segment%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -698,6 +705,26 @@ create or replace package body cad_to_efex_cust_loader as
                   sysdate);
       end if;
       close csr_user_segment;
+
+      /*-*/
+      /* Create the manager segment when required
+      /*-*/
+      open csr_manager_segment;
+      fetch csr_manager_segment into rcd_manager_segment;
+      if csr_manager_segment%notfound then
+         insert into user_segment
+           (user_id,
+            segment_id,
+            status,
+            modified_user,
+            modified_date)
+           values(var_manager_id,
+                  var_segment_id,
+                  'A',
+                  user,
+                  sysdate);
+      end if;
+      close csr_manager_segment;
 
       /*-*/
       /* Commit/rollback the database
