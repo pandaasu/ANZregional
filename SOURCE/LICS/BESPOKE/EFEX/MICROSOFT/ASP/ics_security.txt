@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Security -->
+<!-- -->
+<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=licsfexapp;Data Source=ap0085p.ap.mars;"></security>
