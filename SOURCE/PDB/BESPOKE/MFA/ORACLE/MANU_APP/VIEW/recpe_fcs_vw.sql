@@ -1,34 +1,34 @@
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_fcs_vw (proc_order,
-                                                    cntl_rec_id,
-                                                    matl_code,
-                                                    matl_text,
-                                                    resrce_code,
-                                                    opertn,
-                                                    phase,
-                                                    seq,
-                                                    code,
-                                                    description,
-                                                    VALUE,
-                                                    uom,
-                                                    mpi_type,
-                                                    run_start_datime,
-                                                    run_end_datime,
-                                                    proc_order_stats,
-                                                    batch_qty,
-                                                    strge_locn,
-                                                    mc_code,
-                                                    work_ctr_code,
-                                                    work_ctr_name,
-                                                    pans,
-                                                    used_made,
-                                                    pan_size,
-                                                    last_pan_size,
-                                                    plant,
-                                                    bf_item,
-                                                    diff,
-                                                    m,
-                                                    opertn_header
-                                                   )
+                                                       cntl_rec_id,
+                                                       matl_code,
+                                                       matl_text,
+                                                       resrce_code,
+                                                       opertn,
+                                                       phase,
+                                                       seq,
+                                                       code,
+                                                       description,
+                                                       VALUE,
+                                                       uom,
+                                                       mpi_type,
+                                                       run_start_datime,
+                                                       run_end_datime,
+                                                       proc_order_stats,
+                                                       batch_qty,
+                                                       strge_locn,
+                                                       mc_code,
+                                                       work_ctr_code,
+                                                       work_ctr_name,
+                                                       pans,
+                                                       used_made,
+                                                       pan_size,
+                                                       last_pan_size,
+                                                       plant,
+                                                       bf_item,
+                                                       diff,
+                                                       m,
+                                                       opertn_header
+                                                      )
 AS
   SELECT t01.proc_order, cntl_rec_id, matl_code, matl_text, resrce_code,
          t01.opertn, t01.phase, t01.seq, code, description, VALUE, uom,
@@ -199,11 +199,12 @@ AS
                  bds_recipe_header t03,
                  cntl_rec_status_vw t04,
                  (SELECT proc_order, rd.opertn, rd.phase, rd.mpi_tag,
-                         rr.matl_made_qty
-                    FROM recpe_hdr rh, recpe_val rd, recpe_resrce rr
+                         NULL matl_made_qty                 --rr.matl_made_qty
+                    FROM recpe_hdr rh, recpe_val rd        --, recpe_resrce rr
                    WHERE rh.cntl_rec_id = rd.cntl_rec_id
-                     AND rd.cntl_rec_id = rr.cntl_rec_id
-                     AND rd.opertn = rr.opertn) t05,
+                                                        /*AND rd.cntl_rec_id = rr.cntl_rec_id
+                                                        AND rd.opertn = rr.opertn */
+                 ) t05,
                  recpe_diff t06,
                  material_target_weight t07
            WHERE t02.proc_order = t01.proc_order
