@@ -270,7 +270,7 @@ create or replace package body ladefx01_loader as
       /*-*/
       rcd_iface_item.market_id := lics_inbound_utility.get_number('MARKET_ID',null);
       rcd_iface_item.item_code := lics_inbound_utility.get_variable('ITEM_CODE');
-      rcd_iface_item.item_name := lics_inbound_utility.get_variable('ITEM_NAME');
+      rcd_iface_item.item_name := substrb(lics_inbound_utility.get_variable('ITEM_NAME'),1,50);
       rcd_iface_item.rsu_ean_code := lics_inbound_utility.get_variable('RSU_EAN_CODE');
       if lics_inbound_utility.get_number('CASES_LAYER',null) > 9999 then
          rcd_iface_item.cases_layer := 9999;
