@@ -800,20 +800,20 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
    cursor csr_geo_hierarchy is
       select t01.*
         from geo_hierarchy t01
-       where t01.geo_level1_code = rcd_customer.geo_level1_code
-         and t01.geo_level2_code = rcd_customer.geo_level2_code
-         and t01.geo_level3_code = rcd_customer.geo_level3_code
-         and t01.geo_level4_code = rcd_customer.geo_level4_code
-         and t01.geo_level5_code = rcd_customer.geo_level5_code;
+       where t01.geo_level1_code = rcd_iface_customer.geo_level1_code
+         and t01.geo_level2_code = rcd_iface_customer.geo_level2_code
+         and t01.geo_level3_code = rcd_iface_customer.geo_level3_code
+         and t01.geo_level4_code = rcd_iface_customer.geo_level4_code
+         and t01.geo_level5_code = rcd_iface_customer.geo_level5_code;
    rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
    cursor csr_standard_hierarchy is
       select t01.*
         from standard_hierarchy t01
-       where t01.std_level1_code = rcd_customer.std_level1_code
-         and t01.std_level2_code = rcd_customer.std_level2_code
-         and t01.std_level3_code = rcd_customer.std_level3_code
-         and t01.std_level4_code = rcd_customer.std_level4_code;
+       where t01.std_level1_code = rcd_iface_customer.std_level1_code
+         and t01.std_level2_code = rcd_iface_customer.std_level2_code
+         and t01.std_level3_code = rcd_iface_customer.std_level3_code
+         and t01.std_level4_code = rcd_iface_customer.std_level4_code;
    rcd_standard_hierarchy csr_standard_hierarchy%rowtype;
 
 BEGIN
