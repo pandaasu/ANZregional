@@ -75,7 +75,7 @@ create or replace package body ladefx02_chn_customer as
                 t05.contact_name as contact_name,
                 t04.salesman_code as sales_person_code,
                 t04.salesman_name as sales_person_name,
-                t07.cust_name_en_level_2 as outlet_location,
+                null as outlet_location,
                 t07.sap_cust_code_level_1 as geo_level1_code,
                 t07.sap_cust_code_level_2 as geo_level2_code,
                 t07.sap_cust_code_level_3 as geo_level3_code,
