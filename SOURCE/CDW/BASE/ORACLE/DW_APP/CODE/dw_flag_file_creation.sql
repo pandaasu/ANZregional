@@ -193,15 +193,15 @@ create or replace package body dw_flag_file_creation as
          /*-*/
          /* Create the flag file interface
          /*-*/
-       --  begin
-       --     var_instance := lics_outbound_loader.create_interface('CDWBCA01',null,var_filename);
-       --     lics_outbound_loader.append_data('OK');
-       --     lics_outbound_loader.finalise_interface;
-       --  exception
-       --     when others then
-       --        var_errors := true;
-       --        lics_logging.write_log(substr(SQLERRM, 1, 3000));
-       --  end;
+         begin
+            var_instance := lics_outbound_loader.create_interface('VENBOX01',null,var_filename);
+            lics_outbound_loader.append_data('OK');
+            lics_outbound_loader.finalise_interface;
+         exception
+            when others then
+               var_errors := true;
+               lics_logging.write_log(substr(SQLERRM, 1, 3000));
+         end;
 
          /*-*/
          /* Release the lock on the order extract
