@@ -9,9 +9,10 @@
  -----------
  Dimensional Data Store - Order_Fact view over the dw_order_base 
 
- YYYY/MM   Author           Description 
- -------   ------           ----------- 
- 2008/07   Jonathan Girling Created 
+ YYYY/MM   Author            Description 
+ -------   ------            ----------- 
+ 2008/07   Jonathan Girling  Created 
+ 2008/09   Jonathan Girling  Added new gsv and qty fields from dw_order_base
 
 *******************************************************************************/
 
