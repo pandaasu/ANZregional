@@ -38,7 +38,8 @@ CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
                                removed and increase load speed.
                           MOD: Allow SELL MOE codes to be passed in
                           MOD: Disallow executing only one load component (ie. manu menu or hierachy)
- 2008/06   Trevor Keon    Added support for SSG and MSG                         
+ 2008/06   Trevor Keon    Added support for SSG and MSG
+ 2008/09   Trevor Keon    Modified inactive flag so it would not be changed
 
 *******************************************************************************/
 
@@ -861,13 +862,13 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
          open csr_rsu_update;
          fetch csr_rsu_update into rec_rsu_update;
          if (csr_rsu_update%found) or
-            (trim(rec_tdu.keyw_inactive) != trim(rec_rsu.keyw_inactive)) or
+--            (trim(rec_tdu.keyw_inactive) != trim(rec_rsu.keyw_inactive)) or
             (trim(rec_tdu.keyw_misc1_x) != nvl(trim(rec_rsu.keyw_misc1_x),' ')) then
 
             update sfi.keywrd set
                keyw_description_74 = rec_tdu.keyw_description_74,
                keyw_apn = rec_tdu.keyw_apn,
-               keyw_inactive = rec_tdu.keyw_inactive,
+               keyw_inactive = rec_rsu.keyw_inactive,
                keyw_keyword_01 = rec_tdu.keyw_keyword_01,
                keyw_keyword_02 = rec_tdu.keyw_keyword_02,
                keyw_keyword_03 = rec_tdu.keyw_keyword_03,
