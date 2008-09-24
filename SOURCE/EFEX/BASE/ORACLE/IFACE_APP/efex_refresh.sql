@@ -582,8 +582,8 @@ PROCEDURE REFRESH_CHINA_ITEM(p_MarketID IN NUMBER) IS
           b.rsu_ean_code,
           b.cases_layer,
           b.layers_pallet,
-          b.units_case,
-          b.mcu_per_tdu,
+          decode(b.units_case,null,1,0,1,b.units_case) as units_case,
+          decode(b.mcu_per_tdu,null,1,0,1,b.mcu_per_tdu) as mcu_per_tdu,
           b.unit_measure,
           b.price1,
           b.price2,
@@ -621,7 +621,7 @@ PROCEDURE REFRESH_CHINA_ITEM(p_MarketID IN NUMBER) IS
 BEGIN
 
    FOR iface_row IN csrUpdateItem LOOP
-   
+
       UPDATE item
          SET item_name = iface_row.item_name,
              rsu_ean_code = iface_row.rsu_ean_code,
@@ -630,6 +630,8 @@ BEGIN
              units_case = iface_row.units_case,
              tdu_price = iface_row.price1,
              rrp_price = iface_row.price2,
+             mcu_price = round(iface_row.price1/ iface_row.mcu_per_tdu,2),
+             rsu_price = round(iface_row.price1/iface_row.units_case,2),
              brand = iface_row.brand,
              sub_brand = iface_row.sub_brand,
              item_category = iface_row.item_category,
@@ -1015,6 +1017,7 @@ BEGIN
       end if;
 
       --
+      -- if customer status is active
       -- if customer contact name is different then update the name
       -- if customer contact does not exist then create the contact
       --
@@ -1022,27 +1025,28 @@ BEGIN
       /* Retrieve the existing customer contact
       /* **notes** 1. The first active customer contact is retrieved
       /*-*/
-      if not(rcd_customer.contact_name is null) then
-         open csr_cust_contact;
-         fetch csr_cust_contact into rcd_cust_contact;
-         if csr_cust_contact%found then
-            if rcd_cust_contact.first_name != rcd_customer.contact_name then
-               update cust_contact
-                  set first_name = rcd_customer.contact_name,
-                      modified_user = user,
-                      modified_date = sysdate
-                where cust_contact_id = rcd_cust_contact.cust_contact_id;
+      if rcd_customer.old_status = 'A' and rcd_customer.cust_status = 'A' then
+         if not(rcd_customer.contact_name is null) then
+            open csr_cust_contact;
+            fetch csr_cust_contact into rcd_cust_contact;
+            if csr_cust_contact%found then
+               if rcd_cust_contact.first_name != rcd_customer.contact_name then
+                  update cust_contact
+                     set first_name = rcd_customer.contact_name,
+                         modified_user = user,
+                         modified_date = sysdate
+                   where cust_contact_id = rcd_cust_contact.cust_contact_id;
+                  bol_update := true;
+               end if;
+            else
+               select cust_contact_seq.nextval into var_cust_contact_id from dual;
+               insert into cust_contact
+                  (cust_contact_id, first_name, customer_id, status, modified_user, modified_date)
+                  values(var_cust_contact_id, rcd_customer.contact_name, rcd_customer.customer_id, 'A', user, sysdate);
                bol_update := true;
             end if;
-         else
-            select cust_contact_seq.nextval into var_cust_contact_id from dual;
-            insert into cust_contact
-               (cust_contact_id, first_name, customer_id, status, modified_user, modified_date)
-               values(var_cust_contact_id, rcd_customer.contact_name, rcd_customer.customer_id, 'A', user, sysdate);
-            bol_update := true;
+            close csr_cust_contact;
          end if;
-         close csr_cust_contact;
-
       end if;
 
       --

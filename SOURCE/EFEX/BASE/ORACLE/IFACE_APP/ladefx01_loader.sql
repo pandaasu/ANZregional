@@ -93,6 +93,7 @@ create or replace package body ladefx01_loader as
       lics_inbound_utility.set_definition('HDR','RSU_EAN_CODE',18);
       lics_inbound_utility.set_definition('HDR','CASES_LAYER',20);
       lics_inbound_utility.set_definition('HDR','LAYERS_PALLET',20);
+      lics_inbound_utility.set_definition('HDR','MCU_PER_TDU',20);
       lics_inbound_utility.set_definition('HDR','UNITS_CASE',20);
       lics_inbound_utility.set_definition('HDR','UNIT_MEASURE',3);
       lics_inbound_utility.set_definition('HDR','PRICE1',20);
@@ -282,6 +283,11 @@ create or replace package body ladefx01_loader as
       else
          rcd_iface_item.layers_pallet := lics_inbound_utility.get_number('LAYERS_PALLET',null);
       end if;
+      if lics_inbound_utility.get_number('MCU_PER_TDU',null) > 9999 then
+         rcd_iface_item.mcu_per_tdu := 9999;
+      else
+         rcd_iface_item.mcu_per_tdu := lics_inbound_utility.get_number('MCU_PER_TDU',null);
+      end if;
       if lics_inbound_utility.get_number('UNITS_CASE',null) > 9999 then
          rcd_iface_item.units_case := 9999;
       else
@@ -346,6 +352,7 @@ create or replace package body ladefx01_loader as
           rsu_ean_code,
           cases_layer,
           layers_pallet,
+          mcu_per_tdu,
           units_case,
           unit_measure,
           price1,
@@ -367,6 +374,7 @@ create or replace package body ladefx01_loader as
           rcd_iface_item.rsu_ean_code,
           rcd_iface_item.cases_layer,
           rcd_iface_item.layers_pallet,
+          rcd_iface_item.mcu_per_tdu,
           rcd_iface_item.units_case,
           rcd_iface_item.unit_measure,
           rcd_iface_item.price1,
