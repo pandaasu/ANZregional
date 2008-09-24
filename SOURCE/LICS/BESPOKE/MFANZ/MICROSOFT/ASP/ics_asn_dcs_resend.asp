@@ -140,11 +140,11 @@ sub ProcessSelect()
          strTest = " and "
          strOrder = "desc"
       case "PREVIOUS"
-         strWhere = " where t01.dch_smsg_nbr > " & objForm.Fields("STR_SendNumber").Value
+         strWhere = "t01.dch_smsg_nbr > " & objForm.Fields("STR_SendNumber").Value
          strTest = " and "
          strOrder = "asc"
       case "NEXT"
-         strWhere = " where t01.dch_smsg_nbr < " & objForm.Fields("STR_SendNumber").Value
+         strWhere = "t01.dch_smsg_nbr < " & objForm.Fields("END_SendNumber").Value
          strTest = " and "
          strOrder = "desc"
    end select
@@ -159,7 +159,7 @@ sub ProcessSelect()
    strQuery = strQuery & " from asn_dcs_hdr t01"
    strQuery = strQuery & " where t01.dch_stat_cde = '*COMPLETE'"
    if strWhere <> "" then
-      strQuery = strQuery & strWhere
+      strQuery = strQuery & strTest & strWhere
    end if
    if objForm.Fields("QRY_SendNumber").Value <> "" then
       strQuery = strQuery & strTest & "t01.dch_smsg_nbr = " & objForm.Fields("QRY_SendNumber").Value
