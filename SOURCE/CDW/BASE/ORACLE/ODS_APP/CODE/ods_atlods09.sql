@@ -21,6 +21,7 @@ create or replace package ods_atlods09 as
     2004      ISI            Created
     2007/10   Steve Gregan   Included SAP_STO_PO_TRACE table
     2008/02   Steve Gregan   Added source plant to SAP_STO_PO_TRACE table
+    2008/08   Steve Gregan   Added line action test to SAP_STO_PO_TRACE table
 
    *******************************************************************************/
 
@@ -2664,6 +2665,7 @@ create or replace package body ods_atlods09 as
                 t04.sales_org_code,
                 t04.distbn_chnl_code,
                 t04.division_code,
+                t05.line_action,
                 t05.purch_order_doc_line_num,
                 t05.purch_order_uom_code,
                 t05.plant_code,
@@ -2764,6 +2766,7 @@ create or replace package body ods_atlods09 as
                --
                (select t01.belnr,
                        t01.genseq,
+                       t01.line_action,
                        t01.purch_order_doc_line_num,
                        t01.purch_order_uom_code,
                        t01.plant_code,
@@ -2777,6 +2780,7 @@ create or replace package body ods_atlods09 as
                        t02.cust_code
                   from (select t01.belnr,
                                t01.genseq,
+                               t01.action as line_action,
                                t01.posex as purch_order_doc_line_num,
                                t01.menee as purch_order_uom_code,
                                t01.werks as plant_code,
@@ -2873,11 +2877,16 @@ create or replace package body ods_atlods09 as
          /* Deleted/Excluded purchase order line
          /* **notes** no purchase order lines found
          /*              OR
+         /*           purchase order line action equal '003'
+         /*              OR
          /*           sold to reference equal '*DELETED'
          /*              OR
          /*           vendor reference is not null
          /*-*/
          if rcd_ods_data.purch_order_doc_line_num is null then
+            rcd_sap_sto_po_trace.trace_status := '*DELETED';
+         end if;
+         if rcd_ods_data.line_action = '003' then
             rcd_sap_sto_po_trace.trace_status := '*DELETED';
          end if;
          if upper(rcd_ods_data.sold_to_reference) = '*DELETED' then
