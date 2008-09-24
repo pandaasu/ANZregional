@@ -39,6 +39,7 @@ create or replace package bds_atllad10_flatten as
                                 process_prodctn_resrc_hdr
  2007/05   Steve Gregan   Fixed process_prodctn_resrc_text field mapping
  2007/07   Steve Gregan   Added null primary key filters
+ 2008/10   Linden Glen    Added for bds_refrnc_purchasing_src_cml in process_purchasing_src
 
 *******************************************************************************/
 
@@ -1342,10 +1343,10 @@ create or replace package body bds_atllad10_flatten as
                 trim(substr(max(t01.z_data),124,1)) as src_list_planning_usage,
                 trim(substr(max(t01.z_data),125,3)) as order_unit,
                 trim(substr(max(t01.z_data),128,10)) as logical_system,
-                trim(substr(max(t01.z_data),138,1)) as special_stock_indctr
+                trim(substr(max(t01.z_data),138,1)) as special_stock_indctr,
+                max(t01.z_chgtyp) as change_type
          from lads_ref_dat t01
          where t01.z_tabname = par_z_tabname
-           and nvl(t01.z_chgtyp,'x') != 'D'
          group by trim(substr(t01.z_data,4,18)),
                   trim(substr(t01.z_data,22,4)),
                   trim(substr(t01.z_data,26,5));
@@ -1392,18 +1393,94 @@ create or replace package body bds_atllad10_flatten as
          rcd_bds_refrnc_purchasing_src.logical_system := rcd_ref_purchasing_src.logical_system;
          rcd_bds_refrnc_purchasing_src.special_stock_indctr := rcd_ref_purchasing_src.special_stock_indctr;
 
-  
-         /*------------------------------------------*/
-         /* INSERT BDS_REFRNC_MATERIAL_ZREP          */
-         /*------------------------------------------*/
-         insert into bds_refrnc_purchasing_src
+         if (nvl(rcd_ref_purchasing_src.change_type,'x') != 'D') then
+
+            /*------------------------------------------*/
+            /* INSERT BDS_REFRNC_PURCHASING_SRC         */
+            /*------------------------------------------*/
+            insert into bds_refrnc_purchasing_src
+                  (sap_material_code,
+                   plant_code,
+                   record_no,
+                   creatn_date,
+                   creatn_user,
+                   src_list_valid_from,
+                   src_list_valid_to,
+                   vendor_code,
+                   fixed_vendor_indctr,
+                   agreement_no,
+                   agreement_item,
+                   fixed_purchase_agreement_item,
+                   plant_procured_from,
+                   sto_fixed_issuing_plant,
+                   manufctr_part_refrnc_material,
+                   blocked_supply_src_flag,
+                   purchasing_organisation,
+                   purchasing_document_ctgry,
+                   src_list_ctgry,
+                   src_list_planning_usage,
+                   order_unit,
+                   logical_system,
+                   special_stock_indctr)
+             values
+                  (rcd_bds_refrnc_purchasing_src.sap_material_code,
+                   rcd_bds_refrnc_purchasing_src.plant_code,
+                   rcd_bds_refrnc_purchasing_src.record_no,
+                   rcd_bds_refrnc_purchasing_src.creatn_date,
+                   rcd_bds_refrnc_purchasing_src.creatn_user,
+                   rcd_bds_refrnc_purchasing_src.src_list_valid_from,
+                   rcd_bds_refrnc_purchasing_src.src_list_valid_to,
+                   rcd_bds_refrnc_purchasing_src.vendor_code,
+                   rcd_bds_refrnc_purchasing_src.fixed_vendor_indctr,
+                   rcd_bds_refrnc_purchasing_src.agreement_no,
+                   rcd_bds_refrnc_purchasing_src.agreement_item,
+                   rcd_bds_refrnc_purchasing_src.fixed_purchase_agreement_item,
+                   rcd_bds_refrnc_purchasing_src.plant_procured_from,
+                   rcd_bds_refrnc_purchasing_src.sto_fixed_issuing_plant,
+                   rcd_bds_refrnc_purchasing_src.manufctr_part_refrnc_material,
+                   rcd_bds_refrnc_purchasing_src.blocked_supply_src_flag,
+                   rcd_bds_refrnc_purchasing_src.purchasing_organisation,
+                   rcd_bds_refrnc_purchasing_src.purchasing_document_ctgry,
+                   rcd_bds_refrnc_purchasing_src.src_list_ctgry,
+                   rcd_bds_refrnc_purchasing_src.src_list_planning_usage,
+                   rcd_bds_refrnc_purchasing_src.order_unit,
+                   rcd_bds_refrnc_purchasing_src.logical_system,
+                   rcd_bds_refrnc_purchasing_src.special_stock_indctr);
+
+            /*---------------------------------------------*/
+            /* INSERT/UPDATE BDS_REFRNC_PURCHASING_SRC_CML */
+            /*---------------------------------------------*/
+            update bds_refrnc_purchasing_src_cml
+               set creatn_date = rcd_bds_refrnc_purchasing_src.creatn_date,
+                   creatn_user = rcd_bds_refrnc_purchasing_src.creatn_user,
+                   fixed_purchase_agreement_item = rcd_bds_refrnc_purchasing_src.fixed_purchase_agreement_item,
+                   sto_fixed_issuing_plant = rcd_bds_refrnc_purchasing_src.sto_fixed_issuing_plant,
+                   manufctr_part_refrnc_material = rcd_bds_refrnc_purchasing_src.manufctr_part_refrnc_material,
+                   blocked_supply_src_flag = rcd_bds_refrnc_purchasing_src.blocked_supply_src_flag,
+                   purchasing_document_ctgry = rcd_bds_refrnc_purchasing_src.purchasing_document_ctgry,
+                   src_list_ctgry = rcd_bds_refrnc_purchasing_src.src_list_ctgry,
+                   order_unit = rcd_bds_refrnc_purchasing_src.order_unit,
+                   logical_system = rcd_bds_refrnc_purchasing_src.logical_system,
+                   special_stock_indctr = rcd_bds_refrnc_purchasing_src.special_stock_indctr
+             where sap_material_code = nvl(rcd_bds_refrnc_purchasing_src.sap_material_code,'*NVL')
+               and plant_code = nvl(rcd_bds_refrnc_purchasing_src.plant_code,'*NVL')
+               and src_list_valid_from = rcd_bds_refrnc_purchasing_src.src_list_valid_from
+               and purchasing_organisation = nvl(rcd_bds_refrnc_purchasing_src.purchasing_organisation,'*NVL')
+               and vendor_code = nvl(rcd_bds_refrnc_purchasing_src.vendor_code,'*NVL')
+               and fixed_vendor_indctr = nvl(rcd_bds_refrnc_purchasing_src.fixed_vendor_indctr,'*NVL')
+               and agreement_no = nvl(rcd_bds_refrnc_purchasing_src.agreement_no,'*NVL')
+               and agreement_item = nvl(rcd_bds_refrnc_purchasing_src.agreement_item,'*NVL')
+               and src_list_valid_to = rcd_bds_refrnc_purchasing_src.src_list_valid_to
+               and plant_procured_from = nvl(rcd_bds_refrnc_purchasing_src.plant_procured_from,'*NVL')
+               and src_list_planning_usage = nvl(rcd_bds_refrnc_purchasing_src.src_list_planning_usage,'*NVL');
+            if sql%notfound then
+               insert into bds_refrnc_purchasing_src_cml
                (sap_material_code,
                 plant_code,
-                record_no,
-                creatn_date,
-                creatn_user,
                 src_list_valid_from,
                 src_list_valid_to,
+                creatn_date,
+                creatn_user,
                 vendor_code,
                 fixed_vendor_indctr,
                 agreement_no,
@@ -1420,31 +1497,50 @@ create or replace package body bds_atllad10_flatten as
                 order_unit,
                 logical_system,
                 special_stock_indctr)
-          values
-               (rcd_bds_refrnc_purchasing_src.sap_material_code,
-                rcd_bds_refrnc_purchasing_src.plant_code,
-                rcd_bds_refrnc_purchasing_src.record_no,
-                rcd_bds_refrnc_purchasing_src.creatn_date,
-                rcd_bds_refrnc_purchasing_src.creatn_user,
+               values       
+               (nvl(rcd_bds_refrnc_purchasing_src.sap_material_code,'*NVL'),
+                nvl(rcd_bds_refrnc_purchasing_src.plant_code,'*NVL'),
                 rcd_bds_refrnc_purchasing_src.src_list_valid_from,
                 rcd_bds_refrnc_purchasing_src.src_list_valid_to,
-                rcd_bds_refrnc_purchasing_src.vendor_code,
-                rcd_bds_refrnc_purchasing_src.fixed_vendor_indctr,
-                rcd_bds_refrnc_purchasing_src.agreement_no,
-                rcd_bds_refrnc_purchasing_src.agreement_item,
+                rcd_bds_refrnc_purchasing_src.creatn_date,
+                rcd_bds_refrnc_purchasing_src.creatn_user,
+                nvl(rcd_bds_refrnc_purchasing_src.vendor_code,'*NVL'),
+                nvl(rcd_bds_refrnc_purchasing_src.fixed_vendor_indctr,'*NVL'),
+                nvl(rcd_bds_refrnc_purchasing_src.agreement_no,'*NVL'),
+                nvl(rcd_bds_refrnc_purchasing_src.agreement_item,'*NVL'),
                 rcd_bds_refrnc_purchasing_src.fixed_purchase_agreement_item,
-                rcd_bds_refrnc_purchasing_src.plant_procured_from,
+                nvl(rcd_bds_refrnc_purchasing_src.plant_procured_from,'*NVL'),
                 rcd_bds_refrnc_purchasing_src.sto_fixed_issuing_plant,
                 rcd_bds_refrnc_purchasing_src.manufctr_part_refrnc_material,
                 rcd_bds_refrnc_purchasing_src.blocked_supply_src_flag,
-                rcd_bds_refrnc_purchasing_src.purchasing_organisation,
+                nvl(rcd_bds_refrnc_purchasing_src.purchasing_organisation,'*NVL'),
                 rcd_bds_refrnc_purchasing_src.purchasing_document_ctgry,
                 rcd_bds_refrnc_purchasing_src.src_list_ctgry,
-                rcd_bds_refrnc_purchasing_src.src_list_planning_usage,
+                nvl(rcd_bds_refrnc_purchasing_src.src_list_planning_usage,'*NVL'),
                 rcd_bds_refrnc_purchasing_src.order_unit,
                 rcd_bds_refrnc_purchasing_src.logical_system,
                 rcd_bds_refrnc_purchasing_src.special_stock_indctr);
+            end if;
 
+         else
+         
+            /*---------------------------------------------*/
+            /* DELETE BDS_REFRNC_PURCHASING_SRC_CML        */
+            /*---------------------------------------------*/
+            delete bds_refrnc_purchasing_src_cml
+             where sap_material_code = nvl(rcd_bds_refrnc_purchasing_src.sap_material_code,'*NVL')
+               and plant_code = nvl(rcd_bds_refrnc_purchasing_src.plant_code,'*NVL')
+               and src_list_valid_from = rcd_bds_refrnc_purchasing_src.src_list_valid_from
+               and purchasing_organisation = nvl(rcd_bds_refrnc_purchasing_src.purchasing_organisation,'*NVL')
+               and vendor_code = nvl(rcd_bds_refrnc_purchasing_src.vendor_code,'*NVL')
+               and fixed_vendor_indctr = nvl(rcd_bds_refrnc_purchasing_src.fixed_vendor_indctr,'*NVL')
+               and agreement_no = nvl(rcd_bds_refrnc_purchasing_src.agreement_no,'*NVL')
+               and agreement_item = nvl(rcd_bds_refrnc_purchasing_src.agreement_item,'*NVL')
+               and src_list_valid_to = rcd_bds_refrnc_purchasing_src.src_list_valid_to
+               and plant_procured_from = nvl(rcd_bds_refrnc_purchasing_src.plant_procured_from,'*NVL')
+               and src_list_planning_usage = nvl(rcd_bds_refrnc_purchasing_src.src_list_planning_usage,'*NVL');
+
+         end if;
       end loop;
       close csr_ref_purchasing_src;
 
