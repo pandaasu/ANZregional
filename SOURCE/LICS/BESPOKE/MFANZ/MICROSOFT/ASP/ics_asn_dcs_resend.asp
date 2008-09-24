@@ -147,6 +147,10 @@ sub ProcessSelect()
          strWhere = "t01.dch_smsg_nbr < " & objForm.Fields("END_SendNumber").Value
          strTest = " and "
          strOrder = "desc"
+      case else
+         strMode = "FATAL"
+         strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified."
+         exit sub        
    end select
    strQuery = "select /*+ FIRST_ROWS */"
    strQuery = strQuery & " t01.dch_smsg_nbr,"
@@ -235,6 +239,13 @@ sub ProcessUpdate()
    '// Set the mode
    '//
    strMode = "SEARCH"
+   
+   if objForm.Fields("Mode").Value = "" then
+      call objForm.AddField("Mode", "SEARCH")
+   else
+      call objForm.UpdateField("Mode", "SEARCH")
+   end if   
+   
    call ProcessSelect
 
 end sub
