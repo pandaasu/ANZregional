@@ -17,6 +17,8 @@ create or replace package ladefx01_chn_item as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/08   Steve Gregan   Created
+    2008/10   Steve Gregan   Added MCU/TDU
+                             Modified MIN_ORD_QTY and ORDER_MULTIPLES to 1
                            
    *******************************************************************************/
 
@@ -64,16 +66,17 @@ create or replace package body ladefx01_chn_item as
                 t01.maktx as item_name,
                 ltrim(t01.zzrepmatnr,'0') as item_zrep_code,
                 decode(t02.rsu_meinh,null,decode(t02.mcu_meinh,null,t02.tdu_ean11,t02.mcu_ean11),t02.rsu_ean11) as rsu_ean_code,
-                decode(t02.rsu_meinh,null,0,t02.mcu_count) as cases_layer,
+                0 as cases_layer,
                 0 as layers_pallet,
+                decode(t02.mcu_meinh,null,1,t02.mcu_count) as mcu_per_tdu,
                 decode(t02.rsu_meinh,null,decode(t02.mcu_meinh,null,t02.tdu_count,t02.mcu_count),t02.rsu_count) as units_case,
                 t02.tdu_meinh as unit_measure,
                 round(nvl(t03.list_price,0),2) as price1,
                 0 as price2,
                 0 as price3,
                 0 as price4,
-                0 as min_ord_qty,
-                0 as order_multiples,
+                1 as min_ord_qty,
+                1 as order_multiples,
                 t01.brand_flag_desc as brand,
                 t01.brand_sub_flag_desc as sub_brand,
                 to_char(nvl(t01.ntgew,0))||' '||t01.gewei as pack_size,
@@ -276,6 +279,7 @@ create or replace package body ladefx01_chn_item as
                                           nvl(rcd_item_master.rsu_ean_code,' ')||rpad(' ',18-length(nvl(rcd_item_master.rsu_ean_code,' ')),' ') ||
                                           to_char(nvl(rcd_item_master.cases_layer,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.cases_layer,0))),' ') ||
                                           to_char(nvl(rcd_item_master.layers_pallet,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.layers_pallet,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.mcu_per_tdu,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.mcu_per_tdu,0))),' ') ||
                                           to_char(nvl(rcd_item_master.units_case,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.units_case,0))),' ') ||
                                           nvl(rcd_item_master.unit_measure,' ')||rpad(' ',3-length(nvl(rcd_item_master.unit_measure,' ')),' ') ||
                                           to_char(nvl(rcd_item_master.price1,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.price1,0))),' ') ||
