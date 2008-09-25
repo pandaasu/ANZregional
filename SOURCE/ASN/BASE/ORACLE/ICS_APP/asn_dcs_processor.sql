@@ -80,6 +80,8 @@ create or replace package asn_dcs_processor as
                              Added sales order creation date
     2008/02   Steve Gregan   Added the customer GTIN to the DCS detail table
     2008/06   Steve Gregan   Added the material code to the DCS detail table
+    2008/10   Steve Gregan   Removed LADS delivery status check from transaction lookup
+                             (large order line splits have negated the existing delete logic)
 
    *******************************************************************************/
 
@@ -170,8 +172,8 @@ create or replace package body asn_dcs_processor as
       cursor csr_lads_del_hdr is
          select *
            from lads_del_hdr t01
-          where t01.vbeln = rcd_asn_dcs_hdr.dch_pick_nbr
-            and t01.lads_status = '1';
+          where t01.vbeln = rcd_asn_dcs_hdr.dch_pick_nbr;
+      --------      and t01.lads_status = '1';
       rcd_lads_del_hdr csr_lads_del_hdr%rowtype;
 
       cursor csr_lads_sal_ord_hdr is
