@@ -65,8 +65,8 @@ create or replace package body efxsbw06_dis_std_itm_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.display_standard_id as display_standard_id,
-                t01.display_item_id as display_item_id
+         select to_char(t01.display_standard_id) as display_standard_id,
+                to_char(t01.display_item_id) as display_item_id
            from display_standard_items t01;
       rcd_extract csr_extract%rowtype;
 
@@ -105,8 +105,8 @@ create or replace package body efxsbw06_dis_std_itm_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.display_standard_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.display_item_id),'"','""')||'"');
+                                          '"'||replace(rcd_extract.display_standard_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.display_item_id,'"','""')||'"');
 
       end loop;
       close csr_extract;

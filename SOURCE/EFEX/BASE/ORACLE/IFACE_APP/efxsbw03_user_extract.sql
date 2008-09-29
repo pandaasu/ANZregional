@@ -78,7 +78,7 @@ create or replace package body efxsbw03_user_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.user_id as user_id,
+         select to_char(t01.user_id) as user_id,
                 t01.username as username,
                 t01.firstrname as firstrname,
                 t01.lastname as lastname,
@@ -132,7 +132,7 @@ create or replace package body efxsbw03_user_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.user_id),'"','""')||'";'||
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.username,'"','""')||'";'||
                                           '"'||replace(rcd_extract.firstname,'"','""')||'";'||
                                           '"'||replace(rcd_extract.lastname,'"','""')||'";'||

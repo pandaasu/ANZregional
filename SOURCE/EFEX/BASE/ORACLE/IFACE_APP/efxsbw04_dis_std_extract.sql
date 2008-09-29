@@ -65,10 +65,10 @@ create or replace package body efxsbw04_dis_std_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.display_standard_id as display_standard_id,
+         select to_char(t01.display_standard_id) as display_standard_id,
                 t01.display_standard_name as display_standard_name,
                 t01.display_standard_name_en as display_standard_name_en,
-                t01.cust_trade_channel_id as cust_trade_channel_id,
+                to_char(t01.cust_trade_channel_id) as cust_trade_channel_id,
                 t02.segment_name as segment_name,
                 t03.cust_type_name as cust_type_name
            from display_standard t01,
@@ -113,11 +113,11 @@ create or replace package body efxsbw04_dis_std_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.display_standard_id),'"','""')||'";'||
+                                          '"'||replace(rcd_extract.display_standard_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_name_en,'"','""')||'";'||
                                           '"'||replace(rcd_extract.segment_name,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.cust_trade_channel_id),'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'"');
 
       end loop;

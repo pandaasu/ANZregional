@@ -78,8 +78,8 @@ create or replace package body efxsbw02_coremat_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.customer_id as customer_id,
-                t03.item_id as item_id
+         select to_char(t01.customer_id) as customer_id,
+                to_char(t03.item_id) as item_id
            from customer t01,
                 range t02,
                 range_item t03
@@ -136,8 +136,8 @@ create or replace package body efxsbw02_coremat_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.item_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.customer_id),'"','""')||'"');
+                                          '"'||replace(rcd_extract.item_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'"');
 
       end loop;
       close csr_extract;

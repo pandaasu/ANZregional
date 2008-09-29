@@ -73,10 +73,10 @@ create or replace package body efxsbw08_display_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.customer_id as customer_id,
-                t01.display_item_id as display_item_id,
-                t01.user_id as user_id,
-                t01.call_date as call_date
+         select to_char(t01.customer_id) as customer_id,
+                to_char(t01.display_item_id) as display_item_id,
+                to_char(t01.user_id) as user_id,
+                to_char(t01.call_date,'yyyymmdd') as call_date
            from display_distribution t01
           where t01.display_in_store = '1'
             and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
@@ -126,10 +126,10 @@ create or replace package body efxsbw08_display_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.customer_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.display_item_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.call_date,'yyyymmdd'),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.user_id),'"','""')||'"');
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.display_item_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.call_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
 
       end loop;
       close csr_extract;

@@ -78,7 +78,7 @@ create or replace package body efxsbw01_cust_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select t01.customer_id as customer_id,
+         select to_char(t01.customer_id )as customer_id,
                 t01.customer_code as customer_code,
                 t01.customer_name as customer_name,
                 t01.customer_name_en as customer_name_en,
@@ -87,14 +87,14 @@ create or replace package body efxsbw01_cust_extract as
                 t01.outlet_flg as outlet_flg,
                 t01.active_flg as active_flg,
                 t02.cust_type_name as cust_type_name,
-                t03.cust_trade_channel_id as cust_trade_channel_id,
-                t04.cust_channel_id as cust_channel_id,
+                to_char(t03.cust_trade_channel_id) as cust_trade_channel_id,
+                to_char(t04.cust_channel_id) as cust_channel_id,
                 t07.sales_territory_name as sales_territory_name,
-                t07.user_id as sales_territory_user_id,
+                to_char(t07.user_id) as sales_territory_user_id,
                 t08.sales_area_name as sales_area_name,
-                t08.user_id as sales_area_user_id,
+                to_char(t08.user_id) as sales_area_user_id,
                 t09.sales_region_name as sales_region_name,
-                t09.user_id as sales_region_user_id,
+                to_char(t09.user_id) as sales_region_user_id,
                 t10.segment_name as segment_name,
                 t12.cust_grade_name as cust_grade_name,
                 t13.std_level1_name as std_level1_name,
@@ -221,7 +221,7 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.customer_id),'"','""')||'";'||
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_name_en,'"','""')||'";'||
@@ -238,11 +238,11 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.sales_area_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.sales_territory_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.sales_region_name,'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.sales_area_user_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.sales_territory_user_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.sales_region_user_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.cust_channel_id),'"','""')||'";'||
-                                          '"'||replace(to_char(rcd_extract.cust_trade_channel_id),'"','""')||'";'||
+                                          '"'||replace(rcd_extract.sales_area_user_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.sales_territory_user_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.sales_region_user_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_channel_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.outlet_location,'"','""')||'";'||
                                           '"'||replace(rcd_extract.list_value_text,'"','""')||'"');
