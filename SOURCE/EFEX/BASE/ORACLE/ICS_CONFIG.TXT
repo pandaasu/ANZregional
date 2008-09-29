@@ -1,22 +1,79 @@
 
+
+
+lics_schedule_tz('*ALL',0,'Asia/Shanghai')
+
+
+
+
+
+licsfexapp prod
+
+<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>
+
+
 --
 -- LADS ICS Configuration
 --
-connect lics_app/licscell@ap0112t.ap.mars
+connect lics_app/licice@ap0115p.ap.mars
 
-insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
-insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> APQM002P WODU02P1 /ics/efex/prod/inbound','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> APQM002P WODU02P1 /ics/efex/prod/inbound','1');
+
+commit;
+
+insert into lics_job values('EFEX_CHINA_ITEM_EXTRACT','EFEX China Item Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'site_app.ladefx01_chn_item.execute','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','0');
+insert into lics_job values('EFEX_CHINA_CUST_EXTRACT','EFEX China Customer Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'site_app.ladefx01_chn_customer.execute','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','0');
 
 commit;
 
 --
 -- EFEX ICS Configuration
 --
-connect lics_app/licsroof@ap0088t.ap.mars
+connect lics_app/licsfexapp@ap0085p.ap.mars
 
 insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx01_loader','1');
 insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx02_loader','1');
-insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars ics 1htj2isa /tmp/ <MESG>','1');
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> APQM002P QM0121P /ics/prod/inbound','1');
+
+
+*************************** NEW SBW INTERFACES ************************
+
+insert into lics_interface values('EFXSBW01','EFEX to SAP BW - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW02','EFEX to SAP BW - China Core Material Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW02',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW03','EFEX to SAP BW - China User Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW03',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW04','EFEX to SAP BW - Display Standard Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW04',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW05','EFEX to SAP BW - Display Item Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW05',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW06','EFEX to SAP BW - Display Standard Item Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW06',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW07','EFEX to SAP BW - Activity Master Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW07',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW08','EFEX to SAP BW - Display Distribution Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW08',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW09','EFEX to SAP BW - Activity Distribution Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW09',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW10','EFEX to SAP BW - Order Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW10',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW11','EFEX to SAP BW - Distribution Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW11',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW12','EFEX to SAP BW - Route Plan Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW12',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+insert into lics_interface values('EFXSBW13','EFEX to SAP BW - Call Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW13',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex','1');
+
+insert into lics_job values('SBW_CUST_EXTRACT','SAP BW China Customer Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw01_cust_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_COREMAT_EXTRACT','SAP BW China Core Material Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw02_coremat_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_USER_EXTRACT','SAP BW China User Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw03_user_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_DIS_STD_EXTRACT','SAP BW Display Standard Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw04_dis_std_extract.execute','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_DIS_ITM_EXTRACT','SAP BW Display Item Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw05_dis_itm_extract.execute','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_DIS_STD_ITM_EXTRACT','SAP BW Display Standard Item Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw06_dis_std_itm_extract.execute','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_ACTITY_MST_EXTRACT','SAP BW Activity Master Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw07_actity_mst_extract.execute','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_DISPLAY_EXTRACT','SAP BW Display Distribution Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw08_display_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_ACTITY_EXTRACT','SAP BW Activity Distribution Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw09_actity_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_ORDER_EXTRACT','SAP BW Order Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw10_order_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_DISTRI_EXTRACT','SAP BW Distribution Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw11_distri_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_ROUTE_PLAN_EXTRACT','SAP BW Route Plan Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw12_route_plan_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+insert into lics_job values('SBW_CALL_EXTRACT','SAP BW Call Extract (00:00 Beijing Time)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxsbw13_call_extract.execute(3)','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','lics_schedule_tz('*ALL',0,'Asia/Shanghai')','0');
+
+
+commit;
+
+***************************
+
+insert into lics_job values('CAD_CUST_EXTRACT','CAD China Customer Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxcad01_customer.execute(7)','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW'' + numtodsinterval(5,''HOUR'')','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW'' + numtodsinterval(5,''HOUR'')','0');
+insert into lics_job values('CHN_TURNIN_ORDERS','China Turn In Order Processing',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.chn_data_load.extract_turnin_orders','sysdate','sysdate+1/48','1');
 
 commit;
 
@@ -29,6 +86,65 @@ insert into lics_interface values('EFXCAD01','EFEX to China Applications - Custo
 
 commit;
 
+
+<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> APQM002P QM0121P /ics/prod/inbound
+
+mqrc <error_code> (in this case 2058)
+
+
+
+--
+-- LADS ICS Configuration
+--
+connect lics_app/licscell@ap0112t.ap.mars
+
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 WODU03T1 /ics/efex/test/inbound','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADEFX02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 WODU03T1 /ics/efex/test/inbound','1');
+
+commit;
+
+insert into lics_job values('EFEX_CHINA_ITEM_EXTRACT','EFEX China Item Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'site_app.ladefx01_chn_item.execute','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','0');
+insert into lics_job values('EFEX_CHINA_CUST_EXTRACT','EFEX China Customer Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'site_app.ladefx01_chn_customer.execute','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW''','0');
+
+commit;
+
+--
+-- EFEX ICS Configuration
+--
+connect lics_app/licsroof@ap0088t.ap.mars
+
+insert into lics_interface values('LADEFX01','LADS to EFEX - China Item Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx01_loader','1');
+insert into lics_interface values('LADEFX02','LADS to EFEX - China Customer Data','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,0,null,null,'asia.pacific.efex.error.messages@ap.effem.com',null,'ladefx02_loader','1');
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - China Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXCAD01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 HUAU03T1 /ics/test/inbound','1');
+
+commit;
+
+insert into lics_job values('CAD_CUST_EXTRACT','CAD China Customer Extract',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxcad01_customer.execute(7)','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW'' + numtodsinterval(5,''HOUR'')','from_tz(cast(trunc(sysdate) as timestamp), ''Asia/Shanghai'') at time zone ''Australia/NSW'' + numtodsinterval(5,''HOUR'')','0');
+insert into lics_job values('CHN_TURNIN_ORDERS','China Turn In Order Processing',null,20,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.chn_data_load.extract_turnin_orders','sysdate','sysdate+1/48','0');
+
+commit;
+
+--
+-- CAD ICS Configuration
+--
+connect lics_app/licsapp_dev@db0767d.ap.mars
+
+insert into lics_interface values('EFXCAD01','EFEX to China Applications - Customer Data','*INBOUND','IB_PRC',1,7,7,'ICS_INBOUND',null,0,null,null,'"HUA Applications Support"@smtp.ap.mars',null,'efxcad01_customer','1');
+
+commit;
+
+
+=====
+
+select to_char(from_tz(cast(trunc(sysdate) AS TIMESTAMP), 'Asia/Shanghai')
+                AT TIME ZONE dbtimezone + numtodsinterval(6,'HOUR'),'yyyymmddhhmiss') as tz_date
+         from dual;
+
+select to_char(from_tz(cast(trunc(sysdate) AS TIMESTAMP), 'Asia/Shanghai')
+                AT TIME ZONE 'Australia/NSW' + numtodsinterval(6,'HOUR'),'yyyymmddhhmiss') as tz_date
+         from dual;
+         
+from_tz(cast(trunc(sysdate) as timestamp), 'Asia/Shanghai') at time zone 'Australia/NSW' + numtodsinterval(6,'HOUR')
 
 
 ===========================================
