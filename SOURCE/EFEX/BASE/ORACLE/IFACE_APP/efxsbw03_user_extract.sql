@@ -85,7 +85,8 @@ create or replace package body efxsbw03_user_extract as
                 t01.description as description,
                 t01.city as city
            from users t01
-          where trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+          where t01.market_id = con_market_id
+            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
