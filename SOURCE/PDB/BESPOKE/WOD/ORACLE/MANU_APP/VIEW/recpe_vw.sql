@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.RECPE_VW;
 
-/* Formatted on 2008/10/01 09:01 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/10/01 09:20 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_vw (proc_order,
                                                 cntl_rec_id,
                                                 opertn,
@@ -60,18 +60,9 @@ AS
       FROM recpe_resrce t01,
            cntl_rec t02,
            cntl_rec_bom t03,
-           (SELECT t05.proc_order, t05.opertn, t05.phase, mpi_desc
-              FROM cntl_rec_mpi_val t05,
-                   (SELECT DISTINCT proc_order, opertn, phase
-                               FROM cntl_rec_bom
-                              WHERE phantom IS NULL
-                                AND LTRIM (matl_code, '0') NOT IN (
-                                                            SELECT matl_code
-                                                              FROM recpe_phantom)) t99
-             WHERE t05.proc_order = t99.proc_order
-               AND t05.opertn = t99.opertn
-               AND t05.phase = t99.phase
-               AND TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
+           (SELECT proc_order, opertn, phase, mpi_desc
+              FROM cntl_rec_mpi_val t05
+             WHERE TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
                AND NOT (mpi_tag = 1999 OR mpi_val = '*NP*')) t04
      WHERE t01.cntl_rec_id = t02.cntl_rec_id
        AND t02.proc_order = t03.proc_order
@@ -95,15 +86,9 @@ AS
       FROM recpe_resrce t01,
            cntl_rec t02,
            cntl_rec_mpi_val t03,
-           (SELECT t05.proc_order, t05.opertn, t05.phase, mpi_desc
-              FROM cntl_rec_mpi_val t05,
-                   (SELECT DISTINCT proc_order, opertn, phase
-                               FROM cntl_rec_mpi_val
-                              WHERE mpi_val NOT IN ('?')) t99
-             WHERE t05.proc_order = t99.proc_order
-               AND t05.opertn = t99.opertn
-               AND t05.phase = t99.phase
-               AND TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
+           (SELECT proc_order, opertn, phase, mpi_desc
+              FROM cntl_rec_mpi_val t05
+             WHERE TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
                AND NOT (mpi_tag = 1999 OR mpi_val = '*NP*')) t04
      WHERE t01.cntl_rec_id = t02.cntl_rec_id
        AND t02.proc_order = t03.proc_order
@@ -123,22 +108,15 @@ AS
   /*-*/
   UNION
   SELECT   LTRIM (t02.proc_order, '0') proc_order, t01.cntl_rec_id,
-           t01.opertn, t03.phase, '0001' seq, mpi_desc,
-                                                       --t01.resrce_code || '  ' || t01.resrce_desc description,
-           NULL uom, NULL qty, NULL sub_total, 1 dummy, '0', 'HH',
-           '' sub_header
+           t01.opertn, t03.phase, '0000' seq,
+           t01.resrce_code || '  ' || t01.resrce_desc description, NULL uom,
+           NULL qty, NULL sub_total, 1 dummy, '0', 'HH', '' sub_header
       FROM recpe_resrce t01,
            cntl_rec t02,
            cntl_rec_mpi_txt t03,
-           (SELECT t05.proc_order, t05.opertn, t05.phase, mpi_desc
-              FROM cntl_rec_mpi_val t05,
-                   (SELECT DISTINCT proc_order, opertn, phase
-                               FROM cntl_rec_mpi_txt
-                              WHERE dtl_desc IS NOT NULL) t99
-             WHERE t05.proc_order = t99.proc_order
-               AND t05.opertn = t99.opertn
-               AND t05.phase = t99.phase
-               AND TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
+           (SELECT proc_order, opertn, phase, mpi_desc
+              FROM cntl_rec_mpi_val t05
+             WHERE TO_NUMBER (mpi_tag) BETWEEN 1500 AND 1999
                AND NOT (mpi_tag = 1999 OR mpi_val = '*NP*')) t04
      WHERE t01.cntl_rec_id = t02.cntl_rec_id
        AND t02.proc_order = t03.proc_order
@@ -147,8 +125,11 @@ AS
        AND t03.opertn = t04.opertn
        AND t03.phase = t04.phase
        AND teco_stat = 'NO'
-  GROUP BY t02.proc_order, t01.cntl_rec_id, t01.opertn, t03.phase, mpi_desc
-  --t01.resrce_code || '  ' || t01.resrce_desc
+  GROUP BY t02.proc_order,
+           t01.cntl_rec_id,
+           t01.opertn,
+           t03.phase,
+           t01.resrce_code || '  ' || t01.resrce_desc
   UNION ALL
     /* material records from recpe_dtl which have been created by the
   /* recpe_conversion package */
