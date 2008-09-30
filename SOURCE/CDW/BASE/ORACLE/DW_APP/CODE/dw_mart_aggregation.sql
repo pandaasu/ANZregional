@@ -35,6 +35,7 @@ create or replace package dw_mart_aggregation as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/08   Steve Gregan   Created
+    2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
 
    *******************************************************************************/
 
@@ -140,16 +141,8 @@ create or replace package body dw_mart_aggregation as
       var_process_date := to_char(var_date-1,'yyyymmdd');
       var_process_code := par_process;
       if rcd_company.company_timezone_code != 'Australia/NSW' then
-         var_test := sysdate;
-         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
-         loop
-            var_date := var_next;
-            var_next := var_next + 1;
-            if var_next > var_test then
-               exit;
-            end if;
-         end loop;
-         var_process_date := to_char(var_date,'yyyymmdd');
+         var_date := dw_to_timezone(trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')),'Australia/NSW',rcd_company.company_timezone_code);
+         var_process_date := to_char(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1,'yyyymmdd');
       end if;
 
       /*-*/

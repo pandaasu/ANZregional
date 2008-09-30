@@ -43,6 +43,7 @@ create or replace package dw_scheduled_aggregation as
     2008/08   Steve Gregan   Fixed sales order material joins (expand numeric)
     2008/08   Steve Gregan   Added ICS process trace calls
     2008/09   Linden Glen    Added NZ16 to NZMKT base load
+    2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
 
    *******************************************************************************/
 
@@ -155,16 +156,8 @@ create or replace package body dw_scheduled_aggregation as
       var_process_date := to_char(var_date-1,'yyyymmdd');
       var_process_code := 'SCHEDULED_AGGREGATION_'||var_company_code;
       if rcd_company.company_timezone_code != 'Australia/NSW' then
-         var_test := sysdate;
-         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
-         loop
-            var_date := var_next;
-            var_next := var_next + 1;
-            if var_next > var_test then
-               exit;
-            end if;
-         end loop;
-         var_process_date := to_char(var_date,'yyyymmdd');
+         var_date := dw_to_timezone(trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')),'Australia/NSW',rcd_company.company_timezone_code);
+         var_process_date := to_char(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1,'yyyymmdd');
       end if;
 
       /*-*/
@@ -616,16 +609,8 @@ create or replace package body dw_scheduled_aggregation as
       var_process_date := to_char(var_date-1,'yyyymmdd');
       var_process_code := 'SAP_ALIGNMENT_'||var_company_code;
       if rcd_company.company_timezone_code != 'Australia/NSW' then
-         var_test := sysdate;
-         var_next := dw_to_timezone(trunc(sysdate)-3,'Australia/NSW',rcd_company.company_timezone_code);
-         loop
-            var_date := var_next;
-            var_next := var_next + 1;
-            if var_next > var_test then
-               exit;
-            end if;
-         end loop;
-         var_process_date := to_char(var_date,'yyyymmdd');
+         var_date := dw_to_timezone(trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')),'Australia/NSW',rcd_company.company_timezone_code);
+         var_process_date := to_char(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1,'yyyymmdd');
       end if;
 
       /*-*/
