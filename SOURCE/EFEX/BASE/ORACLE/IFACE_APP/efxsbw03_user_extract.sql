@@ -80,7 +80,7 @@ create or replace package body efxsbw03_user_extract as
       cursor csr_extract is
          select to_char(t01.user_id) as user_id,
                 t01.username as username,
-                t01.firstrname as firstrname,
+                t01.firstname as firstname,
                 t01.lastname as lastname,
                 t01.description as description,
                 t01.city as city
