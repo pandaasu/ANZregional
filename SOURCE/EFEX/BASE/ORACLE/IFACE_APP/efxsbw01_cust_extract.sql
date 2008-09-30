@@ -245,7 +245,7 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.outlet_location,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.list_value_text,'"','""')||'"');
+                                          '"'||replace(rcd_extract.list_value_text,'"','""')||'";'||
                                           '"'||replace(rcd_extract.distributor_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.outlet_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.active_flg,'"','""')||'";'||
