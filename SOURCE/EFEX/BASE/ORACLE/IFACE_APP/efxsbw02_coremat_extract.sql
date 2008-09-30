@@ -32,11 +32,7 @@ create or replace package efxsbw02_coremat_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2,
-                     par_history in varchar2 default 0);
+   procedure execute(par_history in varchar2 default 0);
 
 end efxsbw02_coremat_extract;
 /
@@ -56,15 +52,15 @@ create or replace package body efxsbw02_coremat_extract as
    /* Private constants
    /*-*/
    con_market_id constant number := 4;
+   con_sales_org_code constant varchar2(10) := '135';
+   con_dstbn_chnl_code constant varchar2(10) := '10';
+   con_division_code constant varchar2(10) := '51';
+   con_company_code constant varchar2(10) := '135';
 
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2,
-                     par_history in varchar2 default 0) is
+   procedure execute(par_history in varchar2 default 0) is
 
       /*-*/
       /* Local definitions
@@ -78,18 +74,15 @@ create or replace package body efxsbw02_coremat_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select to_char(t01.customer_id) as customer_id,
-                to_char(t03.item_id) as item_id
-           from customer t01,
-                range t02,
-                range_item t03
+         select to_char(t01.range_id) as range_id,
+                to_char(t02.item_id) as item_id
+           from range t01,
+                range_item t02
           where t01.range_id = t02.range_id
-            and t02.range_id = t03.range_id
-            and t02.market_id = con_market_id
-            and t03.required_flg = 'Y'
-            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t02.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t03.modified_date) >= trunc(sysdate) - var_history);
+            and t01.market_id = con_market_id
+            and t02.required_flg = 'Y'
+            and (t01.range_id in (select range_id from range where trunc(modified_date) >= trunc(sysdate) - var_history) or
+                 t01.range_id in (select distinct(range_id) from range_item where trunc(modified_date) >= trunc(sysdate) - var_history));
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -132,12 +125,12 @@ create or replace package body efxsbw02_coremat_extract as
          /*-*/
          /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('"'||replace(par_sales_org_code,'"','""')||'";'||
-                                          '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(par_division_code,'"','""')||'";'||
-                                          '"'||replace(par_company_code,'"','""')||'";'||
+         lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
+                                          '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
+                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.item_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.customer_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.range_id,'"','""')||'"');
 
       end loop;
       close csr_extract;

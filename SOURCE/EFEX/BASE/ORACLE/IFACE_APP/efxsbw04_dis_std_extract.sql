@@ -27,10 +27,7 @@ create or replace package efxsbw04_dis_std_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2);
+   procedure execute;
 
 end efxsbw04_dis_std_extract;
 /
@@ -50,14 +47,15 @@ create or replace package body efxsbw04_dis_std_extract as
    /* Private constants
    /*-*/
    con_market_id constant number := 4;
+   con_sales_org_code constant varchar2(10) := '135';
+   con_dstbn_chnl_code constant varchar2(10) := '10';
+   con_division_code constant varchar2(10) := '51';
+   con_company_code constant varchar2(10) := '135';
 
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2) is
+   procedure execute is
 
       /*-*/
       /* Local definitions
@@ -114,10 +112,10 @@ create or replace package body efxsbw04_dis_std_extract as
          /*-*/
          /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('"'||replace(par_sales_org_code,'"','""')||'";'||
-                                          '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(par_division_code,'"','""')||'";'||
-                                          '"'||replace(par_company_code,'"','""')||'";'||
+         lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
+                                          '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
+                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_name_en,'"','""')||'";'||
