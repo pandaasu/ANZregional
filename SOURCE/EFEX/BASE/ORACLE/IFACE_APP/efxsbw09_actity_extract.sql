@@ -76,10 +76,10 @@ create or replace package body efxsbw09_actity_extract as
          select to_char(t01.customer_id) as customer_id,
                 to_char(t01.activity_item_id) as activity_item_id,
                 to_char(t01.user_id) as user_id,
-                to_char(t01.call_date,'yyyymmdd') as call_date
+                to_char(t01.call_date,'yyyymmdd') as call_date,
+                t01.activity_in_store as activity_in_store
            from activity_distribution t01
-          where t01.activity_in_store = '1'
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(t01.modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -129,7 +129,8 @@ create or replace package body efxsbw09_actity_extract as
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.activity_item_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.call_date,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.activity_in_store,'"','""')||'"');
 
       end loop;
       close csr_extract;
