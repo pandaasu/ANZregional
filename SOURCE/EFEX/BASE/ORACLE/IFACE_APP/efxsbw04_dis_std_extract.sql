@@ -46,6 +46,11 @@ create or replace package body efxsbw04_dis_std_extract as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_market_id constant number := 4;
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
