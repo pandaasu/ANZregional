@@ -81,7 +81,7 @@ create or replace package body efxsbw13_call_extract as
          select to_char(t01.customer_id) as customer_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 to_char(t01.end_date,'yyyymmdd') as end_date,
-                to_char(user_id) as user_id
+                to_char(t01.user_id) as user_id
            from call t01
           where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history)
             and t01.customer_id in (select t01.customer_id
@@ -141,10 +141,10 @@ create or replace package body efxsbw13_call_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(customer_id,'"','""')||'";'||
-                                          '"'||replace(call_date,'"','""')||'";'||
-                                          '"'||replace(end_date,'"','""')||'";'||
-                                          '"'||replace(user_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.call_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.end_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
 
       end loop;
       close csr_extract;
