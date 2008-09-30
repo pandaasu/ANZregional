@@ -78,7 +78,7 @@ create or replace package body efxsbw13_call_extract as
                 to_char(t01.end_date,'yyyymmdd') as end_date,
                 to_char(user_id) as user_id
            from call t01
-          where trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(t01.modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/

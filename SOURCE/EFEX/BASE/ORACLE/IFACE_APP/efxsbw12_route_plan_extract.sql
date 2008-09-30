@@ -78,7 +78,7 @@ create or replace package body efxsbw12_route_plan_extract as
                 to_char(user_id) as user_id,
                 t01.status as status
            from route_plan t01
-          where trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+          where (t01.user_id, t01.route_plan_date) in (select user_id, route_plan_date from route_plan where trunc(t01.modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
