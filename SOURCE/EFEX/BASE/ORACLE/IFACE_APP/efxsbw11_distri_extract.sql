@@ -52,6 +52,11 @@ create or replace package body efxsbw11_distri_extract as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_market_id constant number := 4;
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
@@ -87,7 +92,18 @@ create or replace package body efxsbw11_distri_extract as
             and t02.item_id = t03.item_id(+)
             and t02.customer_id = t04.customer_id(+)
             and 0 = t04.item_group_id(+)
-          where (t01.customer_id, t01.call_date) in (select customer_id, max(call_date) from call where trunc(modified_date) >= trunc(sysdate) - var_history group by customer_id);
+          where (t01.customer_id, t01.call_date) in (select customer_id, max(call_date) from call where trunc(modified_date) >= trunc(sysdate) - var_history group by customer_id)
+            and t01.customer_id in (select t01.customer_id
+                                      from customer t01,
+                                           cust_type t02,
+                                           cust_trade_channel t03,
+                                           cust_channel t04,
+                                           market t05
+                                     where t01.cust_type_id = t02.cust_type_id(+)
+                                       and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
+                                       and t03.cust_channel_id = t04.cust_channel_id(+)
+                                       and t04.market_id = t05.market_id(+)
+                                       and t05.market_id = con_market_id);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
