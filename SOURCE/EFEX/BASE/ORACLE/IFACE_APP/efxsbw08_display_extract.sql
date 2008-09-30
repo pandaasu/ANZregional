@@ -79,7 +79,7 @@ create or replace package body efxsbw08_display_extract as
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 t01.display_in_store as display_in_store
            from display_distribution t01
-          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(t01.modified_date) >= trunc(sysdate) - var_history);
+          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
