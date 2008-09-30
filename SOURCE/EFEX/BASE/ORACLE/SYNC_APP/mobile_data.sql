@@ -492,6 +492,7 @@ create or replace package body mobile_data as
           where t01.customer_id = t02.customer_id
             and (t01.distributor_flg is null or t01.distributor_flg = 'N')
             and t01.status = 'A'
+            and t01.active_flg = 'Y'
             and t01.business_unit_id = var_auth_business_unit_id
           order by t01.customer_name;
       rcd_customer csr_customer%rowtype;
