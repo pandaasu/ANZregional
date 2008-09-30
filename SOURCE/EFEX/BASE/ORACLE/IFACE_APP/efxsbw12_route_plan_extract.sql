@@ -52,6 +52,11 @@ create or replace package body efxsbw12_route_plan_extract as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_market_id constant number := 4;
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
@@ -78,7 +83,18 @@ create or replace package body efxsbw12_route_plan_extract as
                 to_char(user_id) as user_id,
                 t01.status as status
            from route_plan t01
-          where (t01.user_id, t01.route_plan_date) in (select user_id, route_plan_date from route_plan where trunc(modified_date) >= trunc(sysdate) - var_history);
+          where (t01.user_id, t01.route_plan_date) in (select user_id, route_plan_date from route_plan where trunc(modified_date) >= trunc(sysdate) - var_history)
+            and t01.customer_id in (select t01.customer_id
+                                      from customer t01,
+                                           cust_type t02,
+                                           cust_trade_channel t03,
+                                           cust_channel t04,
+                                           market t05
+                                     where t01.cust_type_id = t02.cust_type_id(+)
+                                       and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
+                                       and t03.cust_channel_id = t04.cust_channel_id(+)
+                                       and t04.market_id = t05.market_id(+)
+                                       and t05.market_id = con_market_id);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
