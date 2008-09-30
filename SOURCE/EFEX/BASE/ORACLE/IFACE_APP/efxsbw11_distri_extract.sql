@@ -81,9 +81,9 @@ create or replace package body efxsbw11_distri_extract as
          select to_char(t01.customer_id) as customer_id,
                 to_char(nvl(t02.inventory_qty,0)) as inventory_qty,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
-                to_char(nvl(t03.total_qty,0)) as total_qty,
+                to_char(nvl(t04.total_qty,0)) as total_qty,
                 to_char(t01.user_id) as user_id,
-                t02.item_code as item_code
+                t03.item_code as item_code
            from call t01,
                 distribution t02,
                 item t03,
@@ -92,7 +92,7 @@ create or replace package body efxsbw11_distri_extract as
             and t02.item_id = t03.item_id(+)
             and t02.customer_id = t04.customer_id(+)
             and 0 = t04.item_group_id(+)
-          where (t01.customer_id, t01.call_date) in (select customer_id, max(call_date) from call where trunc(modified_date) >= trunc(sysdate) - var_history group by customer_id)
+            and (t01.customer_id, t01.call_date) in (select customer_id, max(call_date) from call where trunc(modified_date) >= trunc(sysdate) - var_history group by customer_id)
             and t01.customer_id in (select t01.customer_id
                                       from customer t01,
                                            cust_type t02,
@@ -150,12 +150,12 @@ create or replace package body efxsbw11_distri_extract as
                                           '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
                                           '"'||replace(par_division_code,'"','""')||'";'||
                                           '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(customer_id,'"','""')||'";'||
-                                          '"'||replace(item_code,'"','""')||'";'||
-                                          '"'||replace(inventory_qty,'"','""')||'";'||
-                                          '"'||replace(call_date,'"','""')||'";'||
-                                          '"'||replace(total_qty,'"','""')||'";'||
-                                          '"'||replace(user_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.item_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.inventory_qty,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.call_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.total_qty,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
 
       end loop;
       close csr_extract;
