@@ -32,11 +32,7 @@ create or replace package efxsbw10_order_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2,
-                     par_history in varchar2 default 0);
+   procedure execute(par_history in varchar2 default 0);
 
 end efxsbw10_order_extract;
 /
@@ -52,14 +48,19 @@ create or replace package body efxsbw10_order_extract as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_market_id constant number := 4;
+   con_sales_org_code constant varchar2(10) := '135';
+   con_dstbn_chnl_code constant varchar2(10) := '10';
+   con_division_code constant varchar2(10) := '51';
+   con_company_code constant varchar2(10) := '135';
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_sales_org_code in varchar2,
-                     par_dstbn_chnl_code in varchar2,
-                     par_division_code in varchar2,
-                     par_company_code in varchar2,
-                     par_history in varchar2 default 0) is
+   procedure execute(par_history in varchar2 default 0) is
 
       /*-*/
       /* Local definitions
@@ -77,8 +78,14 @@ create or replace package body efxsbw10_order_extract as
                 to_char(t01.order_date,'yyyymmdd') as order_date,
                 to_char(t01.customer_id) as customer_id,
                 to_char(t01.user_id) as user_id,
-                to_char(t02.order_qty) as order_qty,
-                to_char(0,'fm999999990.00') as order_value,
+                decode(t02.uom,'TDU',to_char(t02.order_qty),
+                               'MCU',to_char(round(t02.order_qty/nvl(t04.mcu_per_tdu,1),2)),
+                               'RSU',to_char(round(t02.order_qty/nvl(t04.units_case,1),2)),
+                               to_char(t02.order_qty)) as order_qty,
+                to_char(decode(t02.uom,'TDU',t02.order_qty,
+                                       'MCU',round(t02.order_qty/nvl(t04.mcu_per_tdu,1),2),
+                                       'RSU',round(t02.order_qty/nvl(t04.units_case,1),2),
+                                       t02.order_qty)*nvl(t04.tdu_price,0),'fm999999990.00') as order_value,
                 t03.distcust_code as distcust_code,
                 t04.item_code as item_code
            from orders t01,
@@ -88,18 +95,22 @@ create or replace package body efxsbw10_order_extract as
           where t01.order_id = t02.order_id
             and t01.customer_id = t03.customer_id(+)
             and t01.distributor_id = t03.distributor_id(+)
-            and t02.item_id = t03.item_id(+)
+            and t02.item_id = t04.item_id(+)
             and t01.status = 'A'
-            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t02.modified_date) >= trunc(sysdate) - var_history);
+            and t01.customer_id in (select t01.customer_id
+                                      from customer t01,
+                                           cust_type t02,
+                                           cust_trade_channel t03,
+                                           cust_channel t04,
+                                           market t05
+                                     where t01.cust_type_id = t02.cust_type_id(+)
+                                       and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
+                                       and t03.cust_channel_id = t04.cust_channel_id(+)
+                                       and t04.market_id = t05.market_id(+)
+                                       and t05.market_id = con_market_id)
+            and (t01.order_id in (select order_id from orders where trunc(modified_date) >= trunc(sysdate) - var_history) or
+                 t01.order_id in (select distinct(order_id) from order_item where trunc(modified_date) >= trunc(sysdate) - var_history));
       rcd_extract csr_extract%rowtype;
-
-
-
-
-???????? how to get only market 4
-???????? how to convert UOM to CASE
-???????? how to get the value per item (value only stored at the ORDERS level)
 
    /*-------------*/
    /* Begin block */
@@ -141,18 +152,18 @@ create or replace package body efxsbw10_order_extract as
          /*-*/
          /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('"'||replace(par_sales_org_code,'"','""')||'";'||
-                                          '"'||replace(par_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(par_division_code,'"','""')||'";'||
-                                          '"'||replace(par_company_code,'"','""')||'";'||
-                                          '"'||replace(order_id,'"','""')||'";'||
-                                          '"'||replace(order_date,'"','""')||'";'||
-                                          '"'||replace(customer_id,'"','""')||'";'||
-                                          '"'||replace(distcust_code,'"','""')||'";'||
-                                          '"'||replace(item_code,'"','""')||'";'||
-                                          '"'||replace(order_qty,'"','""')||'";'||
-                                          '"'||replace(order_value,'"','""')||'";'||
-                                          '"'||replace(user_id,'"','""')||'"');
+         lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
+                                          '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
+                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(con_company_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.order_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.order_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.distcust_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.item_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.order_qty,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.order_value,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
 
       end loop;
       close csr_extract;

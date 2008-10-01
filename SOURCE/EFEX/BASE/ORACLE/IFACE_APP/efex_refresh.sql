@@ -603,7 +603,8 @@ PROCEDURE REFRESH_CHINA_ITEM(p_MarketID IN NUMBER) IS
               a.rsu_ean_code     <> b.rsu_ean_code
               OR a.cases_layer   <> b.cases_layer
               OR a.layers_pallet <> b.layers_pallet
-              OR a.units_case    <> b.units_case
+              OR nvl(a.units_case,0) <> decode(b.units_case,null,1,0,1,b.units_case)
+              OR nvl(a.mcu_per_tdu,0) <> decode(b.mcu_per_tdu,null,1,0,1,b.mcu_per_tdu)
               OR (a.unit_measure <> b.unit_measure OR a.unit_measure IS NULL)
               OR a.tdu_price     <> b.price1
               OR DECODE(a.rrp_price, null, 0, a.rrp_price) <> DECODE(b.price2, null, 0, b.price2)         
@@ -628,9 +629,10 @@ BEGIN
              cases_layer = iface_row.cases_layer,
              layers_pallet = iface_row.layers_pallet,
              units_case = iface_row.units_case,
+             mcu_per_tdu = iface_row.mcu_per_tdu,
              tdu_price = iface_row.price1,
              rrp_price = iface_row.price2,
-             mcu_price = round(iface_row.price1/ iface_row.mcu_per_tdu,2),
+             mcu_price = round(iface_row.price1/iface_row.mcu_per_tdu,2),
              rsu_price = round(iface_row.price1/iface_row.units_case,2),
              brand = iface_row.brand,
              sub_brand = iface_row.sub_brand,
