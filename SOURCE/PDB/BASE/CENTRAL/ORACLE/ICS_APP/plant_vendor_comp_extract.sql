@@ -40,6 +40,7 @@ create or replace package ics_app.plant_vendor_comp_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/09   Trevor Keon    Change criteria so deleted items are sent
 
 *******************************************************************************/
 
@@ -292,8 +293,7 @@ create or replace package body ics_app.plant_vendor_comp_extract as
         t02.vendor_name_04 as vendor_name_04
       from bds_vend_header t01,
         bds_vend_comp t02
-      where t01.vendor_code = t02.vendor_code  
-        and t02.deletion_flag is null
+      where t01.vendor_code = t02.vendor_code
         and 
         (
           (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))

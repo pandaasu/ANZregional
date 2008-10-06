@@ -104,6 +104,7 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','LENGTH', 38);
     lics_inbound_utility.set_definition('HDR','WIDTH', 38);
     lics_inbound_utility.set_definition('HDR','HEIGHT', 38);
+    lics_inbound_utility.set_definition('HDR','DELETION_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','DIMENSION_UOM', 3);
     lics_inbound_utility.set_definition('HDR','INTERNTL_ARTICLE_NO', 18);
     lics_inbound_utility.set_definition('HDR','TOTAL_SHELF_LIFE', 38);
@@ -138,6 +139,7 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','BDS_UNIT_COST', 38);
     lics_inbound_utility.set_definition('HDR','FUTURE_PLANNED_PRICE_1', 38);
     lics_inbound_utility.set_definition('HDR','VLTN_CLASS', 4);
+    lics_inbound_utility.set_definition('HDR','VLTN_DELETION_INDCTR', 1);    
     lics_inbound_utility.set_definition('HDR','BDS_PCE_FACTOR_FROM_BASE_UOM', 42);
     lics_inbound_utility.set_definition('HDR','MARS_PCE_ITEM_CODE', 18);
     lics_inbound_utility.set_definition('HDR','MARS_PCE_INTERNTL_ARTICLE_NO', 18);
@@ -151,7 +153,8 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','MAX_STORAGE_PRD', 38);
     lics_inbound_utility.set_definition('HDR','MAX_STORAGE_PRD_UNIT', 3);
     lics_inbound_utility.set_definition('HDR','ISSUE_UNIT', 3);
-    lics_inbound_utility.set_definition('HDR','PLANNED_DELIVERY_DAYS', 38); 
+    lics_inbound_utility.set_definition('HDR','PLANNED_DELIVERY_DAYS', 38);
+    lics_inbound_utility.set_definition('HDR','PLANT_DELETION_INDCTR', 1);
     
     /*-*/
     lics_inbound_utility.set_definition('STX','ID',3);
@@ -433,6 +436,7 @@ create or replace package body bds_app.ladpdb02_loader as
     rcd_hdr.length := lics_inbound_utility.get_number('LENGTH',null);
     rcd_hdr.width := lics_inbound_utility.get_number('WIDTH',null);
     rcd_hdr.height := lics_inbound_utility.get_number('HEIGHT',null);
+    rcd_hdr.deletion_flag := lics_inbound_utility.get_variable('DELETION_FLAG');
     rcd_hdr.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');
     rcd_hdr.interntl_article_no := lics_inbound_utility.get_variable('INTERNTL_ARTICLE_NO');
     rcd_hdr.total_shelf_life := lics_inbound_utility.get_number('TOTAL_SHELF_LIFE',null);
@@ -467,6 +471,7 @@ create or replace package body bds_app.ladpdb02_loader as
     rcd_hdr.bds_unit_cost := lics_inbound_utility.get_number('BDS_UNIT_COST',null);
     rcd_hdr.future_planned_price_1 := lics_inbound_utility.get_number('FUTURE_PLANNED_PRICE_1',null);
     rcd_hdr.vltn_class := lics_inbound_utility.get_variable('VLTN_CLASS');
+    rcd_hdr.vltn_deletion_indctr := lics_inbound_utility.get_variable('VLTN_DELETION_INDCTR');
     rcd_hdr.bds_pce_factor_from_base_uom := lics_inbound_utility.get_number('BDS_PCE_FACTOR_FROM_BASE_UOM',null);
     rcd_hdr.mars_pce_item_code := lics_inbound_utility.get_variable('MARS_PCE_ITEM_CODE');
     rcd_hdr.mars_pce_interntl_article_no := lics_inbound_utility.get_variable('MARS_PCE_INTERNTL_ARTICLE_NO');
@@ -481,6 +486,7 @@ create or replace package body bds_app.ladpdb02_loader as
     rcd_hdr.issue_unit := lics_inbound_utility.get_variable('ISSUE_UNIT');
     rcd_hdr.planned_delivery_days := lics_inbound_utility.get_number('PLANNED_DELIVERY_DAYS',null);
     rcd_hdr.effective_out_date := lics_inbound_utility.get_date('EFFECTIVE_OUT_DATE','yyyymmddhh24miss'); 
+    rcd_hdr.plant_deletion_indctr := lics_inbound_utility.get_variable('PLANT_DELETION_INDCTR');
 
     /*-*/
     /* Retrieve exceptions raised 
@@ -528,6 +534,7 @@ create or replace package body bds_app.ladpdb02_loader as
       length,
       width,
       height,
+      deletion_flag,
       dimension_uom,
       interntl_article_no,
       total_shelf_life,
@@ -562,6 +569,7 @@ create or replace package body bds_app.ladpdb02_loader as
       bds_unit_cost,
       future_planned_price_1,
       vltn_class,
+      vltn_deletion_indctr,
       bds_pce_factor_from_base_uom,
       mars_pce_item_code,
       mars_pce_interntl_article_no,
@@ -575,6 +583,7 @@ create or replace package body bds_app.ladpdb02_loader as
       max_storage_prd_unit,
       issue_unit,
       planned_delivery_days,
+      plant_deletion_indctr,
       effective_out_date,
       msg_timestamp
     )
@@ -593,6 +602,7 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.length,
       rcd_hdr.width,
       rcd_hdr.height,
+      rcd_hdr.deletion_flag,
       rcd_hdr.dimension_uom,
       rcd_hdr.interntl_article_no,
       rcd_hdr.total_shelf_life,
@@ -627,6 +637,7 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.bds_unit_cost,
       rcd_hdr.future_planned_price_1,
       rcd_hdr.vltn_class,
+      rcd_hdr.vltn_deletion_indctr,
       rcd_hdr.bds_pce_factor_from_base_uom,
       rcd_hdr.mars_pce_item_code,
       rcd_hdr.mars_pce_interntl_article_no,
@@ -640,6 +651,7 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.max_storage_prd_unit,
       rcd_hdr.issue_unit,
       rcd_hdr.planned_delivery_days,
+      rcd_hdr.plant_deletion_indctr,
       rcd_hdr.effective_out_date,
       rcd_hdr.msg_timestamp
     );

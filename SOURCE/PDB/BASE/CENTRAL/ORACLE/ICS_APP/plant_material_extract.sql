@@ -48,7 +48,8 @@ create or replace package ics_app.plant_material_extract as
                             trigged by changes only to LADS table 
   2008/03   J. Phillipson Added sending of Packaging instruction data 
   2008/03   T. Keon       Changed structure to match new standards   
-  2008/04   T. Keon       Added option to extract data since last run only  
+  2008/04   T. Keon       Added option to extract data since last run only 
+  2008/09   T. Keon       Changed criteria to broadcast deletes
 
 *******************************************************************************/ 
 
@@ -254,6 +255,7 @@ as
         t01.length as length,
         t01.width as width,
         t01.height as height,
+        t01.deletion_flag as deletion_flag,
         t01.dimension_uom as dimension_uom,
         t01.interntl_article_no as interntl_article_no,
         t01.total_shelf_life as total_shelf_life,
@@ -290,6 +292,7 @@ as
         t05.stndrd_price / t05.price_unit as price_unit,
         t05.future_planned_price_1 as future_planned_price_1,
         t05.vltn_class as vltn_class,
+        t05.deletion_indctr as vltn_deletion_indctr,
         decode(t06.bds_pce_factor_from_base_uom,null,1,t06.bds_pce_factor_from_base_uom) as bds_pce_factor_from_base_uom,
         t06.mars_pce_item_code as mars_pce_item_code,
         t06.mars_pce_interntl_article_no as mars_pce_interntl_article_no,
@@ -303,7 +306,8 @@ as
         t02.max_storage_prd as max_storage_prd,
         t02.max_storage_prd_unit as max_storage_prd_unit,
         t02.issue_unit as issue_unit,
-        t02.planned_delivery_days as planned_delivery_days
+        t02.planned_delivery_days as planned_delivery_days,
+        t02.deletion_indctr as plant_deletion_indctr
       from bds_material_hdr t01,
         bds_material_plant_hdr t02,
         (
@@ -344,11 +348,8 @@ as
         and t02.plant_code = t05.vltn_area(+)
         and t01.sap_material_code = t06.sap_material_code(+)
         and t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE', 'FERT') -- all interested materials 
-        and t01.deletion_flag is null
         and (t02.plant_code like 'AU%' OR t02.plant_code like 'NZ%')
-        and t02.deletion_indctr is null
         and t05.vltn_type(+) = '*NONE'
-        and t05.deletion_indctr(+) is null 
         and 
         (
           (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
@@ -490,6 +491,7 @@ as
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.length),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.width),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.height),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.deletion_flag),' '),1,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.dimension_uom),' '),3,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.interntl_article_no),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.total_shelf_life),'0'),38,' ')
@@ -524,6 +526,7 @@ as
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.price_unit),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.future_planned_price_1),' '),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.vltn_class),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.vltn_deletion_indctr),' '),1,' ')        
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.bds_pce_factor_from_base_uom),'0'),42,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_item_code),' '),18,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.mars_pce_interntl_article_no),' '),18,' ')
@@ -537,7 +540,8 @@ as
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.max_storage_prd),'0'),38,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.max_storage_prd_unit),' '),3,' ')
         || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.issue_unit),' '),3,' ')
-        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.planned_delivery_days),'0'),38,' ');        
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.planned_delivery_days),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_material_plant_mfanz.plant_deletion_indctr),' '),1,' ');         
       
       -- include the sales text in a seperate child record if it contains data 
       if ( rcd_bds_material_plant_mfanz.sales_text_147 is not null
