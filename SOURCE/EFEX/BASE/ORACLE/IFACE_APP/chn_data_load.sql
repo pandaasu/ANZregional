@@ -202,7 +202,7 @@ BEGIN
       END IF;
 
       -- build ZETAFAX email address of the distributor to fAX this order to.
-      v_distributor_zetafax_email := '"'||header_row.distrib_name||'@'||v_distributor_fax_num||'@faxanz"';
+      v_distributor_zetafax_email := '"'||header_row.distrib_name||'@'||v_distributor_fax_num||'@faxmch"';
 
       -- Get customer email address
       v_cust_email := header_row.cust_email;
@@ -224,7 +224,7 @@ BEGIN
       END IF;
 
       -- Build ZETAFAX email address of the customer to fax this order copy to.
-      v_cust_zetafax_email := '"'||header_row.customer_name||'@'||v_cust_fax_num||'@faxanz"';
+      v_cust_zetafax_email := '"'||header_row.customer_name||'@'||v_cust_fax_num||'@faxmch"';
 
       -- Create Order Header Data for e-mail (as HTML)
       tbl_orddat(tbl_orddat.count + 1) := '<HTML>'||chr(13);
@@ -356,14 +356,14 @@ BEGIN
            if not(v_email is null) then
               v_recipient := v_recipient||','||v_email;
            end if;
-           v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                            v_recipient,
-                                            'eFEX TIO CONFIRMATION ONLY for '||header_row.customer_name,
-                                            'text/html; charset=utf-8');
+           v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                    v_recipient,
+                                                    'eFEX TIO CONFIRMATION ONLY for '||header_row.customer_name,
+                                                    'text/html; charset=utf-8');
            for idx in 1..tbl_orddat.count loop
-              smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
+              smtp_mailer_unicode.write_mb_text(v_conn, tbl_orddat(idx));
            end loop;
-  	   smtp_mailer.end_mail(v_conn);
+  	   smtp_mailer_unicode.end_mail(v_conn);
       ELSE
           --If the distributor has an e-mail address then send the order as an email.
            IF v_distributor_email IS NOT NULL THEN
@@ -372,36 +372,36 @@ BEGIN
                   v_recipient := v_recipient||','||v_email;
                end if;
                v_recipient := v_recipient||','||v_distributor_email;
-               v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_recipient,
-                                                'eFEX E-MAIL Order For '||header_row.customer_name,
-                                                'text/html; charset=utf-8');
+               v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                        v_recipient,
+                                                        'eFEX E-MAIL Order For '||header_row.customer_name,
+                                                        'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
-                  smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
+                  smtp_mailer_unicode.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
-               smtp_mailer.end_mail(v_conn);
+               smtp_mailer_unicode.end_mail(v_conn);
            ELSE
                v_recipient := v_fe_email;
                if not(v_email is null) then
                   v_recipient := v_recipient||','||v_email;
                end if;
-               v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_recipient,
-                                                'eFEX FAX Order has been sent for '||header_row.customer_name,
-                                                'text/html; charset=utf-8');
+               v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                        v_recipient,
+                                                        'eFEX FAX Order has been sent for '||header_row.customer_name,
+                                                        'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
-                  smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
+                  smtp_mailer_unicode.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
-               smtp_mailer.end_mail(v_conn);
+               smtp_mailer_unicode.end_mail(v_conn);
                v_recipient := v_distributor_zetafax_email;
-               v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_recipient,
-                                                'eFEX FAX Order For '||header_row.customer_name||'. Order Taken By '||header_row.firstname||' '||header_row.lastname||' '||header_row.order_date||'.',
-                                                'text/plain; charset=utf-8');
+               v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                        v_recipient,
+                                                        'eFEX FAX Order For '||header_row.customer_name||'. Order Taken By '||header_row.firstname||' '||header_row.lastname||' '||header_row.order_date||'.',
+                                                        'text/plain; charset=utf-8');
                for idx in 1..tbl_ordfax.count loop
-                  smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
+                  smtp_mailer_unicode.write_mb_text(v_conn, tbl_ordfax(idx));
                end loop;
-               smtp_mailer.end_mail(v_conn);
+               smtp_mailer_unicode.end_mail(v_conn);
            END IF;
        END IF;
 
@@ -410,35 +410,35 @@ BEGIN
           --Check to see if the Customer has an e-mail address and send
           IF v_cust_email IS NOT NULL THEN
                v_recipient := v_cust_email||',efex@ap.effem.com';
-               v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                v_recipient,
-                                                'E-MAIL Copy of TIO eFEX Order For '||header_row.customer_name,
-                                                'text/html; charset=utf-8');
+               v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                        v_recipient,
+                                                        'E-MAIL Copy of TIO eFEX Order For '||header_row.customer_name,
+                                                        'text/html; charset=utf-8');
                for idx in 1..tbl_orddat.count loop
-                  smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
+                  smtp_mailer_unicode.write_mb_text(v_conn, tbl_orddat(idx));
                end loop;
-               smtp_mailer.end_mail(v_conn);
+               smtp_mailer_unicode.end_mail(v_conn);
           ELSE
               IF v_cust_fax_num IS NOT NULL THEN
                   v_recipient := v_cust_zetafax_email||',efex@ap.effem.com';
-                  v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                   v_recipient,
-                                                   'FAX Copy of TIO eFEX Order For '||header_row.customer_name,
-                                                   'text/plain; charset=utf-8');
+                  v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                           v_recipient,
+                                                           'FAX Copy of TIO eFEX Order For '||header_row.customer_name,
+                                                           'text/plain; charset=utf-8');
                   for idx in 1..tbl_ordfax.count loop
-                     smtp_mailer.write_mb_text(v_conn, tbl_ordfax(idx));
+                     smtp_mailer_unicode.write_mb_text(v_conn, tbl_ordfax(idx));
                   end loop;
-                  smtp_mailer.end_mail(v_conn);
+                  smtp_mailer_unicode.end_mail(v_conn);
               ELSE
                   v_recipient := 'efex@ap.effem.com';
-                  v_conn := smtp_mailer.begin_mail('efex@ap.effem.com',
-                                                   v_recipient,
-                                                   'POST Copy of eFEX TIO Order For '||header_row.customer_name,
-                                                   'text/html; charset=utf-8');
+                  v_conn := smtp_mailer_unicode.begin_mail('efex@ap.effem.com',
+                                                           v_recipient,
+                                                           'POST Copy of eFEX TIO Order For '||header_row.customer_name,
+                                                           'text/html; charset=utf-8');
                   for idx in 1..tbl_orddat.count loop
-                     smtp_mailer.write_mb_text(v_conn, tbl_orddat(idx));
+                     smtp_mailer_unicode.write_mb_text(v_conn, tbl_orddat(idx));
                   end loop;
-                  smtp_mailer.end_mail(v_conn);
+                  smtp_mailer_unicode.end_mail(v_conn);
               END IF;
           END IF;
       END IF;

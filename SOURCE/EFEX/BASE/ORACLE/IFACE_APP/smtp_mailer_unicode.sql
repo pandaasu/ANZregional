@@ -409,9 +409,6 @@ CREATE OR REPLACE PACKAGE BODY smtp_mailer_unicode IS
 
     -- Set "To" MIME header
     write_mime_header(conn, 'To', recipients);
-	
-	-- Set MIME version
-    --write_mime_header(conn, 'MIME-Version','1.0');
 
     -- Set "Subject" MIME header
     utl_smtp.write_data(conn, 'Subject: =?utf-8?Q?');
@@ -468,3 +465,9 @@ CREATE OR REPLACE PACKAGE BODY smtp_mailer_unicode IS
 END;
 
 /
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym SMTP_MAILER_UNICODE for iface_app.SMTP_MAILER_UNICODE;
+grant execute on SMTP_MAILER_UNICODE to public;
