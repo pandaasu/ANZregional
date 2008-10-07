@@ -84,8 +84,8 @@ create or replace package body efxsbw01_cust_extract as
                 t01.active_flg as active_flg,
                 to_char(t01.range_id) as range_id,
                 t02.cust_type_name as cust_type_name,
-                to_char(t03.cust_trade_channel_id) as cust_trade_channel_id,
-                to_char(t04.cust_channel_id) as cust_channel_id,
+                t03.cust_trade_channel_name as cust_trade_channel_name,
+                t04.cust_channel_name as cust_channel_name,
                 t07.sales_territory_name as sales_territory_name,
                 to_char(t07.user_id) as sales_territory_user_id,
                 t08.sales_area_name as sales_area_name,
@@ -238,8 +238,8 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.sales_area_user_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.sales_territory_user_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.sales_region_user_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.cust_channel_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_channel_name,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_trade_channel_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.outlet_location,'"','""')||'";'||
                                           '"'||replace(rcd_extract.list_value_text,'"','""')||'";'||

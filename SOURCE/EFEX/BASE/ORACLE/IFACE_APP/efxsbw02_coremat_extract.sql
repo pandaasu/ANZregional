@@ -75,10 +75,12 @@ create or replace package body efxsbw02_coremat_extract as
       /*-*/
       cursor csr_extract is
          select to_char(t01.range_id) as range_id,
-                to_char(t02.item_id) as item_id
+                t03.item_code as item_code
            from range t01,
-                range_item t02
+                range_item t02,
+                item t03
           where t01.range_id = t02.range_id
+            and t02.item_id = t03.item_id(+)
             and t01.market_id = con_market_id
             and t02.required_flg = 'Y'
             and (t01.range_id in (select range_id from range where trunc(modified_date) >= trunc(sysdate) - var_history) or
@@ -125,11 +127,7 @@ create or replace package body efxsbw02_coremat_extract as
          /*-*/
          /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
-                                          '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
-                                          '"'||replace(con_company_code,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.item_id,'"','""')||'";'||
+         lics_outbound_loader.append_data('"'||replace(rcd_extract.item_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.range_id,'"','""')||'"');
 
       end loop;

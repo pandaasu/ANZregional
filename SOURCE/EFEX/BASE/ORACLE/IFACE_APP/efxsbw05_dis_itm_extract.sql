@@ -71,14 +71,16 @@ create or replace package body efxsbw05_dis_itm_extract as
          select to_char(t01.display_item_id) as display_item_id,
                 t01.display_item_name as display_item_name,
                 t01.display_item_name_en as display_item_name_en,
-                to_char(t01.cust_trade_channel_id) as cust_trade_channel_id,
                 t02.segment_name as segment_name,
-                t03.cust_type_name as cust_type_name
+                t03.cust_type_name as cust_type_name,
+                t04.cust_trade_channel_name as cust_trade_channel_name
            from display_item t01,
                 segment t02,
-                cust_type t03
+                cust_type t03,
+                cust_trade_channel t04
           where t01.segment_id = t02.segment_id(+)
-            and t01.cust_type_id = t03.cust_type_id(+);
+            and t01.cust_type_id = t03.cust_type_id(+)
+            and t01.cust_trade_channel_id = t04.cust_trade_channel_id(+);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -120,7 +122,7 @@ create or replace package body efxsbw05_dis_itm_extract as
                                           '"'||replace(rcd_extract.display_item_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_item_name_en,'"','""')||'";'||
                                           '"'||replace(rcd_extract.segment_name,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_trade_channel_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'"');
 
       end loop;

@@ -97,7 +97,7 @@ create or replace package body efxsbw06_dis_std_itm_extract as
          /* Create outbound interface if record(s) exist
          /*-*/
          if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXSBW06',null,'EFEX_DIS_STD_ITM_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+            var_instance := lics_outbound_loader.create_interface('EFXSBW06',null,'EFEX_DIS_STD_ITM_EXTRA.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
             var_start := false;
          end if;
 

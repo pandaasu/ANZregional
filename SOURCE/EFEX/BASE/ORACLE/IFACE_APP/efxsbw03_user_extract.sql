@@ -125,11 +125,7 @@ create or replace package body efxsbw03_user_extract as
          /*-*/
          /* Append data lines when required
          /*-*/
-         lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
-                                          '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
-                                          '"'||replace(con_company_code,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.user_id,'"','""')||'";'||
+         lics_outbound_loader.append_data('"'||replace(rcd_extract.user_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.username,'"','""')||'";'||
                                           '"'||replace(rcd_extract.firstname,'"','""')||'";'||
                                           '"'||replace(rcd_extract.lastname,'"','""')||'";'||

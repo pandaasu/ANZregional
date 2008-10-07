@@ -77,25 +77,22 @@ create or replace package body efxsbw10_order_extract as
          select to_char(t01.order_id) as order_id,
                 to_char(t01.order_date,'yyyymmdd') as order_date,
                 to_char(t01.customer_id) as customer_id,
+                to_char(t01.distributor_id) as distributor_id,
                 to_char(t01.user_id) as user_id,
                 decode(t02.uom,'TDU',to_char(t02.order_qty),
-                               'MCU',to_char(round(t02.order_qty/nvl(t04.mcu_per_tdu,1),2)),
-                               'RSU',to_char(round(t02.order_qty/nvl(t04.units_case,1),2)),
+                               'MCU',to_char(round(t02.order_qty/nvl(t03.mcu_per_tdu,1),2)),
+                               'RSU',to_char(round(t02.order_qty/nvl(t03.units_case,1),2)),
                                to_char(t02.order_qty)) as order_qty,
                 to_char(decode(t02.uom,'TDU',t02.order_qty,
-                                       'MCU',round(t02.order_qty/nvl(t04.mcu_per_tdu,1),2),
-                                       'RSU',round(t02.order_qty/nvl(t04.units_case,1),2),
-                                       t02.order_qty)*nvl(t04.tdu_price,0),'fm999999990.00') as order_value,
-                t03.distcust_code as distcust_code,
-                t04.item_code as item_code
+                                       'MCU',round(t02.order_qty/nvl(t03.mcu_per_tdu,1),2),
+                                       'RSU',round(t02.order_qty/nvl(t03.units_case,1),2),
+                                       t02.order_qty)*nvl(t03.tdu_price,0),'fm999999990.00') as order_value,
+                t03.item_code as item_code
            from orders t01,
                 order_item t02,
-                distributor_cust t03,
-                item t04
+                item t03
           where t01.order_id = t02.order_id
-            and t01.customer_id = t03.customer_id(+)
-            and t01.distributor_id = t03.distributor_id(+)
-            and t02.item_id = t04.item_id(+)
+            and t02.item_id = t03.item_id(+)
             and t01.status = 'A'
             and t01.customer_id in (select t01.customer_id
                                       from customer t01,
@@ -159,7 +156,7 @@ create or replace package body efxsbw10_order_extract as
                                           '"'||replace(rcd_extract.order_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.order_date,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.distcust_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.distributor_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.item_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.order_qty,'"','""')||'";'||
                                           '"'||replace(rcd_extract.order_value,'"','""')||'";'||

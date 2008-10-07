@@ -71,14 +71,16 @@ create or replace package body efxsbw07_actity_mst_extract as
          select to_char(t01.activity_item_id) as activity_item_id,
                 t01.activity_item_name as activity_item_name,
                 t01.activity_item_name_en as activity_item_name_en,
-                to_char(t01.cust_trade_channel_id) as cust_trade_channel_id,
                 t02.segment_name as segment_name,
-                t03.cust_type_name as cust_type_name
+                t03.cust_type_name as cust_type_name,
+                t04.cust_trade_channel_name as cust_trade_channel_name
            from activity_item t01,
                 segment t02,
-                cust_type t03
+                cust_type t03,
+                cust_trade_channel t04
           where t01.segment_id = t02.segment_id(+)
-            and t01.cust_type_id = t03.cust_type_id(+);
+            and t01.cust_type_id = t03.cust_type_id(+)
+            and t01.cust_trade_channel_id = t04.cust_trade_channel_id(+);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -105,7 +107,7 @@ create or replace package body efxsbw07_actity_mst_extract as
          /* Create outbound interface if record(s) exist
          /*-*/
          if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXSBW07',null,'EFEX_ACTITY_MST_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+            var_instance := lics_outbound_loader.create_interface('EFXSBW07',null,'EFEX_ACTITY_MST_EXTRA.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
             var_start := false;
          end if;
 
@@ -120,7 +122,7 @@ create or replace package body efxsbw07_actity_mst_extract as
                                           '"'||replace(rcd_extract.activity_item_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.activity_item_name_en,'"','""')||'";'||
                                           '"'||replace(rcd_extract.segment_name,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.cust_trade_channel_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.cust_trade_channel_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_type_name,'"','""')||'"');
 
       end loop;

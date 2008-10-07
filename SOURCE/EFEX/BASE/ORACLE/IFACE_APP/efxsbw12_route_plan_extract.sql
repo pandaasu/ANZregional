@@ -126,7 +126,7 @@ create or replace package body efxsbw12_route_plan_extract as
          /* Create outbound interface if record(s) exist
          /*-*/
          if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXSBW12',null,'EFEX_ROUTE_PLAN_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+            var_instance := lics_outbound_loader.create_interface('EFXSBW12',null,'EFEX_ROUTE_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
             var_start := false;
          end if;
 
