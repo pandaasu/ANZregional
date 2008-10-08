@@ -1632,7 +1632,7 @@ create or replace package body dw_mart_sales02 as
       var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
       var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
       var_ptg_str_yyyyppw := var_current_yyyyppw;
-      var_ptg_str_yyyyppw := (var_current_yyyypp * 10) + 4;
+      var_ptg_end_yyyyppw := (var_current_yyyypp * 10) + 4;
       var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
       var_wyr_p01 := var_wyr_str_yyyypp + 1;
       var_wyr_p02 := var_wyr_str_yyyypp + 2;
@@ -2943,7 +2943,7 @@ create or replace package body dw_mart_sales02 as
       var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
       var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
       var_ptg_str_yyyyppw := var_current_yyyyppw;
-      var_ptg_str_yyyyppw := (var_current_yyyypp * 10) + 4;
+      var_ptg_end_yyyyppw := (var_current_yyyypp * 10) + 4;
       var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
       var_wyr_p01 := var_wyr_str_yyyypp + 1;
       var_wyr_p02 := var_wyr_str_yyyypp + 2;
