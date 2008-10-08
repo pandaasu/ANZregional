@@ -68,6 +68,7 @@ CREATE OR REPLACE PACKAGE ODS_APP.scheduled_aggregation IS
                                               - purch_order_fact_agg_v3 
                                               - order_fact_aggregation_v2
                                               - delivery_fact_aggregation_v2
+  1.16  08/10/2008 Trevor Keon          MOD: Fixed bug which allowed nulls to be entered for matl_zrep_code in DCS                                              
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -683,9 +684,6 @@ PROCEDURE write_log (
 END scheduled_aggregation;
 /
 
-
-/*** Package Body ***/
-
 CREATE OR REPLACE PACKAGE BODY ODS_APP.scheduled_aggregation IS
 
   pc_fcst_dtl_typ_dfn_adj        CONSTANT VARCHAR2(1) := '0';
@@ -962,7 +960,7 @@ BEGIN
   
   
   -- Stream trace
-  var_process_date := to_char(i_aggregation_date,'yyyymmdd');
+  var_process_date := to_char(v_aggregation_date,'yyyymmdd');
   var_process_code := 'OLD_SCHEDULED_AGGREGATION_'||i_company_code;
 
   lics_processing.set_trace(var_process_code, var_process_date);
@@ -5187,9 +5185,10 @@ BEGIN
     WHERE
       t1.company_code = i_company_code
       AND t1.valdtn_status = ods_constants.valdtn_valid
-      AND t1.matl_code = t2.matl_code (+)
+      AND t1.matl_code = t2.matl_code
       AND t1.creatn_date = t3.calendar_date (+)
-      AND t1.order_eff_date = t4.calendar_date (+);
+      AND t1.order_eff_date = t4.calendar_date (+)
+      AND (t2.matl_type_code = 'ZREP' or t2.rep_item is not null);
 
     write_log(ods_constants.data_type_dcs_order, 'N/A', i_log_level + 1, 'Insert count: ' || TO_CHAR(SQL%ROWCOUNT));
 
@@ -6161,3 +6160,6 @@ END write_log;
 
 END scheduled_aggregation;
 /
+
+GRANT EXECUTE ON ODS_APP.SCHEDULED_AGGREGATION TO LICS_APP;
+GRANT EXECUTE ON ODS_APP.SCHEDULED_AGGREGATION TO ODS_APP_EXEC;
