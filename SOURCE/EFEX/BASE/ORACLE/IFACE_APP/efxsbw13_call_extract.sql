@@ -76,7 +76,7 @@ create or replace package body efxsbw13_call_extract as
       cursor csr_extract is
          select to_char(t01.customer_id) as customer_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
-                to_char(t01.end_date,'yyyymmdd') as end_date,
+                to_char(t01.end_date,'hh24miss') as end_time,
                 to_char(t01.user_id) as user_id
            from call t01
           where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history)
@@ -139,7 +139,7 @@ create or replace package body efxsbw13_call_extract as
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.call_date,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.end_date,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.end_time,'"','""')||'";'||
                                           '"'||replace(rcd_extract.user_id,'"','""')||'"');
 
       end loop;
