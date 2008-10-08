@@ -15,6 +15,7 @@
  2008/06   Steve Gregan   Created
  2008/08   Steve Gregan   Added ICB_FLAG
  2008/08   Steve Gregan   Added ship to customer
+ 2008/10   Steve Gregan   Added PTW/PTG/LYRM1/LYRM2/P01-26FCST/P01-26BR
 
 *******************************************************************************/
 
@@ -33,6 +34,9 @@ create table dw_mart_sales02_det
     data_type varchar2(10 char) not null,
     cur_day_ord_value number not null,
     cur_day_inv_value number not null,
+    ptw_inv_value number not null,
+    ptg_br_value number not null,
+    ptg_fcst_value number not null,
     cur_prd_inv_value number not null,
     cur_prd_op_value number not null,
     cur_prd_rob_value number not null,
@@ -43,6 +47,8 @@ create table dw_mart_sales02_det
     fut_prd_ord_value number not null,
     fut_prd_inv_value number not null,
     lyr_yte_inv_value number not null,
+    lyrm1_yte_inv_value number not null,
+    lyrm2_yte_inv_value number not null,
     cyr_ytd_inv_value number not null,
     cyr_mat_inv_value number not null,
     cyr_yte_op_value number not null,
@@ -53,32 +59,58 @@ create table dw_mart_sales02_det
     nyr_yte_fcst_value number not null,
     cyr_yee_inv_fcst_value number not null,
     cyr_yee_inv_br_value number not null,
-    p01_value number not null,
-    p02_value number not null,
-    p03_value number not null,
-    p04_value number not null,
-    p05_value number not null,
-    p06_value number not null,
-    p07_value number not null,
-    p08_value number not null,
-    p09_value number not null,
-    p10_value number not null,
-    p11_value number not null,
-    p12_value number not null,
-    p13_value number not null,
-    p14_value number not null,
-    p15_value number not null,
-    p16_value number not null,
-    p17_value number not null,
-    p18_value number not null,
-    p19_value number not null,
-    p20_value number not null,
-    p21_value number not null,
-    p22_value number not null,
-    p23_value number not null,
-    p24_value number not null,
-    p25_value number not null,
-    p26_value number not null);
+    p01_fcst_value number not null,
+    p02_fcst_value number not null,
+    p03_fcst_value number not null,
+    p04_fcst_value number not null,
+    p05_fcst_value number not null,
+    p06_fcst_value number not null,
+    p07_fcst_value number not null,
+    p08_fcst_value number not null,
+    p09_fcst_value number not null,
+    p10_fcst_value number not null,
+    p11_fcst_value number not null,
+    p12_fcst_value number not null,
+    p13_fcst_value number not null,
+    p14_fcst_value number not null,
+    p15_fcst_value number not null,
+    p16_fcst_value number not null,
+    p17_fcst_value number not null,
+    p18_fcst_value number not null,
+    p19_fcst_value number not null,
+    p20_fcst_value number not null,
+    p21_fcst_value number not null,
+    p22_fcst_value number not null,
+    p23_fcst_value number not null,
+    p24_fcst_value number not null,
+    p25_fcst_value number not null,
+    p26_fcst_value number not null,
+    p01_br_value number not null,
+    p02_br_value number not null,
+    p03_br_value number not null,
+    p04_br_value number not null,
+    p05_br_value number not null,
+    p06_br_value number not null,
+    p07_br_value number not null,
+    p08_br_value number not null,
+    p09_br_value number not null,
+    p10_br_value number not null,
+    p11_br_value number not null,
+    p12_br_value number not null,
+    p13_br_value number not null,
+    p14_br_value number not null,
+    p15_br_value number not null,
+    p16_br_value number not null,
+    p17_br_value number not null,
+    p18_br_value number not null,
+    p19_br_value number not null,
+    p20_br_value number not null,
+    p21_br_value number not null,
+    p22_br_value number not null,
+    p23_br_value number not null,
+    p24_br_value number not null,
+    p25_br_value number not null,
+    p26_br_value number not null);
 
 /**/
 /* Comments
@@ -95,6 +127,9 @@ comment on column dw_mart_sales02_det.mfanz_icb_flag is 'MFANZ ICB flag';
 comment on column dw_mart_sales02_det.data_type is 'Data type - *QTY, *TON, *GSV';
 comment on column dw_mart_sales02_det.cur_day_ord_value is 'Current day ordered value';
 comment on column dw_mart_sales02_det.cur_day_inv_value is 'Current day invoiced value';
+comment on column dw_mart_sales02_det.ptw_inv_value is 'Period to week invoiced value';
+comment on column dw_mart_sales02_det.ptg_br_value is 'Period to go business review value';
+comment on column dw_mart_sales02_det.ptg_fcst_value is 'Period to go forecast value';
 comment on column dw_mart_sales02_det.cur_prd_inv_value is 'Current period invoiced value';
 comment on column dw_mart_sales02_det.cur_prd_op_value is 'Current period operating plan value';
 comment on column dw_mart_sales02_det.cur_prd_rob_value is 'Current period review of business value';
@@ -105,6 +140,8 @@ comment on column dw_mart_sales02_det.cur_prd_ord_value is 'Current period order
 comment on column dw_mart_sales02_det.fut_prd_ord_value is 'Future periods order delivered value';
 comment on column dw_mart_sales02_det.fut_prd_inv_value is 'Future period invoice delivered value';
 comment on column dw_mart_sales02_det.lyr_yte_inv_value is 'Last year to end invoiced value';
+comment on column dw_mart_sales02_det.lyrm1_yte_inv_value is 'Last year minus 1 to end invoiced value';
+comment on column dw_mart_sales02_det.lyrm2_yte_inv_value is 'Last year minus 2 to end invoiced value';
 comment on column dw_mart_sales02_det.cyr_ytd_inv_value is 'Current year to date invoiced value';
 comment on column dw_mart_sales02_det.cyr_mat_inv_value is 'Current moving annual total invoiced value';
 comment on column dw_mart_sales02_det.cyr_yte_op_value is 'Current year to end operating plan';
@@ -115,32 +152,58 @@ comment on column dw_mart_sales02_det.nyr_yte_br_value is 'Next year to end busi
 comment on column dw_mart_sales02_det.nyr_yte_fcst_value is 'Next year to end forecast value';
 comment on column dw_mart_sales02_det.cyr_yee_inv_fcst_value is 'Current year end estimate invoiced/forecast value';
 comment on column dw_mart_sales02_det.cyr_yee_inv_br_value is 'Current year end estimate invoiced/business review value';
-comment on column dw_mart_sales02_det.p01_value is 'P01 value';
-comment on column dw_mart_sales02_det.p02_value is 'P02 value';
-comment on column dw_mart_sales02_det.p03_value is 'P03 value';
-comment on column dw_mart_sales02_det.p04_value is 'P04 value';
-comment on column dw_mart_sales02_det.p05_value is 'P05 value';
-comment on column dw_mart_sales02_det.p06_value is 'P06 value';
-comment on column dw_mart_sales02_det.p07_value is 'P07 value';
-comment on column dw_mart_sales02_det.p08_value is 'P08 value';
-comment on column dw_mart_sales02_det.p09_value is 'P09 value';
-comment on column dw_mart_sales02_det.p10_value is 'P10 value';
-comment on column dw_mart_sales02_det.p11_value is 'P11 value';
-comment on column dw_mart_sales02_det.p12_value is 'P12 value';
-comment on column dw_mart_sales02_det.p13_value is 'P13 value';
-comment on column dw_mart_sales02_det.p14_value is 'P14 value';
-comment on column dw_mart_sales02_det.p15_value is 'P15 value';
-comment on column dw_mart_sales02_det.p16_value is 'P16 value';
-comment on column dw_mart_sales02_det.p17_value is 'P17 value';
-comment on column dw_mart_sales02_det.p18_value is 'P18 value';
-comment on column dw_mart_sales02_det.p19_value is 'P19 value';
-comment on column dw_mart_sales02_det.p20_value is 'P20 value';
-comment on column dw_mart_sales02_det.p21_value is 'P21 value';
-comment on column dw_mart_sales02_det.p22_value is 'P22 value';
-comment on column dw_mart_sales02_det.p23_value is 'P23 value';
-comment on column dw_mart_sales02_det.p24_value is 'P24 value';
-comment on column dw_mart_sales02_det.p25_value is 'P25 value';
-comment on column dw_mart_sales02_det.p26_value is 'P26 value';
+comment on column dw_mart_sales02_det.p01_fcst_value is 'P01 ACT/FCST value';
+comment on column dw_mart_sales02_det.p02_fcst_value is 'P02 ACT/FCST value';
+comment on column dw_mart_sales02_det.p03_fcst_value is 'P03 ACT/FCST value';
+comment on column dw_mart_sales02_det.p04_fcst_value is 'P04 ACT/FCST value';
+comment on column dw_mart_sales02_det.p05_fcst_value is 'P05 ACT/FCST value';
+comment on column dw_mart_sales02_det.p06_fcst_value is 'P06 ACT/FCST value';
+comment on column dw_mart_sales02_det.p07_fcst_value is 'P07 ACT/FCST value';
+comment on column dw_mart_sales02_det.p08_fcst_value is 'P08 ACT/FCST value';
+comment on column dw_mart_sales02_det.p09_fcst_value is 'P09 ACT/FCST value';
+comment on column dw_mart_sales02_det.p10_fcst_value is 'P10 ACT/FCST value';
+comment on column dw_mart_sales02_det.p11_fcst_value is 'P11 ACT/FCST value';
+comment on column dw_mart_sales02_det.p12_fcst_value is 'P12 ACT/FCST value';
+comment on column dw_mart_sales02_det.p13_fcst_value is 'P13 ACT/FCST value';
+comment on column dw_mart_sales02_det.p14_fcst_value is 'P14 ACT/FCST value';
+comment on column dw_mart_sales02_det.p15_fcst_value is 'P15 ACT/FCST value';
+comment on column dw_mart_sales02_det.p16_fcst_value is 'P16 ACT/FCST value';
+comment on column dw_mart_sales02_det.p17_fcst_value is 'P17 ACT/FCST value';
+comment on column dw_mart_sales02_det.p18_fcst_value is 'P18 ACT/FCST value';
+comment on column dw_mart_sales02_det.p19_fcst_value is 'P19 ACT/FCST value';
+comment on column dw_mart_sales02_det.p20_fcst_value is 'P20 ACT/FCST value';
+comment on column dw_mart_sales02_det.p21_fcst_value is 'P21 ACT/FCST value';
+comment on column dw_mart_sales02_det.p22_fcst_value is 'P22 ACT/FCST value';
+comment on column dw_mart_sales02_det.p23_fcst_value is 'P23 ACT/FCST value';
+comment on column dw_mart_sales02_det.p24_fcst_value is 'P24 ACT/FCST value';
+comment on column dw_mart_sales02_det.p25_fcst_value is 'P25 ACT/FCST value';
+comment on column dw_mart_sales02_det.p26_fcst_value is 'P26 ACT/FCST value';
+comment on column dw_mart_sales02_det.p01_br_value is 'P01 ACT/BR value';
+comment on column dw_mart_sales02_det.p02_br_value is 'P02 ACT/BR value';
+comment on column dw_mart_sales02_det.p03_br_value is 'P03 ACT/BR value';
+comment on column dw_mart_sales02_det.p04_br_value is 'P04 ACT/BR value';
+comment on column dw_mart_sales02_det.p05_br_value is 'P05 ACT/BR value';
+comment on column dw_mart_sales02_det.p06_br_value is 'P06 ACT/BR value';
+comment on column dw_mart_sales02_det.p07_br_value is 'P07 ACT/BR value';
+comment on column dw_mart_sales02_det.p08_br_value is 'P08 ACT/BR value';
+comment on column dw_mart_sales02_det.p09_br_value is 'P09 ACT/BR value';
+comment on column dw_mart_sales02_det.p10_br_value is 'P10 ACT/BR value';
+comment on column dw_mart_sales02_det.p11_br_value is 'P11 ACT/BR value';
+comment on column dw_mart_sales02_det.p12_br_value is 'P12 ACT/BR value';
+comment on column dw_mart_sales02_det.p13_br_value is 'P13 ACT/BR value';
+comment on column dw_mart_sales02_det.p14_br_value is 'P14 ACT/BR value';
+comment on column dw_mart_sales02_det.p15_br_value is 'P15 ACT/BR value';
+comment on column dw_mart_sales02_det.p16_br_value is 'P16 ACT/BR value';
+comment on column dw_mart_sales02_det.p17_br_value is 'P17 ACT/BR value';
+comment on column dw_mart_sales02_det.p18_br_value is 'P18 ACT/BR value';
+comment on column dw_mart_sales02_det.p19_br_value is 'P19 ACT/BR value';
+comment on column dw_mart_sales02_det.p20_br_value is 'P20 ACT/BR value';
+comment on column dw_mart_sales02_det.p21_br_value is 'P21 ACT/BR value';
+comment on column dw_mart_sales02_det.p22_br_value is 'P22 ACT/BR value';
+comment on column dw_mart_sales02_det.p23_br_value is 'P23 ACT/BR value';
+comment on column dw_mart_sales02_det.p24_br_value is 'P24 ACT/BR value';
+comment on column dw_mart_sales02_det.p25_br_value is 'P25 ACT/BR value';
+comment on column dw_mart_sales02_det.p26_br_value is 'P26 ACT/BR value';
 
 /**/
 /* Primary Key Constraint
