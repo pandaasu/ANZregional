@@ -26,13 +26,14 @@ create or replace package dw_daily_hierarchy_checker as
     -------   ------         -----------
     2005/07   Steve Gregan   Created
     2006/07   Linden Glen    Changed date check to adjust for ICS_TIMEZONE setting
+    2008/11   Steve Gregan   Changed to handle company code
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute;
+   procedure execute(par_company_code in varchar2);
 
 end dw_daily_hierarchy_checker;
 /
@@ -51,7 +52,7 @@ create or replace package body dw_daily_hierarchy_checker as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute is
+   procedure execute(par_company_code in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -78,8 +79,9 @@ create or replace package body dw_daily_hierarchy_checker as
       /*-*/
       cursor csr_hierarchy is
          select count(*) as leaf_count
-           from lads_hie_cus_hdr t01
-          where t01.hdrdat = var_date;
+           from lads_hie_cus_det t01
+          where t01.hdrdat = var_date
+            and t01.vkorg = par_company_code;
       rcd_hierarchy csr_hierarchy%rowtype;
 
    /*-------------*/
@@ -90,8 +92,8 @@ create or replace package body dw_daily_hierarchy_checker as
       /*-*/
       /* Initialise the log variables
       /*-*/
-      var_log_prefix := 'CLIO - DW_DAILY_HIERARCHY_CHECKER';
-      var_log_search := 'DW_DAILY_HIERARCHY_CHECKER';
+      var_log_prefix := 'CLIO - DW_DAILY_HIERARCHY_CHECKER -' || par_company_code;
+      var_log_search := 'DW_DAILY_HIERARCHY_CHECKER_' || par_company_code;
       var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
       var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
 
@@ -103,7 +105,7 @@ create or replace package body dw_daily_hierarchy_checker as
       /*-*/
       /* Begin log
       /*-*/
-      lics_logging.write_log('Begin - Daily Hierarchy Checker');
+      lics_logging.write_log('Begin - Daily Hierarchy Checker - Parameters(' || par_company_code || ')');
 
       /*-*/
       /* Retrieve date to check
@@ -121,10 +123,10 @@ create or replace package body dw_daily_hierarchy_checker as
       close csr_hierarchy;
       if rcd_hierarchy.leaf_count = 0 then
          var_status := '*ERROR';
-         lics_logging.write_log('Daily Hierarchy Checker - Hierarchy NOT RECEIVED for - ' || var_date);
+         lics_logging.write_log('Daily Hierarchy Checker - Hierarchy NOT RECEIVED for - ' || par_company_code || ' + ' || var_date);
       else
          var_status := '*OK';
-         lics_logging.write_log('Daily Hierarchy Checker - Hierarchy received for - ' || var_date);
+         lics_logging.write_log('Daily Hierarchy Checker - Hierarchy received for - ' || par_company_code || ' + ' || var_date);
       end if;
 
       /*-*/
@@ -149,7 +151,7 @@ create or replace package body dw_daily_hierarchy_checker as
                                          lads_parameter.system_unit,
                                          lads_parameter.system_environment,
                                          con_function,
-                                         'DW_DAILY_HIERARCHY_CHECKER',
+                                         'DW_DAILY_HIERARCHY_CHECKER_' || par_company_code,
                                          var_email,
                                          'One or more errors occurred during the Daily Hierarchy Checker execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
