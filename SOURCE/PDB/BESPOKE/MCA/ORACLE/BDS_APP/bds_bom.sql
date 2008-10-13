@@ -1,5 +1,3 @@
-DROP PACKAGE BDS_APP.BDS_BOM;
-
 CREATE OR REPLACE PACKAGE BDS_APP.Bds_Bom
 AS
 /******************************************************************************/
@@ -60,6 +58,7 @@ FUNCTION : GET_COMPONENT_QTY This function retrieves the factory BOM for the req
  01-Mar-2007   Jeff Phillipson added get_hierarchy_reverse
  01-Jun-2007   Jeff Phillipson added get_comonent_qty
  02-Nov-2007   JP              added '<' to the next statement to reset scrap if the hierarchy level drops 
+ 13-Oct-2008   Trevor Keon     Changed bds_bom_all to use code from view to improve performance
         
 *******************************************************************************/
 
@@ -96,9 +95,6 @@ FUNCTION : GET_COMPONENT_QTY This function retrieves the factory BOM for the req
         
 END Bds_Bom;
 /
-
-
-DROP PACKAGE BODY BDS_APP.BDS_BOM;
 
 CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
 
@@ -149,10 +145,45 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                                   t01.bom_plant
                                          ORDER BY t01.bom_eff_from_date DESC,
                                                   t01.bom_alternative DESC) AS rnkseq
-                   FROM bds_bom_all t01
-                  WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)
-                    AND (var_material_code IS NULL OR t01.bom_material_code = var_material_code)
-                    AND (var_plant_code IS NULL OR t01.bom_plant = var_plant_code)) t01
+                   FROM 
+                   (
+                    SELECT t01.bom_material_code, t01.bom_alternative, t01.bom_plant,
+                           t01.bom_number, t01.bom_msg_function, t01.bom_usage,
+                           CASE
+                             WHEN COUNT = 1
+                             AND t02.bom_eff_from_date IS NOT NULL
+                               THEN t02.bom_eff_from_date
+                             WHEN COUNT = 1 AND t02.bom_eff_from_date IS NULL
+                               THEN t01.bom_eff_from_date
+                             WHEN COUNT > 1 AND t02.bom_eff_from_date IS NULL
+                               THEN NULL
+                             WHEN COUNT > 1 AND t02.bom_eff_from_date IS NOT NULL
+                               THEN t02.bom_eff_from_date
+                           END AS bom_eff_from_date,
+                           t01.bom_eff_to_date, t01.bom_base_qty, t01.bom_base_uom,
+                           t01.bom_status, t01.item_sequence, t01.item_number,
+                           t01.item_msg_function, t01.item_material_code, t01.item_category,
+                           t01.item_base_qty, t01.item_base_uom, t01.item_eff_from_date,
+                           t01.item_eff_to_date
+                      FROM bds_bom_det t01,
+                           bds_refrnc_hdr_altrnt t02,
+                           (SELECT   bom_material_code, bom_plant, COUNT (*) AS COUNT
+                                FROM (SELECT DISTINCT bom_material_code, bom_plant,
+                                                      bom_alternative
+                                                 FROM bds_bom_det)
+                            GROUP BY bom_material_code, bom_plant) t03
+                     WHERE t01.bom_material_code = LTRIM (t02.bom_material_code(+), ' 0')
+                       AND t01.bom_alternative = LTRIM (t02.bom_alternative(+), ' 0')
+                       AND t01.bom_plant = t02.bom_plant(+)
+                       AND t01.bom_usage = t02.bom_usage(+)
+                       AND t01.bom_material_code = t03.bom_material_code
+                       AND t01.bom_plant = t03.bom_plant
+                       AND t01.item_sequence != 0
+                       AND TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)
+                       AND (var_material_code IS NULL OR t01.bom_material_code = var_material_code)
+                       AND (var_plant_code IS NULL OR t01.bom_plant = var_plant_code)
+                   ) t01
+                 ) t01
           WHERE t01.rnkseq = 1
             AND t01.item_sequence != 0;
       rcd_bom_dataset csr_bom_dataset%ROWTYPE;
@@ -279,7 +310,42 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                                           t01.bom_plant
                                                  ORDER BY t01.bom_eff_from_date DESC,
                                                           t01.bom_alternative DESC) AS rnkseq
-                           FROM bds_bom_all t01
+                           FROM 
+                           (
+                            SELECT t01.bom_material_code, t01.bom_alternative, t01.bom_plant,
+                                   t01.bom_number, t01.bom_msg_function, t01.bom_usage,
+                                   CASE
+                                     WHEN COUNT = 1
+                                     AND t02.bom_eff_from_date IS NOT NULL
+                                       THEN t02.bom_eff_from_date
+                                     WHEN COUNT = 1 AND t02.bom_eff_from_date IS NULL
+                                       THEN t01.bom_eff_from_date
+                                     WHEN COUNT > 1 AND t02.bom_eff_from_date IS NULL
+                                       THEN NULL
+                                     WHEN COUNT > 1 AND t02.bom_eff_from_date IS NOT NULL
+                                       THEN t02.bom_eff_from_date
+                                   END AS bom_eff_from_date,
+                                   t01.bom_eff_to_date, t01.bom_base_qty, t01.bom_base_uom,
+                                   t01.bom_status, t01.item_sequence, t01.item_number,
+                                   t01.item_msg_function, t01.item_material_code, t01.item_category,
+                                   t01.item_base_qty, t01.item_base_uom, t01.item_eff_from_date,
+                                   t01.item_eff_to_date
+                              FROM bds_bom_det t01,
+                                   bds_refrnc_hdr_altrnt t02,
+                                   (SELECT   bom_material_code, bom_plant, COUNT (*) AS COUNT
+                                        FROM (SELECT DISTINCT bom_material_code, bom_plant,
+                                                              bom_alternative
+                                                         FROM bds_bom_det)
+                                    GROUP BY bom_material_code, bom_plant) t03
+                             WHERE t01.bom_material_code = LTRIM (t02.bom_material_code(+), ' 0')
+                               AND t01.bom_alternative = LTRIM (t02.bom_alternative(+), ' 0')
+                               AND t01.bom_plant = t02.bom_plant(+)
+                               AND t01.bom_usage = t02.bom_usage(+)
+                               AND t01.bom_material_code = t03.bom_material_code
+                               AND t01.bom_plant = t03.bom_plant
+                               AND t01.item_sequence != 0
+                               AND t01.bom_plant = var_plant_code                  
+                           ) t01
                           WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)) t01
                   WHERE t01.rnkseq = 1
                     AND t01.item_sequence != 0) t01
@@ -424,7 +490,42 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                                           t01.bom_plant
                                                  ORDER BY t01.bom_eff_from_date DESC,
                                                           t01.bom_alternative DESC) AS rnkseq
-                           FROM bds_bom_all t01
+                           FROM 
+                           (
+                            SELECT t01.bom_material_code, t01.bom_alternative, t01.bom_plant,
+                                   t01.bom_number, t01.bom_msg_function, t01.bom_usage,
+                                   CASE
+                                     WHEN COUNT = 1
+                                     AND t02.bom_eff_from_date IS NOT NULL
+                                       THEN t02.bom_eff_from_date
+                                     WHEN COUNT = 1 AND t02.bom_eff_from_date IS NULL
+                                       THEN t01.bom_eff_from_date
+                                     WHEN COUNT > 1 AND t02.bom_eff_from_date IS NULL
+                                       THEN NULL
+                                     WHEN COUNT > 1 AND t02.bom_eff_from_date IS NOT NULL
+                                       THEN t02.bom_eff_from_date
+                                   END AS bom_eff_from_date,
+                                   t01.bom_eff_to_date, t01.bom_base_qty, t01.bom_base_uom,
+                                   t01.bom_status, t01.item_sequence, t01.item_number,
+                                   t01.item_msg_function, t01.item_material_code, t01.item_category,
+                                   t01.item_base_qty, t01.item_base_uom, t01.item_eff_from_date,
+                                   t01.item_eff_to_date
+                              FROM bds_bom_det t01,
+                                   bds_refrnc_hdr_altrnt t02,
+                                   (SELECT   bom_material_code, bom_plant, COUNT (*) AS COUNT
+                                        FROM (SELECT DISTINCT bom_material_code, bom_plant,
+                                                              bom_alternative
+                                                         FROM bds_bom_det)
+                                    GROUP BY bom_material_code, bom_plant) t03
+                             WHERE t01.bom_material_code = LTRIM (t02.bom_material_code(+), ' 0')
+                               AND t01.bom_alternative = LTRIM (t02.bom_alternative(+), ' 0')
+                               AND t01.bom_plant = t02.bom_plant(+)
+                               AND t01.bom_usage = t02.bom_usage(+)
+                               AND t01.bom_material_code = t03.bom_material_code
+                               AND t01.bom_plant = t03.bom_plant
+                               AND t01.item_sequence != 0
+                               AND t01.bom_plant = var_plant_code                     
+                           ) t01
                           WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(par_eff_date)) t01
                   WHERE t01.rnkseq = 1
                     AND t01.item_sequence != 0) t01
@@ -577,7 +678,42 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                                             t01.bom_plant
                                                    ORDER BY t01.bom_eff_from_date DESC,
                                                             t01.bom_alternative DESC) AS rnkseq
-                             FROM bds_bom_all t01
+                             FROM 
+                             (
+                              SELECT t01.bom_material_code, t01.bom_alternative, t01.bom_plant,
+                                     t01.bom_number, t01.bom_msg_function, t01.bom_usage,
+                                     CASE
+                                       WHEN COUNT = 1
+                                       AND t02.bom_eff_from_date IS NOT NULL
+                                         THEN t02.bom_eff_from_date
+                                       WHEN COUNT = 1 AND t02.bom_eff_from_date IS NULL
+                                         THEN t01.bom_eff_from_date
+                                       WHEN COUNT > 1 AND t02.bom_eff_from_date IS NULL
+                                         THEN NULL
+                                       WHEN COUNT > 1 AND t02.bom_eff_from_date IS NOT NULL
+                                         THEN t02.bom_eff_from_date
+                                     END AS bom_eff_from_date,
+                                     t01.bom_eff_to_date, t01.bom_base_qty, t01.bom_base_uom,
+                                     t01.bom_status, t01.item_sequence, t01.item_number,
+                                     t01.item_msg_function, t01.item_material_code, t01.item_category,
+                                     t01.item_base_qty, t01.item_base_uom, t01.item_eff_from_date,
+                                     t01.item_eff_to_date
+                                FROM bds_bom_det t01,
+                                     bds_refrnc_hdr_altrnt t02,
+                                     (SELECT   bom_material_code, bom_plant, COUNT (*) AS COUNT
+                                          FROM (SELECT DISTINCT bom_material_code, bom_plant,
+                                                                bom_alternative
+                                                           FROM bds_bom_det)
+                                      GROUP BY bom_material_code, bom_plant) t03
+                               WHERE t01.bom_material_code = LTRIM (t02.bom_material_code(+), ' 0')
+                                 AND t01.bom_alternative = LTRIM (t02.bom_alternative(+), ' 0')
+                                 AND t01.bom_plant = t02.bom_plant(+)
+                                 AND t01.bom_usage = t02.bom_usage(+)
+                                 AND t01.bom_material_code = t03.bom_material_code
+                                 AND t01.bom_plant = t03.bom_plant
+                                 AND t01.item_sequence != 0
+                                 AND t01.bom_plant = var_plant_code                             
+                             ) t01
                             WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)) t01
                     WHERE t01.rnkseq = 1
                       AND t01.item_sequence != 0
@@ -727,22 +863,11 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
    
 END Bds_Bom;
 /
-
-
-DROP PUBLIC SYNONYM BDS_BOM;
-
-CREATE PUBLIC SYNONYM BDS_BOM FOR BDS_APP.BDS_BOM;
-
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO APPSUPPORT;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO ESCHED_APP WITH GRANT OPTION;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU WITH GRANT OPTION;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU_APP WITH GRANT OPTION;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO PKGSPEC_APP WITH GRANT OPTION;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO PPLAN_APP WITH GRANT OPTION;
 
+CREATE OR REPLACE PUBLIC SYNONYM BDS_BOM FOR BDS_APP.BDS_BOM;

@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- View   : bds_bom_all_tmp  
+ View   : bds_bom_all  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_bom_all_tmp 
+ Business Data Store - bds_bom_all 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.bds_bom_all_tmp as
+create or replace force view bds.bds_bom_all as
   select t01.bom_material_code, 
     t01.bom_alternative, 
     t01.bom_plant,
@@ -76,11 +76,11 @@ create or replace force view bds_app.bds_bom_all_tmp as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.bds_bom_all_tmp to bds_app with grant option;
-grant select on bds_app.bds_bom_all_tmp to pt_app with grant option;
-grant select on bds_app.bds_bom_all_tmp to manu_app with grant option;
+grant select on bds.bds_bom_all to bds_app with grant option;
+grant select on bds.bds_bom_all to pt_app with grant option;
+grant select on bds.bds_bom_all to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_bom_all_tmp for bds_app.bds_bom_all_tmp;    
+create or replace public synonym bds_bom_all for bds.bds_bom_all;    
