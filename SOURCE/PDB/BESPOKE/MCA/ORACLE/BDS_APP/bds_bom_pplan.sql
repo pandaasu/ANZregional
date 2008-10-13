@@ -142,8 +142,13 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom_Pplan AS
                                    AND t01.bom_usage = t02.bom_usage(+)
                                    AND t01.bom_material_code = t03.bom_material_code
                                    AND t01.bom_plant = t03.bom_plant
---                                   AND t01.bom_plant in ('AU40','AU42','AU45','AU82','AU83','AU84','AU85','AU86','AU87','AU88','AU89', 'AU90')
-                                   AND t01.item_sequence != 0                 
+                                   AND t01.bom_plant in ('AU40','AU42','AU45','AU82','AU83','AU84','AU85','AU86','AU87','AU88','AU89', 'AU90')
+                                   AND t01.item_sequence != 0
+                                   AND (t01.bom_material_code,t01.item_material_code) in (select bom_material_code, item_material_code
+                                                               from bds_bom_det
+                                                            START WITH bom_material_code = var_material_code
+                                                              AND bom_plant = var_plant_code
+                                                            CONNECT BY NOCYCLE PRIOR item_material_code = bom_material_code)                                                
                              ) t01
                             WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)) t01
                     WHERE t01.rnkseq = 1
