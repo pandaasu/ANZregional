@@ -26,14 +26,14 @@ create or replace package dw_daily_hierarchy_checker as
     -------   ------         -----------
     2005/07   Steve Gregan   Created
     2006/07   Linden Glen    Changed date check to adjust for ICS_TIMEZONE setting
-    2008/11   Steve Gregan   Changed to handle company code
+    2008/11   Steve Gregan   Changed to handle individual company code
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_company_code in varchar2);
+   procedure execute(par_company_code in varchar2, par_timezone in varchar2);
 
 end dw_daily_hierarchy_checker;
 /
@@ -52,7 +52,7 @@ create or replace package body dw_daily_hierarchy_checker as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_company_code in varchar2) is
+   procedure execute(par_company_code in varchar2, par_timezone in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -110,7 +110,10 @@ create or replace package body dw_daily_hierarchy_checker as
       /*-*/
       /* Retrieve date to check
       /*-*/
-      var_date := to_char(lics_time.get_tz_time(sysdate,'Asia/Hong_Kong'),'YYYYMMDD');
+      var_date := to_char(sysdate,'YYYYMMDD');
+      if not(par_timezone is null) then
+         var_date := to_char(lics_time.get_tz_time(sysdate,par_timezone),'YYYYMMDD');
+      end if;
 
       /*-*/
       /* Retrieve the hierachy count for today
