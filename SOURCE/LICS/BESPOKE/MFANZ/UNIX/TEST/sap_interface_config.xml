@@ -24,9 +24,9 @@
                SapLanguage="EN"
                SapServer="sapapb.na.mars"
                SapSystem="02"
-               SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911"
-               SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
-               RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL"/>
+               SapTables="KONDD,KOTD002,KOTD501,KOTD503,KOTD880,KOTD903,KOTD907,KOTD910,KOTD911,T415A"
+               SapFilters="*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE,*NONE"
+               RetrievalModes="*BATCH,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL,*ALL"/>
     <interface identifier="SAPLAD02#02"
                description="SAP to LADS SRC Interface"
                class="com.isi.lad.cSapLad02"
