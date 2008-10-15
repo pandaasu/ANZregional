@@ -96,8 +96,8 @@ create or replace package body efxsbw01_cust_extract as
                 t12.cust_grade_name as cust_grade_name,
                 t13.std_level1_name as std_level1_name,
                 t13.std_level2_name as std_level2_name,
-                t13.std_level3_name as std_level3_name,
-                t13.std_level4_name as std_level4_name,
+                case when t01.outlet_flg = 'N' then t13.std_level3_name else t18.affiliation_group_name end as std_level3_name,
+                case when t01.outlet_flg = 'N' then t13.std_level4_name else t17.affiliation_name end as std_level4_name,
                 t14.geo_level1_name as geo_level1_name,
                 t14.geo_level2_name as geo_level2_name,
                 t14.geo_level3_name as geo_level3_name,
@@ -136,7 +136,9 @@ create or replace package body efxsbw01_cust_extract as
                   where t01.list_type = 'CHN_CUST_LOCATION'
                     and t01.market_id = con_market_id
                   group by t01.business_unit_id,
-                           t01.list_value_name) t16
+                           t01.list_value_name) t16,
+                affiliation t17,
+                affiliation_group t18
           where t01.cust_type_id = t02.cust_type_id(+)
             and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
             and t03.cust_channel_id = t04.cust_channel_id(+)
@@ -161,6 +163,8 @@ create or replace package body efxsbw01_cust_extract as
             and t01.distributor_id = t15.distributor_id(+)
             and t01.business_unit_id = t16.business_unit_id(+)
             and t01.outlet_location = t16.list_value_name(+)
+            and t01.affiliation_id = t17.affiliation_id(+)
+            and t17.affiliation_group_id = t18.affiliation_group_id(+)
             and t05.market_id = con_market_id
             and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t02.modified_date) >= trunc(sysdate) - var_history or
