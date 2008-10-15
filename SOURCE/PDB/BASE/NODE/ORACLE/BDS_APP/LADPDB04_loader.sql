@@ -15,6 +15,7 @@
   -----------  ------           ----------- 
   14-Mar-2008  Trevor Keon      Created 
   01-Sep-2008  Trevor Keon      Modified to remove BOM details before loading
+  14-Oct-2008  Trevor Keon      Modified to call bds_bom_build for each item
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb04_loader as
@@ -211,6 +212,17 @@ create or replace package body bds_app.ladpdb04_loader as
       /* NOTE - releases transaction lock 
       /*-*/
       commit;
+      
+      /*-*/
+      /* Update bds_bom_all table with changes
+      /*-*/      
+      begin
+        bds_bom_build.execute('*DOCUMENT', rcd_hdr.bom_material_code, rcd_hdr.bom_alternative, rcd_hdr.bom_plant);
+      exception
+        when others then
+           lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+      end; 
+      
     end if;
 
   /*-------------*/

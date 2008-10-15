@@ -15,6 +15,7 @@
   -----------  ------           ----------- 
   19-Mar-2008  Trevor Keon      Created 
   21-Jul-2008  Trevor Keon      Changed package to handle full refreshes only
+  14-Oct-2008  Trevor Keon      Modified to call bds_bom_build for each refresh
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb05_loader as
@@ -147,6 +148,16 @@ create or replace package body bds_app.ladpdb05_loader as
     /* Complete the Transaction 
     /*-*/
     complete_transaction;
+    
+    /*-*/
+    /* Rebuild bds_bom_all table
+    /*-*/        
+    begin
+      bds_bom_build.execute('*REFRESH');
+    exception
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+    end;    
 
   /*-------------*/
   /* End routine */
@@ -192,7 +203,7 @@ create or replace package body bds_app.ladpdb05_loader as
       /* Commit the transaction 
       /* NOTE - releases transaction lock 
       /*-*/
-      commit;
+      commit;      
     end if;
 
   /*-------------*/
