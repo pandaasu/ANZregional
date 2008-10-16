@@ -991,7 +991,7 @@ BEGIN
          if csr_affiliation%notfound then
             write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - affiliation name ('||rcd_customer.affiliation||') not found on AFFILIATION table using AFFILIATION_NAME_EN');
          else
-            if rcd_affiliation.affiliation_id != rcd_customer.affiliation_id then
+            if rcd_affiliation.affiliation_id != nvl(rcd_customer.affiliation_id,-1) then
                var_affiliation_id := rcd_affiliation.affiliation_id;
                bol_update := true;
             end if;
@@ -1010,7 +1010,7 @@ BEGIN
          if csr_cust_type%notfound then
             write_log('Customer id ('||to_char(rcd_customer.customer_id)||') business unit id ('||to_char(rcd_customer.business_unit_id)||') - customer type name ('||rcd_customer.cust_type||') not found on CUST_TYPE table using CUST_TYPE_NAME_EN');
          else
-            if rcd_cust_type.cust_type_id != rcd_customer.cust_type_id then
+            if rcd_cust_type.cust_type_id != nvl(rcd_customer.cust_type_id,-1) then
                var_cust_type_id := rcd_cust_type.cust_type_id;
                bol_update := true;
             end if;
