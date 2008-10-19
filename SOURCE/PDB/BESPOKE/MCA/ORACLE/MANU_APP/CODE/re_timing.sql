@@ -915,6 +915,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
         AND start_datime > TRUNC(SYSDATE) - 1
         AND start_datime < TRUNC(SYSDATE) + 9
         AND st.SHIFT_TYPE_CODE = pt.SHIFT_TYPE_CODE
+        AND st.SHIFT_TYPE_CODE not in (select SHIFT_TYPE_CODE from manu.rtt_excluded_shifts)
         AND trim(st.shift_ptrn_code) = (SELECT VALUE 
                                                 FROM REF_DEFAULTS
                                                WHERE ref_defaults_code = 'SHIFT_PATTERN')

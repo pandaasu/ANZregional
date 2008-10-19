@@ -24,33 +24,70 @@ create or replace force view bds_app.matl_int_plt_ics as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.plant_code as plant,
     t01.plant_specific_status_valid as plant_sts_start,
-    t03.bom_eff_date as units_per_case_date,
-    t01.mars_pce_interntl_article_no as apn,
-    t01.bds_pce_factor_from_base_uom as units_per_case,
-    t02.pkg_instr_start_date as pi_start_date,
-    t02.pkg_instr_end_date as pi_end_date,
-    t02.hu_total_weight as pllt_gross_wght,
-    t02.target_qty as crtns_per_pllt,
-    t02.rounding_qty as crtns_per_layer,
-    t02.uom as uom_qty
+    t02.valid_from_date as units_per_case_date,
+    t02.rsu_ean as apn,
+    t02.rsus_per_tdu as units_per_case,
+    t03.start_date as pi_start_date,
+    t03.end_date as pi_end_date,
+    t03.total_wght_hndlng_unit as pllt_gross_wght,
+    t03.crtns_per_pllt as crtns_per_pllt,
+    t03.crtns_per_layer as crtns_per_layer,
+    t03.uom_qty as uom_qty
   from bds_material_plant_mfanz_test t01,
-    bds_material_pkg_instr_det_t t02,
-    bds_material_bom_hdr t03
-  where t01.sap_material_code = t02.sap_material_code (+)
-    and t01.sap_material_code = t03.parent_material_code (+)
+    (
+      select t11.tdu_matl_code, 
+        t11.rsus_per_tdu, 
+        t11.rsu_ean,
+        max(t11.valid_from_date) as valid_from_date, 
+        t11.rsu_matl_code
+      from
+      (
+        select t99.parent_material_code as tdu_matl_code,
+          t99.child_per_parent as rsus_per_tdu,
+          t99.child_ian as rsu_ean,
+          t99.child_material_code as rsu_matl_code,
+          decode(t99.bom_eff_date, null, to_date('19000101', 'yyyymmdd'), t99.bom_eff_date) as valid_from_date
+        from bds_material_bom_all_ics t99
+        where t99.parent_intr_flag = 'X'
+          and t99.parent_material_type = 'FERT'
+          and t99.bom_plant = '*NONE'
+          and t99.bom_alternative = 1
+          and t99.bom_status in (1, 7)
+          and t99.bom_usage = 5
+          and t99.child_material_type = 'FERT'
+          and t99.child_rsu_flag = 'X'
+      ) t11
+      where t11.valid_from_date < sysdate
+      group by t11.tdu_matl_code, 
+        t11.rsus_per_tdu, 
+        t11.rsu_ean, 
+        t11.rsu_matl_code 
+    ) t02,
+    (
+      select t12.sap_material_code as matl_code,
+        t12.target_qty as crtns_per_pllt,
+        t12.rounding_qty as crtns_per_layer,
+        t12.uom as uom_qty,
+        t12.hu_total_weight as total_wght_hndlng_unit,
+        t12.pkg_instr_start_date as start_date,
+        t12.pkg_instr_end_date as end_date
+      from bds_material_pkg_instr_det_t t12
+      where t12.sap_material_code = t12.component
+        and t12.pkg_instr_start_date =
+        (
+          select max(t98.pkg_instr_start_date)
+          from bds_material_pkg_instr_det_t t98
+          where t12.sap_material_code = t98.sap_material_code
+            and t98.pkg_instr_start_date <= sysdate
+            and t98.pkg_instr_table = '505'
+            and t98.sales_organisation = '147'            
+        )    
+    ) t03
+  where t01.sap_material_code = t02.tdu_matl_code
+    and t01.sap_material_code = t03.matl_code (+)
     and t01.plant_code in ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25')
-  group by t01.sap_material_code,
-    t01.plant_code,
-    t01.plant_specific_status_valid,
-    t03.bom_eff_date,
-    t01.mars_pce_interntl_article_no,
-    t01.bds_pce_factor_from_base_uom,
-    t02.pkg_instr_start_date,
-    t02.pkg_instr_end_date,
-    t02.hu_total_weight,
-    t02.target_qty,
-    t02.rounding_qty,
-    t02.uom;
+    and t01.mars_intrmdt_prdct_compnt_flag = 'X'
+    and t01.material_type = 'FERT';
   
 /**/
 /* Authority 

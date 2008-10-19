@@ -50,7 +50,6 @@ create or replace force view bds_app.matl_clssfctn_fg_ics as
     bds_material_plant_mfanz t02
   where t01.sap_material_code = t02.sap_material_code 
     and t02.material_type in ('FERT', 'ZREP', 'ZHIE')
-    and t02.plant_code like 'NZ%'
   group by t01.sap_material_code,
     t01.sap_bus_sgmnt_code,
     t01.sap_mrkt_sgmnt_code,

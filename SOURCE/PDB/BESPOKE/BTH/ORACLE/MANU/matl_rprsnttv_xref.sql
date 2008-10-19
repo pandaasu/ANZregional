@@ -26,9 +26,13 @@ create or replace force view bds_app.matl_rprsnttv_xref_ics as
     case when t01.plant_code like 'AU%' then t01.sales_text_147 else t01.sales_text_149 end as matl_sales_text,
     t01.plant_code as plant_code
   from bds_material_plant_mfanz t01
-  where t01.plant_code IN ('AU20', 'AU21', 'AU22', 'AU25')
+  where t01.plant_code IN ('AU30')
     and t01.mars_rprsnttv_item_code is not null
-    and (t01.sales_text_147 is not null or t01.sales_text_149 is not null);
+    and 
+    (
+      (t01.plant_code like 'AU%' and t01.sales_text_147 is not null)
+      or (t01.plant_code like 'NZ%' and t01.sales_text_149 is not null)
+    );
     
 /**/
 /* Authority 

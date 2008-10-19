@@ -446,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Recipe_Conversion AS
                    t03.seq,
                    t03.phantom,
                    LTRIM (t03.matl_code, '0') matl_code,
-                   t03.matl_desc,
+                   t05.matl_desc,  -- Use local reference data for material description
                    TO_CHAR (TO_NUMBER (DECODE (t03.pan_size_flag, 'Y', t03.pan_size, t03.qty)),'999999999990.999990') bom_qty,
                    t03.uom,
                    t03.opertn_from,
@@ -461,6 +461,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Recipe_Conversion AS
                    cntl_rec_resrce t02, 
                    cntl_rec_bom t03, 
                    bds_prodctn_resrc_en t04, --ref_resource t04,
+                   matl t05, -- Local material reference data
                    (SELECT DISTINCT proc_order,
                            opertn AS opertn,
                            t01.mpi_tag,
@@ -470,6 +471,8 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Recipe_Conversion AS
                        AND (spcl_cndtn_name = 'SCALE_TO_BOM' OR spcl_cndtn_name = 'SCALE_TO_PARENT' )) t08
              WHERE t01.proc_order = t02.proc_order
                AND t01.proc_order = t03.proc_order
+               AND t05.plant = t01.plant
+               AND t05.matl_code = ltrim(t03.matl_code,'0')
                AND t02.opertn = t03.opertn
                AND t02.resrce_code = t04.resrc_code(+)
                AND t02.plant = t04.resrc_plant_code(+)
@@ -569,7 +572,8 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Recipe_Conversion AS
         /* this is assuming the MPI_TAG value is set to SCALE_TO_MADE (1999)
 		/*-*/
 		CURSOR csr_pan_qty IS
-		    SELECT SUM(DECODE(pan_qty,0,1,NULL,1,1,pan_qty, (pan_qty - 1)  + (TO_CHAR(TO_NUMBER(last_pan_size)/pan_size,'999D9')))) pan_qty,  
+        /* JP 11 Sep 2008  format increased from 1 decimal to 3 */
+		    SELECT SUM(DECODE(pan_qty,0,1,NULL,1,1,pan_qty, (pan_qty - 1)  + (TO_CHAR(TO_NUMBER(last_pan_size)/pan_size,'999D999')))) pan_qty,  
 			       matl_code AS matl_code, 
 				   matl_desc AS matl_desc,  
 			       DECODE(pan_size,NULL,qty,pan_size) qty,
@@ -897,13 +901,17 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Recipe_Conversion AS
                                 rcd_recpe_RESRCE.RESRCE_code,
                            		rcd_recpe_RESRCE.opertn,
                            		rcd_recpe_RESRCE.RESRCE_desc,
-								-- var_count will be 1 if a phantom is made within this operation
-								ROUND(DECODE(var_count, 1, DECODE(rcd_pan_qty.rescale, 'Y', var_no_of_pans, rcd_pan_qty.pan_qty),0),1),
+								/* mod by J Phillipson  27 Aug 2008 to round UP the pan qty to 1 decimal place 
+                                ie if the value is 4.01 it will round up to 4.1   */
+                                -- var_count will be 1 if a phantom is made within this operation
+								CEIL(DECODE(var_count, 1, DECODE(rcd_pan_qty.rescale, 'Y', var_no_of_pans, rcd_pan_qty.pan_qty),0) * 10)/10,
 								DECODE(var_count, 1, rcd_pan_qty.matl_code, ''),
 								DECODE(var_count, 1, rcd_pan_qty.matl_desc, ''),
-								DECODE(var_count, 1, DECODE(rcd_pan_qty.qty, NULL, 0,'', 0, rcd_pan_qty.qty), 0) * var_ratio);
+								/* mod by J Phillipson  27 Aug 2008 added round function to the string to limit value to 2 decimal places */  
+                                ROUND(DECODE(var_count, 1, DECODE(rcd_pan_qty.qty, NULL, 0,'', 0, rcd_pan_qty.qty), 0) * var_ratio,2)
+                                );
                         
-                        
+                                
                         END IF;
                     CLOSE csr_recpe_RESRCE;
 				CLOSE csr_pan_qty;

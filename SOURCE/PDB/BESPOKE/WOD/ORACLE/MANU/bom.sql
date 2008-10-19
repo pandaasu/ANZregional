@@ -27,7 +27,7 @@ create or replace force view bds_app.bom_ics as
     t01.bom_material_code as matl_code,
     t01.bom_base_qty as batch_qty,
     t01.bom_base_uom as batch_uom,
-    decode(t01.bom_eff_from_date, null, to_date('01/01/2000', 'dd/mm/yyyy') + to_number(t01.bom_alternative) - 1, t01.bom_eff_from_date) as eff_start_date,
+    decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) as eff_start_date,
     t01.bom_eff_to_date as eff_end_date,
     ltrim(t01.item_number,'0') as seq,
     t01.item_sequence as detseq,
@@ -35,7 +35,8 @@ create or replace force view bds_app.bom_ics as
     t01.item_base_qty as qty,
     t01.item_base_uom as uom
   from bds_bom_all_ics t01
-  where t01.bom_plant IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25');
+  where t01.bom_plant IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25')
+    and t01.item_number is not null;
 
 /**/
 /* Authority 

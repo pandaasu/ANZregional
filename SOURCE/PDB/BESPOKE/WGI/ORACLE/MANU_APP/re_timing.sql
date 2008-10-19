@@ -411,6 +411,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
         AND start_datime > TRUNC(SYSDATE) - 1
         AND start_datime < TRUNC(SYSDATE) + 9
         AND st.SHIFT_TYPE_CODE = pt.SHIFT_TYPE_CODE
+        AND st.SHIFT_TYPE_CODE not in (select SHIFT_TYPE_CODE from manu.rtt_excluded_shifts)
       ORDER BY 4; */
       OPEN o_retrieve_shifts FOR 
         SELECT * FROM dual WHERE 1=0;
