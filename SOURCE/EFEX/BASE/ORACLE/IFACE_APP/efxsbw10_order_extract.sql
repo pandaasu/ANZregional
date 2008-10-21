@@ -26,6 +26,7 @@ create or replace package efxsbw10_order_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/10   Steve Gregan   Created
+    2008/10   Steve Gregan   Added order line status check (only active orders and order lines)
 
    *******************************************************************************/
 
@@ -94,6 +95,7 @@ create or replace package body efxsbw10_order_extract as
           where t01.order_id = t02.order_id
             and t02.item_id = t03.item_id(+)
             and t01.status = 'A'
+            and t02.status = 'A'
             and t01.customer_id in (select t01.customer_id
                                       from customer t01,
                                            cust_type t02,
