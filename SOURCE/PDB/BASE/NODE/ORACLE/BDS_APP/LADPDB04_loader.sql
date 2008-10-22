@@ -9,13 +9,11 @@
 
   Description 
   ----------- 
-  Plant Database - Inbound bill of materials detail loader 
+  Plant Database - Inbound BOM data loader 
 
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
-  14-Mar-2008  Trevor Keon      Created 
-  01-Sep-2008  Trevor Keon      Modified to remove BOM details before loading
-  14-Oct-2008  Trevor Keon      Modified to call bds_bom_build for each item
+  15-Oct-2008  Trevor Keon      Created 
 *******************************************************************************/
 
 create or replace package bds_app.ladpdb04_loader as
@@ -42,9 +40,7 @@ create or replace package body bds_app.ladpdb04_loader as
   /* Private declarations 
   /*-*/
   procedure complete_transaction;
-  procedure process_record_ctl(par_record in varchar2);
   procedure process_record_hdr(par_record in varchar2);
-
 
   /*-*/
   /* Private definitions 
@@ -53,8 +49,7 @@ create or replace package body bds_app.ladpdb04_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
   
-  rcd_hdr bds_bom_det%rowtype;
-  var_bom_material_code rcd_hdr.bom_material_code%type;
+  rcd_hdr bds_bom_all%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -69,24 +64,25 @@ create or replace package body bds_app.ladpdb04_loader as
     /*-*/
     /* Initialise the transaction variables 
     /*-*/
-    var_trn_start := false;
+    var_trn_start := true;
     var_trn_ignore := false;
     var_trn_error := false;
+    
+    /*-*/
+    /* Delete BOM data entries
+    /*-*/     
+    delete bds_bom_all;
 
     /*-*/
     /* Initialise the inbound definitions 
     /*-*/ 
     lics_inbound_utility.clear_definition;
     
-    /*-*/
-    lics_inbound_utility.set_definition('CTL','ID',3);
-    lics_inbound_utility.set_definition('CTL','BOM_MATERIAL_CODE', 18);
-    lics_inbound_utility.set_definition('CTL','BOM_ALTERNATIVE', 2);
-    lics_inbound_utility.set_definition('CTL','BOM_PLANT', 4);   
-    lics_inbound_utility.set_definition('CTL','MSG_TIMESTAMP', 14);  
-    
-    /*-*/
+    /*-*/  
     lics_inbound_utility.set_definition('HDR','ID',3);
+    lics_inbound_utility.set_definition('HDR','BOM_MATERIAL_CODE', 18);
+    lics_inbound_utility.set_definition('HDR','BOM_ALTERNATIVE', 2);
+    lics_inbound_utility.set_definition('HDR','BOM_PLANT', 4);       
     lics_inbound_utility.set_definition('HDR','BOM_NUMBER', 8);
     lics_inbound_utility.set_definition('HDR','BOM_MSG_FUNCTION', 3);
     lics_inbound_utility.set_definition('HDR','BOM_USAGE', 1);
@@ -130,7 +126,6 @@ create or replace package body bds_app.ladpdb04_loader as
     var_record_identifier := substr(par_record,1,3);
     
     case var_record_identifier
-      when 'CTL' then process_record_ctl(par_record);
       when 'HDR' then process_record_hdr(par_record);
       else lics_inbound_utility.add_exception('Record identifier (' || var_record_identifier || ') not recognised');
     end case;
@@ -165,7 +160,7 @@ create or replace package body bds_app.ladpdb04_loader as
     /*-*/
     /* Complete the Transaction 
     /*-*/
-    complete_transaction;
+    complete_transaction; 
 
   /*-------------*/
   /* End routine */
@@ -211,119 +206,20 @@ create or replace package body bds_app.ladpdb04_loader as
       /* Commit the transaction 
       /* NOTE - releases transaction lock 
       /*-*/
-      commit;
-      
-      /*-*/
-      /* Update bds_bom_all table with changes
-      /*-*/      
-      begin
-        bds_bom_build.execute('*DOCUMENT', rcd_hdr.bom_material_code, rcd_hdr.bom_alternative, rcd_hdr.bom_plant);
-      exception
-        when others then
-           lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-      end; 
-      
+      commit;      
     end if;
 
   /*-------------*/
   /* End routine */
   /*-------------*/
   end complete_transaction;
-
-  /**************************************************/
-  /* This procedure performs the record CTL routine */
-  /**************************************************/
-  procedure process_record_ctl(par_record in varchar2) is              
-                       
-    /*-*/
-    /* Local cursors 
-    /*-*/
-    cursor csr_bds_bom_det is
-      select t01.bom_material_code as bom_material_code,
-        t01.bom_alternative as bom_alternative,
-        t01.bom_plant as bom_plant,
-        min(t01.msg_timestamp) as msg_timestamp
-      from bds_bom_det t01
-      where t01.bom_material_code = rcd_hdr.bom_material_code
-        and t01.bom_alternative = rcd_hdr.bom_alternative
-        and t01.bom_plant = rcd_hdr.bom_plant
-      group by t01.bom_material_code,
-        t01.bom_alternative,
-        t01.bom_plant;
-      
-    rcd_bds_bom_det csr_bds_bom_det%rowtype;
-    
-  /*-------------*/
-  /* Begin block */
-  /*-------------*/
-  begin
-
-    /*-*/
-    /* Complete the previous transactions 
-    /*-*/
-    complete_transaction;
-
-    /*-*/
-    /* Reset transaction variables 
-    /*-*/
-    var_trn_start := true;
-    var_trn_ignore := false;
-    var_trn_error := false;
-
-    /*-*/
-    /* PARSE - Parse the data record 
-    /*-*/    
-    lics_inbound_utility.parse_record('CTL', par_record);
-
-    /*-*/
-    /* RETRIEVE - Retrieve the field values 
-    /*-*/
-    rcd_hdr.bom_material_code := lics_inbound_utility.get_variable('BOM_MATERIAL_CODE');
-    rcd_hdr.bom_alternative := lics_inbound_utility.get_variable('BOM_ALTERNATIVE');
-    rcd_hdr.bom_plant := lics_inbound_utility.get_variable('BOM_PLANT');
-    rcd_hdr.msg_timestamp := lics_inbound_utility.get_variable('MSG_TIMESTAMP');
-        
-    /*-*/
-    /* Validate message sequence  
-    /*-*/
-    open csr_bds_bom_det;
-    fetch csr_bds_bom_det into rcd_bds_bom_det;
-    
-    if ( csr_bds_bom_det%found ) then      
-      if ( rcd_hdr.msg_timestamp >= rcd_bds_bom_det.msg_timestamp ) then
-        delete 
-        from bds_bom_det 
-        where bom_material_code = rcd_hdr.bom_material_code
-          and bom_alternative = rcd_hdr.bom_alternative
-          and bom_plant = rcd_hdr.bom_plant;      
-      else
-        var_trn_ignore := true;
-      end if;
-    end if;   
-     
-    close csr_bds_bom_det;
-    
-  /*-------------*/
-  /* End routine */
-  /*-------------*/
-  end process_record_ctl;
-
-  /**************************************************/
-  /* This procedure performs the record HDR routine */
-  /**************************************************/
+  
   procedure process_record_hdr(par_record in varchar2) is
-                           
+    
   /*-------------*/
   /* Begin block */
   /*-------------*/
   begin
-
-    /*--------------------------------------------*/
-    /* IGNORE - Ignore the data row when required */
-    /*--------------------------------------------*/
-    if ( var_trn_ignore = true ) then
-      return;
-    end if;
 
     /*-------------------------------*/
     /* PARSE - Parse the data record */
@@ -332,22 +228,24 @@ create or replace package body bds_app.ladpdb04_loader as
     
     /*--------------------------------------*/
     /* RETRIEVE - Retrieve the field values */  
-    /*--------------------------------------*/
-
+    /*--------------------------------------*/    
+    rcd_hdr.bom_material_code := lics_inbound_utility.get_variable('BOM_MATERIAL_CODE');
+    rcd_hdr.bom_alternative := lics_inbound_utility.get_variable('BOM_ALTERNATIVE');
+    rcd_hdr.bom_plant := lics_inbound_utility.get_variable('BOM_PLANT');
     rcd_hdr.bom_number := lics_inbound_utility.get_variable('BOM_NUMBER');
-    rcd_hdr.bom_msg_function := lics_inbound_utility.get_variable('BOM_MSG_FUNCTION');
+    rcd_hdr.bom_msg_function := lics_inbound_utility.get_variable('BOM_MSG_FUNCTION');    
     rcd_hdr.bom_usage := lics_inbound_utility.get_variable('BOM_USAGE');
     rcd_hdr.bom_eff_from_date := lics_inbound_utility.get_date('BOM_EFF_FROM_DATE','yyyymmddhh24miss');
     rcd_hdr.bom_eff_to_date := lics_inbound_utility.get_date('BOM_EFF_TO_DATE','yyyymmddhh24miss');
-    rcd_hdr.bom_base_qty := lics_inbound_utility.get_number('BOM_BASE_QTY',null);
+    rcd_hdr.bom_base_qty := lics_inbound_utility.get_variable('BOM_BASE_QTY');
     rcd_hdr.bom_base_uom := lics_inbound_utility.get_variable('BOM_BASE_UOM');
     rcd_hdr.bom_status := lics_inbound_utility.get_variable('BOM_STATUS');
-    rcd_hdr.item_sequence := lics_inbound_utility.get_number('ITEM_SEQUENCE',null);
+    rcd_hdr.item_sequence := lics_inbound_utility.get_variable('ITEM_SEQUENCE');
     rcd_hdr.item_number := lics_inbound_utility.get_variable('ITEM_NUMBER');
     rcd_hdr.item_msg_function := lics_inbound_utility.get_variable('ITEM_MSG_FUNCTION');
     rcd_hdr.item_material_code := lics_inbound_utility.get_variable('ITEM_MATERIAL_CODE');
     rcd_hdr.item_category := lics_inbound_utility.get_variable('ITEM_CATEGORY');
-    rcd_hdr.item_base_qty := lics_inbound_utility.get_number('ITEM_BASE_QTY',null);
+    rcd_hdr.item_base_qty := lics_inbound_utility.get_variable('ITEM_BASE_QTY');
     rcd_hdr.item_base_uom := lics_inbound_utility.get_variable('ITEM_BASE_UOM');
     rcd_hdr.item_eff_from_date := lics_inbound_utility.get_date('ITEM_EFF_FROM_DATE','yyyymmddhh24miss');
     rcd_hdr.item_eff_to_date := lics_inbound_utility.get_date('ITEM_EFF_TO_DATE','yyyymmddhh24miss');
@@ -374,17 +272,17 @@ create or replace package body bds_app.ladpdb04_loader as
     if ( rcd_hdr.bom_alternative is null ) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_ALTERNATIVE');
       var_trn_error := true;
-    end if;
+    end if;    
           
     if ( rcd_hdr.bom_plant is null ) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.BOM_PLANT');
       var_trn_error := true;
     end if;
-    
+        
     if ( rcd_hdr.item_sequence is null ) then
       lics_inbound_utility.add_exception('Missing Primary Key - HDR.ITEM_SEQUENCE');
       var_trn_error := true;
-    end if;
+    end if;  
     
     /*--------------------------------------------*/
     /* IGNORE - Ignore the data row when required */
@@ -400,60 +298,58 @@ create or replace package body bds_app.ladpdb04_loader as
       return;
     end if;
     
-    insert into bds_bom_det
+    insert into bds_bom_all
     (
       bom_material_code, 
-      bom_alternative,
+      bom_alternative, 
       bom_plant,
-      bom_number,
-      bom_msg_function,
+      bom_number, 
+      bom_msg_function, 
       bom_usage,
       bom_eff_from_date,
-      bom_eff_to_date,
-      bom_base_qty,
+      bom_eff_to_date, 
+      bom_base_qty, 
       bom_base_uom,
-      bom_status,
-      item_sequence,
+      bom_status, 
+      item_sequence, 
       item_number,
-      item_msg_function,
-      item_material_code,
+      item_msg_function, 
+      item_material_code, 
       item_category,
-      item_base_qty,
-      item_base_uom,
+      item_base_qty, 
+      item_base_uom, 
       item_eff_from_date,
-      item_eff_to_date,
-      msg_timestamp
+      item_eff_to_date
     )
     values 
     (
       rcd_hdr.bom_material_code, 
-      rcd_hdr.bom_alternative,
+      rcd_hdr.bom_alternative, 
       rcd_hdr.bom_plant,
-      rcd_hdr.bom_number,
-      rcd_hdr.bom_msg_function,
+      rcd_hdr.bom_number, 
+      rcd_hdr.bom_msg_function, 
       rcd_hdr.bom_usage,
       rcd_hdr.bom_eff_from_date,
-      rcd_hdr.bom_eff_to_date,
-      rcd_hdr.bom_base_qty,
+      rcd_hdr.bom_eff_to_date, 
+      rcd_hdr.bom_base_qty, 
       rcd_hdr.bom_base_uom,
-      rcd_hdr.bom_status,
-      rcd_hdr.item_sequence,
+      rcd_hdr.bom_status, 
+      rcd_hdr.item_sequence, 
       rcd_hdr.item_number,
-      rcd_hdr.item_msg_function,
-      rcd_hdr.item_material_code,
+      rcd_hdr.item_msg_function, 
+      rcd_hdr.item_material_code, 
       rcd_hdr.item_category,
-      rcd_hdr.item_base_qty,
-      rcd_hdr.item_base_uom,
+      rcd_hdr.item_base_qty, 
+      rcd_hdr.item_base_uom, 
       rcd_hdr.item_eff_from_date,
-      rcd_hdr.item_eff_to_date,
-      rcd_hdr.msg_timestamp
+      rcd_hdr.item_eff_to_date
     );
-    
+  
   /*-------------*/
   /* End routine */
   /*-------------*/
   end process_record_hdr;
-  
+    
 end ladpdb04_loader; 
 /
 

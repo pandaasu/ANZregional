@@ -50,6 +50,11 @@ create table bds.bds_refrnc_prchsing_src_ics
 );
 
 /**/
+/* Indexes  
+/**/
+create index bds.bds_refrnc_purch_src_ics_idx01 on bds.bds_refrnc_prchsing_src_ics(vendor_code);
+
+/**/
 /* Primary Key Constraint 
 /**/
 alter table bds.bds_refrnc_prchsing_src_ics 

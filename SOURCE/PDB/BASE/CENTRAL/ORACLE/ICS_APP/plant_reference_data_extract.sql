@@ -142,7 +142,7 @@ create or replace package body ics_app.plant_reference_data_extract as
       /*----------------------------------------------------*/
       /* BOM Alternate Versions Reference Tables            */
       /*----------------------------------------------------*/
-      when (var_z_tabname = 'T415A') then plant_bom_alternative_extract.execute(par_site);
+      when (var_z_tabname = 'T415A') then plant_bom_all_extract.execute(par_site);
       /*----------------------------------------------------*/
       /* Purchasing Source (Vendor/Material) Reference Table*/
       /*----------------------------------------------------*/

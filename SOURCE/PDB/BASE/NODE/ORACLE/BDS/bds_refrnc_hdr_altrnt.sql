@@ -27,6 +27,14 @@ create table bds.bds_refrnc_hdr_altrnt
 );
 
 /**/
+/* Indexes
+/**/
+create index bds.bds_refrnc_hdr_altrnt_idx01 on bds.bds_refrnc_hdr_altrnt(bom_material_code);
+create index bds.bds_refrnc_hdr_altrnt_idx02 on bds.bds_refrnc_hdr_altrnt(bom_alternative);
+create index bds.bds_refrnc_hdr_altrnt_idx03 on bds.bds_refrnc_hdr_altrnt(bom_plant);
+create index bds.bds_refrnc_hdr_altrnt_idx04 on bds.bds_refrnc_hdr_altrnt(bom_usage);
+
+/**/
 /* Primary Key Constraint 
 /**/
 alter table bds.bds_refrnc_hdr_altrnt

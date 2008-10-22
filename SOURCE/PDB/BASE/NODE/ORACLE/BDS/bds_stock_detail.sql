@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/04   Trevor Keon    Created 
+ 2008/10   Trevor Keon    Added detseq column and updated PK
 
 *******************************************************************************/
 
@@ -35,14 +36,15 @@ create table bds.bds_stock_detail
   stock_best_before_date         varchar2(8 char),
   consignment_cust_vend          varchar2(10 char),
   rcv_isu_storage_location_code  varchar2(4 char),
-  stock_type_code                varchar2(2 char)
+  stock_type_code                varchar2(2 char),
+  detseq			                   number not null
 );
 
 /**/
 /* Primary Key Constraint 
 /**/
 alter table bds.bds_stock_detail
-   add constraint bds_stock_detail_pk primary key (company_code, plant_code, storage_location_code, stock_balance_date, stock_balance_time, material_code);
+   add constraint bds_stock_detail_pk primary key (company_code, plant_code, storage_location_code, stock_balance_date, stock_balance_time, material_code, detseq);
 
 /**/
 /* Authority 

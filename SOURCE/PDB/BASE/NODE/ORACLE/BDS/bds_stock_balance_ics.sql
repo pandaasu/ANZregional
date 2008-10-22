@@ -39,7 +39,7 @@ create or replace force view bds.bds_stock_balance_ics as
       select company_code,
         max (stock_balance_date) as stock_balance_date
       from bds_stock_header
-      where storage_location_code != 'intr'
+      where storage_location_code != 'INTR'
       group by company_code
     ) t01,
     bds_stock_detail t02
@@ -48,7 +48,7 @@ create or replace force view bds.bds_stock_balance_ics as
       
   union all
     
-  select t02.company_code, t02.plant_code, 'intr',
+  select t02.company_code, t02.plant_code, 'INTR',
     substr (t01.sap_idoc_timestamp, 1, 8),
     substr (t01.sap_idoc_timestamp, 9, 6), 
     t02.material_code, 
