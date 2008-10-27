@@ -141,10 +141,10 @@ create or replace package body efxcad01_customer as
       lics_inbound_utility.set_definition('HDR','CUST_BELONGS_TO_WS_NAME',50);
       lics_inbound_utility.set_definition('HDR','LINE_MGR_CODE',20);
       lics_inbound_utility.set_definition('HDR','LINE_MGR_NAME',60);
-      lics_inbound_utility.set_definition('HDR','SECONDARY_PERSON_ASSOCIATE_CODE',60);
-      lics_inbound_utility.set_definition('HDR','SECONDARY_PERSON_LAST_NAME',60);
-      lics_inbound_utility.set_definition('HDR','SECONDARY_PERSON_TITLE',60);
-      lics_inbound_utility.set_definition('HDR','SECONDARY_PERSON_CITY',60);
+      lics_inbound_utility.set_definition('HDR','SECONDARY_SALES_PERSON_CODE',60);
+      lics_inbound_utility.set_definition('HDR','SECONDARY_SALES_PERSON_NAME',60);
+      lics_inbound_utility.set_definition('HDR','SECONDARY_SALES_PERSON_TITLE',60);
+      lics_inbound_utility.set_definition('HDR','SECONDARY_SALES_PERSON_CITY',60);
 
    /*-------------*/
    /* End routine */
@@ -360,10 +360,10 @@ create or replace package body efxcad01_customer as
       rcd_cad_efex_cust_master.line_mgr_code := lics_inbound_utility.get_variable('LINE_MGR_CODE');
       rcd_cad_efex_cust_master.line_mgr_name := lics_inbound_utility.get_variable('LINE_MGR_NAME');
       rcd_cad_efex_cust_master.sales_city_code := null;
-      rcd_cad_efex_cust_master.secondary_person_associate_code := lics_inbound_utility.get_variable('SECONDARY_PERSON_ASSOCIATE_CODE');
-      rcd_cad_efex_cust_master.secondary_person_last_name := lics_inbound_utility.get_variable('SECONDARY_PERSON_LAST_NAME');
-      rcd_cad_efex_cust_master.secondary_person_title := lics_inbound_utility.get_variable('SECONDARY_PERSON_TITLE');
-      rcd_cad_efex_cust_master.secondary_person_city := lics_inbound_utility.get_variable('SECONDARY_PERSON_CITY');
+      rcd_cad_efex_cust_master.secondary_sales_person_code := lics_inbound_utility.get_variable('SECONDARY_SALES_PERSON_CODE');
+      rcd_cad_efex_cust_master.secondary_sales_person_name := lics_inbound_utility.get_variable('SECONDARY_SALES_PERSON_NAME');
+      rcd_cad_efex_cust_master.secondary_sales_person_title := lics_inbound_utility.get_variable('SECONDARY_SALES_PERSON_TITLE');
+      rcd_cad_efex_cust_master.secondary_sales_person_city := lics_inbound_utility.get_variable('SECONDARY_SALES_PERSON_CITY');
 
       /*-*/
       /* Retrieve exceptions raised
