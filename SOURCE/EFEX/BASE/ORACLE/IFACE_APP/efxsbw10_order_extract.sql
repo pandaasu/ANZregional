@@ -27,6 +27,7 @@ create or replace package efxsbw10_order_extract as
     -------   ------         -----------
     2008/10   Steve Gregan   Created
     2008/10   Steve Gregan   Added order line status check (only active orders and order lines)
+    2008/10   Steve Gregan   Changed order value calculation
 
    *******************************************************************************/
 
@@ -84,10 +85,10 @@ create or replace package body efxsbw10_order_extract as
                                'MCU',to_char(round(t02.order_qty/nvl(t03.mcu_per_tdu,1),2)),
                                'RSU',to_char(round(t02.order_qty/nvl(t03.units_case,1),2)),
                                to_char(t02.order_qty)) as order_qty,
-                to_char(decode(t02.uom,'TDU',t02.order_qty,
-                                       'MCU',round(t02.order_qty/nvl(t03.mcu_per_tdu,1),2),
-                                       'RSU',round(t02.order_qty/nvl(t03.units_case,1),2),
-                                       t02.order_qty)*nvl(t03.tdu_price,0),'fm999999990.00') as order_value,
+                to_char(round(decode(t02.uom,'TDU',t02.order_qty,
+                                             'MCU',t02.order_qty/nvl(t03.mcu_per_tdu,1),
+                                             'RSU',t02.order_qty/nvl(t03.units_case,1),
+                                             t02.order_qty)*nvl(t03.tdu_price,0),2),'fm999999990.00') as order_value,
                 t03.item_code as item_code
            from orders t01,
                 order_item t02,
