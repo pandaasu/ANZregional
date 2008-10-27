@@ -26,6 +26,7 @@ create or replace package efxcad01_customer as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/08   Steve Gregan   Created
+    2008/10   Steve Gregan   Added secondary sales person to interface
 
    *******************************************************************************/
 
@@ -128,7 +129,11 @@ create or replace package body efxcad01_customer as
                 t17.customer_code as cust_belongs_to_ws_code,
                 t17.customer_name as cust_belongs_to_ws_name,
                 t19.associate_code as line_mgr_code,
-                t19.lastname as line_mgr_name
+                t19.lastname as line_mgr_name,
+                t22.associate_code as secondary_sales_person_code,
+                t22.lastname as secondary_sales_person_name,
+                t22.description as secondary_sales_person_title,
+                t22.city as secondary_sales_person_city
            from customer t01,
                 cust_type t02,
                 cust_trade_channel t03,
@@ -162,7 +167,19 @@ create or replace package body efxcad01_customer as
                   where t01.rnkseq = 1) t16,
                 customer t17,
                 users t18,
-                users t19
+                users t19,
+                (select t01.customer_id,
+                        t01.sales_territory_id
+                   from (select t01.customer_id,
+                                t01.sales_territory_id,
+                                rank() over (partition by t01.customer_id
+                                                 order by t01.sales_territory_id asc) as rnkseq
+                           from cust_sales_territory t01
+                          where t01.status = 'A'
+                            and t01.primary_flg = 'N') t01
+                  where t01.rnkseq = 1) t20,
+                sales_territory t21,
+                users t22
           where t01.cust_type_id = t02.cust_type_id(+)
             and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
             and t03.cust_channel_id = t04.cust_channel_id(+)
@@ -188,6 +205,9 @@ create or replace package body efxcad01_customer as
             and t01.distributor_id = t17.customer_id(+)
             and t07.user_id = t18.user_id(+)
             and t08.user_id = t19.user_id(+)
+            and t01.customer_id = t20.customer_id(+)
+            and t20.sales_territory_id = t21.sales_territory_id(+)
+            and t21.user_id = t22.user_id(+)
             and t05.market_id = con_market_id
             and trunc(t01.modified_date) >= trunc(sysdate) - var_history
             and trunc(t01.modified_date) > to_date('20080914','yyyymmdd');
@@ -305,7 +325,11 @@ create or replace package body efxcad01_customer as
                                              nvl(rcd_customer.cust_belongs_to_ws_code,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_code,' ')),' ') ||
                                              nvl(rcd_customer.cust_belongs_to_ws_name,' ')||rpad(' ',50-length(nvl(rcd_customer.cust_belongs_to_ws_name,' ')),' ') ||
                                              nvl(rcd_customer.line_mgr_code,' ')||rpad(' ',20-length(nvl(rcd_customer.line_mgr_code,' ')),' ') ||
-                                             nvl(rcd_customer.line_mgr_name,' ')||rpad(' ',60-length(nvl(rcd_customer.line_mgr_name,' ')),' '));
+                                             nvl(rcd_customer.line_mgr_name,' ')||rpad(' ',60-length(nvl(rcd_customer.line_mgr_name,' ')),' ') ||
+                                             nvl(rcd_customer.secondary_sales_person_code,' ')||rpad(' ',60-length(nvl(rcd_customer.secondary_sales_person_code,' ')),' ') ||
+                                             nvl(rcd_customer.secondary_sales_person_name,' ')||rpad(' ',60-length(nvl(rcd_customer.secondary_sales_person_name,' ')),' ') ||
+                                             nvl(rcd_customer.secondary_sales_person_title,' ')||rpad(' ',60-length(nvl(rcd_customer.secondary_sales_person_title,' ')),' ') ||
+                                             nvl(rcd_customer.secondary_sales_person_city,' ')||rpad(' ',60-length(nvl(rcd_customer.secondary_sales_person_city,' ')),' '));
 
          end if;
 
