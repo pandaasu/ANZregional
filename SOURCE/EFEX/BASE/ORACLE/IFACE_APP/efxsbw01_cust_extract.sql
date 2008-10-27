@@ -26,6 +26,7 @@ create or replace package efxsbw01_cust_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/10   Steve Gregan   Created
+    2008/10   Steve Gregan   Modified market test to the customer from the customer type
 
    *******************************************************************************/
 
@@ -165,7 +166,7 @@ create or replace package body efxsbw01_cust_extract as
             and t01.outlet_location = t16.list_value_name(+)
             and t01.affiliation_id = t17.affiliation_id(+)
             and t17.affiliation_group_id = t18.affiliation_group_id(+)
-            and t05.market_id = con_market_id
+            and t01.market_id = con_market_id
             and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t02.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t03.modified_date) >= trunc(sysdate) - var_history or
