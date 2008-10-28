@@ -1,0 +1,275 @@
+-------------------------------------
+Misc Details:
+-------------------------------------
+
+Country Codes: (i_company_code)
+-- 147 - AU 
+-- 149 - NZ 
+-- 131 - JP 
+-- 132 - JP (Drinks) 
+-- 135 - CH (China)
+-- 137 - HK (Hong Kong) 
+-- 139 - CH (China) 
+
+Date Format: (i_creation_date)
+'yyyymmdd' (eg 13 Dec 2007 = '20071213')
+
+NOTE:  the date should be the day before the current day!!
+
+-------------------------------------
+Checking existing invoices in system:
+-------------------------------------
+
+-- HK (115P)
+select * 
+from lads_inv_dat
+where datum = :i_creation_date
+	and iddat = '015'
+
+
+-- JP (93P)
+select t01.belnr from lads_inv_hdr t01,
+	(
+		select t21.belnr as belnr
+		from lads_inv_dat t21
+		where t21.iddat = '015'
+			and t21.datum = :i_creation_date
+		group by t21.belnr
+	) T02,
+	(
+		select t31.belnr as belnr
+		from lads_inv_org t31
+		where t31.qualf = '003'
+			and t31.orgid = :i_company_code
+	) t03
+where t01.belnr = t02.belnr
+	and t01.belnr = t03.belnr;
+
+
+-- VENUS (70P)
+SELECT c.orgid AS companycode, b.datum AS creationdate,
+	a.belnr AS invoicenumber, d.summe AS reconciliationvalue,
+	a.curcy AS currency, f.orgid AS invc_type_code
+FROM sap_inv_hdr a,
+	sap_inv_dat b,
+	sap_inv_org c,
+	sap_inv_smy d,
+	sap_inv_org f
+WHERE a.valdtn_status = 'VALID'
+	AND a.belnr = b.belnr
+	AND a.belnr = c.belnr
+	AND b.iddat = '015'                
+	AND c.qualf = '008'
+	AND a.belnr = d.belnr
+	AND d.sumid = '010'
+	AND b.datum = :i_creation_date
+	AND c.orgid = :i_company_code
+	AND f.belnr(+) = a.belnr
+	AND f.qualf(+) = '015'             
+ORDER BY b.datum
+
+
+-------------------------------------
+Checking invoice summary:
+-------------------------------------
+
+-- RUN FOR VENUS
+select *
+from sap_inv_sum_hdr
+where fkdat = :i_creation_date
+	and bukrs = :i_company_code
+
+
+-- RUN FOR CLIO
+select *
+from lads_inv_sum_hdr
+where fkdat = :i_creation_date
+	and bukrs = :i_company_code
+
+
+-------------------------------------
+ATLAS Team information:
+-------------------------------------
+
+- connect to Support Contact Directory (SCD - notes://apsn4/msc/supinfo1.nsf)
+- select Apps Support Group -> By Group
+- goto Atlas Support Outbound
+- select Atlas Support Outbound AP
+- read the information before selecting the first associate in the list (first call +86 1 39 1141 6547)
+
+
+-------------------------------------
+Query to check reconciliation of invoices:
+-------------------------------------
+
+-- VENUS (70P)
+SELECT
+  creation_date,
+  company_code,
+  SUM(summ_count) AS summ_count,
+  SUM(summ_line) AS summ_line,
+  SUM(summ_value) AS summ_value,
+  SUM(trans_count) AS trans_count,
+  SUM(trans_line) AS trans_line,
+  SUM(trans_value) AS trans_value
+FROM
+ (SELECT
+    a.fkdat AS creation_date,
+    a.bukrs AS company_code,
+    b.znumiv AS summ_count,
+    b.znumps AS summ_line,
+    b.netwr AS summ_value,
+    0 AS trans_count,
+    0 AS trans_line,
+    0 AS trans_value
+  FROM
+    sap_inv_sum_hdr a,
+    sap_inv_sum_det b
+  WHERE
+    a.fkdat = b.fkdat
+    AND a.bukrs = b.vkorg
+    AND a.bukrs = :i_company_code
+    AND a.fkdat = :i_creation_date
+UNION ALL
+  SELECT
+    t1.datum AS creation_date,
+    t1.orgid AS company_code,
+    0 AS summ_count,
+    0 AS summ_line,
+    0 AS summ_value,
+    SUM(trans_count) AS trans_count,
+    SUM(trans_line) AS trans_line,
+    SUM(trans_value) AS trans_value
+  FROM
+   (SELECT
+      b.datum AS datum,
+      c.orgid AS orgid,
+      count(*) AS trans_count,
+      0 AS trans_line,
+      0 AS trans_value
+    FROM
+      sap_inv_hdr a,
+      sap_inv_dat b,
+      sap_inv_org c
+    WHERE a.valdtn_status = 'VALID' -- ods_constants.valdtn_valid
+      AND a.belnr = b.belnr
+      AND a.belnr = c.belnr
+      AND b.iddat = '015' -- ods_constants.invoice_document_date -- Document Date
+      AND b.datum = :i_creation_date
+      AND c.qualf = '008' -- ods_constants.invoice_sales_org -- Sales Organisation
+      AND c.orgid = :i_company_code
+    GROUP BY
+      b.datum,
+      c.orgid
+    UNION
+    SELECT
+      b.datum AS datum,
+      c.orgid AS orgid,
+      0 AS trans_count,
+      count(*) AS trans_line,
+      0 AS trans_value
+    FROM
+      sap_inv_hdr a,
+      sap_inv_dat b,
+      sap_inv_org c,
+      sap_inv_gen d
+    WHERE a.valdtn_status = 'VALID' -- ods_constants.valdtn_valid
+      AND a.belnr = b.belnr
+      AND a.belnr = c.belnr
+      AND a.belnr = d.belnr
+      AND b.iddat = '015' -- ods_constants.invoice_document_date -- Document Date
+      AND b.datum = :i_creation_date
+      AND c.qualf = '008' -- ods_constants.invoice_sales_org -- Sales Organisation
+      AND c.orgid = :i_company_code
+    GROUP BY
+      b.datum,
+      c.orgid
+    UNION  
+    SELECT
+      b.datum AS datum,
+      c.orgid AS orgid,
+      0 AS trans_count,
+      0 AS trans_line,
+      SUM(DECODE(sign(instr(d.summe,'-',1,1)),1,-1,1) * trim('-' from d.summe)) AS trans_value
+    FROM
+      sap_inv_hdr a,
+      sap_inv_dat b,
+      sap_inv_org c,
+      sap_inv_smy d
+    WHERE a.valdtn_status = 'VALID' -- ods_constants.valdtn_valid
+      AND a.belnr = b.belnr
+      AND b.iddat = '015' -- ods_constants.invoice_document_date -- Document Date
+      AND b.datum = :i_creation_date
+      AND a.belnr = c.belnr
+      AND c.qualf = '008' -- ods_constants.invoice_sales_org -- Sales Organisation
+      AND c.orgid = :i_company_code
+      AND a.belnr = d.belnr
+      AND d.sumid = '010' -- ods_constants.invoice_smy_qualifier -- Get SMY values to balance to summary
+    GROUP BY
+       b.datum,
+       c.orgid) t1
+  GROUP BY
+    t1.datum,
+    t1.orgid)
+GROUP BY
+  creation_date,
+  company_code
+
+
+-- CLIO
+set serveroutput on
+declare
+  var_msg varchar2(4000);
+  var_msg_rtn varchar2(4000);
+begin 
+  var_msg_rtn := dw_reconciliation.reconcile_sales(20071115,'137',var_msg);
+  dbms_output.put_line('RECONCILIATION RESULT : ' || var_msg_rtn);
+end;
+
+-------------------------------------
+Check triggered aggregation success:
+-------------------------------------
+
+-- VENUS (70P)
+select *
+from log
+where log_lupdt > trunc(sysdate, 'DD')
+  and job_type_code = '1'
+order by session_id, log_seq;
+
+-------------------------------------
+Rerun interface:
+-------------------------------------
+
+Note: Only required if invoice reconciliation failed, and has since been resolved.
+
+- connect to ICS webpage (http://webappdev11.ap.mars/ics_browser.asp)
+- select relevant environment
+- select Configuration -> Process Interface
+- select the interface number to reprocess
+- click accept
+
+-------------------------------------
+Steps:
+-------------------------------------
+
+1 - find which problem we are dealing with (missing invoice summary or missing invoices)
+2 - run relevant query from above (check invoices / check invoice summary)
+3 - contact ATLAS team to get them to resend missing data (ATLAS Team information)
+4 - run same query (from step 2) once again to ensure all data has been received
+5 - redo steps 3 & 4 if data still missing
+6 - if data exists run query to check invoice reconciliation
+7 - rerun the interface (unless invoice summary was missing)
+
+
+
+
+
+
+
+
+
+
+
+
+
