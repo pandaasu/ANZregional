@@ -26,6 +26,7 @@ create or replace package efxsbw11_distri_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/10   Steve Gregan   Created
+    2008/10   Steve Gregan   Modified the distibution total quantity logic
 
    *******************************************************************************/
 
@@ -69,6 +70,7 @@ create or replace package body efxsbw11_distri_extract as
       var_history number;
       var_instance number(15,0);
       var_start boolean;
+      var_save_id number;
 
       /*-*/
       /* Local cursors
@@ -99,7 +101,9 @@ create or replace package body efxsbw11_distri_extract as
                                        and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
                                        and t03.cust_channel_id = t04.cust_channel_id(+)
                                        and t04.market_id = t05.market_id(+)
-                                       and t05.market_id = con_market_id);
+                                       and t05.market_id = con_market_id)
+         order by t01.customer_id asc,
+                  t03.item_code asc;
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -124,6 +128,7 @@ create or replace package body efxsbw11_distri_extract as
       /*-*/
       /* Open cursor for output
       /*-*/
+      var_save_id := -1;
       open csr_extract;
       loop
          fetch csr_extract into rcd_extract;
@@ -137,6 +142,15 @@ create or replace package body efxsbw11_distri_extract as
          if (var_start) then
             var_instance := lics_outbound_loader.create_interface('EFXSBW11',null,'EFEX_DISTRI_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
             var_start := false;
+         end if;
+
+         /*-*/
+         /* Change in customer
+         /*-*/
+         if rcd_extract.customer_id != var_save_id then
+            var_save_id := rcd_extract.customer_id;
+         else
+            rcd_extract.total_qty := 0;
          end if;
 
          /*-*/
