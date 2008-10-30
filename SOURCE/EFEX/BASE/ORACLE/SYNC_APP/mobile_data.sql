@@ -19,6 +19,7 @@ create or replace package mobile_data as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/07   Steve Gregan   Created
+    2008/10   Steve Gregan   Added the customer code to the customer list and data
 
    *******************************************************************************/
 
@@ -650,6 +651,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<CUS_DATA_TYPE><![CDATA[' || '*OLD' || ']]></CUS_DATA_TYPE>';
          var_output := var_output||'<CUS_DATA_ACTION><![CDATA[' || '*NONE' || ']]></CUS_DATA_ACTION>';
          var_output := var_output||'<CUS_CUSTOMER_ID><![CDATA[' || to_char(rcd_customer.customer_id) || ']]></CUS_CUSTOMER_ID>';
+         var_output := var_output||'<CUS_CODE><![CDATA[' || rcd_customer.customer_code || ']]></CUS_CODE>';
          var_output := var_output||'<CUS_NAME><![CDATA[' || rcd_customer.customer_name || ']]></CUS_NAME>';
          var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.active_status || ']]></CUS_STATUS>';
          var_output := var_output||'</CUS>';
@@ -1029,6 +1031,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<CUS_DATA_TYPE><![CDATA[' || '*OLD' || ']]></CUS_DATA_TYPE>';
          var_output := var_output||'<CUS_DATA_ACTION><![CDATA[' || '*LOADED' || ']]></CUS_DATA_ACTION>';
          var_output := var_output||'<CUS_CUSTOMER_ID><![CDATA[' || to_char(rcd_customer.customer_id) || ']]></CUS_CUSTOMER_ID>';
+         var_output := var_output||'<CUS_CODE><![CDATA[' || rcd_customer.customer_code || ']]></CUS_CODE>';
          var_output := var_output||'<CUS_NAME><![CDATA[' || rcd_customer.customer_name || ']]></CUS_NAME>';
          var_output := var_output||'<CUS_STATUS><![CDATA[' || rcd_customer.active_status || ']]></CUS_STATUS>';
          var_output := var_output||'<CUS_ADDRESS><![CDATA[' || rcd_customer.address_1 || ']]></CUS_ADDRESS>';
@@ -1526,6 +1529,7 @@ create or replace package body mobile_data as
          var_output := '<RTE_CALL>';
          var_output := var_output||'<RTE_CALL_SEQUENCE><![CDATA[' || to_char(par_route_plan_order,'fm0000') || ']]></RTE_CALL_SEQUENCE>';
          var_output := var_output||'<RTE_CALL_CUSTOMER_ID><![CDATA[' || to_char(rcd_call.customer_id) || ']]></RTE_CALL_CUSTOMER_ID>';
+         var_output := var_output||'<RTE_CALL_CUSTOMER_CODE><![CDATA[' || rcd_call.customer_code || ']]></RTE_CALL_CUSTOMER_CODE>';
          var_output := var_output||'<RTE_CALL_CUSTOMER_NAME><![CDATA[' || rcd_call.customer_name || ']]></RTE_CALL_CUSTOMER_NAME>';
          var_output := var_output||'<RTE_CALL_CUSTOMER_TYPE><![CDATA[' || par_type || ']]></RTE_CALL_CUSTOMER_TYPE>';
          var_output := var_output||'<RTE_CALL_MARKET><![CDATA[' || rcd_call.customer_market || ']]></RTE_CALL_MARKET>';
