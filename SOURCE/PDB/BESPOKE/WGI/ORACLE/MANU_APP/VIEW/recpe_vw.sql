@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.RECPE_VW;
 
-/* Formatted on 2008/11/05 13:14 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/11/05 13:18 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_vw (proc_order,
                                                 cntl_rec_id,
                                                 opertn,

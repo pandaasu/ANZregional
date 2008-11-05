@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.SITE_TDU_MPO_XREF;
 
-/* Formatted on 2008/11/05 13:14 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/11/05 13:18 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.site_tdu_mpo_xref (matl_code,
                                                          matl_desc,
                                                          mpo,

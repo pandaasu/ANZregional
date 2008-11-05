@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.SITE_SHIFTLOG_FG_MATL_VW;
 
-/* Formatted on 2008/11/05 13:14 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/11/05 13:19 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.site_shiftlog_fg_matl_vw (matl_code,
                                                                 matl_desc,
                                                                 units_per_case,

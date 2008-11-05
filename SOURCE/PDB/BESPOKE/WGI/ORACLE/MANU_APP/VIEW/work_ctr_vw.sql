@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.WORK_CTR_VW;
 
-/* Formatted on 2008/11/05 13:15 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/11/05 13:19 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.work_ctr_vw (work_ctr_code,
                                                    resource_desc,
                                                    plant_code,
@@ -26,4 +26,6 @@ DROP PUBLIC SYNONYM WORK_CTR_VW;
 
 CREATE PUBLIC SYNONYM WORK_CTR_VW FOR MANU_APP.WORK_CTR_VW;
 
+
+GRANT SELECT ON MANU_APP.WORK_CTR_VW TO MANU;
 

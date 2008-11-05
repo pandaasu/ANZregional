@@ -1,6 +1,6 @@
 DROP VIEW MANU_APP.RECIPE_FCS_VW;
 
-/* Formatted on 2008/11/05 13:14 (Formatter Plus v4.8.8) */
+/* Formatted on 2008/11/05 13:18 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recipe_fcs_vw (proc_order,
                                                      cntl_rec_id,
                                                      material,
@@ -45,7 +45,6 @@ AS
      AND c.proc_order = v.proc_order
      AND TO_NUMBER (r.proc_order) = TO_NUMBER (s.proc_order(+))
      AND teco_status = 'NO'
-     AND SUBSTR (c.proc_order, 1, 1) BETWEEN '0' AND '9'
   UNION ALL
   SELECT LTRIM (r.proc_order, 0) proc_order, c.cntl_rec_id,
          LTRIM (c.material, '0') material, c.material_text, r.resource_code,
@@ -63,8 +62,7 @@ AS
      AND r.operation = v.operation
      AND r.proc_order = c.proc_order
      AND TO_NUMBER (r.proc_order) = TO_NUMBER (s.proc_order(+))
-     AND teco_status = 'NO'
-     AND SUBSTR (c.proc_order, 1, 1) BETWEEN '0' AND '9';
+     AND teco_status = 'NO';
 
 
 DROP PUBLIC SYNONYM RECIPE_FCS_VW;
