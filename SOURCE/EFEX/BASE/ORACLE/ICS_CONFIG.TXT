@@ -58,7 +58,9 @@ insert into lics_interface values('EFXSBW11','EFEX to SAP BW - Distribution Data
 insert into lics_interface values('EFXSBW12','EFEX to SAP BW - Route Plan Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW12',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 MOU054T1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP','1');
 insert into lics_interface values('EFXSBW13','EFEX to SAP BW - Call Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXSBW13',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 MOU054T1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP','1');
 
-TEST
+
+==================
+PROD (REAL PRODUCTION)
 
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP' where int_interface = 'EFXSBW01';
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP' where int_interface = 'EFXSBW02';
@@ -74,6 +76,26 @@ update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PA
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP' where int_interface = 'EFXSBW12';
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU02P1 MOU165P1 /sapmq/Sources/Local/China/eFex *NOCOMPRESS *CMP' where int_interface = 'EFXSBW13';
 
+=========================
+
+==================
+PROD (MIRROR TEST)
+
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW01';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW02';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW03';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW04';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW05';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW06';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW07';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW08';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW09';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW10';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW11';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW12';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXSBW13';
+
+=========================
 
 
 
