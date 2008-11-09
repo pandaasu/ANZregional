@@ -26,6 +26,8 @@ create or replace package efxsbw02_coremat_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/10   Steve Gregan   Created
+    2008/11   Steve Gregan   Modified interface to include name as first row
+    2008/11   Steve Gregan   Modified to send empty file (just first row)
 
    *******************************************************************************/
 
@@ -68,7 +70,6 @@ create or replace package body efxsbw02_coremat_extract as
       var_exception varchar2(4000);
       var_history number;
       var_instance number(15,0);
-      var_start boolean;
 
       /*-*/
       /* Local cursors
@@ -93,11 +94,6 @@ create or replace package body efxsbw02_coremat_extract as
    begin
 
       /*-*/
-      /* Initialise variables
-      /*-*/
-      var_start := true;
-
-      /*-*/
       /* Define number of days to extract
       /*-*/
       if (par_history = 0) then
@@ -107,6 +103,12 @@ create or replace package body efxsbw02_coremat_extract as
       end if;
 
       /*-*/
+      /* Create outbound interface
+      /*-*/
+      var_instance := lics_outbound_loader.create_interface('EFXSBW02',null,'EFEX_COREMAT_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+      lics_outbound_loader.append_data('EFEX_COREMAT_EXTRACT');
+
+      /*-*/
       /* Open cursor for output
       /*-*/
       open csr_extract;
@@ -114,14 +116,6 @@ create or replace package body efxsbw02_coremat_extract as
          fetch csr_extract into rcd_extract;
          if csr_extract%notfound then
             exit;
-         end if;
-
-         /*-*/
-         /* Create outbound interface if record(s) exist
-         /*-*/
-         if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXSBW02',null,'EFEX_COREMAT_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
-            var_start := false;
          end if;
 
          /*-*/
@@ -136,9 +130,7 @@ create or replace package body efxsbw02_coremat_extract as
       /*-*/
       /* Finalise Interface
       /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
-      end if;
+      lics_outbound_loader.finalise_interface;
 
    /*-------------------*/
    /* Exception handler */

@@ -21,6 +21,8 @@ create or replace package efxsbw06_dis_std_itm_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/10   Steve Gregan   Created
+    2008/11   Steve Gregan   Modified interface to include name as first row
+    2008/11   Steve Gregan   Modified to send empty file (just first row)
 
    *******************************************************************************/
 
@@ -62,7 +64,6 @@ create or replace package body efxsbw06_dis_std_itm_extract as
       /*-*/
       var_exception varchar2(4000);
       var_instance number(15,0);
-      var_start boolean;
 
       /*-*/
       /* Local cursors
@@ -79,9 +80,10 @@ create or replace package body efxsbw06_dis_std_itm_extract as
    begin
 
       /*-*/
-      /* Initialise variables
+      /* Create outbound interface
       /*-*/
-      var_start := true;
+      var_instance := lics_outbound_loader.create_interface('EFXSBW06',null,'EFEX_DIS_STD_ITM_EXTRA.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+      lics_outbound_loader.append_data('EFEX_DIS_STD_ITM_EXTRA');
 
       /*-*/
       /* Open cursor for output
@@ -91,14 +93,6 @@ create or replace package body efxsbw06_dis_std_itm_extract as
          fetch csr_extract into rcd_extract;
          if csr_extract%notfound then
             exit;
-         end if;
-
-         /*-*/
-         /* Create outbound interface if record(s) exist
-         /*-*/
-         if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXSBW06',null,'EFEX_DIS_STD_ITM_EXTRA.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
-            var_start := false;
          end if;
 
          /*-*/
@@ -117,9 +111,7 @@ create or replace package body efxsbw06_dis_std_itm_extract as
       /*-*/
       /* Finalise Interface
       /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
-      end if;
+      lics_outbound_loader.finalise_interface;
 
    /*-------------------*/
    /* Exception handler */
