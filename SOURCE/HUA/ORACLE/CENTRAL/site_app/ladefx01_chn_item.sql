@@ -19,6 +19,7 @@ create or replace package ladefx01_chn_item as
     2008/08   Steve Gregan   Created
     2008/10   Steve Gregan   Added MCU/TDU
                              Modified MIN_ORD_QTY and ORDER_MULTIPLES to 1
+    2008/11   Steve Gregan   Changed the material UOM logic
                            
    *******************************************************************************/
 
@@ -65,11 +66,11 @@ create or replace package body ladefx01_chn_item as
          select ltrim(t01.matnr,'0') as item_code,
                 t01.maktx as item_name,
                 ltrim(t01.zzrepmatnr,'0') as item_zrep_code,
-                decode(t02.rsu_meinh,null,decode(t02.mcu_meinh,null,t02.tdu_ean11,t02.mcu_ean11),t02.rsu_ean11) as rsu_ean_code,
+                t02.rsu_ean11 as rsu_ean_code,
                 0 as cases_layer,
                 0 as layers_pallet,
-                decode(t02.mcu_meinh,null,1,t02.mcu_count) as mcu_per_tdu,
-                decode(t02.rsu_meinh,null,decode(t02.mcu_meinh,null,t02.tdu_count,t02.mcu_count),t02.rsu_count) as units_case,
+                t02.mcu_count as mcu_per_tdu,
+                t02.rsu_count as units_case,
                 t02.tdu_meinh as unit_measure,
                 round(nvl(t03.list_price,0),2) as price1,
                 0 as price2,
@@ -178,34 +179,33 @@ create or replace package body ladefx01_chn_item as
                 -- Material TDU/UOM information
                 --
                 (select t01.matnr as matnr,
-                        max(decode(t01.rnkseq,1,t01.umren)) tdu_count,
-                        max(decode(t01.rnkseq,2,t01.umren)) mcu_count,
-                        max(decode(t01.rnkseq,3,t01.umren)) rsu_count,
-                        max(decode(t01.rnkseq,1,t01.meinh)) tdu_meinh,
-                        max(decode(t01.rnkseq,2,t01.meinh)) mcu_meinh,
-                        max(decode(t01.rnkseq,3,t01.meinh)) rsu_meinh,
-                        max(decode(t01.rnkseq,1,t01.ean11)) tdu_ean11,
-                        max(decode(t01.rnkseq,2,t01.ean11)) mcu_ean11,
-                        max(decode(t01.rnkseq,3,t01.ean11)) rsu_ean11
-                   from (select t01.matnr,
-                                t01.meinh,
-                                t01.umren,
+                        t01.meinh as tdu_meinh,
+                        t03.ean11 as rsu_ean11,
+                        1 as tdu_count,
+                        nvl(t02.umren * round(1/(1/t01.umrez)*t01.umren,1),1) as mcu_count,
+                        nvl(t03.umren * round(1/(1/t01.umrez)*t01.umren,1),1) as rsu_count
+                   from lads_mat_uom t01,
+                        (select t01.matnr,
                                 t01.umrez,
-                                t01.ean11,
-                                rank() over (partition by t01.matnr order by t01.umren asc, t01.uomseq desc) as rnkseq
+                                t01.umren
                            from lads_mat_uom t01
-                          where t01.meinh != 'EA'
-                            and t01.umrez = 1) t01
-                  group by t01.matnr) t02,
+                          where t01.meinh = 'SB') t02,
+                        (select t01.matnr,
+                                t01.umrez,
+                                t01.umren,
+                                t01.ean11
+                           from lads_mat_uom t01
+                          where t01.meinh = 'PCE') t03
+                  where t01.matnr = t02.matnr(+)
+                    and t01.matnr = t03.matnr(+)
+                    and t01.meinh = 'CS') t02,
                 --
                 -- Material pricing information
                 --
                (select t01.matnr as matnr,
                        t01.kmein as kmein,
-                       ((t01.kbetr/t01.kpein)*nvl(t01.umrez,1))/nvl(t01.umren,1) as list_price
-                  from (select t01.*,
-                               t02.umrez,
-                               t02.umren
+                       t01.kbetr/t01.kpein as list_price
+                  from (select t01.*
                           from (select t01.vakey,
                                        t01.kotabnr,
                                        t01.kschl,
@@ -230,12 +230,10 @@ create or replace package body ladefx01_chn_item as
                                    and t01.vkorg = '135'
                                    and (t01.vtweg is null or t01.vtweg = '10')
                                    and decode(t01.datab,null,'19000101','00000000','19000101',t01.datab) <= to_char(sysdate,'yyyymmdd')
-                                   and decode(t01.datbi,null,'19000101','00000000','19000101',t01.datbi) >= to_char(sysdate,'yyyymmdd')) t01,
-                               lads_mat_uom t02
-                         where t01.matnr = t02.matnr(+)
-                           and t01.kmein = t02.meinh(+)
-                           and t01.rnkseq = 1) t01) t03
-          where t01.matnr = t02.matnr(+)
+                                   and decode(t01.datbi,null,'19000101','00000000','19000101',t01.datbi) >= to_char(sysdate,'yyyymmdd')
+                                   and t02.kmein = 'CS') t01
+                         where t01.rnkseq = 1) t01) t03
+          where t01.matnr = t02.matnr
             and t01.matnr = t03.matnr(+);
       rcd_item_master csr_item_master%rowtype;
 
