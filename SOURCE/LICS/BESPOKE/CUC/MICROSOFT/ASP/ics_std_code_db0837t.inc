@@ -20,7 +20,7 @@ function GetInstallation()
    '//
    '// Returns the installation string
    '//
-   GetInstallation = "MARS Japan" 
+   GetInstallation = "CUC" 
 
 end function
 
@@ -32,7 +32,7 @@ function GetCharSet()
    '//
    '// Returns the character set string ISO-8859-1, Shift-JIS
    '//
-   GetCharSet = "Shift-JIS" 
+   GetCharSet = "UTF-8" 
 
 end function
 
@@ -46,7 +46,6 @@ function GetBase()
    '//
    dim strBase
    strBase = "http://" & Request.ServerVariables("SERVER_NAME")
-   strBase = strBase & ":" & Request.ServerVariables("SERVER_PORT")
    strBase = strBase & left(Request.ServerVariables("PATH_INFO"), instrRev(Request.ServerVariables("PATH_INFO"), "/"))
    GetBase = strBase
 
@@ -62,7 +61,7 @@ function GetUser()
    '//
    dim strUser
    strUser = UCase(request.ServerVariables("LOGON_USER"))
-   GetUser = replace(replace(replace(strUser,"MARSDOM",""),"/",""),"\","")
+   GetUser = strUser
 
 end function
 
@@ -108,13 +107,13 @@ end sub
 function GetSecurity()
 
    '//
-   '// 1. Initialises the security from the supplied security XML file path
+   '// 1. Initialises the security from the database
    '// 2. Authenticates the current logon user against the security settings
    '// 3. Returns the result string
    '//
    dim strReturn
    set objSecurity = Server.CreateObject("ICS_SECURITY.Object")
-   strReturn = objSecurity.Initialise(Server.MapPath("/ics_security.txt"))
+   strReturn = objSecurity.Initialise("D:\Inetpub\IISWebs\webappdev11.ap.mars\cuc\ics_security.txt")
    GetSecurity = strReturn 
 
 end function
@@ -131,7 +130,7 @@ function GetSecurityCheck(strOption)
    '//
    dim strReturn
    set objSecurity = Server.CreateObject("ICS_SECURITY.Object")
-   strReturn = objSecurity.InitialiseCheck(Server.MapPath("/ics_security.txt"),GetUser(),strOption)
+   strReturn = objSecurity.InitialiseCheck("D:\Inetpub\IISWebs\webappdev11.ap.mars\cuc\ics_security.txt",GetUser(),strOption)
    GetSecurityCheck = strReturn 
 
 end function

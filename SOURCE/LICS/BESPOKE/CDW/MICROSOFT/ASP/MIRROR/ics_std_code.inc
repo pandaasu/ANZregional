@@ -62,7 +62,7 @@ function GetUser()
    '//
    dim strUser
    strUser = UCase(request.ServerVariables("LOGON_USER"))
-   GetUser = strUser
+   GetUser = replace(replace(replace(strUser,"MARSDOM",""),"/",""),"\","")
 
 end function
 
