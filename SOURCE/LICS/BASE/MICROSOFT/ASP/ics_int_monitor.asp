@@ -385,7 +385,7 @@ sub ProcessForm()
    end if
 
    '//
-   '// Execute the interface/stream/triggered backlog
+   '// Execute the interface/triggered backlog
    '//
    lngSize = 0
    strQuery = "select * from"
@@ -399,16 +399,6 @@ sub ProcessForm()
    strQuery = strQuery & " where t01.hea_interface = t02.int_interface(+)"
    strQuery = strQuery & " and t01.hea_status = '3'"
    strQuery = strQuery & " group by t01.hea_interface"
-   strQuery = strQuery & " union all"
-   strQuery = strQuery & " select"
-   strQuery = strQuery & " '*STREAM_'||t01.sta_job_group as backlog_code,"
-   strQuery = strQuery & " t01.sta_job_group||' - Stream procedures' as backlog_desc,"
-   strQuery = strQuery & " '*STREAMED' as backlog_type,"
-   strQuery = strQuery & " t01.sta_job_group as backlog_group,"
-   strQuery = strQuery & " count(*) as backlog_count"
-   strQuery = strQuery & " from lics_str_action t01"
-   strQuery = strQuery & " where t01.sta_status = '*CREATED'"
-   strQuery = strQuery & " group by t01.sta_job_group
    strQuery = strQuery & " union all"
    strQuery = strQuery & " select"
    strQuery = strQuery & " '*TRIGGER_'||t01.tri_group as backlog_code,"
