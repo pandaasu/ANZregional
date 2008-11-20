@@ -328,11 +328,10 @@ create or replace package body care_bw_extract as
                                            null,
                                            null);
                   lics_mailer.create_part(null);
-                  lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - No Data - ' || rcd_period.yyyy_pp || - 'Information Only');
+                  lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - No Data - ' || rcd_period.yyyy_pp || ' - Information Only');
                   lics_mailer.append_data(null);
                   lics_mailer.append_data(null);
-                  lics_mailer.append_data('The consumer response interface extract job was executed for period (' || rcd_period.yyyy_pp || ' but no data was found');
-                  lics_mailer.create_part(null);
+                  lics_mailer.append_data('The consumer response interface extract job was executed for period (' || rcd_period.yyyy_pp || ') but no data was found');
                   lics_mailer.append_data(null);
                   lics_mailer.append_data('** Email End **');
                   lics_mailer.finalise_email('utf-8');
@@ -472,10 +471,16 @@ create or replace package body care_bw_extract as
 
       exception
          when others then
-            if lics_outbound_loader.is_created = true then
-               lics_outbound_loader.add_exception(substr(SQLERRM, 1, 2048));
-               lics_outbound_loader.finalise_interface;
-            end if;
+            begin
+               lics_logging.write_log(substr(SQLERRM, 1, 2048));
+               if lics_outbound_loader.is_created = true then
+                  lics_outbound_loader.add_exception(substr(SQLERRM, 1, 2048));
+                  lics_outbound_loader.finalise_interface;
+               end if;
+            exception
+               when others then
+                  null;
+            end;
             var_errors := true;
       end;
 
@@ -531,8 +536,10 @@ create or replace package body care_bw_extract as
          /* Log error
          /*-*/
          begin
-            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
-            lics_logging.end_log;
+            if lics_logging.is_created = true then
+               lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+               lics_logging.end_log;
+            end if;
          exception
             when others then
                null;
