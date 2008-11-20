@@ -9,7 +9,7 @@
 
  Description
  -----------
- Care - care_bw_xref
+ Care - Care BE Cross Reference Table
 
  YYYY/MM   Author         Description
  -------   ------         -----------
@@ -21,18 +21,18 @@
 /* Table creation
 /**/
 create table cr.care_bw_xref
-   (code                         varchar2(10 char)               not null,
-    type                         varchar2(20 char)               not null,
-    desc                         varchar2(60 char)               not null,
-    bw_code                      varchar2(18 char)               not null);
+   (code                         varchar2(10)               not null,
+    xref_type                    varchar2(20)               not null,
+    xref_desc                    varchar2(60)               not null,
+    bw_code                      varchar2(18)               not null);
 
 /**/
 /* Comments
 /**/
 comment on table cr.care_bw_xref is 'Care BW Cross Reference Table';
 comment on column cr.care_bw_xref.code is 'The CARE code being mapped';
-comment on column cr.care_bw_xref.type is 'Type of code being mapped. Used for filtering by user. Not required for processing.';
-comment on column cr.care_bw_xref.desc is 'User description of the code';
+comment on column cr.care_bw_xref.xref_type is 'Type of code being mapped. Used for filtering by user. Not required for processing.';
+comment on column cr.care_bw_xref.xref_desc is 'User description of the code';
 comment on column cr.care_bw_xref.bw_code is 'Equivalent code in BW';
 
 /**/
