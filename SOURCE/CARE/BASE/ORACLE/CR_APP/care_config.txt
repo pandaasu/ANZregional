@@ -1,6 +1,13 @@
 --
 -- Create the Care BW cross reference data
 --
+
+connect cr/cr2210@db0837t.ap.mars
+
+--connect cr_app/crapp2310@db0845p.ap.mars
+connect cr_app/poo@db0837t.ap.mars
+
+insert into care_bw_xref values ('CONCERN','REASON1','Concern','2');
 insert into care_bw_xref values ('NEGFEED','REASON1','Concern','2');
 insert into care_bw_xref values ('PRAISE','REASON1','Praise','4');
 insert into care_bw_xref values ('QUESTION','REASON1','Question','5');
@@ -61,15 +68,49 @@ insert into care_bw_xref values ('AUS-FOOD','MARKET','Australia','147');
 insert into care_bw_xref values ('AUS-PET','MARKET','Australia','147');
 insert into care_bw_xref values ('AUS-SNACK','MARKET','Australia','147');
 insert into care_bw_xref values ('NEWZEALAND','MARKET','New Zealand','149');
-insert into care_bw_xref values ('CHINA	MARKET','China','135');
-insert into care_bw_xref values ('KOREA	MARKET','Korea','(TBD )');
+insert into care_bw_xref values ('CHINA','MARKET','China','135');
+insert into care_bw_xref values ('KOREA','MARKET','Korea','(TBD )');
 insert into care_bw_xref values ('TAIWAN','MARKET','Taiwan','(TBD)');
 insert into care_bw_xref values ('HKMACAU','MARKET','Hong Kong','137');
 insert into care_bw_xref values ('THAILAND','MARKET','Thailand','(TBD)');
 insert into care_bw_xref values ('VIETNAM','MARKET','Vietnam','(TBD)');
-insert into care_bw_xref values ('JAPAN	MARKET','Japan','131');
+insert into care_bw_xref values ('JAPAN','MARKET','Japan','131');
 insert into care_bw_xref values ('MALAYSIA','MARKET','Malaysia','(TBD)');
 insert into care_bw_xref values ('PHILIPINES','MARKET','Philippines','(TBD)');
 insert into care_bw_xref values ('SINGAPORE','MARKET','Singapore','(TBD)');
 insert into care_bw_xref values ('INDONESIA','MARKET','Indonesia','(TBD)');
+
+commit;
+
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CARE\BASE\ORACLE\CR_APP\care_bw_extract.sql;
+
+--
+-- Create the LICS configuration data
+--
+
+--TEST--
+connect lics_app/culics@db0837t.ap.mars
+
+insert into lics_setting values('CARE_SAPBW_EXTRACT','ALERT_STRING','*NONE');
+insert into lics_setting values('CARE_SAPBW_EXTRACT','EMAIL_GROUP','stephen.gregan@ap.effem.com');
+insert into lics_setting values('CARE_SAPBW_EXTRACT','REPORT_GROUP','stephen.gregan@ap.effem.com');
+insert into lics_interface values('CARSBW01','Care to SAP BW - Consumer Response Interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','CARSBW01',15,'TXT',null,'stephen.gregan@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> apu003.ap.mars ics 1htj2isa /tmp/ <MESG>','0');
+insert into lics_job values('SBW_CONSUMER_RESPONSE','SAP BW Consumer Response Extract (12:00AM 1st Tuesday of Period)',null,20,null,'stephen.gregan@ap.effem.com','*PROCEDURE',null,'cr_app.care_bw_extract.execute(*LAST)','lics_time.schedule_next(''*MARS03'',12)','lics_time.schedule_next(''*MARS03'',12)','0');
+commit;
+
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> QM0083T MOU43T1 /sapmq/Sources/GCC/NonCRM *NOCOMPRESS *CMP' where int_interface = 'CARSBW01';
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> apu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'CARSBW01';
+commit;
+
+--PROD--
+--connect lics_app/licsapp@db0845p.ap.mars
+
+insert into lics_setting values('CARE_SAPBW_EXTRACT','ALERT_STRING','*NONE');
+insert into lics_setting values('CARE_SAPBW_EXTRACT','EMAIL_GROUP','xxxx@ap.effem.com');
+insert into lics_setting values('CARE_SAPBW_EXTRACT','REPORT_GROUP','xxxx@ap.effem.com');
+insert into lics_interface values('CARSBW01','Care to SAP BW - Consumer Response Interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','CARSBW01',15,'TXT',null,'xxxx@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> QM0020P QM0033P /sapmq/Sources/GCC/NonCRM *NOCOMPRESS *CMP','0');
+insert into lics_job values('SBW_CONSUMER_RESPONSE','SAP BW Consumer Response Extract (12:00AM 1st Tuesday of Period)',null,20,null,'xxxx@ap.effem.com','*PROCEDURE',null,'cr_app.care_bw_extract.execute(*LAST)','lics_time.schedule_next(''*MARS03'',12)','lics_time.schedule_next(''*MARS03'',12)','0');
+commit;
+
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> QM0020P QM0033P /sapmq/Sources/GCC/NonCRM *NOCOMPRESS *CMP' where int_interface = 'CARSBW01';
 commit;
