@@ -25,6 +25,7 @@
 SCRIPT_PATH=${0%/*}
 
 USE_DEFAULT="*NONE"
+EXCLUDE="*EXCLUDE"
 
 DEFAULT_ROOT="ics"
 DEFAULT_SYS="lad"
@@ -90,6 +91,9 @@ create_ics_path()
     if [ $USE_DEFAULT = $CREATE_DIR ] ; then
         print_message "INFO: [create_ics_path] Using default directory [${DEFAULT_DIR}]" "HARMLESS" 
         CREATE_DIR=$DEFAULT_DIR
+    elif [ $EXCLUDE = $CREATE_DIR ] ; then
+        print_message "INFO: [create_ics_path] Excluding directory. [${DEFAULT_DIR}]" "HARMLESS"
+        return
     fi
     
     LAST_PATH="${CREATE_PATH}/${CREATE_DIR}"
@@ -254,4 +258,5 @@ exit 0                  # Exit: Exit script with successful flag (0)
 # Version Date        Author        Modification
 # ------- ----------- ------------- -----------------------------
 # 1.0     13-NOV-2008 T. Keon       Original 
+# 1.1     21-NOV-2008 T. Keon       Added option to exclude directories
 # ---------------------------------------------------------------------------
