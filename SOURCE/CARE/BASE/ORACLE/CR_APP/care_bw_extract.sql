@@ -15,9 +15,15 @@ create or replace package care_bw_extract as
     Care - BW Extract
 
     This package contains the extract procedure for the consumer response SAP BW extract.
-    The package exposes one procedure EXECUTE that performs the extract based on the following parameter:
+    The package exposes one procedure EXECUTE that performs the extract based on the following parameters:
 
     1. PAR_PERIOD (*LAST or period in string format (YYYYPP) (MANDATORY)
+
+       *LAST extracts consumer response data for the previous three periods.
+       *CURRENT extracts consumer response data for the current period.
+       YYYYPP extracts consumer response data for the requested period.
+
+    2. PAR_ACTION (*EXECUTE or *VALIDATE (MANDATORY)
 
        *LAST extracts consumer response data for the previous three periods.
        YYYYPP extracts consumer response data for the requested period.
@@ -31,7 +37,7 @@ create or replace package care_bw_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_period in varchar2);
+   procedure execute(par_period in varchar2, par_action in varchar2);
 
 end care_bw_extract;
 /
@@ -67,7 +73,7 @@ create or replace package body care_bw_extract as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_period in varchar2) is
+   procedure execute(par_period in varchar2, par_action in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -84,6 +90,7 @@ create or replace package body care_bw_extract as
       var_save_tran varchar2(10);
       var_suffix number;
       var_output varchar2(4000);
+      var_text varchar2(128);
       type typ_output is table of varchar2(4000) index by binary_integer;
       tbl_email typ_output;
       tbl_output typ_output;
@@ -105,8 +112,9 @@ create or replace package body care_bw_extract as
                 to_char(t01.salesyear * 100 + t01.period,'fm000000') as yyyypp,
                 substr(to_char(t01.salesyear * 100 + t01.period,'fm000000'),1,4)||'/'||substr(to_char(t01.salesyear * 100 + t01.period,'fm000000'),5,2) as yyyy_pp
            from period t01
-          where ((upper(par_period) = '*LAST' and trunc(t01.salesend) <= trunc(sysdate)) or
-                 (upper(par_period) != '*LAST' and to_char(t01.salesyear * 100 + t01.period,'fm000000') = par_period))
+          where ((upper(par_period) = '*CURRENT' and trunc(t01.salestart) <= trunc(sysdate) and trunc(t01.salesend) >= trunc(sysdate)) or
+                 (upper(par_period) = '*LAST' and trunc(t01.salesend) <= trunc(sysdate)) or
+                 (upper(par_period) != '*CURRENT' and upper(par_period) != '*LAST' and to_char(t01.salesyear * 100 + t01.period,'fm000000') = par_period))
             and rownum <= 3
           order by t01.salesyear desc, t01.period desc;
       rcd_period csr_period%rowtype;
@@ -174,13 +182,22 @@ create or replace package body care_bw_extract as
       /*-*/
       /* Validate the parameters
       /*-*/
-      if upper(par_period) != '*LAST' then
+      if (upper(par_period) != '*CURRENT' and upper(par_period) != '*LAST') then
          open csr_check;
          fetch csr_check into rcd_check;
          if csr_check%notfound then
-            raise_application_error(-20000, 'Period ('||par_period||') not found in PERIOD table');
+            raise_application_error(-20000, 'Period ('||par_period||') must be *CURRENT, *LAST or exist in the PERIOD table');
          end if;
          close csr_check;
+      end if;
+      if (upper(par_action) != '*EXECUTE' and upper(par_action) != '*VALIDATE') then
+         raise_application_error(-20000, 'Action ('||par_action||') must be *EXECUTE or *VALIDATE');
+      end if;
+      if upper(par_action) = '*EXECUTE' then
+         var_text := 'EXECUTION';
+      end if;
+      if upper(par_action) = '*VALIDATE' then
+         var_text := 'VALIDATION ONLY';
       end if;
 
       /*-*/
@@ -191,7 +208,7 @@ create or replace package body care_bw_extract as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Care SAP BW Extract - Parameters(' || par_period || ')');
+      lics_logging.write_log('Begin - Care SAP BW Extract - Parameters(' || par_period || ' + ' || par_action || ')');
 
       /*-*/
       /* Perform the period extracts
@@ -276,7 +293,7 @@ create or replace package body care_bw_extract as
                end if;
 
                /*-*/
-               /* Output the extract string when no errors
+               /* Output the extract string when required
                /*-*/
                if tbl_email.count = 0 then
                   var_output := '"'||replace(rcd_extract.trans_id,'"','""')||'";';
@@ -310,36 +327,9 @@ create or replace package body care_bw_extract as
             if tbl_email.count = 0 then
 
                /*-*/
-               /* Create the notification when no data for the period
-               /*-*/
-               if tbl_output.count = 0 then
-
-                  /*-*/
-                  /* Log event
-                  /*-*/
-                  lics_logging.write_log('Sending no data information email for period (' || rcd_period.yyyy_pp || ') to ' || var_report);
-
-                  /*-*/
-                  /* Create the notification email
-                  /*-*/
-                  lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
-                                           var_report,
-                                           'Consumer Response Interface (Care to SAP BW) - No Data - ' || rcd_period.yyyy_pp,
-                                           null,
-                                           null);
-                  lics_mailer.create_part(null);
-                  lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - No Data - ' || rcd_period.yyyy_pp || ' - Information Only');
-                  lics_mailer.append_data(null);
-                  lics_mailer.append_data(null);
-                  lics_mailer.append_data('The consumer response interface extract job was executed for period (' || rcd_period.yyyy_pp || ') but no data was found');
-                  lics_mailer.append_data(null);
-                  lics_mailer.append_data('** Email End **');
-                  lics_mailer.finalise_email('utf-8');
-
-               /*-*/
                /* Create the interface when required
                /*-*/
-               else
+               if (upper(par_action) = '*EXECUTE' and tbl_output.count != 0) then
 
                   /*-*/
                   /* Log event
@@ -355,6 +345,7 @@ create or replace package body care_bw_extract as
                   /*-*/
                   /* Append the interface records
                   /*-*/
+                  lics_outbound_loader.append_data('TRANS_ID;SALES_ORG;PROD_ID_GRD;BUS_SEG;MKT_SEG;BRAND_FLAG;SUPP_SEG;PACK_FORMAT;PROD_CAT;FACTORY_MOE;REASON_L1;REASON_L2;REASON_L3;SEVERITY_ID;YEAR;PERIOD;CREATION_DATE;VERBATIM;REASON_TEXT');
                   for idx in 1..tbl_output.count loop
                      lics_outbound_loader.append_data(tbl_output(idx));
                   end loop;
@@ -366,8 +357,49 @@ create or replace package body care_bw_extract as
 
                end if;
 
+               /*-*/
+               /* Create the confirmation email
+               /*-*/
+               if tbl_output.count = 0 then
+                  lics_logging.write_log('Sending confirmation email (No Data) for period (' || rcd_period.yyyy_pp || ') to ' || var_report);
+                  lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
+                                           var_report,
+                                           'Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - No Data Found - ' || rcd_period.yyyy_pp,
+                                           null,
+                                           null);
+                  lics_mailer.create_part(null);
+                  lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - No Data Found - ' || rcd_period.yyyy_pp);
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data('The consumer response interface extract job (' || var_text || ') was executed for period (' || rcd_period.yyyy_pp || ') but no data was found');
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data('** Email End **');
+                  lics_mailer.finalise_email('utf-8');
+               else
+                  lics_logging.write_log('Sending confirmation email (Completed) for period (' || rcd_period.yyyy_pp || ') to ' || var_report);
+                  lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
+                                           var_report,
+                                           'Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - Completed - ' || rcd_period.yyyy_pp,
+                                           null,
+                                           null);
+                  lics_mailer.create_part(null);
+                  lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - Completed - ' || rcd_period.yyyy_pp);
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data('The consumer response interface extract job (' || var_text || ') was executed for period (' || rcd_period.yyyy_pp || ') and completed successfully');
+                  if upper(par_action) = '*EXECUTE' then
+                     lics_mailer.append_data(null);
+                     lics_mailer.append_data(null);
+                     lics_mailer.append_data('The interface file has been sent to the SAP BW system');
+                  end if;
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data(null);
+                  lics_mailer.append_data('** Email End **');
+                  lics_mailer.finalise_email('utf-8');
+               end if;
+
             /*-*/
-            /* Create the email when required
+            /* Create the error email when required
             /*-*/
             else
 
@@ -381,11 +413,11 @@ create or replace package body care_bw_extract as
                /*-*/
                lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
                                         var_report,
-                                        'Consumer Response Interface (Care to SAP BW) - Error Report - ' || rcd_period.yyyy_pp,
+                                        'Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - Error Report - ' || rcd_period.yyyy_pp,
                                         null,
                                         null);
                lics_mailer.create_part(null);
-               lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - Error Report - ' || rcd_period.yyyy_pp);
+               lics_mailer.append_data('Consumer Response Interface (Care to SAP BW) - ' || var_text || ' - Error Report - ' || rcd_period.yyyy_pp);
                lics_mailer.append_data(null);
                lics_mailer.append_data(null);
                lics_mailer.append_data(null);
