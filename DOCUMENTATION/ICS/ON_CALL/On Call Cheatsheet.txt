@@ -16,18 +16,23 @@ Date Format: (i_creation_date)
 
 NOTE:  the date should be the day before the current day!!
 
+Database Connections:
+-- HK - DW_APP / AP0115P
+-- JP - DW_APP / AP0093P
+-- CDW - ODS_APP / AP0070P
+
 -------------------------------------
 Checking existing invoices in system:
 -------------------------------------
 
--- HK (115P)
+-- HK
 select * 
 from lads_inv_dat
 where datum = :i_creation_date
 	and iddat = '015'
 
 
--- JP (93P)
+-- JP
 select t01.belnr from lads_inv_hdr t01,
 	(
 		select t21.belnr as belnr
@@ -46,7 +51,7 @@ where t01.belnr = t02.belnr
 	and t01.belnr = t03.belnr;
 
 
--- VENUS (70P)
+-- VENUS
 SELECT c.orgid AS companycode, b.datum AS creationdate,
 	a.belnr AS invoicenumber, d.summe AS reconciliationvalue,
 	a.curcy AS currency, f.orgid AS invc_type_code
@@ -102,7 +107,7 @@ ATLAS Team information:
 Query to check reconciliation of invoices:
 -------------------------------------
 
--- VENUS (70P)
+-- VENUS
 SELECT
   creation_date,
   company_code,
@@ -230,7 +235,7 @@ end;
 Check triggered aggregation success:
 -------------------------------------
 
--- VENUS (70P)
+-- VENUS
 select *
 from log
 where log_lupdt > trunc(sysdate, 'DD')
