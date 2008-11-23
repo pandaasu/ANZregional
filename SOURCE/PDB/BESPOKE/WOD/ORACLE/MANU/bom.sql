@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.bom_ics as
+create or replace force view manu.bom as
   select t01.bom_plant as plant,
     ltrim(t01.bom_number,'0') as bom_code,
     t01.bom_alternative as alt,
@@ -34,18 +34,18 @@ create or replace force view bds_app.bom_ics as
     t01.item_material_code as sub_matl_code,
     t01.item_base_qty as qty,
     t01.item_base_uom as uom
-  from bds_bom_all_ics t01
+  from bds_bom_all t01
   where t01.bom_plant IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25')
     and t01.item_number is not null;
 
 /**/
 /* Authority 
 /**/
---grant select on bds_app.bom_ics to bds_app with grant option;
-grant select on bds_app.bom_ics to pt_app with grant option;
-grant select on bds_app.bom_ics to manu_app with grant option;
+grant select on manu.bom to bds_app with grant option;
+grant select on manu.bom to pt_app with grant option;
+grant select on manu.bom to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bom_ics for bds_app.bom_ics;    
+create or replace public synonym bom for manu.bom;    

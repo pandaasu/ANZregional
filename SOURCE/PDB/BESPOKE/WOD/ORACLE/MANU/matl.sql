@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.matl_ics as
+create or replace force view manu.matl as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.bds_material_desc_en as matl_desc,
     t01.plant_code as plant,
@@ -62,17 +62,17 @@ create or replace force view bds_app.matl_ics as
     t01.future_planned_price_1 as plnd_price,
     t01.vltn_class as vltn_class,
     t01.backflush_indctr as back_flush_ind
-  from bds_material_plant_mfanz_test t01
+  from bds_material_plant_mfanz t01
   where plant_code IN ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25');
 
 /**/
 /* Authority 
 /**/
---grant select on bds_app.matl_ics to bds_app with grant option;
-grant select on bds_app.matl_ics to pt_app with grant option;
-grant select on bds_app.matl_ics to manu_app with grant option;
+grant select on manu.matl to bds_app with grant option;
+grant select on manu.matl to pt_app with grant option;
+grant select on manu.matl to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_ics for bds_app.matl_ics; 
+create or replace public synonym matl for manu.matl; 

@@ -1,4 +1,4 @@
-create or replace package pt_app.tagsys_fctry_intfc_ics as
+create or replace package pt_app.tagsys_fctry_intfc as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -135,7 +135,7 @@ create or replace package pt_app.tagsys_fctry_intfc_ics as
 end;
 /
 
-create or replace package body pt_app.tagsys_fctry_intfc_ics as
+create or replace package body pt_app.tagsys_fctry_intfc as
    
   b_test_flag boolean := false; 
    
@@ -190,7 +190,7 @@ create or replace package body pt_app.tagsys_fctry_intfc_ics as
     cursor csr_matl is
       select issue_strg_locn, 
         decode(base_uom,'KGM','KG', base_uom) as uom 
-      from matl_ics
+      from matl
       where ltrim(matl_code,'0') = i_material_code
         and plant = i_plant_code;    
     
@@ -284,7 +284,7 @@ create or replace package body pt_app.tagsys_fctry_intfc_ics as
     else
       select count(*) 
       into v_count 
-      from matl_ics
+      from matl
       where matl_code = i_material_code;
       
       if ( v_count = 0 ) then
@@ -1239,7 +1239,7 @@ create or replace package body pt_app.tagsys_fctry_intfc_ics as
     cursor csr_matl is
       select issue_strg_locn, 
         decode(base_uom,'KGM','KG', base_uom) as uom 
-      from matl_ics
+      from matl
       where ltrim(matl_code,'0') = i_material_code
         and plant = i_plant_code;
     
@@ -1397,7 +1397,7 @@ create or replace package body pt_app.tagsys_fctry_intfc_ics as
     cursor csr_matl is
     select issue_strg_locn, 
       decode(base_uom,'KGM','KG', base_uom) uom 
-    from matl_ics
+    from matl
     where ltrim(matl_code,'0') = i_material_code
       and plant = i_plant_code;		
 	
@@ -1458,20 +1458,20 @@ create or replace package body pt_app.tagsys_fctry_intfc_ics as
   	 
   end cancel_consumption;
 
-end tagsys_fctry_intfc_ics;
+end tagsys_fctry_intfc;
 /
 
 /**/
 /* Authority 
 /**/
-grant execute on pt_app.tagsys_fctry_intfc_ics to appsupport;
-grant execute on pt_app.tagsys_fctry_intfc_ics to citsrv1 with grant option;
-grant execute on pt_app.tagsys_fctry_intfc_ics to pt_maint;
-grant execute on pt_app.tagsys_fctry_intfc_ics to pt_user;
-grant execute on pt_app.tagsys_fctry_intfc_ics to public;
-grant execute on pt_app.tagsys_fctry_intfc_ics to shiftlog;
+grant execute on pt_app.tagsys_fctry_intfc to appsupport;
+grant execute on pt_app.tagsys_fctry_intfc to citsrv1 with grant option;
+grant execute on pt_app.tagsys_fctry_intfc to pt_maint;
+grant execute on pt_app.tagsys_fctry_intfc to pt_user;
+grant execute on pt_app.tagsys_fctry_intfc to public;
+grant execute on pt_app.tagsys_fctry_intfc to shiftlog;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym tagsys_fctry_intfc_ics for pt_app.tagsys_fctry_intfc_ics;
+create or replace public synonym tagsys_fctry_intfc for pt_app.tagsys_fctry_intfc;

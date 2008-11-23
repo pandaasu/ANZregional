@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.matl_plt_ics as
+create or replace force view manu.matl_plt as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.plant_code as plant,
     t01.plant_specific_status_valid as plant_sts_start,
@@ -44,12 +44,12 @@ create or replace force view bds_app.matl_plt_ics as
         t12.hu_total_weight as total_wght_hndlng_unit,
         t12.pkg_instr_start_date as start_date,
         t12.pkg_instr_end_date as end_date
-      from bds_material_pkg_instr_det_t t12
+      from bds_material_pkg_instr_det t12
       where t12.sap_material_code = t12.component
         and t12.pkg_instr_start_date =
         (
           select max(t98.pkg_instr_start_date)
-          from bds_material_pkg_instr_det_t t98
+          from bds_material_pkg_instr_det t98
           where t12.sap_material_code = t98.sap_material_code
             and t98.pkg_instr_start_date <= sysdate
             and t98.pkg_instr_table = '505'
@@ -69,7 +69,7 @@ create or replace force view bds_app.matl_plt_ics as
           decode(t99.bom_eff_date, null, to_date('19000101', 'yyyymmdd'), t99.bom_eff_date) as valid_from_date,
           t99.bom_plant as plant,
           rank() over (partition by t99.parent_material_code order by t99.bom_eff_date desc,t99.child_per_parent) as rank_seq
-        from bds_material_bom_all_ics t99
+        from bds_material_bom_all t99
         where t99.parent_tdu_flag = 'X'
           and t99.parent_material_type = 'FERT'
           and t99.bom_plant = '*NONE'
@@ -91,7 +91,7 @@ create or replace force view bds_app.matl_plt_ics as
         select t98.parent_material_code as tdu_matl_code,
           t98.child_per_parent as mcus_per_tdu,
           t98.bom_eff_date as valid_from_date
-        from bds_material_bom_all_ics t98
+        from bds_material_bom_all t98
         where t98.parent_tdu_flag = 'X'
           and t98.parent_material_type = 'FERT'
           and t98.bom_plant = '*NONE'
@@ -116,11 +116,11 @@ create or replace force view bds_app.matl_plt_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.matl_plt_ics to bds_app with grant option;
-grant select on bds_app.matl_plt_ics to pt_app with grant option;
-grant select on bds_app.matl_plt_ics to manu_app with grant option;
+grant select on manu.matl_plt to bds_app with grant option;
+grant select on manu.matl_plt to pt_app with grant option;
+grant select on manu.matl_plt to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_plt_ics for bds_app.matl_plt_ics;     
+create or replace public synonym matl_plt for manu.matl_plt;     
