@@ -29,6 +29,7 @@ create or replace package efxsbw01_cust_extract as
     2008/10   Steve Gregan   Modified market test to the customer from the customer type
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
+    2008/11   Steve Gregan   Modified to distributer customer id
 
    *******************************************************************************/
 
@@ -105,7 +106,7 @@ create or replace package body efxsbw01_cust_extract as
                 t14.geo_level3_name as geo_level3_name,
                 t14.geo_level4_name as geo_level4_name,
                 t14.geo_level5_name as geo_level5_name,
-                t15.distcust_code as distcust_code,
+                to_char(t01.distributor_id) as distributor_id,
                 t16.list_value_text as list_value_text
            from customer t01,
                 cust_type t02,
@@ -130,7 +131,6 @@ create or replace package body efxsbw01_cust_extract as
                 cust_grade t12,
                 standard_hierarchy t13,
                 geo_hierarchy t14,
-                distributor_cust t15,
                 (select t01.business_unit_id,
                         t01.list_value_name,
                         max(t01.list_value_text) as list_value_text
@@ -161,8 +161,6 @@ create or replace package body efxsbw01_cust_extract as
             and t01.geo_level3_code = t14.geo_level3_code(+)
             and t01.geo_level4_code = t14.geo_level4_code(+)
             and t01.geo_level5_code = t14.geo_level5_code(+)
-            and t01.customer_id = t15.customer_id(+)
-            and t01.distributor_id = t15.distributor_id(+)
             and t01.business_unit_id = t16.business_unit_id(+)
             and t01.outlet_location = t16.list_value_name(+)
             and t01.affiliation_id = t17.affiliation_id(+)
@@ -176,8 +174,7 @@ create or replace package body efxsbw01_cust_extract as
                  trunc(t08.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t09.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t10.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t12.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t15.modified_date) >= trunc(sysdate) - var_history);
+                 trunc(t12.modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -246,7 +243,7 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.outlet_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.active_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_grade_name,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.distcust_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.distributor_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.range_id,'"','""')||'"');
 
       end loop;
