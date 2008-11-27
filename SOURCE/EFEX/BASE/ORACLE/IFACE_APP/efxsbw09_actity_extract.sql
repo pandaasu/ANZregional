@@ -28,6 +28,7 @@ create or replace package efxsbw09_actity_extract as
     2008/10   Steve Gregan   Created
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
+    2008/11   Steve Gregan   Modified to extract by period grouping
 
    *******************************************************************************/
 
@@ -81,7 +82,23 @@ create or replace package body efxsbw09_actity_extract as
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 t01.activity_in_store as activity_in_store
            from activity_distribution t01
-          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history)
+          where (t01.customer_id,
+                 t01.activity_item_id,
+                 t01.user_id,
+                 t01.call_date) in (select t01.customer_id,
+                                           t01.activity_item_id,
+                                           t01.user_id,
+                                           max(call_date) as call_date
+                                      from activity_distribution t01,
+                                           mars_date t02
+                                     where trunc(t01.call_date) = trunc(t02.calendar_date)
+                                       and (t01.user_id, t01.call_date) in (select user_id, call_date
+                                                                              from call
+                                                                             where trunc(modified_date) >= trunc(sysdate) - var_history)
+                                     group by t01.customer_id,
+                                              t01.activity_item_id,
+                                              t01.user_id,
+                                              t02.mars_period)
             and t01.customer_id in (select t01.customer_id
                                       from customer t01,
                                            cust_type t02,
