@@ -7,9 +7,9 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define database = ap0085p.ap.mars
+define database = db0845p.ap.mars
 define datauser = lics_app
-define data_password = licsfexapp
+define data_password = licskyte
 
 /**/
 /* Create the configuration data
@@ -32,7 +32,6 @@ prompt CREATING SECURITY CONFIGURATION ...
 insert into lics_sec_user values('*GUEST','Guest','GUEST','1');
 insert into lics_sec_user values('GREGASTE','Steve Gregan','ICS_ADMIN','1');
 insert into lics_sec_user values('GIRLIJON','Jonathan Girling','ICS_ADMIN','1');
-insert into lics_sec_user values('GLENLIN','Linden Glen','ICS_ADMIN','1');
 insert into lics_sec_user values('KEONTRE','Trevor Keon','ICS_ADMIN','1');
 
 insert into lics_sec_menu values('*SECURITY','Security');
