@@ -76,11 +76,15 @@ create or replace package body efxsbw09_actity_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
+         select * from (
          select to_char(t01.customer_id) as customer_id,
                 to_char(t01.activity_item_id) as activity_item_id,
                 to_char(t01.user_id) as user_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
-                t01.activity_in_store as activity_in_store
+                t01.activity_in_store as activity_in_store,
+                rank() over (partition by t01.customer_id,
+                                          t01.activity_item_id
+                                 order by t01.call_date desc) as rnkseq
            from activity_distribution t01
           where (t01.customer_id,
                  t01.activity_item_id,
@@ -109,7 +113,8 @@ create or replace package body efxsbw09_actity_extract as
                                        and t02.cust_trade_channel_id = t03.cust_trade_channel_id(+)
                                        and t03.cust_channel_id = t04.cust_channel_id(+)
                                        and t04.market_id = t05.market_id(+)
-                                       and t05.market_id = con_market_id);
+                                       and t05.market_id = con_market_id)) t01
+          where t01.rnkseq = 1;
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
