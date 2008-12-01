@@ -69,7 +69,7 @@ create or replace package body ics_cisatl09_validation as
             if not(var_message is null) then
                var_message := var_message || '; ';
             end if;
-            var_message := var_message || 'Record HDR length must be 158';
+            var_message := var_message || 'Record HDR length must be 208';
          end if;
       end if;
 
