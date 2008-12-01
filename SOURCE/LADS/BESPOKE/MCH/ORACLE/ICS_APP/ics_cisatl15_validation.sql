@@ -1,20 +1,20 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ics_cisatl09_validation as
+create or replace package ics_cisatl15_validation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     System  : ics
-    Package : ics_cisatl09_validation
+    Package : ics_cisatl15_validation
     Owner   : ics_app
     Author  : Steve Gregan
 
     Description
     -----------
-    Interface Control System - Interface CISATL09 validation
+    Interface Control System - Interface CISATL15 validation
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package ics_cisatl09_validation as
    /*-*/
    function on_data(par_record in varchar2) return varchar2;
 
-end ics_cisatl09_validation;
+end ics_cisatl15_validation;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ics_cisatl09_validation as
+create or replace package body ics_cisatl15_validation as
 
    /***********************************************/
    /* This procedure performs the on data routine */
@@ -43,7 +43,6 @@ create or replace package body ics_cisatl09_validation as
       /*-*/
       /* Local definitions
       /*-*/
-      var_title varchar2(128);
       var_message varchar2(4000);
 
    /*-------------*/
@@ -54,26 +53,24 @@ create or replace package body ics_cisatl09_validation as
       /*-*/
       /* Initialise the function
       /*-*/
-      var_title := 'Interface CISATL15 Validation';
       var_message := null;
 
       /*-*/
       /* Validate the data
       /*-*/
       if substr(par_record,1,3) != 'HDR' then
-         var_message := var_message || chr(13) || 'Record must start with HDR not (' || substr(par_record,1,3) || ')';
-      end if;
-      if (substr(par_record,1,3) = 'HDR' then
-         if length(par_record) != 98 then
-            var_message := var_message || chr(13) || 'Record HDR length must be 98';
+         if not(var_message is null) then
+            var_message := var_message || '; ';
          end if;
+         var_message := var_message || 'Record must start with HDR not (' || substr(par_record,1,3) || ')';
       end if;
-
-      /*-*/
-      /* Insert the message title when required
-      /*-*/
-      if not(var_message is null) then
-         var_message := var_title || var_message;
+      if substr(par_record,1,3) = 'HDR' then
+         if length(par_record) != 98 then
+            if not(var_message is null) then
+               var_message := var_message || '; ';
+            end if;
+            var_message := var_message || 'Record HDR length must be 98';
+         end if;
       end if;
 
       /*-*/
@@ -86,11 +83,11 @@ create or replace package body ics_cisatl09_validation as
    /*-------------*/
    end on_data;
 
-end ics_cisatl09_validation;
+end ics_cisatl15_validation;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ics_cisatl09_validation for ics_app.ics_cisatl09_validation;
-grant execute on ics_cisatl09_validation to public;
+create or replace public synonym ics_cisatl15_validation for ics_app.ics_cisatl15_validation;
+grant execute on ics_cisatl15_validation to public;

@@ -43,8 +43,7 @@ create or replace package body ics_cisatl09_validation as
       /*-*/
       /* Local definitions
       /*-*/
-      var_result varchar2(4000);
-      var_record_identifier varchar2(3);
+      var_message varchar2(4000);
 
    /*-------------*/
    /* Begin block */
@@ -54,27 +53,30 @@ create or replace package body ics_cisatl09_validation as
       /*-*/
       /* Initialise the function
       /*-*/
-      var_result := null;
+      var_message := null;
 
       /*-*/
-      /* Add the search data
+      /* Validate the data
       /*-*/
-      var_record_identifier := substr(par_record,1,3);
-      case var_record_identifier
-         when 'CTL' then
-            process_record_ctl(par_record);
-         when 'HDR' then
-            process_record_hdr(par_record);
-         when 'DET' then
-            process_record_det(par_record);
-         else
-            var_result := 'Record identifier (' || var_record_identifier || ') must be CTL, HDR or DET');
-      end case;
+      if substr(par_record,1,3) != 'HDR' then
+         if not(var_message is null) then
+            var_message := var_message || '; ';
+         end if;
+         var_message := var_message || 'Record must start with HDR not (' || substr(par_record,1,3) || ')';
+      end if;
+      if substr(par_record,1,3) = 'HDR' then
+         if length(par_record) != 158 then
+            if not(var_message is null) then
+               var_message := var_message || '; ';
+            end if;
+            var_message := var_message || 'Record HDR length must be 158';
+         end if;
+      end if;
 
       /*-*/
-      /* Return the result
+      /* Return the message
       /*-*/
-      return var_result;
+      return var_message;
 
    /*-------------*/
    /* End routine */
