@@ -95,6 +95,7 @@ alter table bds.bds_vend_comp_ics
 grant select, update, delete, insert on bds.bds_vend_comp_ics to bds_app with grant option;
 grant select on bds.bds_vend_comp_ics to manu_app with grant option;
 grant select on bds.bds_vend_comp_ics to pt_app with grant option;
+grant select on bds.bds_vend_comp_ics to manu with grant option;
 
 /**/
 /* Synonym 

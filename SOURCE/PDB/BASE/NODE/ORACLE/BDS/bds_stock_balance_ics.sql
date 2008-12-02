@@ -70,6 +70,7 @@ create or replace force view bds.bds_stock_balance_ics as
 grant select on bds.bds_stock_balance_ics to bds_app with grant option;
 grant select on bds.bds_stock_balance_ics to manu_app with grant option;
 grant select on bds.bds_stock_balance_ics to pt_app with grant option;
+grant select on bds.bds_stock_balance_ics to manu with grant option;
 
 /**/
 /* Synonym 

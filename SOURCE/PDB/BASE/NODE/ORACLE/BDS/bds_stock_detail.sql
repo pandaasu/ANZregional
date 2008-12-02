@@ -52,6 +52,7 @@ alter table bds.bds_stock_detail
 grant select, update, delete, insert on bds.bds_stock_detail to bds_app with grant option;
 grant select on bds.bds_stock_detail to manu_app with grant option;
 grant select on bds.bds_stock_detail to pt_app with grant option;
+grant select on bds.bds_stock_detail to manu with grant option;
 
 /**/
 /* Synonym 

@@ -98,6 +98,10 @@ create index bds.bds_material_plant_test_idx02 on bds.bds_material_plant_mfanz_t
 create index bds.bds_material_plant_test_idx03 on bds.bds_material_plant_mfanz_test(procurement_type, special_procurement_type);
 create index bds.bds_material_plant_test_idx04 on bds.bds_material_plant_mfanz_test(mars_plant_material_type);
 create index bds.bds_material_plant_test_idx05 on bds.bds_material_plant_mfanz_test(plant_code,sap_material_code,plant_specific_status,material_division,material_type,mars_traded_unit_flag,mrp_type);
+create index bds.bds_material_plant_test_idx06 on bds.bds_material_plant_mfanz_test(plant_code,material_type);
+create index bds.bds_material_plant_test_idx07 on bds.bds_material_plant_mfanz_test(mars_traded_unit_flag);
+create index bds.bds_material_plant_test_idx08 on bds.bds_material_plant_mfanz_test(mars_retail_sales_unit_flag);
+create index bds.bds_material_plant_test_idx09 on bds.bds_material_plant_mfanz_test(mars_intrmdt_prdct_compnt_flag);
 
 /**/
 /* Primary Key Constraint 
@@ -111,6 +115,7 @@ alter table bds.bds_material_plant_mfanz_test
 grant select, delete, insert, update on bds.bds_material_plant_mfanz_test to bds_app with grant option;
 grant select on bds.bds_material_plant_mfanz_test to manu_app with grant option;
 grant select on bds.bds_material_plant_mfanz_test to pt_app with grant option;
+grant select on bds.bds_material_plant_mfanz_test to manu with grant option;
 
 /**/
 /* Synonym 

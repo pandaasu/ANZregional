@@ -20,6 +20,9 @@ create or replace package bds_purging as
   -------   ------         ----------- 
   2008/05   Trevor Keon    Created 
   2008/07   Trevor Keon    Added recipe_purge into purge_ladpdb01 procedure
+  2008/09   Trevor Keon    Added purging to LADPDB03 and LADPDB10
+  2008/10   Trevor Keon    Added purging to LADPDB02 and LADPDB12
+  2008/10   Trevor Keon    Removed purging for LADPDB14 and LADPDB15
 
 *******************************************************************************/ 
 
@@ -46,8 +49,9 @@ create or replace package body bds_purging as
    /* Private declarations
    /*-*/
    procedure purge_ladpdb01;
-   procedure purge_ladpdb14;
-   procedure purge_ladpdb15;
+   procedure purge_ladpdb02;
+   procedure purge_ladpdb03_10;
+   procedure purge_ladpdb12;
 
    /*-*/
    /* Private constants
@@ -69,16 +73,21 @@ create or replace package body bds_purging as
       /* Purge the LADPDB01 (process order) 
       /*-*/
       purge_ladpdb01;
+      
+      /*-*/
+      /* Purge the LADPDB02 (materials) 
+      /*-*/
+      purge_ladpdb02;      
+      
+      /*-*/
+      /* Purge the LADPDB03 and LADPDB10 (customer addresses and sales area) 
+      /*-*/
+      purge_ladpdb03_10; 
 
       /*-*/
-      /* Purge the LADPDB14 (stock balance) 
+      /* Purge the LADPDB12 (vendors) 
       /*-*/
-      purge_ladpdb14;
-
-      /*-*/
-      /* Purge the LADPDB15 (stock in transit) 
-      /*-*/
-      purge_ladpdb15;
+      purge_ladpdb12;
 
    /*-------------------*/
    /* Exception handler */
@@ -225,16 +234,15 @@ create or replace package body bds_purging as
   /* End routine */
   /*-------------*/
   end purge_ladpdb01;
-
+  
   /******************************************************/
-  /* This procedure performs the purge LADPDB14 routine */
+  /* This procedure performs the purge LADPDB02 routine */
   /******************************************************/
-  procedure purge_ladpdb14 is
+  procedure purge_ladpdb02 is
 
   /*-*/
   /* Local definitions
   /*-*/
-  var_history number;
   var_count number;
   var_available boolean;
 
@@ -242,27 +250,17 @@ create or replace package body bds_purging as
   /* Local cursors
   /*-*/
   cursor csr_header is
-    select t01.company_code,
-      t01.plant_code,
-      t01.storage_location_code,
-      t01.stock_balance_date,
-      t01.stock_balance_time
-    from bds_stock_header t01
-    where t01.msg_timestamp < to_char((sysdate - var_history),'yyyymmddhh24miss');
+    select t01.sap_material_code
+    from bds_material_plant_mfanz t01
+    where t01.deletion_flag is not null
+       or t01.plant_deletion_indctr is not null
+       or t01.vltn_deletion_indctr is not null;
   rcd_header csr_header%rowtype;
 
   cursor csr_lock is
-    select t01.company_code,
-      t01.plant_code,
-      t01.storage_location_code,
-      t01.stock_balance_date,
-      t01.stock_balance_time
-    from bds_stock_header t01
-    where t01.company_code = rcd_header.company_code
-      and t01.plant_code = rcd_header.plant_code
-      and t01.storage_location_code = rcd_header.storage_location_code
-      and t01.stock_balance_date = rcd_header.stock_balance_date
-      and t01.stock_balance_time =  rcd_header.stock_balance_time
+    select t01.sap_material_code
+    from bds_material_plant_mfanz t01
+    where t01.sap_material_code = rcd_header.sap_material_code
     for update nowait;
   rcd_lock csr_lock%rowtype;
 
@@ -270,11 +268,6 @@ create or replace package body bds_purging as
   /* Begin block */
   /*-------------*/
   begin
-
-    /*-*/
-    /* Retrieve the history days
-    /*-*/
-    var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'LADPDB14'));
 
     /*-*/
     /* Retrieve the headers
@@ -324,24 +317,20 @@ create or replace package body bds_purging as
       end if;
 
       /*-*/
-      /* Delete the header and related data when available
+      /* Delete the related data when available
       /*-*/
-      if var_available = true then
+      if var_available = true then    
         delete
-        from bds_stock_detail
-        where company_code = rcd_lock.company_code
-          and plant_code = rcd_lock.plant_code
-          and storage_location_code = rcd_lock.storage_location_code
-          and stock_balance_date = rcd_lock.stock_balance_date
-          and stock_balance_time =  rcd_lock.stock_balance_time;
-                    
+        from bds_material_uom
+        where sap_material_code = rcd_lock.sap_material_code;
+        
         delete
-        from bds_stock_header
-        where company_code = rcd_lock.company_code
-          and plant_code = rcd_lock.plant_code
-          and storage_location_code = rcd_lock.storage_location_code
-          and stock_balance_date = rcd_lock.stock_balance_date
-          and stock_balance_time =  rcd_lock.stock_balance_time;
+        from bds_material_pkg_instr_det
+        where sap_material_code = rcd_lock.sap_material_code;
+        
+        delete
+        from bds_material_plant_mfanz
+        where sap_material_code = rcd_lock.sap_material_code;        
       end if;
 
     end loop;
@@ -355,17 +344,16 @@ create or replace package body bds_purging as
   /*-------------*/
   /* End routine */
   /*-------------*/
-  end purge_ladpdb14;
-
-  /******************************************************/
-  /* This procedure performs the purge LADPDB15 routine */
-  /******************************************************/
-  procedure purge_ladpdb15 is
+  end purge_ladpdb02;
+  
+  /*******************************************************************/
+  /* This procedure performs the purge LADPDB02 and LADPDB10 routine */
+  /*******************************************************************/
+  procedure purge_ladpdb03_10 is
 
   /*-*/
   /* Local definitions
   /*-*/
-  var_history number;
   var_count number;
   var_available boolean;
 
@@ -373,18 +361,15 @@ create or replace package body bds_purging as
   /* Local cursors
   /*-*/
   cursor csr_header is
-    select t01.plant_code,
-      t01.detseq
-    from bds_intransit_detail t01
-    where t01.record_timestamp < to_char((sysdate - var_history),'yyyymmddhh24mi');
+    select t01.customer_code
+    from bds_cust_sales_area t01
+    where t01.deletion_flag is not null;
   rcd_header csr_header%rowtype;
 
   cursor csr_lock is
-    select t01.plant_code,
-      t01.detseq
-    from bds_intransit_detail t01
-    where t01.plant_code = rcd_header.plant_code
-      and t01.detseq = rcd_header.detseq
+    select t01.customer_code
+    from bds_cust_sales_area t01
+    where t01.customer_code = rcd_header.customer_code
     for update nowait;
   rcd_lock csr_lock%rowtype;
 
@@ -392,11 +377,6 @@ create or replace package body bds_purging as
   /* Begin block */
   /*-------------*/
   begin
-
-    /*-*/
-    /* Retrieve the history days
-    /*-*/
-    var_history := to_number(lics_setting_configuration.retrieve_setting(con_purging_group, 'LADPDB15'));
 
     /*-*/
     /* Retrieve the headers
@@ -410,7 +390,7 @@ create or replace package body bds_purging as
         end if;
         
         commit;
-      
+        
         open csr_header;
         var_count := 0;
       end if;
@@ -446,13 +426,16 @@ create or replace package body bds_purging as
       end if;
 
       /*-*/
-      /* Delete the header and related data when available
+      /* Delete the related data when available
       /*-*/
-      if var_available = true then
-        delete 
-        from bds_intransit_detail 
-        where plant_code = rcd_lock.plant_code
-          and detseq = rcd_lock.detseq;
+      if var_available = true then    
+        delete
+        from bds_addr_customer_det
+        where customer_code = rcd_lock.customer_code;
+        
+        delete
+        from bds_cust_sales_area
+        where customer_code = rcd_lock.customer_code;        
       end if;
 
     end loop;
@@ -466,7 +449,108 @@ create or replace package body bds_purging as
   /*-------------*/
   /* End routine */
   /*-------------*/
-  end purge_ladpdb15;
+  end purge_ladpdb03_10;  
+
+  /******************************************************/
+  /* This procedure performs the purge LADPDB12 routine */
+  /******************************************************/
+  procedure purge_ladpdb12 is
+
+  /*-*/
+  /* Local definitions
+  /*-*/
+  var_count number;
+  var_available boolean;
+
+  /*-*/
+  /* Local cursors
+  /*-*/
+  cursor csr_header is
+    select t01.vendor_code
+    from bds_vend_comp t01
+    where t01.deletion_flag is not null;
+  rcd_header csr_header%rowtype;
+
+  cursor csr_lock is
+    select t01.vendor_code
+    from bds_vend_comp t01
+    where t01.vendor_code = rcd_header.vendor_code
+    for update nowait;
+  rcd_lock csr_lock%rowtype;
+
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin
+
+    /*-*/
+    /* Retrieve the headers
+    /*-*/
+    var_count := 0;
+    open csr_header;
+    loop
+      if var_count >= cnt_process_count then
+        if csr_header%isopen then
+          close csr_header;
+        end if;
+        
+        commit;
+        
+        open csr_header;
+        var_count := 0;
+      end if;
+      
+      fetch csr_header into rcd_header;
+      if csr_header%notfound then
+        exit;
+      end if;
+
+      /*-*/
+      /* Increment the count
+      /*-*/
+      var_count := var_count + 1;
+
+      /*-*/
+      /* Attempt to lock the header
+      /*-*/
+      var_available := true;
+      begin
+        open csr_lock;
+        fetch csr_lock into rcd_lock;
+        if csr_lock%notfound then
+          var_available := false;
+        end if;
+        
+        exception
+        when others then
+          var_available := false;
+      end;
+      
+      if csr_lock%isopen then
+        close csr_lock;
+      end if;
+
+      /*-*/
+      /* Delete the related data when available
+      /*-*/
+      if var_available = true then    
+        delete
+        from bds_vend_comp
+        where vendor_code = rcd_lock.vendor_code;       
+      end if;
+
+    end loop;
+    close csr_header;
+
+    /*-*/
+    /* Commit the database
+    /*-*/
+    commit;
+
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end purge_ladpdb12;
 
 end bds_purging;
 /

@@ -21,39 +21,12 @@ create or replace package ics_app.plant_stock_extract as
       - *WOD = Wodonga 
       - *MFA = Wyong 
       - *WGI = Wanganui 
-      - *REL = Relevant - will only send the data to the site which matches 
-        the plant code parameter.  If plant code is null, will act like *ALL 
-
-  For extended execute procedure: 
-  
-  1. PAR_COMPANY_CODE (MANDATORY) 
-    
-    Specify the company code to send to the plant.
-    Refers to lads_stk_bal_hdr.burks 
-    
-  2. PAR_PLANT_CODE (MANDATORY) 
-    
-    Specify the plant code to send to the plant.
-    Refers to lads_stk_bal_hdr.werks 
-    
-  3. PAR_STORAGE_LOCATION_CODE (MANDATORY) 
-    
-    Specify the storage location code to send to the plant.
-    Refers to lads_stk_bal_hdr.lgort 
-    
-  4. PAR_STOCK_BALANCE_DATE (MANDATORY) 
-    
-    Specify the stock balance date to send to the plant.
-    Refers to lads_stk_bal_hdr.budat 
-    
-  5. PAR_STOCK_BALANCE_TIME (MANDATORY) 
-    
-    Specify the stock balance time to send to the plant.
-    Refers to lads_stk_bal_hdr.timlo 
 
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
+  2008/10   Trevor Keon    Changed to use lads stock balance view and be a 
+                            full refresh of the data
 
 *******************************************************************************/
 
@@ -61,8 +34,6 @@ create or replace package ics_app.plant_stock_extract as
   /* Public declarations 
   /*-*/
   procedure execute(par_site in varchar2 default '*ALL');
-  procedure execute(par_company_code in varchar2, par_plant_code in varchar2, par_storage_location_code in varchar2, 
-                    par_stock_balance_date in varchar2, par_stock_balance_time in varchar2, par_site in varchar2 default '*ALL');
 
 end plant_stock_extract;
 /
@@ -81,10 +52,8 @@ create or replace package body ics_app.plant_stock_extract as
   /*-*/
   /* Private declarations 
   /*-*/
-  function execute_extract(par_company_code in varchar2, par_plant_code in varchar2, par_storage_location_code in varchar2, 
-                          par_stock_balance_date in varchar2, par_stock_balance_time in varchar2) return boolean;
+  function execute_extract(par_site in varchar2) return boolean;
   procedure execute_send(par_interface in varchar2);
-  function get_send_relative return varchar2;
   
   /*-*/
   /* Global variables 
@@ -103,20 +72,11 @@ create or replace package body ics_app.plant_stock_extract as
   type typ_definition is table of rcd_definition index by binary_integer;
      
   tbl_definition typ_definition;
-
-  /***********************************************/
-  /* This procedure performs the execute routine */
-  /***********************************************/
-  procedure execute(par_site in varchar2 default '*ALL') is
-  begin
-    execute(null,null,null,null,null,par_site);
-  end;
   
   /***********************************************/
   /* This procedure performs the execute routine */
   /***********************************************/
-  procedure execute(par_company_code in varchar2, par_plant_code in varchar2, par_storage_location_code in varchar2, 
-                    par_stock_balance_date in varchar2, par_stock_balance_time in varchar2, par_site in varchar2 default '*ALL') is 
+  procedure execute(par_site in varchar2) is 
     /*-*/
     /* Local variables 
     /*-*/
@@ -128,14 +88,7 @@ create or replace package body ics_app.plant_stock_extract as
          
   begin
   
-    var_site := upper(nvl(trim(par_site), '*ALL'));  
-    var_company_code := trim(par_company_code);
-    var_plant_code := trim(par_plant_code);
-    var_storage_location_code := trim(par_storage_location_code);
-    var_stock_balance_date := trim(par_stock_balance_date);
-    var_stock_balance_time := trim(par_stock_balance_time);
-    
-    tbl_definition.delete;
+    var_site := upper(nvl(trim(par_site), '*ALL'));    
     
     /*-*/
     /* validate parameters 
@@ -146,53 +99,32 @@ create or replace package body ics_app.plant_stock_extract as
         and var_site != '*WOD'
         and var_site != '*MFA'
         and var_site != '*BTH'
-        and var_site != '*WGI'
-        and var_site != '*REL' ) then
-      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI, *REL or NULL');
+        and var_site != '*WGI' ) then
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
-       
-    /*-*/
-    /* store the specified plant code for checking *REL sites  
-    /*-*/       
-    var_specific_plant_code := var_plant_code;
-    
-    var_start := execute_extract(var_company_code,var_plant_code,var_storage_location_code,var_stock_balance_date,var_stock_balance_time);
-    
+              
     /*-*/
     /* ensure data was returned in the cursor before creating interfaces 
     /* to send to the specified site(s) 
-    /*-*/ 
-    if ( var_start = true ) then
-      if (var_site = '*REL' ) then        
-        /*-*/
-        /* do not sent to related site if no plant code was specified 
-        /*-*/        
-        if ( var_specific_plant_code is null ) then
-          var_site := '*ALL';
-        else  
-          var_site := get_send_relative;
-        end if;
-      end if;
-                
-      if ( var_site in ('*ALL','*MFA') ) then
+    /*-*/  
+    if ( par_site in ('*ALL','*MFA') and execute_extract('MFA') = true ) then   
         execute_send('LADPDB14.1'); 
-      end if;    
-      if ( var_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB14.2');
-      end if;    
-      if ( var_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB14.3');
-      end if;    
-      if ( var_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB14.4');
-      end if;    
-      if ( var_site in ('*ALL','*MCA') ) then
-        execute_send('LADPDB14.5');   
-      end if;
-      if ( var_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB14.6');   
-      end if;
-    end if; 
+    end if;    
+    if ( par_site in ('*ALL','*WGI') and execute_extract('WGI') = true ) then   
+        execute_send('LADPDB14.2'); 
+    end if;    
+    if ( par_site in ('*ALL','*WOD') and execute_extract('WOD') = true ) then   
+        execute_send('LADPDB14.3'); 
+    end if;    
+    if ( par_site in ('*ALL','*BTH') and execute_extract('BTH') = true ) then 
+        execute_send('LADPDB14.4'); 
+    end if;    
+    if ( par_site in ('*ALL','*MCA') and execute_extract('MCA') = true ) then   
+        execute_send('LADPDB14.5'); 
+    end if;
+    if ( par_site in ('*ALL','*SCO') and execute_extract('SCO') = true ) then  
+        execute_send('LADPDB14.6');
+    end if;
       
   /*-------------------*/
   /* Exception handler */
@@ -233,8 +165,7 @@ create or replace package body ics_app.plant_stock_extract as
   end execute;
   
   
-  function execute_extract(par_company_code in varchar2, par_plant_code in varchar2, par_storage_location_code in varchar2, 
-                          par_stock_balance_date in varchar2, par_stock_balance_time in varchar2) return boolean is
+  function execute_extract(par_site in varchar2) return boolean is
   
     /*-*/
     /* Local variables 
@@ -245,24 +176,7 @@ create or replace package body ics_app.plant_stock_extract as
     /*-*/
     /* Local cursors 
     /*-*/
-    cursor csr_bds_stock_header is
-      select t01.company_code as company_code,
-        t01.plant_code as plant_code,
-        t01.storage_location_code as storage_location_code,
-        t01.stock_balance_date as stock_balance_date,
-        t01.stock_balance_time as stock_balance_time,
-        t01.company_identifier as company_identifier,
-        t01.inventory_document as inventory_document
-      from bds_stock_header t01  
-      where (par_company_code is null or par_company_code = t01.company_code)
-        and (par_plant_code is null or par_plant_code = t01.plant_code)
-        and (par_storage_location_code is null or par_storage_location_code = t01.storage_location_code)
-        and (par_stock_balance_date is null or par_stock_balance_date = t01.stock_balance_date)
-        and (par_stock_balance_time is null or par_stock_balance_time = t01.stock_balance_time);
-        
-    rcd_bds_stock_header csr_bds_stock_header%rowtype;    
-    
-    cursor csr_bds_stock_detail is
+    cursor csr_bds_stock_balance is
       select t01.company_code as company_code,
         t01.plant_code as plant_code,
         t01.storage_location_code as storage_location_code,
@@ -277,14 +191,10 @@ create or replace package body ics_app.plant_stock_extract as
         t01.consignment_cust_vend as consignment_cust_vend,
         t01.rcv_isu_storage_location_code as rcv_isu_storage_location_code,
         t01.stock_type_code as stock_type_code
-      from bds_stock_detail t01  
-      where t01.company_code = rcd_bds_stock_header.company_code
-        and t01.plant_code = rcd_bds_stock_header.plant_code
-        and t01.storage_location_code = rcd_bds_stock_header.storage_location_code
-        and t01.stock_balance_date = rcd_bds_stock_header.stock_balance_date
-        and t01.stock_balance_time = rcd_bds_stock_header.stock_balance_time;
+      from bds_stock_balance t01
+      where t01.plant_code in (select dsv_value from table(lics_datastore.retrieve_value('PDB',par_site,'STK')));
         
-    rcd_bds_stock_detail csr_bds_stock_detail%rowtype;  
+    rcd_bds_stock_balance csr_bds_stock_balance%rowtype;  
 
  /*-------------*/
  /* Begin block */
@@ -295,15 +205,16 @@ create or replace package body ics_app.plant_stock_extract as
     /* Initialise variables 
     /*-*/
     var_result := false;
+    tbl_definition.delete;
 
     /*-*/
     /* Open Cursor for output 
     /*-*/
-    open csr_bds_stock_header;
+    open csr_bds_stock_balance;
     loop
     
-      fetch csr_bds_stock_header into rcd_bds_stock_header;
-      exit when csr_bds_stock_header%notfound;
+      fetch csr_bds_stock_balance into rcd_bds_stock_balance;
+      exit when csr_bds_stock_balance%notfound;
 
       var_index := tbl_definition.count + 1;
       var_result := true;
@@ -311,75 +222,34 @@ create or replace package body ics_app.plant_stock_extract as
       /*-*/
       /* Store current codes for error message purposes 
       /*-*/      
-      var_company_code := rcd_bds_stock_header.company_code;
-      var_plant_code := rcd_bds_stock_header.plant_code;
-      var_storage_location_code := rcd_bds_stock_header.storage_location_code;
-      var_stock_balance_date := rcd_bds_stock_header.stock_balance_date;
-      var_stock_balance_time := rcd_bds_stock_header.stock_balance_time;
+      var_company_code := rcd_bds_stock_balance.company_code;
+      var_plant_code := rcd_bds_stock_balance.plant_code;
+      var_storage_location_code := rcd_bds_stock_balance.storage_location_code;
+      var_stock_balance_date := rcd_bds_stock_balance.stock_balance_date;
+      var_stock_balance_time := rcd_bds_stock_balance.stock_balance_time;
       
-      tbl_definition(var_index).value := 'CTL'
-        || rpad(nvl(to_char(rcd_bds_stock_header.company_code),' '),4,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_header.plant_code),' '),4,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_header.storage_location_code),' '),12,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_header.stock_balance_date),' '),8,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_header.stock_balance_time),' '),8,' ')
-        || rpad(to_char(sysdate, 'yyyymmddhh24miss'),14,' ');    
-
-      var_index := tbl_definition.count + 1;              
-        
       tbl_definition(var_index).value := 'HDR'
-        || rpad(nvl(to_char(rcd_bds_stock_header.company_identifier),' '),6,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_header.inventory_document),' '),10,' ');
-          
-      open csr_bds_stock_detail;
-      loop      
-      
-        var_index := tbl_definition.count + 1;
-        
-        fetch csr_bds_stock_detail into rcd_bds_stock_detail;
-        exit when csr_bds_stock_detail%notfound;
-        
-        tbl_definition(var_index).value := 'DET'
-          || rpad(nvl(to_char(rcd_bds_stock_detail.material_code),' '),18,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.material_batch_number),' '),1,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.inspection_stock_flag),' '),1,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_quantity),'0'),38,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_uom_code),' '),3,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_best_before_date),' '),8,' ')   
-          || rpad(nvl(to_char(rcd_bds_stock_detail.consignment_cust_vend),' '),10,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.rcv_isu_storage_location_code),' '),4,' ')
-          || rpad(nvl(to_char(rcd_bds_stock_detail.stock_type_code),' '),2,' ');     
-      
-      end loop;
-      close csr_bds_stock_detail;  
+        || rpad(nvl(to_char(rcd_bds_stock_balance.company_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.plant_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.storage_location_code),' '),12,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_balance_date),' '),8,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_balance_time),' '),8,' ')      
+        || rpad(nvl(to_char(rcd_bds_stock_balance.material_code),' '),18,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.material_batch_number),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.inspection_stock_flag),' '),1,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_quantity),'0'),38,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_uom_code),' '),3,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_best_before_date),' '),8,' ')   
+        || rpad(nvl(to_char(rcd_bds_stock_balance.consignment_cust_vend),' '),10,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.rcv_isu_storage_location_code),' '),4,' ')
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_type_code),' '),6,' ');
 
     end loop;
-    close csr_bds_stock_header;
+    close csr_bds_stock_balance;
 
     return var_result;
     
   end execute_extract;
-
-  function get_send_relative return varchar2 is
-    /*-*/
-    /* Local variables 
-    /*-*/
-    var_result varchar2(10);    
-    var_vir_table lics_datastore_table := lics_datastore_table();
-    
-  begin
-    var_vir_table := lics_datastore.retrieve_group('PDB','PLC',var_plant_code);
-    
-    if ( var_vir_table.count > 1 ) then      
-      raise_application_error(-20000, 'Plant code (' || var_plant_code || ') has multiple entries in the lics datastore');
-    elsif ( var_vir_table.count = 1 ) then
-      var_result := '*' || var_vir_table(1).dsv_group;  
-    else
-      var_result := '*NONE';
-    end if;
-    
-    return var_result;
-  end;
   
   procedure execute_send(par_interface in varchar2) is
   

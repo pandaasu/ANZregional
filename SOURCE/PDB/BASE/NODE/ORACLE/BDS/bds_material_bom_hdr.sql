@@ -51,6 +51,7 @@ alter table bds.bds_material_bom_hdr
 grant select, update, delete, insert on bds.bds_material_bom_hdr to bds_app with grant option;
 grant select on bds.bds_material_bom_hdr to manu_app with grant option;
 grant select on bds.bds_material_bom_hdr to pt_app with grant option;
+grant select on bds.bds_material_bom_hdr to manu with grant option;
 
 /**/
 /* Synonym 

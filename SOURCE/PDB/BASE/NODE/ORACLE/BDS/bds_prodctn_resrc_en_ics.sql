@@ -42,6 +42,7 @@ alter table bds.bds_prodctn_resrc_en_ics
 grant select, insert, update, delete on bds_prodctn_resrc_en_ics to bds_app with grant option;
 grant select on bds.bds_prodctn_resrc_en_ics to manu_app with grant option;
 grant select on bds.bds_prodctn_resrc_en_ics to pt_app with grant option;
+grant select on bds.bds_prodctn_resrc_en_ics to manu with grant option;
 
 /**/
 /* Synonym 

@@ -59,6 +59,7 @@ alter table bds.bds_material_pkg_instr_det_t
 grant delete, insert, select, update on bds.bds_material_pkg_instr_det_t to bds_app with grant option;
 grant select on bds.bds_material_pkg_instr_det_t to manu_app with grant option;
 grant select on bds.bds_material_pkg_instr_det_t to pt_app with grant option;
+grant select on bds.bds_material_pkg_instr_det_t to manu with grant option;
 /**/
 /* Synonym 
 /**/

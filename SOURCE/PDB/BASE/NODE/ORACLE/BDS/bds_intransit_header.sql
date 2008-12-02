@@ -42,6 +42,7 @@ alter table bds.bds_intransit_header
 grant select, update, delete, insert on bds.bds_intransit_header to bds_app with grant option;
 grant select on bds.bds_intransit_header to manu_app with grant option;
 grant select on bds.bds_intransit_header to pt_app with grant option;
+grant select on bds.bds_intransit_header to manu with grant option;
 
 /**/
 /* Synonym 

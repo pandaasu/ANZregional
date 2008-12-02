@@ -63,6 +63,7 @@ alter table bds.bds_material_uom
 grant select, delete, insert, update on bds.bds_material_uom to bds_app with grant option;
 grant select on bds.bds_material_uom to manu_app with grant option;
 grant select on bds.bds_material_uom to pt_app with grant option;
+grant select on bds.bds_material_uom to manu with grant option;
 
 /**/
 /* Synonym 

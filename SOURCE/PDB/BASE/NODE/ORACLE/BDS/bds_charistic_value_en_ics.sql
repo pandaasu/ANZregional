@@ -40,6 +40,7 @@ create unique index bds.bds_charistic_value_en_ics_pk on bds.bds_charistic_value
 grant select, insert, update, delete on bds.bds_charistic_value_en_ics to bds_app with grant option;
 grant select on bds.bds_charistic_value_en_ics to manu_app with grant option;
 grant select on bds.bds_charistic_value_en_ics to pt_app with grant option;
+grant select on bds.bds_charistic_value_en_ics to manu with grant option;
 
 /**/
 /* Synonym 

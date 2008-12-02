@@ -45,6 +45,7 @@ alter table bds.bds_refrnc_charistic_ics
 grant delete, insert, select, update on bds.bds_refrnc_charistic_ics to bds_app with grant option;
 grant select on bds.bds_refrnc_charistic_ics to manu_app with grant option;
 grant select on bds.bds_refrnc_charistic_ics to pt_app with grant option;
+grant select on bds.bds_refrnc_charistic_ics to manu with grant option;
 
 /**/
 /* Synonym 

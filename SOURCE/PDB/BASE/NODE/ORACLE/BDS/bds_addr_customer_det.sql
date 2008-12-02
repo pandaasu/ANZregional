@@ -76,6 +76,7 @@ alter table bds.bds_addr_customer_det
 grant select, update, delete, insert on bds.bds_addr_customer_det to bds_app with grant option;
 grant select on bds.bds_addr_customer_det to manu_app with grant option;
 grant select on bds.bds_addr_customer_det to pt_app with grant option;
+grant select on bds.bds_addr_customer_det to manu with grant option;
 
 /**/
 /* Synonym 

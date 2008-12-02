@@ -71,6 +71,7 @@ alter table bds.bds_intransit_detail
 grant select, update, delete, insert on bds.bds_intransit_detail to bds_app with grant option;
 grant select on bds.bds_intransit_detail to manu_app with grant option;
 grant select on bds.bds_intransit_detail to pt_app with grant option;
+grant select on bds.bds_intransit_detail to manu with grant option;
 
 /**/
 /* Synonym 

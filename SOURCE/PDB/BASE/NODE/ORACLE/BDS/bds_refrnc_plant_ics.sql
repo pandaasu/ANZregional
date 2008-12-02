@@ -94,6 +94,7 @@ alter table bds.bds_refrnc_plant_ics
 grant select, insert, update, delete on bds_refrnc_plant_ics to bds_app with grant option;
 grant select on bds.bds_refrnc_plant_ics to manu_app with grant option;
 grant select on bds.bds_refrnc_plant_ics to pt_app with grant option;
+grant select on bds.bds_refrnc_plant_ics to manu with grant option;
 
 /**/
 /* Synonym 
