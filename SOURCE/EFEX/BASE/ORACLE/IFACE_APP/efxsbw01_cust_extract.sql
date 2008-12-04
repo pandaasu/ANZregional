@@ -30,6 +30,7 @@ create or replace package efxsbw01_cust_extract as
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
     2008/11   Steve Gregan   Modified to distributer customer id
+    2008/12   Steve Gregan   Modified to include modified date
 
    *******************************************************************************/
 
@@ -86,6 +87,7 @@ create or replace package body efxsbw01_cust_extract as
                 t01.outlet_flg as outlet_flg,
                 t01.active_flg as active_flg,
                 to_char(t01.range_id) as range_id,
+                to_char(t01.modified_date,'yyyymmdd') as modified_date,
                 t02.cust_type_name as cust_type_name,
                 t03.cust_trade_channel_name as cust_trade_channel_name,
                 t04.cust_channel_name as cust_channel_name,
@@ -244,7 +246,8 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.active_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_grade_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.distributor_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.range_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.range_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.modified_date,'"','""')||'"');
 
       end loop;
       close csr_extract;
