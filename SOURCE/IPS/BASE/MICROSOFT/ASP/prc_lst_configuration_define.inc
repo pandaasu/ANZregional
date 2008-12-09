@@ -133,12 +133,15 @@
    var cobjReportData = new Array();
    var cobjReportBreak = new Array();
    var cobjReportOrder = new Array();
+   var cobjReportTerm = new Array();
    var cintSelectedDataItem = -1;
-   function loadPriceItems() {<%for i = objSelection.ListLower("PRICE_ITEM") to objSelection.ListUpper("PRICE_ITEM")%>
-      cobjPriceItems[<%=i%>] = new clsPriceItem('<%=objSelection.ListValue01("PRICE_ITEM",i)%>','<%=replace(objSelection.ListValue02("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>');<%next%><%if objForm.Fields("DTA_ReportId").Value <> "" then%><%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
-      cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=objSelection.ListValue02("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>');<%next%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
-      cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=objSelection.ListValue02("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue03("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>');<%next%><%for i = objSelection.ListLower("REPORT_ORDER") to objSelection.ListUpper("REPORT_ORDER")%>
-      cobjReportOrder[<%=i%>] = new clsReportOrder('<%=objSelection.ListValue01("REPORT_ORDER",i)%>','<%=objSelection.ListValue02("REPORT_ORDER",i)%>','<%=replace(objSelection.ListValue03("REPORT_ORDER",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
+   var cintSelectedTerm = -1;
+   function loadPriceItems() {<%if objSelection.ListCount("PRICE_ITEM") <> 0 then%><%for i = objSelection.ListLower("PRICE_ITEM") to objSelection.ListUpper("PRICE_ITEM")%>
+      cobjPriceItems[<%=i%>] = new clsPriceItem('<%=objSelection.ListValue01("PRICE_ITEM",i)%>','<%=replace(objSelection.ListValue02("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objForm.Fields("DTA_ReportId").Value <> "" then%><%if objSelection.ListCount("REPORT_DATA") <> 0 then%><%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
+      cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=objSelection.ListValue02("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_BREAK") <> 0 then%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
+      cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=objSelection.ListValue02("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue03("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_ORDER") <> 0 then%><%for i = objSelection.ListLower("REPORT_ORDER") to objSelection.ListUpper("REPORT_ORDER")%>
+      cobjReportOrder[<%=i%>] = new clsReportOrder('<%=objSelection.ListValue01("REPORT_ORDER",i)%>','<%=objSelection.ListValue02("REPORT_ORDER",i)%>','<%=replace(objSelection.ListValue03("REPORT_ORDER",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_TERM") <> 0 then%><%for i = objSelection.ListLower("REPORT_TERM") to objSelection.ListUpper("REPORT_TERM")%>
+      cobjReportTerm[<%=i%>] = new clsReportTerm('<%=objSelection.ListValue01("REPORT_TERM",i)%>','<%=replace(objSelection.ListValue02("REPORT_TERM",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%end if%>
       var objSltPriceItem = document.getElementById('sltPriceItem');
       objSltPriceItem.options.length = 0;
       objSltPriceItem.selectedIndex = -1;
@@ -168,6 +171,13 @@
          objSltReportOrder.options[i] = new Option(cobjReportOrder[i].name,cobjReportOrder[i].repid);
          objSltReportOrder.options[i].setAttribute('repid',cobjReportOrder[i].repid);
          objSltReportOrder.options[i].setAttribute('prcid',cobjReportOrder[i].prcid);
+      }
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      objSltReportTerm.options.length = 0;
+      objSltReportTerm.selectedIndex = -1;
+      for (var i=0;i<cobjReportTerm.length;i++) {
+         objSltReportTerm.options[i] = new Option(cobjReportTerm[i].text,cobjReportTerm[i].terid);
+         objSltReportTerm.options[i].setAttribute('terid',cobjReportTerm[i].terid);
       }
    }
    function getPriceItems(strPriceMdlId) {
@@ -262,6 +272,10 @@
       this.repid = strRepId;
       this.prcid = strPrcId;
       this.name = strName;
+   }
+   function clsReportTerm(strTerId,strText) {
+      this.terid = strTerId;
+      this.text = strText;
    }
    function selectDataItems() {
       var objSltPriceItem = document.getElementById('sltPriceItem');
@@ -575,12 +589,178 @@
          objSltReportOrder.options[intIndex].selected = false;
       }
    }
+   function insertTerms() {
+      cintSelectedTerm = -1;
+      document.getElementById('inpTerms').disabled = false;
+      document.getElementById('inpTerms').value = '';
+      document.getElementById('inpTerms').style.backgroundColor= '#ffffff';
+      document.getElementById('cmdTerms01').style.visibility = 'hidden';
+      document.getElementById('cmdTerms02').style.visibility = 'hidden';
+      document.getElementById('cmdTerms03').style.visibility = 'hidden';
+      document.getElementById('cmdTerms04').style.visibility = 'hidden';
+      document.getElementById('cmdTerms05').style.visibility = 'hidden';
+      document.getElementById('cmdTerms06').style.visibility = 'visible';
+      document.getElementById('cmdTerms07').style.visibility = 'visible';
+      document.getElementById('inpTerms').focus();
+   }
+   function updateTerms() {
+      var intIndex;
+      var intSelect;
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      intSelect = 0;
+      intIndex = -1;
+      for (var i=0;i<objSltReportTerm.options.length;i++) {
+         if (objSltReportTerm.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one item can be selected to update');
+         return;
+      }
+      if (intIndex == -1) {
+         alert('Item must be selected to update');
+         return;
+      }
+      cintSelectedTerm = intIndex;
+      document.getElementById('inpTerms').disabled = false;
+      document.getElementById('inpTerms').value = objSltReportTerm.options[cintSelectedTerm].text;
+      document.getElementById('inpTerms').style.backgroundColor= '#ffffff';
+      document.getElementById('cmdTerms01').style.visibility = 'hidden';
+      document.getElementById('cmdTerms02').style.visibility = 'hidden';
+      document.getElementById('cmdTerms03').style.visibility = 'hidden';
+      document.getElementById('cmdTerms04').style.visibility = 'hidden';
+      document.getElementById('cmdTerms05').style.visibility = 'hidden';
+      document.getElementById('cmdTerms06').style.visibility = 'visible';
+      document.getElementById('cmdTerms07').style.visibility = 'visible';
+      document.getElementById('inpTerms').focus();
+   }
+   function removeTerms() {
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objSltReportTerm.options.length;i++) {
+         if (objSltReportTerm.options[i].selected == false) {
+            objWork[intIndex] = objSltReportTerm[i];
+            intIndex++;
+         }
+      }
+      objSltReportTerm.options.length = 0;
+      objSltReportTerm.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSltReportTerm.options[i] = objWork[i];
+      }
+   }
+   function upTerms() {
+      var intIndex;
+      var intSelect;
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      intSelect = 0;
+      for (var i=0;i<objSltReportTerm.options.length;i++) {
+         if (objSltReportTerm.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one item can be selected to move up');
+         return;
+      }
+      if (intSelect == 1 && intIndex > 0) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objSltReportTerm.options[intIndex-1].value;
+         aryA[1] = objSltReportTerm.options[intIndex-1].text;
+         aryA[2] = objSltReportTerm.options[intIndex-1].getAttribute('terid');
+         aryB[0] = objSltReportTerm.options[intIndex].value;
+         aryB[1] = objSltReportTerm.options[intIndex].text;
+         aryB[2] = objSltReportTerm.options[intIndex].getAttribute('terid');
+         objSltReportTerm.options[intIndex-1].value = aryB[0];
+         objSltReportTerm.options[intIndex-1].text = aryB[1];
+         objSltReportTerm.options[intIndex-1].setAttribute('terid',aryB[2]);
+         objSltReportTerm.options[intIndex-1].selected = true;
+         objSltReportTerm.options[intIndex].value = aryA[0];
+         objSltReportTerm.options[intIndex].text = aryA[1];
+         objSltReportTerm.options[intIndex].setAttribute('terid',aryA[2]);
+         objSltReportTerm.options[intIndex].selected = false;
+      }
+   }
+   function downTerms() {
+      var intIndex;
+      var intSelect;
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      intSelect = 0;
+      for (var i=0;i<objSltReportTerm.options.length;i++) {
+         if (objSltReportTerm.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one item can be selected to move down');
+         return;
+      }
+      if (intSelect == 1 && intIndex < objSltReportTerm.options.length-1) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objSltReportTerm.options[intIndex+1].value;
+         aryA[1] = objSltReportTerm.options[intIndex+1].text;
+         aryA[2] = objSltReportTerm.options[intIndex+1].getAttribute('terid');
+         aryB[0] = objSltReportTerm.options[intIndex].value;
+         aryB[1] = objSltReportTerm.options[intIndex].text;
+         aryB[2] = objSltReportTerm.options[intIndex].getAttribute('terid');
+         objSltReportTerm.options[intIndex+1].value = aryB[0];
+         objSltReportTerm.options[intIndex+1].text = aryB[1];
+         objSltReportTerm.options[intIndex+1].setAttribute('terid',aryB[2]);
+         objSltReportTerm.options[intIndex+1].selected = true;
+         objSltReportTerm.options[intIndex].value = aryA[0];
+         objSltReportTerm.options[intIndex].text = aryA[1];
+         objSltReportTerm.options[intIndex].setAttribute('terid',aryA[2]);
+         objSltReportTerm.options[intIndex].selected = false;
+      }
+   }
+   function acceptTerms() {
+      var objSltReportTerm = document.getElementById('sltReportTerm');
+      if (cintSelectedTerm == -1) {
+         objSltReportTerm.options[objSltReportTerm.options.length] = new Option(document.getElementById('inpTerms').value,'*NEW');
+         objSltReportTerm.options[objSltReportTerm.options.length-1].setAttribute('terid','*NEW');
+      } else {
+         objSltReportTerm.options[cintSelectedTerm].text = document.getElementById('inpTerms').value;
+      }
+      cintSelectedTerm = -1;
+      document.getElementById('inpTerms').disabled = true;
+      document.getElementById('inpTerms').value = '';
+      document.getElementById('inpTerms').style.backgroundColor= '#c0c0c0';
+      document.getElementById('cmdTerms01').style.visibility = 'visible';
+      document.getElementById('cmdTerms02').style.visibility = 'visible';
+      document.getElementById('cmdTerms03').style.visibility = 'visible';
+      document.getElementById('cmdTerms04').style.visibility = 'visible';
+      document.getElementById('cmdTerms05').style.visibility = 'visible';
+      document.getElementById('cmdTerms06').style.visibility = 'hidden';
+      document.getElementById('cmdTerms07').style.visibility = 'hidden';
+      objSltReportTerm.focus();
+   }
+   function cancelTerms() {
+      document.getElementById('inpTerms').disabled = true;
+      document.getElementById('inpTerms').value = '';
+      document.getElementById('inpTerms').style.backgroundColor= '#c0c0c0';
+      document.getElementById('cmdTerms01').style.visibility = 'visible';
+      document.getElementById('cmdTerms02').style.visibility = 'visible';
+      document.getElementById('cmdTerms03').style.visibility = 'visible';
+      document.getElementById('cmdTerms04').style.visibility = 'visible';
+      document.getElementById('cmdTerms05').style.visibility = 'visible';
+      document.getElementById('cmdTerms06').style.visibility = 'hidden';
+      document.getElementById('cmdTerms07').style.visibility = 'hidden';
+      document.getElementById('sltReportTerm').focus();
+   }
    function checkItems() {
       var strReturn = '';
       var objHidden = null;
       var objSltReportData = document.getElementById('sltReportData');
       var objSltReportBreak = document.getElementById('sltReportBreak');
       var objSltReportOrder = document.getElementById('sltReportOrder');
+      var objSltReportTerm = document.getElementById('sltReportTerm');
       if (objSltReportData.options.length == 0) {
          strReturn = 'At least one data item must be selected';
       } else {
@@ -623,6 +803,19 @@
             document.forms['main'].appendChild(objHidden);
          }
          document.getElementById('DET_RepOrdCount').value = objSltReportOrder.options.length;
+         for (var i=0;i<objSltReportTerm.options.length;i++) {
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepTerId'+(i+1));
+            objHidden.setAttribute('value',objSltReportTerm.options[i].getAttribute('terid'));
+            document.forms['main'].appendChild(objHidden);
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepTerText'+(i+1));
+            objHidden.setAttribute('value',objSltReportTerm.options[i].text);
+            document.forms['main'].appendChild(objHidden);
+         }
+         document.getElementById('DET_RepTerCount').value = objSltReportOrder.options.length;
       }
       return strReturn;
    }
@@ -631,6 +824,7 @@
       var objSltReportData = document.getElementById('sltReportData');
       var objSltReportBreak = document.getElementById('sltReportBreak');
       var objSltReportOrder = document.getElementById('sltReportOrder');
+      var objSltReportTerm = document.getElementById('sltReportTerm');
       if (cobjReportData.length != objSltReportData.options.length) {
          bolReturn = true;
       } else {
@@ -659,6 +853,17 @@
          for (var i=0;i<cobjReportOrder.length;i++) {
             if (cobjReportOrder[i].repid != objSltReportOrder.options[i].getAttribute('repid') ||
                 cobjReportOrder[i].prcid != objSltReportOrder.options[i].getAttribute('prcid')) {
+               bolReturn = true;
+               break;
+            }
+         }
+      }
+      if (cobjReportTerm.length != objSltReportTerm.options.length) {
+         bolReturn = true;
+      } else {
+         for (var i=0;i<cobjReportTerm.length;i++) {
+            if (cobjReportTerm[i].terid != objSltReportTerm.options[i].getAttribute('terid') ||
+                cobjReportTerm[i].text != objSltReportTerm.options[i].text) {
                bolReturn = true;
                break;
             }
@@ -798,6 +1003,36 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
+         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportTerm" name="sltReportTerm" style="width:700px" size=20></select></nobr></td>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
+                        <tr><td id="cmdTerms01" style="visibility:visible;" align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upTerms();"></nobr></td></tr>
+                        <tr><td id="cmdTerms02" style="visibility:visible;" align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downTerms();"></nobr></td></tr>
+                        <tr><td id="cmdTerms03" style="visibility:visible;" align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:removeTerms();">&nbsp;Delete&nbsp;</a></nobr></td></tr>
+                        <tr><td id="cmdTerms04" style="visibility:visible;" align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:updateTerms();">&nbsp;Update&nbsp;</a></nobr></td></tr>
+                        <tr><td id="cmdTerms05" style="visibility:visible;" align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:insertTerms();">&nbsp;Insert&nbsp;</a></nobr></td></tr>
+                        <tr><td id="cmdTerms06" style="visibility:hidden;" align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:acceptTerms();">&nbsp;Accept&nbsp;</a></nobr></td></tr>
+                        <tr><td id="cmdTerms07" style="visibility:hidden;" align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:cancelTerms();">&nbsp;Cancel&nbsp;</a></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="background-color:#c0c0c0;" type="text" name="inpTerms" style="width:700px" maxlength="1000" disabled value="" onFocus="setSelect(this);"></nobr></td>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
@@ -825,7 +1060,7 @@
    <input type="hidden" name="DET_RepDatCount" value="">
    <input type="hidden" name="DET_RepBrkCount" value="">
    <input type="hidden" name="DET_RepOrdCount" value="">
-   <input type="hidden" name="DET_RepTacCount" value="">
+   <input type="hidden" name="DET_RepTerCount" value="">
 </form>
 </body>
 </html>

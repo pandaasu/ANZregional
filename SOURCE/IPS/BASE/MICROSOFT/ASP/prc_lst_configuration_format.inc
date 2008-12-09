@@ -75,10 +75,12 @@
    var cobjReport;
    var cobjReportData = new Array();
    var cobjReportBreak = new Array();
+   var cobjReportTerm = new Array();
    function loadReportItems() {
-      cobjReport = new clsReport('<%=replace(objSelection.ListValue02("REPORT",objSelection.ListLower("REPORT")), """", "&#34;", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT",objSelection.ListLower("REPORT"))%>');<%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
-      cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue02("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue04("REPORT_DATA",i)%>','<%=objSelection.ListValue05("REPORT_DATA",i)%>');<%next%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
-      cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue02("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT_BREAK",i)%>');<%next%>
+      cobjReport = new clsReport('<%=replace(objSelection.ListValue02("REPORT",objSelection.ListLower("REPORT")), """", "&#34;", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT",objSelection.ListLower("REPORT"))%>');<%if objSelection.ListCount("REPORT_DATA") <> 0 then%><%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
+      cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue02("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue04("REPORT_DATA",i)%>','<%=objSelection.ListValue05("REPORT_DATA",i)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_BREAK") <> 0 then%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
+      cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue02("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT_BREAK",i)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_TERM") <> 0 then%><%for i = objSelection.ListLower("REPORT_TERM") to objSelection.ListUpper("REPORT_TERM")%>
+      cobjReportTerm[<%=i%>] = new clsReportTerm('<%=objSelection.ListValue01("REPORT_TERM",i)%>','<%=replace(objSelection.ListValue02("REPORT_TERM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT_TERM",i)%>');<%next%><%end if%>
       var objFormatTable;
       var objRow;
       var objCell;
@@ -147,7 +149,7 @@
       objRow = objFormatTable.insertRow(intRowCount);
       objCell = objRow.insertCell(0);
       objCell.colSpan = cobjReportData.length;
-      objCell.innerText = 'Report Breaks';
+      objCell.innerHTML = '<table class="clsTable01" align=center cols=3 cellpadding=0 cellspacing=0><tr><td class="clsLabelWB" align=center colspan=1 nowrap><nobr>Report Breaks</nobr></td><td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:startFormatter(\'*REPBRKALL\',null);">&nbsp;Format All&nbsp;</a></nobr></td></tr></table>';
       objCell.className = 'clsLabelBB';
       objCell.style.backgroundColor = '#40414c';
       objCell.style.color = '#ffffff';
@@ -194,12 +196,25 @@
       objRow = objFormatTable.insertRow(intRowCount);
       objCell = objRow.insertCell(0);
       objCell.colSpan = cobjReportData.length;
-      objCell.innerText = 'Terms and Conditions';
+      objCell.innerHTML = '<table class="clsTable01" align=center cols=3 cellpadding=0 cellspacing=0><tr><td class="clsLabelWB" align=center colspan=1 nowrap><nobr>Terms and Conditions</nobr></td><td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td><td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:startFormatter(\'*REPTERALL\',null);">&nbsp;Format All&nbsp;</a></nobr></td></tr></table>';
       objCell.className = 'clsLabelBB';
       objCell.style.backgroundColor = '#40414c';
       objCell.style.color = '#ffffff';
       objCell.style.textAlign = 'center';
       objCell.style.whiteSpace = 'nowrap';
+      for (var i=0;i<cobjReportTerm.length;i++) {
+         intRowCount++;
+         objRow = objFormatTable.insertRow(intRowCount);
+         objCell = objRow.insertCell(0);
+         objCell.id = 'REPTER'+i;
+         objCell.colSpan = cobjReportData.length;
+         objCell.innerText = cobjReportTerm[i].text;
+         objCell.onclick = function() {startFormatter('*REPTER',this);};
+         setStyle(objCell,cobjReportTerm[i].datafrmt);
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.style.cursor = 'pointer';
+         objCell.setAttribute('idx',i);
+      }
    }
    function clsReport(strName,strNameFrmt) {
       this.name = strName;
@@ -219,6 +234,12 @@
    function clsReportBreak(strId,strName,strDataFrmt) {
       this.id = strId;
       this.name = strName;
+      this.datafrmt = strDataFrmt;
+      this.datasave = strDataFrmt;
+   }
+   function clsReportTerm(strId,strText,strDataFrmt) {
+      this.id = strId;
+      this.text = strText;
       this.datafrmt = strDataFrmt;
       this.datasave = strDataFrmt;
    }
@@ -318,6 +339,19 @@
          document.forms['main'].appendChild(objHidden);
       }
       document.getElementById('DET_RepBrkCount').value = cobjReportBreak.length;
+      for (var i=0;i<cobjReportTerm.length;i++) {
+         objHidden = document.createElement('input');
+         objHidden.setAttribute('type','hidden');
+         objHidden.setAttribute('name','DET_RepTerId'+(i+1));
+         objHidden.setAttribute('value',cobjReportTerm[i].id);
+         document.forms['main'].appendChild(objHidden);
+         objHidden = document.createElement('input');
+         objHidden.setAttribute('type','hidden');
+         objHidden.setAttribute('name','DET_RepTerDat'+(i+1));
+         objHidden.setAttribute('value',cobjReportTerm[i].datafrmt);
+         document.forms['main'].appendChild(objHidden);
+      }
+      document.getElementById('DET_RepTerCount').value = cobjReportTerm.length;
       return strReturn;
    }
    function changeItems() {
@@ -335,6 +369,12 @@
       }
       for (var i=0;i<cobjReportBreak.length;i++) {
          if (cobjReportBreak[i].datafrmt != cobjReportBreak[i].datasave) {
+            bolReturn = true;
+            break;
+         }
+      }
+      for (var i=0;i<cobjReportTerm.length;i++) {
+         if (cobjReportTerm[i].datafrmt != cobjReportTerm[i].datasave) {
             bolReturn = true;
             break;
          }
@@ -535,11 +575,26 @@
    function startFormatter(strAction,objObject) {
       cstrFormatterAction = strAction;
       if (cstrFormatterAction == '*COLHEDALL') {
-         cobjFormatterSource = document.getElementById('COLHED0');
+         if (cobjReportData.length != 0) {
+            cobjFormatterSource = document.getElementById('COLHED0');
+         }
       } else if (cstrFormatterAction == '*COLDATALL') {
-         cobjFormatterSource = document.getElementById('COLDAT0');
+         if (cobjReportData.length != 0) {
+            cobjFormatterSource = document.getElementById('COLDAT0');
+         }
+      } else if (cstrFormatterAction == '*REPBRKALL') {
+         if (cobjReportBreak.length != 0) {
+            cobjFormatterSource = document.getElementById('REPBRK0');
+         }
+      } else if (cstrFormatterAction == '*REPTERALL') {
+         if (cobjReportTerm.length != 0) {
+            cobjFormatterSource = document.getElementById('REPTER0');
+         }
       } else {
          cobjFormatterSource = objObject;
+      }
+      if (cobjFormatterSource == null) {
+         return;
       }
       cobjFormatterTarget.style.color = cobjFormatterSource.style.color;
       cobjFormatterTarget.style.backgroundColor = cobjFormatterSource.style.backgroundColor;
@@ -555,6 +610,10 @@
          cobjFormatterTarget.innerText = 'All Column Headings';
       } else if (cstrFormatterAction == '*COLDATALL') {
          cobjFormatterTarget.innerText = 'All Column Data';
+      } else if (cstrFormatterAction == '*REPBRKALL') {
+         cobjFormatterTarget.innerText = 'All Report Breaks';
+      } else if (cstrFormatterAction == '*REPTERALL') {
+         cobjFormatterTarget.innerText = 'All Terms and Conditions';
       } else {
          cobjFormatterTarget.innerText = cobjFormatterSource.innerText;
       }
@@ -648,6 +707,36 @@
             cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
             cobjReportData[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
          }
+      } else if (cstrFormatterAction == '*REPBRKALL') {
+         for (var i=0;i<cobjReportBreak.length;i++) {
+            cobjFormatterSource = document.getElementById('REPBRK'+i);
+            cobjFormatterSource.style.color = cobjFormatterTarget.style.color;
+            cobjFormatterSource.style.backgroundColor = cobjFormatterTarget.style.backgroundColor;
+            cobjFormatterSource.style.borderColor = cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor;
+            cobjFormatterSource.style.borderStyle = cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle;
+            cobjFormatterSource.style.borderWidth = cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth;
+            cobjFormatterSource.style.fontFamily = cobjFormatterTarget.style.fontFamily;
+            cobjFormatterSource.style.fontWeight = cobjFormatterTarget.style.fontWeight;
+            cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
+            cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
+            cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjReportBreak[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
+         }
+      } else if (cstrFormatterAction == '*REPTERALL') {
+         for (var i=0;i<cobjReportTerm.length;i++) {
+            cobjFormatterSource = document.getElementById('REPTER'+i);
+            cobjFormatterSource.style.color = cobjFormatterTarget.style.color;
+            cobjFormatterSource.style.backgroundColor = cobjFormatterTarget.style.backgroundColor;
+            cobjFormatterSource.style.borderColor = cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor + ' ' + cobjFormatterTarget.style.borderColor;
+            cobjFormatterSource.style.borderStyle = cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle + ' ' + cobjFormatterTarget.style.borderStyle;
+            cobjFormatterSource.style.borderWidth = cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth + ' ' + cobjFormatterTarget.style.borderWidth;
+            cobjFormatterSource.style.fontFamily = cobjFormatterTarget.style.fontFamily;
+            cobjFormatterSource.style.fontWeight = cobjFormatterTarget.style.fontWeight;
+            cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
+            cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
+            cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjReportTerm[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
+         }
       } else {
          cobjFormatterSource.style.color = cobjFormatterTarget.style.color;
          cobjFormatterSource.style.backgroundColor = cobjFormatterTarget.style.backgroundColor;
@@ -669,6 +758,8 @@
             cobjReportData[cobjFormatterSource.getAttribute('idx')].namefrmt = getStyle(cobjFormatterSource);
          } else if (cstrFormatterAction == '*COLDAT') {
             cobjReportData[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
+         } else if (cstrFormatterAction == '*REPTER') {
+            cobjReportTerm[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
          }
       }
       cstrFormatterAction == '';
@@ -835,6 +926,7 @@
    <input type="hidden" name="DTA_ReportId" value="<%=objForm.Fields("DTA_ReportId").Value%>">
    <input type="hidden" name="DET_RepDatCount" value="">
    <input type="hidden" name="DET_RepBrkCount" value="">
+   <input type="hidden" name="DET_RepTerCount" value="">
 </form>
 </body>
 </html>
