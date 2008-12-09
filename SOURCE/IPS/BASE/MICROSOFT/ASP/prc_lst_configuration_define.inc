@@ -89,7 +89,7 @@
       document.main.DTA_AutoMatlUpdate.value = document.main.INP_AutoMatlUpdate.value;
       document.main.DTA_Status.value = document.main.INP_Status.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'UPDATE_ACCEPT';
+      document.main.Mode.value = 'DEFINE_ACCEPT';
       document.main.submit();
    }
    function processForm() {
@@ -282,8 +282,8 @@
       var objSltReportData = document.getElementById('sltReportData');
       for (var i=0;i<objSltPriceItem.options.length;i++) {
          if (objSltPriceItem.options[i].selected == true) {
-            objSltReportData.options[objSltReportData.options.length] = new Option(objSltPriceItem[i].text,'*NEW');
-            objSltReportData.options[objSltReportData.options.length-1].setAttribute('repid','*NEW');
+            objSltReportData.options[objSltReportData.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
+            objSltReportData.options[objSltReportData.options.length-1].setAttribute('repid','0');
             objSltReportData.options[objSltReportData.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
          }
       }
@@ -294,7 +294,7 @@
       for (var i=0;i<objSltPriceItem.options.length;i++) {
          if (objSltPriceItem.options[i].selected == true) {
             objSltReportBreak.options[objSltReportBreak.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
-            objSltReportBreak.options[objSltReportBreak.options.length-1].setAttribute('repid','*NEW');
+            objSltReportBreak.options[objSltReportBreak.options.length-1].setAttribute('repid','0');
             objSltReportBreak.options[objSltReportBreak.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
          }
       }
@@ -305,7 +305,7 @@
       for (var i=0;i<objSltPriceItem.options.length;i++) {
          if (objSltPriceItem.options[i].selected == true) {
             objSltReportOrder.options[objSltReportOrder.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
-            objSltReportOrder.options[objSltReportOrder.options.length-1].setAttribute('repid','*NEW');
+            objSltReportOrder.options[objSltReportOrder.options.length-1].setAttribute('repid','0');
             objSltReportOrder.options[objSltReportOrder.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
          }
       }
@@ -723,8 +723,8 @@
    function acceptTerms() {
       var objSltReportTerm = document.getElementById('sltReportTerm');
       if (cintSelectedTerm == -1) {
-         objSltReportTerm.options[objSltReportTerm.options.length] = new Option(document.getElementById('inpTerms').value,'*NEW');
-         objSltReportTerm.options[objSltReportTerm.options.length-1].setAttribute('terid','*NEW');
+         objSltReportTerm.options[objSltReportTerm.options.length] = new Option(document.getElementById('inpTerms').value,'0');
+         objSltReportTerm.options[objSltReportTerm.options.length-1].setAttribute('terid','0');
       } else {
          objSltReportTerm.options[cintSelectedTerm].text = document.getElementById('inpTerms').value;
       }
@@ -815,7 +815,7 @@
             objHidden.setAttribute('value',objSltReportTerm.options[i].text);
             document.forms['main'].appendChild(objHidden);
          }
-         document.getElementById('DET_RepTerCount').value = objSltReportOrder.options.length;
+         document.getElementById('DET_RepTerCount').value = objSltReportTerm.options.length;
       }
       return strReturn;
    }

@@ -218,9 +218,9 @@ sub ProcessDefineLoad()
       strQuery = strQuery & " t01.report_name,"
       strQuery = strQuery & " to_char(t01.report_grp_id),"
       strQuery = strQuery & " to_char(t01.price_mdl_id,'fm0000000')||to_char(t01.price_sales_org_id,'fm0000000')||to_char(t01.price_distbn_chnl_id,'fm0000000'),"
-      strQuery = strQuery & " t01.status,"
-      strQuery = strQuery & " t01.matl_alrtng,"
-      strQuery = strQuery & " t01.auto_matl_update,"
+      strQuery = strQuery & " nvl(t01.status,'I'),"
+      strQuery = strQuery & " nvl(t01.matl_alrtng,'N'),"
+      strQuery = strQuery & " nvl(t01.auto_matl_update,'N'),"
       strQuery = strQuery & " t01.price_mdl_id"
       strQuery = strQuery & " from report t01"
       strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
@@ -438,7 +438,7 @@ sub ProcessDefineAccept()
       strStatement = strStatement & objForm.Fields("DET_RepOrdId" & i).Value & ","
       strStatement = strStatement & objForm.Fields("DET_RepOrdPrcId" & i).Value
       strStatement = strStatement & ")"
-      strReturn = objProcedureExecute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"

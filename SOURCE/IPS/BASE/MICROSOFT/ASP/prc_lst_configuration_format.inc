@@ -52,7 +52,7 @@
          return;
       }
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'UPDATE_ACCEPT';
+      document.main.Mode.value = 'FORMAT_ACCEPT';
       document.main.submit();
    }
    function processForm() {
@@ -284,15 +284,15 @@
       }
    }
    function getStyle(objObject) {
-      return 'font-family:'+objObject.style.fontFamily+';'
-             'font-size:'+objObject.style.fontSize+';'
-             'font-weight:'+objObject.style.fontWeight+';'
-             'font-style:'+objObject.style.fontStyle+';'
-             'background-color:'+objObject.style.backgroundColor+';'
-             'color:'+objObject.style.color+';'
-             'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'
-             'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'
-             'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'
+      return 'font-family:'+objObject.style.fontFamily+';'+
+             'font-size:'+objObject.style.fontSize+';'+
+             'font-weight:'+objObject.style.fontWeight+';'+
+             'font-style:'+objObject.style.fontStyle+';'+
+             'background-color:'+objObject.style.backgroundColor+';'+
+             'color:'+objObject.style.color+';'+
+             'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'+
+             'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'+
+             'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'+
              'text-align:'+objObject.style.textAlign+';';
    }
    function checkItems() {

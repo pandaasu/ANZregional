@@ -30,7 +30,7 @@
    }
    function doExecute(strIdentifier) {
       if (!processForm()) {return;}
-      doReportOutput(eval('document.body'),'PRICING_REPORT_'+strIdentifier,'*SPREADSHEET','select * from table(pr_app.pricelist_reporting.execute_report(' + strIdentifier + ',\'20080601\'))');
+      doReportOutput(eval('document.body'),'PRICING_REPORT_'+strIdentifier,'*SPREADSHEET','select * from table(pr_app.pricelist_execution.execute_report(' + strIdentifier + ',\'20080601\'))');
    }
    function processForm() {
       if (checkInput() == true) {
