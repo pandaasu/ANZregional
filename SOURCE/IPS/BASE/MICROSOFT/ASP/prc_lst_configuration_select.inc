@@ -80,7 +80,7 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh List&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('');">&nbsp;Create Report&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('0');">&nbsp;Create Report&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

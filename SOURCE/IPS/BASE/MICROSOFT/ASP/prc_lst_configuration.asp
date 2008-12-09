@@ -26,6 +26,7 @@
    dim objSecurity
    dim objSelection
    dim objFunction
+   dim objProcedure
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -123,6 +124,7 @@
    set objSecurity = nothing
    set objSelection = nothing
    set objFunction = nothing
+   set objProcedure = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -205,7 +207,7 @@ sub ProcessDefineLoad()
    '//
    '// Retrieve the report data
    '//
-   if objForm.Fields("DTA_ReportId").Value <> "" then
+   if objForm.Fields("DTA_ReportId").Value <> "0" then
 
       '//
       '// Retrieve the report data
@@ -311,11 +313,11 @@ sub ProcessDefineLoad()
       '//
       lngSize = 0
       strQuery = "select"
-      strQuery = strQuery & " to_char(t01.offset_x),"
+      strQuery = strQuery & " to_char(t01.report_item_id),"
       strQuery = strQuery & " t01.value"
       strQuery = strQuery & " from report_term t01"
       strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
-      strQuery = strQuery & " order by t01.offset_x asc"
+      strQuery = strQuery & " order by t01.sort_order asc"
       strReturn = objSelection.Execute("REPORT_TERM", strQuery, lngSize)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
@@ -364,39 +366,26 @@ sub ProcessDefineAccept()
    dim lngCount
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
-   '// Begin the report
-   '//
-   strStatement = "pricelist_configuration.report_begin("
-   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value
-   strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
-   if strReturn <> "*OK" then
-      strError = FormatError(strReturn)
-      strMode = "SELECT"
-      call ProcessSelect
-      exit sub
-   end if
-
-   '//
-   '// Set the report
+   '// Define the report
    '//
    strStatement = "pricelist_configuration.define_report("
+   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value & ","
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportName").Value) & "',"
    strStatement = strStatement & objForm.Fields("DTA_ReportGrpId").Value & ","
-   strStatement = strStatement & cint(mid(objForm.Fields("DTA_PriceMdlId").Value,1,7)) & ","
-   strStatement = strStatement & cint(mid(objForm.Fields("DTA_PriceMdlId").Value,8,7)) & ","
-   strStatement = strStatement & cint(mid(objForm.Fields("DTA_PriceMdlId").Value,15,7)) & ","
+   strStatement = strStatement & mid(objForm.Fields("DTA_PriceMdlId").Value,1,7) & ","
+   strStatement = strStatement & mid(objForm.Fields("DTA_PriceMdlId").Value,8,7) & ","
+   strStatement = strStatement & mid(objForm.Fields("DTA_PriceMdlId").Value,15,7) & ","
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Status").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_MatlAlrtng").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_AutoMatlUpdate").Value) & "'"
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -405,16 +394,15 @@ sub ProcessDefineAccept()
    end if
 
    '//
-   '// Set the report item data
+   '// Define the report item data
    '//
    lngCount = clng(objForm.Fields("DET_RepDatCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.define_data_item("
-      strStatement = strStatement & "'D',"
+      strStatement = "pricelist_configuration.define_data("
       strStatement = strStatement & objForm.Fields("DET_RepDatId" & i).Value & ","
       strStatement = strStatement & objForm.Fields("DET_RepDatPrcId" & i).Value
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -424,16 +412,15 @@ sub ProcessDefineAccept()
    next
 
    '//
-   '// Set the report item break
+   '// Define the report item break
    '//
    lngCount = clng(objForm.Fields("DET_RepBrkCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.define_break_item("
-      strStatement = strStatement & "'B',"
+      strStatement = "pricelist_configuration.define_break("
       strStatement = strStatement & objForm.Fields("DET_RepBrkId" & i).Value & ","
       strStatement = strStatement & objForm.Fields("DET_RepBrkPrcId" & i).Value
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -443,16 +430,15 @@ sub ProcessDefineAccept()
    next
 
    '//
-   '// Set the report item order
+   '// Define the report item order
    '//
    lngCount = clng(objForm.Fields("DET_RepOrdCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.define_order_item("
-      strStatement = strStatement & "'O',"
+      strStatement = "pricelist_configuration.define_order("
       strStatement = strStatement & objForm.Fields("DET_RepOrdId" & i).Value & ","
       strStatement = strStatement & objForm.Fields("DET_RepOrdPrcId" & i).Value
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedureExecute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -462,16 +448,15 @@ sub ProcessDefineAccept()
    next
 
    '//
-   '// Set the report term
+   '// Define the report term
    '//
    lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
    for i = 1 to lngCount
       strStatement = "pricelist_configuration.define_term("
-      strStatement = strStatement & "'O',"
       strStatement = strStatement & objForm.Fields("DET_RepTerId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerText" & i).Value) & "'"
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -481,10 +466,10 @@ sub ProcessDefineAccept()
    next
 
    '//
-   '// Commit the report
+   '// Commit the define
    '//
    strStatement = "pricelist_configuration.define_commit"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -577,12 +562,12 @@ sub ProcessFormatLoad()
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " to_char(t01.offset_x),"
+   strQuery = strQuery & " to_char(t01.report_item_id),"
    strQuery = strQuery & " t01.value,"
    strQuery = strQuery & " t01.data_frmt"
    strQuery = strQuery & " from report_term t01"
    strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
-   strQuery = strQuery & " order by t01.offset_x asc"
+   strQuery = strQuery & " order by t01.sort_order asc"
    strReturn = objSelection.Execute("REPORT_TERM", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -607,10 +592,10 @@ sub ProcessFormatAccept()
    dim lngCount
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Format the report
@@ -619,7 +604,7 @@ sub ProcessFormatAccept()
    strStatement = strStatement & objForm.Fields("DTA_ReportId").Value & ","
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepHed").Value) & "'"
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -632,13 +617,13 @@ sub ProcessFormatAccept()
    '//
    lngCount = clng(objForm.Fields("DET_RepDatCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.format_data_item("
+      strStatement = "pricelist_configuration.format_data("
       strStatement = strStatement & objForm.Fields("DET_RepDatId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepDatOvr" & i).Value) & "',"
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepDatHed" & i).Value) & "',"
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepDatDat" & i).Value) & "'"
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -652,11 +637,11 @@ sub ProcessFormatAccept()
    '//
    lngCount = clng(objForm.Fields("DET_RepBrkCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.format_break_item("
+      strStatement = "pricelist_configuration.format_break("
       strStatement = strStatement & objForm.Fields("DET_RepBrkId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepBrkDat" & i).Value) & "'"
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -674,7 +659,7 @@ sub ProcessFormatAccept()
       strStatement = strStatement & objForm.Fields("DET_RepTerId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerDat" & i).Value) & "'"
       strStatement = strStatement & ")"
-      strReturn = objFunction.Execute(strStatement)
+      strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -687,7 +672,7 @@ sub ProcessFormatAccept()
    '// Commit the report
    '//
    strStatement = "pricelist_configuration.format_commit"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
