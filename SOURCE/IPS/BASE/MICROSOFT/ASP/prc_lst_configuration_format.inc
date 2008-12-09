@@ -139,7 +139,7 @@
          objCell.id = 'COLHED'+i;
          objCell.innerText = cobjReportData[i].ovrd;
          objCell.onclick = function() {startFormatter('*COLHED',this);};
-         setStyle(objCell,cobjReportData[i].datafrmt);
+         setStyle(objCell,cobjReportData[i].namefrmt);
          objCell.style.whiteSpace = 'nowrap';
          objCell.style.cursor = 'pointer';
          objCell.setAttribute('idx',i);
@@ -460,7 +460,7 @@
                               'FFCC00','FFCC33','FFCC66','FFCC99','FFCCCC','FFCCFF',
                               'FFFF00','FFFF33','FFFF66','FFFF99','FFFFCC','FFFFFF');
    var cobjBorderStyles = new Array('none','solid','dashed','dotted','solid','double','solid','dashed','dotted');
-   var cobjBorderWidths = new Array('1.0pt','1.0pt','1.0pt','1.0pt','1.5pt','2.0pt','2.0pt','2.0pt','2.0pt');
+   var cobjBorderWidths = new Array('.75pt','.75pt','.75pt','.75pt','1.5pt','2.0pt','2.0pt','2.0pt','2.0pt');
    var cobjBorderColors = new Array('#000000','#000000','#000000','#000000','#000000','#000000','#000000','#000000','#000000');
    function clsSelectList(strText,strValue) {
       this.text = strText;
