@@ -241,6 +241,8 @@ create or replace package body pricelist_execution as
       var_query := var_query || ' and t1c.price_sales_org_code = t2.sales_org';
       var_query := var_query || ' and t1a.price_distbn_chnl_id = t1d.price_distbn_chnl_id';
       var_query := var_query || ' and t1d.price_distbn_chnl_code = t2.dstrbtn_chnl';
+      var_query := var_query || ' and t1.x_plant_matl_sts = ''10''';
+      var_query := var_query || ' and t2.dstrbtn_chain_sts = ''20''';
       if not(rcd_price_mdl.sql_from_tables is null) and not(rcd_price_mdl.sql_where_joins is null) then
          var_query := var_query || trim(rcd_price_mdl.sql_where_joins);
       end if;
@@ -313,7 +315,7 @@ create or replace package body pricelist_execution as
       if rcd_report.report_name_frmt is null then
          pipe row('<tr><td colspan='||var_data_count||'>'||rcd_report.report_name||'</td></tr>');
       else
-         pipe row('<tr><td colspan='||var_data_count||' style="'||rcd_report.report_name_frmt||'>'||rcd_report.report_name||'"</td></tr>');
+         pipe row('<tr><td colspan='||var_data_count||' style="'||rcd_report.report_name_frmt||'">'||rcd_report.report_name||'</td></tr>');
       end if;
       var_output := '<tr>';
       for idx in var_break_count+1..var_column_count loop
