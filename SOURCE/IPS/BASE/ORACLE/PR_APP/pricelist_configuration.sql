@@ -42,6 +42,7 @@ create or replace package pricelist_configuration as
                           par_price_item_id in number);
    procedure define_term(par_report_item_id in number,
                          par_value in varchar2);
+   procedure define_material(par_matl_code in varchar2);
    procedure define_commit;
    procedure format_report(par_report_id in number,
                            par_report_name_frmt in varchar2);
@@ -75,14 +76,17 @@ create or replace package body pricelist_configuration as
    rcd_report report%rowtype;
    rcd_report_item report_item%rowtype;
    rcd_report_term report_term%rowtype;
+   rcd_report_matl report_matl%rowtype;
    type typ_report is table of report%rowtype index by binary_integer;
    type typ_report_item is table of report_item%rowtype index by binary_integer;
    type typ_report_term is table of report_term%rowtype index by binary_integer;
+   type typ_report_matl is table of report_matl%rowtype index by binary_integer;
    tbl_report typ_report;
    tbl_report_data typ_report_item;
    tbl_report_break typ_report_item;
    tbl_report_order typ_report_item;
    tbl_report_term typ_report_term;
+   tbl_report_matl typ_report_matl;
 
    /*****************************************************/
    /* This procedure performs the define report routine */
@@ -110,6 +114,7 @@ create or replace package body pricelist_configuration as
       tbl_report_break.delete;
       tbl_report_order.delete;
       tbl_report_term.delete;
+      tbl_report_matl.delete;
 
       /*-*/
       /* Set the report variables
@@ -294,6 +299,41 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    end define_term;
 
+   /*******************************************************/
+   /* This procedure performs the define material routine */
+   /*******************************************************/
+   procedure define_material(par_matl_code in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the report variables
+      /**/
+      tbl_report_matl(tbl_report_matl.count+1).matl_code := par_matl_code;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end define_material;
+
    /*****************************************************/
    /* This procedure performs the define commit routine */
    /*****************************************************/
@@ -402,6 +442,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Delete the existing report information
       /*-*/
+      delete from report_matl where report_id = tbl_report(1).report_id;
       delete from report_term where report_id = tbl_report(1).report_id;
       delete from report_item where report_id = tbl_report(1).report_id;
       delete from report where report_id = tbl_report(1).report_id;
@@ -425,8 +466,8 @@ create or replace package body pricelist_configuration as
          if var_return != common.gc_success then
             raise_application_error(-20000, 'Unable to request new id for a report - ' || var_return_msg);
          end if;
+         rcd_report.report_id := var_id;
       end if;
-      rcd_report.report_id := var_id;
       insert into report values rcd_report;
 
       /*-*/
@@ -446,8 +487,8 @@ create or replace package body pricelist_configuration as
             if var_return != common.gc_success then
                raise_application_error(-20000, 'Unable to request new id for a report item - ' || var_return_msg);
             end if;
+            rcd_report_item.report_item_id := var_id;
          end if;
-         rcd_report_item.report_item_id := var_id;
          insert into report_item values rcd_report_item;
       end loop;
 
@@ -468,8 +509,8 @@ create or replace package body pricelist_configuration as
             if var_return != common.gc_success then
                raise_application_error(-20000, 'Unable to request new id for a report item - ' || var_return_msg);
             end if;
+            rcd_report_item.report_item_id := var_id;
          end if;
-         rcd_report_item.report_item_id := var_id;
          insert into report_item values rcd_report_item;
       end loop;
 
@@ -490,13 +531,13 @@ create or replace package body pricelist_configuration as
             if var_return != common.gc_success then
                raise_application_error(-20000, 'Unable to request new id for a report item - ' || var_return_msg);
             end if;
+            rcd_report_item.report_item_id := var_id;
          end if;
-         rcd_report_item.report_item_id := var_id;
          insert into report_item values rcd_report_item;
       end loop;
 
       /*-*/
-      /* Insert the new report order terms
+      /* Insert the new report terms
       /*-*/
       for idx in 1..tbl_report_term.count loop
          rcd_report_term.report_id := rcd_report.report_id;
@@ -509,9 +550,18 @@ create or replace package body pricelist_configuration as
             if var_return != common.gc_success then
                raise_application_error(-20000, 'Unable to request new id for a report item - ' || var_return_msg);
             end if;
+            rcd_report_term.report_item_id := var_id;
          end if;
-         rcd_report_term.report_item_id := var_id;
          insert into report_term values rcd_report_term;
+      end loop;
+
+      /*-*/
+      /* Insert the new report materials
+      /*-*/
+      for idx in 1..tbl_report_matl.count loop
+         rcd_report_matl.report_id := rcd_report.report_id;
+         rcd_report_matl.matl_code := tbl_report_matl(idx).matl_code;
+         insert into report_matl values rcd_report_matl;
       end loop;
 
       /*-*/
