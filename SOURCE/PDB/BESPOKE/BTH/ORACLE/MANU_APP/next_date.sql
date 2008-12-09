@@ -1,6 +1,4 @@
-DROP FUNCTION MANU_APP.NEXT_DATE;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Next_Date RETURN DATE IS
+CREATE OR REPLACE FUNCTION "NEXT_DATE" RETURN DATE IS
 
 /******************************************************************************
    NAME:       Next_Date
@@ -10,6 +8,7 @@ CREATE OR REPLACE FUNCTION MANU_APP.Next_Date RETURN DATE IS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        25-Aug-06  Jeff Phillipson        1. Created this function.
+   1.2        05-Nov-08  Chris Munn				1. Updated the function to handle the dynamic frozen window changes
 
    NOTES:
    	  Purpose:		   Due to planned Atlas outages it is necessary to automate the
@@ -28,25 +27,33 @@ CREATE OR REPLACE FUNCTION MANU_APP.Next_Date RETURN DATE IS
 
 ******************************************************************************/
     
-	CURSOR csr_wndw
-	IS
-	SELECT TO_DATE(TO_CHAR(TRUNC(SYSDATE)+decode(to_char(sysdate,'DY'),'FRI', 2,1),'dd-mon-yyyy') || ' ' || decode(to_char(sysdate,'DY'),'THU', fri_wndw_time,wndw_time),'dd-Mon-yyyy HH24:MI')  Next_Date FROM RTT_Wndw_time WHERE Wndw_Date IN
-	(SELECT MAX(wndw_date) FROM RTT_Wndw_time WHERE Wndw_date <= SYSDATE+decode(to_char(sysdate,'DY'),'FRI', 2,1));
-	
-	var_next_date		   DATE DEFAULT TRUNC(SYSDATE);
+  sqlstmt     varchar2(1000);
+  var_next_date		   DATE DEFAULT TRUNC(SYSDATE);
 	
 BEGIN
+
+  -- Build the SQL statement used to retrieve the date and time at which the Master Schedule Send should occur.
+  sqlstmt := 'SELECT TO_DATE(TO_CHAR(TRUNC(SYSDATE) + 1,''dd-mon-yyyy'') || ';
+        
+  -- If tomorrow is a day on and a block of days off falls the next day.
+  IF (RE_TIMING.IS_DAY_OFF(SYSDATE + 1) = false) AND (RE_TIMING.GET_OFF_BLOCK_LENGTH(SYSDATE + 1) >= 2) THEN
+      -- Send the schedule at the earlier extended time.
+      sqlstmt := sqlstmt || 'ext_wndw_time';
+  ELSE
+      -- otherwise send the schedule at the regular time.
+      sqlstmt := sqlstmt || 'wndw_time';
+  END IF;
   
-    OPEN csr_wndw;
-    LOOP
-       FETCH csr_wndw INTO var_next_date;
-       EXIT WHEN csr_wndw%NOTFOUND;
-    END LOOP;
-    CLOSE csr_wndw;
+  sqlstmt := sqlstmt || ',''dd-Mon-yyyy HH24:MI'')  Next_Date FROM RTT_Wndw_time WHERE Wndw_Date IN 
+    (SELECT MAX(wndw_date) FROM RTT_Wndw_time WHERE Wndw_date <= SYSDATE+1)';
     
-   RETURN var_next_date;
+  -- Execute the query.
+  EXECUTE IMMEDIATE sqlstmt INTO var_next_date;
+  
+  -- Return the date the master schedule send will next occur.
+  RETURN var_next_date;
    
-   EXCEPTION
+  EXCEPTION
      WHEN NO_DATA_FOUND THEN
        NULL;
 	   RETURN var_next_date;
@@ -54,17 +61,11 @@ BEGIN
        -- Consider logging the error and then re-raise
        RAISE;
 	   RETURN var_next_date;
-	   
+
 END Next_Date;
 /
 
+grant execute on manu_app.next_date to appsupport;
+grant execute on manu_app.next_date to bthsupport;
 
-DROP PUBLIC SYNONYM NEXT_DATE;
-
-CREATE PUBLIC SYNONYM NEXT_DATE FOR MANU_APP.NEXT_DATE;
-
-
-GRANT EXECUTE ON MANU_APP.NEXT_DATE TO APPSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.NEXT_DATE TO BTHSUPPORT;
-
+create or replace public synonym next_date for manu_app.next_date;

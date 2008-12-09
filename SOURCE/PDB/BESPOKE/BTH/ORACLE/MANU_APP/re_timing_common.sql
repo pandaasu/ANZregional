@@ -1,4 +1,15 @@
-CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing_Common IS
+CREATE OR REPLACE PACKAGE Re_Timing_Common IS
+/******************************************************************************************************
+   NAME:       Re_timing_Common
+   PURPOSE:    Constants used by Re Timing.
+
+   REVISIONS:
+   Ver        Date          Author              Description
+   ---------  ----------    ---------------     ------------------------------------
+   1.0        21/11/2005    Jeff Phillipson     1. Created this package.
+   2.0        10/06/2008    Daniel Owen         Added 6 day RTT msg code and renamed all RTT msg codes
+   3.0		  05/11/2008	Chris Munn			Added message codes for window withs 6 up to days wide.
+*******************************************************************************************************/
 
     -- System Constants
 		SUBTYPE RESULT_TYPE IS INTEGER;
@@ -50,22 +61,22 @@ CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing_Common IS
 		/* Bathurst values 
 		/*-*/
 		SCHEDULE_CODE CONSTANT VARCHAR(3) := '012';
-		RETIMING_CODE CONSTANT VARCHAR2(3) := '013';
-		RETIMING_LONG_CODE CONSTANT VARCHAR2(3) := '017';  -- used if the window is based on after 18:50 ie 3 days
-                RETIMING_FRI_LONG_CODE CONSTANT VARCHAR2(3) := '020';  --  special case used on Fridays only, when the window is based after mrp period it becomes 4 days
-		RETIMING_CODE_5DAYS CONSTANT VARCHAR2(3) := '021';  --  special case used when the window is +5 days
+		RETIMING_CODE_2DAYS CONSTANT VARCHAR2(3) := '013'; -- indicates a window width of 2 days
+		RETIMING_CODE_3DAYS CONSTANT VARCHAR2(3) := '017'; -- indicates a window width of 3 days
+        RETIMING_CODE_4DAYS CONSTANT VARCHAR2(3) := '020'; --  indicates a window width of 4 days
+		RETIMING_CODE_5DAYS CONSTANT VARCHAR2(3) := '021'; --  indicates a window width of 5 days
+        RETIMING_CODE_6DAYS CONSTANT VARCHAR2(3) := '022'; --  indicates a window width of 6 days
                 
 		-- Default Reference Return Cursor.
 		TYPE RETURN_REF_CURSOR IS REF CURSOR;
-
-
 END;
-/
 
-GRANT EXECUTE ON MANU_APP.RE_TIMING_COMMON TO APPSUPPORT;
-GRANT EXECUTE ON MANU_APP.RE_TIMING_COMMON TO BTHSUPPORT;
-GRANT EXECUTE ON MANU_APP.RE_TIMING_COMMON TO PR_ADMIN;
-GRANT EXECUTE ON MANU_APP.RE_TIMING_COMMON TO PR_APP WITH GRANT OPTION;
-GRANT EXECUTE ON MANU_APP.RE_TIMING_COMMON TO PR_USER;
 
-CREATE OR REPLACE PUBLIC SYNONYM RE_TIMING_COMMON FOR MANU_APP.RE_TIMING_COMMON;
+
+grant execute on manu_app.re_timing_common to appsupport;
+grant execute on manu_app.re_timing_common to bthsupport;
+grant execute on manu_app.re_timing_common to pr_admin;
+grant execute on manu_app.re_timing_common to pr_app with grant option;
+grant execute on manu_app.re_timing_common to pr_user;
+
+create or replace public synonym re_timing_common for manu_app.re_timing_common;

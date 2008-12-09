@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing_Schedule_Send AS
+CREATE OR REPLACE PACKAGE Re_Timing_Schedule_Send AS
 /******************************************************************************
    NAME:       Send_Schedule
    PURPOSE:		This will send a mini schedule of say 2 days. 
@@ -23,7 +23,7 @@ CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing_Schedule_Send AS
 END Re_Timing_Schedule_Send;
 /
 
-CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing_Schedule_Send AS
+CREATE OR REPLACE PACKAGE BODY Re_Timing_Schedule_Send AS
 /******************************************************************************
    NAME:       Send_Schedule 
    PURPOSE:		This package is called from Execute which return a query based on a standard 
@@ -161,28 +161,31 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing_Schedule_Send AS
                 
                 /* -- check current size of RTT window and choose msg code to suit */
                 CASE re_timing.get_firm('AU30')
-                WHEN TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi') THEN
-                    --2 Days
-                    var_retiming_code := Re_Timing_Common.RETIMING_CODE;
-                    
-                WHEN TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi') THEN
-                    --3 Days
-                    var_retiming_code := Re_Timing_Common.RETIMING_LONG_CODE;
-          
-                WHEN TO_CHAR(TRUNC(SYSDATE) + 4,'dd/mm/yyyy hh24:mi') THEN
-                    --4 Days
-                    var_retiming_code := Re_Timing_Common.RETIMING_FRI_LONG_CODE;
-          
-                WHEN TO_CHAR(TRUNC(SYSDATE) + 5,'dd/mm/yyyy hh24:mi') THEN
-                    --5 Days
-                    var_retiming_code := Re_Timing_Common.RETIMING_CODE_5DAYS;           
-                    
-                ELSE
-                    --TODO: Do not send (exit with error)
-                    --RAISE_APPLICATION_ERROR(-20000, 'RTT Schedule Not Sent - No Msg Code for current RTT Window Size. - ' || SUBSTR(SQLERRM, 1, 512));       
-                    
-                    -- For now, just send as a 2 day - any extra days will be converted to new planned orders
-                    var_retiming_code := Re_Timing_Common.RETIMING_CODE;
+				WHEN TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi') THEN
+					--2 Days
+					var_retiming_code := Re_Timing_Common.RETIMING_CODE_2DAYS;
+	                
+				WHEN TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi') THEN
+					--3 Days
+					var_retiming_code := Re_Timing_Common.RETIMING_CODE_3DAYS;
+	        
+				WHEN TO_CHAR(TRUNC(SYSDATE) + 4,'dd/mm/yyyy hh24:mi') THEN
+					--4 Days
+					var_retiming_code := Re_Timing_Common.RETIMING_CODE_4DAYS;
+	        
+				WHEN TO_CHAR(TRUNC(SYSDATE) + 5,'dd/mm/yyyy hh24:mi') THEN
+					--5 Days
+					var_retiming_code := Re_Timing_Common.RETIMING_CODE_5DAYS;  
+				WHEN TO_CHAR(TRUNC(SYSDATE) + 6,'dd/mm/yyyy hh24:mi') THEN
+                    --6 Days
+                    var_retiming_code := Re_Timing_Common.RETIMING_CODE_6DAYS;     					         
+	                
+				ELSE
+					--TODO: Do not send (exit with error)
+					--RAISE_APPLICATION_ERROR(-20000, 'RTT Schedule Not Sent - No Msg Code for current RTT Window Size. - ' || SUBSTR(SQLERRM, 1, 512));       
+	                
+					-- For now, just send as a 2 day - any extra days will be converted to new planned orders
+					var_retiming_code := Re_Timing_Common.RETIMING_CODE_2DAYS;
                 END CASE;
 
 		
@@ -333,7 +336,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing_Schedule_Send AS
 END Re_Timing_Schedule_Send;
 /
 
-GRANT EXECUTE ON MANU_APP.RE_TIMING_SCHEDULE_SEND TO APPSUPPORT;
-GRANT EXECUTE ON MANU_APP.RE_TIMING_SCHEDULE_SEND TO BTHSUPPORT;
+grant execute on manu_app.re_timing_schedule_send to appsupport;
+grant execute on manu_app.re_timing_schedule_send to bthsupport;
 
-CREATE OR REPLACE PUBLIC SYNONYM RE_TIMING_SCHEDULE_SEND FOR MANU_APP.RE_TIMING_SCHEDULE_SEND;
+create or replace public synonym re_timing_schedule_send for manu_app.re_timing_schedule_send;

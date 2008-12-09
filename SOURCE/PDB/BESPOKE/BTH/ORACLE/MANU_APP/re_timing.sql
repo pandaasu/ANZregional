@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing
+CREATE OR REPLACE PACKAGE Re_Timing
 IS
 /******************************************************************************
    NAME:       Re  timing tool functions
@@ -13,7 +13,8 @@ IS
    1.0        21/11/2005   Jeff Phillipson    1. Created this package.
    2.0        01/02/2008   Jeff Phillipson    Validation upgrade changes made
    3.0        27-May-2008  Jeff Phillipson    Obsolete BOM Report procedures added to end of package
-   3.1        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
+   3.2        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
+   3.3        04-Nov-2008  Chris Munn        Modify Frozen Window to cope with consecutive days off.
 ******************************************************************************/
 
    /***********************************************************/
@@ -272,6 +273,17 @@ IS
       RETURN NUMBER;
 
 /***********************************************************/
+/*  Determine whether a day passed into this function
+/*  is a day on or a day off.
+/***********************************************************/
+
+FUNCTION IS_DAY_OFF(check_day IN DATE) 
+  RETURN BOOLEAN;
+
+FUNCTION GET_OFF_BLOCK_LENGTH(i_start_date IN DATE)
+  RETURN NUMBER;
+
+/***********************************************************/
 /* get the FIRM end date from oracle
 /***********************************************************/
    FUNCTION get_firm (i_plant_code IN VARCHAR2)
@@ -493,7 +505,7 @@ IS
 END Re_Timing;
 /
 
-CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
+CREATE OR REPLACE PACKAGE BODY Re_Timing IS
 /******************************************************************************
    NAME:       Re  timing tool functions
    PURPOSE:    This package will provide the interface between the windows application
@@ -506,6 +518,8 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
    ---------  ----------   ---------------   ------------------------------------
    1.0        21/11/2005   Jeff Phillipson   1. Created this package.
    3.0        27-May-2008  Jeff Phillipson   Obsolete BOM Report procedures added to end of package 
+   3.2        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
+   3.3        04-Nov-2008  Chris Munn        Modify Frozen Window to cope with consecutive days off.
 ******************************************************************************/
 
    /*-*/
@@ -520,7 +534,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
    var_work		   NUMBER DEFAULT 0;
    var_start      NUMBER;
 
-   /***********************************************************/
+  /***********************************************************/
   /* MRP_PERIOD will check if the current time is in the extended
   /* time frame or before the extended time frame
   /* Returns 0 for before the extended period ie before the time of
@@ -528,27 +542,37 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
   /*         1 for after the epriod ie 18:50 to midnight
   /***********************************************************/
   FUNCTION MRP_PERIOD RETURN NUMBER
-  IS
+   IS
 
-  	  var_mrp NUMBER;
+      var_mrp NUMBER;
+      sqlstmt varchar2(1000);
 
   BEGIN
-      /*-*/
-	  /* the cursor will return data from the last record
-	  /* entered into the table - RTT_WNDW_TIME
-	  /* RESULT 0 BEFORE mrp WINDOW
-	  /* 		1 AFTER MRP WINDOW
-	  /*-*/
-      SELECT CASE WHEN TO_DATE(TO_CHAR(TRUNC(SYSDATE),'dd-mon-yyyy') || ' ' || decode(to_char(sysdate,'DY'),'FRI', fri_wndw_time,wndw_time),'dd-Mon-yyyy HH24:MI') + mrp_offset/1440 - SYSDATE  > 0 THEN 0
-             ELSE 1 END mrp_stat
-	         /* 0 is before MRP window  */
-	         /* 1 is after MRP window   */
-	    INTO var_mrp
-        FROM RTT_Wndw_time WHERE Wndw_Date IN
-             (SELECT MAX(wndw_date) FROM RTT_Wndw_time WHERE Wndw_date <= SYSDATE);
-
-      RETURN var_mrp;
-
+      
+      --  Build the SQL to determine the time at which the frozen window is extended.
+      sqlstmt := 'SELECT CASE WHEN TO_DATE(TO_CHAR(TRUNC(SYSDATE),''dd-mon-yyyy'') || ';
+      
+      -- If today is not a day off and tomorrow is the start of a block of days off
+      IF (RE_TIMING.IS_DAY_OFF(SYSDATE) = false) AND (RE_TIMING.GET_OFF_BLOCK_LENGTH(SYSDATE) >= 2) THEN
+          -- retrieve the extended time at which the master scheduled send is run.
+          sqlstmt := sqlstmt || 'ext_wndw_time';
+      ELSE
+          -- otherwise retrieve the regular time at which the master schedule send is run
+          sqlstmt := sqlstmt || 'wndw_time';
+      END IF;
+ 
+      -- Determine if extended time (the time at which the master schedule has run + the value in the offset field)
+      -- has passed. If it has extended time has been reached - return 1, otherwise return 0.
+      sqlstmt := sqlstmt || ',''dd-Mon-yyyy HH24:MI'') + mrp_offset/1440 - SYSDATE  > 0 THEN 0';
+      sqlstmt := sqlstmt || ' ELSE 1 END mrp_stat';
+      sqlstmt := sqlstmt || ' FROM RTT_Wndw_time WHERE Wndw_Date IN';
+      sqlstmt := sqlstmt || ' (SELECT MAX(wndw_date) FROM RTT_Wndw_time WHERE Wndw_date <= SYSDATE)';
+      
+      -- Retrieve the value of extended time
+      EXECUTE IMMEDIATE sqlstmt
+        into var_mrp;
+  
+      return var_mrp;
   EXCEPTION
      WHEN NO_DATA_FOUND THEN
        NULL;
@@ -2003,65 +2027,120 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 
   END GET_ACTUAL;
 
+/********************************************************************
+  IS_DAY_OFF determines whether a date passed into it is
+  a day on, or a day off. A day off is a day that the site
+  will not be operating normal shifts, and will not have an
+  SSC available to retime the schedule within the frozen window.
+  
+  A day is considered a day off if it is a Saturday, Sunday 
+  or any date entered in the days_off table.
+**********************************************************************/
+
+FUNCTION IS_DAY_OFF(check_day IN DATE) RETURN BOOLEAN IS
+
+      days_returned NUMBER;
+BEGIN
+
+      -- Initialise the counter that records the number of days returned.
+      days_returned := 0;
+      
+      -- Query the days_off table to determine if the date represented by check_day is present.
+      SELECT COUNT(*) 
+      INTO days_returned
+      FROM days_off
+      WHERE trunc(day_off) = trunc(check_day);
+      
+      -- If the date in question has been found in the database, or the date is a Saturday or Sunday
+      IF (days_returned = 1) OR (to_char(check_day,'DY') IN ('SAT','SUN')) THEN
+        -- return true indicating that the date is a day off
+        RETURN TRUE;
+      ELSE
+        -- otherwise return false indicating that the date is not a day off.
+        RETURN FALSE;
+      END IF;
+      
+      -- If there was a problem retrieving date information return false
+      EXCEPTION
+        WHEN OTHERS THEN
+	   RETURN FALSE;
+      
+END;
+
+/*****************************************************************
+  Determine if a block of days off starts the day after the date
+  received. If it does, determine the number of days in that block 
+  of days off.
+/*****************************************************************/
+
+FUNCTION GET_OFF_BLOCK_LENGTH(i_start_date IN DATE) RETURN NUMBER IS
+
+  no_of_days_in_block number;
+BEGIN
+
+  --Initialise the count of days off
+  no_of_days_in_block := 0;
+  
+  -- If the day after the received date is a day off, determine if is part of a block of days off. If it is determine
+  -- how many consecutive days are in the block of days off.
+  WHILE (RE_TIMING.IS_DAY_OFF(TRUNC(i_start_date + no_of_days_in_block + 1)) = TRUE) LOOP
+      no_of_days_in_block := no_of_days_in_block + 1;
+  END LOOP;
+
+  -- Return the number of days a block of days off.
+  RETURN no_of_days_in_block;
+END GET_OFF_BLOCK_LENGTH;
 
   /***********************************************************/
-  /* get the FIRM date from oracle
-  /***********************************************************/
-  FUNCTION GET_FIRM(i_plant_code IN VARCHAR2)  RETURN VARCHAR2 IS
+/* get the FIRM date from oracle
+/***********************************************************/
+FUNCTION GET_FIRM(i_plant_code IN VARCHAR2)  RETURN VARCHAR2 IS
 
       var_work VARCHAR2(20);
-
-
+      end_block date;
+      no_of_days_off number;
+    
   BEGIN
-
-	   --IF SYSDATE >= TRUNC(SYSDATE) + RE_TIMING_COMMON.SCHEDULE_CHANGE THEN
-	   /*IF mrp_period = 1 THEN
-	       IF TO_CHAR(SYSDATE,'DY') = 'FRI' THEN
-                   var_work := TO_CHAR(TRUNC(SYSDATE) + 4,'dd/mm/yyyy hh24:mi');
-               ELSE
-                   var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
-               END IF;
-	   ELSE
-               IF TO_CHAR(SYSDATE,'DY') = 'SAT' THEN
-                   var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
-               ELSE
-                   var_work := TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi');
-               END IF;
-
-	   END IF;*/
-           
-      /* Basic pattern for RTT window sizes is 2/3 for most days except on Fridays (2/4) and Saturdays (3/3) */
-      CASE TO_CHAR(SYSDATE,'DY')
-      WHEN 'FRI' THEN
-          --FRIDAY
-          IF mrp_period = 0 THEN
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi');
-          ELSE
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 4,'dd/mm/yyyy hh24:mi');
-          END IF;
-          
-      WHEN 'SAT' THEN
-          --SATURDAY
-          IF mrp_period = 0 THEN
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
-          ELSE
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
-          END IF;
-          
+      
+  -- Retrieve the number of days off
+  no_of_days_off := GET_OFF_BLOCK_LENGTH(trunc(SYSDATE));
+ 
+  -- Determine date of the final day in a block of days off. 
+  end_block := TRUNC(SYSDATE + no_of_days_off);
+  
+  -- If the current time is
+  CASE mrp_period 
+    -- before the mrp period
+    WHEN 0 THEN
+      -- and today is not a day off create a window 2 days wide
+      IF IS_DAY_OFF(TRUNC(SYSDATE)) = FALSE THEN
+        var_work := TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi');
       ELSE
-          --OTHER DAYS
-          IF mrp_period = 0 THEN
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi');
-          ELSE
-                  var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
-          END IF;       
-      END CASE;
-
-      RETURN var_work;
+        -- otherwise create a window wide enough to encompas the first day on.
+        var_work := TO_CHAR(end_block + 2, 'dd/mm/yyyy hh24:mi');
+      END IF;
+    -- after the mrp period.
+    WHEN 1 THEN
+      -- and there is no block of consecutive days off, create a window 3 days wide
+      IF no_of_days_off < 2 THEN
+        var_work := TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi');
+      ELSE
+        -- otherwise create a window wide enough to encompas the first day on.
+        var_work := TO_CHAR(end_block + 2, 'dd/mm/yyyy hh24:mi');
+      END IF;
+  END CASE;
+  
+  -- Limit the window size to a width of 6 days.
+  IF TO_DATE(var_work,'dd/mm/yyyy hh24:mi') > TRUNC(SYSDATE + 6) THEN
+    var_work := TO_CHAR(TRUNC(SYSDATE + 6), 'dd/mm/yyyy hh24:mi');
+  END IF;
+  
+   RETURN var_work;
 
   EXCEPTION
       WHEN OTHERS THEN
 		   RETURN TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi');
+    
 
   END GET_FIRM;
 
@@ -2966,16 +3045,10 @@ END OBS_BOM_RECORDS;
   END Re_Timing;
 /
 
-CREATE OR REPLACE PUBLIC SYNONYM RE_TIMING FOR MANU_APP.RE_TIMING;
+grant execute on manu_app.re_timing to appsupport;
+grant execute on manu_app.re_timing to bthsupport;
+grant execute on manu_app.re_timing to pr_admin;
+grant execute on manu_app.re_timing to pr_app with grant option;
+grant execute on manu_app.re_timing to pr_user;
 
-
-GRANT EXECUTE ON MANU_APP.RE_TIMING TO APPSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.RE_TIMING TO BTHSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.RE_TIMING TO PR_ADMIN;
-
-GRANT EXECUTE ON MANU_APP.RE_TIMING TO PR_APP WITH GRANT OPTION;
-
-GRANT EXECUTE ON MANU_APP.RE_TIMING TO PR_USER;
-
+create or replace public synonym re_timing for manu_app.re_timing;
