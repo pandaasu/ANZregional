@@ -313,7 +313,6 @@ sub ProcessDefineLoad()
       '//
       lngSize = 0
       strQuery = "select"
-      strQuery = strQuery & " to_char(t01.report_item_id),"
       strQuery = strQuery & " t01.value"
       strQuery = strQuery & " from report_term t01"
       strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
@@ -344,7 +343,7 @@ sub ProcessDefineLoad()
       call objForm.AddField("DTA_ReportName", "")
       call objForm.AddField("DTA_ReportGrpId", "")
       call objForm.AddField("DTA_PriceMdlId", "")
-      call objForm.AddField("DTA_Status", "I")
+      call objForm.AddField("DTA_Status", "V")
       call objForm.AddField("DTA_MatlAlrtng", "N")
       call objForm.AddField("DTA_AutoMatlUpdate", "N")
 
@@ -453,7 +452,6 @@ sub ProcessDefineAccept()
    lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
    for i = 1 to lngCount
       strStatement = "pricelist_configuration.define_term("
-      strStatement = strStatement & objForm.Fields("DET_RepTerId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerText" & i).Value) & "'"
       strStatement = strStatement & ")"
       strReturn = objProcedure.Execute(strStatement)
@@ -562,8 +560,7 @@ sub ProcessFormatLoad()
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " to_char(t01.report_item_id),"
-   strQuery = strQuery & " t01.value,"
+   strQuery = strQuery & " nvl(t01.value,'*Blank Line*'),"
    strQuery = strQuery & " t01.data_frmt"
    strQuery = strQuery & " from report_term t01"
    strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
@@ -656,7 +653,6 @@ sub ProcessFormatAccept()
    lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
    for i = 1 to lngCount
       strStatement = "pricelist_configuration.format_term("
-      strStatement = strStatement & objForm.Fields("DET_RepTerId" & i).Value & ","
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerDat" & i).Value) & "'"
       strStatement = strStatement & ")"
       strReturn = objProcedure.Execute(strStatement)

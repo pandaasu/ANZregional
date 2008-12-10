@@ -80,7 +80,7 @@
       cobjReport = new clsReport('<%=replace(objSelection.ListValue02("REPORT",objSelection.ListLower("REPORT")), """", "&#34;", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT",objSelection.ListLower("REPORT"))%>');<%if objSelection.ListCount("REPORT_DATA") <> 0 then%><%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
       cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue02("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue04("REPORT_DATA",i)%>','<%=objSelection.ListValue05("REPORT_DATA",i)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_BREAK") <> 0 then%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
       cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue02("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT_BREAK",i)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_TERM") <> 0 then%><%for i = objSelection.ListLower("REPORT_TERM") to objSelection.ListUpper("REPORT_TERM")%>
-      cobjReportTerm[<%=i%>] = new clsReportTerm('<%=objSelection.ListValue01("REPORT_TERM",i)%>','<%=replace(objSelection.ListValue02("REPORT_TERM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("REPORT_TERM",i)%>');<%next%><%end if%>
+      cobjReportTerm[<%=i%>] = new clsReportTerm('<%=replace(objSelection.ListValue01("REPORT_TERM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue02("REPORT_TERM",i)%>');<%next%><%end if%>
       var objFormatTable;
       var objRow;
       var objCell;
@@ -237,8 +237,7 @@
       this.datafrmt = strDataFrmt;
       this.datasave = strDataFrmt;
    }
-   function clsReportTerm(strId,strText,strDataFrmt) {
-      this.id = strId;
+   function clsReportTerm(strText,strDataFrmt) {
       this.text = strText;
       this.datafrmt = strDataFrmt;
       this.datasave = strDataFrmt;
@@ -340,11 +339,6 @@
       }
       document.getElementById('DET_RepBrkCount').value = cobjReportBreak.length;
       for (var i=0;i<cobjReportTerm.length;i++) {
-         objHidden = document.createElement('input');
-         objHidden.setAttribute('type','hidden');
-         objHidden.setAttribute('name','DET_RepTerId'+(i+1));
-         objHidden.setAttribute('value',cobjReportTerm[i].id);
-         document.forms['main'].appendChild(objHidden);
          objHidden = document.createElement('input');
          objHidden.setAttribute('type','hidden');
          objHidden.setAttribute('name','DET_RepTerDat'+(i+1));
@@ -574,6 +568,7 @@
    }
    function startFormatter(strAction,objObject) {
       cstrFormatterAction = strAction;
+      cobjFormatterSource = null;
       if (cstrFormatterAction == '*COLHEDALL') {
          if (cobjReportData.length != 0) {
             cobjFormatterSource = document.getElementById('COLHED0');

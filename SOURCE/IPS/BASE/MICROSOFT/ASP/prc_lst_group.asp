@@ -220,7 +220,7 @@ sub ProcessDefineAccept()
    '//
    '// Update the group
    '//
-   strStatement = "pricelist_configuration.update_group("
+   strStatement = "pricelist_configuration.define_group("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpId").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpName").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Status").Value) & "'"
