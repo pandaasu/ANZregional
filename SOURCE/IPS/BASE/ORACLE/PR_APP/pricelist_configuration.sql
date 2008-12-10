@@ -35,9 +35,9 @@ create or replace package pricelist_configuration as
                            par_price_mdl_id in number,
                            par_price_sales_org_id in number,
                            par_price_distbn_id in number,
+                           par_status in varchar2,
                            par_matl_alrtng in varchar2,
-                           par_auto_matl_update in varchar2,
-                           par_status in varchar2);
+                           par_auto_matl_update in varchar2);
    procedure define_data(par_report_item_id in number,
                          par_price_item_id in number);
    procedure define_break(par_report_item_id in number,
@@ -262,9 +262,9 @@ create or replace package body pricelist_configuration as
                            par_price_mdl_id in number,
                            par_price_sales_org_id in number,
                            par_price_distbn_id in number,
+                           par_status in varchar2,
                            par_matl_alrtng in varchar2,
-                           par_auto_matl_update in varchar2,
-                           par_status in varchar2) is
+                           par_auto_matl_update in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -293,7 +293,7 @@ create or replace package body pricelist_configuration as
       tbl_report(1).report_grp_id := par_report_grp_id;
       tbl_report(1).owner_id := 0;
       tbl_report(1).matl_alrtng := par_matl_alrtng;
-      tbl_report(1).auto_matl_update := par_matl_alrtng;
+      tbl_report(1).auto_matl_update := par_auto_matl_update;
       tbl_report(1).report_name_frmt := null;
 
    /*-------------------*/
