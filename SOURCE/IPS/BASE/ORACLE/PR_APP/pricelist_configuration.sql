@@ -440,7 +440,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Set the report variables
       /**/
-      tbl_report_term(tbl_report_term.count+1).value := par_value;
+      tbl_report_term(tbl_report_term.count+1).value := rtrim(rtrim(ltrim(ltrim(par_value,chr(10)),chr(13)),chr(10)),chr(13));
 
    /*-------------------*/
    /* Exception handler */
@@ -515,13 +515,13 @@ create or replace package body pricelist_configuration as
       cursor csr_check_report is 
          select t01.*
            from report t01
-          where t01.report_id = tbl_report(1).report_id;
+          where t01.report_id = rcd_report.report_id;
       rcd_check_report csr_check_report%rowtype;
 
       cursor csr_check_item is 
          select t01.*
            from report_item t01
-          where t01.report_id = tbl_report(1).report_id
+          where t01.report_id = rcd_report.report_id
           order by t01.report_item_id asc;
       rcd_check_item csr_check_item%rowtype;
 
@@ -529,6 +529,11 @@ create or replace package body pricelist_configuration as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Initialise the report identifier
+      /*-*/
+      rcd_report.report_id := tbl_report(1).report_id;
 
       /*-*/
       /* Retrieve the existing report data items
@@ -585,7 +590,7 @@ create or replace package body pricelist_configuration as
                 matl_alrtng = tbl_report(1).matl_alrtng,
                 auto_matl_update = tbl_report(1).auto_matl_update,
                 report_name_frmt = rcd_check_report.report_name_frmt
-          where report_id = tbl_report(1).report_id;
+          where report_id = rcd_report.report_id;
          delete from report_term where report_id = tbl_report(1).report_id;
        ----  delete from report_matl where report_id = tbl_report(1).report_id;
          delete from report_item where report_id = tbl_report(1).report_id;
