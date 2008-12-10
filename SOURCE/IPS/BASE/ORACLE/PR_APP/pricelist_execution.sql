@@ -56,6 +56,7 @@ create or replace package body pricelist_execution as
       var_query varchar2(32767);
       var_select_found boolean;
       var_order_found boolean;
+      var_term_found boolean;
       var_break_count integer;
       var_data_count integer;
       var_break_level integer;
@@ -165,6 +166,7 @@ create or replace package body pricelist_execution as
       tbl_data.delete;
       var_select_found := false;
       var_order_found := false;
+      var_term_found := false;
       var_break_count := 0;
       var_data_count := 0;
       var_query := 'select';
@@ -241,8 +243,8 @@ create or replace package body pricelist_execution as
       var_query := var_query || ' and t1c.price_sales_org_code = t2.sales_org';
       var_query := var_query || ' and t1a.price_distbn_chnl_id = t1d.price_distbn_chnl_id';
       var_query := var_query || ' and t1d.price_distbn_chnl_code = t2.dstrbtn_chnl';
-      var_query := var_query || ' and t1.x_plant_matl_sts = ''10''';
-      var_query := var_query || ' and t2.dstrbtn_chain_sts = ''20''';
+    --  var_query := var_query || ' and t1.x_plant_matl_sts = ''10''';
+    --  var_query := var_query || ' and t2.dstrbtn_chain_sts = ''20''';
       if not(rcd_price_mdl.sql_from_tables is null) and not(rcd_price_mdl.sql_where_joins is null) then
          var_query := var_query || trim(rcd_price_mdl.sql_where_joins);
       end if;
@@ -317,18 +319,17 @@ create or replace package body pricelist_execution as
       else
          pipe row('<tr><td colspan='||var_data_count||' style="'||rcd_report.report_name_frmt||'">'||rcd_report.report_name||'</td></tr>');
       end if;
-      var_output := '<tr>';
+      pipe row('<tr>');
       for idx in var_break_count+1..var_column_count loop
          if tbl_data(idx).item_type = 'D' then
             if tbl_data(idx).name_frmt is null then
-               var_output := var_output || '<td>'||tbl_data(idx).name_ovrd||'</td>';
+               pipe row('<td>'||tbl_data(idx).name_ovrd||'</td>');
             else
-               var_output := var_output || '<td style="'||tbl_data(idx).name_frmt||'">'||tbl_data(idx).name_ovrd||'</td>';
+               pipe row('<td style="'||tbl_data(idx).name_frmt||'">'||tbl_data(idx).name_ovrd||'</td>');
             end if;
          end if;
       end loop;
-      var_output := var_output || '</tr>';
-      pipe row(var_output);
+      pipe row('</tr>');
 
       /*-*/
       /* Retrieve the report data
@@ -364,11 +365,10 @@ create or replace package body pricelist_execution as
                   if tbl_data(idx).item_type = 'B' then
                      tbl_data(idx).save_value := tbl_data(idx).this_value;
                      if tbl_data(idx).data_frmt is null then
-                        var_output := '<tr><td colspan='||to_char(var_data_count)||'>'||tbl_data(idx).this_value||'</td></tr>';
+                        pipe row('<tr><td colspan='||to_char(var_data_count)||'>'||tbl_data(idx).this_value||'</td></tr>');
                      else
-                        var_output := '<tr><td colspan='||to_char(var_data_count)||' style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td></tr>';
+                        pipe row('<tr><td colspan='||to_char(var_data_count)||' style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td></tr>');
                      end if;
-                     pipe row(var_output);
                   end if;
                end loop;
             end if;
@@ -377,18 +377,17 @@ create or replace package body pricelist_execution as
          /*-*/
          /* Output the report data
          /*-*/
-         var_output := '<tr>';
+         pipe row('<tr>');
          for idx in var_break_count+1..var_column_count loop
             if tbl_data(idx).item_type = 'D' then
                if tbl_data(idx).data_frmt is null then
-                  var_output := var_output||'<td>'||tbl_data(idx).this_value||'</td>';
+                  pipe row('<td>'||tbl_data(idx).this_value||'</td>');
                else
-                  var_output := var_output||'<td style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td>';
+                  pipe row('<td style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td>');
                end if;
             end if;
          end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
+         pipe row('</tr>');
 
       end loop;
       dbms_sql.close_cursor(var_cursor);
@@ -409,10 +408,14 @@ create or replace package body pricelist_execution as
          if csr_report_term%notfound then
             exit;
          end if;
+         if var_term_found = false then
+            pipe row('<tr><td colspan='||to_char(var_data_count)||'></td></tr>');
+            var_term_found := true;
+         end if;
          if rcd_report_term.data_frmt is null then
-            var_output := var_output||'<tr><td colspan='||to_char(var_data_count)||'>'||rcd_report_term.value||'</td></tr>';
+            pipe row('<tr><td colspan='||to_char(var_data_count)||'>'||rcd_report_term.value||'</td></tr>');
          else
-            var_output := var_output||'<tr><td colspan='||to_char(var_data_count)||' style="'||rcd_report_term.data_frmt||'">'||rcd_report_term.value||'</td></tr>';
+            pipe row('<tr><td colspan='||to_char(var_data_count)||' style="'||rcd_report_term.data_frmt||'">'||rcd_report_term.value||'</td></tr>');
          end if;
       end loop;
       close csr_report_term;
