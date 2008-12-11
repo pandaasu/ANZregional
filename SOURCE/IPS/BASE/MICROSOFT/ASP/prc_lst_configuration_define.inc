@@ -37,6 +37,7 @@
       if (document.main.INP_PriceMdlId.value != document.main.DTA_PriceMdlId.value) {bolChange = true;}
       if (document.main.INP_MatlAlrtng.value != document.main.DTA_MatlAlrtng.value) {bolChange = true;}
       if (document.main.INP_AutoMatlUpdate.value != document.main.DTA_AutoMatlUpdate.value) {bolChange = true;}
+      if (document.main.INP_EmailAddress.value != document.main.DTA_EmailAddress.value) {bolChange = true;}
       if (document.main.INP_Status.value != document.main.DTA_Status.value) {bolChange = true;}
       if (changeItems() == true) {bolChange = true;}
       if (bolChange == true) {
@@ -75,6 +76,10 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Auto material update must be selected';
       }
+      if (document.main.INP_EmailAddress.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Notification email address must be entered';
+      }
       if (document.main.INP_Status.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Status must be selected';
@@ -93,6 +98,7 @@
       document.main.DTA_PriceMdlId.value = document.main.INP_PriceMdlId.value;
       document.main.DTA_MatlAlrtng.value = document.main.INP_MatlAlrtng.value;
       document.main.DTA_AutoMatlUpdate.value = document.main.INP_AutoMatlUpdate.value;
+      document.main.DTA_EmailAddress.value = document.main.INP_EmailAddress.value;
       document.main.DTA_Status.value = document.main.INP_Status.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'DEFINE_ACCEPT';
@@ -749,7 +755,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_ReportName" size="128" maxlength="200" value="<%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_ReportName" size="100" maxlength="200" value="<%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -768,6 +774,11 @@
                <option value=""<%if objForm.Fields("DTA_PriceMdlId").Value = "" then%> selected<%end if%>>** select price model **<%for i = 0 to objSelection.ListCount("PRICE_MDL") - 1%>
                <option value="<%=objSelection.ListValue01("PRICE_MDL",i)%>"<%if objForm.Fields("DTA_PriceMdlId").Value = objSelection.ListValue01("PRICE_MDL",i) then%> selected<%end if%>><%=objSelection.ListValue02("PRICE_MDL",i)%><%next%>
             </select>
+         </nobr></td>
+      </tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Notification Email Address:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_EmailAddress" size="64" maxlength="64" value="<%=replace(objForm.Fields("DTA_EmailAddress").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -927,6 +938,7 @@
    <input type="hidden" name="DTA_PriceMdlId" value="<%=objForm.Fields("DTA_PriceMdlId").Value%>">
    <input type="hidden" name="DTA_MatlAlrtng" value="<%=objForm.Fields("DTA_MatlAlrtng").Value%>">
    <input type="hidden" name="DTA_AutoMatlUpdate" value="<%=objForm.Fields("DTA_AutoMatlUpdate").Value%>">
+   <input type="hidden" name="DTA_EmailAddress" value="<%=replace(objForm.Fields("DTA_EmailAddress").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
    <input type="hidden" name="INP_ReportGrpId" value="<%=objForm.Fields("DTA_ReportGrpId").Value%>">
    <input type="hidden" name="INP_PriceMdlId" value="<%=objForm.Fields("DTA_PriceMdlId").Value%>">

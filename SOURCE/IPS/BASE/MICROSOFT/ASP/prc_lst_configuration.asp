@@ -147,7 +147,7 @@ sub ProcessSelect()
    strQuery = "select"
    strQuery = strQuery & " to_char(t01.report_id),"
    strQuery = strQuery & " t01.report_name,"
-   strQuery = strQuery & " t01.status"
+   strQuery = strQuery & " decode(t01.status,'V','Available','I','Inactive',t01.status)"
    strQuery = strQuery & " from report t01"
    strQuery = strQuery & " order by t01.report_name asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -221,6 +221,8 @@ sub ProcessDefineLoad()
       strQuery = strQuery & " nvl(t01.status,'I'),"
       strQuery = strQuery & " nvl(t01.matl_alrtng,'N'),"
       strQuery = strQuery & " nvl(t01.auto_matl_update,'N'),"
+      strQuery = strQuery & " t01.email_address,"
+      strQuery = strQuery & " t01.update_user,"
       strQuery = strQuery & " t01.price_mdl_id"
       strQuery = strQuery & " from report t01"
       strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
@@ -241,7 +243,7 @@ sub ProcessDefineLoad()
       strQuery = strQuery & " t01.price_item_name,"
       strQuery = strQuery & " t01.price_item_desc"
       strQuery = strQuery & " from price_item t01"
-      strQuery = strQuery & " where t01.price_mdl_id is null or t01.price_mdl_id = " & objSelection.ListValue08("REPORT",objSelection.ListLower("LIST"))
+      strQuery = strQuery & " where t01.price_mdl_id is null or t01.price_mdl_id = " & objSelection.ListValue10("REPORT",objSelection.ListLower("LIST"))
       strQuery = strQuery & " order by t01.price_item_name asc"
       strReturn = objSelection.Execute("PRICE_ITEM", strQuery, lngSize)
       if strReturn <> "*OK" then
@@ -334,6 +336,8 @@ sub ProcessDefineLoad()
       call objForm.AddField("DTA_Status", objSelection.ListValue05("REPORT",objSelection.ListLower("REPORT")))
       call objForm.AddField("DTA_MatlAlrtng", objSelection.ListValue06("REPORT",objSelection.ListLower("REPORT")))
       call objForm.AddField("DTA_AutoMatlUpdate", objSelection.ListValue07("REPORT",objSelection.ListLower("REPORT")))
+      call objForm.AddField("DTA_EmailAddress", objSelection.ListValue08("REPORT",objSelection.ListLower("REPORT")))
+      call objForm.AddField("DTA_UpdateUser", objSelection.ListValue09("REPORT",objSelection.ListLower("REPORT")))
 
    else
 
@@ -346,6 +350,8 @@ sub ProcessDefineLoad()
       call objForm.AddField("DTA_Status", "V")
       call objForm.AddField("DTA_MatlAlrtng", "N")
       call objForm.AddField("DTA_AutoMatlUpdate", "N")
+      call objForm.AddField("DTA_EmailAddress", "")
+      call objForm.AddField("DTA_UpdateUser", "New Report")
 
    end if
 
@@ -382,7 +388,9 @@ sub ProcessDefineAccept()
    strStatement = strStatement & mid(objForm.Fields("DTA_PriceMdlId").Value,15,7) & ","
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Status").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_MatlAlrtng").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_AutoMatlUpdate").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_AutoMatlUpdate").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EmailAddress").Value) & "',"
+   strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -522,7 +530,7 @@ sub ProcessFormatLoad()
    strQuery = "select"
    strQuery = strQuery & " to_char(t01.report_item_id),"
    strQuery = strQuery & " t02.price_item_name,"
-   strQuery = strQuery & " t01.name_ovrd,"
+   strQuery = strQuery & " nvl(t01.name_ovrd,t02.price_item_name),"
    strQuery = strQuery & " t01.name_frmt,"
    strQuery = strQuery & " t01.data_frmt"
    strQuery = strQuery & " from report_item t01, price_item t02"
@@ -599,7 +607,8 @@ sub ProcessFormatAccept()
    '//
    strStatement = "pricelist_configuration.format_report("
    strStatement = strStatement & objForm.Fields("DTA_ReportId").Value & ","
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepHed").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepHed").Value) & "',"
+   strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
