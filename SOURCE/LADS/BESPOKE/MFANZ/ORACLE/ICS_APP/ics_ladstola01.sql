@@ -1,3 +1,4 @@
+create or replace package ics_ladstola01 as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -11,16 +12,12 @@
  -----------
  Interface Control System - ladstola01 - Lads to Tolas Material
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/05   Steve Gregan   Created
+ YYYY/MM   Author            Description
+ -------   ------            -----------
+ 2004/05   Steve Gregan      Created
+ 2008/12   Ricardo Carneiro  Added rounding
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package ics_ladstola01 as
 
    /*-*/
    /* Public declarations
@@ -130,10 +127,20 @@ create or replace package body ics_ladstola01 as
 	               lpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.crtn_date),' '),8,'0') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.plant),' '),4,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.matl_type),' '),4,' ') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.prdct_ctgry),' '),2,' ') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_case_01.gross_wght,0),'FM0000000000.000') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_case_01.net_wght,0),'FM0000000000.000') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.gross_wght_uom),' '),3,' ') ||
+	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.prdct_ctgry),' '),2,' ');
+		 if nvl(round(rcd_food_tolas_fgmatl_case_01.gross_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_case_01.gross_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_case_01.gross_wght,0),'FM0000000000.000');
+         end if;	
+		 
+		 if nvl(round(rcd_food_tolas_fgmatl_case_01.net_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_case_01.net_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_case_01.net_wght,0),'FM0000000000.000');
+         end if;
+		 	   
+		 var_string := var_string || rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.gross_wght_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.batch_mngmnt_rqrmnt_indctr),' '),1,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.order_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_case_01.base_uom),' '),3,' ');
@@ -193,10 +200,22 @@ create or replace package body ics_ladstola01 as
 	               lpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.crtn_date),' '),8,'0') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.plant),' '),4,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.matl_type),' '),4,' ') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.prdct_ctgry),' '),2,' ') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_show_01.gross_wght,0),'FM0000000000.000') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_show_01.net_wght,0),'FM0000000000.000') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.gross_wght_uom),' '),3,' ') ||
+	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.prdct_ctgry),' '),2,' ');
+				   
+		 if nvl(round(rcd_food_tolas_fgmatl_show_01.gross_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_show_01.gross_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_show_01.gross_wght,0),'FM0000000000.000');
+         end if;	
+		 
+		 if nvl(round(rcd_food_tolas_fgmatl_show_01.net_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_show_01.net_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_show_01.net_wght,0),'FM0000000000.000');
+         end if;
+				   
+
+	     var_string := var_string || rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.gross_wght_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.batch_mngmnt_rqrmnt_indctr),' '),1,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.order_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_show_01.base_uom),' '),3,' ');
@@ -256,10 +275,22 @@ create or replace package body ics_ladstola01 as
 	               lpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.crtn_date),' '),8,'0') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.plant),' '),4,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.matl_type),' '),4,' ') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.prdct_ctgry),' '),2,' ') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_pack_01.gross_wght,0),'FM0000000000.000') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_pack_01.net_wght,0),'FM0000000000.000') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.gross_wght_uom),' '),3,' ') ||
+	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.prdct_ctgry),' '),2,' ') ;
+				   
+		 if nvl(round(rcd_food_tolas_fgmatl_pack_01.gross_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_pack_01.gross_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_pack_01.gross_wght,0),'FM0000000000.000');
+         end if;	
+		 
+		 if nvl(round(rcd_food_tolas_fgmatl_pack_01.net_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_pack_01.net_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_pack_01.net_wght,0),'FM0000000000.000');
+         end if;
+				   
+
+	     var_string := var_string || rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.gross_wght_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.batch_mngmnt_rqrmnt_indctr),' '),1,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.order_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_pack_01.base_uom),' '),3,' ');
@@ -319,10 +350,22 @@ create or replace package body ics_ladstola01 as
 	               lpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.crtn_date),' '),8,'0') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.plant),' '),4,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.matl_type),' '),4,' ') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.prdct_ctgry),' '),2,' ') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_piece_01.gross_wght,0),'FM0000000000.000') ||
-	               to_char(nvl(rcd_food_tolas_fgmatl_piece_01.net_wght,0),'FM0000000000.000') ||
-	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.gross_wght_uom),' '),3,' ') ||
+	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.prdct_ctgry),' '),2,' ');
+				   
+		 if nvl(round(rcd_food_tolas_fgmatl_piece_01.gross_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_piece_01.gross_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_piece_01.gross_wght,0),'FM0000000000.000');
+         end if;	
+		 
+		 if nvl(round(rcd_food_tolas_fgmatl_piece_01.net_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_fgmatl_piece_01.net_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_fgmatl_piece_01.net_wght,0),'FM0000000000.000');
+         end if;
+				   
+
+	     var_string := var_string || rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.gross_wght_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.batch_mngmnt_rqrmnt_indctr),' '),1,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.order_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_fgmatl_piece_01.base_uom),' '),3,' ');
@@ -382,10 +425,22 @@ create or replace package body ics_ladstola01 as
 	               lpad(nvl(trim(rcd_food_tolas_inb_matl_01.crtn_date),' '),8,'0') ||
 	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.plant),' '),4,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.matl_type),' '),4,' ') ||
-	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.prdct_ctgry),' '),2,' ') ||
-	               to_char(nvl(rcd_food_tolas_inb_matl_01.gross_wght,0),'FM0000000000.000') ||
-	               to_char(nvl(rcd_food_tolas_inb_matl_01.net_wght,0),'FM0000000000.000') ||
-	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.declrd_uom),' '),3,' ') ||
+	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.prdct_ctgry),' '),2,' ');
+				   
+		 if nvl(round(rcd_food_tolas_inb_matl_01.gross_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_inb_matl_01.gross_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_inb_matl_01.gross_wght,0),'FM0000000000.000');
+         end if;	
+		 
+		 if nvl(round(rcd_food_tolas_inb_matl_01.net_wght,3),0) = 0 then
+            var_string := var_string || to_char(nvl(ceil(rcd_food_tolas_inb_matl_01.net_wght*1000)/1000,0),'FM0000000000.000');  
+         else
+            var_string := var_string || to_char(nvl(rcd_food_tolas_inb_matl_01.net_wght,0),'FM0000000000.000');
+         end if;
+				   
+
+	     var_string := var_string || rpad(nvl(trim(rcd_food_tolas_inb_matl_01.declrd_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.batch_mngmnt_rqrmnt_indctr),' '),1,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.order_uom),' '),3,' ') ||
 	               rpad(nvl(trim(rcd_food_tolas_inb_matl_01.base_uom),' '),3,' ');
@@ -452,6 +507,6 @@ end ics_ladstola01;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-drop public synonym ics_ladstola01;
-create public synonym ics_ladstola01 for ics_app.ics_ladstola01;
+create or replace public synonym ics_ladstola01 for ics_app.ics_ladstola01;
+
 grant execute on ics_ladstola01 to public;
