@@ -81,9 +81,9 @@
          case "DEFINE_ACCEPT"
             call ProcessDefineAccept
          case "MATERIAL_LOAD"
-            call ProcessDefineLoad
+            call ProcessMaterialLoad
          case "MATERIAL_ACCEPT"
-            call ProcessDefineAccept
+            call ProcessMaterialAccept
          case "FORMAT_LOAD"
             call ProcessFormatLoad
          case "FORMAT_ACCEPT"
@@ -531,12 +531,15 @@ sub ProcessMaterialLoad()
    '//
    '// Retrieve the report materials
    '//
+   ''strQuery = strQuery & " nvl(t02.matl_desc,'*UNKNOWN')"
+   ''strQuery = strQuery & " from report_matl t01, matl t02"
+   ''strQuery = strQuery & " where t01.matl_code = t02.matl_code(+) and t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " t01.matl_code,"
-   strQuery = strQuery & " nvl(t02.matl_desc,'*UNKNOWN')"
-   strQuery = strQuery & " from report_matl t01, matl t02"
-   strQuery = strQuery & " where t01.matl_code = t02.matl_code(+) and t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strQuery = strQuery & " '*UNKNOWN'"
+   strQuery = strQuery & " from report_matl t01"
+   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    strQuery = strQuery & " order by t01.matl_code asc"
    strReturn = objSelection.Execute("MATERIAL", strQuery, lngSize)
    if strReturn <> "*OK" then
@@ -956,6 +959,13 @@ sub PaintSelect()%>
 '//////////////////////////
 sub PaintDefine()%>
 <!--#include file="prc_lst_configuration_define.inc"-->
+<%end sub
+
+'////////////////////////////
+'// Paint material routine //
+'////////////////////////////
+sub PaintMaterial()%>
+<!--#include file="prc_lst_configuration_material.inc"-->
 <%end sub
 
 '//////////////////////////
