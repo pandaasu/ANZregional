@@ -64,7 +64,7 @@
    }
    function doRefresh() {
       doActivityStart(document.body);
-      window.setTimeout('reloadMaterials();',10);
+      window.setTimeout('getMaterials(\'<%=objForm.Fields("DTA_ReportId").Value%>\');',10);
    }
    function doSelect(objSelected) {
       if (cobjSelected) {

@@ -84,7 +84,10 @@ sub ProcessLookup()
       Response.AddHeader "Cache-Control", "no-cache"
       Response.Write(strReturn)
       for intIndex = 0 to objSelection.ListCount("LIST") - 1
-         call Response.Write(objSelection.ListValue01("LIST",intIndex) & chr(9) & objSelection.ListValue02("LIST",intIndex) & chr(10))
+         if intIndex > 0 then
+            call Response.Write(chr(10))
+         end if
+         call Response.Write(objSelection.ListValue01("LIST",intIndex) & chr(9) & objSelection.ListValue02("LIST",intIndex))
       next
    end if
 
