@@ -1,6 +1,8 @@
 <html>
 <script language="javascript">
 <!--
+   cobjSelected = null;
+   cstrSelected = '';
    function showError() {<%if strError <> "" then%>
       alert('<%=strError%>');<%else%>return;<%end if%>
    }
@@ -22,38 +24,92 @@
          objElement.className = 'clsSelect';
       }
    }
+   function doSelect(objSelected,strSelected) {
+      if (cobjSelected) {
+         cobjSelected.className = 'clsList';
+      }
+      cobjSelected = objSelected;
+      cobjSelected.className = 'clsListX';
+      cstrSelected = strSelected;
+   }
    function doRefresh() {
       if (!processForm()) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'SELECT';
       document.main.submit();
    }
-   function doDefine(strReportId) {
+   function doDefine(strType) {
       if (!processForm()) {return;}
+      if (strType == '*CREATE') {
+         document.main.action = '<%=strBase%><%=strTarget%>';
+         document.main.Mode.value = 'DEFINE_LOAD';
+         document.main.DTA_ReportId.value = 0;
+         document.main.submit();
+      }
+      if (strType == '*UPDATE') {
+         if (cstrSelected == '') {
+            alert('Report must be selected');
+            return;
+         }
+         document.main.action = '<%=strBase%><%=strTarget%>';
+         document.main.Mode.value = 'DEFINE_LOAD';
+         document.main.DTA_ReportId.value = cstrSelected;
+         document.main.submit();
+      }
+   }
+   function doRules() {
+      if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'DEFINE_LOAD';
-      document.main.DTA_ReportId.value = strReportId;
+      document.main.Mode.value = 'RULE_LOAD';
+      document.main.DTA_ReportId.value = cstrSelected;
       document.main.submit();
    }
-   function doFormat(strReportId) {
+   function doMaterials() {
       if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
+      document.main.action = '<%=strBase%><%=strTarget%>';
+      document.main.Mode.value = 'MATERIAL_LOAD';
+      document.main.DTA_ReportId.value = cstrSelected;
+      document.main.submit();
+   }
+   function doFormat() {
+      if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'FORMAT_LOAD';
-      document.main.DTA_ReportId.value = strReportId;
+      document.main.DTA_ReportId.value = cstrSelected;
       document.main.submit();
    }
-   function doDelete(strReportId) {
+   function doDelete() {
       if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'DELETE_LOAD';
-      document.main.DTA_ReportId.value = strReportId;
+      document.main.DTA_ReportId.value = cstrSelected;
       document.main.submit();
    }
-   function doCopy(strReportId) {
+   function doCopy() {
       if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'COPY_LOAD';
-      document.main.DTA_ReportId.value = strReportId;
+      document.main.DTA_ReportId.value = cstrSelected;
       document.main.submit();
    }
    function processForm() {
@@ -76,11 +132,16 @@
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh List&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('0');">&nbsp;Create Report&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('*CREATE');">&nbsp;Create&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('*UPDATE');">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRules();">&nbsp;Rules&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doMaterials();">&nbsp;Materials&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doFormat();">&nbsp;Format&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -91,9 +152,8 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=4 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=3 cellpadding="0" cellspacing="1">
                         <tr>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Action&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Report&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Status&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
@@ -105,11 +165,10 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=3 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=3 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=2 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=2 nowrap><nobr>&nbsp;NO REPORTS FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doDefine('<%=objSelection.ListValue01("LIST",i)%>');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doFormat('<%=objSelection.ListValue01("LIST",i)%>');">Format</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doCopy('<%=objSelection.ListValue01("LIST",i)%>');">Copy</a></nobr></td>
-                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
+                           <td class="clsList" align=left colspan=1 onClick="doSelect(this,'<%=objSelection.ListValue01("LIST",i)%>');" nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>

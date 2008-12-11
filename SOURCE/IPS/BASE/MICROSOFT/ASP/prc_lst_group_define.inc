@@ -43,7 +43,7 @@
    function doAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.main.INP_ReportGrpId.value == '') {
+      if (document.main.INP_ReportGrpName.value == '') {
          if (strMessage != null) {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Report group name must be entered';
       }
@@ -92,10 +92,10 @@
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Status:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Available:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "" or objForm.Fields("DTA_Status").Value = "I" then%> checked<%end if%> value="I" onClick="javascript:selectStatus('Unavailable');">No&nbsp;
-            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "V" then%> checked<%end if%> value="V" onClick="javascript:selectStatus('Y');">Available&nbsp;
+            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "" or objForm.Fields("DTA_Status").Value = "I" then%> checked<%end if%> value="I" onClick="javascript:selectStatus('I');">No&nbsp;
+            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "V" then%> checked<%end if%> value="V" onClick="javascript:selectStatus('V');">Yes&nbsp;
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

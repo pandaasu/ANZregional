@@ -25,7 +25,7 @@
    dim objForm
    dim objSecurity
    dim objSelection
-   dim objFunction
+   dim objProcedure
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -110,7 +110,7 @@
    set objForm = nothing
    set objSecurity = nothing
    set objSelection = nothing
-   set objFunction = nothing
+   set objProcedure = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -133,7 +133,7 @@ sub ProcessSelect()
    strQuery = "select"
    strQuery = strQuery & " t01.report_grp_id,"
    strQuery = strQuery & " t01.report_grp_name,"
-   strQuery = strQuery & " t01.status"
+   strQuery = strQuery & " decode(t01.status,'V','Available','I','Inactive',t01.status)"
    strQuery = strQuery & " from report_grp t01"
    strQuery = strQuery & " order by t01.report_grp_name asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -160,7 +160,7 @@ sub ProcessDefineLoad()
    '//
    '// Retrieve the report group data
    '//
-   if objForm.Fields("DTA_ReportGrpId").Value <> "" then
+   if objForm.Fields("DTA_ReportGrpId").Value <> "0" then
 
       '//
       '// Retrieve the report group data
@@ -212,20 +212,20 @@ sub ProcessDefineAccept()
    dim lngCount
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Update the group
    '//
    strStatement = "pricelist_configuration.define_group("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpId").Value) & "',"
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_ReportGrpId").Value) & ","
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpName").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Status").Value) & "'"
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -294,18 +294,18 @@ sub ProcessDeleteAccept()
    dim strStatement
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Set the procedure string
    '//
    strStatement = "pricelist_configuration.delete_group("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpId").Value) & "'"
+   strStatement = strStatement & objSecurity.FixString(objForm.Fields("DTA_ReportGrpId").Value)
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
