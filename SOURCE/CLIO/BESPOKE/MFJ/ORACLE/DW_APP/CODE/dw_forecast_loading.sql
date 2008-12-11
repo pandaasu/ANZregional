@@ -44,6 +44,7 @@ create or replace package dw_forecast_loading as
  2006/12   Steve Gregan   Disabled links to planning database (Mercia)
  2007/12   Steve Gregan   Enabled BR forecast creation and loading for
                           casting period equal to CLIO previous period
+ 2008/12   Steve Gregan   Modified to fix XML parsing cdata section bug
 
 *******************************************************************************/
 
@@ -3714,7 +3715,7 @@ create or replace package body dw_forecast_loading as
             for idx in 1..39 loop
                tbl_wrkw(idx) := 0;
 	    end loop;
-            var_string := xmlDom.getNodeValue(par_xml_node);
+            var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
             if not(var_string is null) then
                var_value := null;
                var_index := 0;
