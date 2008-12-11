@@ -1,6 +1,8 @@
 <html>
 <script language="javascript">
 <!--
+   cobjSelected = null;
+   cstrSelected = '';
    function showError() {<%if strError <> "" then%>
       alert('<%=strError%>');<%else%>return;<%end if%>
    }
@@ -22,15 +24,27 @@
          objElement.className = 'clsSelect';
       }
    }
+   function doSelect(objSelected,strSelected) {
+      if (cobjSelected) {
+         cobjSelected.className = 'clsList';
+      }
+      cobjSelected = objSelected;
+      cobjSelected.className = 'clsListX';
+      cstrSelected = strSelected;
+   }
    function doRefresh() {
       if (!processForm()) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'SELECT';
       document.main.submit();
    }
-   function doExecute(strIdentifier) {
+   function doExecute() {
       if (!processForm()) {return;}
-      doReportOutput(eval('document.body'),'PRICING_REPORT_'+strIdentifier,'*SPREADSHEET','select * from table(pr_app.pricelist_execution.execute_report(' + strIdentifier + ',\'20080601\'))');
+      if (cstrSelected == '') {
+         alert('Report must be selected');
+         return;
+      }
+      doReportOutput(eval('document.body'),cobjSelected.innerText,'*SPREADSHEET','select * from table(pr_app.pricelist_execution.execute_report(' + cstrSelected + ',\'20080601\'))');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -57,9 +71,10 @@
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doExecute();">&nbsp;Execute&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -70,9 +85,8 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=3 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=2 cellpadding="0" cellspacing="1">
                         <tr>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Action&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Description&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
@@ -83,11 +97,10 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=2 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=2 nowrap><nobr>&nbsp;NO REPORTS FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=1 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=1 nowrap><nobr>&nbsp;NO REPORTS FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doExecute('<%=objSelection.ListValue01("LIST",i)%>');">Execute</a></nobr></td>
-                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
+                           <td class="clsList" align=left colspan=1 onClick="doSelect(this,'<%=objSelection.ListValue01("LIST",i)%>');" nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>

@@ -80,6 +80,10 @@
             call ProcessDefineLoad
          case "DEFINE_ACCEPT"
             call ProcessDefineAccept
+         case "MATERIAL_LOAD"
+            call ProcessDefineLoad
+         case "MATERIAL_ACCEPT"
+            call ProcessDefineAccept
          case "FORMAT_LOAD"
             call ProcessFormatLoad
          case "FORMAT_ACCEPT"
@@ -109,6 +113,8 @@
          call PaintSelect
       case "DEFINE"
          call PaintDefine
+      case "MATERIAL"
+         call PaintMaterial
       case "FORMAT"
          call PaintFormat
       case "DELETE"
@@ -482,6 +488,84 @@ sub ProcessDefineAccept()
       call ProcessSelect
       exit sub
    end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'///////////////////////////////////
+'// Process material load routine //
+'///////////////////////////////////
+sub ProcessMaterialLoad()
+
+   dim strQuery
+   dim lngSize
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the report data
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " to_char(t01.report_id),"
+   strQuery = strQuery & " t01.report_name"
+   strQuery = strQuery & " from report t01"
+   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the report materials
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " t01.matl_code,"
+   strQuery = strQuery & " nvl(t02.matl_desc,'*UNKNOWN')"
+   strQuery = strQuery & " from report_matl t01, matl t02"
+   strQuery = strQuery & " where t01.matl_code = t02.matl_code(+) and t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strQuery = strQuery & " order by t01.matl_code asc"
+   strReturn = objSelection.Execute("MATERIAL", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "MATERIAL"
+
+end sub
+
+'/////////////////////////////////////
+'// Process material accept routine //
+'/////////////////////////////////////
+sub ProcessMaterialAccept()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Set the mode
