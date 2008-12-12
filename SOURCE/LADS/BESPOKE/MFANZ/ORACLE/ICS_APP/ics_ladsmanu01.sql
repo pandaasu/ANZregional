@@ -23,7 +23,9 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 	/*   Added by SG 19 Jun 2007  - included text truncation (max 2000/4000)
 	/*   Added by SG 27 Jul 2007  - included validation process order logic
 	/*   Added by SG 22 Aug 2007  - excluded AU10 and NZ01 from validation process order logic
-  /*   Added by TK 17 Mar 2008  - removed AU10 from validation process order exclusions 
+  /*   Added by TK 17 Mar 2008  - removed AU10 from validation process order exclusions
+  /*   Added by TK 10 Dec 2008  - added check for missing ',' when doing to_number with FM999G999G999D999 
+  /*                              format using convert_to_number.
 	/*-*/
 
    /*-*/
@@ -41,6 +43,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
    PROCEDURE process_zmessrc;
    PROCEDURE process_zphpan1;
    PROCEDURE process_zphbrq1;
+   FUNCTION convert_to_number(par_value varchar2) return number;
 
    /*-*/
    /* Private definitions
@@ -105,7 +108,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
    /*-------------*/
    /* Begin block */
    /*-------------*/
-   BEGIN
+   BEGIN 
 
       /*-*/
       /* Retrieve the control recipe HPI from the LADS schema
@@ -187,7 +190,6 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
          /* Raise an exception to the calling application
          /*-*/
          RAISE_APPLICATION_ERROR(-20000, 'ICS_LADSMANU01 - in ' || rcd_lads_ctl_rec_tpi.proc_instr_category || ' - ' || SUBSTR(SQLERRM, 1, 512));
-
 		 /*-*/
 		 /*  raise tivoli alert
 		 /*-*/
@@ -863,7 +865,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 		   IF INSTR(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'E') > 0 THEN
 			    rcd_cntl_rec_bom.material_qty := TO_NUMBER(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
 			ELSE
-             rcd_cntl_rec_bom.material_qty := TO_NUMBER(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'FM999G999G999D999');
+             rcd_cntl_rec_bom.material_qty := convert_to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
          END IF;
 
 		EXCEPTION
@@ -1580,7 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 
          var_space := INSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,' ');
          BEGIN
-            rcd_cntl_rec_bom.material_qty := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)),'FM999G999G999D999');
+            rcd_cntl_rec_bom.material_qty := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)));
             rcd_cntl_rec_bom.material_uom := UPPER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,var_space + 1)));
          EXCEPTION
             WHEN OTHERS THEN
@@ -1591,14 +1593,14 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
          var_space := INSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char,' ');
          var_space1 := INSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,' ');
          BEGIN
-            rcd_cntl_rec_bom.pan_size := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char, 1, var_space - 1)),'FM999G999G999D999');
+            rcd_cntl_rec_bom.pan_size := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char, 1, var_space - 1)));
          EXCEPTION
             WHEN OTHERS THEN
                RAISE_APPLICATION_ERROR(-20000, ' Process ZPHPAN1 - Field - FIRST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char || ') to a number');
          END;
 
          BEGIN
-            rcd_cntl_rec_bom.last_pan_size := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,1,var_space1 - 1)),'FM999G999G999D999');
+            rcd_cntl_rec_bom.last_pan_size := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,1,var_space1 - 1)));
          EXCEPTION
             WHEN OTHERS THEN
                RAISE_APPLICATION_ERROR(-20000, 'Process ZPHPAN1 - Field - LAST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char || ') TO a NUMBER');
@@ -1606,7 +1608,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 
          var_space := INSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,' ');
          BEGIN
-            rcd_cntl_rec_bom.material_qty := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)) ,'FM999G999G999D999');
+            rcd_cntl_rec_bom.material_qty := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)));
             rcd_cntl_rec_bom.material_uom := UPPER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,var_space + 1)));
          EXCEPTION
             WHEN OTHERS THEN
@@ -1827,9 +1829,9 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 
          BEGIN
 		    IF var_space = 0 THEN
-			    rcd_cntl_rec_bom.material_qty := TO_NUMBER(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char),'FM999G999G999D999');
+			    rcd_cntl_rec_bom.material_qty := convert_to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char));
 			ELSE
-                rcd_cntl_rec_bom.material_qty := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1, var_space - 1)),'FM999G999G999D999');
+                rcd_cntl_rec_bom.material_qty := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1, var_space - 1)));
          	END IF;
 		 EXCEPTION
             WHEN OTHERS THEN
@@ -1853,7 +1855,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 				 ELSE
 				     var_space := INSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,' ');
          		  var_space1 := INSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,' ');
-            	  rcd_cntl_rec_bom.material_qty := (TO_NUMBER(TRIM(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space -1)),'FM999G999G999D999') * 1) + TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 -1)),'FM999G999G999D999');
+            	  rcd_cntl_rec_bom.material_qty := (convert_to_number(TRIM(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space -1))) * 1) + convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 -1)));
              END IF;
 			EXCEPTION
             WHEN OTHERS THEN
@@ -1865,7 +1867,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
          /*-*/
          rcd_cntl_rec_bom.pan_size := NULL;
          BEGIN
-            rcd_cntl_rec_bom.pan_size := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space - 1)),'FM999G999G999D999');
+            rcd_cntl_rec_bom.pan_size := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space - 1)));
          EXCEPTION
             WHEN OTHERS THEN
                RAISE_APPLICATION_ERROR(-20000, 'Process ZPHBRQ1  - Field - PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char || ') to a number');
@@ -1881,7 +1883,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
 		    /* Added by JP 26 May 2006
 		    /* For the first time a Proc Order was sent with a smaller numerical value length for last_pan_size
 		    /*-*/
-            rcd_cntl_rec_bom.last_pan_size := TO_NUMBER(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 - 1)),'FM999G999G999D999');
+            rcd_cntl_rec_bom.last_pan_size := convert_to_number(trim(SUBSTR(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 - 1)));
          EXCEPTION
             WHEN OTHERS THEN
                RAISE_APPLICATION_ERROR(-20000, 'Process ZPHBRQ1 - Field - LAST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char || ') to a number');
@@ -1978,7 +1980,21 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladsmanu01 AS
    /*-------------*/
    END process_zphbrq1;
 
+  FUNCTION convert_to_number(par_value varchar2) return number is
 
+    var_result number;
+
+  BEGIN
+  
+    if ( instr(par_value, ',') = 0 ) then    
+      var_result := to_number(par_value);    
+    else
+      var_result := to_number(par_value, 'FM999G999G999D999');    
+    end if;    
+  
+    return var_result;
+
+  END convert_to_number;
 
 END ics_ladsmanu01;
 /
