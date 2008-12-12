@@ -19,7 +19,9 @@ as
  01_Jun-2007 Steve Gregan   Created 
  12-Oct-2007 JP           Added filtering to not send to petcare, Food and WGI 
  26-Oct-2007 JP           Remove plant specific filtering 
- 28-Feb-2008 Trevor Keon    Changed schema to ICS_APP from SITE_APP 
+ 28-Feb-2008 Trevor Keon    Changed schema to ICS_APP from SITE_APP
+ 10-Dec-2008 Trevor Keon    Added check for missing ',' when doing to_number with FM999G999G999D999 
+                            format using convert_to_number. 
 
 *******************************************************************************/
 
@@ -47,6 +49,7 @@ create or replace package body ics_app.plant_process_order_extract as
    procedure process_zmessrc;
    procedure process_zphpan1;
    procedure process_zphbrq1;
+   function convert_to_number(par_value varchar2) return number;
 
    /*-*/
    /* Private definitions
@@ -951,7 +954,7 @@ create or replace package body ics_app.plant_process_order_extract as
 		   if instr(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'E') > 0 then
 			    row_recipe_bom.material_qty := to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
 			else
-             row_recipe_bom.material_qty := to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'FM999G999G999D999');
+             row_recipe_bom.material_qty := convert_to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
          end if;
 
 		  exception
@@ -1627,7 +1630,7 @@ create or replace package body ics_app.plant_process_order_extract as
         var_space := instr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,' ');
         
         begin
-           row_recipe_bom.material_qty := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)),'FM999G999G999D999');
+           row_recipe_bom.material_qty := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)));
            row_recipe_bom.material_uom := upper(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,var_space + 1)));
         exception
            when others then
@@ -1639,14 +1642,14 @@ create or replace package body ics_app.plant_process_order_extract as
          var_space1 := instr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,' ');
          
          begin
-            row_recipe_bom.pan_size := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char, 1, var_space - 1)),'FM999G999G999D999');
+            row_recipe_bom.pan_size := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char, 1, var_space - 1)));
          exception
             when others then
                raise_application_error(-20000, ' Process ZPHPAN1 - Field - FIRST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_first_pan_out_char || ') to a number');
          end;
 
          begin
-            row_recipe_bom.last_pan_size := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,1,var_space1 - 1)),'FM999G999G999D999');
+            row_recipe_bom.last_pan_size := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char,1,var_space1 - 1)));
          exception
             when others then
                raise_application_error(-20000, 'Process ZPHPAN1 - Field - LAST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_last_pan_out_char || ') to a number');
@@ -1654,7 +1657,7 @@ create or replace package body ics_app.plant_process_order_extract as
 
          var_space := instr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,' ');
          begin
-            row_recipe_bom.material_qty := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)) ,'FM999G999G999D999');
+            row_recipe_bom.material_qty := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,1,var_space - 1)));
             row_recipe_bom.material_uom := upper(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,var_space + 1)));
          exception
             when others then
@@ -1820,9 +1823,9 @@ create or replace package body ics_app.plant_process_order_extract as
 
         begin
           if var_space = 0 then
-            row_recipe_bom.material_qty := to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char),'FM999G999G999D999');
+            row_recipe_bom.material_qty := convert_to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char));
           else
-                  row_recipe_bom.material_qty := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1, var_space - 1)),'FM999G999G999D999');
+                  row_recipe_bom.material_qty := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1, var_space - 1)));
           end if;
         exception
               when others then
@@ -1842,7 +1845,7 @@ create or replace package body ics_app.plant_process_order_extract as
 				  else
                var_space := instr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,' ');
                var_space1 := instr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,' ');
-               row_recipe_bom.material_qty := (to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space -1)),'FM999G999G999D999') * 1) + to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 -1)),'FM999G999G999D999');
+               row_recipe_bom.material_qty := (convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space -1))) * 1) + convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 -1)));
           end if;
 			  exception
             when others then
@@ -1854,7 +1857,7 @@ create or replace package body ics_app.plant_process_order_extract as
          /*-*/
          row_recipe_bom.pan_size := null;
          begin
-            row_recipe_bom.pan_size := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space - 1)),'FM999G999G999D999');
+            row_recipe_bom.pan_size := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space - 1)));
          exception
             when others then
                raise_application_error(-20000, 'Process ZPHBRQ1  - Field - PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char || ') to a number');
@@ -1870,7 +1873,7 @@ create or replace package body ics_app.plant_process_order_extract as
 		    /* Added by JP 26 May 2006
 		    /* For the first time a Proc Order was sent with a smaller numerical value length for last_pan_size
 		    /*-*/
-            row_recipe_bom.last_pan_size := to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 - 1)),'FM999G999G999D999');
+            row_recipe_bom.last_pan_size := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 - 1)));
          exception
             when others then
                raise_application_error(-20000, 'Process ZPHBRQ1 - Field - LAST_PAN_SIZE - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char || ') to a number');
@@ -1935,6 +1938,22 @@ create or replace package body ics_app.plant_process_order_extract as
    /* End routine */
    /*-------------*/
    end process_zphbrq1;
+   
+  function convert_to_number(par_value varchar2) return number is
+
+    var_result number;
+
+  begin
+  
+    if ( instr(par_value, ',') = 0 ) then    
+      var_result := to_number(par_value);    
+    else
+      var_result := to_number(par_value, 'FM999G999G999D999');    
+    end if;
+  
+    return var_result;
+
+  end convert_to_number;   
 
 end plant_process_order_extract;
 /
