@@ -21,6 +21,7 @@ create or replace package lads_atllad02_monitor as
     2004/01   Steve Gregan   Created
     2007/03   Steve Gregan   Included LADS FLATTENING callout
     2008/05   Trevor Keon    Changed to use execute_before and execute_after
+    2008/10   Trevor Keon       Removed triggered job for send to plant DBs    
 
    *******************************************************************************/
 
@@ -146,11 +147,7 @@ create or replace package body lads_atllad02_monitor as
       /*---------------------------*/
       /* 1. Triggered procedures   */
       /*---------------------------*/
-      lics_trigger_loader.execute('MFANZ Plant Stock Balance Data Inteface',
-                            'plant_stock_extract.execute(''' || par_bukrs || ''',''' || par_werks || ''',''' || par_lgort || ''',''' || par_budat || ''',''' || par_timlo || ''',''*REL'')',
-                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','PLANT_INTERFACE'),
-                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','PLANT_INTERFACE'),
-                            lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','PLANT_INTERFACE'));                           
+      return;                      
 
    /*-------------------*/
    /* Exception handler */
