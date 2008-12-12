@@ -65,11 +65,11 @@ create or replace package body ics_cisatl09_validation as
          var_message := var_message || 'Record must start with HDR not (' || substr(par_record,1,3) || ')';
       end if;
       if substr(par_record,1,3) = 'HDR' then
-         if length(par_record) != 208 then
+         if length(par_record) != 206 then
             if not(var_message is null) then
                var_message := var_message || '; ';
             end if;
-            var_message := var_message || 'Record HDR length must be 208';
+            var_message := var_message || 'Record HDR length must be 206';
          end if;
       end if;
 
