@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : prc_lst_item_lookup.asp                            //
+'// Script  : prc_lst_matl_lookup.asp                            //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2008                                      //
 '// Text    : This script implements the price list material     //
