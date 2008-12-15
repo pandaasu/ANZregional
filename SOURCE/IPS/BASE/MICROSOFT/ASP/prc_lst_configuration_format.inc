@@ -23,14 +23,8 @@
       }
    }
    function checkChange() {
-      var bolChange = false;
-      var bolReturn;
-      if (changeItems() == true) {bolChange = true;}
-      if (bolChange == true) {
-         bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
-         return bolReturn;
-      }
-      return true;
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
    }
    function doCancel() {
       if (checkChange() == false) {return;}
@@ -347,33 +341,6 @@
       }
       document.getElementById('DET_RepTerCount').value = cobjReportTerm.length;
       return strReturn;
-   }
-   function changeItems() {
-      var bolReturn = false;
-      if (cobjReport.namefrmt != cobjReport.namesave) {
-         bolReturn = true;
-      }
-      for (var i=0;i<cobjReportData.length;i++) {
-         if (cobjReportData[i].ovrd != cobjReportData[i].ovrdsave ||
-             cobjReportData[i].namefrmt != cobjReportData[i].namesave ||
-             cobjReportData[i].datafrmt != cobjReportData[i].datasave) {
-            bolReturn = true;
-            break;
-         }
-      }
-      for (var i=0;i<cobjReportBreak.length;i++) {
-         if (cobjReportBreak[i].datafrmt != cobjReportBreak[i].datasave) {
-            bolReturn = true;
-            break;
-         }
-      }
-      for (var i=0;i<cobjReportTerm.length;i++) {
-         if (cobjReportTerm[i].datafrmt != cobjReportTerm[i].datasave) {
-            bolReturn = true;
-            break;
-         }
-      }
-      return bolReturn;
    }
 // -->
 </script>

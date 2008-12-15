@@ -30,21 +30,8 @@
       }
    }
    function checkChange() {
-      var bolChange = false;
-      var bolReturn;
-      if (document.main.INP_ReportName.value != document.main.DTA_ReportName.value) {bolChange = true;}
-      if (document.main.INP_ReportGrpId.value != document.main.DTA_ReportGrpId.value) {bolChange = true;}
-      if (document.main.INP_PriceMdlId.value != document.main.DTA_PriceMdlId.value) {bolChange = true;}
-      if (document.main.INP_MatlAlrtng.value != document.main.DTA_MatlAlrtng.value) {bolChange = true;}
-      if (document.main.INP_AutoMatlUpdate.value != document.main.DTA_AutoMatlUpdate.value) {bolChange = true;}
-      if (document.main.INP_EmailAddress.value != document.main.DTA_EmailAddress.value) {bolChange = true;}
-      if (document.main.INP_Status.value != document.main.DTA_Status.value) {bolChange = true;}
-      if (changeItems() == true) {bolChange = true;}
-      if (bolChange == true) {
-         bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
-         return bolReturn;
-      }
-      return true;
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
    }
    function doCancel() {
       if (checkChange() == false) {return;}
@@ -136,43 +123,21 @@
    }
    function showItem() {
       var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
       var objTableTerm = document.getElementById('tabTerm');
       document.getElementById('pckItem').className = 'clsTabX';
-      document.getElementById('pckMatl').className = 'clsTab';
       document.getElementById('pckTerm').className = 'clsTab';
       objTableTerm.style.display = 'none';
       objTableTerm.style.visibility = 'hidden';
-      objTableMatl.style.display = 'none';
-      objTableMatl.style.visibility = 'hidden'
       objTableItem.style.display = 'block';
       objTableItem.style.visibility = 'visible';
    }
-   function showMatl() {
-      var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
-      var objTableTerm = document.getElementById('tabTerm');
-      document.getElementById('pckItem').className = 'clsTab';
-      document.getElementById('pckMatl').className = 'clsTabX';
-      document.getElementById('pckTerm').className = 'clsTab';
-      objTableItem.style.display = 'none';
-      objTableItem.style.visibility = 'hidden';
-      objTableTerm.style.display = 'none';
-      objTableTerm.style.visibility = 'hidden'
-      objTableMatl.style.display = 'block';
-      objTableMatl.style.visibility = 'visible';
-   }
    function showTerm() {
       var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
       var objTableTerm = document.getElementById('tabTerm');
       document.getElementById('pckItem').className = 'clsTab';
-      document.getElementById('pckMatl').className = 'clsTab';
       document.getElementById('pckTerm').className = 'clsTabX';
       objTableItem.style.display = 'none';
       objTableItem.style.visibility = 'hidden';
-      objTableMatl.style.display = 'none';
-      objTableMatl.style.visibility = 'hidden'
       objTableTerm.style.display = 'block';
       objTableTerm.style.visibility = 'visible';
    }
@@ -695,50 +660,6 @@
       }
       return strReturn;
    }
-   function changeItems() {
-      var bolReturn = false;
-      var objSltReportData = document.getElementById('sltReportData');
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      var objTxtReportTerm = document.getElementById('txtReportTerm');
-      if (cobjReportData.length != objSltReportData.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportData.length;i++) {
-            if (cobjReportData[i].repid != objSltReportData.options[i].getAttribute('repid') ||
-                cobjReportData[i].prcid != objSltReportData.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cobjReportBreak.length != objSltReportBreak.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportBreak.length;i++) {
-            if (cobjReportBreak[i].repid != objSltReportBreak.options[i].getAttribute('repid') ||
-                cobjReportBreak[i].prcid != objSltReportBreak.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cobjReportOrder.length != objSltReportOrder.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportOrder.length;i++) {
-            if (cobjReportOrder[i].repid != objSltReportOrder.options[i].getAttribute('repid') ||
-                cobjReportOrder[i].prcid != objSltReportOrder.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cstrReportTerm != objTxtReportTerm.value) {
-         bolReturn = true;
-      }
-      return bolReturn;
-   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -805,10 +726,9 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="2">
+            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="2">
                <tr>
                   <td id="pckItem" class="clsTabX" onClick="showItem();" align=center colspan=1 nowrap><nobr>&nbsp;Items&nbsp;</nobr></td>
-                  <td id="pckMatl" class="clsTab" onClick="showMatl();" align=center colspan=1 nowrap><nobr>&nbsp;Materials&nbsp;</nobr></td>
                   <td id="pckTerm" class="clsTab" onClick="showTerm();" align=center colspan=1 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
                </tr>
             </table>
@@ -877,26 +797,6 @@
                                        </table>
                                     </nobr></td>
                                  </tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-            </table>
-            <table id="tabMatl" style="display:none;visibility:hidden" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding=0 cellspacing=0>
-               <tr>
-                  <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Materials&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
-                        <tr>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportMatl" name="sltReportMatl" style="width:700px" size=20></select></nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                              <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                 <tr><td id="cmdMatl03" align=center colspan=1 nowrap><nobr><a class="clsButtonN" href="javascript:removeTerms();">&nbsp;Delete&nbsp;</a></nobr></td></tr>
-                                 <tr><td id="cmdMatl05" align=center colspan=1 nowrap><nobr><a class="clsButtonN" href="javascript:insertTerms();">&nbsp;Insert&nbsp;</a></nobr></td></tr>
                               </table>
                            </nobr></td>
                         </tr>

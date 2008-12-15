@@ -30,14 +30,8 @@
       }
    }
    function checkChange() {
-      var bolChange = false;
-      var bolReturn;
-      if (changeMaterials() == true) {bolChange = true;}
-      if (bolChange == true) {
-         bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
-         return bolReturn;
-      }
-      return true;
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
    }
    function doCancel() {
       if (checkChange() == false) {return;}

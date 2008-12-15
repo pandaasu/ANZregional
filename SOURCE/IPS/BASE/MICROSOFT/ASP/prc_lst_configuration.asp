@@ -84,6 +84,10 @@
             call ProcessMaterialLoad
          case "MATERIAL_ACCEPT"
             call ProcessMaterialAccept
+         case "RULE_LOAD"
+            call ProcessRuleLoad
+         case "RULE_ACCEPT"
+            call ProcessRuleAccept
          case "FORMAT_LOAD"
             call ProcessFormatLoad
          case "FORMAT_ACCEPT"
@@ -113,6 +117,8 @@
          call PaintSelect
       case "DEFINE"
          call PaintDefine
+      case "RULE"
+         call PaintRule
       case "MATERIAL"
          call PaintMaterial
       case "FORMAT"
@@ -481,6 +487,164 @@ sub ProcessDefineAccept()
    '// Commit the define
    '//
    strStatement = "pricelist_configuration.define_commit"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'///////////////////////////////
+'// Process rule load routine //
+'///////////////////////////////
+sub ProcessRuleLoad()
+
+   dim strQuery
+   dim lngSize
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the report data
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " to_char(t01.report_id),"
+   strQuery = strQuery & " t01.report_name"
+   strQuery = strQuery & " from report t01"
+   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the price rule types
+   '//
+   lngSize = 0
+   strQuery = "select t01.price_rule_type_id,"
+   strQuery = strQuery & " t01.price_rule_type_name"
+   strQuery = strQuery & " from price_rule_type t01"
+   strQuery = strQuery & " order by t01.price_rule_type_name asc"
+   strReturn = objSelection.Execute("RULE_TYPE", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the report rules
+   '//
+   lngSize = 0
+   strQuery = "select t01.report_rule_id,"
+   strQuery = strQuery & " t01.report_rule_name,"
+   strQuery = strQuery & " t02.price_rule_type_id,"
+   strQuery = strQuery & " t03.price_rule_type_name,"
+   strQuery = strQuery & " t02.rule_vlu,"
+   strQuery = strQuery & " t02.rule_not"
+   strQuery = strQuery & " from report_rule t01, report_rule_detl t02, price_rule_type t03"
+   strQuery = strQuery & " where t01.report_rule_id = t02.report_rule_id(+)"
+   strQuery = strQuery & " and t02.price_rule_type_id = t03.price_rule_type_id(+)"
+   strQuery = strQuery & " and t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strQuery = strQuery & " order by t01.report_rule_id asc, t02.price_rule_type_id asc"
+   strReturn = objSelection.Execute("RULE", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "RULE"
+
+end sub
+
+'/////////////////////////////////
+'// Process rule accept routine //
+'/////////////////////////////////
+sub ProcessRuleAccept()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Begin the rules
+   '//
+   strStatement = "pricelist_configuration.rule_begin("
+   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value
+   strStatement = strStatement & ")"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Define the report rule data
+   '//
+   lngCount = clng(objForm.Fields("DET_RepRulCount").Value)
+   for i = 1 to lngCount
+      if objForm.Fields("DET_RepRulTyp" & i).Value = "RH" then
+         strStatement = "pricelist_configuration.rule_header("
+         strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepRulNam" & i).Value) & "'"
+         strStatement = strStatement & ")"
+         strReturn = objProcedure.Execute(strStatement)
+         if strReturn <> "*OK" then
+            strError = FormatError(strReturn)
+            strMode = "SELECT"
+            call ProcessSelect
+            exit sub
+         end if
+      end if
+      if objForm.Fields("DET_RepRulTyp" & i).Value = "RD" then
+         strStatement = "pricelist_configuration.rule_detail("
+         strStatement = strStatement & objForm.Fields("DET_RepTypId" & i).Value & ","
+         strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepRulVal" & i).Value) & "',"
+         strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepRulNot" & i).Value) & "'"
+         strStatement = strStatement & ")"
+         strReturn = objProcedure.Execute(strStatement)
+         if strReturn <> "*OK" then
+            strError = FormatError(strReturn)
+            strMode = "SELECT"
+            call ProcessSelect
+            exit sub
+         end if
+      end if
+   next
+
+   '//
+   '// Commit the rule data
+   '//
+   strStatement = "pricelist_configuration.rule_commit"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -959,6 +1123,13 @@ sub PaintSelect()%>
 '//////////////////////////
 sub PaintDefine()%>
 <!--#include file="prc_lst_configuration_define.inc"-->
+<%end sub
+
+'////////////////////////
+'// Paint rule routine //
+'////////////////////////
+sub PaintRule()%>
+<!--#include file="prc_lst_configuration_rule.inc"-->
 <%end sub
 
 '////////////////////////////

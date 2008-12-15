@@ -1,9 +1,9 @@
 <html>
 <script language="javascript">
 <!--
-   function showError() {
-      document.main.INP_ReportName.focus();<%if strReturn <> "*OK" then%>
-      alert('<%=strReturn%>');<%else%>return;<%end if%>
+   function showError() {<%if strReturn <> "*OK" then%>
+      alert('<%=strReturn%>');<%else%>
+      return;<%end if%>
    }
    function document.onmouseover() {
       var objElement = window.event.srcElement;
@@ -30,21 +30,8 @@
       }
    }
    function checkChange() {
-      var bolChange = false;
-      var bolReturn;
-      if (document.main.INP_ReportName.value != document.main.DTA_ReportName.value) {bolChange = true;}
-      if (document.main.INP_ReportGrpId.value != document.main.DTA_ReportGrpId.value) {bolChange = true;}
-      if (document.main.INP_PriceMdlId.value != document.main.DTA_PriceMdlId.value) {bolChange = true;}
-      if (document.main.INP_MatlAlrtng.value != document.main.DTA_MatlAlrtng.value) {bolChange = true;}
-      if (document.main.INP_AutoMatlUpdate.value != document.main.DTA_AutoMatlUpdate.value) {bolChange = true;}
-      if (document.main.INP_EmailAddress.value != document.main.DTA_EmailAddress.value) {bolChange = true;}
-      if (document.main.INP_Status.value != document.main.DTA_Status.value) {bolChange = true;}
-      if (changeItems() == true) {bolChange = true;}
-      if (bolChange == true) {
-         bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
-         return bolReturn;
-      }
-      return true;
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
    }
    function doCancel() {
       if (checkChange() == false) {return;}
@@ -56,35 +43,7 @@
       if (!processForm()) {return;}
       var strMessage = '';
       var strDetail = '';
-      if (document.main.INP_ReportName.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Report name must be entered';
-      }
-      if (document.main.INP_ReportGrpId.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Report group must be selected';
-      }
-      if (document.main.INP_PriceMdlId.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Price model must be selected';
-      }
-      if (document.main.INP_MatlAlrtng.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Material alerting must be selected';
-      }
-      if (document.main.INP_AutoMatlUpdate.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Auto material update must be selected';
-      }
-      if (document.main.INP_EmailAddress.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Notification email address must be entered';
-      }
-      if (document.main.INP_Status.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Status must be selected';
-      }
-      strDetail = checkItems();
+      strDetail = checkRules();
       if (strDetail != '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + strDetail;
@@ -93,15 +52,8 @@
          alert(strMessage);
          return;
       }
-      document.main.DTA_ReportName.value = document.main.INP_ReportName.value;
-      document.main.DTA_ReportGrpId.value = document.main.INP_ReportGrpId.value;
-      document.main.DTA_PriceMdlId.value = document.main.INP_PriceMdlId.value;
-      document.main.DTA_MatlAlrtng.value = document.main.INP_MatlAlrtng.value;
-      document.main.DTA_AutoMatlUpdate.value = document.main.INP_AutoMatlUpdate.value;
-      document.main.DTA_EmailAddress.value = document.main.INP_EmailAddress.value;
-      document.main.DTA_Status.value = document.main.INP_Status.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'DEFINE_ACCEPT';
+      document.main.Mode.value = 'RULE_ACCEPT';
       document.main.submit();
    }
    function processForm() {
@@ -114,630 +66,460 @@
    function setSelect(objInput) {
       objInput.select();
    }
-   function selectReportGrpId(objSelect) {
-      document.main.INP_ReportGrpId.value = objSelect.options[objSelect.selectedIndex].value;
-   }
-   function selectPriceMdlId(objSelect) {
-      var strPriceMdlId = objSelect.options[objSelect.selectedIndex].value;
-      document.main.INP_PriceMdlId.value = strPriceMdlId;
-      if (strPriceMdlId != '') {
-         doActivityStart(document.body);
-         window.setTimeout('getPriceItems(\''+strPriceMdlId+'\');',10);
-      }
-   }
-   function selectMatlAlrtng(strValue) {
-      document.main.INP_MatlAlrtng.value = strValue;
-   }
-   function selectAutoMatlUpdate(strValue) {
-      document.main.INP_AutoMatlUpdate.value = strValue;
-   }
-   function selectStatus(strValue) {
-      document.main.INP_Status.value = strValue;
-   }
-   function showItem() {
-      var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
-      var objTableTerm = document.getElementById('tabTerm');
-      document.getElementById('pckItem').className = 'clsTabX';
-      document.getElementById('pckMatl').className = 'clsTab';
-      document.getElementById('pckTerm').className = 'clsTab';
-      objTableTerm.style.display = 'none';
-      objTableTerm.style.visibility = 'hidden';
-      objTableMatl.style.display = 'none';
-      objTableMatl.style.visibility = 'hidden'
-      objTableItem.style.display = 'block';
-      objTableItem.style.visibility = 'visible';
-   }
-   function showMatl() {
-      var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
-      var objTableTerm = document.getElementById('tabTerm');
-      document.getElementById('pckItem').className = 'clsTab';
-      document.getElementById('pckMatl').className = 'clsTabX';
-      document.getElementById('pckTerm').className = 'clsTab';
-      objTableItem.style.display = 'none';
-      objTableItem.style.visibility = 'hidden';
-      objTableTerm.style.display = 'none';
-      objTableTerm.style.visibility = 'hidden'
-      objTableMatl.style.display = 'block';
-      objTableMatl.style.visibility = 'visible';
-   }
-   function showTerm() {
-      var objTableItem = document.getElementById('tabItem');
-      var objTableMatl = document.getElementById('tabMatl');
-      var objTableTerm = document.getElementById('tabTerm');
-      document.getElementById('pckItem').className = 'clsTab';
-      document.getElementById('pckMatl').className = 'clsTab';
-      document.getElementById('pckTerm').className = 'clsTabX';
-      objTableItem.style.display = 'none';
-      objTableItem.style.visibility = 'hidden';
-      objTableMatl.style.display = 'none';
-      objTableMatl.style.visibility = 'hidden'
-      objTableTerm.style.display = 'block';
-      objTableTerm.style.visibility = 'visible';
-   }
 // -->
 </script>
 <script language="javascript">
 <!--
-   //////////////////////////////
-   // Report definition script //
-   //////////////////////////////
-   var cobjPriceItems = new Array();
-   var cobjReportData = new Array();
-   var cobjReportBreak = new Array();
-   var cobjReportOrder = new Array();
-   var cobjReportTerm = new Array();
-   var cstrReportTerm = '';
-   var cintSelectedDataItem = -1;
-   function loadPriceItems() {<%if objSelection.ListCount("PRICE_ITEM") <> 0 then%><%for i = objSelection.ListLower("PRICE_ITEM") to objSelection.ListUpper("PRICE_ITEM")%>
-      cobjPriceItems[<%=i%>] = new clsPriceItem('<%=objSelection.ListValue01("PRICE_ITEM",i)%>','<%=replace(objSelection.ListValue02("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue03("PRICE_ITEM",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objForm.Fields("DTA_ReportId").Value <> "0" then%><%if objSelection.ListCount("REPORT_DATA") <> 0 then%><%for i = objSelection.ListLower("REPORT_DATA") to objSelection.ListUpper("REPORT_DATA")%>
-      cobjReportData[<%=i%>] = new clsReportData('<%=objSelection.ListValue01("REPORT_DATA",i)%>','<%=objSelection.ListValue02("REPORT_DATA",i)%>','<%=replace(objSelection.ListValue03("REPORT_DATA",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_BREAK") <> 0 then%><%for i = objSelection.ListLower("REPORT_BREAK") to objSelection.ListUpper("REPORT_BREAK")%>
-      cobjReportBreak[<%=i%>] = new clsReportBreak('<%=objSelection.ListValue01("REPORT_BREAK",i)%>','<%=objSelection.ListValue02("REPORT_BREAK",i)%>','<%=replace(objSelection.ListValue03("REPORT_BREAK",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_ORDER") <> 0 then%><%for i = objSelection.ListLower("REPORT_ORDER") to objSelection.ListUpper("REPORT_ORDER")%>
-      cobjReportOrder[<%=i%>] = new clsReportOrder('<%=objSelection.ListValue01("REPORT_ORDER",i)%>','<%=objSelection.ListValue02("REPORT_ORDER",i)%>','<%=replace(objSelection.ListValue03("REPORT_ORDER",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("REPORT_TERM") <> 0 then%><%for i = objSelection.ListLower("REPORT_TERM") to objSelection.ListUpper("REPORT_TERM")%>
-      cstrReportTerm = <%if i > 0 then%>cstrReportTerm<%end if%><%if objSelection.ListValue01("REPORT_TERM",i) <> "" then %><%if i > 0 then%>+<%end if%>'<%=replace(objSelection.ListValue01("REPORT_TERM",i), "'", "\'", 1, -1, 1)%>'<%end if%><%if i < objSelection.ListCount("REPORT_TERM")-1 then%>+'\n'<%end if%>;<%next%><%end if%><%end if%>
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      objSltPriceItem.options.length = 0;
-      objSltPriceItem.selectedIndex = -1;
-      for (var i=0;i<cobjPriceItems.length;i++) {
-         objSltPriceItem.options[i] = new Option(cobjPriceItems[i].name,cobjPriceItems[i].prcid);
+   ////////////////////////
+   // Report rule script //
+   ////////////////////////
+   var cobjRuleTypes = new Array();
+   var cobjRules = new Array();
+   var cobjSelected = null;
+   var cstrSelected = '';
+   var cintSelected = 0;
+   var cobjRow = null;
+   var cstrMode = '';
+   var cintInsert = -1;
+   function loadRules() {<%if objSelection.ListCount("RULE_TYPE") <> 0 then%><%for i = objSelection.ListLower("RULE_TYPE") to objSelection.ListUpper("RULE_TYPE")%>
+      cobjRuleTypes[<%=i%>] = new clsRuleType('<%=objSelection.ListValue01("RULE_TYPE",i)%>','<%=replace(objSelection.ListValue02("RULE_TYPE",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("RULE") <> 0 then%><%for i = objSelection.ListLower("RULE") to objSelection.ListUpper("RULE")%>
+      cobjRules[<%=i%>] = new clsRule('<%=objSelection.ListValue01("RULE",i)%>','<%=replace(objSelection.ListValue02("RULE",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("RULE",i)%>','<%=replace(objSelection.ListValue04("RULE",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue05("RULE",i)%>','<%=objSelection.ListValue06("RULE",i)%>');<%next%><%end if%>
+      var objTable = document.getElementById('tabRule');
+      var objRow;
+      var objCell;
+      var strSavId = 'STR';
+      for (var i=0;i<cobjRules.length;i++) {
+         if (cobjRules[i].rulid != strSavId) {
+            objRow = objTable.insertRow(-1);
+            objRow.setAttribute('rultyp','RH');
+            objRow.setAttribute('rulid',cobjRules[i].rulid);
+            objRow.setAttribute('rulnam',cobjRules[i].rulnam);
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = 1;
+            objCell.innerText = 'Rule';
+            objCell.onclick = function() {selectRule(this);};
+            objCell.className = 'clsListB';
+            objCell = objRow.insertCell(1);
+            objCell.colSpan = 1;
+            objCell.innerText = cobjRules[i].rulnam;
+            objCell.className = 'clsLabelFB';
+            strSavId = cobjRules[i].rulid;
+         }
+         if (cobjRules[i].typid != '') {
+            objRow = objTable.insertRow(-1);
+            objRow.setAttribute('rultyp','RD');
+            objRow.setAttribute('rulid',cobjRules[i].rulid);
+            objRow.setAttribute('typid',cobjRules[i].typid);
+            objRow.setAttribute('rulval',cobjRules[i].rulval);
+            objRow.setAttribute('rulnot',cobjRules[i].rulnot);
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = 1;
+            objCell.innerText = 'Detail';
+            objCell.onclick = function() {selectDetail(this);};
+            objCell.className = 'clsList';
+            objCell = objRow.insertCell(1);
+            objCell.colSpan = 1;
+            objCell.innerText = cobjRules[i].typnam+' ('+cobjRules[i].rulval+') - ';
+            if (cobjRules[i].rulnot == 'F') {
+               objCell.innerText = objCell.innerText+'Standard rule';
+            } else {
+               objCell.innerText = objCell.innerText+'Rule NOT test applied';
+            }
+            objCell.className = 'clsLabelFN';
+         }
       }
-      var objSltReportData = document.getElementById('sltReportData');
-      objSltReportData.options.length = 0;
-      objSltReportData.selectedIndex = -1;
-      for (var i=0;i<cobjReportData.length;i++) {
-         objSltReportData.options[i] = new Option(cobjReportData[i].name,cobjReportData[i].repid);
-         objSltReportData.options[i].setAttribute('repid',cobjReportData[i].repid);
-         objSltReportData.options[i].setAttribute('prcid',cobjReportData[i].prcid);
+      var objSltRuleType = document.getElementById('sltRuleType');
+      objSltRuleType.options.length = 0;
+      objSltRuleType.selectedIndex = -1;
+      for (var i=0;i<cobjRuleTypes.length;i++) {
+         objSltRuleType.options[i] = new Option(cobjRuleTypes[i].typnam,cobjRuleTypes[i].typid);
+         objSltRuleType.options[i].setAttribute('typid',cobjRuleTypes[i].typid);
+         objSltRuleType.options[i].setAttribute('typnam',cobjRuleTypes[i].typnam);
       }
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      objSltReportBreak.options.length = 0;
-      objSltReportBreak.selectedIndex = -1;
-      for (var i=0;i<cobjReportBreak.length;i++) {
-         objSltReportBreak.options[i] = new Option(cobjReportBreak[i].name,cobjReportBreak[i].repid);
-         objSltReportBreak.options[i].setAttribute('repid',cobjReportBreak[i].repid);
-         objSltReportBreak.options[i].setAttribute('prcid',cobjReportBreak[i].prcid);
-      }
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      objSltReportOrder.options.length = 0;
-      objSltReportOrder.selectedIndex = -1;
-      for (var i=0;i<cobjReportOrder.length;i++) {
-         objSltReportOrder.options[i] = new Option(cobjReportOrder[i].name,cobjReportOrder[i].repid);
-         objSltReportOrder.options[i].setAttribute('repid',cobjReportOrder[i].repid);
-         objSltReportOrder.options[i].setAttribute('prcid',cobjReportOrder[i].prcid);
-      }
-      var objTxtReportTerm = document.getElementById('txtReportTerm');
-      objTxtReportTerm.value = cstrReportTerm;
    }
-   function getPriceItems(strPriceMdlId) {
-      doGetRequest('<%=strBase%>prc_lst_item_lookup.asp?QRY_PriceMdlId='+strPriceMdlId,function(strResponse) {reloadPriceItems(strResponse);},false);
+   function clsRuleType(strTypId,strTypNam) {
+      this.typid = strTypId;
+      this.typnam = strTypNam;
    }
-   function reloadPriceItems(strResponse) {
+   function clsRule(strRulId,strRulNam,strTypId,strTypNam,strRulVal,strRulNot) {
+      this.rulid = strRulId;
+      this.rulnam = strRulNam;
+      this.typid = strTypId;
+      this.typnam = strTypNam;
+      this.rulval = strRulVal;
+      this.rulnot = strRulNot;
+   }
+   function selectRule(objSelected) {
+      if (cobjSelected) {
+         if (cobjSelected.className == 'clsListX') {
+            cobjSelected.className = 'clsList';
+         } else {
+            cobjSelected.className = 'clsListB';
+         }
+      }
+      cobjSelected = objSelected;
+      cobjSelected.className = 'clsListBX';
+      cstrSelected = 'RH';
+      cintSelected = cobjSelected.parentNode.rowIndex;
+   }
+   function selectDetail(objSelected) {
+      if (cobjSelected) {
+         if (cobjSelected.className == 'clsListX') {
+            cobjSelected.className = 'clsList';
+         } else {
+            cobjSelected.className = 'clsListB';
+         }
+      }
+      cobjSelected = objSelected;
+      cobjSelected.className = 'clsListX';
+      cstrSelected = 'RD';
+      cintSelected = cobjSelected.parentNode.rowIndex;
+   }
+   function updateRule() {
+      if (cobjSelected == null) {
+         return;
+      }
+      cstrMode = 'UPD';
+      cobjRow = document.getElementById('tabRule').rows[cintSelected];
+      if (cstrSelected == 'RH') {
+         document.getElementById('inpRuleName').value = cobjRow.getAttribute('rulnam');
+         var objDspList = document.getElementById('dspList');
+         var objDspRule = document.getElementById('dspRule');
+         var objDspDetail = document.getElementById('dspDetail');
+         objDspList.style.display = 'none';
+         objDspList.style.visibility = 'hidden';
+         objDspRule.style.display = 'block';
+         objDspRule.style.visibility = 'visible'
+         objDspDetail.style.display = 'none';
+         objDspDetail.style.visibility = 'hidden';
+         document.getElementById('inpRuleName').focus();
+      }
+      if (cstrSelected == 'RD') {
+         var objSltRuleType = document.getElementById('sltRuleType');
+         objSltRuleType.selectedIndex = -1;
+         for (var i=0;i<objSltRuleType.options.length;i++) {
+            if (objSltRuleType.options[i].getAttribute('typid') == cobjRow.getAttribute('typid')) {
+               objSltRuleType.selectedIndex = i;
+               break;
+            }
+         }
+         doActivityStart(document.body);
+         document.getElementById('sltRuleValue').selectedIndex = -1;
+         if (cobjRow.getAttribute('rulnot') == 'F') {
+            document.getElementById('sltRuleNot').selectedIndex = 0;
+         } else {
+            document.getElementById('sltRuleNot').selectedIndex = 1;
+         }
+         getRuleValues(cobjRow.getAttribute('typid'));
+         for (var i=0;i<document.getElementById('sltRuleValue').options.length;i++) {
+            if (document.getElementById('sltRuleValue').options[i].value == cobjRow.getAttribute('rulval')) {
+               document.getElementById('sltRuleValue').selectedIndex = i;
+               break;
+            }
+         }
+         var objDspList = document.getElementById('dspList');
+         var objDspRule = document.getElementById('dspRule');
+         var objDspDetail = document.getElementById('dspDetail');
+         objDspList.style.display = 'none';
+         objDspList.style.visibility = 'hidden';
+         objDspRule.style.display = 'none';
+         objDspRule.style.visibility = 'hidden'
+         objDspDetail.style.display = 'block';
+         objDspDetail.style.visibility = 'visible';
+         document.getElementById('sltRuleType').focus();
+      }
+   }
+   function deleteRule() {
+      if (cobjSelected == null) {
+         return;
+      }
+      var objTable = document.getElementById('tabRule');
+      if (cstrSelected == 'RH') {
+         var intEnd = objTable.rows.length-1;
+         if (cintSelected != objTable.rows.length-1) {
+            intEnd = cintSelected;
+            for (var i=intEnd+1;i<objTable.rows.length;i++) {
+               if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
+                  intEnd = i;
+               } else {
+                  break;
+               }
+            }
+         }
+         for (var i=intEnd;i>=cintSelected;i--) {
+            objTable.deleteRow(i);
+         }
+      } else {
+         objTable.deleteRow(cintSelected);
+      }
+   }
+   function cancelRule() {
+      var objDspList = document.getElementById('dspList');
+      var objDspRule = document.getElementById('dspRule');
+      var objDspDetail = document.getElementById('dspDetail');
+      objDspList.style.display = 'block';
+      objDspList.style.visibility = 'visible';
+      objDspRule.style.display = 'none';
+      objDspRule.style.visibility = 'hidden'
+      objDspDetail.style.display = 'none';
+      objDspDetail.style.visibility = 'hidden';
+   }
+   function addRule() {
+      cstrMode = 'ADD';
+      document.getElementById('inpRuleName').value = '';
+      var objDspList = document.getElementById('dspList');
+      var objDspRule = document.getElementById('dspRule');
+      var objDspDetail = document.getElementById('dspDetail');
+      objDspList.style.display = 'none';
+      objDspList.style.visibility = 'hidden';
+      objDspRule.style.display = 'block';
+      objDspRule.style.visibility = 'visible'
+      objDspDetail.style.display = 'none';
+      objDspDetail.style.visibility = 'hidden';
+      document.getElementById('inpRuleName').focus();
+   }
+   function acceptRule() {
+      var objTable;
+      var objRow;
+      var objCell;
+      objTable = document.getElementById('tabRule');
+      if (cstrMode == 'ADD') {
+         objRow = objTable.insertRow(-1);
+         objRow.setAttribute('rultyp','RH');
+         objRow.setAttribute('rulid','0');
+         objRow.setAttribute('rulnam',document.getElementById('inpRuleName').value);
+         objCell = objRow.insertCell(0);
+         objCell.colSpan = 1;
+         objCell.innerText = 'Rule';
+         objCell.onclick = function() {selectRule(this);};
+         objCell.className = 'clsListB';
+         objCell = objRow.insertCell(1);
+         objCell.colSpan = 3;
+         objCell.innerText = document.getElementById('inpRuleName').value;
+         objCell.className = 'clsLabelFB';
+      } else {
+         objRow = objTable.rows[cintSelected];
+         objRow.setAttribute('rulnam',document.getElementById('inpRuleName').value);
+         objRow.cells(1).innerText = document.getElementById('inpRuleName').value;
+      }
+      var objDspList = document.getElementById('dspList');
+      var objDspRule = document.getElementById('dspRule');
+      var objDspDetail = document.getElementById('dspDetail');
+      objDspList.style.display = 'block';
+      objDspList.style.visibility = 'visible';
+      objDspRule.style.display = 'none';
+      objDspRule.style.visibility = 'hidden'
+      objDspDetail.style.display = 'none';
+      objDspDetail.style.visibility = 'hidden';
+   }
+   function addDetail() {
+      if (cobjSelected == null) {
+         return;
+      }
+      if (cstrSelected != 'RH') {
+         return;
+      }
+      cstrMode = 'ADD';
+      var objWork = new Array();
+      var intIndex = 0;
+      var bolFound = false;
+      var objTable = document.getElementById('tabRule');
+      if (cintSelected == objTable.rows.length-1) {
+         cintInsert = -1;
+      } else {
+         cintInsert = cintSelected;
+         for (var i=cintSelected+1;i<objTable.rows.length;i++) {
+            if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
+               cintInsert = i;
+               objWork[intIndex] = objTable.rows[i].getAttribute('typid');
+               intIndex++;
+            } else {
+               break;
+            }
+         }
+         cintInsert++;
+      }
+      intIndex = 0;
+      var objSltRuleType = document.getElementById('sltRuleType');
+      objSltRuleType.options.length = 0;
+      for (var i=0;i<cobjRuleTypes.length;i++) {
+         bolFound = false;
+         for (var j=0;j<objWork.length;j++) {
+            if (cobjRuleTypes[i].typid == objWork[j]) {
+               bolFound = true;
+            }
+         }
+         if (!bolFound) {
+            objSltRuleType.options[intIndex] = new Option(cobjRuleTypes[i].typnam,cobjRuleTypes[i].typid);
+            objSltRuleType.options[intIndex].setAttribute('typid',cobjRuleTypes[i].typid);
+            objSltRuleType.options[intIndex].setAttribute('typnam',cobjRuleTypes[i].typnam);
+            intIndex++;
+         }
+      }
+      document.getElementById('sltRuleType').selectedIndex = -1;
+      document.getElementById('sltRuleValue').selectedIndex = -1;
+      document.getElementById('sltRuleNot').selectedIndex = 0;
+      var objDspList = document.getElementById('dspList');
+      var objDspRule = document.getElementById('dspRule');
+      var objDspDetail = document.getElementById('dspDetail');
+      objDspList.style.display = 'none';
+      objDspList.style.visibility = 'hidden';
+      objDspRule.style.display = 'none';
+      objDspRule.style.visibility = 'hidden'
+      objDspDetail.style.display = 'block';
+      objDspDetail.style.visibility = 'visible';
+      document.getElementById('sltRuleType').focus();
+   }
+   function acceptDetail() {
+      if (document.getElementById('sltRuleType').selectedIndex == -1) {
+         alert('Rule type must be selected');
+         return;
+      }
+      if (document.getElementById('sltRuleValue').selectedIndex == -1) {
+         alert('Rule value be selected');
+         return;
+      }
+      if (document.getElementById('sltRuleNot').selectedIndex == -1) {
+         alert('Rule not be selected');
+         return;
+      }
+      var objTable;
+      var objRow;
+      var objCell;
+      objTable = document.getElementById('tabRule');
+      if (cstrMode == 'ADD') {
+         objRow = objTable.insertRow(cintInsert);
+         objRow.setAttribute('rultyp','RD');
+         objRow.setAttribute('rulid',objTable.rows[cintSelected].getAttribute('rulid'));
+         objRow.setAttribute('typid',document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typid'));
+         objRow.setAttribute('rulval',document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value);
+         objRow.setAttribute('rulnot',document.getElementById('sltRuleNot').options[document.getElementById('sltRuleNot').selectedIndex].value);
+         objCell = objRow.insertCell(0);
+         objCell.colSpan = 1;
+         objCell.innerText = 'Detail';
+         objCell.onclick = function() {selectDetail(this);};
+         objCell.className = 'clsList';
+         objCell = objRow.insertCell(1);
+         objCell.colSpan = 1;
+         objCell.innerText = document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typnam')+' ('+document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value+') - ';
+         if (document.getElementById('sltRuleNot').selectedIndex == 0) {
+            objCell.innerText = objCell.innerText+'Standard rule';
+         } else {
+            objCell.innerText = objCell.innerText+'Rule NOT test applied';
+         }
+         objCell.className = 'clsLabelFN';
+      } else {
+         objRow = objTable.rows[cintSelected];
+         objRow.setAttribute('typid',document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typid'));
+         objRow.setAttribute('rulval',document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value);
+         objRow.setAttribute('rulnot',document.getElementById('sltRuleNot').options[document.getElementById('sltRuleNot').selectedIndex].value);
+         objRow.cells(1).innerText = document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typnam')+' ('+document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value+') - ';
+         if (document.getElementById('sltRuleNot').selectedIndex == 0) {
+            objRow.cells(1).innerText = objRow.cells(1).innerText+'Standard rule';
+         } else {
+            objRow.cells(1).innerText = objRow.cells(1).innerText+'Rule NOT test applied';
+         }
+      }
+      var objDspList = document.getElementById('dspList');
+      var objDspRule = document.getElementById('dspRule');
+      var objDspDetail = document.getElementById('dspDetail');
+      objDspList.style.display = 'block';
+      objDspList.style.visibility = 'visible';
+      objDspRule.style.display = 'none';
+      objDspRule.style.visibility = 'hidden'
+      objDspDetail.style.display = 'none';
+      objDspDetail.style.visibility = 'hidden';
+   }
+   function selectRuleType(objSelect) {
+      if (objSelect.selectedIndex != -1) {
+         doActivityStart(document.body);
+         window.setTimeout('getRuleValues(\''+objSelect.options[objSelect.selectedIndex].value+'\');',10);
+      }
+   }
+   function getRuleValues(strTypeId) {
+      doGetRequest('<%=strBase%>prc_lst_rule_lookup.asp?QRY_TypeId='+strTypeId,function(strResponse) {loadRuleValues(strResponse);},false);
+   }
+   function loadRuleValues(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
          var aryRows = strResponse.substring(3,strResponse.length).split('\n');
          var aryColumns;
-         cobjPriceItems.length = 0;
+         var objSltRuleValue = document.getElementById('sltRuleValue');
+         objSltRuleValue.options.length = 0;
+         objSltRuleValue.selectedIndex = -1;
          for (var i=0;i<aryRows.length;i++) {
             aryColumns = aryRows[i].split('\t');
-            cobjPriceItems[i] = new clsPriceItem(aryColumns[0],aryColumns[1],aryColumns[2]);
-         }
-         var objSltPriceItem = document.getElementById('sltPriceItem');
-         objSltPriceItem.options.length = 0;
-         objSltPriceItem.selectedIndex = -1;
-         for (var i=0;i<cobjPriceItems.length;i++) {
-            objSltPriceItem.options[i] = new Option(cobjPriceItems[i].name,cobjPriceItems[i].prcid);
-         }
-         var objWork = new Array();
-         var intIndex = 0;
-         objWork.length = 0;
-         intIndex = 0;
-         var objSltReportData = document.getElementById('sltReportData');
-         for (var i=0;i<objSltReportData.options.length;i++) {
-            for (var j=0;j<cobjPriceItems.length;j++) {
-               if (objSltReportData.options[i].getAttribute('prcid') == cobjPriceItems[j].prcid) {
-                  objWork[intIndex] = objSltReportData[i];
-                  intIndex++;
-               }
-            }
-         }
-         objSltReportData.options.length = 0;
-         objSltReportData.selectedIndex = -1;
-         for (var i=0;i<objWork.length;i++) {
-            objSltReportData.options[i] = objWork[i];
-         }
-         objWork.length = 0;
-         intIndex = 0;
-         var objSltReportBreak = document.getElementById('sltReportBreak');
-         for (var i=0;i<objSltReportBreak.options.length;i++) {
-            for (var j=0;j<cobjPriceItems.length;j++) {
-               if (objSltReportBreak.options[i].getAttribute('prcid') == cobjPriceItems[j].prcid) {
-                  objWork[intIndex] = objSltReportBreak[i];
-                  intIndex++;
-               }
-            }
-         }
-         objSltReportBreak.options.length = 0;
-         objSltReportBreak.selectedIndex = -1;
-         for (var i=0;i<objWork.length;i++) {
-            objSltReportBreak.options[i] = objWork[i];
-         }
-         objWork.length = 0;
-         intIndex = 0;
-         var objSltReportOrder = document.getElementById('sltReportOrder');
-         for (var i=0;i<objSltReportOrder.options.length;i++) {
-            for (var j=0;j<cobjPriceItems.length;j++) {
-               if (objSltReportOrder.options[i].getAttribute('prcid') == cobjPriceItems[j].prcid) {
-                  objWork[intIndex] = objSltReportOrder[i];
-                  intIndex++;
-               }
-            }
-         }
-         objSltReportOrder.options.length = 0;
-         objSltReportOrder.selectedIndex = -1;
-         for (var i=0;i<objWork.length;i++) {
-            objSltReportOrder.options[i] = objWork[i];
+            objSltRuleValue.options[i] = new Option('('+aryColumns[0]+') '+aryColumns[1],aryColumns[0]);
          }
       }
       doActivityStop();
    }
-   function clsPriceItem(strPrcId,strName,strDesc) {
-      this.prcid = strPrcId;
-      this.name = strName;
-      this.desc = strDesc;
-   }
-   function clsReportData(strRepId,strPrcId,strName) {
-      this.repid = strRepId;
-      this.prcid = strPrcId;
-      this.name = strName;
-   }
-   function clsReportBreak(strRepId,strPrcId,strName) {
-      this.repid = strRepId;
-      this.prcid = strPrcId;
-      this.name = strName;
-   }
-   function clsReportOrder(strRepId,strPrcId,strName) {
-      this.repid = strRepId;
-      this.prcid = strPrcId;
-      this.name = strName;
-   }
-   function selectDataItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportData = document.getElementById('sltReportData');
-      for (var i=0;i<objSltPriceItem.options.length;i++) {
-         if (objSltPriceItem.options[i].selected == true) {
-            objSltReportData.options[objSltReportData.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
-            objSltReportData.options[objSltReportData.options.length-1].setAttribute('repid','0');
-            objSltReportData.options[objSltReportData.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
-         }
-      }
-   }
-   function selectBreakItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      for (var i=0;i<objSltPriceItem.options.length;i++) {
-         if (objSltPriceItem.options[i].selected == true) {
-            objSltReportBreak.options[objSltReportBreak.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
-            objSltReportBreak.options[objSltReportBreak.options.length-1].setAttribute('repid','0');
-            objSltReportBreak.options[objSltReportBreak.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
-         }
-      }
-   }
-   function selectOrderItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      for (var i=0;i<objSltPriceItem.options.length;i++) {
-         if (objSltPriceItem.options[i].selected == true) {
-            objSltReportOrder.options[objSltReportOrder.options.length] = new Option(objSltPriceItem[i].text,objSltPriceItem[i].value);
-            objSltReportOrder.options[objSltReportOrder.options.length-1].setAttribute('repid','0');
-            objSltReportOrder.options[objSltReportOrder.options.length-1].setAttribute('prcid',objSltPriceItem[i].value);
-         }
-      }
-   }
-   function removeDataItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportData = document.getElementById('sltReportData');
-      var objWork = new Array();
-      var intIndex = 0;
-      for (var i=0;i<objSltReportData.options.length;i++) {
-         if (objSltReportData.options[i].selected == false) {
-            objWork[intIndex] = objSltReportData[i];
-            intIndex++;
-         }
-      }
-      objSltReportData.options.length = 0;
-      objSltReportData.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSltReportData.options[i] = objWork[i];
-      }
-   }
-   function removeBreakItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      var objWork = new Array();
-      var intIndex = 0;
-      for (var i=0;i<objSltReportBreak.options.length;i++) {
-         if (objSltReportBreak.options[i].selected == false) {
-            objWork[intIndex] = objSltReportBreak[i];
-            intIndex++;
-         }
-      }
-      objSltReportBreak.options.length = 0;
-      objSltReportBreak.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSltReportBreak.options[i] = objWork[i];
-      }
-   }
-   function removeOrderItems() {
-      var objSltPriceItem = document.getElementById('sltPriceItem');
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      var objWork = new Array();
-      var intIndex = 0;
-      for (var i=0;i<objSltReportOrder.options.length;i++) {
-         if (objSltReportOrder.options[i].selected == false) {
-            objWork[intIndex] = objSltReportOrder[i];
-            intIndex++;
-         }
-      }
-      objSltReportOrder.options.length = 0;
-      objSltReportOrder.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSltReportOrder.options[i] = objWork[i];
-      }
-   }
-   function upDataItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportData = document.getElementById('sltReportData');
-      intSelect = 0;
-      for (var i=0;i<objSltReportData.options.length;i++) {
-         if (objSltReportData.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move up');
-         return;
-      }
-      if (intSelect == 1 && intIndex > 0) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportData.options[intIndex-1].value;
-         aryA[1] = objSltReportData.options[intIndex-1].text;
-         aryA[2] = objSltReportData.options[intIndex-1].getAttribute('repid');
-         aryA[3] = objSltReportData.options[intIndex-1].getAttribute('prcid');
-         aryB[0] = objSltReportData.options[intIndex].value;
-         aryB[1] = objSltReportData.options[intIndex].text;
-         aryB[2] = objSltReportData.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportData.options[intIndex].getAttribute('prcid');
-         objSltReportData.options[intIndex-1].value = aryB[0];
-         objSltReportData.options[intIndex-1].text = aryB[1];
-         objSltReportData.options[intIndex-1].setAttribute('repid',aryB[2]);
-         objSltReportData.options[intIndex-1].setAttribute('prcid',aryB[3]);
-         objSltReportData.options[intIndex-1].selected = true;
-         objSltReportData.options[intIndex].value = aryA[0];
-         objSltReportData.options[intIndex].text = aryA[1];
-         objSltReportData.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportData.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportData.options[intIndex].selected = false;
-      }
-   }
-   function upBreakItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      intSelect = 0;
-      for (var i=0;i<objSltReportBreak.options.length;i++) {
-         if (objSltReportBreak.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move up');
-         return;
-      }
-      if (intSelect == 1 && intIndex > 0) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportBreak.options[intIndex-1].value;
-         aryA[1] = objSltReportBreak.options[intIndex-1].text;
-         aryA[2] = objSltReportBreak.options[intIndex-1].getAttribute('repid');
-         aryA[3] = objSltReportBreak.options[intIndex-1].getAttribute('prcid');
-         aryB[0] = objSltReportBreak.options[intIndex].value;
-         aryB[1] = objSltReportBreak.options[intIndex].text;
-         aryB[2] = objSltReportBreak.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportBreak.options[intIndex].getAttribute('prcid');
-         objSltReportBreak.options[intIndex-1].value = aryB[0];
-         objSltReportBreak.options[intIndex-1].text = aryB[1];
-         objSltReportBreak.options[intIndex-1].setAttribute('repid',aryB[2]);
-         objSltReportBreak.options[intIndex-1].setAttribute('prcid',aryB[3]);
-         objSltReportBreak.options[intIndex-1].selected = true;
-         objSltReportBreak.options[intIndex].value = aryA[0];
-         objSltReportBreak.options[intIndex].text = aryA[1];
-         objSltReportBreak.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportBreak.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportBreak.options[intIndex].selected = false;
-      }
-   }
-   function upOrderItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      intSelect = 0;
-      for (var i=0;i<objSltReportOrder.options.length;i++) {
-         if (objSltReportOrder.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move up');
-         return;
-      }
-      if (intSelect == 1 && intIndex > 0) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportOrder.options[intIndex-1].value;
-         aryA[1] = objSltReportOrder.options[intIndex-1].text;
-         aryA[2] = objSltReportOrder.options[intIndex-1].getAttribute('repid');
-         aryA[3] = objSltReportOrder.options[intIndex-1].getAttribute('prcid');
-         aryB[0] = objSltReportOrder.options[intIndex].value;
-         aryB[1] = objSltReportOrder.options[intIndex].text;
-         aryB[2] = objSltReportOrder.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportOrder.options[intIndex].getAttribute('prcid');
-         objSltReportOrder.options[intIndex-1].value = aryB[0];
-         objSltReportOrder.options[intIndex-1].text = aryB[1];
-         objSltReportOrder.options[intIndex-1].setAttribute('repid',aryB[2]);
-         objSltReportOrder.options[intIndex-1].setAttribute('prcid',aryB[3]);
-         objSltReportOrder.options[intIndex-1].selected = true;
-         objSltReportOrder.options[intIndex].value = aryA[0];
-         objSltReportOrder.options[intIndex].text = aryA[1];
-         objSltReportOrder.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportOrder.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportOrder.options[intIndex].selected = false;
-      }
-   }
-   function downDataItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportData = document.getElementById('sltReportData');
-      intSelect = 0;
-      for (var i=0;i<objSltReportData.options.length;i++) {
-         if (objSltReportData.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move down');
-         return;
-      }
-      if (intSelect == 1 && intIndex < objSltReportData.options.length-1) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportData.options[intIndex+1].value;
-         aryA[1] = objSltReportData.options[intIndex+1].text;
-         aryA[2] = objSltReportData.options[intIndex+1].getAttribute('repid');
-         aryA[3] = objSltReportData.options[intIndex+1].getAttribute('prcid');
-         aryB[0] = objSltReportData.options[intIndex].value;
-         aryB[1] = objSltReportData.options[intIndex].text;
-         aryB[2] = objSltReportData.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportData.options[intIndex].getAttribute('prcid');
-         objSltReportData.options[intIndex+1].value = aryB[0];
-         objSltReportData.options[intIndex+1].text = aryB[1];
-         objSltReportData.options[intIndex+1].setAttribute('repid',aryB[2]);
-         objSltReportData.options[intIndex+1].setAttribute('prcid',aryB[3]);
-         objSltReportData.options[intIndex+1].selected = true;
-         objSltReportData.options[intIndex].value = aryA[0];
-         objSltReportData.options[intIndex].text = aryA[1];
-         objSltReportData.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportData.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportData.options[intIndex].selected = false;
-      }
-   }
-   function downBreakItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      intSelect = 0;
-      for (var i=0;i<objSltReportBreak.options.length;i++) {
-         if (objSltReportBreak.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move down');
-         return;
-      }
-      if (intSelect == 1 && intIndex < objSltReportBreak.options.length-1) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportBreak.options[intIndex+1].value;
-         aryA[1] = objSltReportBreak.options[intIndex+1].text;
-         aryA[2] = objSltReportBreak.options[intIndex+1].getAttribute('repid');
-         aryA[3] = objSltReportBreak.options[intIndex+1].getAttribute('prcid');
-         aryB[0] = objSltReportBreak.options[intIndex].value;
-         aryB[1] = objSltReportBreak.options[intIndex].text;
-         aryB[2] = objSltReportBreak.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportBreak.options[intIndex].getAttribute('prcid');
-         objSltReportBreak.options[intIndex+1].value = aryB[0];
-         objSltReportBreak.options[intIndex+1].text = aryB[1];
-         objSltReportBreak.options[intIndex+1].setAttribute('repid',aryB[2]);
-         objSltReportBreak.options[intIndex+1].setAttribute('prcid',aryB[3]);
-         objSltReportBreak.options[intIndex+1].selected = true;
-         objSltReportBreak.options[intIndex].value = aryA[0];
-         objSltReportBreak.options[intIndex].text = aryA[1];
-         objSltReportBreak.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportBreak.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportBreak.options[intIndex].selected = false;
-      }
-   }
-   function downOrderItems() {
-      var intIndex;
-      var intSelect;
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      intSelect = 0;
-      for (var i=0;i<objSltReportOrder.options.length;i++) {
-         if (objSltReportOrder.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one item can be selected to move down');
-         return;
-      }
-      if (intSelect == 1 && intIndex < objSltReportOrder.options.length-1) {
-         var aryA = new Array();
-         var aryB = new Array();
-         aryA[0] = objSltReportOrder.options[intIndex+1].value;
-         aryA[1] = objSltReportOrder.options[intIndex+1].text;
-         aryA[2] = objSltReportOrder.options[intIndex+1].getAttribute('repid');
-         aryA[3] = objSltReportOrder.options[intIndex+1].getAttribute('prcid');
-         aryB[0] = objSltReportOrder.options[intIndex].value;
-         aryB[1] = objSltReportOrder.options[intIndex].text;
-         aryB[2] = objSltReportOrder.options[intIndex].getAttribute('repid');
-         aryB[3] = objSltReportOrder.options[intIndex].getAttribute('prcid');
-         objSltReportOrder.options[intIndex+1].value = aryB[0];
-         objSltReportOrder.options[intIndex+1].text = aryB[1];
-         objSltReportOrder.options[intIndex+1].setAttribute('repid',aryB[2]);
-         objSltReportOrder.options[intIndex+1].setAttribute('prcid',aryB[3]);
-         objSltReportOrder.options[intIndex+1].selected = true;
-         objSltReportOrder.options[intIndex].value = aryA[0];
-         objSltReportOrder.options[intIndex].text = aryA[1];
-         objSltReportOrder.options[intIndex].setAttribute('repid',aryA[2]);
-         objSltReportOrder.options[intIndex].setAttribute('prcid',aryA[3]);
-         objSltReportOrder.options[intIndex].selected = false;
-      }
-   }
-   function checkItems() {
+   function checkRules() {
       var strReturn = '';
       var objHidden = null;
-      var objSltReportData = document.getElementById('sltReportData');
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      var objTxtReportTerm = document.getElementById('txtReportTerm');
-      if (objSltReportData.options.length == 0) {
-         strReturn = 'At least one data item must be selected';
-      } else {
-         for (var i=0;i<objSltReportData.options.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepDatId'+(i+1));
-            objHidden.setAttribute('value',objSltReportData.options[i].getAttribute('repid'));
-            document.forms['main'].appendChild(objHidden);
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepDatPrcId'+(i+1));
-            objHidden.setAttribute('value',objSltReportData.options[i].getAttribute('prcid'));
-            document.forms['main'].appendChild(objHidden);
+      var bolFirst = true;
+      var bolFound = false;
+      var intCount = 0;
+      var objTable = document.getElementById('tabRule');
+      for (var i=0;i<objTable.rows.length;i++) {
+         if (objTable.rows[i].getAttribute('rultyp') == 'RH') {
+            if (!bolFirst) {
+               if (intCount == 0) {
+                  bolFound = true;
+               }
+            }
+            bolFirst = false;
+            intCount = 0;
+         } else if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
+            intCount++
          }
-         document.getElementById('DET_RepDatCount').value = objSltReportData.options.length;
-         for (var i=0;i<objSltReportBreak.options.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepBrkId'+(i+1));
-            objHidden.setAttribute('value',objSltReportBreak.options[i].getAttribute('repid'));
-            document.forms['main'].appendChild(objHidden);
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepBrkPrcId'+(i+1));
-            objHidden.setAttribute('value',objSltReportBreak.options[i].getAttribute('prcid'));
-            document.forms['main'].appendChild(objHidden);
-         }
-         document.getElementById('DET_RepBrkCount').value = objSltReportBreak.options.length;
-         for (var i=0;i<objSltReportOrder.options.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepOrdId'+(i+1));
-            objHidden.setAttribute('value',objSltReportOrder.options[i].getAttribute('repid'));
-            document.forms['main'].appendChild(objHidden);
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepOrdPrcId'+(i+1));
-            objHidden.setAttribute('value',objSltReportOrder.options[i].getAttribute('prcid'));
-            document.forms['main'].appendChild(objHidden);
-         }
-         document.getElementById('DET_RepOrdCount').value = objSltReportOrder.options.length;
-         var aryTerms = objTxtReportTerm.value.split('\n');
-         for (var i=0;i<aryTerms.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepTerText'+(i+1));
-            objHidden.setAttribute('value',aryTerms[i]);
-            document.forms['main'].appendChild(objHidden);
-         }
-         document.getElementById('DET_RepTerCount').value = aryTerms.length;
       }
+      if (!bolFirst) {
+         if (intCount == 0) {
+            bolFound = true;
+         }
+      }
+      if (bolFound) {
+         strReturn = 'All rules must have at least detail defined';
+      }
+      for (var i=0;i<objTable.rows.length;i++) {
+         if (objTable.rows[i].getAttribute('rultyp') == 'RH') {
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepRulTyp'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('rultyp'));
+            document.forms['main'].appendChild(objHidden);
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepRulNam'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('rulnam'));
+            document.forms['main'].appendChild(objHidden);
+         } else if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepRulTyp'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('rultyp'));
+            document.forms['main'].appendChild(objHidden);
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepTypId'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('typid'));
+            document.forms['main'].appendChild(objHidden);
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepRulVal'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('rulval'));
+            document.forms['main'].appendChild(objHidden);
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepRulNot'+(i+1));
+            objHidden.setAttribute('value',objTable.rows[i].getAttribute('rulnot'));
+            document.forms['main'].appendChild(objHidden);
+         }
+      }
+      document.getElementById('DET_RepRulCount').value = objTable.rows.length;
       return strReturn;
-   }
-   function changeItems() {
-      var bolReturn = false;
-      var objSltReportData = document.getElementById('sltReportData');
-      var objSltReportBreak = document.getElementById('sltReportBreak');
-      var objSltReportOrder = document.getElementById('sltReportOrder');
-      var objTxtReportTerm = document.getElementById('txtReportTerm');
-      if (cobjReportData.length != objSltReportData.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportData.length;i++) {
-            if (cobjReportData[i].repid != objSltReportData.options[i].getAttribute('repid') ||
-                cobjReportData[i].prcid != objSltReportData.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cobjReportBreak.length != objSltReportBreak.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportBreak.length;i++) {
-            if (cobjReportBreak[i].repid != objSltReportBreak.options[i].getAttribute('repid') ||
-                cobjReportBreak[i].prcid != objSltReportBreak.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cobjReportOrder.length != objSltReportOrder.options.length) {
-         bolReturn = true;
-      } else {
-         for (var i=0;i<cobjReportOrder.length;i++) {
-            if (cobjReportOrder[i].repid != objSltReportOrder.options[i].getAttribute('repid') ||
-                cobjReportOrder[i].prcid != objSltReportOrder.options[i].getAttribute('prcid')) {
-               bolReturn = true;
-               break;
-            }
-         }
-      }
-      if (cstrReportTerm != objTxtReportTerm.value) {
-         bolReturn = true;
-      }
-      return bolReturn;
    }
 // -->
 </script>
@@ -748,56 +530,13 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_configuration_rule_help.htm');parent.setHeading('<%=strHeading%> - Report Rules');parent.showContent();loadPriceItems();showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_configuration_rule_help.htm');parent.setHeading('<%=strHeading%> - Report Rules');parent.showContent();loadRules();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table class="clsGrid02" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspList" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Name:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_ReportName" size="100" maxlength="200" value="<%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Report Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="sltReportGrpId" onChange="selectReportGrpId(this);">
-               <option value=""<%if objForm.Fields("DTA_ReportGrpId").Value = "" then%> selected<%end if%>>** select report group **<%for i = 0 to objSelection.ListCount("REPORT_GRP") - 1%>
-               <option value="<%=objSelection.ListValue01("REPORT_GRP",i)%>"<%if objForm.Fields("DTA_ReportGrpId").Value = objSelection.ListValue01("REPORT_GRP",i) then%> selected<%end if%>><%=objSelection.ListValue02("REPORT_GRP",i)%><%next%>
-            </select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Price Model:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="sltPriceMdlId" onChange="selectPriceMdlId(this);">
-               <option value=""<%if objForm.Fields("DTA_PriceMdlId").Value = "" then%> selected<%end if%>>** select price model **<%for i = 0 to objSelection.ListCount("PRICE_MDL") - 1%>
-               <option value="<%=objSelection.ListValue01("PRICE_MDL",i)%>"<%if objForm.Fields("DTA_PriceMdlId").Value = objSelection.ListValue01("PRICE_MDL",i) then%> selected<%end if%>><%=objSelection.ListValue02("PRICE_MDL",i)%><%next%>
-            </select>
-         </nobr></td>
-      </tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Notification Email Address:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_EmailAddress" size="64" maxlength="64" value="<%=replace(objForm.Fields("DTA_EmailAddress").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Email Material Recommendations:&nbsp;
-            <input type="radio" name="sltMatlAlrtng"<%if objForm.Fields("DTA_MatlAlrtng").Value = "" or objForm.Fields("DTA_MatlAlrtng").Value = "N" then%> checked<%end if%> value="N" onClick="javascript:selectMatlAlrtng('N');">No&nbsp;
-            <input type="radio" name="sltMatlAlrtng"<%if objForm.Fields("DTA_MatlAlrtng").Value = "Y" then%> checked<%end if%> value="Y" onClick="javascript:selectMatlAlrtng('Y');">Yes&nbsp;
-         &nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Automatically Apply Recommendations:&nbsp;
-            <input type="radio" name="sltAutoMatlUpdate"<%if objForm.Fields("DTA_AutoMatlUpdate").Value = "" or objForm.Fields("DTA_AutoMatlUpdate").Value = "N" then%> checked<%end if%> value="N" onClick="javascript:selectAutoMatlUpdate('N');">No&nbsp;
-            <input type="radio" name="sltAutoMatlUpdate"<%if objForm.Fields("DTA_AutoMatlUpdate").Value = "Y" then%> checked<%end if%> value="Y" onClick="javascript:selectAutoMatlUpdate('Y');">Yes&nbsp;
-         &nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Available:&nbsp;
-            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "" or objForm.Fields("DTA_Status").Value = "I" then%> checked<%end if%> value="I" onClick="javascript:selectStatus('I');">No&nbsp;
-            <input type="radio" name="sltStatus"<%if objForm.Fields("DTA_Status").Value = "V" then%> checked<%end if%> value="V" onClick="javascript:selectStatus('V');">Yes&nbsp;
-         &nbsp;</nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=replace(objSelection.ListValue02("REPORT",objSelection.ListLower("REPORT")), """", "&#34;", 1, -1, 1)%></nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
@@ -805,115 +544,21 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="2">
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td id="pckItem" class="clsTabX" onClick="showItem();" align=center colspan=1 nowrap><nobr>&nbsp;Items&nbsp;</nobr></td>
-                  <td id="pckMatl" class="clsTab" onClick="showMatl();" align=center colspan=1 nowrap><nobr>&nbsp;Materials&nbsp;</nobr></td>
-                  <td id="pckTerm" class="clsTab" onClick="showTerm();" align=center colspan=1 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:addRule();">&nbsp;Add Rule&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:addDetail();">&nbsp;Add Detail&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:updateRule();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:deleteRule();">&nbsp;Delete&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table id="tabItem" style="display:block;visibility:visible" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding=0 cellspacing=0>
-               <tr>
-                  <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Report Items&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
-                        <tr>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="sltPriceItem" name="sltPriceItem" style="width:300px" multiple size=20></select>
-                           </nobr></td>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
-                                 <tr>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
-                                          <tr><td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;Report Data&nbsp;</nobr></td></tr>
-                                          <tr><td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeDataItems();"></nobr></td>
-                                              <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectDataItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                    <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportData" name="sltReportData" style="width:300px" multiple size=8></select></nobr></td>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upDataItems();"></nobr></td></tr>
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downDataItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                 </tr>
-                                 <tr>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
-                                          <tr><td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;Report Breaks&nbsp;</nobr></td></tr>
-                                          <tr><td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeBreakItems();"></nobr></td>
-                                              <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectBreakItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                    <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportBreak" name="sltReportBreak" style="width:300px" multiple size=5></select></nobr></td>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upBreakItems();"></nobr></td></tr>
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downBreakItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                 </tr>
-                                 <tr>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
-                                          <tr><td class="clsLabelHB" align=center colspan=2 nowrap><nobr>&nbsp;Report Order&nbsp;</nobr></td></tr>
-                                          <tr><td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeOrderItems();"></nobr></td>
-                                              <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectOrderItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                    <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportOrder" name="sltReportOrder" style="width:300px" multiple size=5></select></nobr></td>
-                                    <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                                       <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upOrderItems();"></nobr></td></tr>
-                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downOrderItems();"></nobr></td></tr>
-                                       </table>
-                                    </nobr></td>
-                                 </tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-            </table>
-            <table id="tabMatl" style="display:none;visibility:hidden" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding=0 cellspacing=0>
-               <tr>
-                  <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Materials&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
-                        <tr>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr><select class="clsInputBN" id="sltReportMatl" name="sltReportMatl" style="width:700px" size=20></select></nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                              <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                 <tr><td id="cmdMatl03" align=center colspan=1 nowrap><nobr><a class="clsButtonN" href="javascript:removeTerms();">&nbsp;Delete&nbsp;</a></nobr></td></tr>
-                                 <tr><td id="cmdMatl05" align=center colspan=1 nowrap><nobr><a class="clsButtonN" href="javascript:insertTerms();">&nbsp;Insert&nbsp;</a></nobr></td></tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-            </table>
-            <table id="tabTerm" style="display:none;visibility:hidden" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding=0 cellspacing=0>
-               <tr>
-                  <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <textarea class="clsInputNN" id="txtReportTerm" name="txtReportTerm" style="width:700px;" rows="20" wrap="off"></textarea>
-                  </nobr></td>
-               </tr>
-            </table>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible">
+               <table id="tabRule" class="clsTableBody" cols=2 align=left cellpadding="2" cellspacing="1"></table>
+            </div>
          </nobr></td>
       </tr>
       <tr>
@@ -931,24 +576,71 @@
          </nobr></td>
       </tr>
    </table>
+   <table id="dspRule" class="clsGrid02" style="display:none;visibility:hidden" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Rule Name:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input id="inpRuleName" class="clsInputNN" type="text" size="100" maxlength="200" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:cancelRule();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:acceptRule();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspDetail" class="clsGrid02" style="display:none;visibility:hidden" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Rule Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="sltRuleType" onChange="selectRuleType(this);"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Rule Value:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="sltRuleValue"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Rule Value:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="sltRuleNot">
+               <option value="F">Standard Rule
+               <option value="T">Rule NOT test applied
+            </select>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:cancelRule();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:acceptDetail();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_ReportId" value="<%=objForm.Fields("DTA_ReportId").Value%>">
-   <input type="hidden" name="DTA_ReportName" value="<%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%>">
-   <input type="hidden" name="DTA_ReportGrpId" value="<%=objForm.Fields("DTA_ReportGrpId").Value%>">
-   <input type="hidden" name="DTA_PriceMdlId" value="<%=objForm.Fields("DTA_PriceMdlId").Value%>">
-   <input type="hidden" name="DTA_MatlAlrtng" value="<%=objForm.Fields("DTA_MatlAlrtng").Value%>">
-   <input type="hidden" name="DTA_AutoMatlUpdate" value="<%=objForm.Fields("DTA_AutoMatlUpdate").Value%>">
-   <input type="hidden" name="DTA_EmailAddress" value="<%=replace(objForm.Fields("DTA_EmailAddress").Value, """", "&#34;", 1, -1, 1)%>">
-   <input type="hidden" name="DTA_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
-   <input type="hidden" name="INP_ReportGrpId" value="<%=objForm.Fields("DTA_ReportGrpId").Value%>">
-   <input type="hidden" name="INP_PriceMdlId" value="<%=objForm.Fields("DTA_PriceMdlId").Value%>">
-   <input type="hidden" name="INP_MatlAlrtng" value="<%=objForm.Fields("DTA_MatlAlrtng").Value%>">
-   <input type="hidden" name="INP_AutoMatlUpdate" value="<%=objForm.Fields("DTA_AutoMatlUpdate").Value%>">
-   <input type="hidden" name="INP_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
-   <input type="hidden" name="DET_RepDatCount" value="">
-   <input type="hidden" name="DET_RepBrkCount" value="">
-   <input type="hidden" name="DET_RepOrdCount" value="">
-   <input type="hidden" name="DET_RepTerCount" value="">
+   <input type="hidden" name="DET_RepRulCount" value="">
 </form>
 </body>
 </html>
