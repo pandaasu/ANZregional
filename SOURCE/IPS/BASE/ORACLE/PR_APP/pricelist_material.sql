@@ -51,7 +51,7 @@ create or replace package body pricelist_material as
       /*-*/
       cursor csr_material is 
          select ltrim(t01.matl_code,0) as matl_code,
-                nvl(t02.matl_desc,'*UNKNOWN') as matl_desc
+                '('||ltrim(t01.matl_code,0)||') '||nvl(t02.matl_desc,'*UNKNOWN') as matl_desc
            from report_matl t01,
                 matl t02
           where t01.matl_code = t02.matl_code(+)
