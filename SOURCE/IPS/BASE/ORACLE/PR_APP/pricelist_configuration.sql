@@ -69,8 +69,9 @@ create or replace package pricelist_configuration as
    procedure format_term(par_data_frmt in varchar2);
    procedure format_commit;
    procedure delete_report(par_report_id in number);
-   procedure copy_report(par_report_id in number,
-                         par_report_grp_id in number);
+   procedure copy_report(par_copy_id in number,
+                         par_report_grp_id in number,
+                         par_report_name in varchar2);
 
 end pricelist_configuration;
 /
@@ -1434,8 +1435,9 @@ create or replace package body pricelist_configuration as
    /*****************************************************/
    /* This procedure performs the delete report routine */
    /*****************************************************/
-   procedure copy_report(par_report_id in number,
-                         par_report_grp_id in number) is
+   procedure copy_report(par_copy_id in number,
+                         par_report_grp_id in number,
+                         par_report_name in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1450,27 +1452,27 @@ create or replace package body pricelist_configuration as
       cursor csr_copy_report is 
          select t01.*
            from report t01
-          where t01.report_id = par_report_id;
+          where t01.report_id = par_copy_id;
       rcd_copy_report csr_copy_report%rowtype;
 
       cursor csr_copy_item is 
          select t01.*
            from report_item t01
-          where t01.report_id = par_report_id
+          where t01.report_id = par_copy_id
           order by t01.report_item_id asc;
       rcd_copy_item csr_copy_item%rowtype;
 
       cursor csr_copy_term is 
          select t01.*
            from report_term t01
-          where t01.report_id = par_report_id
+          where t01.report_id = par_copy_id
           order by t01.sort_order asc;
       rcd_copy_term csr_copy_term%rowtype;
 
       cursor csr_copy_rule is 
          select t01.*
            from report_rule t01
-          where t01.report_id = par_report_id
+          where t01.report_id = par_copy_id
           order by t01.report_rule_id asc;
       rcd_copy_rule csr_copy_rule%rowtype;
 
@@ -1484,7 +1486,7 @@ create or replace package body pricelist_configuration as
       cursor csr_copy_matl is 
          select t01.*
            from report_matl t01
-          where t01.report_id = par_report_id
+          where t01.report_id = par_copy_id
           order by t01.matl_code asc;
       rcd_copy_matl csr_copy_matl%rowtype;
 
@@ -1499,7 +1501,7 @@ create or replace package body pricelist_configuration as
       open csr_copy_report;
       fetch csr_copy_report into rcd_copy_report;
       if csr_copy_report%notfound then
-         raise_application_error(-20000, 'Report (' || par_report_id || ') does not exist');
+         raise_application_error(-20000, 'Report (' || par_copy_id || ') does not exist');
       end if;
       close csr_copy_report;
       var_return := pricelist_object_tracking.get_new_id('REPORT', 'REPORT_ID', var_id, var_return_msg);
@@ -1507,7 +1509,7 @@ create or replace package body pricelist_configuration as
          raise_application_error(-20000, 'Unable to request new id for a report - ' || var_return_msg);
       end if;
       rcd_report.report_id := var_id;
-      rcd_report.report_name := rcd_copy_report.report_name;
+      rcd_report.report_name := par_report_name;
       rcd_report.price_sales_org_id := rcd_copy_report.price_sales_org_id;
       rcd_report.price_distbn_chnl_id := rcd_copy_report.price_distbn_chnl_id;
       rcd_report.price_mdl_id := rcd_copy_report.price_mdl_id;
