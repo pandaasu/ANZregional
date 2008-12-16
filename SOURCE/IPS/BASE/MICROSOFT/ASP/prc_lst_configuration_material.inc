@@ -56,10 +56,6 @@
       document.main.Mode.value = 'MATERIAL_ACCEPT';
       document.main.submit();
    }
-   function doRefresh() {
-      doActivityStart(document.body);
-      window.setTimeout('getMaterials(\'<%=objForm.Fields("DTA_ReportId").Value%>\');',10);
-   }
    function doSelect(objSelected) {
       if (cobjSelected) {
          cobjSelected.className = 'clsList';
@@ -84,29 +80,16 @@
    ////////////////////////////
    // Report material script //
    ////////////////////////////
-   var cobjMaterials = new Array();
    var cobjSelected = null;
-   function loadMaterials() {<%if objSelection.ListCount("MATERIAL") <> 0 then%><%for i = objSelection.ListLower("MATERIAL") to objSelection.ListUpper("MATERIAL")%>
-      cobjMaterials[<%=i%>] = new clsMaterial('<%=objSelection.ListValue01("MATERIAL",i)%>','<%=replace(objSelection.ListValue02("MATERIAL",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
-      var objTable;
-      var objRow;
-      var objCell;
-      var intRowCount;
-      var intCellCount;
-      objTable = document.getElementById('tabMatl');
-      intRowCount = 0;
-      for (var i=0;i<cobjMaterials.length;i++) {
-         objRow = objTable.insertRow(intRowCount);
-         objCell = objRow.insertCell(0);
-         objCell.innerText = cobjMaterials[i].code;
-         objCell.onclick = function() {doSelect(this);};
-         objCell.className = 'clsList';
-         objCell.setAttribute('idx',i);
-         objCell = objRow.insertCell(1);
-         objCell.innerText = cobjMaterials[i].desc;
-         objCell.className = 'clsLabelFN';
-         intRowCount++;
-      }
+   function loadMaterials() {
+      var objSltMaterial = document.getElementById('sltMaterial');
+      objSltMaterial.options.length = 0;
+      objSltMaterial.selectedIndex = -1;<%if objSelection.ListCount("MATERIAL") <> 0 then%><%for i = objSelection.ListLower("MATERIAL") to objSelection.ListUpper("MATERIAL")%>
+      objSltMaterial.options[i] = new Option('<%=replace(objSelection.ListValue02("MATERIAL",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue01("MATERIAL",i)%>');<%next%><%end if%>
+   }
+   function refreshMaterials() {
+      doActivityStart(document.body);
+      window.setTimeout('getMaterials(\'<%=objForm.Fields("DTA_ReportId").Value%>\');',10);
    }
    function getMaterials(strReportId) {
       doGetRequest('<%=strBase%>prc_lst_matl_lookup.asp?QRY_ReportId='+strReportId,function(strResponse) {reloadMaterials(strResponse);},false);
@@ -117,50 +100,49 @@
       } else {
          var aryRows = strResponse.substring(3,strResponse.length).split('\n');
          var aryColumns;
-         cobjMaterials.length = 0;
+         var objSltMaterial = document.getElementById('sltMaterial');
+         objSltMaterial.options.length = 0;
+         objSltMaterial.selectedIndex = -1;
          for (var i=0;i<aryRows.length;i++) {
             aryColumns = aryRows[i].split('\t');
-            cobjMaterials[i] = new clsMaterial(aryColumns[0],aryColumns[1]);
-         }
-         var objTable;
-         var objRow;
-         var objCell;
-         var intRowCount;
-         var intCellCount;
-         objTable = document.getElementById('tabMatl');
-         for (var i=objTable.rows.length;i>0;i--) {
-            objTable.deleteRow(i-1);
-         }
-         intRowCount = 0;
-         for (var i=0;i<cobjMaterials.length;i++) {
-            objRow = objTable.insertRow(intRowCount);
-            objCell = objRow.insertCell(0);
-            objCell.innerText = cobjMaterials[i].code;
-            objCell.onclick = function() {doSelect(this);};
-            objCell.className = 'clsList';
-            objCell.setAttribute('idx',i);
-            objCell = objRow.insertCell(1);
-            objCell.innerText = cobjMaterials[i].desc;
-            objCell.className = 'clsLabelFN';
-            intRowCount++;
+            objSltMaterial.options[i] = new Option(aryColumns[1],aryColumns[0]);
          }
       }
       doActivityStop();
    }
-   function clsMaterial(strCode,strDesc) {
-      this.code = strCode;
-      this.desc = strDesc;
-   }
-   function removeMaterial() {
+   function deleteMaterials() {
+      var objSltMaterial = document.getElementById('sltMaterial');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objSltMaterial.options.length;i++) {
+         if (objSltMaterial.options[i].selected == false) {
+            objWork[intIndex] = objSltMaterial[i];
+            intIndex++;
+         }
+      }
+      objSltMaterial.options.length = 0;
+      objSltMaterial.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSltMaterial.options[i] = objWork[i];
+      }
    }
    function checkMaterials() {
       var strReturn = '';
       var objHidden = null;
+      var objSltMaterial = document.getElementById('sltMaterial');
+      if (objSltMaterial.options.length == 0) {
+         strReturn = 'The report must have at least one material';
+      } else {
+         for (var i=0;i<objSltMaterial.options.length;i++) {
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepMatCod'+(i+1));
+            objHidden.setAttribute('value',objSltMaterial.options[i].value);
+            document.forms['main'].appendChild(objHidden);
+         }
+         document.getElementById('DET_RepMatCount').value = objSltMaterial.options.length;
+      }
       return strReturn;
-   }
-   function changeMaterials() {
-      var bolReturn = false;
-      return bolReturn;
    }
 // -->
 </script>
@@ -187,19 +169,14 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doAdd();">&nbsp;Add&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:refreshMaterials();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:deleteMaterials();">&nbsp;Delete&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-      <tr height=100% width=100%>
-         <td align=center colspan=2 nowrap><nobr>
-            <div class="clsScroll01">
-               <table id="tabMatl" class="clsTableBody" align=left cellpadding="0" cellspacing="1"></table>
-            </div>
-         </nobr></td>
+      <tr>
+         <td align=center colspan=2 nowrap><nobr><select class="clsInputBN" id="sltMaterial" name="sltMaterial" style="width:800px" multiple size=20></select></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

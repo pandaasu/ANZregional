@@ -80,14 +80,14 @@
             call ProcessDefineLoad
          case "DEFINE_ACCEPT"
             call ProcessDefineAccept
-         case "MATERIAL_LOAD"
-            call ProcessMaterialLoad
-         case "MATERIAL_ACCEPT"
-            call ProcessMaterialAccept
          case "RULE_LOAD"
             call ProcessRuleLoad
          case "RULE_ACCEPT"
             call ProcessRuleAccept
+         case "MATERIAL_LOAD"
+            call ProcessMaterialLoad
+         case "MATERIAL_ACCEPT"
+            call ProcessMaterialAccept
          case "FORMAT_LOAD"
             call ProcessFormatLoad
          case "FORMAT_ACCEPT"
@@ -695,16 +695,8 @@ sub ProcessMaterialLoad()
    '//
    '// Retrieve the report materials
    '//
-   ''strQuery = strQuery & " nvl(t02.matl_desc,'*UNKNOWN')"
-   ''strQuery = strQuery & " from report_matl t01, matl t02"
-   ''strQuery = strQuery & " where t01.matl_code = t02.matl_code(+) and t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    lngSize = 0
-   strQuery = "select"
-   strQuery = strQuery & " t01.matl_code,"
-   strQuery = strQuery & " '*UNKNOWN'"
-   strQuery = strQuery & " from report_matl t01"
-   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
-   strQuery = strQuery & " order by t01.matl_code asc"
+   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("DTA_ReportId").Value & "))"
    strReturn = objSelection.Execute("MATERIAL", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -733,6 +725,49 @@ sub ProcessMaterialAccept()
    '//
    set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
    set objProcedure.Security = objSecurity
+
+   '//
+   '// Begin the materials
+   '//
+   strStatement = "pricelist_configuration.material_begin("
+   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value
+   strStatement = strStatement & ")"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Define the report material codes
+   '//
+   lngCount = clng(objForm.Fields("DET_RepMatCount").Value)
+   for i = 1 to lngCount
+      strStatement = "pricelist_configuration.material_define("
+      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepMatCode" & i).Value) & "'"
+      strStatement = strStatement & ")"
+      strReturn = objProcedure.Execute(strStatement)
+      if strReturn <> "*OK" then
+         strError = FormatError(strReturn)
+         strMode = "SELECT"
+         call ProcessSelect
+         exit sub
+      end if
+   next
+
+   '//
+   '// Commit the material data
+   '//
+   strStatement = "pricelist_configuration.material_commit"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
 
    '//
    '// Set the mode

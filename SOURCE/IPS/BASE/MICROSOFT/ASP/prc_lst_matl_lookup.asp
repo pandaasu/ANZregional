@@ -67,12 +67,7 @@ sub ProcessLookup()
    '//
    '// Execute the price material lookup
    '//
-   strQuery = "select"
-   strQuery = strQuery & " t01.matl_code,"
-   strQuery = strQuery & " '*UNKNOWN'"
-   strQuery = strQuery & " from report_matl t01"
-   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("QRY_ReportId").Value
-   strQuery = strQuery & " order by t01.matl_code asc"
+   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("QRY_ReportId").Value & "))"
    strReturn = objSelection.Execute("LIST", strQuery, 0)
 
    '//
