@@ -1079,8 +1079,24 @@ sub ProcessCopyLoad()
    strQuery = strQuery & " to_char(t01.report_id),"
    strQuery = strQuery & " t01.report_name"
    strQuery = strQuery & " from report t01"
-   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
+   strQuery = strQuery & " order by t01.report_name asc"
    strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the report group data
+   '//
+   lngSize = 0
+   strQuery = "select to_char(t01.report_grp_id),"
+   strQuery = strQuery & " t01.report_grp_name"
+   strQuery = strQuery & " from report_grp t01"
+   strQuery = strQuery & " order by t01.report_grp_name asc"
+   strReturn = objSelection.Execute("REPORT_GRP", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -1091,9 +1107,9 @@ sub ProcessCopyLoad()
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_ReportName", objSelection.ListValue02("REPORT",objSelection.ListLower("LIST")))
-   call objForm.AddField("DTA_CopyGrpId", "")
-   call objForm.AddField("DTA_CopyName", "")
+   call objForm.AddField("DTA_ReportName", "")
+   call objForm.AddField("DTA_ReportGrpId", "")
+   call objForm.AddField("DTA_CopyRptId", "")
 
    '//
    '// Set the mode
@@ -1119,9 +1135,9 @@ sub ProcessCopyAccept()
    '// Copy the report
    '//
    strStatement = "pricelist_configuration.copy_report("
-   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value & ","
-   strStatement = strStatement & objForm.Fields("DTA_CopyGrpId").Value & ","
-   strStatement = strStatement & "'" & objForm.Fields("DTA_CopyName").Value & "'"
+   strStatement = strStatement & objForm.Fields("DTA_CopyRptId").Value & ","
+   strStatement = strStatement & objForm.Fields("DTA_ReportGrpId").Value & ","
+   strStatement = strStatement & "'" & objForm.Fields("DTA_ReportName").Value & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
