@@ -25,7 +25,6 @@
    dim objForm
    dim objSecurity
    dim objSelection
-   dim objFunction
    dim objProcedure
 
    '//
@@ -135,7 +134,6 @@
    set objForm = nothing
    set objSecurity = nothing
    set objSelection = nothing
-   set objFunction = nothing
    set objProcedure = nothing
 
 '////////////////////////////
@@ -1030,10 +1028,10 @@ sub ProcessDeleteAccept()
    dim strStatement
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Delete the report
@@ -1041,7 +1039,7 @@ sub ProcessDeleteAccept()
    strStatement = "pricelist_configuration.delete_report("
    strStatement = strStatement & objForm.Fields("DTA_ReportId").Value
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -1079,7 +1077,7 @@ sub ProcessCopyLoad()
    strQuery = strQuery & " to_char(t01.report_id),"
    strQuery = strQuery & " t01.report_name"
    strQuery = strQuery & " from report t01"
-   strQuery = strQuery & " order by t01.report_name asc"
+   strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -1107,9 +1105,9 @@ sub ProcessCopyLoad()
    '//
    '// Initialise the data fields
    '//
+   call objForm.AddField("DTA_CopyName", objSelection.ListValue02("REPORT",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_ReportName", "")
    call objForm.AddField("DTA_ReportGrpId", "")
-   call objForm.AddField("DTA_CopyRptId", "")
 
    '//
    '// Set the mode
@@ -1126,20 +1124,20 @@ sub ProcessCopyAccept()
    dim strStatement
 
    '//
-   '// Create the function object
+   '// Create the procedure object
    '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
 
    '//
    '// Copy the report
    '//
    strStatement = "pricelist_configuration.copy_report("
-   strStatement = strStatement & objForm.Fields("DTA_CopyRptId").Value & ","
+   strStatement = strStatement & objForm.Fields("DTA_ReportId").Value & ","
    strStatement = strStatement & objForm.Fields("DTA_ReportGrpId").Value & ","
    strStatement = strStatement & "'" & objForm.Fields("DTA_ReportName").Value & "'"
    strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
