@@ -37,7 +37,9 @@ create or replace package pricelist_configuration as
                            par_price_distbn_id in number,
                            par_status in varchar2,
                            par_matl_alrtng in varchar2,
-                           par_auto_matl_update in varchar2);
+                           par_auto_matl_update in varchar2,
+                           par_email_address in varchar2,
+                           par_user in varchar2);
    procedure define_data(par_report_item_id in number,
                          par_price_item_id in number);
    procedure define_break(par_report_item_id in number,
@@ -45,10 +47,16 @@ create or replace package pricelist_configuration as
    procedure define_order(par_report_item_id in number,
                           par_price_item_id in number);
    procedure define_term(par_value in varchar2);
-   procedure define_material(par_matl_code in varchar2);
    procedure define_commit;
+   procedure rule_begin(par_report_id in number);
+   procedure rule_header(par_report_rule_name in varchar2);
+   procedure rule_detail(par_price_rule_type_id in number,
+                         par_rule_vlu in varchar2,
+                         par_rule_not in varchar2);
+   procedure rule_commit;
    procedure format_report(par_report_id in number,
-                           par_report_name_frmt in varchar2);
+                           par_report_name_frmt in varchar2,
+                           par_user in varchar2);
    procedure format_data(par_report_item_id in number,
                          par_name_ovrd in varchar2,
                          par_name_frmt in varchar2,
@@ -75,26 +83,38 @@ create or replace package body pricelist_configuration as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /**/
+   /* Private declarations
+   /**/
+   procedure load_materials(par_report_id in number);
+
    /*-*/
    /* Private definitions
    /*-*/
+   type rcd_rule is record(rule_type varchar2(2),
+                           report_rule_name varchar2(200),
+                           price_rule_type_id number,
+                           rule_vlu varchar2(200),
+                           rule_not varchar2(1));
    rcd_report_grp report_grp%rowtype;
    type typ_report_grp is table of report_grp%rowtype index by binary_integer;
    tbl_report_grp typ_report_grp;
    rcd_report report%rowtype;
    rcd_report_item report_item%rowtype;
    rcd_report_term report_term%rowtype;
+   rcd_report_rule report_rule%rowtype;
+   rcd_report_rule_detl report_rule_detl%rowtype;
    rcd_report_matl report_matl%rowtype;
    type typ_report is table of report%rowtype index by binary_integer;
    type typ_report_item is table of report_item%rowtype index by binary_integer;
    type typ_report_term is table of report_term%rowtype index by binary_integer;
-   type typ_report_matl is table of report_matl%rowtype index by binary_integer;
+   type typ_report_rule is table of rcd_rule index by binary_integer;
    tbl_report typ_report;
    tbl_report_data typ_report_item;
    tbl_report_break typ_report_item;
    tbl_report_order typ_report_item;
    tbl_report_term typ_report_term;
-   tbl_report_matl typ_report_matl;
+   tbl_report_rule typ_report_rule;
 
    /***********************************************************/
    /* This procedure performs the define report group routine */
@@ -116,7 +136,7 @@ create or replace package body pricelist_configuration as
       cursor csr_check_report_grp is 
          select t01.*
            from report_grp t01
-          where t01.report_grp_id = tbl_report_grp(1).report_grp_id;
+          where t01.report_grp_id = rcd_report_grp.report_grp_id;
       rcd_check_report_grp csr_check_report_grp%rowtype;
 
    /*-------------*/
@@ -137,6 +157,11 @@ create or replace package body pricelist_configuration as
       tbl_report_grp(1).status := par_status;
 
       /*-*/
+      /* Initialise the report group identifier
+      /*-*/
+      rcd_report_grp.report_grp_id := tbl_report_grp(1).report_grp_id;
+
+      /*-*/
       /* Update/insert the report group
       /*-*/
       open csr_check_report_grp;
@@ -145,7 +170,7 @@ create or replace package body pricelist_configuration as
          update report_grp
             set report_grp_name = tbl_report_grp(1).report_grp_name,
                 status = tbl_report_grp(1).status
-          where report_grp_id = tbl_report_grp(1).report_grp_id;
+          where report_grp_id = rcd_report_grp.report_grp_id;
       else
          var_return := pricelist_object_tracking.get_new_id('REPORT_GRP', 'REPORT_GRP_ID', var_id, var_return_msg);
          if var_return != common.gc_success then
@@ -264,7 +289,9 @@ create or replace package body pricelist_configuration as
                            par_price_distbn_id in number,
                            par_status in varchar2,
                            par_matl_alrtng in varchar2,
-                           par_auto_matl_update in varchar2) is
+                           par_auto_matl_update in varchar2,
+                           par_email_address in varchar2,
+                           par_user in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -279,7 +306,6 @@ create or replace package body pricelist_configuration as
       tbl_report_break.delete;
       tbl_report_order.delete;
       tbl_report_term.delete;
-      tbl_report_matl.delete;
 
       /*-*/
       /* Set the report variables
@@ -291,10 +317,12 @@ create or replace package body pricelist_configuration as
       tbl_report(1).price_mdl_id := par_price_mdl_id;
       tbl_report(1).status := par_status;
       tbl_report(1).report_grp_id := par_report_grp_id;
-      tbl_report(1).owner_id := 0;
       tbl_report(1).matl_alrtng := par_matl_alrtng;
       tbl_report(1).auto_matl_update := par_auto_matl_update;
       tbl_report(1).report_name_frmt := null;
+      tbl_report(1).create_user := par_user;
+      tbl_report(1).update_user := par_user;
+      tbl_report(1).email_address := par_email_address;
 
    /*-------------------*/
    /* Exception handler */
@@ -440,7 +468,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Set the report variables
       /**/
-      tbl_report_term(tbl_report_term.count+1).value := rtrim(rtrim(ltrim(ltrim(par_value,chr(10)),chr(13)),chr(10)),chr(13));
+      tbl_report_term(tbl_report_term.count+1).value := substr(rtrim(rtrim(ltrim(ltrim(par_value,chr(10)),chr(13)),chr(10)),chr(13)),1,1000);
 
    /*-------------------*/
    /* Exception handler */
@@ -462,41 +490,6 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    end define_term;
 
-   /*******************************************************/
-   /* This procedure performs the define material routine */
-   /*******************************************************/
-   procedure define_material(par_matl_code in varchar2) is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Set the report variables
-      /**/
-      tbl_report_matl(tbl_report_matl.count+1).matl_code := par_matl_code;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end define_material;
-
    /*****************************************************/
    /* This procedure performs the define commit routine */
    /*****************************************************/
@@ -508,6 +501,7 @@ create or replace package body pricelist_configuration as
       var_return common.st_result;
       var_return_msg common.st_message_string;
       var_id common.st_code;
+      var_materials boolean;
 
       /*-*/
       /* Local cursors
@@ -576,9 +570,14 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Update/insert the report
       /*-*/
+      var_materials := false;
       open csr_check_report;
       fetch csr_check_report into rcd_check_report;
       if csr_check_report%found then
+         if rcd_check_report.price_sales_org_id != tbl_report(1).price_sales_org_id or
+            rcd_check_report.price_distbn_chnl_id != tbl_report(1).price_distbn_chnl_id then
+            var_materials := true;
+         end if;
          update report
             set report_name = tbl_report(1).report_name,
                 price_sales_org_id = tbl_report(1).price_sales_org_id,
@@ -586,15 +585,17 @@ create or replace package body pricelist_configuration as
                 price_mdl_id = tbl_report(1).price_mdl_id,
                 status = tbl_report(1).status,
                 report_grp_id = tbl_report(1).report_grp_id,
-                owner_id = tbl_report(1).owner_id,
                 matl_alrtng = tbl_report(1).matl_alrtng,
                 auto_matl_update = tbl_report(1).auto_matl_update,
-                report_name_frmt = rcd_check_report.report_name_frmt
+                report_name_frmt = rcd_check_report.report_name_frmt,
+                create_user = nvl(rcd_check_report.create_user,tbl_report(1).update_user),
+                update_user = tbl_report(1).update_user,
+                email_address = tbl_report(1).email_address
           where report_id = rcd_report.report_id;
          delete from report_term where report_id = tbl_report(1).report_id;
-       ----  delete from report_matl where report_id = tbl_report(1).report_id;
          delete from report_item where report_id = tbl_report(1).report_id;
       else
+         var_materials := true;
          var_return := pricelist_object_tracking.get_new_id('REPORT', 'REPORT_ID', var_id, var_return_msg);
          if var_return != common.gc_success then
             raise_application_error(-20000, 'Unable to request new id for a report - ' || var_return_msg);
@@ -606,10 +607,12 @@ create or replace package body pricelist_configuration as
          rcd_report.price_mdl_id := tbl_report(1).price_mdl_id;
          rcd_report.status := tbl_report(1).status;
          rcd_report.report_grp_id := tbl_report(1).report_grp_id;
-         rcd_report.owner_id := tbl_report(1).owner_id;
          rcd_report.matl_alrtng := tbl_report(1).matl_alrtng;
          rcd_report.auto_matl_update := tbl_report(1).auto_matl_update;
          rcd_report.report_name_frmt := tbl_report(1).report_name_frmt;
+         rcd_report.create_user := tbl_report(1).create_user;
+         rcd_report.update_user := tbl_report(1).update_user;
+         rcd_report.email_address := tbl_report(1).email_address;
          insert into report values rcd_report;
       end if;
       close csr_check_report;
@@ -681,15 +684,6 @@ create or replace package body pricelist_configuration as
       end loop;
 
       /*-*/
-      /* Insert the new report materials
-      /*-*/
-      for idx in 1..tbl_report_matl.count loop
-         rcd_report_matl.report_id := rcd_report.report_id;
-         rcd_report_matl.matl_code := tbl_report_matl(idx).matl_code;
-  ----     insert into report_matl values rcd_report_matl;
-      end loop;
-
-      /*-*/
       /* Insert the new report terms
       /*-*/
       for idx in 1..tbl_report_term.count loop
@@ -699,6 +693,13 @@ create or replace package body pricelist_configuration as
          rcd_report_term.data_frmt := null;
          insert into report_term values rcd_report_term;
       end loop;
+
+      /*-*/
+      /* Reload the report materials when required
+      /*-*/
+      if var_materials = true then
+         load_materials(rcd_report.report_id);
+      end if;
 
       /*-*/
       /* Commit the database
@@ -730,11 +731,234 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    end define_commit;
 
+   /**************************************************/
+   /* This procedure performs the rule begin routine */
+   /**************************************************/
+   procedure rule_begin(par_report_id in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the rules
+      /*-*/
+      tbl_report_rule.delete;
+
+      /*-*/
+      /* Initialise the report identifier
+      /*-*/
+      rcd_report_rule.report_id := par_report_id;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end rule_begin;
+
+   /***************************************************/
+   /* This procedure performs the rule header routine */
+   /***************************************************/
+   procedure rule_header(par_report_rule_name in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the rule
+      /*-*/
+      rcd_report_rule.report_rule_name := par_report_rule_name;
+
+      /*-*/
+      /* Set the report variables
+      /**/
+      tbl_report_rule(tbl_report_rule.count+1).rule_type := 'RH';
+      tbl_report_rule(tbl_report_rule.count).report_rule_name := par_report_rule_name;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end rule_header;
+
+   /***************************************************/
+   /* This procedure performs the rule detail routine */
+   /***************************************************/
+   procedure rule_detail(par_price_rule_type_id in number,
+                         par_rule_vlu in varchar2,
+                         par_rule_not in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the rule detail
+      /*-*/
+      tbl_report_rule(tbl_report_rule.count+1).rule_type := 'RD';
+      tbl_report_rule(tbl_report_rule.count).price_rule_type_id := par_price_rule_type_id;
+      tbl_report_rule(tbl_report_rule.count).rule_vlu := par_rule_vlu;
+      tbl_report_rule(tbl_report_rule.count).rule_not := par_rule_not;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end rule_detail;
+
+   /***************************************************/
+   /* This procedure performs the rule commit routine */
+   /***************************************************/
+   procedure rule_commit is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return common.st_result;
+      var_return_msg common.st_message_string;
+      var_id common.st_code;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_rule is 
+         select t01.*
+           from report_rule t01
+          where t01.report_id = rcd_report_rule.report_id
+          order by t01.report_rule_id asc;
+      rcd_rule csr_rule%rowtype;
+
+      cursor csr_rule_detl is 
+         select t01.rule_vlu,
+                t01.rule_not,
+                t02.sql_where
+           from report_rule_detl t01,
+                price_rule_type t02
+          where t01.price_rule_type_id = t02.price_rule_type_id
+            and t01.report_rule_id = rcd_rule.report_rule_id
+          order by t01.price_rule_type_id asc;
+      rcd_rule_detl csr_rule_detl%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Delete the existing report rule data
+      /*-*/
+      delete from report_rule_detl where report_rule_id in (select report_rule_id from report_rule where report_id = rcd_report_rule.report_id);
+      delete from report_rule where report_id = rcd_report_rule.report_id;
+
+      /*-*/
+      /* Insert the new report rule data
+      /*-*/
+      for idx in 1..tbl_report_rule.count loop
+         if tbl_report_rule(idx).rule_type = 'RH' then
+            var_return := pricelist_object_tracking.get_new_id('REPORT_RULE', 'REPORT_RULE_ID', var_id, var_return_msg);
+            if var_return != common.gc_success then
+               raise_application_error(-20000, 'Unable to request new id for a report rule - ' || var_return_msg);
+            end if;
+            rcd_report_rule.report_rule_id := var_id;
+            rcd_report_rule.report_rule_name := tbl_report_rule(idx).report_rule_name;
+            insert into report_rule values rcd_report_rule;
+         end if;
+         if tbl_report_rule(idx).rule_type = 'RD' then
+            rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+            rcd_report_rule_detl.price_rule_type_id := tbl_report_rule(idx).price_rule_type_id;
+            rcd_report_rule_detl.rule_vlu := tbl_report_rule(idx).rule_vlu;
+            rcd_report_rule_detl.rule_not := tbl_report_rule(idx).rule_not;
+            insert into report_rule_detl values rcd_report_rule_detl;
+         end if;
+      end loop;
+
+      /*-*/
+      /* Reload the report materials
+      /*-*/
+      load_materials(rcd_report_rule.report_id);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end rule_commit;
+
    /*****************************************************/
    /* This procedure performs the format report routine */
    /*****************************************************/
    procedure format_report(par_report_id in number,
-                           par_report_name_frmt in varchar2) is
+                           par_report_name_frmt in varchar2,
+                           par_user in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -755,6 +979,7 @@ create or replace package body pricelist_configuration as
       /**/
       tbl_report(1).report_id := par_report_id;
       tbl_report(1).report_name_frmt := par_report_name_frmt;
+      tbl_report(1).update_user := par_user;
 
    /*-------------------*/
    /* Exception handler */
@@ -929,7 +1154,8 @@ create or replace package body pricelist_configuration as
       /* Update the report
       /*-*/
       update report
-         set report_name_frmt = tbl_report(1).report_name_frmt
+         set report_name_frmt = tbl_report(1).report_name_frmt,
+             update_user = tbl_report(1).update_user
        where report_id = tbl_report(1).report_id;
 
       /*-*/
@@ -1007,8 +1233,10 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Delete the report information
       /*-*/
-      delete from report_term where report_id = par_report_id;
       delete from report_matl where report_id = par_report_id;
+      delete from report_rule_detl where report_rule_id in (select report_rule_id from report_rule where report_id = par_report_id);
+      delete from report_rule where report_id = par_report_id;
+      delete from report_term where report_id = par_report_id;
       delete from report_item where report_id = par_report_id;
       delete from report where report_id = par_report_id;
 
@@ -1054,10 +1282,12 @@ create or replace package body pricelist_configuration as
    begin
 
       /*-*/
-      /* Delete the report information
+      /* Copy the report information
       /*-*/
-      delete from report_term where report_id = par_report_id;
       delete from report_matl where report_id = par_report_id;
+      delete from report_rule_detl where report_rule_id in (select report_rule_id from report_rule where report_id = par_report_id);
+      delete from report_rule where report_id = par_report_id;
+      delete from report_term where report_id = par_report_id;
       delete from report_item where report_id = par_report_id;
       delete from report where report_id = par_report_id;
 
@@ -1090,6 +1320,167 @@ create or replace package body pricelist_configuration as
    /* End routine */
    /*-------------*/
    end copy_report;
+
+   /******************************************************/
+   /* This procedure performs the load materials routine */
+   /******************************************************/
+   procedure load_materials(par_report_id in number) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(32767 char);
+      type typ_cursor is ref cursor;
+      csr_material typ_cursor;
+      var_matl_code report_matl.matl_code%type;
+      var_rule boolean;
+      var_detail boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_report is 
+         select t02.price_sales_org_code,
+                t03.price_distbn_chnl_code
+           from report t01,
+                price_sales_org t02,
+                price_distbn_chnl t03
+          where t01.price_sales_org_id = t02.price_sales_org_id
+            and t01.price_distbn_chnl_id = t03.price_distbn_chnl_id
+            and t01.report_id = par_report_id;
+      rcd_report csr_report%rowtype;
+
+      cursor csr_rule is 
+         select t01.*
+           from report_rule t01
+          where t01.report_id = par_report_id
+          order by t01.report_rule_id asc;
+      rcd_rule csr_rule%rowtype;
+
+      cursor csr_rule_detl is 
+         select t01.rule_vlu,
+                t01.rule_not,
+                t02.sql_where
+           from report_rule_detl t01,
+                price_rule_type t02
+          where t01.price_rule_type_id = t02.price_rule_type_id
+            and t01.report_rule_id = rcd_rule.report_rule_id
+          order by t01.price_rule_type_id asc;
+      rcd_rule_detl csr_rule_detl%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the report data
+      /*-*/
+      open csr_report;
+      fetch csr_report into rcd_report;
+      if csr_report%notfound then
+         raise_application_error(-20000, 'Report (' || to_char(par_report_id) || ') not found');
+      end if;
+      close csr_report;
+
+      /*-*/
+      /* Delete the existing report materials
+      /*-*/
+      delete from report_matl where report_id = par_report_id;
+
+      /*-*/
+      /* Build the query statement
+      /*-*/
+      var_query := 'select t1.matl_code
+                      from matl t1, matl_by_sales_area t2
+                     where t1.matl_code = t2.matl_code
+                       and t2.sales_org = '''||rcd_report.price_sales_org_code||'''
+                       and t2.dstrbtn_chnl = '''||rcd_report.price_distbn_chnl_code||'''';
+
+      /*-*/
+      /* Add the report rules
+      /*-*/
+      var_rule := false;
+      open csr_rule;
+      loop
+         fetch csr_rule into rcd_rule;
+         if csr_rule%notfound then
+            exit;
+         end if;
+         if var_rule = false then
+            var_query :=  var_query || ' and ((';
+         else
+            var_query :=  var_query || ' or (';
+         end if;
+         var_rule := true;
+         var_detail := false;
+         open csr_rule_detl;
+         loop
+            fetch csr_rule_detl into rcd_rule_detl;
+            if csr_rule_detl%notfound then
+               exit;
+            end if;
+            if var_detail = false then
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || 'not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            else
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || ' and not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || ' and ' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            end if;
+            var_detail := true;
+         end loop;
+         close csr_rule_detl;
+         var_query :=  var_query || ')';
+      end loop;
+      close csr_rule;
+      if var_rule = true then
+         var_query :=  var_query || ')';
+      end if;
+
+      /*-*/
+      /* Insert the order by
+      /*-*/
+      var_query :=  var_query || ' order by t1.matl_code asc';
+
+      /*-*/
+      /* Load the report materials
+      /*-*/
+      open csr_material for var_query;
+      loop
+         fetch csr_material into var_matl_code;
+         if csr_material%notfound then
+            exit;
+         end if;
+         insert into report_matl values(rcd_report_rule.report_id, var_matl_code);
+      end loop;
+      close csr_material;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end load_materials;
+
 
 end pricelist_configuration;
 /  
