@@ -569,6 +569,11 @@ create or replace package body pricelist_configuration as
 
       /*-*/
       /* Update/insert the report
+      /* **notes**
+      /* 1. New reports have the following default rules created
+      /*    1.1 x_plant_matl_sts = 10 (price_rule_type_id = 100)
+      /*    1.2 dstrbtn_chain_sts = 20 (price_rule_type_id = 101)
+      /*    1.3 matl_type = ZREP (price_rule_type_id = 102)
       /*-*/
       var_materials := false;
       open csr_check_report;
@@ -614,6 +619,29 @@ create or replace package body pricelist_configuration as
          rcd_report.update_user := tbl_report(1).update_user;
          rcd_report.email_address := tbl_report(1).email_address;
          insert into report values rcd_report;
+         var_return := pricelist_object_tracking.get_new_id('REPORT_RULE', 'REPORT_RULE_ID', var_id, var_return_msg);
+         if var_return != common.gc_success then
+            raise_application_error(-20000, 'Unable to request new id for a report rule - ' || var_return_msg);
+         end if;
+         rcd_report_rule.report_id := rcd_report.report_id;
+         rcd_report_rule.report_rule_id := var_id;
+         rcd_report_rule.report_rule_name := 'Default material selection rule';
+         insert into report_rule values rcd_report_rule;
+         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+         rcd_report_rule_detl.price_rule_type_id := 100;
+         rcd_report_rule_detl.rule_vlu := '10';
+         rcd_report_rule_detl.rule_not := 'F';
+         insert into report_rule_detl values rcd_report_rule_detl;
+         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+         rcd_report_rule_detl.price_rule_type_id := 101;
+         rcd_report_rule_detl.rule_vlu := '20';
+         rcd_report_rule_detl.rule_not := 'F';
+         insert into report_rule_detl values rcd_report_rule_detl;
+         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+         rcd_report_rule_detl.price_rule_type_id := 102;
+         rcd_report_rule_detl.rule_vlu := 'ZREP';
+         rcd_report_rule_detl.rule_not := 'F';
+         insert into report_rule_detl values rcd_report_rule_detl;
       end if;
       close csr_check_report;
 
@@ -1276,20 +1304,179 @@ create or replace package body pricelist_configuration as
    procedure copy_report(par_report_id in number,
                          par_report_grp_id in number) is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return common.st_result;
+      var_return_msg common.st_message_string;
+      var_id common.st_code;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_copy_report is 
+         select t01.*
+           from report t01
+          where t01.report_id = par_report_id;
+      rcd_copy_report csr_copy_report%rowtype;
+
+      cursor csr_copy_item is 
+         select t01.*
+           from report_item t01
+          where t01.report_id = par_report_id
+          order by t01.report_item_id asc;
+      rcd_copy_item csr_copy_item%rowtype;
+
+      cursor csr_copy_term is 
+         select t01.*
+           from report_term t01
+          where t01.report_id = par_report_id
+          order by t01.sort_order asc;
+      rcd_copy_term csr_copy_term%rowtype;
+
+      cursor csr_copy_rule is 
+         select t01.*
+           from report_rule t01
+          where t01.report_id = par_report_id
+          order by t01.report_rule_id asc;
+      rcd_copy_rule csr_copy_rule%rowtype;
+
+      cursor csr_copy_rule_detl is 
+         select t01.*
+           from report_rule_detl t01
+          where t01.report_rule_id = rcd_copy_rule.report_rule_id
+          order by t01.price_rule_type_id asc;
+      rcd_copy_rule_detl csr_copy_rule_detl%rowtype;
+
+      cursor csr_copy_matl is 
+         select t01.*
+           from report_matl t01
+          where t01.report_id = par_report_id
+          order by t01.matl_code asc;
+      rcd_copy_matl csr_copy_matl%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
       /*-*/
-      /* Copy the report information
+      /* Copy the report
       /*-*/
-      delete from report_matl where report_id = par_report_id;
-      delete from report_rule_detl where report_rule_id in (select report_rule_id from report_rule where report_id = par_report_id);
-      delete from report_rule where report_id = par_report_id;
-      delete from report_term where report_id = par_report_id;
-      delete from report_item where report_id = par_report_id;
-      delete from report where report_id = par_report_id;
+      open csr_copy_report;
+      fetch csr_copy_report into rcd_copy_report;
+      if csr_copy_report%notfound then
+         raise_application_error(-20000, 'Report (' || par_report_id || ') does not exist');
+      end if;
+      close csr_copy_report;
+      var_return := pricelist_object_tracking.get_new_id('REPORT', 'REPORT_ID', var_id, var_return_msg);
+      if var_return != common.gc_success then
+         raise_application_error(-20000, 'Unable to request new id for a report - ' || var_return_msg);
+      end if;
+      rcd_report.report_id := var_id;
+      rcd_report.report_name := rcd_copy_report.report_name;
+      rcd_report.price_sales_org_id := rcd_copy_report.price_sales_org_id;
+      rcd_report.price_distbn_chnl_id := rcd_copy_report.price_distbn_chnl_id;
+      rcd_report.price_mdl_id := rcd_copy_report.price_mdl_id;
+      rcd_report.status := rcd_copy_report.status;
+      rcd_report.report_grp_id := par_report_grp_id;
+      rcd_report.matl_alrtng := rcd_copy_report.matl_alrtng;
+      rcd_report.auto_matl_update := rcd_copy_report.auto_matl_update;
+      rcd_report.report_name_frmt := rcd_copy_report.report_name_frmt;
+      rcd_report.create_user := rcd_copy_report.create_user;
+      rcd_report.update_user := rcd_copy_report.update_user;
+      rcd_report.email_address := rcd_copy_report.email_address;
+      insert into report values rcd_report;
+
+      /*-*/
+      /* Copy the report items
+      /*-*/
+      open csr_copy_item;
+      loop
+         fetch csr_copy_item into rcd_copy_item;
+         if csr_copy_item%notfound then
+            exit;
+         end if;
+         var_return := pricelist_object_tracking.get_new_id('REPORT_ITEM', 'REPORT_ITEM_ID', var_id, var_return_msg);
+         if var_return != common.gc_success then
+            raise_application_error(-20000, 'Unable to request new id for a report item - ' || var_return_msg);
+         end if;
+         rcd_report_item.report_item_id := var_id;
+         rcd_report_item.report_id := rcd_report.report_id;
+         rcd_report_item.price_item_id := rcd_copy_item.price_item_id;
+         rcd_report_item.report_item_type := rcd_copy_item.report_item_type;
+         rcd_report_item.name_ovrd := rcd_copy_item.name_ovrd;
+         rcd_report_item.sort_order := rcd_copy_item.sort_order;
+         rcd_report_item.name_frmt := rcd_copy_item.name_frmt;
+         rcd_report_item.data_frmt := rcd_copy_item.data_frmt;
+         insert into report_item values rcd_report_item;
+      end loop;
+      close csr_copy_item;
+
+      /*-*/
+      /* Copy the report terms
+      /*-*/
+      open csr_copy_term;
+      loop
+         fetch csr_copy_term into rcd_copy_term;
+         if csr_copy_term%notfound then
+            exit;
+         end if;
+         rcd_report_term.report_id := rcd_report.report_id;
+         rcd_report_term.sort_order := rcd_copy_term.sort_order;
+         rcd_report_term.value := rcd_copy_term.value;
+         rcd_report_term.data_frmt := rcd_copy_term.data_frmt;
+         insert into report_term values rcd_report_term;
+      end loop;
+      close csr_copy_term;
+
+      /*-*/
+      /* Copy the report rules
+      /*-*/
+      open csr_copy_rule;
+      loop
+         fetch csr_copy_rule into rcd_copy_rule;
+         if csr_copy_rule%notfound then
+            exit;
+         end if;
+            var_return := pricelist_object_tracking.get_new_id('REPORT_RULE', 'REPORT_RULE_ID', var_id, var_return_msg);
+            if var_return != common.gc_success then
+               raise_application_error(-20000, 'Unable to request new id for a report rule - ' || var_return_msg);
+            end if;
+            rcd_report_rule.report_rule_id := var_id;
+            rcd_report_rule.report_id := rcd_report.report_id;
+            rcd_report_rule.report_rule_name := rcd_copy_rule.report_rule_name;
+            insert into report_rule values rcd_report_rule;
+            open csr_copy_rule_detl;
+            loop
+               fetch csr_copy_rule_detl into rcd_copy_rule_detl;
+               if csr_copy_rule_detl%notfound then
+                  exit;
+               end if;
+               rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+               rcd_report_rule_detl.price_rule_type_id := rcd_copy_rule_detl.price_rule_type_id;
+               rcd_report_rule_detl.rule_vlu := rcd_copy_rule_detl.rule_vlu;
+               rcd_report_rule_detl.rule_not := rcd_copy_rule_detl.rule_not;
+               insert into report_rule_detl values rcd_report_rule_detl;
+            end loop;
+            close csr_copy_rule_detl;
+      end loop;
+      close csr_copy_rule;
+
+      /*-*/
+      /* Copy the report materials
+      /*-*/
+      open csr_copy_matl;
+      loop
+         fetch csr_copy_matl into rcd_copy_matl;
+         if csr_copy_matl%notfound then
+            exit;
+         end if;
+         rcd_report_matl.report_id := rcd_report.report_id;
+         rcd_report_matl.matl_code := rcd_copy_matl.matl_code;
+         insert into report_matl values rcd_report_matl;
+      end loop;
+      close csr_copy_matl;
 
       /*-*/
       /* Commit the database

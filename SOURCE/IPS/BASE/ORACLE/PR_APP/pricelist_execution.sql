@@ -243,8 +243,6 @@ create or replace package body pricelist_execution as
       var_query := var_query || ' and t1c.price_sales_org_code = t2.sales_org';
       var_query := var_query || ' and t1a.price_distbn_chnl_id = t1d.price_distbn_chnl_id';
       var_query := var_query || ' and t1d.price_distbn_chnl_code = t2.dstrbtn_chnl';
-    --  var_query := var_query || ' and t1.x_plant_matl_sts = ''10''';
-    --  var_query := var_query || ' and t2.dstrbtn_chain_sts = ''20''';
       if not(rcd_price_mdl.sql_from_tables is null) and not(rcd_price_mdl.sql_where_joins is null) then
          var_query := var_query || trim(rcd_price_mdl.sql_where_joins);
       end if;
