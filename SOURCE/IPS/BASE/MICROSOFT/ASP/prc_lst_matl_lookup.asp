@@ -67,7 +67,7 @@ sub ProcessLookup()
    '//
    '// Execute the price material lookup
    '//
-   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("QRY_ReportId").Value & "))"
+   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("QRY_ReportId").Value & ")) t01"
    strReturn = objSelection.Execute("LIST", strQuery, 0)
 
    '//

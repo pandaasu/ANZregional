@@ -85,7 +85,7 @@
       var objSltMaterial = document.getElementById('sltMaterial');
       objSltMaterial.options.length = 0;
       objSltMaterial.selectedIndex = -1;<%if objSelection.ListCount("MATERIAL") <> 0 then%><%for i = objSelection.ListLower("MATERIAL") to objSelection.ListUpper("MATERIAL")%>
-      objSltMaterial.options[i] = new Option('<%=replace(objSelection.ListValue02("MATERIAL",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue01("MATERIAL",i)%>');<%next%><%end if%>
+      objSltMaterial.options[<%=i%>] = new Option('<%=replace(objSelection.ListValue02("MATERIAL",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue01("MATERIAL",i)%>');<%next%><%end if%>
    }
    function refreshMaterials() {
       doActivityStart(document.body);
@@ -155,7 +155,7 @@
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_configuration_material_help.htm');parent.setHeading('<%=strHeading%> - Report Materials');parent.showContent();loadMaterials();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table class="clsGrid02" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table class="clsGrid02" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Name:&nbsp;</nobr></td>
@@ -176,7 +176,7 @@
          </nobr></td>
       </tr>
       <tr>
-         <td align=center colspan=2 nowrap><nobr><select class="clsInputBN" id="sltMaterial" name="sltMaterial" style="width:800px" multiple size=20></select></nobr></td>
+         <td align=center colspan=2 nowrap><nobr><select class="clsInputBN" id="sltMaterial" name="sltMaterial" style="width:500px" multiple size=20></select></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

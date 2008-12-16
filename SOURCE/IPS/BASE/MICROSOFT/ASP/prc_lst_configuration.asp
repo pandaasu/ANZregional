@@ -696,7 +696,7 @@ sub ProcessMaterialLoad()
    '// Retrieve the report materials
    '//
    lngSize = 0
-   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("DTA_ReportId").Value & "))"
+   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("DTA_ReportId").Value & ")) t01"
    strReturn = objSelection.Execute("MATERIAL", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -745,8 +745,8 @@ sub ProcessMaterialAccept()
    '//
    lngCount = clng(objForm.Fields("DET_RepMatCount").Value)
    for i = 1 to lngCount
-      strStatement = "pricelist_configuration.material_define("
-      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepMatCode" & i).Value) & "'"
+      strStatement = "pricelist_configuration.material_detail("
+      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepMatCod" & i).Value) & "'"
       strStatement = strStatement & ")"
       strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then
