@@ -54,6 +54,9 @@ create or replace package pricelist_configuration as
                          par_rule_vlu in varchar2,
                          par_rule_not in varchar2);
    procedure rule_commit;
+   procedure material_begin(par_report_id in number);
+   procedure material_detail(par_matl_code in varchar2);
+   procedure material_commit;
    procedure format_report(par_report_id in number,
                            par_report_name_frmt in varchar2,
                            par_user in varchar2);
@@ -109,12 +112,14 @@ create or replace package body pricelist_configuration as
    type typ_report_item is table of report_item%rowtype index by binary_integer;
    type typ_report_term is table of report_term%rowtype index by binary_integer;
    type typ_report_rule is table of rcd_rule index by binary_integer;
+   type typ_report_matl is table of report_matl%rowtype index by binary_integer;
    tbl_report typ_report;
    tbl_report_data typ_report_item;
    tbl_report_break typ_report_item;
    tbl_report_order typ_report_item;
    tbl_report_term typ_report_term;
    tbl_report_rule typ_report_rule;
+   tbl_report_matl typ_report_matl;
 
    /***********************************************************/
    /* This procedure performs the define report group routine */
@@ -980,6 +985,134 @@ create or replace package body pricelist_configuration as
    /* End routine */
    /*-------------*/
    end rule_commit;
+
+   /******************************************************/
+   /* This procedure performs the material begin routine */
+   /******************************************************/
+   procedure material_begin(par_report_id in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the materials
+      /*-*/
+      tbl_report_matl.delete;
+
+      /*-*/
+      /* Initialise the report identifier
+      /*-*/
+      rcd_report_matl.report_id := par_report_id;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end material_begin;
+
+   /*******************************************************/
+   /* This procedure performs the material detail routine */
+   /*******************************************************/
+   procedure material_detail(par_matl_code in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the rule detail
+      /*-*/
+      tbl_report_matl(tbl_report_matl.count+1).matl_code := par_matl_code;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end material_detail;
+
+   /*******************************************************/
+   /* This procedure performs the material commit routine */
+   /*******************************************************/
+   procedure material_commit is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Delete the existing report material data
+      /*-*/
+      delete from report_matl where report_id = rcd_report_matl.report_id;
+
+      /*-*/
+      /* Insert the new report material data
+      /*-*/
+      for idx in 1..tbl_report_matl.count loop
+         rcd_report_matl.matl_code := tbl_report_matl(idx).matl_code;
+         insert into report_matl values rcd_report_matl;
+      end loop;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end material_commit;
 
    /*****************************************************/
    /* This procedure performs the format report routine */
