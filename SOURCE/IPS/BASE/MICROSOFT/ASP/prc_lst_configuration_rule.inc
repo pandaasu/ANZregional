@@ -81,6 +81,7 @@
    var cobjRow = null;
    var cstrMode = '';
    var cintInsert = -1;
+   var cintNewId = 999000000;
    function loadRules() {<%if objSelection.ListCount("RULE_TYPE") <> 0 then%><%for i = objSelection.ListLower("RULE_TYPE") to objSelection.ListUpper("RULE_TYPE")%>
       cobjRuleTypes[<%=i%>] = new clsRuleType('<%=objSelection.ListValue01("RULE_TYPE",i)%>','<%=replace(objSelection.ListValue02("RULE_TYPE",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%><%if objSelection.ListCount("RULE") <> 0 then%><%for i = objSelection.ListLower("RULE") to objSelection.ListUpper("RULE")%>
       cobjRules[<%=i%>] = new clsRule('<%=objSelection.ListValue01("RULE",i)%>','<%=replace(objSelection.ListValue02("RULE",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue03("RULE",i)%>','<%=replace(objSelection.ListValue04("RULE",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue05("RULE",i)%>','<%=objSelection.ListValue06("RULE",i)%>');<%next%><%end if%>
@@ -161,6 +162,7 @@
       cobjSelected.className = 'clsListBX';
       cstrSelected = 'RH';
       cintSelected = cobjSelected.parentNode.rowIndex;
+      cobjRow = document.getElementById('tabRule').rows[cintSelected];
    }
    function selectDetail(objSelected) {
       if (cobjSelected) {
@@ -174,13 +176,13 @@
       cobjSelected.className = 'clsListX';
       cstrSelected = 'RD';
       cintSelected = cobjSelected.parentNode.rowIndex;
+      cobjRow = document.getElementById('tabRule').rows[cintSelected];
    }
    function updateRule() {
       if (cobjSelected == null) {
          return;
       }
       cstrMode = 'UPD';
-      cobjRow = document.getElementById('tabRule').rows[cintSelected];
       if (cstrSelected == 'RH') {
          document.getElementById('inpRuleName').value = cobjRow.getAttribute('rulnam');
          var objDspList = document.getElementById('dspList');
@@ -197,19 +199,18 @@
       if (cstrSelected == 'RD') {
          var objSltRuleType = document.getElementById('sltRuleType');
          objSltRuleType.selectedIndex = -1;
-         for (var i=0;i<objSltRuleType.options.length;i++) {
+         for (var i=0;i<objSltRuleType.length;i++) {
             if (objSltRuleType.options[i].getAttribute('typid') == cobjRow.getAttribute('typid')) {
                objSltRuleType.selectedIndex = i;
-               break;
             }
          }
-         doActivityStart(document.body);
          document.getElementById('sltRuleValue').selectedIndex = -1;
          if (cobjRow.getAttribute('rulnot') == 'F') {
             document.getElementById('sltRuleNot').selectedIndex = 0;
          } else {
             document.getElementById('sltRuleNot').selectedIndex = 1;
          }
+         doActivityStart(document.body);
          getRuleValues(cobjRow.getAttribute('typid'));
          for (var i=0;i<document.getElementById('sltRuleValue').options.length;i++) {
             if (document.getElementById('sltRuleValue').options[i].value == cobjRow.getAttribute('rulval')) {
@@ -235,19 +236,10 @@
       }
       var objTable = document.getElementById('tabRule');
       if (cstrSelected == 'RH') {
-         var intEnd = objTable.rows.length-1;
-         if (cintSelected != objTable.rows.length-1) {
-            intEnd = cintSelected;
-            for (var i=intEnd+1;i<objTable.rows.length;i++) {
-               if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
-                  intEnd = i;
-               } else {
-                  break;
-               }
+         for (var i=objTable.rows.length-1;i>=0;i--) {
+            if (objTable.rows[i].getAttribute('rulid') == cobjRow.getAttribute('rulid')) {
+               objTable.deleteRow(i);
             }
-         }
-         for (var i=intEnd;i>=cintSelected;i--) {
-            objTable.deleteRow(i);
          }
       } else {
          objTable.deleteRow(cintSelected);
@@ -284,9 +276,10 @@
       var objCell;
       objTable = document.getElementById('tabRule');
       if (cstrMode == 'ADD') {
+         cintNewId++;
          objRow = objTable.insertRow(-1);
          objRow.setAttribute('rultyp','RH');
-         objRow.setAttribute('rulid','0');
+         objRow.setAttribute('rulid',cintNewId);
          objRow.setAttribute('rulnam',document.getElementById('inpRuleName').value);
          objCell = objRow.insertCell(0);
          objCell.colSpan = 1;
@@ -329,32 +322,11 @@
       } else {
          cintInsert = cintSelected;
          for (var i=cintSelected+1;i<objTable.rows.length;i++) {
-            if (objTable.rows[i].getAttribute('rultyp') == 'RD') {
+            if (objTable.rows[i].getAttribute('rulid') == cobjRow.getAttribute('rulid')) {
                cintInsert = i;
-               objWork[intIndex] = objTable.rows[i].getAttribute('typid');
-               intIndex++;
-            } else {
-               break;
             }
          }
          cintInsert++;
-      }
-      intIndex = 0;
-      var objSltRuleType = document.getElementById('sltRuleType');
-      objSltRuleType.options.length = 0;
-      for (var i=0;i<cobjRuleTypes.length;i++) {
-         bolFound = false;
-         for (var j=0;j<objWork.length;j++) {
-            if (cobjRuleTypes[i].typid == objWork[j]) {
-               bolFound = true;
-            }
-         }
-         if (!bolFound) {
-            objSltRuleType.options[intIndex] = new Option(cobjRuleTypes[i].typnam,cobjRuleTypes[i].typid);
-            objSltRuleType.options[intIndex].setAttribute('typid',cobjRuleTypes[i].typid);
-            objSltRuleType.options[intIndex].setAttribute('typnam',cobjRuleTypes[i].typnam);
-            intIndex++;
-         }
       }
       document.getElementById('sltRuleType').selectedIndex = -1;
       document.getElementById('sltRuleValue').selectedIndex = -1;
@@ -371,6 +343,10 @@
       document.getElementById('sltRuleType').focus();
    }
    function acceptDetail() {
+      var objTable;
+      var objRow;
+      var objCell;
+      objTable = document.getElementById('tabRule');
       if (document.getElementById('sltRuleType').selectedIndex == -1) {
          alert('Rule type must be selected');
          return;
@@ -383,10 +359,19 @@
          alert('Rule not be selected');
          return;
       }
-      var objTable;
-      var objRow;
-      var objCell;
-      objTable = document.getElementById('tabRule');
+      var bolFound = false;
+      for (var i=0;i<objTable.rows.length;i++) {
+         if (objTable.rows[i].getAttribute('rultyp') == 'RD' && objTable.rows[i].getAttribute('rulid') == cobjRow.getAttribute('rulid')) {
+            if ((cstrMode == 'ADD' || cintSelected != i) && objTable.rows[i].getAttribute('typid') == document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typid')) {
+               bolFound = true;
+               break;
+            }
+         }
+      }
+      if (bolFound == true) {
+         alert('Rule type has already been selected for this rule');
+         return;
+      }
       if (cstrMode == 'ADD') {
          objRow = objTable.insertRow(cintInsert);
          objRow.setAttribute('rultyp','RD');
@@ -481,7 +466,7 @@
          }
       }
       if (bolFound) {
-         strReturn = 'All rules must have at least detail defined';
+         strReturn = 'All rules must have at least one detail defined';
       }
       for (var i=0;i<objTable.rows.length;i++) {
          if (objTable.rows[i].getAttribute('rultyp') == 'RH') {

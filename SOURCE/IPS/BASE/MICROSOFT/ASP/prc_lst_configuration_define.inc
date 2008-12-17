@@ -109,7 +109,7 @@
       document.main.INP_PriceMdlId.value = strPriceMdlId;
       if (strPriceMdlId != '') {
          doActivityStart(document.body);
-         window.setTimeout('getPriceItems(\''+strPriceMdlId+'\');',10);
+         window.setTimeout('getPriceItems(\''+strPriceMdlId.substring(0,7)+'\');',10);
       }
    }
    function selectMatlAlrtng(strValue) {
