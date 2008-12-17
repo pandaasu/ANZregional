@@ -72,6 +72,7 @@ create or replace package pricelist_configuration as
    procedure copy_report(par_copy_id in number,
                          par_report_grp_id in number,
                          par_report_name in varchar2);
+   procedure review_reports;
 
 end pricelist_configuration;
 /
@@ -91,6 +92,7 @@ create or replace package body pricelist_configuration as
    /* Private declarations
    /**/
    procedure load_materials(par_report_id in number);
+   procedure check_materials(par_report_id in number, par_update in varchar2);
 
    /*-*/
    /* Private definitions
@@ -508,6 +510,7 @@ create or replace package body pricelist_configuration as
       var_return_msg common.st_message_string;
       var_id common.st_code;
       var_materials boolean;
+      var_price_rule_type_column price_rule_type.price_rule_type_column%type;
 
       /*-*/
       /* Local cursors
@@ -524,6 +527,12 @@ create or replace package body pricelist_configuration as
           where t01.report_id = rcd_report.report_id
           order by t01.report_item_id asc;
       rcd_check_item csr_check_item%rowtype;
+
+      cursor csr_price_rule_type is 
+         select t01.price_rule_type_id
+           from price_rule_type t01
+          where t01.price_rule_type_column = var_price_rule_type_column;
+      rcd_price_rule_type csr_price_rule_type%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -633,21 +642,39 @@ create or replace package body pricelist_configuration as
          rcd_report_rule.report_rule_id := var_id;
          rcd_report_rule.report_rule_name := 'Default material selection rule';
          insert into report_rule values rcd_report_rule;
-         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
-         rcd_report_rule_detl.price_rule_type_id := 100;
-         rcd_report_rule_detl.rule_vlu := '10';
-         rcd_report_rule_detl.rule_not := 'F';
-         insert into report_rule_detl values rcd_report_rule_detl;
-         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
-         rcd_report_rule_detl.price_rule_type_id := 101;
-         rcd_report_rule_detl.rule_vlu := '20';
-         rcd_report_rule_detl.rule_not := 'F';
-         insert into report_rule_detl values rcd_report_rule_detl;
-         rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
-         rcd_report_rule_detl.price_rule_type_id := 102;
-         rcd_report_rule_detl.rule_vlu := 'ZREP';
-         rcd_report_rule_detl.rule_not := 'F';
-         insert into report_rule_detl values rcd_report_rule_detl;
+         var_price_rule_type_column := 'DISBTN_CHNNL';
+         open csr_price_rule_type;
+         fetch csr_price_rule_type into rcd_price_rule_type;
+         if csr_price_rule_type%found then
+            rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+            rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
+            rcd_report_rule_detl.rule_vlu := '10';
+            rcd_report_rule_detl.rule_not := 'F';
+            insert into report_rule_detl values rcd_report_rule_detl;
+         end if;
+         close csr_price_rule_type;
+         var_price_rule_type_column := 'X_PLANT_MATL_STS';
+         open csr_price_rule_type;
+         fetch csr_price_rule_type into rcd_price_rule_type;
+         if csr_price_rule_type%found then
+            rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+            rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
+            rcd_report_rule_detl.rule_vlu := '20';
+            rcd_report_rule_detl.rule_not := 'F';
+            insert into report_rule_detl values rcd_report_rule_detl;
+         end if;
+         close csr_price_rule_type;
+         var_price_rule_type_column := 'MATL_TYPE';
+         open csr_price_rule_type;
+         fetch csr_price_rule_type into rcd_price_rule_type;
+         if csr_price_rule_type%found then
+            rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
+            rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
+            rcd_report_rule_detl.rule_vlu := 'ZREP';
+            rcd_report_rule_detl.rule_not := 'F';
+            insert into report_rule_detl values rcd_report_rule_detl;
+         end if;
+         close csr_price_rule_type;
       end if;
       close csr_check_report;
 
@@ -1644,6 +1671,175 @@ create or replace package body pricelist_configuration as
    end copy_report;
 
    /******************************************************/
+   /* This procedure performs the review reports routine */
+   /******************************************************/
+   procedure review_reports is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_exception varchar2(4000);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_review_report is 
+         select t01.*
+           from report t01
+          order by t01.report_name;
+      rcd_review_report csr_review_report%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the log/lock variables
+      /*-*/
+      var_log_prefix := 'PRICE_LIST_REVIEW';
+      var_log_search := 'PRICE_LIST_REVIEW';
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - Price List Report Review');
+
+      /*-*/
+      /* Retrieve all activated reports
+      /*-*/
+      open csr_review_report;
+      loop
+         fetch csr_review_report into rcd_review_report;
+         if csr_review_report%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Log the report event
+         /*-*/
+         lics_logging.write_log('Reviewing report (' || rcd_review_report.report_name || ') status (' || rcd_review_report.status || ') automatic material update (' || rcd_review_report.auto_matl_update || ') material alerting (' || rcd_review_report.matl_alrtng || ') email address (' || rcd_review_report.email_address || ')');
+
+         /*-*/
+         /* Process activated reports
+         /*-*/
+         if rcd_review_report.status = 'V' then
+
+            /*-*/
+            /* Automatic material update requested
+            /*-*/
+            if rcd_review_report.auto_matl_update = 'Y' then
+
+               /*-*/
+               /* Check the report materials based on the report rules
+               /*-*/
+               if rcd_review_report.matl_alrtng = 'Y' and not(rcd_review_report.email_address is null) then
+                  lics_logging.write_log('Generating automatic material update notification for report (' || rcd_review_report.report_name || ')');
+                  check_materials(rcd_review_report.report_id,'Y');
+               end if;
+
+               /*-*/
+               /* Update the report materials based on the report rules
+               /*-*/
+               lics_logging.write_log('Performing automatic material update for report (' || rcd_review_report.report_name || ')');
+               load_materials(rcd_review_report.report_id);
+
+               /*-*/
+               /* Commit the database
+               /*-*/
+               commit;
+
+            /*-*/
+            /* Automatic material update NOT requested
+            /*-*/
+            else
+
+               /*-*/
+               /* Material alerting requested and notification email address specified
+               /*-*/
+               if rcd_review_report.matl_alrtng = 'Y' and not(rcd_review_report.email_address is null) then
+
+                  /*-*/
+                  /* Check the report materials based on the report rules and email recommendations
+                  /*-*/
+                  lics_logging.write_log('Generating material recommendation notification for report (' || rcd_review_report.report_name || ')');
+                  check_materials(rcd_review_report.report_id,'N');
+
+                  /*-*/
+                  /* Commit the database
+                  /*-*/
+                  commit;
+
+               end if;
+
+            end if;
+
+         end if;
+
+      end loop;
+      close csr_review_report;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Price List Report Review');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         begin
+            if lics_logging.is_created = true then
+               lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+               lics_logging.end_log;
+            end if;
+         exception
+            when others then
+               null;
+         end;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end review_reports;
+
+   /******************************************************/
    /* This procedure performs the load materials routine */
    /******************************************************/
    procedure load_materials(par_report_id in number) is
@@ -1662,7 +1858,8 @@ create or replace package body pricelist_configuration as
       /* Local cursors
       /*-*/
       cursor csr_report is 
-         select t02.price_sales_org_code,
+         select t01.report_id,
+                t02.price_sales_org_code,
                 t03.price_distbn_chnl_code
            from report t01,
                 price_sales_org t02,
@@ -1779,7 +1976,7 @@ create or replace package body pricelist_configuration as
          if csr_material%notfound then
             exit;
          end if;
-         insert into report_matl values(rcd_report_rule.report_id, var_matl_code);
+         insert into report_matl values(rcd_report.report_id, var_matl_code);
       end loop;
       close csr_material;
 
@@ -1803,6 +2000,382 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    end load_materials;
 
+   /*******************************************************/
+   /* This procedure performs the check materials routine */
+   /*******************************************************/
+   procedure check_materials(par_report_id in number, par_update in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(32767 char);
+      type typ_cursor is ref cursor;
+      csr_material typ_cursor;
+      var_matl_code report_matl.matl_code%type;
+      var_matl_desc matl.matl_desc%type;
+      var_rule boolean;
+      var_detail boolean;
+      type rcd_matl is record(matl_code varchar2(20),
+                              matl_desc varchar2(200));
+      type typ_matl is table of rcd_matl index by binary_integer;
+      tbl_matl01 typ_matl;
+      tbl_matl02 typ_matl;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_report is 
+         select t01.report_id,
+                t01.report_name,
+                t01.email_address,
+                t02.price_sales_org_code,
+                t03.price_distbn_chnl_code
+           from report t01,
+                price_sales_org t02,
+                price_distbn_chnl t03
+          where t01.price_sales_org_id = t02.price_sales_org_id
+            and t01.price_distbn_chnl_id = t03.price_distbn_chnl_id
+            and t01.report_id = par_report_id;
+      rcd_report csr_report%rowtype;
+
+      cursor csr_rule is 
+         select t01.*
+           from report_rule t01
+          where t01.report_id = par_report_id
+          order by t01.report_rule_id asc;
+      rcd_rule csr_rule%rowtype;
+
+      cursor csr_rule_detl is 
+         select t01.rule_vlu,
+                t01.rule_not,
+                t02.sql_where
+           from report_rule_detl t01,
+                price_rule_type t02
+          where t01.price_rule_type_id = t02.price_rule_type_id
+            and t01.report_rule_id = rcd_rule.report_rule_id
+          order by t01.price_rule_type_id asc;
+      rcd_rule_detl csr_rule_detl%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the report data
+      /*-*/
+      open csr_report;
+      fetch csr_report into rcd_report;
+      if csr_report%notfound then
+         raise_application_error(-20000, 'Report (' || to_char(par_report_id) || ') not found');
+      end if;
+      close csr_report;
+
+      /*-*/
+      /* Build the add query statement (ie. report rule materials not in the rule materials)
+      /*-*/
+      var_query := 'select t1.matl_code, t1.matl_desc
+                      from matl t1, matl_by_sales_area t2
+                     where t1.matl_code = t2.matl_code
+                       and t2.sales_org = '''||rcd_report.price_sales_org_code||'''
+                       and t2.dstrbtn_chnl = '''||rcd_report.price_distbn_chnl_code||'''';
+
+      /*-*/
+      /* Add the report rules
+      /*-*/
+      var_rule := false;
+      open csr_rule;
+      loop
+         fetch csr_rule into rcd_rule;
+         if csr_rule%notfound then
+            exit;
+         end if;
+         if var_rule = false then
+            var_query :=  var_query || ' and ((';
+         else
+            var_query :=  var_query || ' or (';
+         end if;
+         var_rule := true;
+         var_detail := false;
+         open csr_rule_detl;
+         loop
+            fetch csr_rule_detl into rcd_rule_detl;
+            if csr_rule_detl%notfound then
+               exit;
+            end if;
+            if var_detail = false then
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || 'not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            else
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || ' and not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || ' and ' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            end if;
+            var_detail := true;
+         end loop;
+         close csr_rule_detl;
+         var_query :=  var_query || ')';
+      end loop;
+      close csr_rule;
+      if var_rule = true then
+         var_query :=  var_query || ')';
+      end if;
+
+      /*-*/
+      /* Close the query
+      /*-*/
+      var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
+
+      /*-*/
+      /* Load the report add materials
+      /*-*/
+      tbl_matl01.delete;
+      open csr_material for var_query;
+      loop
+         fetch csr_material into var_matl_code, var_matl_desc;
+         if csr_material%notfound then
+            exit;
+         end if;
+         tbl_matl01(tbl_matl01.count+1).matl_code := var_matl_code;
+         tbl_matl01(tbl_matl01.count).matl_desc := var_matl_desc;
+      end loop;
+      close csr_material;
+
+
+      /*-*/
+      /* Build the delete query statement (ie. report materials not in the report rule materials)
+      /*-*/
+      var_query := 'select t1.matl_code, nvl(t2.matl_desc,''*UNKNOWN'') as matl_desc
+                      from report_matl t1, matl t2
+                     where t1.matl_code = t2.matl_code(+)
+                       and t1.report_id = ' || rcd_report.report_id || '
+                       and t1.matl_code not in (select t1.matl_code
+                                                  from matl t1, matl_by_sales_area t2
+                                                 where t1.matl_code = t2.matl_code
+                                                   and t2.sales_org = '''||rcd_report.price_sales_org_code||'''
+                                                   and t2.dstrbtn_chnl = '''||rcd_report.price_distbn_chnl_code||'''';
+
+      /*-*/
+      /* Add the report rules
+      /*-*/
+      var_rule := false;
+      open csr_rule;
+      loop
+         fetch csr_rule into rcd_rule;
+         if csr_rule%notfound then
+            exit;
+         end if;
+         if var_rule = false then
+            var_query :=  var_query || ' and ((';
+         else
+            var_query :=  var_query || ' or (';
+         end if;
+         var_rule := true;
+         var_detail := false;
+         open csr_rule_detl;
+         loop
+            fetch csr_rule_detl into rcd_rule_detl;
+            if csr_rule_detl%notfound then
+               exit;
+            end if;
+            if var_detail = false then
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || 'not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            else
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || ' and not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || ' and ' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            end if;
+            var_detail := true;
+         end loop;
+         close csr_rule_detl;
+         var_query :=  var_query || ')';
+      end loop;
+      close csr_rule;
+      if var_rule = true then
+         var_query :=  var_query || ')';
+      end if;
+
+      /*-*/
+      /* Close the query
+      /*-*/
+      var_query :=  var_query || ') order by t1.matl_code asc';
+
+      /*-*/
+      /* Load the report delete materials
+      /*-*/
+      tbl_matl02.delete;
+      open csr_material for var_query;
+      loop
+         fetch csr_material into var_matl_code, var_matl_desc;
+         if csr_material%notfound then
+            exit;
+         end if;
+         tbl_matl02(tbl_matl02.count+1).matl_code := var_matl_code;
+         tbl_matl02(tbl_matl02.count).matl_desc := var_matl_desc;
+      end loop;
+      close csr_material;
+
+      /*-*/
+      /* Log the event when no email generated
+      /*-*/
+      if tbl_matl01.count = 0 and tbl_matl02.count = 0 then
+         if par_Update = 'N' then
+            lics_logging.write_log('No price list material recommendations for report (' || rcd_report.report_name || ')');
+         else
+            lics_logging.write_log('No price list automatic material updates for report (' || rcd_report.report_name || ')');
+         end if;
+      end if;
+
+      /*-*/
+      /* Create the notification email when recommendations exist
+      /*-*/
+      if tbl_matl01.count != 0 or tbl_matl02.count != 0 then
+
+         /*-*/
+         /* Log event
+         /*-*/
+         if par_Update = 'N' then
+            lics_logging.write_log('Sending price list material recommendation notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
+         else
+            lics_logging.write_log('Sending price list automatic material update notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
+         end if;
+
+         /*-*/
+         /* Create the new email and create the email text header part
+         /*-*/
+         if par_Update = 'N' then
+            lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
+                                     rcd_report.email_address,
+                                     'Price List Report - ' || rcd_report.report_name || ' - Material Recommendations',
+                                     null,
+                                     null);
+            lics_mailer.create_part(null);
+            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Material Recommendations');
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+         else
+            lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
+                                     rcd_report.email_address,
+                                     'Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates',
+                                     null,
+                                     null);
+            lics_mailer.create_part(null);
+            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates');
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+         end if;
+
+         /*-*/
+         /* Create the email file and output the header data
+         /*-*/
+         if par_Update = 'N' then
+            lics_mailer.create_part('Price_List_Material_Recommendations.xls');
+            lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+            lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+            lics_mailer.append_data('<tr>');
+            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Material Recommendations</td>');
+            lics_mailer.append_data('</tr>');
+         else
+            lics_mailer.create_part('Price_List_Automatic_Material_Updates.xls');
+            lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+            lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+            lics_mailer.append_data('<tr>');
+            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates</td>');
+            lics_mailer.append_data('</tr>');
+         end if;
+
+         /*-*/
+         /* Output the header
+         /*-*/
+         lics_mailer.append_data('<tr>');
+         lics_mailer.append_data('<td></td>');
+         lics_mailer.append_data('<td></td>');
+         lics_mailer.append_data('</tr>');
+         lics_mailer.append_data('<tr>');
+         if par_Update = 'N' then
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Recommendation</td>');
+         else
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Action</td>');
+         end if;
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Material Code</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Material Name</td>');
+         lics_mailer.append_data('</tr>');
+
+         /*-*/
+         /* Append the additions
+         /*-*/
+         for idx in 1..tbl_matl01.count loop
+            lics_mailer.append_data('<tr>');
+            if par_Update = 'N' then
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">ADD</td>');
+            else
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">ADDED</td>');
+            end if;
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl01(idx).matl_code||'</td>');
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl01(idx).matl_desc||'</td>');
+            lics_mailer.append_data('</tr>');
+         end loop;
+
+         /*-*/
+         /* Append the deletions
+         /*-*/
+         for idx in 1..tbl_matl02.count loop
+            lics_mailer.append_data('<tr>');
+            if par_Update = 'N' then
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">DELETE</td>');
+            else
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">DELETED</td>');
+            end if;
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl02(idx).matl_code||'</td>');
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl02(idx).matl_desc||'</td>');
+            lics_mailer.append_data('</tr>');
+         end loop;
+
+         /*-*/
+         /* Output the email file part trailer data
+         /*-*/
+         lics_mailer.append_data('</table>');
+         lics_mailer.create_part(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data('** Email End **');
+         lics_mailer.finalise_email('utf-8');
+
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end check_materials;
 
 end pricelist_configuration;
 /  
