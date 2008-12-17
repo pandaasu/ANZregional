@@ -40,11 +40,20 @@
    }
    function doExecute() {
       if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.main.INP_ExecutionDate.value == '') {
+         if (strMessage != null) {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Execution date must be entered';
+      }
       if (cstrSelected == '') {
-         alert('Report must be selected');
+         if (strMessage != null) {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Report must be selected';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
          return;
       }
-      doReportOutput(eval('document.body'),cobjSelected.innerText,'*SPREADSHEET','select * from table(pr_app.pricelist_execution.execute_report(' + cstrSelected + ',\'20080601\'))');
+      doReportOutput(eval('document.body'),cobjSelected.innerText,'*SPREADSHEET','select * from table(pr_app.pricelist_execution.execute_report(' + cstrSelected + ',\'' + document.main.INP_ExecutionDate.value + '\'))');
    }
    function processForm() {
       if (checkInput() == true) {
@@ -79,6 +88,12 @@
             </table>
          </nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Execution Date (YYYYMMDD):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_ExecutionDate" size="8" maxlength="8" value="<%=objSelection.ListValue01("DATE",0)%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
@@ -111,8 +126,6 @@
       </tr>
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
-   <input type="hidden" name="DTA_LoadType" value="<%=objForm.Fields("DTA_LoadType").Value%>">
-   <input type="hidden" name="INP_LoadType" value="<%=objForm.Fields("DTA_LoadType").Value%>">
 </form>
 </body>
 </html>

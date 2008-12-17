@@ -116,6 +116,17 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
+   '// Retrieve the sysdate date
+   '//
+   lngSize = 0
+   strQuery = "select to_char(sysdate,'yyyymmdd') from dual"
+   strReturn = objSelection.Execute("DATE", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+      exit sub
+   end if
+
+   '//
    '// Retrieve the load type list
    '//
    lngSize = 0
