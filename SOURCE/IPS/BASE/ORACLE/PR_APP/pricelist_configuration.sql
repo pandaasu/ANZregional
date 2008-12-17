@@ -648,7 +648,7 @@ create or replace package body pricelist_configuration as
          if csr_price_rule_type%found then
             rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
             rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
-            rcd_report_rule_detl.rule_vlu := '10';
+            rcd_report_rule_detl.rule_vlu := '20';
             rcd_report_rule_detl.rule_not := 'F';
             insert into report_rule_detl values rcd_report_rule_detl;
          end if;
@@ -659,7 +659,7 @@ create or replace package body pricelist_configuration as
          if csr_price_rule_type%found then
             rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
             rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
-            rcd_report_rule_detl.rule_vlu := '20';
+            rcd_report_rule_detl.rule_vlu := '10';
             rcd_report_rule_detl.rule_not := 'F';
             insert into report_rule_detl values rcd_report_rule_detl;
          end if;
