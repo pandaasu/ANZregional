@@ -61,6 +61,11 @@ body {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;}
             OVERFLOW:scroll;
             BACKGROUND-COLOR:#708090;
             BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:none;}
+.clsScroll01 {HEIGHT=100%;
+              WIDTH=100%;
+              OVERFLOW:scroll;
+              BACKGROUND-COLOR:#708090;
+              BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:#40414c 2px solid;}
 .clsScrollFrame {HEIGHT=100%;
                  WIDTH=100%;
                  OVERFLOW:auto;
@@ -237,6 +242,18 @@ body {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;}
           BACKGROUND-COLOR:#b0e0e6;COLOR:#000000;
           BORDER-BOTTOM:#40414c 2px solid;BORDER-LEFT:#40414c 2px solid;BORDER-RIGHT:#40414c 2px solid;BORDER-TOP:#40414c 2px solid;
           PADDING-BOTTOM:0px;PADDING-LEFT:0px;PADDING-RIGHT:0px;PADDING-TOP:0px;}
+.clsList {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+          BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+          CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsListX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;
+           BACKGROUND-COLOR:#b0e0e6;COLOR:#000000;
+           CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsListB {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+           BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;
+           CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
+.clsListBX {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;
+            BACKGROUND-COLOR:#b0e0e6;COLOR:#000000;
+            CURSOR:pointer;TEXT-DECORATION:none;TEXT-TRANSFORM:none;}
 .clsHeading {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:transparent;COLOR:#000000;}
 .clsSubHeading {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:transparent;COLOR:#000000;}
 .clsNormal {FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:normal;BACKGROUND-COLOR:transparent;COLOR:#000000;}
