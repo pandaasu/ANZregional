@@ -78,6 +78,14 @@
 <body class="clsBody02" scroll="no" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_reporting_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Execution Date (YYYYMMDD):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_ExecutionDate" size="8" maxlength="8" value="<%=objSelection.ListValue01("DATE",0)%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
@@ -86,12 +94,6 @@
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doExecute();">&nbsp;Execute&nbsp;</a></nobr></td>
                </tr>
             </table>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Execution Date (YYYYMMDD):&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_ExecutionDate" size="8" maxlength="8" value="<%=objSelection.ListValue01("DATE",0)%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr height=100%>
