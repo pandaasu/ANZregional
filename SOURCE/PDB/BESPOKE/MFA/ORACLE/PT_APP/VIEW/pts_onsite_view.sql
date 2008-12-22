@@ -1,0 +1,115 @@
+DROP VIEW PT_APP.PTS_ONSITE_VIEW;
+
+/* Formatted on 2008/12/22 11:15 (Formatter Plus v4.8.8) */
+CREATE OR REPLACE FORCE VIEW pt_app.pts_onsite_view (xactn_seq,
+                                                     xactn_type,
+                                                     plt_code,
+                                                     use_by_date,
+                                                     uom,
+                                                     qty,
+                                                     full_plt_flag,
+                                                     hold_plt_flag,
+                                                     frm_whse_code,
+                                                     frm_whse_locn_code,
+                                                     frm_work_centre,
+                                                     to_whse_code,
+                                                     rework_code,
+                                                     plt_created_intfc_xactn_seq,
+                                                     plt_created_id,
+                                                     plt_created_date,
+                                                     plt_created_qty,
+                                                     plt_cancel_intfc_xactn_seq,
+                                                     plt_cancel_id,
+                                                     plt_cancel_date,
+                                                     plt_cancel_qty,
+                                                     backflush_code,
+                                                     backflush_by,
+                                                     backflush_date,
+                                                     rev_backflush_code,
+                                                     rev_backflush_by,
+                                                     rev_backflush_date,
+                                                     sta_intfc_xactn_seq,
+                                                     sta_code,
+                                                     sta_batch_code,
+                                                     sta_date,
+                                                     sta_loader_id,
+                                                     sta_driver_id,
+                                                     sta_trailer_id,
+                                                     sta_dispn_code,
+                                                     sta_status,
+                                                     receipt_code,
+                                                     receipt_by,
+                                                     receipt_date,
+                                                     status,
+                                                     created_by,
+                                                     created_date,
+                                                     disposition_code,
+                                                     disposition_by,
+                                                     disposition_date,
+                                                     disposition_dispn_code,
+                                                     plt_hold_intfc_xactn_seq,
+                                                     plt_hold_id,
+                                                     plt_hold_date,
+                                                     hold_code_1,
+                                                     hold_code_2,
+                                                     hold_code_3,
+                                                     hold_code_4,
+                                                     hold_code_5,
+                                                     hold_comment,
+                                                     xactn_time,
+                                                     plant_code,
+                                                     sender_name,
+                                                     zpppi_batch,
+                                                     proc_order,
+                                                     stor_loc_code,
+                                                     dispn_code,
+                                                     material_code,
+                                                     sta_time
+                                                    )
+AS
+  SELECT pts_trans."XACTN_SEQ", pts_trans."XACTN_TYPE", pts_trans."PLT_CODE",
+         pts_trans."USE_BY_DATE", pts_trans."UOM", pts_trans."QTY",
+         pts_trans."FULL_PLT_FLAG", pts_trans."HOLD_PLT_FLAG",
+         pts_trans."FRM_WHSE_CODE", pts_trans."FRM_WHSE_LOCN_CODE",
+         pts_trans."FRM_WORK_CENTRE", pts_trans."TO_WHSE_CODE",
+         pts_trans."REWORK_CODE", pts_trans."PLT_CREATED_INTFC_XACTN_SEQ",
+         pts_trans."PLT_CREATED_ID", pts_trans."PLT_CREATED_DATE",
+         pts_trans."PLT_CREATED_QTY", pts_trans."PLT_CANCEL_INTFC_XACTN_SEQ",
+         pts_trans."PLT_CANCEL_ID", pts_trans."PLT_CANCEL_DATE",
+         pts_trans."PLT_CANCEL_QTY", pts_trans."BACKFLUSH_CODE",
+         pts_trans."BACKFLUSH_BY", pts_trans."BACKFLUSH_DATE",
+         pts_trans."REV_BACKFLUSH_CODE", pts_trans."REV_BACKFLUSH_BY",
+         pts_trans."REV_BACKFLUSH_DATE", pts_trans."STA_INTFC_XACTN_SEQ",
+         pts_trans."STA_CODE", pts_trans."STA_BATCH_CODE",
+         pts_trans."STA_DATE", pts_trans."STA_LOADER_ID",
+         pts_trans."STA_DRIVER_ID", pts_trans."STA_TRAILER_ID",
+         pts_trans."STA_DISPN_CODE", pts_trans."STA_STATUS",
+         pts_trans."RECEIPT_CODE", pts_trans."RECEIPT_BY",
+         pts_trans."RECEIPT_DATE", pts_trans."STATUS", pts_trans."CREATED_BY",
+         pts_trans."CREATED_DATE", pts_trans."DISPOSITION_CODE",
+         pts_trans."DISPOSITION_BY", pts_trans."DISPOSITION_DATE",
+         pts_trans."DISPOSITION_DISPN_CODE",
+         pts_trans."PLT_HOLD_INTFC_XACTN_SEQ", pts_trans."PLT_HOLD_ID",
+         pts_trans."PLT_HOLD_DATE", pts_trans."HOLD_CODE_1",
+         pts_trans."HOLD_CODE_2", pts_trans."HOLD_CODE_3",
+         pts_trans."HOLD_CODE_4", pts_trans."HOLD_CODE_5",
+         pts_trans."HOLD_COMMENT", pts_trans."XACTN_TIME",
+         pts_trans."PLANT_CODE", pts_trans."SENDER_NAME",
+         pts_trans."ZPPPI_BATCH", pts_trans."PROC_ORDER",
+         pts_trans."STOR_LOC_CODE", pts_trans."DISPN_CODE",
+         pts_trans."MATERIAL_CODE", pts_trans."STA_TIME"
+    FROM pts_plt, pts_trans
+   WHERE pts_plt.plt_trans_xactn_seq = pts_trans.xactn_seq
+     AND pts_trans.plt_cancel_intfc_xactn_seq IS NULL
+     AND (pts_trans.sta_code IS NULL OR pts_trans.sta_status = 'X')
+     AND pts_plt.created_date > (SYSDATE - 21)
+         WITH READ ONLY;
+
+
+DROP PUBLIC SYNONYM PTS_ONSITE_VIEW;
+
+CREATE PUBLIC SYNONYM PTS_ONSITE_VIEW FOR PT_APP.PTS_ONSITE_VIEW;
+
+
+GRANT SELECT ON PT_APP.PTS_ONSITE_VIEW TO PUBLIC;
+
