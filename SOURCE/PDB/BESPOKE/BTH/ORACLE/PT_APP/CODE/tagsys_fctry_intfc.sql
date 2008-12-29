@@ -1,5 +1,3 @@
-DROP PACKAGE PT_APP.TAGSYS_FCTRY_INTFC;
-
 CREATE OR REPLACE PACKAGE PT_APP.Tagsys_Fctry_Intfc AS
 
     /******************************************************?
@@ -124,9 +122,6 @@ CREATE OR REPLACE PACKAGE PT_APP.Tagsys_Fctry_Intfc AS
  END;
 /
 
-
-DROP PACKAGE BODY PT_APP.TAGSYS_FCTRY_INTFC;
-
 CREATE OR REPLACE PACKAGE BODY PT_APP.Tagsys_Fctry_Intfc AS
 	
 	 /******************************************************?
@@ -207,7 +202,7 @@ CREATE OR REPLACE PACKAGE BODY PT_APP.Tagsys_Fctry_Intfc AS
 		CURSOR csr_matl IS
 		SELECT issue_strg_locn, 
 		       DECODE(base_uom,'KGM','KG', base_uom) uom 
-		  FROM matl_vw
+		  FROM matl
 		 WHERE LTRIM(matl_code,'0') = i_material_code
 		   AND plant = i_plant_code;
 		
@@ -292,7 +287,7 @@ BEGIN
       o_result := Plt_Common.FAILURE;
       RAISE e_process_exception;
    ELSE
-       SELECT COUNT(*) INTO v_count FROM matl_vw 
+       SELECT COUNT(*) INTO v_count FROM matl 
        WHERE matl_code = i_material_code;
        IF v_count = 0 THEN
            o_result_msg := 'Material Code is not correct.';
@@ -1505,19 +1500,10 @@ END;
 END Tagsys_Fctry_Intfc;
 /
 
-
-DROP PUBLIC SYNONYM TAGSYS_FCTRY_INTFC;
-
-CREATE PUBLIC SYNONYM TAGSYS_FCTRY_INTFC FOR PT_APP.TAGSYS_FCTRY_INTFC;
-
-
 GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO APPSUPPORT;
-
 GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO BTHSUPPORT;
-
 GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO CITECT_USER;
-
 GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO PT_MAINT;
-
 GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO PT_USER;
 
+CREATE OR REPLACE PUBLIC SYNONYM TAGSYS_FCTRY_INTFC FOR PT_APP.TAGSYS_FCTRY_INTFC;

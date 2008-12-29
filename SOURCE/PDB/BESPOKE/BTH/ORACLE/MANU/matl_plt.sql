@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.matl_plt_ics as
+create or replace force view manu.matl_plt as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.plant_code as plant,
     t01.plant_specific_status_valid as plant_sts_start,
@@ -44,12 +44,12 @@ create or replace force view bds_app.matl_plt_ics as
         t12.hu_total_weight as total_wght_hndlng_unit,
         t12.pkg_instr_start_date as start_date,
         t12.pkg_instr_end_date as end_date
-      from bds_material_pkg_instr_det_t t12
+      from bds_material_pkg_instr_det t12
       where t12.sap_material_code = t12.component
         and t12.pkg_instr_start_date =
         (
           select max(t98.pkg_instr_start_date)
-          from bds_material_pkg_instr_det_t t98
+          from bds_material_pkg_instr_det t98
           where t12.sap_material_code = t98.sap_material_code
             and t98.pkg_instr_start_date <= sysdate
             and t98.pkg_instr_table = '505'
@@ -117,11 +117,11 @@ create or replace force view bds_app.matl_plt_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.matl_plt_ics to bds_app with grant option;
-grant select on bds_app.matl_plt_ics to pt_app with grant option;
-grant select on bds_app.matl_plt_ics to manu_app with grant option;
+grant select on manu.matl_plt to bds_app with grant option;
+grant select on manu.matl_plt to pt_app with grant option;
+grant select on manu.matl_plt to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_plt_ics for bds_app.matl_plt_ics;     
+create or replace public synonym matl_plt for manu.matl_plt;     

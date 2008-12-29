@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.matl_clssfctn_raw_ics as
+create or replace force view manu.matl_clssfctn_raw as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t01.sap_raw_family_code as raw_fmly_code,
     t01.sap_raw_sub_family_code as raw_sub_fmly_code,
@@ -41,11 +41,11 @@ create or replace force view bds_app.matl_clssfctn_raw_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.matl_clssfctn_raw_ics to bds_app with grant option;
-grant select on bds_app.matl_clssfctn_raw_ics to pt_app with grant option;
-grant select on bds_app.matl_clssfctn_raw_ics to manu_app with grant option;
+grant select on manu.matl_clssfctn_raw to bds_app with grant option;
+grant select on manu.matl_clssfctn_raw to pt_app with grant option;
+grant select on manu.matl_clssfctn_raw to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_clssfctn_raw_ics for bds_app.matl_clssfctn_raw_ics;       
+create or replace public synonym matl_clssfctn_raw for manu.matl_clssfctn_raw;       
