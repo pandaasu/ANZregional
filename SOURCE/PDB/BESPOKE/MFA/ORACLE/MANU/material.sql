@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.material_ics as
+create or replace force view manu.material as
   select ltrim(t01.sap_material_code,'0') as material_code,
     t01.material_type as material_type,
     t01.material_grp as material_grp,
@@ -73,11 +73,11 @@ create or replace force view bds_app.material_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.material_ics to bds_app with grant option;
-grant select on bds_app.material_ics to pt_app with grant option;
-grant select on bds_app.material_ics to manu_app with grant option;
+grant select on manu.material to bds_app with grant option;
+grant select on manu.material to pt_app with grant option;
+grant select on manu.material to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym material_ics for bds_app.material_ics;   
+create or replace public synonym material for manu.material;   

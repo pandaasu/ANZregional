@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.material_plan_ics as
+create or replace force view manu.material_plan as
   select ltrim(t01.sap_material_code,'0') as material_code,
     t01.material_type as material_type,
     t01.material_grp as material_grp,
@@ -65,6 +65,7 @@ create or replace force view bds_app.material_plan_ics as
         (
           t01.mars_traded_unit_flag = 'X'
           or t01.mars_retail_sales_unit_flag = 'X'
+          or t01.mars_merchandising_unit_flag = 'X'
         )
       )
     );   
@@ -72,11 +73,11 @@ create or replace force view bds_app.material_plan_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.material_plan_ics to bds_app with grant option;
-grant select on bds_app.material_plan_ics to pt_app with grant option;
-grant select on bds_app.material_plan_ics to manu_app with grant option;
+grant select on manu.material_plan to bds_app with grant option;
+grant select on manu.material_plan to pt_app with grant option;
+grant select on manu.material_plan to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym material_plan_ics for bds_app.material_plan_ics;     
+create or replace public synonym material_plan for manu.material_plan;     

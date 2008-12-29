@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.material_pllt_ics as
+create or replace force view manu.material_pllt as
   select ltrim(t01.sap_material_code,'0') as matl_code,
     t03.valid_from_date as units_per_case_date,
     t03.rsu_ean as apn_code,
@@ -34,7 +34,7 @@ create or replace force view bds_app.material_pllt_ics as
     t02.rounding_qty as crtns_per_layer,
     t02.uom as uom_qty
   from bds_material_plant_mfanz t01,
-    bds_material_pkg_instr_det_t t02,
+    bds_material_pkg_instr_det t02,
     (
       select t11.tdu_matl_code, 
         t11.rsus_per_tdu, 
@@ -115,11 +115,11 @@ create or replace force view bds_app.material_pllt_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.material_pllt_ics to bds_app with grant option;
-grant select on bds_app.material_pllt_ics to pt_app with grant option;
-grant select on bds_app.material_pllt_ics to manu_app with grant option;
+grant select on manu.material_pllt to bds_app with grant option;
+grant select on manu.material_pllt to pt_app with grant option;
+grant select on manu.material_pllt to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym material_pllt_ics for bds_app.material_pllt_ics;
+create or replace public synonym material_pllt for manu.material_pllt;

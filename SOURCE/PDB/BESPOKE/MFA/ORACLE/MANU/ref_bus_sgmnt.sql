@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.ref_bus_sgmnt_ics as
+create or replace force view manu.ref_bus_sgmnt as
   select t01.sap_charistic_value_code as bus_sgmnt_code,
     t01.sap_charistic_value_shrt_desc as bus_sgmnt_short_desc,
     t01.sap_charistic_value_long_desc as bus_sgmnt_long_desc
@@ -30,11 +30,11 @@ create or replace force view bds_app.ref_bus_sgmnt_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.ref_bus_sgmnt_ics to bds_app with grant option;
-grant select on bds_app.ref_bus_sgmnt_ics to pt_app with grant option;
-grant select on bds_app.ref_bus_sgmnt_ics to manu_app with grant option;
+grant select on manu.ref_bus_sgmnt to bds_app with grant option;
+grant select on manu.ref_bus_sgmnt to pt_app with grant option;
+grant select on manu.ref_bus_sgmnt to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym ref_bus_sgmnt_ics for bds_app.ref_bus_sgmnt_ics;    
+create or replace public synonym ref_bus_sgmnt for manu.ref_bus_sgmnt;    

@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.matl_vndr_xref_ics as
+create or replace force view manu.matl_vndr_xref as
   select t01.plant_code as plant,
     ltrim(t01.sap_material_code,'0') as matl_code,
     t01.vendor_code as vndr_code,
@@ -31,7 +31,7 @@ create or replace force view bds_app.matl_vndr_xref_ics as
     t01.purchasing_organisation as prchsng_org,
     t02.company_code as sales_org,
     t01.order_unit as uom
-  from bds_refrnc_prchsing_src t01,
+  from bds_refrnc_purchasing_src t01,
     bds_vend_comp t02
   where t01.vendor_code = t02.vendor_code(+)
     and t01.plant_code like 'AU%'
@@ -40,11 +40,11 @@ create or replace force view bds_app.matl_vndr_xref_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.matl_vndr_xref_ics to bds_app with grant option;
-grant select on bds_app.matl_vndr_xref_ics to pt_app with grant option;
-grant select on bds_app.matl_vndr_xref_ics to manu_app with grant option;
+grant select on manu.matl_vndr_xref to bds_app with grant option;
+grant select on manu.matl_vndr_xref to pt_app with grant option;
+grant select on manu.matl_vndr_xref to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym matl_vndr_xref_ics for bds_app.matl_vndr_xref_ics;   
+create or replace public synonym matl_vndr_xref for manu.matl_vndr_xref;   

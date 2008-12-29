@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.cust_ics as
+create or replace force view manu.cust as
   select t01.name as name,
     t01.house_number || ' ' || t01.street as addr1,
     ' ' as addr2,
@@ -42,11 +42,11 @@ create or replace force view bds_app.cust_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.cust_ics to bds_app with grant option;
-grant select on bds_app.cust_ics to pt_app with grant option;
-grant select on bds_app.cust_ics to manu_app with grant option;
+grant select on manu.cust to bds_app with grant option;
+grant select on manu.cust to pt_app with grant option;
+grant select on manu.cust to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym cust_ics for bds_app.cust_ics;    
+create or replace public synonym cust for manu.cust;    

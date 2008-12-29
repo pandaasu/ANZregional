@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.ref_mkt_sgmnt_ics as
+create or replace force view manu.ref_mkt_sgmnt as
   select t01.sap_charistic_value_code as mkt_sgmnt_code,
     t01.sap_charistic_value_shrt_desc as mkt_sgmnt_short_desc,
     t01.sap_charistic_value_long_desc as mkt_sgmnt_long_desc
@@ -30,11 +30,11 @@ create or replace force view bds_app.ref_mkt_sgmnt_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.ref_mkt_sgmnt_ics to bds_app with grant option;
-grant select on bds_app.ref_mkt_sgmnt_ics to pt_app with grant option;
-grant select on bds_app.ref_mkt_sgmnt_ics to manu_app with grant option;
+grant select on manu.ref_mkt_sgmnt to bds_app with grant option;
+grant select on manu.ref_mkt_sgmnt to pt_app with grant option;
+grant select on manu.ref_mkt_sgmnt to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym ref_mkt_sgmnt_ics for bds_app.ref_mkt_sgmnt_ics;    
+create or replace public synonym ref_mkt_sgmnt for manu.ref_mkt_sgmnt;    

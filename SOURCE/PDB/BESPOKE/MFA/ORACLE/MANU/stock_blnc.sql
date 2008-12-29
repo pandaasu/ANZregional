@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.stock_blnc_ics as
+create or replace force view manu.stock_blnc as
   select t01.plant_code as plant,
     t01.storage_location_code as strg_lctn,
     t01.stock_balance_date as stock_blnc_date,
@@ -38,11 +38,11 @@ create or replace force view bds_app.stock_blnc_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.stock_blnc_ics to bds_app with grant option;
-grant select on bds_app.stock_blnc_ics to pt_app with grant option;
-grant select on bds_app.stock_blnc_ics to manu_app with grant option;
+grant select on manu.stock_blnc to bds_app with grant option;
+grant select on manu.stock_blnc to pt_app with grant option;
+grant select on manu.stock_blnc to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym stock_blnc_ics for bds_app.stock_blnc_ics;  
+create or replace public synonym stock_blnc for manu.stock_blnc;  

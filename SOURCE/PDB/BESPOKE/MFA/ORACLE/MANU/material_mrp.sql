@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.material_mrp_ics as
+create or replace force view manu.material_mrp as
   select ltrim(t01.sap_material_code,'0') as material,
     t01.plant_code as plant,
     t01.mrp_controller as mrp_cntrllr
@@ -30,11 +30,11 @@ create or replace force view bds_app.material_mrp_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.material_mrp_ics to bds_app with grant option;
-grant select on bds_app.material_mrp_ics to pt_app with grant option;
-grant select on bds_app.material_mrp_ics to manu_app with grant option;
+grant select on manu.material_mrp to bds_app with grant option;
+grant select on manu.material_mrp to pt_app with grant option;
+grant select on manu.material_mrp to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym material_mrp_ics for bds_app.material_mrp_ics;  
+create or replace public synonym material_mrp for manu.material_mrp;  
