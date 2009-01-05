@@ -60,9 +60,6 @@
    function selectReportGrpId(objSelect) {
       document.main.INP_ReportGrpId.value = objSelect.options[objSelect.selectedIndex].value;
    }
-   function selectCopyRptId(objSelect) {
-      document.main.INP_CopyRptId.value = objSelect.options[objSelect.selectedIndex].value;
-   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
