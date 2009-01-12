@@ -27,8 +27,9 @@ create or replace package lics_stream_configuration as
    /*-*/
    /* Public declarations
    /*-*/
+   function get_nodes(par_code in varchar2) return lics_stream_table pipelined;
    procedure define_stream(par_user in varchar2);
-   procedure copy_stream(par_copy in varchar2, par_code, par_text, par_status, par_user);
+   procedure copy_stream(par_copy in varchar2, par_code in varchar2, par_text in varchar2, par_status in varchar2, par_user in varchar2);
    procedure delete_stream(par_code in varchar2);
 
 end lics_stream_configuration;
@@ -51,6 +52,122 @@ create or replace package body lics_stream_configuration as
    rcd_lics_str_header lics_str_header%rowtype;
    rcd_lics_str_task lics_str_task%rowtype;
    rcd_lics_str_event lics_str_event%rowtype;
+
+   /**************************************************/
+   /* This procedure performs the get stream routine */
+   /**************************************************/
+   function get_nodes(par_code in varchar2) return lics_stream_table pipelined is
+
+      /*-*/
+      /* Cursor definitions
+      /*-*/
+      cursor csr_task is
+         select level,
+                 t01.*
+           from lics_str_task t01
+          where t01.stt_str_code = upper(par_code)
+          start with t01.stt_tsk_pcde = '*TOP'
+        connect by prior t01.stt_str_code = t01.stt_str_code
+                and prior t01.stt_tsk_code = t01.stt_tsk_pcde
+          order siblings by t01.stt_tsk_seqn;
+      rcd_task csr_task%rowtype;
+
+      cursor csr_event is
+         select t01.*
+           from lics_str_event t01
+          where t01.ste_str_code = rcd_task.stt_str_code
+            and t01.ste_tsk_code = rcd_task.stt_tsk_code
+          order by t01.ste_evt_seqn asc;
+      rcd_event csr_event%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Pipe the stream root node
+      /*-*/
+      pipe row(lics_stream_object(0,
+                                  'S',
+                                  '*ROOT',
+                                  '*TOP',
+                                  'Stream Root',
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null));
+
+      /*-*/
+      /* Pipe the stream task nodes
+      /*-*/
+      open csr_task;
+      loop
+         fetch csr_task into rcd_task;
+         if csr_task%notfound then
+            exit;
+         end if;
+         pipe row(lics_stream_object(rcd_task.level,
+                                     'T',
+                                     rcd_task.stt_tsk_pcde,
+                                     rcd_task.stt_tsk_code,
+                                     rcd_task.stt_tsk_text,
+                                     null,
+                                     null,
+                                     null,
+                                     null,
+                                     null));
+
+         /*-*/
+         /* Pipe the stream event nodes
+         /*-*/
+         open csr_event;
+         loop
+            fetch csr_event into rcd_event;
+            if csr_event%notfound then
+               exit;
+            end if;
+            pipe row(lics_stream_object(rcd_task.level+1,
+                                        'E',
+                                        rcd_event.ste_tsk_code,
+                                        rcd_event.ste_evt_code,
+                                        rcd_event.ste_evt_text,
+                                        rcd_event.ste_evt_lock,
+                                        rcd_event.ste_evt_proc,
+                                        rcd_event.ste_job_group,
+                                        rcd_event.ste_opr_alert,
+                                        rcd_event.ste_ema_group));
+         end loop;
+         close csr_event;
+
+      end loop;
+      close csr_task;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'ICS_STREAM_CONFIGURATION - GET_NODES - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_nodes;
 
    /*******************************************************/
    /* This procedure performs the put mobile data routine */
@@ -186,7 +303,7 @@ create or replace package body lics_stream_configuration as
    /***************************************************/
    /* This procedure performs the copy stream routine */
    /***************************************************/
-   procedure copy_stream(par_copy in varchar2, par_code, par_text, par_status, par_user) is
+   procedure copy_stream(par_copy in varchar2, par_code in varchar2, par_text in varchar2, par_status in varchar2, par_user in varchar2) is
 
       /*-*/
       /* Local cursors
@@ -226,7 +343,7 @@ create or replace package body lics_stream_configuration as
          raise_application_error(-20000, 'Stream (' || par_copy || ') does not exist');
       end if;
       close csr_copy_stream;
-      rcd_lics_str_header.sth_str_code := par_code
+      rcd_lics_str_header.sth_str_code := upper(par_code);
       rcd_lics_str_header.sth_str_text := par_text;
       rcd_lics_str_header.sth_status := par_status;
       rcd_lics_str_header.sth_upd_user := par_user;
