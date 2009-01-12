@@ -79,7 +79,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_StreamCode" size="32" maxlength="32" value="<%=objForm.Fields("DTA_StreamCode").Value%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_StreamCode" size="32" maxlength="32" value="<%=objForm.Fields("DTA_StreamCode").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -115,7 +115,7 @@
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_CopyCode" value="<%=objForm.Fields("DTA_CopyCode").Value%>">
    <input type="hidden" name="DTA_StreamCode" value="<%=objForm.Fields("DTA_StreamCode").Value%>">
-   <input type="hidden" name="DTA_StreamName" value="<%=replace(objForm.Fields("DTA_StreamName").Value, """", "&#34;", 1, -1, 1)%>">
+   <input type="hidden" name="DTA_StreamText" value="<%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_StreamStatus" value="<%=objForm.Fields("DTA_StreamStatus").Value%>">
    <input type="hidden" name="INP_StreamStatus" value="<%=objForm.Fields("DTA_StreamStatus").Value%>">
 </form>

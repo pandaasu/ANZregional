@@ -60,12 +60,12 @@
    function doDelete() {
       if (!processForm()) {return;}
       if (cstrSelected == '') {
-         alert('Report must be selected');
+         alert('Stream must be selected');
          return;
       }
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'DELETE_LOAD';
-      document.main.DTA_ReportId.value = cstrSelected;
+      document.main.DTA_StreamCode.value = cstrSelected;
       document.main.submit();
    }
    function doCopy() {

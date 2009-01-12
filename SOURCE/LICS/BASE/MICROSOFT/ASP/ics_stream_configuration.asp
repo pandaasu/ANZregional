@@ -175,7 +175,7 @@ sub ProcessDefineLoad()
       strQuery = "select t01.sth_str_code,"
       strQuery = strQuery & " t01.sth_str_text,"
       strQuery = strQuery & " t01.sth_status"
-      strQuery = strQuery & " from lics_sr_header t01"
+      strQuery = strQuery & " from lics_str_header t01"
       strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
       strReturn = objSelection.Execute("STREAM", strQuery, 0)
       if strReturn <> "*OK" then
@@ -188,14 +188,19 @@ sub ProcessDefineLoad()
       '//
       '// Retrieve the stream nodes
       '//
-      strQuery = "select"
-      strQuery = strQuery & " to_char(t01.price_item_id),"
-      strQuery = strQuery & " t01.price_item_name,"
-      strQuery = strQuery & " t01.price_item_desc"
-      strQuery = strQuery & " from price_item t01"
-      strQuery = strQuery & " where t01.price_mdl_id is null or t01.price_mdl_id = " & objSelection.ListValue10("REPORT",objSelection.ListLower("LIST"))
-      strQuery = strQuery & " order by t01.price_item_name asc"
-      strReturn = objSelection.Execute("PRICE_ITEM", strQuery, 0)
+      strQuery = "select "
+      strQuery = strQuery & " to_char(t01.str_depth),"
+      strQuery = strQuery & " t01.str_type,"
+      strQuery = strQuery & " t01.str_parent,"
+      strQuery = strQuery & " t01.str_code,"
+      strQuery = strQuery & " t01.str_text,"
+      strQuery = strQuery & " t01.str_lock,"
+      strQuery = strQuery & " t01.str_proc,"
+      strQuery = strQuery & " t01.str_job_group,"
+      strQuery = strQuery & " t01.str_opr_alert,"
+      strQuery = strQuery & " t01.str_ema_group"
+      strQuery = strQuery & " from table(lics_app.lics_stream_configuration.get_nodes('" & objForm.Fields("DTA_StreamCode").Value & "')) t01"
+      strReturn = objSelection.Execute("NODES", strQuery, 0)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
          strMode = "SELECT"
@@ -206,6 +211,7 @@ sub ProcessDefineLoad()
       '//
       '// Initialise the data fields
       '//
+      call objForm.AddField("DTA_StreamAction", "*UPDATE")
       call objForm.AddField("DTA_StreamText", objSelection.ListValue02("STREAM",objSelection.ListLower("STREAM")))
       call objForm.AddField("DTA_StreamStatus", objSelection.ListValue03("STREAM",objSelection.ListLower("STREAM")))
 
@@ -214,6 +220,7 @@ sub ProcessDefineLoad()
       '//
       '// Initialise the data fields
       '//
+      call objForm.AddField("DTA_StreamAction", "*CREATE")
       call objForm.UpdateField("DTA_StreamCode", "")
       call objForm.AddField("DTA_StreamText", "")
       call objForm.AddField("DTA_StreamStatus", "1")
@@ -290,7 +297,7 @@ sub ProcessDeleteLoad()
    strQuery = "select t01.sth_str_code,"
    strQuery = strQuery & " t01.sth_str_text,"
    strQuery = strQuery & " t01.sth_status"
-   strQuery = strQuery & " from lics_sr_header t01"
+   strQuery = strQuery & " from lics_str_header t01"
    strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
@@ -364,7 +371,7 @@ sub ProcessCopyLoad()
    strQuery = "select t01.sth_str_code,"
    strQuery = strQuery & " t01.sth_str_text,"
    strQuery = strQuery & " t01.sth_status"
-   strQuery = strQuery & " from lics_sr_header t01"
+   strQuery = strQuery & " from lics_str_header t01"
    strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
@@ -379,7 +386,7 @@ sub ProcessCopyLoad()
    '// Initialise the data fields
    '//
    call objForm.AddField("DTA_CopyCode", objForm.Fields("DTA_StreamCode").Value)
-   call objForm.AddField("DTA_StreamCode", "")
+   call objForm.UpdateField("DTA_StreamCode", "")
    call objForm.AddField("DTA_StreamText", objSelection.ListValue02("STREAM",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_StreamStatus", objSelection.ListValue03("STREAM",objSelection.ListLower("STREAM")))
 
@@ -410,7 +417,7 @@ sub ProcessCopyAccept()
    strStatement = strStatement & "'" & objForm.Fields("DTA_CopyCode").Value & "',"
    strStatement = strStatement & "'" & objForm.Fields("DTA_StreamCode").Value & "',"
    strStatement = strStatement & "'" & objForm.Fields("DTA_StreamText").Value & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_StreamStatus").Value & "'"
+   strStatement = strStatement & "'" & objForm.Fields("DTA_StreamStatus").Value & "',"
    strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objProcedure.Execute(strStatement)

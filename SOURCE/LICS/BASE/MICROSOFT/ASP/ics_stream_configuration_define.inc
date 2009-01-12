@@ -121,9 +121,8 @@
    cobjImage[6].src = 'tree_evt.gif';
    cobjImage[7].src = 'tree_boks.gif';
    cobjImage[8].src = 'tree_boko.gif';
-   function loadStream() {
-      cobjStream[0] = new clsStream('0','S','*ROOT','*TOP','Stream Root','','','','','');<%if objSelection.ListCount("STREAM") <> 0 then%><%for i = objSelection.ListLower("STREAM") to objSelection.ListUpper("STREAM")%>
-      cobjStream[<%=i%>] = new clsStream('<%=objSelection.ListValue01("STREAM",i)%>','<%=objSelection.ListValue02("STREAM",i)%>','<%=objSelection.ListValue03("STREAM",i)%>','<%=objSelection.ListValue04("STREAM",i)%>','<%=replace(objSelection.ListValue05("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("STREAM",i)%>','<%=replace(objSelection.ListValue07("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("STREAM",i)%>','<%=replace(objSelection.ListValue09("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("STREAM",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
+   function loadStream() {<%if objSelection.ListCount("NODES") <> 0 then%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
+      cobjStream[<%=i%>] = new clsStream('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
       paintStream();
    }
    function clsStream(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
