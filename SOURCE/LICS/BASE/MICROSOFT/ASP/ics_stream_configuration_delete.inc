@@ -44,12 +44,16 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_configuration_delete_help.htm');parent.setHeading('<%=strHeading%> - Delete Report');parent.showContent();showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_stream_configuration_delete_help.htm');parent.setHeading('<%=strHeading%> - Delete Stream');parent.showContent();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Name:&nbsp;</nobr></td>
-         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%></nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=objForm.Fields("DTA_StreamCode").Value%></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Text:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
@@ -67,8 +71,8 @@
       </tr>
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
-   <input type="hidden" name="DTA_ReportId" value="<%=objForm.Fields("DTA_ReportId").Value%>">
-   <input type="hidden" name="DTA_ReportName" value="<%=replace(objForm.Fields("DTA_ReportName").Value, """", "&#34;", 1, -1, 1)%>">
+   <input type="hidden" name="DTA_StreamCode" value="<%=objForm.Fields("DTA_StreamCode").Value%>">
+   <input type="hidden" name="DTA_StreamText" value="<%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%>">
 </form>
 </body>
 </html>

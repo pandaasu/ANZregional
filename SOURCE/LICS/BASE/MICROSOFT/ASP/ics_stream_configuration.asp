@@ -137,13 +137,13 @@ sub ProcessSelect()
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " t01.str_sth_code,"
-   strQuery = strQuery & " t01.str_sth_code,"
-   strQuery = strQuery & " decode(t01.str_sth_status,'1','Active','0','Inactive',t01.str_sth_status),"
+   strQuery = strQuery & " t01.sth_str_code,"
+   strQuery = strQuery & " t01.sth_str_text,"
+   strQuery = strQuery & " decode(t01.sth_status,'1','Active','0','Inactive',t01.sth_status),"
    strQuery = strQuery & " t01.sth_upd_user,"
    strQuery = strQuery & " to_char(t01.sth_upd_time,'yyyy/mm/dd hh24:mi:ss')"
    strQuery = strQuery & " from lics_str_header t01"
-   strQuery = strQuery & " order by t01.str_sth_code asc"
+   strQuery = strQuery & " order by t01.sth_str_code asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -172,11 +172,11 @@ sub ProcessDefineLoad()
       '//
       '// Retrieve the stream header
       '//
-      strQuery = "select t01.str_sth_code,"
-      strQuery = strQuery & " t01.str_sth_code,"
-      strQuery = strQuery & " t01.str_sth_status"
+      strQuery = "select t01.sth_str_code,"
+      strQuery = strQuery & " t01.sth_str_text,"
+      strQuery = strQuery & " t01.sth_status"
       strQuery = strQuery & " from lics_sr_header t01"
-      strQuery = strQuery & " where t01.str_sth_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+      strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
       strReturn = objSelection.Execute("STREAM", strQuery, 0)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
@@ -203,8 +203,6 @@ sub ProcessDefineLoad()
          exit sub
       end if
 
-
-
       '//
       '// Initialise the data fields
       '//
@@ -216,7 +214,7 @@ sub ProcessDefineLoad()
       '//
       '// Initialise the data fields
       '//
-      call objForm.AddField("DTA_StreamCode", "")
+      call objForm.UpdateField("DTA_StreamCode", "")
       call objForm.AddField("DTA_StreamText", "")
       call objForm.AddField("DTA_StreamStatus", "1")
 
@@ -289,11 +287,11 @@ sub ProcessDeleteLoad()
    '//
    '// Retrieve the stream header
    '//
-   strQuery = "select t01.str_sth_code,"
-   strQuery = strQuery & " t01.str_sth_code,"
-   strQuery = strQuery & " t01.str_sth_status"
+   strQuery = "select t01.sth_str_code,"
+   strQuery = strQuery & " t01.sth_str_text,"
+   strQuery = strQuery & " t01.sth_status"
    strQuery = strQuery & " from lics_sr_header t01"
-   strQuery = strQuery & " where t01.str_sth_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -363,11 +361,11 @@ sub ProcessCopyLoad()
    '//
    '// Retrieve the stream header
    '//
-   strQuery = "select t01.str_sth_code,"
-   strQuery = strQuery & " t01.str_sth_code,"
-   strQuery = strQuery & " t01.str_sth_status"
+   strQuery = "select t01.sth_str_code,"
+   strQuery = strQuery & " t01.sth_str_text,"
+   strQuery = strQuery & " t01.sth_status"
    strQuery = strQuery & " from lics_sr_header t01"
-   strQuery = strQuery & " where t01.str_sth_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -382,7 +380,7 @@ sub ProcessCopyLoad()
    '//
    call objForm.AddField("DTA_CopyCode", objForm.Fields("DTA_StreamCode").Value)
    call objForm.AddField("DTA_StreamCode", "")
-   call objForm.AddField("DTA_StreamText", objSelection.ListValue02("REPORT",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_StreamText", objSelection.ListValue02("STREAM",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_StreamStatus", objSelection.ListValue03("STREAM",objSelection.ListLower("STREAM")))
 
    '//
@@ -442,27 +440,27 @@ sub PaintFatal()%>
 '// Paint prompt routine //
 '//////////////////////////
 sub PaintSelect()%>
-<!--#include file="lics_stream_configuration_select.inc"-->
+<!--#include file="ics_stream_configuration_select.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint define routine //
 '//////////////////////////
 sub PaintDefine()%>
-<!--#include file="lics_stream_configuration_define.inc"-->
+<!--#include file="ics_stream_configuration_define.inc"-->
 <%end sub
 
 '//////////////////////////
 '// Paint delete routine //
 '//////////////////////////
 sub PaintDelete()%>
-<!--#include file="lics_stream_configuration_delete.inc"-->
+<!--#include file="ics_stream_configuration_delete.inc"-->
 <%end sub
 
 '////////////////////////
 '// Paint copy routine //
 '////////////////////////
 sub PaintCopy()%>
-<!--#include file="lics_stream_configuration_copy.inc"-->
+<!--#include file="ics_stream_configuration_copy.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->

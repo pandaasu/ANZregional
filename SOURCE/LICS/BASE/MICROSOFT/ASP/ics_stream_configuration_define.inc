@@ -1182,10 +1182,11 @@
       return strReturn;
    }
    function fixAttribute(strText) {
-      strText = replace(strText, "<", "&lt", 1, -1, 1);
-      strText = replace(strText, ">", "&gt", 1, -1, 1);
-      strText = replace(strText, """", "&#34", 1, -1, 1);
-      return strText;
+      var strReturn = strText;
+      strReturn = strReturn.replace(/</g,'&lt;');
+      strReturn = strReturn.replace(/>/g,'&gt;');
+      strReturn = strReturn.replace(/"/g,'&#34;');
+      return strReturn;
    }
 // -->
 </script>
