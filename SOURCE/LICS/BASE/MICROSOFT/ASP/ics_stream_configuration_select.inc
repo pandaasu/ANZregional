@@ -43,7 +43,7 @@
       if (strType == '*CREATE') {
          document.main.action = '<%=strBase%><%=strTarget%>';
          document.main.Mode.value = 'DEFINE_LOAD';
-         document.main.DTA_StreamCode.value = 0;
+         document.main.DTA_StreamCode.value = '*NEW';
          document.main.submit();
       }
       if (strType == '*UPDATE') {

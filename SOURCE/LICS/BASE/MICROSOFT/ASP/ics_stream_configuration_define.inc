@@ -56,7 +56,7 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Stream status must be selected';
       }
-      strDetail = checkTasks();
+      strDetail = checkStream();
       if (strDetail != '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + strDetail;
@@ -122,28 +122,8 @@
    cobjImage[7].src = 'tree_boks.gif';
    cobjImage[8].src = 'tree_boko.gif';
    function loadStream() {
-      cobjStream[0] = new clsStream('0','S','*ROOT','*TOP','Stream Root','','','','','');
-      cobjStream[1] = new clsStream('1','T','*TOP','T1','Task 1','','','','','');
-      cobjStream[2] = new clsStream('2','E','T1','E1','Event 1','','','','','');
-      cobjStream[3] = new clsStream('2','E','T1','E2','Event 2','','','','','');
-      cobjStream[4] = new clsStream('2','E','T1','E3','Event 3','','','','','');
-      cobjStream[5] = new clsStream('2','E','T1','E4','Event 4','','','','','');
-      cobjStream[6] = new clsStream('2','T','T1','T2','Task 2','','','','','');
-      cobjStream[7] = new clsStream('3','E','T2','E5','Event 5','','','','','');
-      cobjStream[8] = new clsStream('3','E','T2','E6','Event 6','','','','','');
-      cobjStream[9] = new clsStream('2','T','T1','T3','Task 3','','','','','');
-      cobjStream[10] = new clsStream('3','E','T3','E7','Event 7','','','','','');
-      cobjStream[11] = new clsStream('3','E','T3','E8','Event 8','','','','','');
-      cobjStream[12] = new clsStream('3','T','T3','T4','Task 4','','','','','');
-      cobjStream[13] = new clsStream('4','E','T4','E9','Event 9','','','','','');
-      cobjStream[14] = new clsStream('4','E','T4','E10','Event 10','','','','','');
-      cobjStream[15] = new clsStream('1','T','*TOP','T5','Task 5','','','','','');
-      cobjStream[16] = new clsStream('2','E','T5','E11','Event 11','','','','','');
-      cobjStream[17] = new clsStream('2','E','T5','E12','Event 12','','','','','');
-      cobjStream[18] = new clsStream('2','T','T5','T6','Task 6','','','','','');
-      cobjStream[19] = new clsStream('3','E','T6','E13','Event 13','','','','','');
-      cobjStream[20] = new clsStream('3','T','T6','T7','Task 7','','','','','');
-      cobjStream[21] = new clsStream('4','E','T7','E14','Event 14','','','','','');
+      cobjStream[0] = new clsStream('0','S','*ROOT','*TOP','Stream Root','','','','','');<%if objSelection.ListCount("STREAM") <> 0 then%><%for i = objSelection.ListLower("STREAM") to objSelection.ListUpper("STREAM")%>
+      cobjStream[<%=i%>] = new clsStream('<%=objSelection.ListValue01("STREAM",i)%>','<%=objSelection.ListValue02("STREAM",i)%>','<%=objSelection.ListValue03("STREAM",i)%>','<%=objSelection.ListValue04("STREAM",i)%>','<%=replace(objSelection.ListValue05("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("STREAM",i)%>','<%=replace(objSelection.ListValue07("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("STREAM",i)%>','<%=replace(objSelection.ListValue09("STREAM",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("STREAM",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
       paintStream();
    }
    function clsStream(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
@@ -152,12 +132,12 @@
       this.strpar = strParent;
       this.strcod = strCode;
       this.strtxt = strText;
-      this.strlvl = '';
       this.strlck = strLock;
       this.strprc = strProc;
       this.strgrp = strGroup;
       this.stralt = strAlert;
       this.strema = strEmail;
+      this.strlvl = '';
    }
    function paintStream() {
      var objDepth = new Array();
@@ -1125,6 +1105,88 @@
       }
       paintStream();
    }
+   function checkStream() {
+      var strReturn = '';
+      var strXML = null;
+      var objHidden = null;
+      var intPart = 0;
+      var aryStream = null;
+      var bolFound = false;
+      if (cobjStream.length <= 1) {
+         strReturn = 'At least one task must be created';
+      } else {
+         for (var i=1;i<cobjStream.length;i++) {
+            if (cobjStream[i].strtyp == 'T') {
+               bolFound = false;
+               for (var j=i;j<cobjStream.length;j++) {
+                  if (cobjStream[j].strtyp == 'E' && cobjStream[j].strpar == cobjStream[i].strcod) {
+                     bolFound = true;
+                     break;
+                  }
+               }
+               if (bolFound == false) {
+                  strReturn = 'At least one event must be created for each task';
+                  break;
+               }
+            }
+         }
+      }
+      if (strReturn == '') {
+         strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+         strXML = strXML+'<ICS_STREAM';
+         strXML = strXML+' CODE="'+fixAttribute(document.main.INP_StreamCode.value)+'"';
+         strXML = strXML+' TEXT="'+fixAttribute(document.main.INP_StreamText.value)+'"';
+         strXML = strXML+' STATUS="'+fixAttribute(document.main.INP_StreamStatus.value)+'"';
+         strXML = strXML+'>';
+         strXML = strXML+'<NODES>';
+         for (var i=1;i<cobjStream.length;i++) {
+            if (cobjStream[i].strtyp == 'T') {
+               strXML = strXML+'<NODE';
+               strXML = strXML+' TYPE="'+cobjStream[i].strtyp+'"';
+               strXML = strXML+' CODE="'+fixAttribute(cobjStream[i].strcod)+'"';
+               strXML = strXML+' PARENT="'+fixAttribute(cobjStream[i].strpar)+'"';
+               strXML = strXML+' TEXT="'+fixAttribute(cobjStream[i].strtxt)+'"';
+               strXML = strXML+'/>';
+            } else {
+               strXML = strXML+'<NODE';
+               strXML = strXML+' TYPE="'+cobjStream[i].strtyp+'"';
+               strXML = strXML+' CODE="'+fixAttribute(cobjStream[i].strcod)+'"';
+               strXML = strXML+' PARENT="'+fixAttribute(cobjStream[i].strpar)+'"';
+               strXML = strXML+' TEXT="'+fixAttribute(cobjStream[i].strtxt)+'"';
+               strXML = strXML+' LOCK="'+fixAttribute(cobjStream[i].strlck)+'"';
+               strXML = strXML+' PROC="'+fixAttribute(cobjStream[i].strprc)+'"';
+               strXML = strXML+' GROUP="'+fixAttribute(cobjStream[i].strgrp)+'"';
+               strXML = strXML+' ALERT="'+fixAttribute(cobjStream[i].stralt)+'"';
+               strXML = strXML+' EMAIL="'+fixAttribute(cobjStream[i].strema)+'"';
+               strXML = strXML+'/>';
+            }
+         }
+         strXML = strXML+'</NODES>';
+         strXML = strXML+'</ICS_STREAM>';
+         intPart = 0;
+         aryStream = strXML.match(RegExp('.{1,2000}','g'));
+         for (var i=0;i<aryStream.length;i++) {
+            intPart++;
+            objHidden = document.createElement('input');
+            objHidden.type = 'hidden';
+            objHidden.name = 'StreamPart'+intPart;
+            objHidden.value = aryStream[i];
+            document.forms['main'].appendChild(objHidden);
+         }
+         objHidden = document.createElement('input');
+         objHidden.type = 'hidden';
+         objHidden.name = 'StreamCount';
+         objHidden.value = intPart;
+         document.forms['main'].appendChild(objHidden);
+      }
+      return strReturn;
+   }
+   function fixAttribute(strText) {
+      strText = replace(strText, "<", "&lt", 1, -1, 1);
+      strText = replace(strText, ">", "&gt", 1, -1, 1);
+      strText = replace(strText, """", "&#34", 1, -1, 1);
+      return strText;
+   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -1342,7 +1404,6 @@
    <input type="hidden" name="DTA_StreamText" value="<%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_StreamStatus" value="<%=objForm.Fields("DTA_StreamStatus").Value%>">
    <input type="hidden" name="INP_StreamStatus" value="<%=objForm.Fields("DTA_StreamStatus").Value%>">
-   <input type="hidden" name="DET_StreamCount" value="">
 </form>
 </body>
 </html>
