@@ -22,8 +22,7 @@
 create table df.fcst_source
    (fcst_id                     number(20)                 not null,
     source_type                 varchar2(10)               not null,
-    value                        varchar2(1000)             null,
-    data_frmt                    varchar2(4000)             null);
+    source_date                 date                       not null);
 
 /**/
 /* Primary Key Constraint
