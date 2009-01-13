@@ -31,6 +31,13 @@ alter table df.fcst_source
    add constraint fcst_source_pk primary key (fcst_id, source_type);
 
 /**/
+/* Foreign Key Constraints
+/**/
+alter table df.fcst_source
+   add constraint fcst_source_fk01 foreign key (fcst_id)
+      references fcst (fcst_id);
+
+/**/
 /* Authority
 /**/
 grant select, insert, update, delete on df.fcst_source to df_app;
