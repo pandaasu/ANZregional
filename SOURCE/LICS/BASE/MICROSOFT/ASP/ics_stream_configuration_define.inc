@@ -1331,10 +1331,18 @@
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*NONE or Lock with optional substitution values &lt%=PARAMETER%&gt)&nbsp;</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Event Procedure:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_EvtProc" size="64" maxlength="512" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*SUPPLIED or Procedure with optional substitution values &lt%=PARAMETER%&gt)&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Job Group:&nbsp;</nobr></td>
@@ -1349,10 +1357,18 @@
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*NONE or Operator alert)&nbsp;</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Email Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_EmaGroup" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*NONE or Email group)&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr id="enqEvent" style="display:none;visibility:hidden"><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
