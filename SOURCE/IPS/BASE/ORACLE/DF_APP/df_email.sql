@@ -83,7 +83,7 @@ create or replace package body df_email as
          select t01.*
            from fcst t01
           where t01.fcst_id = par_fcst_id;
-      rcd_fcst csr_fcst;
+      rcd_fcst csr_fcst%rowtype;
 
       cursor csr_missing_prices(i_fcst_id in common.st_id) is
          SELECT e.acct_assign_name, a.zrep, (SELECT t0.matl_desc
@@ -391,9 +391,9 @@ create or replace package body df_email as
             lics_notification.send_alert(var_alert);
          end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
-            lics_notification.send_email(dw_parameter.system_code,
-                                         dw_parameter.system_unit,
-                                         dw_parameter.system_environment,
+            lics_notification.send_email(df_parameter.system_code,
+                                         df_parameter.system_unit,
+                                         df_parameter.system_environment,
                                          con_function,
                                          'DF_EMAIL_FORECAST_ALERT',
                                          var_email,
@@ -433,13 +433,6 @@ create or replace package body df_email as
          if lics_logging.is_created = true then
             lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
             lics_logging.end_log;
-         end if;
-
-         /*-*/
-         /* Release the lock when required
-         /*-*/
-         if var_locked = true then
-            lics_locking.release(var_loc_string);
          end if;
 
          /*-*/
