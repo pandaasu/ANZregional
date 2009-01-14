@@ -88,9 +88,9 @@ create or replace package body pricelist_configuration as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**/
+   /*-*/
    /* Private declarations
-   /**/
+   /*-*/
    procedure load_materials(par_report_id in number);
    procedure check_materials(par_report_id in number, par_update in varchar2);
 
