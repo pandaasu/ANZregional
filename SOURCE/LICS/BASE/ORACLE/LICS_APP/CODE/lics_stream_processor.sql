@@ -23,6 +23,7 @@ create or replace package lics_stream_processor as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/08   Steve Gregan   Created
+    2009/01   Steve Gregan   Added parameter functionality
 
    *******************************************************************************/
 
@@ -35,6 +36,7 @@ create or replace package lics_stream_processor as
    function callback_lock return varchar2;
    function callback_alert return varchar2;
    function callback_email return varchar2;
+   function callback_parameter(par_code in varchar2) return varchar2;
 
 end lics_stream_processor;
 /
@@ -53,6 +55,7 @@ create or replace package body lics_stream_processor as
    /*-*/
    /* Private definitions
    /*-*/
+   var_stream lics_str_action.sta_str_seqn%type;
    var_event lics_str_action.sta_evt_code%type;
    var_text lics_str_action.sta_evt_text%type;
    var_lock lics_str_action.sta_evt_lock%type;
@@ -88,6 +91,7 @@ create or replace package body lics_stream_processor as
       /*-*/
       /* Initialise the routine
       /*-*/
+      var_stream := null;
       var_error := null;
       var_event := null;
       var_lock := null;
@@ -127,6 +131,7 @@ create or replace package body lics_stream_processor as
       /*    (this processor will always perform commit/rollback for safety)
       /*-*/
       var_error := null;
+      var_stream := rcd_action.sta_str_seqn;
       var_event := rcd_action.sta_evt_code;
       var_text := rcd_action.sta_evt_text;
       var_lock := rcd_action.sta_evt_lock;
@@ -140,6 +145,7 @@ create or replace package body lics_stream_processor as
             rollback;
             var_error := substr(SQLERRM, 1, 3000);
       end;
+      var_stream := null;
       var_event := null;
       var_text := null;
       var_lock := null;
@@ -310,6 +316,52 @@ create or replace package body lics_stream_processor as
    /* End routine */
    /*-------------*/
    end callback_email;
+
+   /*********************************************************/
+   /* This function performs the callback parameter routine */
+   /*********************************************************/
+   function callback_parameter(par_code in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(4000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_parameter is 
+         select t01.stp_par_value
+           from lics_str_parameter t01
+          where t01.stp_str_seqn = var_stream
+            and t01.stp_par_code = upper(par_code);
+      rcd_parameter csr_parameter%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the stream parameter
+      /*-*/
+      var_return := null;
+      open csr_parameter;
+      fetch csr_parameter into rcd_parameter;
+      if csr_parameter%found then
+         var_return := rcd_parameter.stp_par_value;
+      end if;
+      close csr_parameter;
+
+      /*-*/
+      /* Return the stream parameter
+      /*-*/
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_parameter;
 
 end lics_stream_processor;
 /

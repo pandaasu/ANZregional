@@ -259,8 +259,8 @@ create or replace package body lics_stream_configuration as
             rcd_lics_str_event.ste_evt_lock := upper(xslProcessor.valueOf(obj_xml_node,'@LOCK'));
             rcd_lics_str_event.ste_evt_proc := xslProcessor.valueOf(obj_xml_node,'@PROC');
             rcd_lics_str_event.ste_job_group := upper(xslProcessor.valueOf(obj_xml_node,'@GROUP'));
-            rcd_lics_str_event.ste_opr_alert := xslProcessor.valueOf(obj_xml_node,'@ALERT');
-            rcd_lics_str_event.ste_ema_group := xslProcessor.valueOf(obj_xml_node,'@EMAIL');
+            rcd_lics_str_event.ste_opr_alert := nvl(xslProcessor.valueOf(obj_xml_node,'@ALERT'),'*NONE');
+            rcd_lics_str_event.ste_ema_group := nvl(xslProcessor.valueOf(obj_xml_node,'@EMAIL'),'*NONE');
             insert into lics_str_event values rcd_lics_str_event;
          end if;
       end loop;

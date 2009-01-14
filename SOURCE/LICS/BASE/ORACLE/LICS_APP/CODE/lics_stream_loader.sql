@@ -21,10 +21,13 @@ create or replace package lics_stream_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/09   Steve Gregan   Created
+    2009/01   Steve Gregan   Added parameter functionality
 
    /**/
    /* Public declarations
    /**/
+   procedure clear_parameters;
+   procedure set_parameter(par_code in varchar2, par_value in varchar2);
    procedure execute(par_stream in varchar2, par_procedure in varchar2);
 
 end lics_stream_loader;
@@ -41,10 +44,74 @@ create or replace package body lics_stream_loader as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private definitions
+   /*-*/
+   type rcd_parameter is record(code varchar2(32 char), value varchar2(4000 char));
+   type typ_parameter is table of rcd_parameter index by binary_integer;
+   tbl_parameter typ_parameter;
+
+   /********************************************************/
+   /* This procedure performs the clear parameters routine */
+   /********************************************************/
+   procedure clear_parameters is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the parameters
+      /*-*/
+      tbl_parameter.delete;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear_parameters;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure set_parameter(par_code in varchar2, par_value in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_found boolean;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Insert/update the parameter value
+      /*-*/
+      var_found := false;
+      for idx in 1..tbl_parameter.count loop
+         if tbl_parameter(idx).code = upper(par_code) then
+            tbl_parameter(idx).value := par_value;
+            var_found := true;
+            exit;
+         end if;
+      end loop;
+      if var_found = false then
+        tbl_parameter(tbl_parameter.count+1).code := upper(par_code);
+        tbl_parameter(tbl_parameter.count).value := par_value;
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end set_parameter;
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
    procedure execute(par_stream in varchar2, par_procedure in varchar2) is
+
 
       /*-*/
       /* Autonomous transaction
@@ -55,6 +122,7 @@ create or replace package body lics_stream_loader as
       /* Local definitions
       /*-*/
       rcd_lics_str_action lics_str_action%rowtype;
+      rcd_lics_str_parameter lics_str_parameter%rowtype;
       var_procedure lics_str_action.sta_evt_proc%type;
       var_str_seqn number;
       var_tsk_seqn number;
@@ -156,6 +224,9 @@ create or replace package body lics_stream_loader as
             rcd_lics_str_action.sta_evt_code := rcd_event.ste_evt_code;
             rcd_lics_str_action.sta_evt_text := rcd_event.ste_evt_text;
             rcd_lics_str_action.sta_evt_lock := rcd_event.ste_evt_lock;
+            if upper(trim(rcd_event.ste_evt_lock)) = '*NONE' then
+               rcd_lics_str_action.sta_evt_lock := '*LOCK:' || to_char(var_str_seqn) || ':' || to_char(var_tsk_seqn) || ':' || to_char(var_evt_seqn);
+            end if;
             rcd_lics_str_action.sta_evt_proc := rcd_event.ste_evt_proc;
             if upper(trim(rcd_event.ste_evt_proc)) = '*SUPPLIED' then
                rcd_lics_str_action.sta_evt_proc := var_procedure;
@@ -172,6 +243,19 @@ create or replace package body lics_stream_loader as
             rcd_lics_str_action.sta_completed := '0';
             rcd_lics_str_action.sta_failed := '0';
             rcd_lics_str_action.sta_message := null;
+
+            /*-*/
+            /* Perform the parameter substitutions
+            /*-*/
+            for idx in 1..tbl_parameter.count loop
+               rcd_lics_str_action.sta_evt_lock := replace(rcd_lics_str_action.sta_evt_lock,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
+               rcd_lics_str_action.sta_evt_proc := replace(rcd_lics_str_action.sta_evt_proc,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
+               rcd_lics_str_action.sta_job_group := replace(rcd_lics_str_action.sta_job_group,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
+            end loop;
+
+            /*-*/
+            /* Create the stream action
+            /*-*/
             insert into lics_str_action values rcd_lics_str_action;
 
          end loop;
@@ -179,6 +263,16 @@ create or replace package body lics_stream_loader as
 
       end loop;
       close csr_task;
+
+      /*-*/
+      /* Create the stream parameters
+      /*-*/
+      for idx in 1..tbl_parameter.count loop
+         rcd_lics_str_parameter.stp_str_seqn := var_str_seqn;
+         rcd_lics_str_parameter.stp_par_code := tbl_parameter(idx).code;
+         rcd_lics_str_parameter.stp_par_value := tbl_parameter(idx).value;
+         insert into lics_str_parameter values rcd_lics_str_parameter;
+      end loop;
 
       /*-*/
       /* Commit the database
