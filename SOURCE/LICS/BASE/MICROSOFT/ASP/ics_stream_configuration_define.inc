@@ -1332,7 +1332,7 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*NONE or Lock with optional substitution values &lt%=PARAMETER%&gt)&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*NONE or Lock with optional substitution values &ltPARAMETER&gt)&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Event Procedure:&nbsp;</nobr></td>
@@ -1342,13 +1342,17 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*SUPPLIED or Procedure with optional substitution values &lt%=PARAMETER%&gt)&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(*SUPPLIED or Procedure with optional substitution values &ltPARAMETER&gt)&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Job Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_JobGroup" size="10" maxlength="10" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsWorking" align=left valign=center colspan=1 nowrap><nobr>&nbsp;(Job group with optional substitution values &ltPARAMETER&gt)&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Operator Alert:&nbsp;</nobr></td>
