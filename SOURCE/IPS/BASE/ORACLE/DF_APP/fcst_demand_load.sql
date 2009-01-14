@@ -365,12 +365,12 @@ create or replace package body fcst_demand_load as
          commit;
          if (upper(substr(rcd_load_file.file_name, 1, 5)) = 'DRAFT') then
             lics_stream_loader.clear_parameters;
-            lics_stream_loader.set_parameter('MOE',to_char(rcd_load_file.moe_code));
+            lics_stream_loader.set_parameter('MOE',rcd_load_file.moe_code);
             lics_stream_loader.set_parameter('FILE_ID',to_char(rcd_load_file.file_id));
             lics_stream_loader.execute('DF_DEMAND_DRAFT',null);
          elsif (upper(substr(rcd_load_file.file_name, 1, 6)) = 'DEMAND') then
             lics_stream_loader.clear_parameters;
-            lics_stream_loader.set_parameter('MOE',to_char(rcd_load_file.moe_code));
+            lics_stream_loader.set_parameter('MOE',rcd_load_file.moe_code);
             lics_stream_loader.set_parameter('FILE_ID',to_char(rcd_load_file.file_id));
             lics_stream_loader.execute('DF_DEMAND_FINAL',null);
          end if;
