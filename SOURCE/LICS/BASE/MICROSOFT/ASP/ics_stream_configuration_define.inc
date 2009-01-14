@@ -872,6 +872,10 @@
       }
       var intIndexS = objTarget.parentNode.parentNode.rowIndex;
       var intIndexE = intIndexS;
+      if (cobjStream[intIndexS].strtyp != 'T') {
+         alert('Target must be task for move');
+         return;
+      }
       if (cobjStream[intIndexS].strcod.toUpperCase() == cobjStream[cintSelectS].strpar.toUpperCase()) {
          alert('Target is current selection parent');
          return;
@@ -1207,11 +1211,13 @@
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table id="dspStream" class="clsGrid02" style="display:block;visibility:visible" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
-      <tr>
+      <tr><%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_StreamCode" size="32" maxlength="32" value="<%=objForm.Fields("DTA_StreamCode").Value%>" onFocus="setSelect(this);">
-         </nobr></td>
+         </nobr></td><%else%>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=objForm.Fields("DTA_StreamCode").Value%></nobr></td><%end if%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Text:&nbsp;</nobr></td>
