@@ -293,7 +293,7 @@
          } else if (cobjStream[i].strtyp == 'T') {
             objCell.appendChild(document.createTextNode(' ('+cobjStream[i].strcod+') '+cobjStream[i].strtxt));
          } else if (cobjStream[i].strtyp == 'E') {
-            objCell.appendChild(document.createTextNode(' ('+cobjStream[i].strcod+') '+cobjStream[i].strtxt+' - Lock('+cobjStream[i].strlck+') Group('+cobjStream[i].strgrp+') Procedure('+cobjStream[i].strprc+')'));
+            objCell.appendChild(document.createTextNode(' ('+cobjStream[i].strcod+') '+cobjStream[i].strtxt+' - Lock('+cobjStream[i].strlck+') Group('+cobjStream[i].strgrp+')'));
          }
       }
       cobjSelected = null;
@@ -759,6 +759,14 @@
          if (strJobGroup == '') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Job group must be entered';
+         }
+         if (strOprAlert == '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Operator alert must be entered';
+         }
+         if (strEmaGroup == '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Email group must be entered';
          }
          bolFound = false;
          for (var i=0;i<cobjStream.length;i++) {
