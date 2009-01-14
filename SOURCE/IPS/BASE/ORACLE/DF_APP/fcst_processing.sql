@@ -170,7 +170,7 @@ create or replace package body fcst_processing as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Demand Financials Forecast Processing - Parameters(' || upper(par_action) || ' + ' || to_char(par_file_id) || ')');
+      lics_logging.write_log('Begin - Demand Financials Forecast Processing - Parameters(' || upper(par_action) || ' + ' || to_char(par_file_id) || ' + ' || rcd_load_file.moe_code || ')');
 
       /*-*/
       /* Request the lock on the processing
@@ -197,36 +197,12 @@ create or replace package body fcst_processing as
             cvar_fcst_valid := false;
             if upper(par_action) = '*DEMAND_FINAL' then
                process_demand_file(par_file_id,rcd_moe_setting.dmnd_file,rcd_moe_setting.sply_file);
-               if cvar_fcst_valid = true then
-                  for idx in 1..tab_fcst.count loop
-                     email_forecast(cvar_fcst_id);
-                     review_creation(cvar_fcst_id);
-                     venus_extract(cvar_fcst_id);
-                  end loop;
-               end if;
             elsif upper(par_action) = '*DEMAND_DRAFT' then
                process_demand_file(par_file_id,rcd_moe_setting.dmnd_file,rcd_moe_setting.sply_file);
-               if cvar_fcst_valid = true then
-                  for idx in 1..tab_fcst.count loop
-                     email_forecast(cvar_fcst_id);
-                  end loop;
-               end if;
             elsif upper(par_action) = '*SUPPLY_FINAL' then
                process_supply_file(par_file_id,rcd_moe_setting.dmnd_file,rcd_moe_setting.sply_file);
-               if cvar_fcst_valid = true then
-                  for idx in 1..tab_fcst.count loop
-                     email_forecast(cvar_fcst_id);
-                     review_creation(cvar_fcst_id);
-                     venus_extract(cvar_fcst_id);
-                  end loop;
-               end if;
             elsif upper(par_action) = '*SUPPLY_DRAFT' then
                process_supply_file(par_file_id,rcd_moe_setting.dmnd_file,rcd_moe_setting.sply_file);
-               if cvar_fcst_valid = true then
-                  for idx in 1..tab_fcst.count loop
-                     email_forecast(cvar_fcst_id);
-                  end loop;
-               end if;
             end if;
          exception
             when others then
@@ -766,7 +742,13 @@ create or replace package body fcst_processing as
             if var_fcst_valid = true then
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
-               lics_stream_loader.execute('DF_FCST_PROCESSING',null);
+               lics_stream_loader.execute('DF_FCST_FINAL',null);
+            end if;
+         else
+            if var_fcst_valid = true then
+               lics_stream_loader.clear_parameters;
+               lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
+               lics_stream_loader.execute('DF_FCST_DRAFT',null);
             end if;
          end if;
 
@@ -1236,7 +1218,13 @@ create or replace package body fcst_processing as
             if var_fcst_valid = true then
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
-               lics_stream_loader.execute('DF_FCST_PROCESSING',null);
+               lics_stream_loader.execute('DF_FCST_FINAL',null);
+            end if;
+         else
+            if var_fcst_valid = true then
+               lics_stream_loader.clear_parameters;
+               lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
+               lics_stream_loader.execute('DF_FCST_DRAFT',null);
             end if;
          end if;
 
@@ -1303,6 +1291,321 @@ create or replace package body fcst_processing as
          raise_application_error(-20000, '**ERROR**');
 
    end process_supply_feed;
+
+   /******************************************************/
+   /* This procedure performs the email forecast routine */
+   /******************************************************/
+   procedure email_forecast(par_fcst_id in number) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_exception varchar2(4000);
+      v_result_msg common.st_message_string;
+      v_heading boolean;
+      v_qty_total common.st_value;
+      v_counter common.st_counter;
+      v_group_members common.t_strings;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst is
+         select t01.*
+           from fcst t01
+          where t01.fcst_id = par_fcst_id;
+      rcd_fcst csr_fcst;
+
+      cursor csr_missing_prices(i_fcst_id in common.st_id) is
+         SELECT e.acct_assign_name, a.zrep, (SELECT t0.matl_desc
+                                              FROM matl t0
+                                              WHERE t0.matl_code = reference_functions.full_matl_code (zrep) ) AS zrep_desc, a.tdu,
+            ROUND (SUM (qty_in_base_uom) ) AS qty
+          FROM dmnd_data a, dmnd_grp b, dmnd_grp_org c, dmnd_grp_type d, dmnd_acct_assign e
+          WHERE a.fcst_id = i_fcst_id AND
+           a.price IS NULL AND
+           a.dmnd_grp_org_id = c.dmnd_grp_org_id AND
+           b.dmnd_grp_id = c.dmnd_grp_id AND
+           b.dmnd_grp_type_id = d.dmnd_grp_type_id AND
+           c.acct_assign_id = e.acct_assign_id
+          GROUP BY e.acct_assign_name, a.zrep, a.tdu;
+
+      cursor csr_missing_determination(i_fcst_id in common.st_id) is
+         SELECT e.acct_assign_name, a.zrep, (SELECT t0.matl_desc
+                                              FROM matl t0
+                                              WHERE t0.matl_code = reference_functions.full_matl_code (zrep) ) AS zrep_desc, SUM (qty_in_base_uom) AS qty
+          FROM dmnd_data a, dmnd_grp b, dmnd_grp_org c, dmnd_grp_type d, dmnd_acct_assign e
+          WHERE a.fcst_id = i_fcst_id AND
+           a.tdu IS NULL AND
+           a.dmnd_grp_org_id = c.dmnd_grp_org_id AND
+           b.dmnd_grp_id = c.dmnd_grp_id AND
+           b.dmnd_grp_type_id = d.dmnd_grp_type_id AND
+           c.acct_assign_id = e.acct_assign_id
+          GROUP BY e.acct_assign_name, a.zrep;
+
+      cursor csr_negative_forecast(i_fcst_id in common.st_id) is
+         SELECT e.acct_assign_name, b.dmnd_grp_name, a.zrep, (SELECT t0.matl_desc
+                                                               FROM matl t0
+                                                               WHERE t0.matl_code = reference_functions.full_matl_code (zrep) ) AS zrep_desc, a.mars_week,
+            ROUND (SUM (qty_in_base_uom) ) AS qty
+          FROM dmnd_data a, dmnd_grp b, dmnd_grp_org c, dmnd_grp_type d, dmnd_acct_assign e
+          WHERE a.fcst_id = i_fcst_id AND
+           a.dmnd_grp_org_id = c.dmnd_grp_org_id AND
+           b.dmnd_grp_id = c.dmnd_grp_id AND
+           b.dmnd_grp_type_id = d.dmnd_grp_type_id AND
+           c.acct_assign_id = e.acct_assign_id
+          GROUP BY e.acct_assign_name, b.dmnd_grp_name, a.mars_week, a.zrep
+          HAVING SUM (qty_in_base_uom) <= -1
+          ORDER BY acct_assign_name, dmnd_grp_name, mars_week;
+
+      cursor csr_matl_moe(i_fcst_id in common.st_id) is
+         SELECT t10.matl_code, t20.matl_desc
+          FROM (SELECT DISTINCT zrep AS matl_code
+                FROM dmnd_data t1
+                WHERE fcst_id = i_fcst_id) t10,
+            matl t20
+          WHERE reference_functions.full_matl_code (t10.matl_code) = t20.matl_code AND
+           NOT EXISTS (SELECT *
+                       FROM matl_moe t0
+                       WHERE t0.matl_code = reference_functions.full_matl_code (t10.matl_code) AND t0.item_usage_code IN ('BUY', 'MKE', 'COP') )
+          UNION
+          SELECT t10.matl_code, t20.matl_desc
+          FROM (SELECT DISTINCT tdu AS matl_code
+                FROM dmnd_data t1
+                WHERE fcst_id = i_fcst_id) t10,
+            matl t20
+          WHERE reference_functions.full_matl_code (t10.matl_code) = t20.matl_code AND
+           NOT EXISTS (SELECT *
+                       FROM matl_moe t0
+                       WHERE t0.matl_code = reference_functions.full_matl_code (t10.matl_code) AND t0.item_usage_code IN ('BUY', 'MKE', 'COP') );
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Log the event start
+      /*-*/
+      lics_logging.write_log('Begin - Email forecast');
+
+      /*-*/
+      /* Retrieve the forecast
+      /*-*/
+      open csr_fcst;
+      fetch csr_fcst into rcd_fcst;
+      if csr_fcst%notfound then
+         raise_application_error(-20000, 'Forecast ' || to_char(par_fcst_id) || ' not found');
+      end if;
+      close csr_fcst;
+
+      /*-*/
+      /* Create the email
+      /*-*/
+      if emailit.create_email(null, 'DEMAND FINANCIALS EMAIL ALERT', v_result_msg) != common.gc_success then
+         raise_application_error(-20000, 'Email creation failed - '||v_result_msg);
+      end if;
+
+      /*-*/
+      /* Get list of email address to sent message to
+      /*-*/
+      if security.get_group_user_emails(demand_forecast.gc_demand_alerting_group || ' ' || rcd_fcst.moe_code, v_group_members, v_result_msg) = common.gc_success then
+         for idx in v_group_members.first..v_group_members.last loop
+            if emailit.add_recipient(emailit.gc_area_to, emailit.gc_type_user, v_group_members(idx), null, v_result_msg) != common.gc_success then
+               raise_application_error(-20000, 'Add recipient failed - '||v_result_msg);
+            end if;
+         end loop;
+      else
+         raise_application_error(-20000, 'Failed to find mailing list - '||v_result_msg);
+      end if;
+
+      /*-*/
+      /* Email heading
+      /*-*/
+      if rcd_fcst.forecast_type = demand_forecast.gc_ft_fcst then
+          emailit.add_content ('Demand Financials Completed Forecast Missing Data Report.');
+          emailit.add_content ('---------------------------------------------------------');
+          emailit.add_content ('The following forecast has just completed processing a supply file');
+          emailit.add_content ('and demand file.  If there are any problems with this forecast they');
+          emailit.add_content ('will be summarised below. Please run the Missing Demand Data report');
+          emailit.add_content ('to find out more detail about any reported issues.');
+          emailit.add_content (common.gc_crlf);
+          emailit.add_content ('## Forecast ID : ' || rcd_fcst.fcst_id);
+          emailit.add_content ('   - Created : ' || TO_CHAR (SYSDATE, 'DD/MM/YYYY HH24:MI:SS') );
+          emailit.add_content ('   - Casting Week : ' || rcd_fcst.casting_year || LPAD (rcd_fcst.casting_period, 2, '0') || rcd_fcst.casting_week);
+          emailit.add_content ('   - MOE Code : ' || rcd_fcst.moe_code);
+          emailit.add_content (common.gc_crlf);
+      else
+          emailit.add_content ('Demand Financials Completed Draft Forecast Missing Data Report.');
+          emailit.add_content ('---------------------------------------------------------------');
+          emailit.add_content ('The following forecast has just completed processing a demand draft');
+          emailit.add_content ('file.  If there are any problems with this forecast they will be');
+          emailit.add_content ('summarised below. Please run the Missing Demand Data report to find');
+          emailit.add_content ('out more detail about any reported issues.');
+          emailit.add_content (common.gc_crlf);
+          emailit.add_content ('## Forecast ID : ' || rcd_fcst.fcst_id);
+          emailit.add_content ('   - Created : ' || TO_CHAR (SYSDATE, 'DD/MM/YYYY HH24:MI:SS') );
+          emailit.add_content ('   - Casting Week : ' || rcd_fcst.casting_year || LPAD (rcd_fcst.casting_period, 2, '0') || rcd_fcst.casting_week);
+          emailit.add_content ('   - MOE Code : ' || rcd_fcst.moe_code);
+          emailit.add_content (common.gc_crlf);
+      end if;
+      emailit.add_content('## Forecast Issues');
+
+      /*-*/
+      /* Material determination
+      /*-*/
+      v_heading := false;
+      v_qty_total := 0;
+      v_counter := 0;
+      for rv_determination in csr_missing_determination(rcd_fcst.fcst_id) loop
+         if v_heading = false then
+            emailit.add_content('   * Material Determination Issues Were Detected.');
+            v_heading := true;
+         end if;
+         emailit.add_content(   '     - '
+                             || rv_determination.acct_assign_name
+                             || ', ZREP: '
+                             || rv_determination.zrep
+                             || '-'
+                             || rv_determination.zrep_desc
+                             || ', QTY:'
+                             || rv_determination.qty);
+         v_counter := v_counter + 1;
+         v_qty_total := v_qty_total + rv_determination.qty;
+      end loop;
+      if v_heading = false then
+         emailit.add_content('   * No Missing Material Determination Issues Detected.');
+      else
+         emailit.add_content('     - Total Issues : ' || v_counter || ', Total Quantity Affected : ' || v_qty_total);
+      end if;
+
+      /*-*/
+      /* Pricing
+      /*-*/
+      v_heading := false;
+      v_qty_total := 0;
+      v_counter := 0;
+      for rv_price IN csr_missing_prices(rv_forecast.fcst_id) loop
+         if v_heading = false then
+            emailit.add_content('   * Pricing Issues Were Detected.');
+            v_heading := true;
+         end if;
+         emailit.add_content(   '     - '
+                             || rv_price.acct_assign_name
+                             || ', ZREP: '
+                             || rv_price.zrep
+                             || '-'
+                             || rv_price.zrep_desc
+                             || ', TDU:'
+                             || rv_price.tdu
+                             || ', QTY:'
+                             || rv_price.qty);
+         v_counter := v_counter + 1;
+         v_qty_total := v_qty_total + rv_price.qty;
+      end loop;
+      if v_heading = false then
+         emailit.add_content('   * No Pricing Issues Detected.');
+      else
+         emailit.add_content('     - Total Issues : ' || v_counter || ', Total Quantity Affected : ' || v_qty_total);
+      end if;
+
+      /*-*/
+      /* Negative forecasts
+      /*-*/
+      v_heading := false;
+      v_qty_total := 0;
+      v_counter := 0;
+      for rv_negative in csr_negative_forecast(rv_forecast.fcst_id) loop
+         if v_heading = false then
+            emailit.add_content('   * Negative Forecast Issues Were Detected.');
+            v_heading := true;
+         end if;
+         emailit.add_content(   '     - '
+                             || rv_negative.acct_assign_name
+                             || ', '
+                             || rv_negative.dmnd_grp_name
+                             || ', Mars Week:'
+                             || rv_negative.mars_week
+                             || ', ZREP: '
+                             || rv_negative.zrep
+                             || '-'
+                             || rv_negative.zrep_desc
+                             || ', QTY:'
+                             || rv_negative.qty);
+         v_counter := v_counter + 1;
+         v_qty_total := v_qty_total + rv_negative.qty;
+      end loop;
+      if v_heading = false then
+         emailit.add_content('   * No Negative Forecast Issues Detected.');
+      else
+         emailit.add_content('     - Total Issues : ' || v_counter || ', Total Quantity Affected : ' || v_qty_total);
+      end if;
+
+      /*-*/
+      /* Material moe
+      /*-*/
+      v_heading := false;
+      v_counter := 0;
+      for rv_matl_moe in csr_matl_moe(rv_forecast.fcst_id) loop
+         if v_heading = false then
+            emailit.add_content('   * The Following Materials have missing MOE information.');
+            v_heading := true;
+         end if;
+         emailit.add_content('     - ' || rv_matl_moe.matl_code || ', ' || rv_matl_moe.matl_desc);
+         v_counter := v_counter + 1;
+      end loop;
+      if v_heading = false then
+         emailit.add_content ('   * No Material MOE Issues Detected.');
+      else
+         emailit.add_content ('     - Total Issues : ' || v_counter);
+      end if;
+
+      /*-*/
+      /* Send the email
+      /*-*/
+      if emailit.send_email(v_result_msg) != common.gc_success then
+         raise_application_error(-20000, 'Email send failed - '||v_result_msg);
+      end if;
+
+      /*-*/
+      /* Log the event end
+      /*-*/
+      lics_logging.write_log('End - Email forecast');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**ERROR** - Email forecast - ' || var_exception);
+            lics_logging.write_log('End - Email forecast');
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**ERROR**');
+
+   end email_forecast;
 
    /******************************************************/
    /* This procedure performs the email forecast routine */
