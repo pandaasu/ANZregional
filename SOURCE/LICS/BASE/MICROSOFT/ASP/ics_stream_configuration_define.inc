@@ -403,7 +403,7 @@
          document.getElementById('hedTask').innerText = 'Update Task';
          document.getElementById('INP_TskCode').value = cobjStream[cintTargetS].strcod;
          document.getElementById('INP_TskText').value = cobjStream[cintTargetS].strtxt;
-         document.getElementById('INP_TskCode').focus();
+         document.getElementById('INP_TskText').focus();
       } else {
          objDspStream.style.display = 'none';
          objDspStream.style.visibility = 'hidden';
@@ -427,7 +427,7 @@
          document.getElementById('INP_JobGroup').value = cobjStream[cintTargetS].strgrp;
          document.getElementById('INP_OprAlert').value = cobjStream[cintTargetS].stralt;
          document.getElementById('INP_EmaGroup').value = cobjStream[cintTargetS].strema;
-         document.getElementById('INP_EvtCode').focus();
+         document.getElementById('INP_EvtText').focus();
       }
    }
    function deleteStream() {
