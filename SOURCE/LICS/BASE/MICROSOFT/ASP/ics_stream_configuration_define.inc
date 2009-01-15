@@ -1145,8 +1145,9 @@
       }
       if (strReturn == '') {
          strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-         strXML = strXML+'<ICS_STREAM';
-         strXML = strXML+' CODE="'+fixAttribute(document.main.INP_StreamCode.value)+'"';
+         strXML = strXML+'<ICS_STREAM';<%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
+         strXML = strXML+' CODE="'+fixAttribute(document.main.INP_StreamCode.value)+'"';<%else%>
+         strXML = strXML+' CODE="'+fixAttribute(document.main.DTA_StreamCode.value)+'"';<%end if%>
          strXML = strXML+' TEXT="'+fixAttribute(document.main.INP_StreamText.value)+'"';
          strXML = strXML+' STATUS="'+fixAttribute(document.main.INP_StreamStatus.value)+'"';
          strXML = strXML+'>';
