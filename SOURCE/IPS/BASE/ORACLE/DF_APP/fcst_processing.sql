@@ -427,6 +427,14 @@ create or replace package body fcst_processing as
       close csr_moe setting;
 
       /*-*/
+      /* Update the load data status
+      /*-*/
+      update load_dmnd
+         set status = common.gc_loaded
+          where t01.file_id = rcd_load_file.file_id;
+      commit;
+
+      /*-*/
       /* Retrieve the file casting weeks
       /*-*/
       tbl_cast.delete;
@@ -666,6 +674,7 @@ create or replace package body fcst_processing as
          /*-*/
          delete from dmnd_data
           where fcst_id = var_fcst_id
+and not(type is null)
             and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
                                       from dmnd_grp dg,
                                            dmnd_grp_org dgo,
@@ -951,6 +960,14 @@ create or replace package body fcst_processing as
       close csr_load_file;
 
       /*-*/
+      /* Update the load data status
+      /*-*/
+      update load_sply
+         set status = common.gc_loaded
+          where t01.file_id = rcd_load_file.file_id;
+      commit;
+
+      /*-*/
       /* Retrieve the file casting weeks
       /*-*/
       tbl_cast.delete;
@@ -1142,6 +1159,7 @@ create or replace package body fcst_processing as
          /*-*/
          delete from dmnd_data
           where fcst_id = var_fcst_id
+and type is null
             and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
                                       from dmnd_grp dg,
                                            dmnd_grp_org dgo,
@@ -1308,7 +1326,7 @@ create or replace package body fcst_processing as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
-      v_result_msg common.st_message_string;
+      v_result_msg varchar2(3900);
       v_heading boolean;
       v_qty_total common.st_value;
       v_counter common.st_counter;
@@ -1400,7 +1418,7 @@ create or replace package body fcst_processing as
       /* Initialise the procedure
       /*-*/
       var_log_prefix := 'DF - EMAIL_FORECAST';
-      var_log_search := 'DF_EMAIL_FORECAST' || '_' || lics_stream_processor.callback_event;
+      var_log_search := 'DF_EMAIL_FORECAST' || '_' || to_char(par_fcst_id);
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
@@ -1599,6 +1617,11 @@ create or replace package body fcst_processing as
       lics_logging.write_log('End - Email forecast');
 
       /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+      /*-*/
       /* Errors
       /*-*/
       if var_errors = true then
@@ -1614,7 +1637,7 @@ create or replace package body fcst_processing as
                                          dw_parameter.system_unit,
                                          dw_parameter.system_environment,
                                          con_function,
-                                         'DF_FCST_EMAIL',
+                                         'DF_EMAIL_FORECAST',
                                          var_email,
                                          'One or more errors occurred during the Demand Financials Forecast Emailing execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
@@ -1664,14 +1687,14 @@ create or replace package body fcst_processing as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DF_FCST_EMAILING - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - DF_EMAIL_FORECAST - ' || var_exception);
 
    end email_forecast;
 
    /*******************************************************/
    /* This procedure performs the review creation routine */
    /*******************************************************/
-   procedure review_creation(par_fcst_id in number) is
+   procedure business_review_creation(par_fcst_id in number) is
 
       /*-*/
       /* Local definitions
@@ -1684,6 +1707,7 @@ create or replace package body fcst_processing as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
+      var_result_msg varchar2(3900);
 
       /*-*/
       /* Local constants
@@ -1707,8 +1731,8 @@ create or replace package body fcst_processing as
       /*-*/
       /* Initialise the procedure
       /*-*/
-      var_log_prefix := 'DF - REVIEW CREATION';
-      var_log_search := 'DF_REVIEW_CREATION' || '_' || lics_stream_processor.callback_event;
+      var_log_prefix := 'DF - BUSINESS_REVIEW CREATION';
+      var_log_search := 'DF_BUSINESS_REVIEW_CREATION' || '_' || to_char(par_fcst_id);
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
@@ -1717,11 +1741,6 @@ create or replace package body fcst_processing as
       if var_loc_string is null then
          raise_application_error(-20000, 'Stream lock not returned - must be executed from the ICS Stream Processor');
       end if;
-
-      /*-*/
-      /* Log the event start
-      /*-*/
-      lics_logging.write_log('Begin - Review creation');
 
       /*-*/
       /* Retrieve the forecast
@@ -1734,9 +1753,61 @@ create or replace package body fcst_processing as
       close csr_fcst;
 
       /*-*/
+      /* Log the event start
+      /*-*/
+      lics_logging.write_log('Begin - Review creation');
+
+      /*-*/
+      /* Create the business review
+      /*-*/
+      begin
+         if demand_forecast.br_creation_check(rcd_fcst.fcst_id, var_result_msg) != common.gc_success then
+            var_errors := true;
+            lics_logging.write_log('Review creation failed - '||var_result_msg);
+         end if;
+      exception
+         when others then
+            var_errors := true;
+            lics_logging.write_log(substr(SQLERRM, 1, 1024));
+      end;
+
+      /*-*/
       /* Log the event end
       /*-*/
       lics_logging.write_log('End - Review creation');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+      /*-*/
+      /* Errors
+      /*-*/
+      if var_errors = true then
+
+         /*-*/
+         /* Alert and email
+         /*-*/
+         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+            lics_notification.send_alert(var_alert);
+         end if;
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
+            lics_notification.send_email(dw_parameter.system_code,
+                                         dw_parameter.system_unit,
+                                         dw_parameter.system_environment,
+                                         con_function,
+                                         'DF_BUSINESS_REVIEW_CREATION',
+                                         var_email,
+                                         'One or more errors occurred during the Demand Financials Forecast Business Review Creation execution - refer to web log - ' || lics_logging.callback_identifier);
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
+
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -1776,9 +1847,9 @@ create or replace package body fcst_processing as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DF_REVIEW_CREATION - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - DF_BUSINESS_REVIEW_CREATION - ' || var_exception);
 
-   end review_creation;
+   end business_review_creation;
 
    /*****************************************************/
    /* This procedure performs the venus extract routine */
@@ -1796,6 +1867,7 @@ create or replace package body fcst_processing as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
+      var_result_msg varchar2(3900);
 
       /*-*/
       /* Local constants
@@ -1820,7 +1892,7 @@ create or replace package body fcst_processing as
       /* Initialise the procedure
       /*-*/
       var_log_prefix := 'DF - VENUS EXTRACT';
-      var_log_search := 'DF_VENUS_EXTRACT' || '_' || lics_stream_processor.callback_event;
+      var_log_search := 'DF_VENUS_EXTRACT' || '_' || to_char(par_fcst_id);
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
@@ -1829,11 +1901,6 @@ create or replace package body fcst_processing as
       if var_loc_string is null then
          raise_application_error(-20000, 'Stream lock not returned - must be executed from the ICS Stream Processor');
       end if;
-
-      /*-*/
-      /* Log the event start
-      /*-*/
-      lics_logging.write_log('Begin - Venus extract');
 
       /*-*/
       /* Retrieve the forecast
@@ -1846,9 +1913,77 @@ create or replace package body fcst_processing as
       close csr_fcst;
 
       /*-*/
+      /* Log the event start
+      /*-*/
+      lics_logging.write_log('Begin - Venus extract');
+
+      /*-*/
+      /* Extract the venus demand forecast data
+      /*-*/
+      begin
+         if extract_venus.extract_demand_forecast(rcd_fcst.fcst_id, var_result_msg) != common.gc_success then
+            var_errors := true;
+            lics_logging.write_log('Venus extract demand forecast failed - '||var_result_msg);
+         end if;
+      exception
+         when others then
+            var_errors := true;
+            lics_logging.write_log('Venus send demand forecast failed - '||substr(SQLERRM, 1, 1024));
+      end;
+
+      /*-*/
+      /* Send the venus demand forecast data when required
+      /*-*/
+      if var_errors = false then
+         begin
+            if extract_venus.send_demand_forecast(rcd_fcst.fcst_id, var_result_msg) != common.gc_success then
+               var_errors := true;
+               lics_logging.write_log('Venus send demand forecast failed - '||var_result_msg);
+            end if;
+         exception
+            when others then
+               var_errors := true;
+               lics_logging.write_log('Venus send demand forecast failed - '||substr(SQLERRM, 1, 1024));
+         end;
+      end if;
+
+      /*-*/
       /* Log the event end
       /*-*/
       lics_logging.write_log('End - Venus extract');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+      /*-*/
+      /* Errors
+      /*-*/
+      if var_errors = true then
+
+         /*-*/
+         /* Alert and email
+         /*-*/
+         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+            lics_notification.send_alert(var_alert);
+         end if;
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
+            lics_notification.send_email(dw_parameter.system_code,
+                                         dw_parameter.system_unit,
+                                         dw_parameter.system_environment,
+                                         con_function,
+                                         'DF_VENUS_EXTRACT',
+                                         var_email,
+                                         'One or more errors occurred during the Demand Financials Venus Extract Demand Forecast execution - refer to web log - ' || lics_logging.callback_identifier);
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
+
+      end if;
 
    /*-------------------*/
    /* Exception handler */
