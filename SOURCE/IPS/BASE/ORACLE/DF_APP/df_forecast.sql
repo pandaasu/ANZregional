@@ -349,6 +349,17 @@ create or replace package body df_forecast as
       type rcd_load_data is table of csr_load_data%rowtype index by binary_integer;
       tab_load_data rcd_load_data;
 
+      cursor csr_matl(i_matl_code in varchar2) is
+         select t01.*,
+                t02.bus_sgmnt_code
+           from matl t01,
+                matl_fg_clssfctn t02
+          where t01.matl_code = t02.matl_code(+)
+            and t01.matl_code = reference_functions.full_matl_code(i_matl_code)
+            and t01.matl_type = 'ZREP'
+            and t01.trdd_unit = 'X';
+      rcd_matl csr_matl%rowtype;
+
       cursor csr_demand_group_org(i_dmdgroup in varchar2, i_business_segment in varchar2, i_source_code in varchar2) is
          select dgo.dmnd_grp_org_id,
                 dgo.currcy_code,
@@ -404,13 +415,14 @@ create or replace package body df_forecast as
             v_matl_dtrmntn_offset := rcd_moe_setting.matl_dtrmntn_offset;
          end if;
       else
-         raise_application_error(-20000, 'Moe settings not found for MOE (' || rcd_load_file.moe_code || ')');
+         raise_application_error(-20000, 'Moe settings not found for MOE code (' || rcd_load_file.moe_code || ')');
       end if;
       close csr_moe_setting;
 
       /*-*/
       /* Update the load data status
       /*-*/
+      lics_logging.write_log('--> Updating all load data status to loaded');
       update load_dmnd
          set status = common.gc_loaded
        where file_id = rcd_load_file.file_id;
@@ -419,6 +431,7 @@ create or replace package body df_forecast as
       /*-*/
       /* Retrieve the file casting weeks
       /*-*/
+      lics_logging.write_log('--> Retrieving the casting weeks');
       tbl_cast.delete;
       open csr_casting_weeks;
       fetch csr_casting_weeks bulk collect into tbl_cast;
@@ -432,6 +445,7 @@ create or replace package body df_forecast as
          /*-*/
          /* Set the casting week
          /*-*/
+         lics_logging.write_log('--> Start processing casting week ('||to_char(tbl_cast(icx).casting_mars_week)||')');
          var_casting_week := tbl_cast(icx).casting_mars_week;
 
          /*-*/
@@ -450,6 +464,7 @@ create or replace package body df_forecast as
                                             v_message_out) != common.gc_success then
             raise_application_error(-20000, 'Forecast id invalid or null');
          end if;
+         lics_logging.write_log('--> Created/updated forecast ('||to_char(var_fcst_id)||')');
 
          /*-*/
          /* Clear the temporary forecast table
@@ -460,6 +475,7 @@ create or replace package body df_forecast as
          /*-*/
          /* Process the related load data
          /*-*/
+         lics_logging.write_log('--> Processing load data for forecast ('||to_char(var_fcst_id)||')');
          loop
 
             /*-*/
@@ -484,9 +500,19 @@ create or replace package body df_forecast as
                /*-*/
                v_item_valid := true;
                v_invalid_reason := null;
-               if nvl(tab_load_data(idx).zrep_valid,'*NULL') != common.gc_valid then
+               open csr_matl(tab_load_data(idx).zrep_code);
+               fetch csr_matl into rcd_matl;
+               if csr_matl%notfound then
                   v_item_valid := false;
                   v_invalid_reason := 'ZREP Lookup Error.';
+               else
+                  if rcd_matl.bus_sgmnt_code is null then
+                     raise_application_error(-20000, 'Business segment invalid - ZREP code(' || tab_load_data(idx).zrep_code || ')');
+                  end if;
+               end if;
+               close csr_matl;
+               if tab_load_data(idx).source_code is null then
+                  raise_application_error(-20000, 'Make source invalid - ZREP code(' || tab_load_data(idx).zrep_code || ')');
                end if;
 
                /*-*/
@@ -495,20 +521,10 @@ create or replace package body df_forecast as
                if v_item_valid = true then
 
                   /*-*/
-                  /* Fatal errors on the load data row
-                  /*-*/
-                  if tab_load_data(idx).bus_sgmnt_code is null then
-                     raise_application_error(-20000, 'Business segment invalid - ZREP code(' || tab_load_data(idx).zrep_code || ')');
-                  end if;
-                  if tab_load_data(idx).source_code is null then
-                     raise_application_error(-20000, 'Make source invalid - ZREP code(' || tab_load_data(idx).zrep_code || ')');
-                  end if;
-
-                  /*-*/
                   /* Process the demand group data
                   /*-*/
                   var_found := false;
-                  open csr_demand_group_org(tab_load_data(idx).dmdgroup, tab_load_data(idx).bus_sgmnt_code, tab_load_data(idx).source_code);
+                  open csr_demand_group_org(tab_load_data(idx).dmdgroup, rcd_matl.bus_sgmnt_code, tab_load_data(idx).source_code);
                   loop
                      fetch csr_demand_group_org into rcd_demand_group_org;
                      if csr_demand_group_org%notfound then
@@ -564,23 +580,23 @@ create or replace package body df_forecast as
                      end if;
 
                      v_dmnd_type := null;
-                     if tab_load_data(idx).TYPE = 1 then
+                     if tab_load_data(idx).type = 1 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_1;
-                     elsif tab_load_data(idx).TYPE = 2 then
+                     elsif tab_load_data(idx).type = 2 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_2;
-                     elsif tab_load_data(idx).TYPE = 3 then
+                     elsif tab_load_data(idx).type = 3 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_3;
-                     elsif tab_load_data(idx).TYPE = 4 then
+                     elsif tab_load_data(idx).type = 4 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_4;
-                     elsif tab_load_data(idx).TYPE = 5 then
+                     elsif tab_load_data(idx).type = 5 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_5;
-                     elsif tab_load_data(idx).TYPE = 6 then
+                     elsif tab_load_data(idx).type = 6 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_6;
-                     elsif tab_load_data(idx).TYPE = 7 then
+                     elsif tab_load_data(idx).type = 7 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_7;
-                     elsif tab_load_data(idx).TYPE = 8 then
+                     elsif tab_load_data(idx).type = 8 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_8;
-                     elsif tab_load_data(idx).TYPE = 9 then
+                     elsif tab_load_data(idx).type = 9 then
                         v_dmnd_type := demand_forecast.gc_dmnd_type_9;
                      end if;
 
@@ -615,7 +631,7 @@ create or replace package body df_forecast as
                   /* No demand groups found
                   /*-*/
                   if var_found = false then
-                     raise_application_error(-20000, 'Demand group org lookup failure - Demand group(' || tab_load_data(idx).dmdgroup || '), Business segment(' || tab_load_data(idx).bus_sgmnt_code || '), Source code(' || tab_load_data(idx).source_code || ')');
+                     raise_application_error(-20000, 'Demand group org lookup failure - Demand group(' || tab_load_data(idx).dmdgroup || '), Business segment(' || rcd_matl.bus_sgmnt_code || '), Source code(' || tab_load_data(idx).source_code || ')');
                   end if;
 
                end if;
@@ -650,33 +666,32 @@ create or replace package body df_forecast as
          /* Load the new forecast data within the one commit cycle
          /* to preserve the integrity of the forecast
          /* **notes**
-         /* 1. Delete the existing forecast data
+         /* 1. Delete the existing forecast demand data - complete replacement
          /* 2. Insert the new forecast data from the temporary table
-         /* 3. Only delete rows for any demand_grp included with the current file
          /*-*/
+         lics_logging.write_log('--> Removing existing demand DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          delete from dmnd_data
           where fcst_id = var_fcst_id
-and not(type is null)
             and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
                                       from dmnd_grp dg,
                                            dmnd_grp_org dgo,
-                                           dmnd_grp_type dt,
-                                           load_dmnd
+                                           dmnd_grp_type dt
                                      where dg.dmnd_grp_type_id = dt.dmnd_grp_type_id
                                        and dg.dmnd_grp_id = dgo.dmnd_grp_id
-                                       and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_demand
-                                       and load_dmnd.file_id = rcd_load_file.file_id
-                                       and load_dmnd.dmdgroup = dg.dmnd_grp_code);
+                                       and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_demand);
+         lics_logging.write_log('--> Inserting new demand DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          insert into dmnd_data select * from dmnd_temp;
 
          /*-*/
          /* Clear the temporary forecast table
          /*-*/
+         lics_logging.write_log('--> Deleting temporary data for forecast ('||to_char(var_fcst_id)||')');
          delete from dmnd_temp;
 
          /*-*/
          /* Insert/update the forecast source
          /*-*/
+         lics_logging.write_log('--> Insert/update demand data received for forecast ('||to_char(var_fcst_id)||')');
          begin
             insert into fcst_source
                (fcst_id,
@@ -696,6 +711,7 @@ and not(type is null)
          /*-*/
          /* Check/mark the forecast for completion
          /*-*/
+         lics_logging.write_log('--> Checking forecast ('||to_char(var_fcst_id)||') for completion');
          var_fcst_valid := true;
          if rcd_moe_setting.dmnd_file = common.gc_yes then
             var_source_type := '*DEMAND';
@@ -716,6 +732,7 @@ and not(type is null)
            close csr_fcst_source;
          end if;
          if var_fcst_valid = true then
+            lics_logging.write_log('--> Updating forecast ('||to_char(var_fcst_id)||') to complete');
             update fcst
                set status = demand_forecast.gc_fs_valid
              where fcst_id = var_fcst_id;
@@ -731,17 +748,24 @@ and not(type is null)
          /*-*/
          if upper(par_action) = '*DEMAND_FINAL' then
             if var_fcst_valid = true then
+               lics_logging.write_log('--> Triggering final stream for forecast ('||to_char(var_fcst_id)||')');
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
                lics_stream_loader.execute('DF_FCST_FINAL',null);
             end if;
          else
             if var_fcst_valid = true then
+               lics_logging.write_log('--> Triggering draft stream for forecast ('||to_char(var_fcst_id)||')');
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
                lics_stream_loader.execute('DF_FCST_DRAFT',null);
             end if;
          end if;
+
+         /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('--> End processing casting week ('||to_char(tbl_cast(icx).casting_mars_week)||')');
 
       end loop;
 
@@ -939,6 +963,7 @@ and not(type is null)
       /*-*/
       /* Update the load data status
       /*-*/
+      lics_logging.write_log('--> Updating all load data status to loaded');
       update load_sply
          set status = common.gc_loaded
        where file_id = rcd_load_file.file_id;
@@ -947,6 +972,7 @@ and not(type is null)
       /*-*/
       /* Retrieve the file casting weeks
       /*-*/
+      lics_logging.write_log('--> Retrieving the casting weeks');
       tbl_cast.delete;
       open csr_casting_weeks;
       fetch csr_casting_weeks bulk collect into tbl_cast;
@@ -960,6 +986,7 @@ and not(type is null)
          /*-*/
          /* Set the casting week
          /*-*/
+         lics_logging.write_log('--> Start processing casting week ('||to_char(tbl_cast(icx).casting_mars_week)||')');
          var_casting_week := tbl_cast(icx).casting_mars_week;
 
          /*-*/
@@ -978,6 +1005,7 @@ and not(type is null)
                                             v_message_out) != common.gc_success then
             raise_application_error(-20000, 'Forecast id invalid or null');
          end if;
+         lics_logging.write_log('--> Created/updated forecast ('||to_char(var_fcst_id)||')');
 
          /*-*/
          /* Clear the temporary forecast table
@@ -988,6 +1016,7 @@ and not(type is null)
          /*-*/
          /* Process the related load data
          /*-*/
+         lics_logging.write_log('--> Processing load data for forecast ('||to_char(var_fcst_id)||')');
          loop
 
             /*-*/
@@ -1024,7 +1053,7 @@ and not(type is null)
                fetch csr_matl into rcd_matl;
                if csr_matl%notfound then
                   v_item_valid := false;
-                  v_invalid_reason := v_invalid_reason || 'ZREP Lookup Error ';
+                  v_invalid_reason := v_invalid_reason || 'FERT Lookup Error ';
                else
                   if rcd_matl.bus_sgmnt_code is null then
                      raise_application_error(-20000, 'Business segment invalid - TDU code (' || v_material_code || ')');
@@ -1133,33 +1162,32 @@ and not(type is null)
          /* Load the new forecast data within the one commit cycle
          /* to preserve the integrity of the forecast
          /* **notes**
-         /* 1. Delete the existing forecast data
+         /* 1. Delete the existing forecast supply data - complete replacement
          /* 2. Insert the new forecast data from the temporary table
-         /* 3. Only delete rows for any demand_grp included with the current file
          /*-*/
+         lics_logging.write_log('--> Removing existing supply DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          delete from dmnd_data
           where fcst_id = var_fcst_id
-and type is null
             and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
                                       from dmnd_grp dg,
                                            dmnd_grp_org dgo,
-                                           dmnd_grp_type dt,
-                                           load_sply
+                                           dmnd_grp_type dt
                                      where dg.dmnd_grp_type_id = dt.dmnd_grp_type_id
                                        and dg.dmnd_grp_id = dgo.dmnd_grp_id
-                                       and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_supply
-                                       and load_sply.file_id = rcd_load_file.file_id
-                                       and dg.sply_whse_lst like '%' || load_sply.dest || '%');
+                                       and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_supply);
+         lics_logging.write_log('--> Inserting new supply DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          insert into dmnd_data select * from dmnd_temp;
 
          /*-*/
          /* Clear the temporary forecast table
          /*-*/
+         lics_logging.write_log('--> Deleting temporary data for forecast ('||to_char(var_fcst_id)||')');
          delete from dmnd_temp;
 
          /*-*/
          /* Insert/update the forecast source
          /*-*/
+         lics_logging.write_log('--> Insert/update supply data received for forecast ('||to_char(var_fcst_id)||')');
          begin
             insert into fcst_source
                (fcst_id,
@@ -1179,6 +1207,7 @@ and type is null
          /*-*/
          /* Check/mark the forecast for completion
          /*-*/
+         lics_logging.write_log('--> Checking forecast ('||to_char(var_fcst_id)||') for completion');
          var_fcst_valid := true;
          if rcd_moe_setting.dmnd_file = common.gc_yes then
             var_source_type := '*DEMAND';
@@ -1199,6 +1228,7 @@ and type is null
             close csr_fcst_source;
          end if;
          if var_fcst_valid = true then
+            lics_logging.write_log('--> Updating forecast ('||to_char(var_fcst_id)||') to complete');
             update fcst
                set status = demand_forecast.gc_fs_valid
              where fcst_id = var_fcst_id;
@@ -1214,17 +1244,24 @@ and type is null
          /*-*/
          if upper(par_action) = '*SUPPLY_FINAL' then
             if var_fcst_valid = true then
+               lics_logging.write_log('--> Triggering final stream for forecast ('||to_char(var_fcst_id)||')');
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
                lics_stream_loader.execute('DF_FCST_FINAL',null);
             end if;
          else
             if var_fcst_valid = true then
+               lics_logging.write_log('--> Triggering draft stream for forecast ('||to_char(var_fcst_id)||')');
                lics_stream_loader.clear_parameters;
                lics_stream_loader.set_parameter('FCST_ID',to_char(var_fcst_id));
                lics_stream_loader.execute('DF_FCST_DRAFT',null);
             end if;
          end if;
+
+         /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('--> End processing casting week ('||to_char(tbl_cast(icx).casting_mars_week)||')');
 
       end loop;
 

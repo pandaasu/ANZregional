@@ -176,23 +176,6 @@ create or replace package body df_fcst_demand_load as
    /* This procedure performs the on data routine */
    /***********************************************/
    procedure on_data(par_record in varchar2) is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_matl_code is
-         select matl_code
-           from matl
-          where matl_type = 'ZREP'
-            and trdd_unit = 'X'
-            and matl_code = reference_functions.full_matl_code(rcd_load_dmnd.zrep_code);
-      rcd_matl_code csr_matl_code%rowtype;
-
-      cursor csr_bus_sgmnt_code is
-         select bus_sgmnt_code
-           from matl_fg_clssfctn
-          where matl_code = reference_functions.full_matl_code(rcd_load_dmnd.zrep_code);
-      rcd_bus_sgmnt_code csr_bus_sgmnt_code%rowtype;
       
    /*-------------*/
    /* Begin block */
@@ -247,24 +230,6 @@ create or replace package body df_fcst_demand_load as
       if lics_inbound_utility.has_errors = true then
          var_trn_error := true;
       end if;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      open csr_matl_code;
-      fetch csr_matl_code into rcd_matl_code;
-      if csr_matl_code%found then
-         rcd_load_dmnd.zrep_valid := common.gc_valid;
-      end if;
-      close csr_matl_code;
-
-      open csr_bus_sgmnt_code;
-      fetch csr_bus_sgmnt_code into rcd_bus_sgmnt_code;
-      if csr_bus_sgmnt_code%found then
-         rcd_load_dmnd.bus_sgmnt_code := rcd_bus_sgmnt_code.bus_sgmnt_code;
-      end if;
-      close csr_bus_sgmnt_code;
 
       /*----------------------------------------*/
       /* ERROR- Bypass the update when required */
