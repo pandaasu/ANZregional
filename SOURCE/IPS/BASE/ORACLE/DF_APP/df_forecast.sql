@@ -101,11 +101,6 @@ create or replace package body df_forecast as
    begin
 
       /*-*/
-      /* Required for invoked functions
-      /*-*/
-      logit.enter_method('FCST_PROCESSING', 'PROCESS');
-
-      /*-*/
       /* Initialise the procedure
       /*-*/
       var_log_prefix := 'DF - FORECAST_PROCESS';
@@ -138,6 +133,15 @@ create or replace package body df_forecast as
          raise_application_error(-20000, 'File id ' || to_char(par_file_id) || ' not found on the load file table');
       end if;
       close csr_load_file;
+
+      /*-*/
+      /* Required for invoked demand financials functions
+      /* **notes** 1. NEW_LOG required because ICS job processes multiple requests
+      /*           2. Should be removed as existing functions replaced
+      /*-*/
+      logit.new_log;
+      logit.enter_method('DF_FORECAST', 'PROCESS');
+      logit.log('**ICS_START**');
 
       /*-*/
       /* Log start
@@ -203,8 +207,10 @@ create or replace package body df_forecast as
       lics_logging.end_log;
 
       /*-*/
-      /* Required for invoked functions
+      /* Required for invoked demand financials functions
+      /* **notes** 1. Should be removed as existing functions replaced
       /*-*/
+      logit.log('**ICS_END**');
       logit.leave_method;
 
       /*-*/

@@ -111,6 +111,15 @@ create or replace package body df_venus_extract as
       close csr_fcst;
 
       /*-*/
+      /* Required for invoked demand financials functions
+      /* **notes** 1. NEW_LOG required because ICS job processes multiple requests
+      /*           2. Should be removed as existing functions replaced
+      /*-*/
+      logit.new_log;
+      logit.enter_method('DF_VENUS_EXTRACT', 'DEMAND_FORECAST');
+      logit.log('**ICS_START**');
+
+      /*-*/
       /* Log start
       /*-*/
       lics_logging.start_log(var_log_prefix, var_log_search);
@@ -161,6 +170,13 @@ create or replace package body df_venus_extract as
       /* Log end
       /*-*/
       lics_logging.end_log;
+
+      /*-*/
+      /* Required for invoked demand financials functions
+      /* **notes** 1. Should be removed as existing functions replaced
+      /*-*/
+      logit.log('**ICS_END**');
+      logit.leave_method;
 
       /*-*/
       /* Errors
