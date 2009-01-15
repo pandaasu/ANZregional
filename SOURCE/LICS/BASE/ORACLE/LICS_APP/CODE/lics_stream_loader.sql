@@ -248,9 +248,9 @@ create or replace package body lics_stream_loader as
             /* Perform the parameter substitutions
             /*-*/
             for idx in 1..tbl_parameter.count loop
-               rcd_lics_str_action.sta_evt_lock := replace(rcd_lics_str_action.sta_evt_lock,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
-               rcd_lics_str_action.sta_evt_proc := replace(rcd_lics_str_action.sta_evt_proc,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
-               rcd_lics_str_action.sta_job_group := replace(rcd_lics_str_action.sta_job_group,'<%='||tbl_parameter(idx).code||'%>',tbl_parameter(idx).value);
+               rcd_lics_str_action.sta_evt_lock := replace(rcd_lics_str_action.sta_evt_lock,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
+               rcd_lics_str_action.sta_evt_proc := replace(rcd_lics_str_action.sta_evt_proc,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
+               rcd_lics_str_action.sta_job_group := replace(rcd_lics_str_action.sta_job_group,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
             end loop;
 
             /*-*/
