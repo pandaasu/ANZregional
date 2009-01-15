@@ -109,7 +109,7 @@ create or replace package body df_forecast as
       /* Initialise the procedure
       /*-*/
       var_log_prefix := 'DF - FORECAST_PROCESS';
-      var_log_search := 'DF_FORECAST_PROCESS' || '_' || lics_stream_processor.callback_event;
+      var_log_search := 'DF_FORECAST_PROCESS' || '_' || to_char(par_file_id) || '_' || lics_stream_processor.callback_parameter('MOE');
       var_loc_string := lics_stream_processor.callback_lock;
       var_alert := lics_stream_processor.callback_alert;
       var_email := lics_stream_processor.callback_email;
