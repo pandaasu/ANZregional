@@ -1,7 +1,4 @@
-DROP FUNCTION MANU_APP.GET_ALTERNATE;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Alternate(matl IN  VARCHAR2, xdate IN DATE DEFAULT SYSDATE) RETURN VARCHAR2
-IS
+create or replace function manu_app.get_alternate(matl in varchar2, xdate in date default sysdate) return varchar2 is
 /****************************************************
 
 Function to get the alternate version number for the material entered 
@@ -18,33 +15,33 @@ Note this is used in conjunction with GET_ALTERNATE_DATE to get the
 Author:  Jeff Phillipson  7/7/2004 
 
 ****************************************************/
-
-   
-   v_alt    VARCHAR2(4);
   
+  v_alt    varchar2(4);
+     
+begin
+
+  select r.alternate 
+  into v_alt
+  from 
+  (
+    select decode(t01.bom_alternative,null,'1', t01.bom_alternative) as alternate, 
+      decode(t01.bom_eff_from_date, null, to_date('01/01/2000', 'dd/mm/yyyy') + to_number(t01.bom_alternative) - 1, t01.bom_eff_from_date) as eff_start_date
+    from bds_bom_all t01
+    where t01.bom_material_code = matl
+      and decode(t01.bom_eff_from_date, null, to_date('01/01/2000', 'dd/mm/yyyy') + to_number(t01.bom_alternative) - 1, t01.bom_eff_from_date) <= xdate
+    order by 2 desc
+  ) r
+  where rownum = 1;
    
-BEGIN
-
-   SELECT r.alternate 
-   INTO v_alt
-   FROM (SELECT DECODE(alternate,NULL,'1', alternate) alternate, eff_start_date
-   FROM BOM_vw 
-   WHERE MATERIAL = matl 
-   AND eff_start_date <= xdate
-   ORDER BY 2 DESC) r WHERE ROWNUM = 1;
+  return v_alt;
    
-   RETURN v_alt;
-   
-EXCEPTION
-    WHEN OTHERS THEN
-
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU.Get_Alternate function - ' || SUBSTR(SQLERRM, 1, 512));
-
-
-END;
+exception
+    when others then
+        return 1;
+end;
 /
 
+grant execute on manu_app.get_alternate to manu;
+grant execute on manu_app.get_alternate to appsupport;
 
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE TO APPSUPPORT;
-
+create or replace public synonym get_alternate for manu_app.get_alternate;

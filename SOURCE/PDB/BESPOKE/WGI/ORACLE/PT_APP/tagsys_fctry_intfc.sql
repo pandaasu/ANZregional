@@ -1,1069 +1,1011 @@
-DROP PACKAGE PT_APP.TAGSYS_FCTRY_INTFC;
+create or replace package pt_app.tagsys_fctry_intfc_ics as
+/******************************************************************************/
+/* Package Definition                                                         */
+/******************************************************************************/
+/**
+ System  : pt_app 
+ View    : tagsys_fctry_intfc_ics
+ Owner   : pt_app 
+ Author  : Unknown
 
-CREATE OR REPLACE PACKAGE PT_APP.Tagsys_Fctry_Intfc AS
- 
- PROCEDURE Create_Pllt(
-	   o_result                 IN OUT NUMBER,
-	   o_result_msg             IN OUT VARCHAR2,
-	
-       i_XACTN_DATE			    IN DATE,
-	   i_XACTN_TIME			    IN NUMBER,
-	   i_PLANT_CODE			    IN VARCHAR2,
-	   i_SENDER_NAME			IN VARCHAR2,
-	   i_ZPPPI_BATCH			IN VARCHAR2,
-	   i_PROC_ORDER			    IN NUMBER,
-	   i_STOR_LOC_CODE		    IN NUMBER,
-	   i_DISPN_CODE			    IN VARCHAR2,
-	   i_USE_BY_DATE			IN DATE,
-	   i_MATERIAL_CODE		    IN VARCHAR2,
-	   i_UOM					IN VARCHAR2,
-	   i_PLT_CODE				IN VARCHAR2,
-	   i_QTY					IN NUMBER,
-	   i_FULL_PLT_FLAG		    IN VARCHAR2,
-	   i_USER_ID				IN VARCHAR2,
-	   i_LAST_GR_FLAG			IN VARCHAR2
-   );
-   
-  PROCEDURE Cancel_Pllt(
-	   o_result                 IN OUT NUMBER,
-	   o_result_msg             IN OUT VARCHAR2,
-	
-	   i_XACTN_DATE			    IN DATE,
-	   i_XACTN_TIME			    IN NUMBER,
-	   i_SENDER_NAME			IN VARCHAR2,
-	   i_PLT_CODE				IN VARCHAR2,
-	   i_USER_ID				IN VARCHAR2
-   );  
-   
-   
-   PROCEDURE Disposition(
-       o_result                 IN OUT NUMBER,
-	   o_result_msg             IN OUT VARCHAR2,
-       i_plt_code               IN VARCHAR2,
-       i_Sloc                   IN VARCHAR2,
-       i_Sign                   IN VARCHAR2,
-       i_Iss_Stock_Status       IN VARCHAR2,
-       i_Rec_Stock_Status       IN VARCHAR2,
-       i_dspstn_type            IN VARCHAR2
-       );   
- 
-       /* Disposition procedure is called to change the disposition within Atlas.
-       it is called 1 pallet at a time and an Idoc is only sent to Atlas if:
-       .. the pallet has not had an STO raised
-       .. or the Atlas disposition changes. ie Shift Log has 16 dispositions - Atlas has 3
-       */
- 
- 
- END;
-/
+ Description 
+ ----------- 
+ Pallet Tagging - Production Interface
 
+ YYYY/MM   Author         Description 
+ -------   ------         ----------- 
+ ????/??   Unknown        Created
+ 2008/12   Trevor Keon    Modified to use pt_cisatl17_gr_ics for sending interface
 
-DROP PACKAGE BODY PT_APP.TAGSYS_FCTRY_INTFC;
-
-CREATE OR REPLACE PACKAGE BODY PT_APP.Tagsys_Fctry_Intfc AS
+*******************************************************************************/
  
-   /**********************************************************************************/
-   /* Create a Pallet Record and set up the Idoc structure to send to Atlas
-   /**********************************************************************************/
+  procedure create_pllt(o_result  in out number,
+                  o_result_msg    in out varchar2,    	
+                  i_xactn_date		in date,
+                  i_xactn_time		in number,
+                  i_plant_code		in varchar2,
+                  i_sender_name		in varchar2,
+                  i_zpppi_batch		in varchar2,
+                  i_proc_order		in number,
+                  i_stor_loc_code	in number,
+                  i_dispn_code		in varchar2,
+                  i_use_by_date	  in date,
+                  i_material_code	in varchar2,
+                  i_uom					  in varchar2,
+                  i_plt_code		  in varchar2,
+                  i_qty					  in number,
+                  i_full_plt_flag	in varchar2,
+                  i_user_id				in varchar2,
+                  i_last_gr_flag	in varchar2);
    
-   b_test_flag    BOOLEAN := FALSE;
-   
+  procedure cancel_pllt(o_result  in out number,
+                  o_result_msg    in out varchar2,	
+                  i_xactn_date		in date,
+                  i_xactn_time		in number,
+                  i_sender_name		in varchar2,
+                  i_plt_code			in varchar2,
+                  i_user_id				in varchar2);    
 
-PROCEDURE Create_Pllt(
-    o_result                 IN OUT NUMBER,
-    o_result_msg             IN OUT VARCHAR2,
+  /* Disposition procedure is called to change the disposition within Atlas.
+  it is called 1 pallet at a time and an Idoc is only sent to Atlas if:
+  .. the pallet has not had an STO raised
+  .. or the Atlas disposition changes. ie Shift Log has 16 dispositions - Atlas has 3
+  */   
+  procedure disposition(o_result      in out number,
+                  o_result_msg        in out varchar2,
+                  i_plt_code          in varchar2,
+                  i_sloc              in varchar2,
+                  i_sign              in varchar2,
+                  i_iss_stock_status  in varchar2,
+                  i_rec_stock_status  in varchar2,
+                  i_dspstn_type       in varchar2);   
  
-    i_XACTN_DATE       IN DATE,
-    i_XACTN_TIME       IN NUMBER,
-    i_PLANT_CODE       IN VARCHAR2,
-    i_SENDER_NAME   IN VARCHAR2,
-    i_ZPPPI_BATCH   IN VARCHAR2,
-    i_PROC_ORDER       IN NUMBER,
-    i_STOR_LOC_CODE      IN NUMBER,
-    i_DISPN_CODE       IN VARCHAR2,
-    i_USE_BY_DATE   IN DATE,
-    i_MATERIAL_CODE      IN VARCHAR2,
-    i_UOM     IN VARCHAR2,
-    i_PLT_CODE    IN VARCHAR2,
-    i_QTY     IN NUMBER,
-    i_FULL_PLT_FLAG      IN VARCHAR2,
-    i_USER_ID    IN VARCHAR2,
-    i_LAST_GR_FLAG   IN VARCHAR2
-       )
-       AS
+end;
+
+create or replace package body pt_app.tagsys_fctry_intfc_ics as
+ 
+  /**********************************************************************************/
+  /* Create a Pallet Record and set up the Idoc structure to send to Atlas
+  /**********************************************************************************/
     
-    b_last_gr_flag   BOOLEAN := FALSE;
-    v_count                  NUMBER := 0;
-       v_transaction_type       VARCHAR2(10);
-    e_process_exception      EXCEPTION;
-    e_IDOC_EXCEPTION   EXCEPTION;
-       v_result                 NUMBER;
-       v_result_msg             VARCHAR2(2000);
-       v_batch                  VARCHAR2(10);
+  var_test_flag    boolean := false;
+   
+
+  procedure create_pllt(o_result      in out number,
+                      o_result_msg    in out varchar2,                       
+                      i_xactn_date    in date,
+                      i_xactn_time    in number,
+                      i_plant_code    in varchar2,
+                      i_sender_name   in varchar2,
+                      i_zpppi_batch   in varchar2,
+                      i_proc_order    in number,
+                      i_stor_loc_code in number,
+                      i_dispn_code    in varchar2,
+                      i_use_by_date   in date,
+                      i_material_code in varchar2,
+                      i_uom           in varchar2,
+                      i_plt_code      in varchar2,
+                      i_qty           in number,
+                      i_full_plt_flag in varchar2,
+                      i_user_id       in varchar2,
+                      i_last_gr_flag  in varchar2) as
+    /*-*/
+    /* Variables
+    /*-*/      
+    var_last_gr_flag        boolean := false;
+    
+    var_count               number := 0;
+    var_result              number;
+    
+    var_transaction_type    varchar2(10);
+    var_result_msg          varchar2(2000);
+    var_batch               varchar2(10);           
+    var_trans_type          varchar2(10) default 'CREATE';
+    
+    process_exception       exception;
+    idoc_exception          exception;    
+  begin
+
+    o_result := plt_common.success;
+    o_result_msg := 'Pallet ' || i_plt_code || ' created';
        
-       TRANS_TYPE               VARCHAR2(10) DEFAULT 'CREATE';
-BEGIN
+    /**********************************************************************************/
+    /* VALIDATE data BEFORE saving IN TABLE
+    /**********************************************************************************/
 
-   o_result := Plt_Common.SUCCESS;
-   o_result_msg := 'Pallet ' || i_plt_code || ' created';
-   
-   /**********************************************************************************/
-   /* VALIDATE data BEFORE saving IN TABLE
-   /**********************************************************************************/
-
-   /*
-   IF (i_ZPPPI_BATCH IS NULL AND i_USE_BY_DATE IS NOT NULL) THEN
-      o_result_msg := 'Transaction Failed: Batch Code required where Best Before Date is provided.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;   
-   END IF;
-   */
-   -- Check if Pallet Code exists 
-   SELECT COUNT(*) INTO v_count
-   FROM PLT_HDR
-   WHERE plt_code = i_plt_code;
-   IF v_count > 0 THEN
+    -- Check if Pallet Code exists 
+    select count(*) 
+    into var_count
+    from plt_hdr
+    where plt_code = i_plt_code;
+    
+    if ( var_count > 0 ) then
       o_result_msg := 'Transaction Failed: Pallet code already exists. Please select a unique value.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception; 
-   END IF;
+      o_result := plt_common.failure;
+      raise process_exception; 
+    end if;
    
-   -- check validity of dates
-   IF i_XACTN_DATE IS NULL THEN
+    -- check validity of dates
+    if ( i_xactn_date is null ) then
       o_result_msg := 'Transaction Date cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-   
-   -- check plant code
-   IF i_plant_code IS NULL THEN
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+       
+    -- check plant code
+    if ( i_plant_code is null ) then
       o_result_msg := 'Plant Code cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   ELSE
-       SELECT COUNT(*) INTO v_count FROM manu.REF_PLANT
-       WHERE plant_code = i_plant_code;
-       IF v_count = 0 THEN
-           o_result_msg := 'Plant Code is not correct.';
-           o_result := Plt_Common.FAILURE;
-           RAISE e_process_exception;
-       END IF;
-   END IF;
+      o_result := plt_common.failure;
+      raise process_exception;
+    else
+      select count(*) 
+      into var_count 
+      from manu.ref_plant
+      where plant_code = i_plant_code;
+             
+      if ( var_count = 0 ) then
+        o_result_msg := 'Plant Code is not correct.';
+        o_result := plt_common.failure;
+        raise process_exception;
+      end if;
+    end if;
    
-   -- check for valid proc order
-   IF i_proc_order IS NULL THEN
+    -- check for valid proc order
+    if ( i_proc_order is null ) then
       o_result_msg := 'Proc Order is not valid.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   ELSE
-       IF SUBSTR(i_proc_order,1,2) <> '99' THEN
-          SELECT COUNT(*) INTO v_count FROM manu.CNTL_REC
-          WHERE proc_order = i_proc_order;
-          IF v_count = 0 THEN
-              o_result_msg := 'Proc Order is not valid.';
-              o_result := Plt_Common.FAILURE;
-           RAISE e_process_exception;
-          END IF;
-       END IF;
-   END IF;
+      o_result := plt_common.failure;
+      raise process_exception;
+    else
+      if ( substr(i_proc_order,1,2) <> '99' ) then
+        select count(*) 
+        into var_count 
+        from manu.cntl_rec_vw
+        where proc_order = i_proc_order;
+        
+        if ( var_count = 0 ) then
+          o_result_msg := 'Proc Order is not valid.';
+          o_result := plt_common.failure;
+          raise process_exception;
+        end if;
+      end if;
+    end if;
    
-   -- check material code
-   IF i_material_code IS NULL THEN
+    -- check material code
+    if ( i_material_code is null ) then
       o_result_msg := 'Material Code cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   ELSE
-       SELECT COUNT(*) INTO v_count FROM material_vw
-       WHERE material_code = i_material_code;
-       /*IF v_count = 0 THEN
-           o_result_msg := 'Material Code is not correct.';
-           o_result := 1;
-           RAISE e_process_exception;
-       END IF;
-       */
-   END IF;
+      o_result := plt_common.failure;
+      raise process_exception;
+    else
+      select count(*) 
+      into var_count 
+      from material_vw
+      where material_code = i_material_code;
+    end if;
    
-   -- check validity of qty
-   IF i_Qty = 0 THEN
+    -- check validity of qty
+    if ( i_qty = 0 ) then
       o_result_msg := 'Quantity cannot be Null.';
-      o_result :=Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-   
-   -- check uom
-   IF i_uom IS NULL THEN
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+       
+    -- check uom
+    if ( i_uom is null ) then
       o_result_msg := 'UOM cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
    
-   -- check disposition code 
-   /***********************************************************************************
+    -- check disposition code 
+    /***********************************************************************************
     DISPOSITION STATUS 
-   ********************
-   Blocked            = 'S'
-   Un Restricted      = ' '
-   Quality Inspect    = 'X'
-   ************************************************************************************/
+    ********************
+    Blocked            = 'S'
+    Un Restricted      = ' '
+    Quality Inspect    = 'X'
+    ************************************************************************************/
    
-   IF i_DISPN_CODE IS NULL THEN
+    if ( i_dispn_code is null ) then
       o_result_msg := 'Disposition cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   ELSE
-       IF i_DISPN_CODE <> ' ' AND i_DISPN_CODE <> 'S' AND i_DISPN_CODE <> 'X' THEN
-           o_result_msg := 'Disposition is not a valid value - Blank, ''S'' or ''X''.';
-           o_result := Plt_Common.FAILURE;
-           RAISE e_process_exception;
-       END IF;
-   END IF;
-   
+      o_result := plt_common.failure;
+      raise process_exception;
+    else
+      if ( i_dispn_code <> ' ' and i_dispn_code <> 'S' and i_dispn_code <> 'X' ) then
+        o_result_msg := 'Disposition is not a valid value - Blank, ''S'' or ''X''.';
+        o_result := plt_common.failure;
+        raise process_exception;
+      end if;
+    end if;
+       
+    /**********************************************************************************/
+    /* Save data in Pallet tables
+    /**********************************************************************************/
+    begin
+          
+      if ( i_zpppi_batch is null ) then
+        var_batch := ' ';
+      else
+        -- fg
+        var_batch := substr(i_zpppi_batch,1,30);
+      end if;
+               
+      /**********************************************************************************/
+      /* insert record into header table
+      /**********************************************************************************/
+      insert into pt.plt_hdr 
+      (
+        plt_code,
+        matl_code,
+        qty,
+        status,
+        plant_code,
+        zpppi_batch,
+        proc_order,
+        stor_locn_code,
+        dispn_code,
+        use_by_date,
+        full_plt_flag,
+        last_gr_flag,
+        plt_create_datime,
+        uom
+      )
+      values
+      (
+        i_plt_code,
+        i_material_code,
+        i_qty,
+        var_trans_type,
+        i_plant_code,
+        var_batch,
+        i_proc_order,
+        i_stor_loc_code,
+        i_dispn_code, 
+        i_use_by_date,
+        i_full_plt_flag,
+        i_last_gr_flag,
+        sysdate,
+        upper(i_uom)   
+      );
+                        
+      /**********************************************************************************/                 
+      /* insert detail record 
+      /**********************************************************************************/
+      insert into plt_det 
+      (
+        plt_code,
+        xactn_type,
+        user_id,
+        reason,
+        xactn_date,
+        xactn_time,
+        sender_name
+      )
+      values 
+      (
+        i_plt_code,
+        var_trans_type,
+        upper(i_user_id),
+        var_trans_type,
+        to_char(i_xactn_date,'dd-mon-yyyy'),
+        i_xactn_time,
+        upper(i_sender_name)
+      );
+    exception
+      when others then
+        o_result_msg := 'INSERT (CREATE) INTO pt.plt_hdr and plt_det FAILED, RETURN [' || sqlerrm(sqlcode) || ']';
+        o_result := plt_common.failure;
+    end;       
+        
+    /**********************************************************************************/
+    /* Create Idoc package for Create
+    /**********************************************************************************/       
+    begin
+      if ( substr(i_proc_order,1,2) <> '99' ) then
+           
+        var_transaction_type := 'Z_PI1';
+          
+        if ( i_last_gr_flag = 'Y' ) then
+          var_last_gr_flag := true;
+        end if;
 
-   
+        if ( not idoc_hold ) then
+                       
+          pt_cisatl17_gr_ics.execute
+          (
+            var_result,
+            var_result_msg,
+            var_transaction_type,
+            i_plant_code,
+            i_sender_name || ':' || substr(i_plt_code,1,18), --i_sender_name,
+            var_test_flag,
+            i_proc_order,
+            i_xactn_date,
+            i_xactn_time,
+            i_material_code,
+            i_qty,
+            upper(i_uom),
+            i_stor_loc_code,
+            i_dispn_code,
+            var_batch,
+            var_last_gr_flag,
+            to_char(i_use_by_date,'YYYYMMDD'),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          );
+        else
+          var_result := 0;           
+        end if; 
+                                
+        if ( var_result <> 0 ) then
+          -- error has occured 
+          -- insert record in log file
+          o_result_msg := var_result_msg;
+          o_result := var_result;
+          
+          insert into plt_idoc_log
+          values (i_plt_code, var_trans_type, 0, 'FAIL',o_result_msg, sysdate, 0);
+          
+          o_result_msg := '';
+          o_result := plt_common.success;
+          raise idoc_exception;
+        end if;
+        
+        commit;
+                       
+      end if;
+
+    exception
+      when others then
+        o_result_msg := 'Call to CREATE_IDOC Failed [' || sqlcode || ' ' || substr(sqlerrm,1,256) || ']';
+        o_result := plt_common.failure;
+        rollback;
+        raise process_exception;
+    end;
+       
+    /**********************************************************************************/
+    /* Update Sent Flag if all OK
+    /**********************************************************************************/
+    begin
+    
+      if ( substr(i_proc_order,1,2) = '99' ) then
+        update pt.plt_det
+        set sent_flag = 'X'
+        where plt_code = upper(i_plt_code);
+      else
+        if ( not idoc_hold ) then
+          update pt.plt_det
+          set sent_flag = 'Y'
+          where plt_code = upper(i_plt_code);
+        end if;
+      end if;
+
+    exception
+      when others then
+        o_result_msg := '<TAGSYS_FCTRY_INTFC.Create_Pllt> Error updating sent flag on pts_intfc: [' || sqlerrm || ']';
+        o_result := plt_common.failure;
+        raise process_exception;
+    end;
+
+    commit;
+
+  exception
+    when process_exception then
+      o_result := plt_common.failure;
+      -- raise_application_error(-20001, o_result_msg);
+    when idoc_exception then
+      commit;
+      o_result := plt_common.success;
+      -- raise_application_error(-20000, o_result_msg);
+    when others then
+      o_result := plt_common.failure;
+      rollback;
+      o_result_msg := 'ERROR OCCURED' || sqlcode || '-' || substr(sqlerrm,1,256);
+      --  raise_application_error(-20000, o_result_msg);
+  end create_pllt;
+
+  /**********************************************************************************/
+  /* Cancel Pallet record -
+  /* - the pallet record has to exist and it should be CREATE status
+  /**********************************************************************************/
+  procedure cancel_pllt(o_result    in out number,
+                      o_result_msg  in out varchar2,                 
+                      i_xactn_date  in date,
+                      i_xactn_time  in number,
+                      i_sender_name in varchar2,
+                      i_plt_code    in varchar2,
+                      i_user_id     in varchar2) as
+    /*-*/
+    /* Variables
+    /*-*/ 
+    var_last_gr_flag      boolean := false;
+    
+    var_count             number;
+    var_result            number;
+    
+    var_transaction_type  varchar2(10);
+    var_result_msg        varchar2(2000);
+    var_proc_order        varchar2(12);
+    var_trans_type        varchar2(10) default 'CANCEL';
+    
+    process_exception     exception;
+    idoc_exception        exception;           
+           
+    cursor c_get_plt is
+      select h.*, 
+        sent_flag
+      from plt_hdr h, 
+        plt_det d
+      where h.plt_code = i_plt_code
+        and h.plt_code = d.plt_code
+        and d.xactn_type = 'CREATE';           
+    r_plt  c_get_plt%rowtype;      
+       
+  begin
+
+    o_result := Plt_Common.SUCCESS;
+    o_result_msg := 'Pallet ' || i_plt_code || ' cancelled';  
+         
+    /**********************************************************************************/
+    /* VALIDATE data BEFORE saving IN TABLE
+    /**********************************************************************************/   
+    select count(*) 
+    into var_count
+    from plt_hdr
+    where plt_code = i_plt_code
+      and status = 'CREATE';
+    
+    if ( var_count <> 1 ) then
+      o_result_msg := 'Transaction Failed: A Pallet record with status ''CREATE'' has to exist.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+        
+    select count(*) 
+    into var_count
+    from plt_hdr
+    where plt_code = i_plt_code
+    and status = 'CANCEL';
+    
+    if ( var_count > 0 ) then
+      o_result_msg := 'Transaction Failed: A Pallet record with status ''CANCEL'' already exists.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+         
+    -- check validity of dates
+    if ( i_xactn_date is null ) then
+      o_result_msg := 'Transaction Date cannot be Null.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+         
+    -- check sender name
+    if ( i_sender_name is null ) then
+      o_result_msg := 'Sender Name cannot be Null for a Cancel Pallet.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+
+   -- get rest of pallet data 
+    open c_get_plt;
+    fetch c_get_plt into r_plt;
+    
+    if ( c_get_plt%found ) then   
       /**********************************************************************************/
       /* Save data in Pallet tables
       /**********************************************************************************/
 
-      BEGIN
-      
-           /*
-           IF LENGTH(i_MATERIAL_CODE) < 8 THEN
-               -- semi finished product
-               v_batch := ' ';
-           ELSE
-               -- FG
-               v_batch := i_ZPPPI_BATCH;
-           END IF;
-           */
-           IF i_ZPPPI_BATCH IS NULL THEN
-               v_batch := ' ';
-           ELSE
-               -- FG
-               v_batch := SUBSTR(i_ZPPPI_BATCH,1,30);
-           END IF;
-           
-           /**********************************************************************************/
-           /* Insert record into header table
-           /**********************************************************************************/
-       INSERT INTO PT.PLT_HDR (
-      PLT_CODE,
-                  MATL_CODE,
-                  QTY,
-                  STATUS,
-      PLANT_CODE,
-         ZPPPI_BATCH,
-      PROC_ORDER,
-      STOR_LOCN_CODE,
-         DISPN_CODE,
-      USE_BY_DATE,
-         FULL_PLT_FLAG,
-                  LAST_GR_FLAG,
-      PLT_CREATE_DATIME,
-                  UOM)
-           VALUES(
-          i_Plt_Code,
-                  i_MATERIAL_CODE,
-                  i_QTY,
-                  TRANS_TYPE,
-       i_PLANT_CODE,
-       v_batch,
-                  i_PROC_ORDER,
-                  i_STOR_LOC_CODE,
-         i_DISPN_CODE, 
-       i_USE_BY_DATE,
-                  i_FULL_PLT_FLAG,
-                  i_LAST_GR_FLAG,
-         SYSDATE,
-       UPPER(i_UOM)   
-      );
-                    
-          /**********************************************************************************/                 
-          /* Insert detail record 
-          /**********************************************************************************/
-          INSERT INTO  PLT_DET (
-                  PLT_CODE,
-                  XACTN_TYPE,
-                  USER_ID,
-                  REASON,
-                  XACTN_DATE,
-                  XACTN_TIME,
-                  SENDER_NAME
-                  )
-              VALUES (
-                  i_PLT_CODE,
-                  TRANS_TYPE,
-                  UPPER(i_USER_ID),
-                  TRANS_TYPE,
-                  TO_CHAR(i_Xactn_Date,'dd-mon-yyyy'),
-                  i_Xactn_Time,
-                  UPPER(i_Sender_Name)
-                  );         
-              -- DBMS_OUTPUT.PUT_LINE(TRANS_TYPE); 
-        EXCEPTION
-          WHEN OTHERS THEN
-            o_result_msg := 'INSERT (CREATE) INTO pt.plt_hdr and plt_det FAILED, RETURN ['
-               ||SQLERRM(SQLCODE)||']';
-            o_result := Plt_Common.FAILURE;
-        END;
-
-        
-        
+      begin
+        update pt.plt_hdr 
+        set status = var_trans_type
+        where plt_code = r_plt.plt_code;               
+             
+        /**********************************************************************************/                 
+        /* Insert detail record 
         /**********************************************************************************/
-        /* Create Idoc package for Create
-        /**********************************************************************************/
-
-       
-        
-  BEGIN
-    IF SUBSTR(i_proc_order,1,2) <> '99' THEN
-     
-    v_transaction_type := 'Z_PI1';
-    --v2#transaction_type := 'Z_PI2';
-    
-    IF (i_LAST_GR_FLAG = 'Y') THEN
-       b_last_gr_flag := TRUE;
-    END IF;
-
-                IF NOT Idoc_Hold THEN
-                 
-        -- Make call to create iDOC
-        Create_Idoc(v_result,
-                            v_result_msg,
-                            v_transaction_type,
-          i_PLANT_CODE,
-          i_SENDER_NAME || ':' || SUBSTR(i_PLT_CODE,1,18), --i_SENDER_NAME,
-          b_TEST_FLAG,
-          i_PROC_ORDER,
-          i_XACTN_DATE,
-          i_XACTN_TIME,
-          i_MATERIAL_CODE,
-          i_QTY,
-          UPPER(i_UOM),
-          i_STOR_LOC_CODE,
-          i_DISPN_CODE,
-          v_batch,
-          b_LAST_GR_FLAG,
-       TO_CHAR(i_USE_BY_DATE,'YYYYMMDD'));
-                ELSE
-                    v_result := 0;           
-                END IF; 
-                          
-                IF v_result <> 0 THEN
-                    -- error has occured 
-                    -- insert record in log file
-                    o_result_msg := v_result_msg;
-                    o_result := v_result;
-                    INSERT INTO PLT_IDOC_LOG
-                        VALUES (i_PLT_CODE, TRANS_TYPE, 0, 'FAIL',o_result_msg, SYSDATE, 0);
-                    o_result_msg := '';
-                    o_result := Plt_Common.SUCCESS;
-                    RAISE e_IDOC_EXCEPTION;
-                END IF;
-                COMMIT;
-                 
-    END IF;
-
-  EXCEPTION
-  WHEN OTHERS THEN
-      o_result_msg := 'Call to CREATE_IDOC Failed ['|| SQLCODE || ' ' || SUBSTR(SQLERRM,1,256) ||']';
-            o_result := Plt_Common.FAILURE;
-            ROLLBACK;
-   RAISE   e_process_exception;
-  END;
-        
-        
-        
-        
-        /**********************************************************************************/
-        /* Update Sent Flag if all OK
-        /**********************************************************************************/
-      
-  BEGIN
-    IF SUBSTR(i_proc_order,1,2) = '99' THEN
-     UPDATE PT.PLT_DET
-    SET SENT_FLAG = 'X'
-    WHERE PLT_CODE = UPPER(i_PLT_CODE);
-    ELSE
-                 IF NOT Idoc_Hold THEN
-          UPDATE PT.PLT_DET
-         SET SENT_FLAG = 'Y'
-         WHERE PLT_CODE = UPPER(i_PLT_CODE);
-                 END IF;
-    END IF;
-
-  EXCEPTION
-    WHEN OTHERS THEN
-      o_result_msg := '<TAGSYS_FCTRY_INTFC.Create_Pllt> Error updating sent flag on pts_intfc: ['||SQLERRM||']';
-            o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-  END;
-
-
-        
-        
-
-        COMMIT;
-
-   EXCEPTION
-     WHEN e_process_exception THEN
-          o_result := Plt_Common.FAILURE;
-        -- RAISE_APPLICATION_ERROR(-20001, o_result_msg);
-  WHEN e_IDOC_EXCEPTION THEN
-          COMMIT;
-          o_result := Plt_Common.SUCCESS;
-  -- RAISE_APPLICATION_ERROR(-20000, o_result_msg);
-    WHEN OTHERS THEN
-         o_result := Plt_Common.FAILURE;
-         ROLLBACK;
-         o_result_msg := 'ERROR OCCURED'||SQLCODE || '-' || SUBSTR(SQLERRM,1,256);
-       --  RAISE_APPLICATION_ERROR(-20000, o_result_msg);
-END;
-
-
-
-
-/**********************************************************************************/
-/* Cancel Pallet record -
-/* - the pallet record has to exist and it should be CREATE status
-/**********************************************************************************/
-      
-      
-PROCEDURE Cancel_Pllt(
-    o_result                 IN OUT NUMBER,
-    o_result_msg             IN OUT VARCHAR2,
- 
-    i_XACTN_DATE       IN DATE,
-    i_XACTN_TIME       IN NUMBER,
-    i_SENDER_NAME   IN VARCHAR2,
-    i_PLT_CODE    IN VARCHAR2,
-    i_USER_ID    IN VARCHAR2
-       )
-       AS
-       
-    
-   
-    b_last_gr_flag   BOOLEAN := FALSE;
-       v_count                  NUMBER;
-    v_transaction_type       VARCHAR2(10);
-       v_result                 NUMBER;
-       v_result_msg             VARCHAR2(2000);
-       v_proc_order             VARCHAR2(12);
-    e_process_exception      EXCEPTION;
-    e_IDOC_EXCEPTION   EXCEPTION;
-       
-       TRANS_TYPE               VARCHAR2(10) DEFAULT 'CANCEL';
-       
-       CURSOR c_get_plt IS
-       SELECT h.*, sent_flag
-       FROM PLT_HDR h, PLT_DET d
-       WHERE h.plt_code = i_plt_code
-       AND h.PLT_CODE = d.PLT_CODE
-       AND d.xactn_type = 'CREATE';
-       
-       r_plt  c_get_plt%ROWTYPE;
-       
-       
-BEGIN
-
-   o_result := Plt_Common.SUCCESS;
-   o_result_msg := 'Pallet ' || i_plt_code || ' cancelled';
-   
-   
-   /**********************************************************************************/
-   /* VALIDATE data BEFORE saving IN TABLE
-   /**********************************************************************************/
-
-   
-   SELECT COUNT(*) INTO v_count
-   FROM PLT_HDR
-   WHERE plt_code = i_plt_code
-   AND STATUS = 'CREATE';
-   IF v_count <> 1 THEN
-      o_result_msg := 'Transaction Failed: A Pallet record with status ''CREATE'' has to exist.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-  
-   SELECT COUNT(*) INTO v_count
-   FROM PLT_HDR
-   WHERE plt_code = i_plt_code
-   AND STATUS = 'CANCEL';
-   IF v_count > 0 THEN
-      o_result_msg := 'Transaction Failed: A Pallet record with status ''CANCEL'' already exists.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-   
-   -- check validity of dates
-   IF i_XACTN_DATE IS NULL THEN
-      o_result_msg := 'Transaction Date cannot be Null.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-   
-   -- check SEnder name
-   IF i_Sender_name IS NULL THEN
-      o_result_msg := 'Sender Name cannot be Null for a Cancel Pallet.';
-      o_result := Plt_Common.FAILURE;
-      RAISE e_process_exception;
-   END IF;
-   
-   
-   
-   
-   -- get rest of pallet data 
-   OPEN c_get_plt;
-   FETCH c_get_plt INTO r_plt;
-   LOOP
-       EXIT WHEN c_get_plt%NOTFOUND;
-   
-       -- check Sif Sent Flag is set - if not warn shiftlog to get it fixed before Cancelling Pallet
-       /*
-       IF r_plt.Sent_flag IS NULL THEN
-           o_result_msg := 'Warning the Pallet ingformation has not been sent to Atlas.' || CHR(13) 
-                            || ' Please consult your Support team.';
-           o_result := Plt_Common.FAILURE;
-           RAISE e_process_exception;
-       END IF;
-       */
-   
-   
-   
-       /**********************************************************************************/
-       /* Save data in Pallet tables
-       /**********************************************************************************/
-
-       BEGIN
-       UPDATE PT.PLT_HDR 
-               SET STATUS = TRANS_TYPE
-               WHERE plt_code = r_plt.Plt_Code;
-       
-   
-         /**********************************************************************************/                 
-         /* Insert detail record 
-         /**********************************************************************************/
-         INSERT INTO  PLT_DET (
-                  PLT_CODE,
-                  XACTN_TYPE,
-                  USER_ID,
-                  REASON,
-                  XACTN_DATE,
-                  XACTN_TIME,
-                  SENDER_NAME
-                  )
-              VALUES (
-                  i_PLT_CODE,
-                  TRANS_TYPE,
-                  UPPER(i_USER_ID),
-                  TRANS_TYPE,
-                  TO_CHAR(i_Xactn_Date,'dd-mon-yyyy'),
-                  i_Xactn_Time,
-                  UPPER(i_Sender_Name)
-                  ); 
-                  
-                      
-            
-      EXCEPTION
-         WHEN OTHERS THEN
-            o_result := Plt_Common.FAILURE;
-            o_result_msg := 'UPDATE (CANCEL) INTO pt.plt_hdr and plt_det FAILED, RETURN ['
-               ||SUBSTR(SQLERRM,1,255) ||']';
-      END;
+        insert into  plt_det 
+        (
+          plt_code,
+          xactn_type,
+          user_id,
+          reason,
+          xactn_date,
+          xactn_time,
+          sender_name
+        )
+        values 
+        (
+          i_plt_code,
+          var_trans_type,
+          upper(i_user_id),
+          var_trans_type,
+          to_char(i_xactn_date,'dd-mon-yyyy'),
+          i_xactn_time,
+          upper(i_sender_name)
+        );              
+      exception
+        when others then
+          o_result := plt_common.failure;
+          o_result_msg := 'UPDATE (CANCEL) INTO pt.plt_hdr and plt_det FAILED, RETURN [' || substr(sqlerrm,1,255) || ']';
+      end;
 
       /**********************************************************************************/
       /* Create Idoc package for Cancel
       /**********************************************************************************/
 
-      IF NOT Idoc_Hold THEN
-  BEGIN
-        
-             SELECT proc_order INTO v_proc_order
-             FROM PLT_HDR
-             WHERE plt_code = i_plt_code;
-             
-    IF SUBSTR(v_proc_order,1,2) <> '99'  THEN
-     
-    --v2#transaction_type := 'Z_PI1';
-    v_transaction_type := 'Z_PI2';
-    IF r_plt.LAST_GR_FLAG = 'Y' THEN
-                    b_last_gr_flag := TRUE;
-                ELSE
-                    b_last_gr_flag := FALSE;
-                END IF;
-
-                
-                
-        -- Make call to create iDOC
-        Create_Idoc(v_result,
-                         v_result_msg,
-                            v_transaction_type,
-          trim(r_plt.PLANT_CODE),
-          i_SENDER_NAME || ':' || SUBSTR(i_PLT_CODE,1,18), --i_SENDER_NAME,
-          b_TEST_FLAG,
-          TO_NUMBER(r_plt.PROC_ORDER),
-          i_XACTN_DATE,
-          i_XACTN_TIME,
-          r_plt.MATL_CODE,
-          r_plt.QTY,
-          r_plt.UOM,
-          TO_NUMBER(r_plt.STOR_LOCN_CODE),
-          r_plt.DISPN_CODE,
-          r_plt.ZPPPI_BATCH,
-          b_last_gr_flag,
-       TO_CHAR(r_plt.USE_BY_DATE,'YYYYMMDD'));
-                
-                 
-                IF v_result <> 0 THEN
-                    -- error has occured 
-                    -- insert record in log file
-                    o_result_msg := v_result_msg;
-                    o_result := v_result;
-                    INSERT INTO PLT_IDOC_LOG
-                        VALUES (i_PLT_CODE, TRANS_TYPE, 0, 'FAIL',o_result_msg, SYSDATE, o_result);
-                    o_result_msg := '';
-                    o_result := Plt_Common.SUCCESS;
-                    RAISE e_IDOC_EXCEPTION;
-                END IF;
-                 
-    END IF;
- 
-  EXCEPTION
-      WHEN OTHERS THEN
-          o_result_msg := 'Call to CREATE_IDOC Failed ['||SQLERRM||']';
-                o_result := Plt_Common.FAILURE;
-       RAISE e_process_exception;
-  END;
-      END IF;
-        
-  BEGIN
-      IF SUBSTR(v_proc_order,1,2) = '99' THEN
-       UPDATE PT.PLT_DET
-    SET SENT_FLAG = 'X'
-    WHERE PLT_CODE = UPPER(i_PLT_CODE);
-   ELSE
-                IF NOT Idoc_Hold THEN
-           UPDATE PT.PLT_DET
-        SET SENT_FLAG = 'Y'
-        WHERE PLT_CODE = UPPER(i_PLT_CODE);
-                END IF;
-   END IF;
-
-  EXCEPTION
-     WHEN OTHERS THEN
-         o_result_msg :=  '<TAGSYS_FCTRY_INTFC.Cancel_Pllt> Error updating sent flag on pts_intfc: ['||SQLERRM||']';
-               o_result := Plt_Common.FAILURE;
-         RAISE e_process_exception;
-  END;
-        
-        EXIT;
-        
-   END LOOP;
-   CLOSE c_get_plt;
-       
-   
-   COMMIT;
-
-EXCEPTION
-     WHEN e_process_exception THEN
-         o_result := Plt_Common.FAILURE;
-         -- RAISE_APPLICATION_ERROR(-20001, o_result_msg);
-  WHEN e_IDOC_EXCEPTION THEN
-         COMMIT;
-         o_result := Plt_Common.SUCCESS;
-   -- RAISE_APPLICATION_ERROR(-20000, o_result_msg);
-     WHEN OTHERS THEN
-         o_result := Plt_Common.FAILURE;
-         ROLLBACK;
-         o_result_msg := 'ERROR OCCURED'||SQLERRM(SQLCODE);
-         -- RAISE_APPLICATION_ERROR(-20000, o_result_msg);
-END;
-
-
-/**********************************************************************************/
-/* Disposition Pallet record -
-/* - the pallet record has to exist and in a CREATE status before
-/* - a disposition can be raised
-/**********************************************************************************/
-
-PROCEDURE Disposition(
-       o_result            IN OUT NUMBER,
-    o_result_msg        IN OUT VARCHAR2,
-       i_plt_code          IN VARCHAR2,
-       i_Sloc              IN VARCHAR2,
-       i_Sign              IN VARCHAR2,
-       i_Iss_Stock_Status  IN VARCHAR2,
-       i_Rec_Stock_Status  IN VARCHAR2,
-       i_dspstn_type       IN VARCHAR2
-       ) AS
-       
-       
-       /* Disposition procedure is called to change the disposition within Atlas.
-       it is called 1 pallet at a time and an Idoc is only sent to Atlas if:
-       .. the pallet has not had an STO raised
-       .. or the Atlas disposition changes. ie Shift Log has 16 dispositions - Atlas has 3
-       */
-       
-       
-       e_process_exception      EXCEPTION;
-       e_escape_exception       EXCEPTION;
-    e_IDOC_EXCEPTION   EXCEPTION;
-       
-       v_count                  NUMBER;
-       v_intfc_rtn          NUMBER(15,0);
-    v_interface_type         VARCHAR2(10) := 'CISATL05.1'; 
-       v_batch                  VARCHAR2(20);
-    v_TEST_FLAG          VARCHAR2(1)  := '';
-       --v_status                 VARCHAR2(1);  -- used for issuing disposition
-       --v_status_rec             VARCHAR2(1);  -- used for receiving disposition
-       v_seq                    NUMBER;
-       v_last_dspstn            VARCHAR2(10);
-       v_sign                   VARCHAR2(1);
-       v_rec_stock_status       VARCHAR2(1);
-       v_whse                   NUMBER;
-       v_dsp                    VARCHAR2(1);
-       v_qty                    NUMBER;
-       
-       CURSOR c_disp IS
-       SELECT  matl_code, qty, zpppi_batch batch,
-           proc_order, stor_locn_code sloc1, uom
-           FROM PLT_HDR h, PLT_DET d
-           WHERE h.PLT_CODE = d.PLT_CODE
-           AND reason = 'CREATE'
-           AND h.plt_code = i_plt_code;
-           
-       rcd c_disp%ROWTYPE;
-       
-       CURSOR c_last IS
-       SELECT iss_stock_status 
-             FROM PLT_DSPSTN
-             WHERE plt_code = i_plt_code
-             ORDER BY create_datime DESC;
-       
-     BEGIN
-     
-         o_result := Plt_Common.SUCCESS;
-         o_result_msg := 'Disposition changed for pallet ' || i_plt_code;
-         
-         -- ensure a Pallet exists 
-         SELECT COUNT(*) INTO v_count
-         FROM PLT_HDR
-         WHERE PLT_CODE = i_plt_code
-         AND STATUS = 'CREATE';
-         IF v_count = 0 THEN
-             o_result_msg := 'Pallet does not exist or may have been cancelled.';
-             o_result := Plt_Common.FAILURE;
-             RAISE e_process_exception;
-         END IF;
-         
-         
-         -- disposition can only be sent if an STO has not been raised ? 
-         SELECT COUNT(*) INTO v_count
-         FROM STO_DET d, STO_HDR h
-         WHERE d.cnn = h.cnn
-         AND d.PLT_CODE = i_plt_code;
-         IF v_count > 0 THEN
-             o_result_msg := 'STO has been sent for this Pallet - no Dispositions can be made.';
-             o_result := Plt_Common.FAILURE;
-             RAISE e_process_exception;
-         END IF;
-         
-         
-         
-         
-         /***********************************************************************
-         -- check fields are valid for the type of transfer 
-         ***********************************************************************/
-         IF i_dspstn_type = 'STCH' THEN
-             -- check for a iss stock status 
-             IF i_rec_stock_status IS NULL THEN
-                 o_result_msg := 'Issue Stock Status Code cannot be Null for STCH record.';
-                 RAISE e_process_exception;
-             END IF;
-         END IF;
-         --IF i_dspstn_type = 'SADJ' THEN
-             --check if a qty has been supplied
-            -- IF i_qty IS NULL OR i_qty = 0 THEN
-            --    o_result_msg := 'Stock Adjustment needs a valid Quantity';
-            --    o_result := Plt_Common.FAILURE;
-            --    RAISE e_process_exception;
-            -- END IF;
-         --END IF;
-
-         IF i_dspstn_type <> 'STCH' AND i_dspstn_type <> 'SADJ'  THEN
-             o_result_msg := 'Not a valid transaction type - STCH, SAADJ only';
-             o_result := Plt_Common.FAILURE;
-             RAISE e_process_exception;
-         END IF;
-          
-         -- check for a iss stock status 
-         IF i_iss_stock_status IS NULL THEN
-             o_result_msg := 'Issue Stock Status Code cannot be Null.';
-             RAISE e_process_exception;
-         END IF;
-        
-
-         
-         
-         
-         
-         -- values can only be X - Quality Inspect
-         --                    S - Blocked
-         --                    space - Unrestricted
-         -- change the shift log status to an atlas status 
-         IF i_iss_stock_status NOT IN (' ','R','S','X')  THEN
-             o_result_msg := 'Incorrect Issuing disposition status.';
-             o_result := Plt_Common.FAILURE;
-             RAISE e_process_exception;
-         END IF;
-         
-         -- values can only be X - Quality Inspect
-         --                    S - Blocked
-         --                    space - Unrestricted
-         -- change the shift log status to an atlas rec status 
-         IF i_rec_stock_status NOT IN (' ','R','S','X')  THEN
-             o_result_msg := 'Incorrect Receive disposition status.';
-             o_result := Plt_Common.FAILURE;
-             RAISE e_process_exception;
-         END IF;
-         
-         
+      if ( not idoc_hold ) then
+        begin
                   
-         /**********************************************************************
-         End of field checking 
-         **********************************************************************/
-         
-            
+          select proc_order 
+          into var_proc_order
+          from plt_hdr
+          where plt_code = i_plt_code;
+                         
+          if ( substr(var_proc_order,1,2) <> '99' ) then
                  
-         -- get pallet infomation
-         BEGIN
-             SELECT MAX(zpppi_batch) batch INTO v_batch
-             FROM PLT_HDR
-             WHERE plt_code = i_plt_code;
-                     
-         EXCEPTION
-             WHEN TOO_MANY_ROWS THEN
-                         o_result_msg := 'ERROR OCCURED in Disposition procedure - more than one pallet' || CHR(13) ||SUBSTR(SQLERRM,1,256);
-                         o_result := Plt_Common.FAILURE;
-                         RAISE e_process_exception;
-             WHEN NO_DATA_FOUND THEN
-                         o_result_msg := 'ERROR OCCURED in Disposition procedure - no pallet' || CHR(13) ||SUBSTR(SQLERRM,1,256);
-                         o_result := Plt_Common.FAILURE;
-                         RAISE e_process_exception;
-             WHEN OTHERS THEN
-                         o_result_msg := 'ERROR OCCURED in Disposition procedure - get pallet' || CHR(13) ||SUBSTR(SQLERRM,1,256);
-                         o_result := Plt_Common.FAILURE;
-                         RAISE e_process_exception;
-         END;
-         
-         /* DISPOSITION tests
-          only save data if the disposition is different from tha last Atlas disposition         
-          get last atlas disposition 
-          if it is the same as this one do not send       */
-         SELECT DISPN_CODE, qty INTO v_dsp, v_qty
-         FROM plt_hdr
-         WHERE plt_code = i_plt_code;
-         IF v_dsp <> i_iss_stock_status THEN
-            o_result_msg := 'The current Pallet disposition is different to the Iss_Stock_Status.';
+            var_transaction_type := 'Z_PI2';
+              
+            if ( r_plt.last_gr_flag = 'Y' ) then
+              var_last_gr_flag := true;
+            else
+              var_last_gr_flag := false;
+            end if;
+              
+            pt_cisatl17_gr_ics.execute
+            (
+              var_result,
+              var_result_msg,
+              var_transaction_type,
+              trim(r_plt.plant_code),
+              i_sender_name || ':' || substr(i_plt_code,1,18), --i_sender_name,
+              var_test_flag,
+              to_number(r_plt.proc_order),
+              i_xactn_date,
+              i_xactn_time,
+              r_plt.matl_code,
+              r_plt.qty,
+              r_plt.uom,
+              to_number(r_plt.stor_locn_code),
+              r_plt.dispn_code,
+              r_plt.zpppi_batch,
+              var_last_gr_flag,
+              to_char(r_plt.use_by_date,'YYYYMMDD'),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            );           
+                               
+            if ( var_result <> 0 ) then
+              -- error has occured 
+              -- insert record in log file
+              o_result_msg := var_result_msg;
+              o_result := var_result;
+                
+              insert into plt_idoc_log
+              values (i_plt_code, var_trans_type, 0, 'FAIL', o_result_msg, sysdate, o_result);
+                
+              o_result_msg := '';
+              o_result := plt_common.success;
+              raise idoc_exception;
+            end if;
+                             
+          end if;
+           
+        exception
+          when others then
+            o_result_msg := 'Call to CREATE_IDOC Failed [' || sqlerrm || ']';
+            o_result := plt_common.failure;
+            raise process_exception;
+        end;
+      end if;
+          
+      begin
+      
+        if ( substr(var_proc_order,1,2) = '99' ) then
+          update pt.plt_det
+          set sent_flag = 'X'
+          where plt_code = upper(i_plt_code);
+        else
+          if ( not idoc_hold ) then
+            update pt.plt_det
+            set sent_flag = 'Y'
+            where plt_code = upper(i_plt_code);
+          end if;
+        end if;
+
+      exception
+        when others then
+          o_result_msg :=  '<TAGSYS_FCTRY_INTFC.Cancel_Pllt> Error updating sent flag on pts_intfc: [' || sqlerrm || ']';
+          o_result := plt_common.failure;
+          raise process_exception;
+      end;
+    
+    end if;        
+    close c_get_plt;        
+       
+    commit;
+
+  exception
+    when process_exception then
+      o_result := plt_common.failure;
+      -- raise_application_error(-20001, o_result_msg);
+    when idoc_exception then
+      commit;
+      o_result := plt_common.success;
+      -- raise_application_error(-20000, o_result_msg);
+    when others then
+      o_result := plt_common.failure;
+      rollback;
+      o_result_msg := 'ERROR OCCURED' || sqlerrm(sqlcode);
+      -- raise_application_error(-20000, o_result_msg);
+  end;
+
+  /**********************************************************************************/
+  /* Disposition Pallet record -
+  /* - the pallet record has to exist and in a CREATE status before
+  /* - a disposition can be raised
+  /* Disposition procedure is called to change the disposition within Atlas.
+  /* it is called 1 pallet at a time and an Idoc is only sent to Atlas if:
+  /*.. the pallet has not had an STO raised
+  /*.. or the Atlas disposition changes. ie Shift Log has 16 dispositions - Atlas has 3
+  /**********************************************************************************/
+
+  procedure disposition(o_result          in out number,
+                      o_result_msg        in out varchar2,
+                      i_plt_code          in varchar2,
+                      i_sloc              in varchar2,
+                      i_sign              in varchar2,
+                      i_iss_stock_status  in varchar2,
+                      i_rec_stock_status  in varchar2,
+                      i_dspstn_type       in varchar2) as
+    /*-*/
+    /* Variables
+    /*-*/       
+    process_exception     exception;
+    escape_exception      exception;
+    idoc_exception        exception;
+           
+    var_interface_type    varchar2(10) := 'CISATL05.1'; 
+    var_batch             varchar2(20);
+    var_test_flag         varchar2(1)  := '';
+    var_dsp               varchar2(1);
+    var_last_dspstn       varchar2(10);
+    var_sign              varchar2(1);
+    var_rec_stock_status  varchar2(1);
+    
+    var_count             number;
+    var_intfc_rtn         number(15,0);
+    var_seq               number;
+    var_whse              number;
+    var_qty               number;
+           
+    cursor c_disp is
+      select matl_code, 
+        qty, 
+        zpppi_batch as batch,
+        proc_order, 
+        stor_locn_code as sloc1, 
+        uom
+      from plt_hdr h, 
+        plt_det d
+      where h.plt_code = d.plt_code
+        and reason = 'CREATE'
+        and h.plt_code = i_plt_code;               
+    rcd c_disp%rowtype;
+           
+    cursor c_last is
+      select iss_stock_status 
+      from plt_dspstn
+      where plt_code = i_plt_code
+      order by create_datime desc;
+       
+  begin
+       
+    o_result := plt_common.success;
+    o_result_msg := 'Disposition changed for pallet ' || i_plt_code;
+             
+    -- ensure a pallet exists 
+    select count(*) 
+    into var_count
+    from plt_hdr
+    where plt_code = i_plt_code
+      and status = 'CREATE';
+    
+    if ( var_count = 0 ) then
+      o_result_msg := 'Pallet does not exist or may have been cancelled.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+                          
+    -- disposition can only be sent if an sto has not been raised ? 
+    select count(*) 
+    into var_count
+    from sto_det d, sto_hdr h
+    where d.cnn = h.cnn
+      and d.plt_code = i_plt_code;
+      
+    if ( var_count > 0 ) then
+      o_result_msg := 'STO has been sent for this Pallet - no Dispositions can be made.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+       
+    /***********************************************************************
+    -- check fields are valid for the type of transfer 
+    ***********************************************************************/
+    if ( i_dspstn_type = 'STCH' ) then
+      -- check for a iss stock status 
+      if ( i_rec_stock_status is null ) then
+        o_result_msg := 'Issue Stock Status Code cannot be Null for STCH record.';
+        raise process_exception;
+      end if;
+    end if;
+
+    if ( i_dspstn_type <> 'STCH' and i_dspstn_type <> 'SADJ' ) then
+      o_result_msg := 'Not a valid transaction type - STCH, SAADJ only';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+              
+    -- check for a iss stock status 
+    if ( i_iss_stock_status is null ) then
+      o_result_msg := 'Issue Stock Status Code cannot be Null.';
+      raise process_exception;
+    end if;
+
+    -- values can only be X - Quality Inspect
+    --                    S - Blocked
+    --                    space - Unrestricted
+    -- change the shift log status to an atlas status 
+    if ( i_iss_stock_status not in (' ','R','S','X') ) then
+      o_result_msg := 'Incorrect Issuing disposition status.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;
+             
+    -- values can only be X - Quality Inspect
+    --                    S - Blocked
+    --                    space - Unrestricted
+    -- change the shift log status to an atlas rec status 
+    if ( i_rec_stock_status not in (' ','R','S','X') ) then
+      o_result_msg := 'Incorrect Receive disposition status.';
+      o_result := plt_common.failure;
+      raise process_exception;
+    end if;  
+                  
+    /**********************************************************************
+    End of field checking 
+    **********************************************************************/      
             
-            RAISE e_process_exception;
-         END IF;
-         IF i_iss_stock_status = i_rec_stock_status THEN
-            o_result_msg := 'Issue and Receive Dispositions are the same. They have to be different.' ;
-            
-            RAISE e_process_exception;
-         END IF;
+    -- get pallet infomation
+    begin
+      select max(zpppi_batch) batch 
+      into var_batch
+      from plt_hdr
+      where plt_code = i_plt_code;
+                         
+    exception
+      when too_many_rows then
+        o_result_msg := 'ERROR OCCURED in Disposition procedure - more than one pallet' || chr(13) || substr(sqlerrm,1,256);
+        o_result := plt_common.failure;
+        raise process_exception;
+      when no_data_found then
+        o_result_msg := 'ERROR OCCURED in Disposition procedure - no pallet' || chr(13) || substr(sqlerrm,1,256);
+        o_result := plt_common.failure;
+        raise process_exception;
+      when others then
+        o_result_msg := 'ERROR OCCURED in Disposition procedure - get pallet' || chr(13) || substr(sqlerrm,1,256);
+        o_result := plt_common.failure;
+        raise process_exception;
+    end;
          
-         -- insert a record in dspstn table
-         SELECT PLT_DSPSTN_CODE_SEQ.NEXTVAL INTO v_seq FROM dual;
-         -- get a seq code for WHSE_CODE filed 
-         SELECT PLT_DSPSTN_WHSE_SEQ.NEXTVAL INTO v_whse FROM dual;
+    /* DISPOSITION tests
+    only save data if the disposition is different from tha last Atlas disposition         
+    get last atlas disposition 
+    if it is the same as this one do not send       */
+    select dispn_code, qty 
+    into var_dsp, var_qty
+    from plt_hdr
+    where plt_code = i_plt_code;
+    
+    if ( var_dsp <> i_iss_stock_status ) then
+      o_result_msg := 'The current Pallet disposition is different to the Iss_Stock_Status.';                
+      raise process_exception;
+    end if;
+    if ( i_iss_stock_status = i_rec_stock_status ) then
+      o_result_msg := 'Issue and Receive Dispositions are the same. They have to be different.';                
+      raise process_exception;
+    end if;
+             
+    -- insert a record in dspstn table
+    select plt_dspstn_code_seq.nextval into var_seq from dual;
+    
+    -- get a seq code for whse_code filed 
+    select plt_dspstn_whse_seq.nextval into var_whse from dual;
          
              
-         BEGIN
-         
-         /*****************************************
-         update pallet record with by adding new qty
-         *****************************************/
+    begin
+             
+      /*****************************************
+      update pallet record with by adding new qty
+      *****************************************/
       --   IF i_sign  IS NULL THEN
-            -- add qty 
-      --      v_qty := v_qty + i_qty;
+      -- add qty 
+      --      var_qty := var_qty + i_qty;
       --   ELSE
-             -- subttract qty
-      --       v_qty := v_qty - i_qty;
+      -- subttract qty
+      --       var_qty := var_qty - i_qty;
       --   END IF;
       --   UPDATE plt_hdr
-      --   SET qty = v_qty
+      --   SET qty = var_qty
       --   WHERE plt_code = i_plt_code;
-         /*****************************************/
-         
-         INSERT INTO PLT_DSPSTN
-             VALUES (v_seq,
-                 RTRIM(LTRIM(i_plt_code)),
-                 TRUNC(SYSDATE),
-                 TO_CHAR(SYSDATE,'hh24miss'),
-                 '',
-                 '', --i_qty,
-                 TO_CHAR(v_whse),
-                 Plt_Common.SOURCE_PLANT, -- source plant
-                 i_sloc, -- source sloc
-                 '', -- dest plant 
-                 '', -- dest sloc
-                 i_sign, -- qty sign
-                 RTRIM(LTRIM(i_iss_stock_status)),
-                 RTRIM(LTRIM(i_rec_stock_status)),
-                 v_batch,
-                 '',
-                 '',
-                 '',
-                 '',
-                 '',
-                 SYSDATE,
-                 i_dspstn_type);
-                 
-             UPDATE PLT_HDR SET dispn_code = i_rec_stock_status
-             WHERE plt_code = i_plt_code;
-                
-             COMMIT;
-                  
-         EXCEPTION
-   WHEN OTHERS THEN
-                o_result := Plt_Common.FAILURE;
-                dbms_output.put ('Plt Code =' || i_plt_code || '-');
-                o_result_msg := 'ERROR OCCURED in Disposition procedure Inserting record' || CHR(13) ||SUBSTR(SQLERRM,1,256);
-                RAISE e_process_exception;
-         END;
-          
-          
-         IF NOT Idoc_Hold THEN
-         
-         --CREATE DATA LINES FOR MESSAGE
-         OPEN c_disp;
-             LOOP
-                 FETCH c_disp INTO rcd;
-                 EXIT WHEN c_disp%NOTFOUND;
-                 
-                     BEGIN
-                 
-                     --Create PASSTHROUGH interface on ICS for GR or RGR message to Atlas
-                     v_intfc_rtn := outbound_loader.create_interface(v_interface_type);
-
-                 
-
-                     -- HEADER: Header Record
-                     -- Including 'X' at the end of the header record will cause Atlas
-                     -- to treat the message as a test, meaning no further processing
-                     -- will be completed once it reaches Atlas.
-                     outbound_loader.append_data('HDR'
-                         ||TO_CHAR(SYSDATE,'yyyymmdd')
-                         ||TO_CHAR(SYSDATE,'hh24miss')
-                         ||RPAD(' ',16,' ')
-                         ||RPAD(' ',25,' ')
-                         ||LPAD(v_whse,16,'0')
-          --||TRIM(v_TEST_FLAG)
-                         );
-             
-                 
-                     -- DBMS_OUTPUT.PUT_LINE(TO_CHAR(rcd.qty,'000000000.000'));
-                     --DET: PROCESS ORDER
-                     IF i_sign IS NULL THEN
-                         v_sign := ' ';
-                     ELSE
-                         v_sign := i_sign;
-                     END IF;  
-                     IF i_rec_stock_status IS NULL THEN
-                         v_rec_stock_status := ' ';
-                     ELSE
-                         V_rec_stock_status := i_rec_stock_status;
-                     END IF;
-                     IF i_dspstn_type <> 'STCH' THEN  
-                         v_rec_stock_status := ' ';
-                     END IF;                   
-                                         
-                     outbound_loader.append_data('DET'
-                                           ||RPAD(Plt_Common.SOURCE_PLANT,4)
-                                           ||LPAD(rcd.sloc1,4,'0')
-                                           ||RPAD(' ', 4,' ')
-                                           ||RPAD(' ', 4,' ')
-                                           ||RPAD(rcd.matl_code,8,' ')
-                                           ||RPAD(i_dspstn_type,4,' ')
-                                           ||v_sign
-                                           ||LTRIM(TO_CHAR(0,'000000000.000'))
-                                           ||RPAD(TRIM(rcd.uom),3,' ')
-                                           ||RPAD(i_iss_stock_status,1,' ')
-                                           ||RPAD(i_rec_stock_status,1,' ')
-                                           ||RPAD(rcd.Batch,10,' ')
-                                           ||RPAD(' ',8,' ')
-                                           ||RPAD(' ',1,' ')
-                                           ||RPAD(' ',8,' ')
-                                           ||RPAD(' ',8,' '));
-                                           
-                                           
-                     --Close PASSTHROUGH INTERFACE
-                     outbound_loader.finalise_interface();                         
-                     dbms_output.put ('Sent Idoc');
-                 
-                     EXCEPTION
-                         WHEN OTHERS THEN
-                          IF (outbound_loader.is_created()) THEN
-                              outbound_loader.finalise_interface();
-                          END IF;
+      /*****************************************/
+               
+      insert into plt_dspstn
+      values 
+      (
+        var_seq,
+        rtrim(ltrim(i_plt_code)),
+        trunc(sysdate),
+        to_char(sysdate,'hh24miss'),
+        '',
+        '', --i_qty,
+        to_char(var_whse),
+        plt_common.source_plant, -- source plant
+        i_sloc, -- source sloc
+        '', -- dest plant 
+        '', -- dest sloc
+        i_sign, -- qty sign
+        rtrim(ltrim(i_iss_stock_status)),
+        rtrim(ltrim(i_rec_stock_status)),
+        var_batch,
+        '',
+        '',
+        '',
+        '',
+        '',
+        sysdate,
+        i_dspstn_type
+      );
+                       
+      update plt_hdr 
+      set dispn_code = i_rec_stock_status
+      where plt_code = i_plt_code;
                       
-                             -- error has occured 
-                             -- insert record in log file
-                             o_result_msg := 'ERROR OCCURED'|| '-' || SUBSTR(SQLERRM,1,256);
-                             o_result := SQLCODE;
-                             INSERT INTO DSPSTN_IDOC_LOG
-                                 VALUES (i_PLT_CODE, 0,o_result_msg, SYSDATE, 0);
-                             -- raise error 
-                             o_result_msg := '';
-                             o_result := Plt_Common.SUCCESS;
-                             RAISE e_IDOC_EXCEPTION;
-                     END;
-                 
-                 
-                     UPDATE PT.PLT_DSPSTN SET SENT_FLAG = 'Y'
-            WHERE PLT_CODE = UPPER(i_PLT_CODE);
-             
-             
-                 EXIT;
-             END LOOP;
-         CLOSE c_disp;     
-   
-         END IF;
-                                        
-         COMMIT;
+      commit;
+                      
+    exception
+      when others then
+        o_result := plt_common.failure;
+        dbms_output.put ('Plt Code =' || i_plt_code || '-');
+        o_result_msg := 'ERROR OCCURED in Disposition procedure Inserting record' || chr(13) || substr(sqlerrm,1,256);
+        raise process_exception;
+    end;
           
-     EXCEPTION
-         WHEN e_escape_exception THEN
-              -- this is an error within the operation and so its not really an error 
-              o_result := Plt_Common.SUCCESS;
-              
-         WHEN e_process_exception THEN
-             o_result := Plt_Common.FAILURE;
+          
+    if not idoc_hold then
              
-      WHEN e_IDOC_EXCEPTION THEN
-             o_result := Plt_Common.SUCCESS;
+      --CREATE DATA LINES FOR MESSAGE
+      open c_disp;
+      fetch c_disp into rcd;
       
-         WHEN OTHERS THEN
-             o_result := Plt_Common.FAILURE;
-             ROLLBACK;
-             o_result_msg := 'ERROR OCCURED in Disposition Procedure ' || CHR(13) ||SUBSTR(SQLERRM,1,256);
-            
-       
-     END;
- 
- 
- 
-     
-     
- 
-   
+      if ( c_disp%found ) then
+                         
+        begin
+                     
+          --Create PASSTHROUGH interface on ICS for GR or RGR message to Atlas
+          var_intfc_rtn := outbound_loader.create_interface(var_interface_type);                  
 
-END Tagsys_Fctry_Intfc;
+          -- HEADER: Header Record
+          -- Including 'X' at the end of the header record will cause Atlas
+          -- to treat the message as a test, meaning no further processing
+          -- will be completed once it reaches Atlas.
+          outbound_loader.append_data('HDR'
+            || to_char(sysdate,'yyyymmdd')
+            || to_char(sysdate,'hh24miss')
+            || rpad(' ',16,' ')
+            || rpad(' ',25,' ')
+            || lpad(var_whse,16,'0'));
+                 
+                     
+          -- DBMS_OUTPUT.PUT_LINE(TO_CHAR(rcd.qty,'000000000.000'));
+          --DET: PROCESS ORDER
+          if ( i_sign is null ) then
+            var_sign := ' ';
+          else
+            var_sign := i_sign;
+          end if; 
+           
+          if ( i_rec_stock_status is null ) then
+            var_rec_stock_status := ' ';
+          else
+            var_rec_stock_status := i_rec_stock_status;
+          end if;
+          
+          if ( i_dspstn_type <> 'STCH' ) then  
+            var_rec_stock_status := ' ';
+          end if;                   
+                                             
+          outbound_loader.append_data('DET'
+            || rpad(plt_common.source_plant,4)
+            || lpad(rcd.sloc1,4,'0')
+            || rpad(' ', 4,' ')
+            || rpad(' ', 4,' ')
+            || rpad(rcd.matl_code,8,' ')
+            || rpad(i_dspstn_type,4,' ')
+            || var_sign
+            || ltrim(to_char(0,'000000000.000'))
+            || rpad(trim(rcd.uom),3,' ')
+            || rpad(i_iss_stock_status,1,' ')
+            || rpad(i_rec_stock_status,1,' ')
+            || rpad(rcd.batch,10,' ')
+            || rpad(' ',8,' ')
+            || rpad(' ',1,' ')
+            || rpad(' ',8,' ')
+            || rpad(' ',8,' '));                                           
+                                               
+          --Close PASSTHROUGH INTERFACE
+          outbound_loader.finalise_interface();                         
+          dbms_output.put ('Sent Idoc');
+                     
+        exception
+          when others then
+            if ( outbound_loader.is_created() ) then
+              outbound_loader.finalise_interface();
+            end if;
+                              
+            -- error has occured 
+            -- insert record in log file
+            o_result_msg := 'ERROR OCCURED'|| '-' || substr(sqlerrm,1,256);
+            o_result := sqlcode;
+            
+            insert into dspstn_idoc_log
+            values (i_plt_code, 0, o_result_msg, sysdate, 0);
+            
+            -- raise error 
+            o_result_msg := '';
+            o_result := plt_common.success;
+            raise idoc_exception;
+        end;                     
+                     
+        update pt.plt_dspstn 
+        set sent_flag = 'Y'
+        where plt_code = upper(i_plt_code);
+                 
+      end if;
+      close c_disp;     
+       
+    end if;
+                                            
+    commit;
+            
+  exception
+  when escape_exception then
+    -- this is an error within the operation and so its not really an error 
+    o_result := plt_common.success;                    
+  when process_exception then
+    o_result := plt_common.failure;                   
+  when idoc_exception then
+    o_result := plt_common.success;            
+  when others then
+    o_result := plt_common.failure;
+    rollback;
+    o_result_msg := 'ERROR OCCURED in Disposition Procedure ' || chr(13) ||substr(sqlerrm,1,256);
+  end;
+
+end tagsys_fctry_intfc_ics;
 /
 
+grant execute on pt_app.tagsys_fctry_intfc_ics to shiftlog;
+grant execute on pt_app.tagsys_fctry_intfc_ics to shiftlog_app;
 
-GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO SHIFTLOG;
-
-GRANT EXECUTE ON PT_APP.TAGSYS_FCTRY_INTFC TO SHIFTLOG_APP;
-
+create or replace public synonym tagsys_fctry_intfc_ics for pt_app.tagsys_fctry_intfc_ics;

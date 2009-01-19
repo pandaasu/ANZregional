@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds_app.bom_ics as
+create or replace force view manu.bom_ics as
   select t01.bom_plant as plant,
     ltrim(t01.bom_number,'0') as bom_code,
     t01.bom_alternative as alternate,
@@ -40,11 +40,11 @@ create or replace force view bds_app.bom_ics as
 /**/
 /* Authority 
 /**/
---grant select on bds_app.bom_ics to bds_app with grant option;
-grant select on bds_app.bom_ics to pt_app with grant option;
-grant select on bds_app.bom_ics to manu_app with grant option;
+grant select on manu.bom_ics to bds_app with grant option;
+grant select on manu.bom_ics to pt_app with grant option;
+grant select on manu.bom_ics to manu_app with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bom_ics for bds_app.bom_ics;    
+create or replace public synonym bom_ics for manu.bom_ics;    

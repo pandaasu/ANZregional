@@ -21,6 +21,7 @@ create or replace package manu_app.shiftlog_build as
   YYYY/MM   Author         Description
   -------   ------         -----------
   2008/11   Trevor Keon    Created
+  2009/01   Trevor Keon    Changed from truncate to delete
 
   *******************************************************************************/
 
@@ -115,8 +116,15 @@ create or replace package body manu_app.shiftlog_build as
   /*-------------*/
   begin  
     
-    manu_table.truncate('site_shiftlog_fg_matl');
-          
+    /*-*/
+    /* Remove existing data
+    /*-*/  
+    delete
+    from site_shiftlog_fg_matl;
+   
+    /*-*/
+    /* Insert most recent data
+    /*-*/           
     open csr_site_shiftlog_fg_matl;
     loop
       fetch csr_site_shiftlog_fg_matl bulk collect into site_shiftlog_fg_matl_data limit c_bulk_limit;
@@ -156,3 +164,15 @@ create or replace package body manu_app.shiftlog_build as
   end execute_fg_matl;
 
 end shiftlog_build;
+
+/**/
+/* Authority 
+/**/
+grant execute on manu_app.shiftlog_build to lics_app;
+grant execute on manu_app.shiftlog_build to bds_app;
+grant execute on manu_app.shiftlog_build to appsupport;
+
+/**/
+/* Synonym 
+/**/
+create or replace public synonym shiftlog_build for manu_app.shiftlog_build;
