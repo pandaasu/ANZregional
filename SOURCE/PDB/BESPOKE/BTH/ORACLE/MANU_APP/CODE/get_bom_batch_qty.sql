@@ -1,8 +1,4 @@
-DROP FUNCTION MANU_APP.GET_BOM_BATCH_QTY;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Bom_Batch_Qty(par_matl IN  VARCHAR2) RETURN NUMBER
-IS
-
+create or replace function manu_app.get_bom_batch_qty(par_matl in  varchar2) return number is
 /*******************************************************************************
     NAME:      Get_Bom_Batch_Qty
     PURPOSE:   Gets tha Batch quantity of the Bom for a given material code 
@@ -11,6 +7,7 @@ IS
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   7/7/2004  Jeff Phillipson          Created this procedure.
+    1.2   7/1/2009  Trevor Keon              Changed query to use BDS tables
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -24,53 +21,32 @@ IS
     NOTES:		 			 
   ********************************************************************************/
    
-   var_matl    VARCHAR2(8);
-   var_qty     NUMBER;
-   
-   CURSOR c1
-   IS
-   SELECT DISTINCT batch_qty 
-	  FROM bom r
-    WHERE matl_code = var_matl
-      AND alt = Get_Alternate(matl_code) 
-      AND eff_start_date = Get_Alternate_Date(matl_code);
+  var_matl    varchar2(8);
+  var_qty     number;
        
-BEGIN
+begin
      
-   var_matl := LTRIM(par_matl,'0');
-   OPEN c1;
-      LOOP
-         FETCH c1 INTO var_qty;
-        -- DBMS_OUTPUT.PUT_LINE('VALUE OK qty- ' || v_qty || '-' ||  v_seq || '-' ||  v_matl || '-' ||  v_sub);
-         EXIT WHEN c1%NOTFOUND;
-         EXIT ;
-   END LOOP;
-   CLOSE c1;
+  var_matl := ltrim(par_matl,'0');
+  
+  select t01.bom_base_qty
+  into var_qty
+  from bds_bom_all t01
+  where t01.bom_plant = 'AU30'
+    and t01.item_number is not null
+    and t01.bom_material_code = '1043330'
+    and t01.bom_alternative = get_alternate(t01.bom_material_code) 
+    and decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) = get_alternate_date(t01.bom_material_code)
+  group by t01.bom_base_qty;
+     
+  return var_qty;
    
-   RETURN var_qty;
-   
-EXCEPTION
-
-    WHEN OTHERS THEN
-
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU. Get_BOM_BATCH_QTY function - ' || SUBSTR(SQLERRM, 1, 512));
-
-
-END;
+exception
+  when others then
+    raise_application_error(-20000, 'MANU. Get_BOM_BATCH_QTY function - ' || substr(sqlerrm, 1, 512));
+end;
 /
 
+grant execute on manu_app.get_bom_batch_qty to appsupport;
+grant execute on manu_app.get_bom_batch_qty to bthsupport;
 
-DROP PUBLIC SYNONYM GET_BOM_BATCH_QTY;
-
-CREATE PUBLIC SYNONYM GET_BOM_BATCH_QTY FOR MANU_APP.GET_BOM_BATCH_QTY;
-
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_BATCH_QTY TO APPSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_BATCH_QTY TO BARNEHEL;
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_BATCH_QTY TO BTHSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_BATCH_QTY TO PHILLJEF;
-
+create or replace public synonym get_bom_batch_qty for manu_app.get_bom_batch_qty;

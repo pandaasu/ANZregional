@@ -1,5 +1,3 @@
-DROP VIEW MANU_APP.RECPE_FCS_VW_NEW;
-
 /* Formatted on 2008/12/22 10:14 (Formatter Plus v4.8.8) */
 CREATE OR REPLACE FORCE VIEW manu_app.recpe_fcs_vw_new (proc_order,
                                                         cntl_rec_id,
@@ -77,7 +75,7 @@ AS
     FROM cntl_rec_bom v,
          cntl_rec_resrce r,
          cntl_rec c,
-         cntl_rec_stat_vw_new s,
+         cntl_rec_stat_vw s,
          cntl_rec_lcl_resrce l,
          work_ctr w,
          (SELECT proc_order, opertn, phase, rd.matl_code, bom_qty
@@ -115,7 +113,7 @@ AS
     FROM cntl_rec_mpi_val v,
          cntl_rec_resrce r,
          cntl_rec c,
-         cntl_rec_stat_vw_new s,
+         cntl_rec_stat_vw s,
          cntl_rec_lcl_resrce l,
          work_ctr w
    WHERE r.proc_order = v.proc_order
@@ -130,9 +128,6 @@ AS
      AND c.run_start_datime < TRUNC (SYSDATE) + 20
      AND SUBSTR (c.proc_order, 1, 1) BETWEEN '0' AND '9';
 
-
-DROP PUBLIC SYNONYM RECPE_FCS_VW_NEW;
-
-CREATE PUBLIC SYNONYM RECPE_FCS_VW_NEW FOR MANU_APP.RECPE_FCS_VW_NEW;
+CREATE OR REPLACE PUBLIC SYNONYM RECPE_FCS_VW_NEW FOR MANU_APP.RECPE_FCS_VW_NEW;
 
 

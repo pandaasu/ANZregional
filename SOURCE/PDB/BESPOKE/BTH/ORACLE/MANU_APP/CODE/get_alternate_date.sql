@@ -1,8 +1,4 @@
-DROP FUNCTION MANU_APP.GET_ALTERNATE_DATE;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Alternate_Date(par_matl IN  VARCHAR2, par_xdate IN DATE DEFAULT SYSDATE) RETURN DATE
-IS
-
+create or replace function manu_app.get_alternate_date(par_matl in  varchar2, par_xdate in date default sysdate) return date is
 /*******************************************************************************
     NAME:      Get_Alternate_Date
     PURPOSE:   Function to get the alternate version date for the material entered 
@@ -13,6 +9,7 @@ IS
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   7/7/2004  Jeff Phillipson          Created this procedure.
+    1.2   7/1/2009  Trevor Keon              Changed query to use BDS tables
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -27,39 +24,35 @@ IS
      							 correct date.
   ********************************************************************************/
   
-   var_alt    DATE;
+  var_alt date;
   
-BEGIN
+begin
    
-   SELECT r.eff_start_date 
-   INTO var_alt
-   FROM (SELECT DECODE(alt,NULL,'1', alt) alt, eff_start_date
-   FROM MANU.BOM 
-   WHERE MATL_CODE = par_matl 
-   AND eff_start_date <= par_xdate
-   ORDER BY 2 DESC) r WHERE ROWNUM = 1;
+  select r.eff_start_date 
+  into var_alt
+  from 
+    (
+      select decode(t01.bom_alternative, null, '1', t01.bom_alternative) as alt,
+        decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) as eff_start_date
+      from bds_bom_all t01
+      where t01.bom_plant = 'AU30'
+        and t01.item_number is not null
+        and t01.bom_material_code = par_matl
+        and decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) <= par_xdate
+      order by 2 desc
+    ) r 
+  where rownum = 1;
+     
+  return var_alt;
    
-   RETURN var_alt;
-   
-EXCEPTION
-    WHEN OTHERS THEN
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU.Get_Alternate function - ' || SUBSTR(SQLERRM, 1, 512));
+exception
+  when others then
+    raise_application_error(-20000, 'MANU.Get_Alternate function - ' || substr(sqlerrm, 1, 512));
 
-END;
+end;
 /
 
+grant execute on manu_app.get_alternate_date to appsupport;
+grant execute on manu_app.get_alternate_date to bthsupport;
 
-DROP PUBLIC SYNONYM GET_ALTERNATE_DATE;
-
-CREATE PUBLIC SYNONYM GET_ALTERNATE_DATE FOR MANU_APP.GET_ALTERNATE_DATE;
-
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO APPSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO BARNEHEL;
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO BTHSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO PHILLJEF;
-
+create or replace public synonym get_alternate_date for manu_app.get_alternate_date;
