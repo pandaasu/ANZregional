@@ -51,6 +51,8 @@ create index bds.bds_bom_all_idx01 on bds.bds_bom_all(bom_material_code, item_ma
 create index bds.bds_bom_all_idx02 on bds.bds_bom_all(item_material_code, bom_material_code);
 create index bds.bds_bom_all_idx03 on bds.bds_bom_all(bom_plant);
 create index bds.bds_bom_all_idx04 on bds.bds_bom_all(bom_material_code, bom_alternative, bom_plant);
+create index bds.bds_bom_all_idx05 on bds.bds_bom_all(bom_plant, item_number, bom_material_code, bom_eff_from_date);
+
 
 /**/
 /* Authority 
