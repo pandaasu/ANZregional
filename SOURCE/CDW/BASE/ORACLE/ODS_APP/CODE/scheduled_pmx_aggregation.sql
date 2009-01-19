@@ -748,8 +748,6 @@ CREATE OR REPLACE PACKAGE BODY         scheduled_pmx_aggregation IS
 
    procedure execute_period_end(par_company_code in company.company_code%type);
 
-   procedure execute_year_end(par_company_code in company.company_code%type);
-
  /* **************************************************************
   *                MAIN PROCEDURES
   ****************************************************************/
@@ -2501,12 +2499,8 @@ BEGIN
   write_log(ods_constants.data_type_prom, 'N/A', i_log_level + 1, 'Starting prom_fact aggregation.');
 
   -- Perform the period end execution
-  write_log( ods_constants.data_type_prom, 'N/A', i_log_level + 2, 'Checking for and updating active promotion costs for Company Code [' || i_company_code || '].');
+  write_log( ods_constants.data_type_prom, 'N/A', i_log_level + 2, 'Checking for and creating any period end Promotion timestamps for Company Code [' || i_company_code || '].');
   execute_period_end(i_company_code);
-
-  -- Perform the year end execution
-  write_log( ods_constants.data_type_prom, 'N/A', i_log_level + 2, 'Checking for and creating any year end Promotion timestamps for Company Code [' || i_company_code || '].');
-  execute_year_end(i_company_code);
 
   -- Fetch the record from the csr_prom_count cursor.
   OPEN  csr_prom_count;
@@ -4690,6 +4684,7 @@ END check_phased_oi_overspend;
                                                                                        from pmx_prom_hdr
                                                                                       where company_code = par_company_code
                                                                                         and trunc(prom_chng_date) < trunc(rcd_mars_this_date.min_date)
+                                                                                        and trunc(buy_start) < trunc(rcd_mars_this_date.min_date)
                                                                                       group by company_code,division_code,prom_num)
             and t01.prom_stat_code = 'S'
             and not((t01.company_code,t01.division_code,t01.prom_num) in (select company_code,division_code,prom_num
@@ -4814,165 +4809,6 @@ END check_phased_oi_overspend;
    /* End routine */
    /*-------------*/
    end execute_period_end;
-
-   /*****************************************************************/
-   /* This procedure performs the year end active promotion routine */
-   /*****************************************************************/
-   procedure execute_year_end(par_company_code in company.company_code%type) is
-
-      /*-*/
-      /* Local variables
-      /*-*/
-      var_work_date date;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_mars_date is
-         select t01.mars_year
-           from mars_date t01
-          where trunc(t01.calendar_date) = trunc(sysdate);
-      rcd_mars_date csr_mars_date%rowtype;
-
-      cursor csr_mars_this_date is
-         select min(t01.calendar_date) min_date
-           from mars_date t01
-          where t01.mars_year = rcd_mars_date.mars_year;
-      rcd_mars_this_date csr_mars_this_date%rowtype;
-
-      cursor csr_active_promotions is
-         select t01.*
-           from pmx_prom_hdr t01
-          where (t01.company_code,t01.division_code,t01.prom_num,prom_chng_date) in (select company_code,division_code,prom_num,max(prom_chng_date)
-                                                                                       from pmx_prom_hdr
-                                                                                      where company_code = par_company_code
-                                                                                        and trunc(buy_start) < trunc(rcd_mars_this_date.min_date)
-                                                                                        and trunc(prom_chng_date) < trunc(rcd_mars_this_date.min_date)
-                                                                                      group by company_code,division_code,prom_num)
-            and t01.prom_stat_code = 'S'
-            and not((t01.company_code,t01.division_code,t01.prom_num) in (select company_code,division_code,prom_num
-                                                                            from pmx_prom_hdr
-                                                                           where company_code = par_company_code
-                                                                             and trunc(buy_start) < trunc(rcd_mars_this_date.min_date)
-                                                                             and trunc(prom_chng_date) = trunc(rcd_mars_this_date.min_date)));
-      rcd_active_promotions csr_active_promotions%rowtype;
-
-      cursor csr_pmx_prom_dtl is
-         select t01.*
-          from pmx_prom_dtl t01
-         where t01.company_code = rcd_active_promotions.company_code
-           and t01.division_code = rcd_active_promotions.division_code
-           and t01.prom_num = rcd_active_promotions.prom_num
-           and t01.prom_chng_date = var_work_date;
-      rcd_pmx_prom_dtl csr_pmx_prom_dtl%rowtype;
-
-      cursor csr_pmx_prom_profile is
-         select t01.*
-          from pmx_prom_profile t01
-         where t01.company_code = rcd_active_promotions.company_code
-           and t01.division_code = rcd_active_promotions.division_code
-           and t01.prom_num = rcd_active_promotions.prom_num
-           and t01.prom_chng_date = var_work_date;
-      rcd_pmx_prom_profile csr_pmx_prom_profile%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Retrieve the current mars year based on sysdate
-      /*-*/
-      open csr_mars_date;
-      fetch csr_mars_date into rcd_mars_date;
-      if csr_mars_date%notfound then
-         return;
-      end if;
-      close csr_mars_date;
-
-      /*-*/
-      /* Retrieve the current mars year day one
-      /*-*/
-      open csr_mars_this_date;
-      fetch csr_mars_this_date into rcd_mars_this_date;
-      if csr_mars_this_date%notfound then
-         return;
-      end if;
-      close csr_mars_this_date;
-      if rcd_mars_this_date.min_date is null then
-         return;
-      end if;
-
-      /*-*/
-      /* Retrieve the last year active promotions
-      /* **notes**
-      /* 1. This routine must run prior to the aggregation to ensure that
-      /*    these year end timestamps are included
-      /*-*/
-      open csr_active_promotions;
-      loop
-         fetch csr_active_promotions into rcd_active_promotions;
-         if csr_active_promotions%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Set the work date
-         /*-*/
-         var_work_date := rcd_active_promotions.prom_chng_date;
-
-         /*-*/
-         /* Set the header data
-         /*-*/
-         rcd_active_promotions.prom_chng_date := trunc(rcd_mars_this_date.min_date);
-         rcd_active_promotions.prom_hdr_load_date := sysdate;
-         rcd_active_promotions.last_userid := 'YRSTR'||to_char(rcd_mars_date.mars_year,'fm0000');
-
-         /*-*/
-         /* Insert the year end header
-         /*-*/
-         insert into pmx_prom_hdr values rcd_active_promotions;
-
-         /*-*/
-         /* Retrieve the year end details
-         /*-*/
-         open csr_pmx_prom_dtl;
-         loop
-            fetch csr_pmx_prom_dtl into rcd_pmx_prom_dtl;
-            if csr_pmx_prom_dtl%notfound then
-               exit;
-            end if;
-            rcd_pmx_prom_dtl.prom_chng_date := trunc(rcd_mars_this_date.min_date);
-            insert into pmx_prom_dtl values rcd_pmx_prom_dtl;
-         end loop;
-         close csr_pmx_prom_dtl;
-
-         /*-*/
-         /* Retrieve the year end profile
-         /*-*/
-         open csr_pmx_prom_profile;
-         loop
-            fetch csr_pmx_prom_profile into rcd_pmx_prom_profile;
-            if csr_pmx_prom_profile%notfound then
-               exit;
-            end if;
-            rcd_pmx_prom_profile.prom_chng_date := trunc(rcd_mars_this_date.min_date);
-            insert into pmx_prom_profile values rcd_pmx_prom_profile;
-         end loop;
-         close csr_pmx_prom_profile;
-
-      end loop;
-      close csr_active_promotions;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end execute_year_end;
 
 end scheduled_pmx_aggregation;
 /
