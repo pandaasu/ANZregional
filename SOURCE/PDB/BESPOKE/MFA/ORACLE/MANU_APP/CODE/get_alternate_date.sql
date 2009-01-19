@@ -1,7 +1,4 @@
-DROP FUNCTION MANU_APP.GET_ALTERNATE_DATE;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Alternate_Date(matl IN  VARCHAR2, xdate IN DATE DEFAULT SYSDATE) RETURN DATE
-IS
+create or replace function manu_app.get_alternate_date(matl in  varchar2, xdate in date default sysdate) return date is
 /****************************************************
 
 Function to get the alternate no for the material entered 
@@ -16,40 +13,33 @@ Note this is used in conjunction with GET_ALTERNATE to get the
 Author:  Jeff Phillipson  7/7/2004 
 
 ****************************************************/
+   
+  v_alt    date;
+ 
+begin
 
+  select r.eff_start_date
+  into v_alt
+  from 
+  (
+    select decode(t01.bom_alternative,null,'1', t01.bom_alternative) as alternate, 
+      nvl(t01.bom_eff_from_date, to_date('20000101','yyyymmdd')) as eff_start_date
+    from bds_bom_all t01
+    where t01.bom_material_code = matl
+      and nvl(t01.bom_eff_from_date, to_date('20000101','yyyymmdd')) <= xdate
+    order by 2 desc
+  ) r
+  where rownum = 1;
    
-   v_alt    DATE;
-  
+  return v_alt;
    
-BEGIN
-   
-   SELECT r.eff_start_date 
-   INTO v_alt
-   FROM (SELECT DECODE(alternate,NULL,'1', alternate) alternate, eff_start_date
-   FROM MANU.BOM 
-   WHERE MATERIAL = matl 
-   AND eff_start_date <= xdate
-   ORDER BY 2 DESC) r WHERE ROWNUM = 1;
-   
-   RETURN v_alt;
-   
-EXCEPTION
-    WHEN OTHERS THEN
-
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU.Get_Alternate function - ' || SUBSTR(SQLERRM, 1, 512));
-
-
-END;
+exception
+  when others then
+    raise_application_error(-20000, 'MANU.Get_Alternate function - ' || substr(sqlerrm, 1, 512));
+end;
 /
 
+grant execute on manu_app.get_alternate_date to cl_app;
+grant execute on manu_app.get_alternate_date to manu;
 
-DROP PUBLIC SYNONYM GET_ALTERNATE_DATE;
-
-CREATE PUBLIC SYNONYM GET_ALTERNATE_DATE FOR MANU_APP.GET_ALTERNATE_DATE;
-
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO CL_APP;
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE_DATE TO MANU;
-
+create or replace public synonym get_alternate_date for manu_app.get_alternate_date;

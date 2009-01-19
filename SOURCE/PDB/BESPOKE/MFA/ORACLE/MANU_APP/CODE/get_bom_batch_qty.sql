@@ -1,7 +1,4 @@
-DROP FUNCTION MANU_APP.GET_BOM_BATCH_QTY;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Bom_Batch_Qty(matl IN  VARCHAR2) RETURN NUMBER
-IS
+create or replace function manu_app.get_bom_batch_qty(matl in  varchar2) return number is
 /****************************************************
 
 Function to get the alternate version number for the material entered 
@@ -17,50 +14,32 @@ Author:  Jeff Phillipson  7/10/2004
 ****************************************************/
 
    
-   v_matl    VARCHAR2(8);
-   v_qty     NUMBER;
-   
-   CURSOR c1
-   IS
-   SELECT DISTINCT batch_qty FROM bom r
-       WHERE material = v_matl
-       AND alternate = Get_Alternate(material) 
-       AND eff_start_date = Get_Alternate_Date(material);
-       
-       
-   
-BEGIN
+  v_matl    varchar2(8);
+  v_qty     number;
      
-   v_matl := LTRIM(matl,'0');
-   OPEN c1;
-      LOOP
-         FETCH c1 INTO v_qty;
-        -- DBMS_OUTPUT.PUT_LINE('VALUE OK qty- ' || v_qty || '-' ||  v_seq || '-' ||  v_matl || '-' ||  v_sub);
-         EXIT WHEN c1%NOTFOUND;
-         EXIT ;
-   END LOOP;
-   CLOSE c1;
+  cursor c1 is
+    select distinct decode (t01.bom_base_qty, '0', null, t01.bom_base_qty)
+    from bds_bom_all t01
+    where ltrim(t01.bom_material_code, '0') = v_matl
+      and t01.bom_alternative = get_alternate(bom_material_code) 
+      and nvl(t01.bom_eff_from_date, to_date ('20000101', 'yyyymmdd')) = get_alternate_date(bom_material_code);      
    
-   RETURN v_qty;
+begin
+     
+  v_matl := ltrim(matl,'0');
+  
+  open c1;
+    fetch c1 into v_qty;
+  close c1;
    
-EXCEPTION
-
-    
-    
-    WHEN OTHERS THEN
-
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU. Get_BOM_BATCH_QTY function - ' || SUBSTR(SQLERRM, 1, 512));
-
-
-END;
+return v_qty;
+   
+exception   
+  when others then
+    raise_application_error(-20000, 'MANU. Get_BOM_BATCH_QTY function - ' || substr(sqlerrm, 1, 512));
+end;
 /
 
+grant execute on manu_app.get_bom_batch_qty to appsupport;
 
-DROP PUBLIC SYNONYM GET_BOM_BATCH_QTY;
-
-CREATE PUBLIC SYNONYM GET_BOM_BATCH_QTY FOR MANU_APP.GET_BOM_BATCH_QTY;
-
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_BATCH_QTY TO APPSUPPORT;
-
+create or replace public synonym get_bom_batch_qty for manu_app.get_bom_batch_qty;

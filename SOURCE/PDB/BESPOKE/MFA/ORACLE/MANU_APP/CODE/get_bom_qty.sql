@@ -1,7 +1,4 @@
-DROP FUNCTION MANU_APP.GET_BOM_QTY;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Bom_Qty(matl IN  VARCHAR2, sub IN VARCHAR2, seq IN VARCHAR2) RETURN NUMBER
-IS
+create or replace function manu_app.get_bom_qty(matl in  varchar2, sub in varchar2, seq in varchar2) return number is
 /****************************************************
 
 Function to get the alternate version number for the material entered 
@@ -15,66 +12,53 @@ The output is the correct qty based on BOM value number to use
 Author:  Jeff Phillipson  7/7/2004 
 
 ****************************************************/
-
    
-   v_matl    VARCHAR2(8);
-   v_sub     VARCHAR2(8);
-   v_seq     VARCHAR2(4);
-   v_qty     NUMBER;
-   
-   CURSOR c1
-   IS
-   SELECT MAX(qty) qty 
-       FROM (
-       SELECT LEVEL lvl, material, sub_matl,qty, seq FROM bom r
-       WHERE LEVEL < 2
-       START WITH material = v_matl
-       AND alternate = Get_Alternate(material) 
-       AND eff_start_date = Get_Alternate_Date(material)
-       CONNECT BY PRIOR sub_matl = material
-       ) r
-       WHERE  sub_matl = v_sub
-       AND LTRIM(seq,'0') = v_seq;
-       
-       
-   
-BEGIN
+  v_matl    varchar2(8);
+  v_sub     varchar2(8);
+  v_seq     varchar2(4);
+  v_qty     number;
      
-   v_matl := LTRIM(matl,'0');
-   v_sub :=  LTRIM(sub,'0');
-   v_seq :=  LTRIM(seq,'0');
-   IF LENGTH(v_seq) = 0 THEN
-      v_seq := '0';
-   END IF;
-   OPEN c1;
-      LOOP
-         FETCH c1 INTO v_qty;
-        -- DBMS_OUTPUT.PUT_LINE('VALUE OK qty- ' || v_qty || '-' ||  v_seq || '-' ||  v_matl || '-' ||  v_sub);
-         EXIT WHEN c1%NOTFOUND;
-         EXIT ;
-   END LOOP;
-   CLOSE c1;
+  cursor c1 is
+    select max(qty) qty 
+    from 
+    (
+      select level as lvl, 
+        ltrim (t01.bom_material_code, '0') as material, 
+        ltrim (t01.item_material_code, '0') as sub_matl,
+        t01.item_base_qty as qty, 
+        ltrim (t01.item_number, '0') as seq 
+      from bds_bom_all t01
+      where level < 2
+      start with ltrim (t01.bom_material_code, '0') = v_matl
+        and t01.bom_alternative = get_alternate(bom_material_code) 
+        and nvl (t01.bom_eff_from_date, to_date ('20000101', 'yyyymmdd')) = get_alternate_date(bom_material_code)
+      connect by prior t01.item_material_code = t01.bom_material_code
+    ) r
+    where sub_matl = v_sub
+      and ltrim(seq,'0') = v_seq;
    
-   RETURN v_qty;
+begin
+     
+  v_matl := ltrim(matl,'0');
+  v_sub :=  ltrim(sub,'0');
+  v_seq :=  ltrim(seq,'0');
+     
+  if length(v_seq) = 0 then
+    v_seq := '0';
+  end if;
+     
+  open c1;
+    fetch c1 into v_qty;
+  close c1;
+     
+  return v_qty;
    
-EXCEPTION
-
-    
-    
-    WHEN OTHERS THEN
-
-        --Raise an error 
-     	RAISE_APPLICATION_ERROR(-20000, 'MANU. Get_BOM_QTY function - ' || SUBSTR(SQLERRM, 1, 512));
-
-
-END;
+exception 
+  when others then
+    raise_application_error(-20000, 'MANU. Get_BOM_QTY function - ' || substr(sqlerrm, 1, 512));
+end;
 /
 
+grant execute on manu_app.get_bom_qty to appsupport;
 
-DROP PUBLIC SYNONYM GET_BOM_QTY;
-
-CREATE PUBLIC SYNONYM GET_BOM_QTY FOR MANU_APP.GET_BOM_QTY;
-
-
-GRANT EXECUTE ON MANU_APP.GET_BOM_QTY TO APPSUPPORT;
-
+create or replace public synonym get_bom_qty for manu_app.get_bom_qty;
