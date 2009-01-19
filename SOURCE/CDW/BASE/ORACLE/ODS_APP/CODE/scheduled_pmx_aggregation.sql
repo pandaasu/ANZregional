@@ -4762,7 +4762,7 @@ END check_phased_oi_overspend;
          /*-*/
          rcd_active_promotions.prom_chng_date := trunc(rcd_mars_this_date.min_date);
          rcd_active_promotions.prom_hdr_load_date := sysdate;
-         rcd_active_promotions.last_userid := 'PRDSTR'||to_char(rcd_mars_date.mars_year,'fm0000');
+         rcd_active_promotions.last_userid := 'PSTR'||to_char(rcd_mars_date.mars_period,'fm000000');
 
          /*-*/
          /* Insert the period end header
