@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_vend_comp_ics 
+ Table   : bds_vend_comp 
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_vend_comp_ics 
+ Business Data Store - bds_vend_comp 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* Table creation 
 /**/
-create table bds.bds_vend_comp_ics
+create table bds.bds_vend_comp
 (
   vendor_code                 varchar2(10 char) not null,
   company_code                varchar2(6 char)  not null,
@@ -86,18 +86,18 @@ create table bds.bds_vend_comp_ics
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_vend_comp_ics
-   add constraint bds_vend_comp_ics_pk primary key (vendor_code, company_code);
+alter table bds.bds_vend_comp
+   add constraint bds_vend_comp_pk primary key (vendor_code, company_code);
 
 /**/
 /* Authority 
 /**/
-grant select, update, delete, insert on bds.bds_vend_comp_ics to bds_app with grant option;
-grant select on bds.bds_vend_comp_ics to manu_app with grant option;
-grant select on bds.bds_vend_comp_ics to pt_app with grant option;
-grant select on bds.bds_vend_comp_ics to manu with grant option;
+grant select, update, delete, insert on bds.bds_vend_comp to bds_app with grant option;
+grant select on bds.bds_vend_comp to manu_app with grant option;
+grant select on bds.bds_vend_comp to pt_app with grant option;
+grant select on bds.bds_vend_comp to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_vend_comp_ics for bds.bds_vend_comp_ics;
+create or replace public synonym bds_vend_comp for bds.bds_vend_comp;

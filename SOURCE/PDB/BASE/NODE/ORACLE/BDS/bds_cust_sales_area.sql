@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_cust_sales_area_ics 
+ Table   : bds_cust_sales_area 
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_cust_sales_area_ics 
+ Business Data Store - bds_cust_sales_area 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -17,12 +17,10 @@
 
 *******************************************************************************/
 
-/* Named bds_cust_sales_area_ics for SNACK testing only */ 
-
 /**/
 /* Table creation 
 /**/
-create table bds.bds_cust_sales_area_ics
+create table bds.bds_cust_sales_area
 (
   customer_code                 varchar2(10 char) not null,
   sales_org_code                varchar2(5 char) not null,
@@ -92,18 +90,18 @@ create table bds.bds_cust_sales_area_ics
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_cust_sales_area_ics
-   add constraint bds_cust_sales_area_ics_pk primary key (customer_code, sales_org_code, distbn_chnl_code, division_code);
+alter table bds.bds_cust_sales_area
+   add constraint bds_cust_sales_area_pk primary key (customer_code, sales_org_code, distbn_chnl_code, division_code);
 
 /**/
 /* Authority 
 /**/
-grant select, insert, update, delete on bds.bds_cust_sales_area_ics to bds_app with grant option;
-grant select on bds.bds_cust_sales_area_ics to manu_app with grant option;
-grant select on bds.bds_cust_sales_area_ics to pt_app with grant option;
-grant select on bds.bds_cust_sales_area_ics to manu with grant option;
+grant select, insert, update, delete on bds.bds_cust_sales_area to bds_app with grant option;
+grant select on bds.bds_cust_sales_area to manu_app with grant option;
+grant select on bds.bds_cust_sales_area to pt_app with grant option;
+grant select on bds.bds_cust_sales_area to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create public synonym bds_cust_sales_area_ics for bds.bds_cust_sales_area_ics;
+create public synonym bds_cust_sales_area for bds.bds_cust_sales_area;

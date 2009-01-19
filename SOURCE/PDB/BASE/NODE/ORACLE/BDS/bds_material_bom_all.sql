@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- View   : bds_material_bom_all_ics  
+ View   : bds_material_bom_all  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_material_bom_all_ics 
+ Business Data Store - bds_material_bom_all 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds.bds_material_bom_all_ics as
+create or replace force view bds.bds_material_bom_all as
   select t01.sap_bom,
     t01.bom_alternative,
     t01.bom_plant,
@@ -99,8 +99,8 @@ create or replace force view bds.bds_material_bom_all_ics as
       t04.mars_rprsnttv_item_flag as child_rep_flag
     from bds_material_bom_hdr t01,
       bds_material_bom_det t02,
-      bds_material_plant_mfanz_test t03,
-      bds_material_plant_mfanz_test t04,
+      bds_material_plant_mfanz t03,
+      bds_material_plant_mfanz t04,
       bds_material_uom t05
     where t01.sap_bom = t02.sap_bom
       and t01.sap_bom_alternative = t02.sap_bom_alternative
@@ -144,7 +144,7 @@ create or replace force view bds.bds_material_bom_all_ics as
       t01.mars_semi_finished_prdct_flag as child_semi_finished,
       t01.mars_traded_unit_flag as child_tdu_flag,
       t01.mars_rprsnttv_item_flag as child_rep_flag
-    from bds_material_plant_mfanz_test t01,
+    from bds_material_plant_mfanz t01,
       (
         select parent_material_code
         from bds_material_bom_hdr
@@ -168,7 +168,7 @@ create or replace force view bds.bds_material_bom_all_ics as
     and exists 
     (
       select 1
-      from bds_material_plant_mfanz_test t02
+      from bds_material_plant_mfanz t02
       where t01.parent_material_code = t02.sap_material_code
         and 
         (
@@ -215,13 +215,13 @@ create or replace force view bds.bds_material_bom_all_ics as
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_material_bom_all_ics to bds_app with grant option;
-grant select on bds.bds_material_bom_all_ics to manu_app with grant option;
-grant select on bds.bds_material_bom_all_ics to pt_app with grant option;
-grant select on bds.bds_material_bom_all_ics to manu with grant option;
+grant select on bds.bds_material_bom_all to bds_app with grant option;
+grant select on bds.bds_material_bom_all to manu_app with grant option;
+grant select on bds.bds_material_bom_all to pt_app with grant option;
+grant select on bds.bds_material_bom_all to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_material_bom_all_ics for bds.bds_material_bom_all_ics;
+create or replace public synonym bds_material_bom_all for bds.bds_material_bom_all;
 

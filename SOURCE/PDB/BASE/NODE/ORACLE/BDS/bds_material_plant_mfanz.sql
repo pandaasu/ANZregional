@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_material_plant_mfanz_test  
+ Table   : bds_material_plant_mfanz  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_material_plant_mfanz_test 
+ Business Data Store - bds_material_plant_mfanz 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -17,12 +17,10 @@
 
 *******************************************************************************/
 
-/** Named _ics until testing is completed **/
-
 /**/
 /* Table creation 
 /**/
-create table bds.bds_material_plant_mfanz_test
+create table bds.bds_material_plant_mfanz
 (
   sap_material_code               varchar2(18 char) not null,
   plant_code                      varchar2(4 char) not null,
@@ -93,31 +91,31 @@ create table bds.bds_material_plant_mfanz_test
 /**/
 /* Indexes  
 /**/
-create index bds.bds_material_plant_test_idx01 on bds.bds_material_plant_mfanz_test(material_type);
-create index bds.bds_material_plant_test_idx02 on bds.bds_material_plant_mfanz_test(plant_code);
-create index bds.bds_material_plant_test_idx03 on bds.bds_material_plant_mfanz_test(procurement_type, special_procurement_type);
-create index bds.bds_material_plant_test_idx04 on bds.bds_material_plant_mfanz_test(mars_plant_material_type);
-create index bds.bds_material_plant_test_idx05 on bds.bds_material_plant_mfanz_test(plant_code,sap_material_code,plant_specific_status,material_division,material_type,mars_traded_unit_flag,mrp_type);
-create index bds.bds_material_plant_test_idx06 on bds.bds_material_plant_mfanz_test(plant_code,material_type);
-create index bds.bds_material_plant_test_idx07 on bds.bds_material_plant_mfanz_test(mars_traded_unit_flag);
-create index bds.bds_material_plant_test_idx08 on bds.bds_material_plant_mfanz_test(mars_retail_sales_unit_flag);
-create index bds.bds_material_plant_test_idx09 on bds.bds_material_plant_mfanz_test(mars_intrmdt_prdct_compnt_flag);
+create index bds.bds_material_plant_idx01 on bds.bds_material_plant_mfanz(material_type);
+create index bds.bds_material_plant_idx02 on bds.bds_material_plant_mfanz(plant_code);
+create index bds.bds_material_plant_idx03 on bds.bds_material_plant_mfanz(procurement_type, special_procurement_type);
+create index bds.bds_material_plant_idx04 on bds.bds_material_plant_mfanz(mars_plant_material_type);
+create index bds.bds_material_plant_idx05 on bds.bds_material_plant_mfanz(plant_code,sap_material_code,plant_specific_status,material_division,material_type,mars_traded_unit_flag,mrp_type);
+create index bds.bds_material_plant_idx06 on bds.bds_material_plant_mfanz(plant_code,material_type);
+create index bds.bds_material_plant_idx07 on bds.bds_material_plant_mfanz(mars_traded_unit_flag);
+create index bds.bds_material_plant_idx08 on bds.bds_material_plant_mfanz(mars_retail_sales_unit_flag);
+create index bds.bds_material_plant_idx09 on bds.bds_material_plant_mfanz(mars_intrmdt_prdct_compnt_flag);
 
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_material_plant_mfanz_test 
+alter table bds.bds_material_plant_mfanz 
   add constraint bds_mat_plant_mfanz_test_pk primary key (sap_material_code, plant_code);
  
 /**/
 /* Authority 
 /**/
-grant select, delete, insert, update on bds.bds_material_plant_mfanz_test to bds_app with grant option;
-grant select on bds.bds_material_plant_mfanz_test to manu_app with grant option;
-grant select on bds.bds_material_plant_mfanz_test to pt_app with grant option;
-grant select on bds.bds_material_plant_mfanz_test to manu with grant option;
+grant select, delete, insert, update on bds.bds_material_plant_mfanz to bds_app with grant option;
+grant select on bds.bds_material_plant_mfanz to manu_app with grant option;
+grant select on bds.bds_material_plant_mfanz to pt_app with grant option;
+grant select on bds.bds_material_plant_mfanz to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_material_plant_mfanz_test for bds.bds_material_plant_mfanz_test;
+create or replace public synonym bds_material_plant_mfanz for bds.bds_material_plant_mfanz;

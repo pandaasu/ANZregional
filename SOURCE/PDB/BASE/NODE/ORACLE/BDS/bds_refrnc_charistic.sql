@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_refrnc_charistic_ics  
+ Table   : bds_refrnc_charistic  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_refrnc_charistic_ics 
+ Business Data Store - bds_refrnc_charistic 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -17,12 +17,10 @@
 
 *******************************************************************************/
 
-/** Named _ics until testing is completed **/
-
 /**/
 /* Table creation 
 /**/
-create table bds.bds_refrnc_charistic_ics
+create table bds.bds_refrnc_charistic
 (
   sap_charistic_code             varchar2(30 char) not null,
   sap_charistic_value_code       varchar2(30 char) not null,
@@ -36,18 +34,18 @@ create table bds.bds_refrnc_charistic_ics
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_refrnc_charistic_ics 
-  add constraint bds_refrnc_charistic_ics_pk primary key (sap_charistic_code, sap_charistic_value_code);
+alter table bds.bds_refrnc_charistic 
+  add constraint bds_refrnc_charistic_pk primary key (sap_charistic_code, sap_charistic_value_code);
  
 /**/
 /* Authority 
 /**/
-grant delete, insert, select, update on bds.bds_refrnc_charistic_ics to bds_app with grant option;
-grant select on bds.bds_refrnc_charistic_ics to manu_app with grant option;
-grant select on bds.bds_refrnc_charistic_ics to pt_app with grant option;
-grant select on bds.bds_refrnc_charistic_ics to manu with grant option;
+grant delete, insert, select, update on bds.bds_refrnc_charistic to bds_app with grant option;
+grant select on bds.bds_refrnc_charistic to manu_app with grant option;
+grant select on bds.bds_refrnc_charistic to pt_app with grant option;
+grant select on bds.bds_refrnc_charistic to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_refrnc_charistic_ics for bds.bds_refrnc_charistic_ics;
+create or replace public synonym bds_refrnc_charistic for bds.bds_refrnc_charistic;

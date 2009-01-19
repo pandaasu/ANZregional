@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_charistic_value_en_ics  
+ Table   : bds_charistic_value_en  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_charistic_value_en_ics 
+ Business Data Store - bds_charistic_value_en 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -22,7 +22,7 @@
 /**/
 /* Table creation 
 /**/
-create table bds.bds_charistic_value_en_ics
+create table bds.bds_charistic_value_en
 (
   sap_charistic_code        varchar2(30 char)   not null,
   sap_charistic_value_code  varchar2(30 char)   not null,
@@ -32,17 +32,17 @@ create table bds.bds_charistic_value_en_ics
 /**/
 /* Indexes  
 /**/
-create unique index bds.bds_charistic_value_en_ics_pk on bds.bds_charistic_value_en_ics (sap_charistic_code, sap_charistic_value_code);
+create unique index bds.bds_charistic_value_en_pk on bds.bds_charistic_value_en (sap_charistic_code, sap_charistic_value_code);
  
 /**/
 /* Authority 
 /**/
-grant select, insert, update, delete on bds.bds_charistic_value_en_ics to bds_app with grant option;
-grant select on bds.bds_charistic_value_en_ics to manu_app with grant option;
-grant select on bds.bds_charistic_value_en_ics to pt_app with grant option;
-grant select on bds.bds_charistic_value_en_ics to manu with grant option;
+grant select, insert, update, delete on bds.bds_charistic_value_en to bds_app with grant option;
+grant select on bds.bds_charistic_value_en to manu_app with grant option;
+grant select on bds.bds_charistic_value_en to pt_app with grant option;
+grant select on bds.bds_charistic_value_en to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_charistic_value_en_ics for bds.bds_charistic_value_en_ics;
+create or replace public synonym bds_charistic_value_en for bds.bds_charistic_value_en;

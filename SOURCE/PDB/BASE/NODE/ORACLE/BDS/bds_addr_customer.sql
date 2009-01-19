@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- View   : bds_addr_customer_ics  
+ View   : bds_addr_customer  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_addr_customer_ics 
+ Business Data Store - bds_addr_customer 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* View creation 
 /**/
-create or replace force view bds.bds_addr_customer_ics as
+create or replace force view bds.bds_addr_customer as
   select t01.customer_code, 
     t01.address_version, 
     t01.valid_from_date,
@@ -72,12 +72,12 @@ create or replace force view bds.bds_addr_customer_ics as
 /**/
 /* Authority 
 /**/
-grant select on bds.bds_addr_customer_ics to bds_app with grant option;
-grant select on bds.bds_addr_customer_ics to manu_app with grant option;
-grant select on bds.bds_addr_customer_ics to pt_app with grant option;
-grant select on bds.bds_addr_customer_ics to manu with grant option;
+grant select on bds.bds_addr_customer to bds_app with grant option;
+grant select on bds.bds_addr_customer to manu_app with grant option;
+grant select on bds.bds_addr_customer to pt_app with grant option;
+grant select on bds.bds_addr_customer to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_addr_customer_ics for bds.bds_addr_customer_ics;
+create or replace public synonym bds_addr_customer for bds.bds_addr_customer;

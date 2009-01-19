@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_material_classfctn_ics 
+ Table   : bds_material_classfctn 
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_material_classfctn_ics 
+ Business Data Store - bds_material_classfctn 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -20,7 +20,7 @@
 /**/
 /* Table creation 
 /**/
-create table bds.bds_material_classfctn_ics
+create table bds.bds_material_classfctn
 (
   sap_material_code            varchar2(18 char) not null,
   bds_lads_date                date,
@@ -75,19 +75,19 @@ create table bds.bds_material_classfctn_ics
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_material_classfctn_ics
-   add constraint bds_material_classfctn_ics_pk primary key (sap_material_code);
+alter table bds.bds_material_classfctn
+   add constraint bds_material_classfctn_pk primary key (sap_material_code);
 
 /**/
 /* Authority 
 /**/
-grant select, update, delete, insert on bds.bds_material_classfctn_ics to bds_app with grant option;
-grant select on bds.bds_material_classfctn_ics to manu_app with grant option;
-grant select on bds.bds_material_classfctn_ics to pt_app with grant option;
-grant select on bds.bds_material_classfctn_ics to manu with grant option;
+grant select, update, delete, insert on bds.bds_material_classfctn to bds_app with grant option;
+grant select on bds.bds_material_classfctn to manu_app with grant option;
+grant select on bds.bds_material_classfctn to pt_app with grant option;
+grant select on bds.bds_material_classfctn to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_material_classfctn_ics for bds.bds_material_classfctn_ics;
+create or replace public synonym bds_material_classfctn for bds.bds_material_classfctn;
 

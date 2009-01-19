@@ -3,13 +3,13 @@
 /******************************************************************************/
 /**
  System  : bds 
- Table   : bds_refrnc_plant_ics  
+ Table   : bds_refrnc_plant  
  Owner   : bds 
  Author  : Trevor Keon 
 
  Description 
  ----------- 
- Business Data Store - bds_refrnc_plant_ics 
+ Business Data Store - bds_refrnc_plant 
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
@@ -17,12 +17,10 @@
 
 *******************************************************************************/
 
-/** Named _ics until testing is completed **/
-
 /**/
 /* Table creation 
 /**/
-create table bds.bds_refrnc_plant_ics
+create table bds.bds_refrnc_plant
 (
   plant_code                     varchar2(4 char) not null,
   sap_idoc_number                number,
@@ -85,18 +83,18 @@ create table bds.bds_refrnc_plant_ics
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_refrnc_plant_ics 
-  add constraint bds_refrnc_plant_ics_pk primary key (plant_code);
+alter table bds.bds_refrnc_plant 
+  add constraint bds_refrnc_plant_pk primary key (plant_code);
  
 /**/
 /* Authority 
 /**/
-grant select, insert, update, delete on bds_refrnc_plant_ics to bds_app with grant option;
-grant select on bds.bds_refrnc_plant_ics to manu_app with grant option;
-grant select on bds.bds_refrnc_plant_ics to pt_app with grant option;
-grant select on bds.bds_refrnc_plant_ics to manu with grant option;
+grant select, insert, update, delete on bds_refrnc_plant to bds_app with grant option;
+grant select on bds.bds_refrnc_plant to manu_app with grant option;
+grant select on bds.bds_refrnc_plant to pt_app with grant option;
+grant select on bds.bds_refrnc_plant to manu with grant option;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym bds_refrnc_plant_ics for bds.bds_refrnc_plant_ics;
+create or replace public synonym bds_refrnc_plant for bds.bds_refrnc_plant;
