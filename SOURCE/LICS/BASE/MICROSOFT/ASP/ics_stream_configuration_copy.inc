@@ -85,7 +85,7 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_StreamText" size="128" maxlength="128" value="<%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="INP_StreamText" size="64" maxlength="128" value="<%=replace(objForm.Fields("DTA_StreamText").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
