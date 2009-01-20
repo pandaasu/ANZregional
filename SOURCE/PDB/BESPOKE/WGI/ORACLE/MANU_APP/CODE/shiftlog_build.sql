@@ -22,6 +22,7 @@ create or replace package manu_app.shiftlog_build as
   -------   ------         -----------
   2008/11   Trevor Keon    Created
   2009/01   Trevor Keon    Changed from truncate to delete
+  2009/01   Trevor Keon    Added execute_svms_matl.  TEMP!!
 
   *******************************************************************************/
 
@@ -29,6 +30,7 @@ create or replace package manu_app.shiftlog_build as
   /* Public declarations
   /*-*/
   procedure execute_fg_matl;
+  procedure execute_svms_matl;
 
 end shiftlog_build;
 
@@ -162,6 +164,104 @@ create or replace package body manu_app.shiftlog_build as
   /* End routine */
   /*-------------*/
   end execute_fg_matl;
+
+  /***************************************************************************/
+  /* This procedure performs the refresh routine on the material_svms table  */
+  /***************************************************************************/
+  procedure execute_svms_matl is
+
+    /*-*/
+    /* Record definitions
+    /*-*/
+    type svms_matl_array is table of material_svms%rowtype;
+    svms_matl_data svms_matl_array;
+
+    /*-*/
+    /* Local cursors
+    /*-*/
+    cursor csr_svms_matl is
+      select t01.material, t01.units_per_case, t02.material_desc, t02.gross_wght, t02.dclrd_uom, t02.dclrd_wght 
+      from
+        (
+          select distinct t01.material, (t01.qty / t01.batch_qty) * (t02.qty / t02.batch_qty) as units_per_case
+          from bom t01,
+            bom t02
+          where t01.sub_matl = t02.material
+            and t01.material in 
+            (
+              select ltrim(sap_material_code, '0')
+              from bds_material_plant_mfanz 
+              where 
+                (
+                  bds_material_desc_en like '%SVMS%'
+                  or ltrim(sap_material_code, '0') in ('10063500','10063502','10066274','10066273','10063503','10063501','10063505','10066276',
+                    '10066275','10071780','10074623','10074622','10074620','10074621')
+                )  
+                and plant_code in ('NZ01','NZ11')
+                and material_type = 'FERT'
+                and plant_specific_status = '20'
+                and mars_traded_unit_flag = 'X'  
+            )
+            and t01.alternate = get_alternate(t01.material) 
+            and t01.eff_start_date = get_alternate_date(t01.material)
+            and t01.uom = 'EA' 
+            and length(t01.sub_matl) = 8
+            and length(t02.sub_matl) = 8
+        ) t01,
+        material t02
+      where t01.material = t02.material_code;
+
+  /*-------------*/
+  /* Begin block */
+  /*-------------*/
+  begin  
+    
+    /*-*/
+    /* Remove existing data
+    /*-*/  
+    delete
+    from material_svms;
+   
+    /*-*/
+    /* Insert most recent data
+    /*-*/           
+    open csr_svms_matl;
+    loop
+      fetch csr_svms_matl bulk collect into svms_matl_data limit c_bulk_limit;
+              
+      forall i in 1..svms_matl_data.count
+        insert into material_svms values svms_matl_data(i);
+              
+      exit when csr_svms_matl%notfound;
+    end loop;
+    close csr_svms_matl;
+  
+    commit;
+
+  /*-------------------*/
+  /* Exception handler */
+  /*-------------------*/
+  exception
+
+    /**/
+    /* Exception trap
+    /**/
+    when others then
+
+      /*-*/
+      /* Rollback database
+      /*-*/
+      rollback;
+
+      /*-*/
+      /* Raise an exception to the calling application
+      /*-*/
+      raise_application_error(-20000, 'shiftlog_build - EXECUTE_SVMS_MATL ' || ' - ' || substr(SQLERRM, 1, 1024));
+
+  /*-------------*/
+  /* End routine */
+  /*-------------*/
+  end execute_svms_matl;
 
 end shiftlog_build;
 
