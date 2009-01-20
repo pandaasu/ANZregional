@@ -549,7 +549,7 @@
       objEnqEvent.style.display = 'none';
       objEnqEvent.style.visibility = 'hidden';
    }
-   function acceptTask(strCode,strText) {
+   function acceptTask() {
       if (!processForm()) {return;}
       var strTskCode;
       var strTskText;
