@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : prc_lst_configuration.asp                          //
+'// Script  : lics_stream_configuration.asp                      //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2008                                      //
 '// Text    : This script implements the stream configuration    //
