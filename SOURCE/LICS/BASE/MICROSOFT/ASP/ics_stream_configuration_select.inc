@@ -71,7 +71,7 @@
    function doCopy() {
       if (!processForm()) {return;}
       if (cstrSelected == '') {
-         alert('Report must be selected');
+         alert('Stream must be selected');
          return;
       }
       document.main.action = '<%=strBase%><%=strTarget%>';
