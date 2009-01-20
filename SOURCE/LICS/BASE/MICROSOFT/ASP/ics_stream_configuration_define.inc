@@ -770,8 +770,16 @@
          }
          bolFound = false;
          for (var i=0;i<cobjStream.length;i++) {
-            if ((cintMode == 'A' || (cintMode == 'U' && i != cintTargetS)) &&
+            if (cintMode == 'A' &&
                 cobjStream[i].strpar.toUpperCase() == cobjStream[cintTargetS].strcod.toUpperCase() &&
+                cobjStream[i].strtyp == 'E' &&
+                cobjStream[i].strcod.toUpperCase() == strEvtCode) {
+               bolFound = true;
+               break;
+            }
+            if (cintMode == 'U' &&
+                i != cintTargetS &&
+                cobjStream[i].strpar.toUpperCase() == cobjStream[cintTargetS].strpar.toUpperCase() &&
                 cobjStream[i].strtyp == 'E' &&
                 cobjStream[i].strcod.toUpperCase() == strEvtCode) {
                bolFound = true;
