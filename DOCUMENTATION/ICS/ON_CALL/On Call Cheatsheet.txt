@@ -266,15 +266,26 @@ Steps:
 6 - if data exists run query to check invoice reconciliation
 7 - rerun the interface (unless invoice summary was missing)
 
+-------------------------------------
+Solutions:
+-------------------------------------
 
+Title:
+----------
+Invoice Summary Missing with DW MART AGGREGATION error
 
+Message:
+----------
+DW - MART_AGGREGATION - ORA-20000: FATAL ERROR - DW_SALES_02_MART - REFRESH - ORA-01410: invalid ROWID
 
+Cause:
+----------
+If the data mart is run when flattening is running, this error will occur.  The flattening removes rows from the matl_dim table which is reference by the data mart job.
 
+Solution:
+----------
+Do not reprocess the invoice summary.  Instead run the following command:
 
+exec lics_stream_loader.execute('DW_DATAMART_STREAM_149',null);
 
-
-
-
-
-
-
+***Remember to set the company code as per the impacted code***
