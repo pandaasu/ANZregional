@@ -27,7 +27,7 @@ create or replace package lics_datastore_configuration as
    /*-*/
    /* Public declarations
    /*-*/
-   function get_nodes(par_system in varchar2) return lics_datastore_table pipelined;
+   function get_nodes(par_system in varchar2) return lics_store_table pipelined;
    procedure define_store(par_user in varchar2);
    procedure delete_store(par_system in varchar2);
 
@@ -48,14 +48,15 @@ create or replace package body lics_datastore_configuration as
    /*-*/
    /* Private definitions
    /*-*/
-   rcd_lics_str_header lics_str_header%rowtype;
-   rcd_lics_str_task lics_str_task%rowtype;
-   rcd_lics_str_event lics_str_event%rowtype;
+   rcd_lics_das_system lics_das_system%rowtype;
+   rcd_lics_das_group lics_das_group%rowtype;
+   rcd_lics_das_code lics_das_code%rowtype;
+   rcd_lics_das_value lics_das_value%rowtype;
 
    /*************************************************/
    /* This procedure performs the get nodes routine */
    /*************************************************/
-   function get_nodes(par_system in varchar2) return lics_stream_table pipelined is
+   function get_nodes(par_system in varchar2) return lics_store_table pipelined is
 
       /*-*/
       /* Cursor definitions
@@ -91,14 +92,14 @@ create or replace package body lics_datastore_configuration as
       /*-*/
       /* Pipe the data store root node
       /*-*/
-      pipe row(lics_datastore_object(0,
-                                     'S',
-                                     null,
-                                     null,
-                                     'Data Store Root',
-                                     null,
-                                     null,
-                                     null));
+      pipe row(lics_store_object(0,
+                                 'S',
+                                 null,
+                                 null,
+                                 'Data Store Root',
+                                 null,
+                                 null,
+                                 null));
 
       /*-*/
       /* Pipe the data store group nodes
@@ -109,14 +110,14 @@ create or replace package body lics_datastore_configuration as
          if csr_group%notfound then
             exit;
          end if;
-         pipe row(lics_stream_object(1,
-                                     'G',
-                                     rcd_group.dsg_group,
-                                     null,
-                                     rcd_group.dsg_description,
-                                     null,
-                                     null,
-                                     null));
+         pipe row(lics_store_object(1,
+                                    'G',
+                                    rcd_group.dsg_group,
+                                    null,
+                                    rcd_group.dsg_description,
+                                    null,
+                                    null,
+                                    null));
 
          /*-*/
          /* Pipe the data store code nodes
@@ -127,14 +128,14 @@ create or replace package body lics_datastore_configuration as
             if csr_code%notfound then
                exit;
             end if;
-            pipe row(lics_stream_object(2,
-                                        'C',
-                                        rcd_code.dsc_group,
-                                        rcd_code.dsc_code,
-                                        rcd_code.dsc_description,
-                                        null,
-                                        rcd_code.dsc_val_type,
-                                        rcd_code.dsc_val_data));
+            pipe row(lics_store_object(2,
+                                       'C',
+                                       rcd_code.dsc_group,
+                                       rcd_code.dsc_code,
+                                       rcd_code.dsc_description,
+                                       null,
+                                       rcd_code.dsc_val_type,
+                                       rcd_code.dsc_val_data));
 
             /*-*/
             /* Pipe the data store value nodes
@@ -145,14 +146,14 @@ create or replace package body lics_datastore_configuration as
                if csr_value%notfound then
                   exit;
                end if;
-               pipe row(lics_stream_object(3,
-                                           'V',
-                                           rcd_value.dsv_group,
-                                           rcd_value.dsv_code,
-                                           null,
-                                           rcd_value.dsv_value,
-                                           null,
-                                           null));
+               pipe row(lics_store_object(3,
+                                          'V',
+                                          rcd_value.dsv_group,
+                                          rcd_value.dsv_code,
+                                          null,
+                                          rcd_value.dsv_value,
+                                          null,
+                                          null));
             end loop;
             close csr_value;
 
@@ -197,20 +198,19 @@ create or replace package body lics_datastore_configuration as
       /*-*/
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
-      obj_xml_stream xmlDom.domNode;
+      obj_xml_store xmlDom.domNode;
       obj_xml_node_list xmlDom.domNodeList;
       obj_xml_node xmlDom.domNode;
-      var_tsk_seqn number;
-      var_evt_seqn number;
+      var_val_seqn number;
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_check_stream is 
+      cursor csr_check_store is 
          select t01.*
-           from lics_str_header t01
-          where t01.sth_str_code = rcd_lics_str_header.sth_str_code;
-      rcd_check_stream csr_check_stream%rowtype;
+           from lics_das_system t01
+          where t01.dss_system = rcd_lics_das_system.dss_system;
+      rcd_check_store csr_check_store%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -226,60 +226,63 @@ create or replace package body lics_datastore_configuration as
       xmlParser.freeParser(obj_xml_parser);
 
       /*-*/
-      /* Retrieve and process the stream header
+      /* Retrieve and process the data store
       /*-*/
-      obj_xml_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/ICS_STREAM');
-      rcd_lics_str_header.sth_str_code := upper(xslProcessor.valueOf(obj_xml_stream,'@CODE'));
-      rcd_lics_str_header.sth_str_text := xslProcessor.valueOf(obj_xml_stream,'@TEXT');
-      rcd_lics_str_header.sth_status := xslProcessor.valueOf(obj_xml_stream,'@STATUS');
-      rcd_lics_str_header.sth_upd_user := par_user;
-      rcd_lics_str_header.sth_upd_time := sysdate;
-      open csr_check_stream;
-      fetch csr_check_stream into rcd_check_stream;
-      if csr_check_stream%found then
-         update lics_str_header
-            set sth_str_text = rcd_lics_str_header.sth_str_text,
-                sth_status = rcd_lics_str_header.sth_status,
-                sth_upd_user = rcd_lics_str_header.sth_upd_user,
-                sth_upd_time = rcd_lics_str_header.sth_upd_time
-          where sth_str_code = rcd_lics_str_header.sth_str_code;
-         delete from lics_str_event where ste_str_code = rcd_lics_str_header.sth_str_code;
-         delete from lics_str_task where stt_str_code = rcd_lics_str_header.sth_str_code;
+      obj_xml_store := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/ICS_STORE');
+      rcd_lics_das_system.dss_system := upper(xslProcessor.valueOf(obj_xml_stream,'@CODE'));
+      rcd_lics_das_system.dss_description := xslProcessor.valueOf(obj_xml_stream,'@TEXT');
+      rcd_lics_das_system.dss_upd_user := par_user;
+      rcd_lics_das_system.dss_upd_date := sysdate;
+      open csr_check_store;
+      fetch csr_check_store into rcd_check_store;
+      if csr_check_store%found then
+         update lics_das_system
+            set dss_description = rcd_lics_das_system.dss_description,
+                sth_upd_user = rcd_lics_das_system.dss_upd_user,
+                sth_upd_date = rcd_lics_das_system.dss_upd_date
+          where dss_system = rcd_lics_das_system.dss_system;
+         delete from lics_das_value where dsv_system = rcd_lics_das_system.dss_system;
+         delete from lics_das_code where dsc_system = rcd_lics_das_system.dss_system;
+         delete from lics_das_group where dsg_system = rcd_lics_das_system.dss_system;
       else
-         insert into lics_str_header values rcd_lics_str_header;
+         insert into lics_das_system values rcd_lics_das_system;
       end if;
-      close csr_check_stream;
+      close csr_check_store;
 
       /*-*/
-      /* Retrieve and process the stream nodes
+      /* Retrieve and process the data store nodes
       /*-*/
-      var_tsk_seqn := 0;
-      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/ICS_STREAM/NODES/NODE');
+      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/ICS_STORE/NODES/NODE');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'T' then
-            var_tsk_seqn := var_tsk_seqn + 1;
-            rcd_lics_str_task.stt_str_code := rcd_lics_str_header.sth_str_code;
-            rcd_lics_str_task.stt_tsk_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
-            rcd_lics_str_task.stt_tsk_pcde := upper(xslProcessor.valueOf(obj_xml_node,'@PARENT'));
-            rcd_lics_str_task.stt_tsk_seqn := var_tsk_seqn;
-            rcd_lics_str_task.stt_tsk_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
-            insert into lics_str_task values rcd_lics_str_task;
-            var_evt_seqn := 0;
+         if upper(xslProcessor.valueOf(obj_xml_node,'@NODE')) = 'G' then
+            rcd_lics_das_group.dsg_system := rcd_lics_das_system.dss_system;
+            rcd_lics_das_group.dsg_group := upper(xslProcessor.valueOf(obj_xml_node,'@GROUP'));
+            rcd_lics_das_group.dsg_description := xslProcessor.valueOf(obj_xml_node,'@TEXT');
+            rcd_lics_das_group.dsg_upd_user := rcd_lics_das_system.dss_upd_user;
+            rcd_lics_das_group.dsg_upd_date := rcd_lics_das_system.dss_upd_date;
+            insert into lics_das_group values rcd_lics_das_group;
          end if;
-         if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'E' then
-            var_evt_seqn := var_evt_seqn + 1;
-            rcd_lics_str_event.ste_str_code := rcd_lics_str_task.stt_str_code;
-            rcd_lics_str_event.ste_tsk_code := rcd_lics_str_task.stt_tsk_code;
-            rcd_lics_str_event.ste_evt_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
-            rcd_lics_str_event.ste_evt_seqn := var_evt_seqn;
-            rcd_lics_str_event.ste_evt_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
-            rcd_lics_str_event.ste_evt_lock := upper(xslProcessor.valueOf(obj_xml_node,'@LOCK'));
-            rcd_lics_str_event.ste_evt_proc := xslProcessor.valueOf(obj_xml_node,'@PROC');
-            rcd_lics_str_event.ste_job_group := upper(xslProcessor.valueOf(obj_xml_node,'@GROUP'));
-            rcd_lics_str_event.ste_opr_alert := nvl(xslProcessor.valueOf(obj_xml_node,'@ALERT'),'*NONE');
-            rcd_lics_str_event.ste_ema_group := nvl(xslProcessor.valueOf(obj_xml_node,'@EMAIL'),'*NONE');
-            insert into lics_str_event values rcd_lics_str_event;
+         if upper(xslProcessor.valueOf(obj_xml_node,'@NODE')) = 'C' then
+            rcd_lics_das_code.dsc_system := rcd_lics_das_system.dss_system;
+            rcd_lics_das_code.dsc_group := upper(xslProcessor.valueOf(obj_xml_node,'@GROUP'));
+            rcd_lics_das_code.dsc_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
+            rcd_lics_das_code.dsc_description := xslProcessor.valueOf(obj_xml_node,'@TEXT');
+            rcd_lics_das_code.dsc_val_type := upper(xslProcessor.valueOf(obj_xml_node,'@TYPE'));
+            rcd_lics_das_code.dsc_val_data := upper(xslProcessor.valueOf(obj_xml_node,'@DATA'));
+            rcd_lics_das_code.dsc_upd_user := rcd_lics_das_system.dss_upd_user;
+            rcd_lics_das_code.dsc_upd_date := rcd_lics_das_system.dss_upd_date;
+            insert into lics_das_code values rcd_lics_das_code;
+            var_val_seqn := 0;
+         end if;
+         if upper(xslProcessor.valueOf(obj_xml_node,'@NODE')) = 'V' then
+            var_val_seqn := var_val_seqn + 1;
+            rcd_lics_das_value.dsv_system := rcd_lics_das_system.dss_system;
+            rcd_lics_das_value.dsv_group := upper(xslProcessor.valueOf(obj_xml_node,'@GROUP'));
+            rcd_lics_das_value.dsv_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
+            rcd_lics_das_value.dsv_sequence := var_val_seqn;
+            rcd_lics_das_value.dsv_value := xslProcessor.valueOf(obj_xml_node,'@VALUE');
+            insert into lics_das_value values rcd_lics_das_value;
          end if;
       end loop;
 
