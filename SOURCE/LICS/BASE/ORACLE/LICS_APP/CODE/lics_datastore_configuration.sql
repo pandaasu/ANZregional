@@ -78,7 +78,7 @@ create or replace package body lics_datastore_configuration as
 
       cursor csr_value is
          select t01.*
-           from lics_das_code t01
+           from lics_das_value t01
           where t01.dsv_system = rcd_code.dsc_system
             and t01.dsv_group = rcd_code.dsc_group
           order by t01.dsv_sequence asc;
@@ -229,8 +229,8 @@ create or replace package body lics_datastore_configuration as
       /* Retrieve and process the data store
       /*-*/
       obj_xml_store := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/ICS_STORE');
-      rcd_lics_das_system.dss_system := upper(xslProcessor.valueOf(obj_xml_stream,'@CODE'));
-      rcd_lics_das_system.dss_description := xslProcessor.valueOf(obj_xml_stream,'@TEXT');
+      rcd_lics_das_system.dss_system := upper(xslProcessor.valueOf(obj_xml_store,'@CODE'));
+      rcd_lics_das_system.dss_description := xslProcessor.valueOf(obj_xml_store,'@TEXT');
       rcd_lics_das_system.dss_upd_user := par_user;
       rcd_lics_das_system.dss_upd_date := sysdate;
       open csr_check_store;
@@ -238,8 +238,8 @@ create or replace package body lics_datastore_configuration as
       if csr_check_store%found then
          update lics_das_system
             set dss_description = rcd_lics_das_system.dss_description,
-                sth_upd_user = rcd_lics_das_system.dss_upd_user,
-                sth_upd_date = rcd_lics_das_system.dss_upd_date
+                dss_upd_user = rcd_lics_das_system.dss_upd_user,
+                dss_upd_date = rcd_lics_das_system.dss_upd_date
           where dss_system = rcd_lics_das_system.dss_system;
          delete from lics_das_value where dsv_system = rcd_lics_das_system.dss_system;
          delete from lics_das_code where dsc_system = rcd_lics_das_system.dss_system;
