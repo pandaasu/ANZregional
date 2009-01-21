@@ -169,9 +169,9 @@ create or replace package body lics_stream_configuration as
    /*-------------*/
    end get_nodes;
 
-   /*******************************************************/
-   /* This procedure performs the put mobile data routine */
-   /*******************************************************/
+   /*****************************************************/
+   /* This procedure performs the define stream routine */
+   /*****************************************************/
    procedure define_stream(par_user in varchar2) is
 
       /*-*/
