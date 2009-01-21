@@ -178,17 +178,17 @@ sub ProcessDefineLoad()
       end if
 
       '//
-      '// Retrieve the data store information
+      '// Retrieve the data store nodes
       '//
       strQuery = "select "
-      strQuery = strQuery & " to_char(t01.str_depth),"
-      strQuery = strQuery & " t01.str_node,"
-      strQuery = strQuery & " t01.str_group,"
-      strQuery = strQuery & " t01.str_code,"
-      strQuery = strQuery & " t01.str_text,"
-      strQuery = strQuery & " t01.str_value,"
-      strQuery = strQuery & " t01.str_type,"
-      strQuery = strQuery & " t01.str_data"
+      strQuery = strQuery & " to_char(t01.sto_depth),"
+      strQuery = strQuery & " t01.sto_node,"
+      strQuery = strQuery & " t01.sto_group,"
+      strQuery = strQuery & " t01.sto_code,"
+      strQuery = strQuery & " t01.sto_text,"
+      strQuery = strQuery & " t01.sto_value,"
+      strQuery = strQuery & " t01.sto_type,"
+      strQuery = strQuery & " t01.sto_data"
       strQuery = strQuery & " from table(lics_app.lics_datastore_configuration.get_nodes('" & objForm.Fields("DTA_DasSystem").Value & "')) t01"
       strReturn = objSelection.Execute("NODES", strQuery, 0)
       if strReturn <> "*OK" then
