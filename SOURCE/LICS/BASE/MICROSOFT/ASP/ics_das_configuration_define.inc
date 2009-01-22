@@ -980,7 +980,7 @@
                 cobjStore[i].strnod == 'V' &&
                 cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
                 cobjStore[i].strcod.toUpperCase() == cobjStore[cintTargetS].strcod.toUpperCase() &&
-                cobjStore[i].strcod.toUpperCase() == strCdeValue) {
+                cobjStore[i].strval == strCdeValue) {
                bolFound = true;
                break;
             }
