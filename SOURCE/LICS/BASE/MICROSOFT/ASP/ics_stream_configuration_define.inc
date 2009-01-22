@@ -880,9 +880,11 @@
       }
       var intIndexS = objTarget.parentNode.parentNode.rowIndex;
       var intIndexE = intIndexS;
-      if (cobjStream[intIndexS].strtyp != 'T') {
-         alert('Target must be task for move');
-         return;
+      if (cobjStream[cintSelectS].strtyp == 'E') {
+         if (cobjStream[intIndexS].strtyp != 'T') {
+            alert('Target must be task for event move');
+            return;
+         }
       }
       if (cobjStream[intIndexS].strcod.toUpperCase() == cobjStream[cintSelectS].strpar.toUpperCase()) {
          alert('Target is current selection parent');
