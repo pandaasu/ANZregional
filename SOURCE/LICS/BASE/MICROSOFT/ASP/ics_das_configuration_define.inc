@@ -404,7 +404,7 @@
          objEnqValue.style.display = 'none';
          objEnqValue.style.visibility = 'hidden';
          document.getElementById('hedGroup').innerText = 'Update Group';
-         document.getElementById('INP_GrpCode').value = cobjStore[cintTargetS].strcod;
+         document.getElementById('INP_GrpCode').value = cobjStore[cintTargetS].strgrp;
          document.getElementById('INP_GrpText').value = cobjStore[cintTargetS].strtxt;
          document.getElementById('INP_GrpText').focus();
       } else if (cobjStore[cintTargetS].strnod == 'C') {
@@ -645,7 +645,7 @@
       if (cintMode == 'A') {
          cobjStore[cobjStore.length] = new clsStore('1','G',strGrpCode,'',strGrpText,'','','');
       } else if (cintMode == 'U') {
-         if (cobjStore[cintTargetS].strgrp != strgrpCode) {
+         if (cobjStore[cintTargetS].strgrp != strGrpCode) {
             cintTargetW = -1;
          }
          for (var i=0;i<cobjStore.length;i++) {
@@ -914,7 +914,7 @@
                intCount++;
             }
          }
-         if (intCount > 1) {
+         if (intCount >= 1) {
             alert('Target data store code type *SINGLE can only have one value');
             return;
          }
