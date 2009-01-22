@@ -111,7 +111,7 @@
    cobjImage[8].src = 'tree_boko.gif';
    function loadStore() {<%if objSelection.ListCount("NODES") = 0 then%>
       cobjStore[0] = new clsStore('0','S','','','Data Store Root','','','');<%else%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
-      cobjStore[<%=i%>] = new clsStore('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue07("NODES",i)%>','<%=objSelection.ListValue08("NODES",i)%>');<%next%><%end if%>
+      cobjStore[<%=i%>] = new clsStore('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue06("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue07("NODES",i)%>','<%=objSelection.ListValue08("NODES",i)%>');<%next%><%end if%>
       paintStore();
    }
    function clsStore(strDepth,strNode,strGroup,strCode,strText,strValue,strType,strData) {
@@ -126,6 +126,7 @@
       this.strlvl = '';
    }
    function paintStore() {
+     cobjStore.sort(sortStore);
      var objDepth = new Array();
       for (var i=cobjStore.length-1;i>=0;i--) {
          for (var j=objDepth.length;j<=(cobjStore[i].strdep-0);j++) {
@@ -169,11 +170,11 @@
          if (cobjStore[i].strnod == 'S') {
             objCell.className = 'clsLabelBB';
          } else if (cobjStore[i].strnod == 'G') {
-            objCell.className = 'clsTreeBB';
+            objCell.className = 'clsLabelBB';
          } else if (cobjStore[i].strnod == 'C') {
-            objCell.className = 'clsTreeBN';
+            objCell.className = 'clsLabelBN';
          } else if (cobjStore[i].strnod == 'V') {
-            objCell.className = 'clsTreeBN';
+            objCell.className = 'clsLabelBN';
          }
          objCell.align = 'left';
          for (var j=0;j<cobjStore[i].strlvl.length;j++) {
@@ -192,6 +193,7 @@
                objImage.height = '19';
                objImage.width = '18';
                objImage.onclick = function() {targetStore(this,event);};
+               objImage.style.cursor = 'pointer';
                if (cintTargetW == i) {
                   objTarget = objImage;
                }
@@ -211,6 +213,7 @@
                objImage.height = '19';
                objImage.width = '18';
                objImage.onclick = function() {targetStore(this,event);};
+               objImage.style.cursor = 'pointer';
                if (cintTargetW == i) {
                   objTarget = objImage;
                }
@@ -230,6 +233,7 @@
                objImage.height = '19';
                objImage.width = '18';
                objImage.onclick = function() {targetStore(this,event);};
+               objImage.style.cursor = 'pointer';
                if (cintTargetW == i) {
                   objTarget = objImage;
                }
@@ -242,6 +246,7 @@
                objImage.height = '19';
                objImage.width = '18';
                objImage.onclick = function() {targetStore(this,event);};
+               objImage.style.cursor = 'pointer';
                if (cintTargetW == i) {
                   objTarget = objImage;
                }
@@ -283,9 +288,9 @@
          if (cobjStore[i].strnod == 'S') {
             objCell.appendChild(document.createTextNode(' '+cobjStore[i].strtxt));
          } else if (cobjStore[i].strnod == 'G') {
-            objCell.appendChild(document.createTextNode(' ('+cobjStore[i].strcod+') '+cobjStore[i].strtxt));
+            objCell.appendChild(document.createTextNode(' ('+cobjStore[i].strgrp+') '+cobjStore[i].strtxt));
          } else if (cobjStore[i].strnod == 'C') {
-            objCell.appendChild(document.createTextNode(' ('+cobjStore[i].strcod+') '+cobjStore[i].strtxt+' - Type('+cobjStream[i].strvat+') Data('+cobjStream[i].strvad+')'));
+            objCell.appendChild(document.createTextNode(' ('+cobjStore[i].strcod+') '+cobjStore[i].strtxt+' - Type('+cobjStore[i].strvat+')'));
          } else if (cobjStore[i].strnod == 'V') {
             objCell.appendChild(document.createTextNode(' '+cobjStore[i].strval));
          }
@@ -298,18 +303,24 @@
          targetStore(objTarget,null);
       }
    }
+   function sortStore(obj01, obj02) {
+      if ((obj01.strgrp < obj02.strgrp) ||
+          (obj01.strgrp == obj02.strgrp && obj01.strcod < obj02.strcod) ||
+          (obj01.strgrp == obj02.strgrp && obj01.strcod == obj02.strcod && obj01.strval < obj02.strval)) {
+         return -1;
+      } else if ((obj01.strgrp > obj02.strgrp) ||
+                 (obj01.strgrp == obj02.strgrp && obj01.strcod > obj02.strcod) ||
+                 (obj01.strgrp == obj02.strgrp && obj01.strcod == obj02.strcod && obj01.strval > obj02.strval)) {
+         return 1;
+      }
+      return 0;
+   }
    function targetStore(objTarget,objEvent) {
       if (objEvent != null) {
          objEvent.cancelBubble = true;
       }
       var intWorkS = objTarget.parentNode.parentNode.rowIndex;
       var intWorkE = intWorkS;
-      for (var i=intWorkS+1;i<cobjStore.length;i++) {
-         if (cobjStore[i].strpar != cobjStore[intWorkS].strcod || cobjStore[i].strnod != 'E') {
-            break;
-         }
-         intWorkE = i;
-      }
       if (cobjTarget) {
          cobjTarget.src = cobjImage[7].src;
       }
@@ -421,17 +432,9 @@
          document.getElementById('INP_CdeCode').value = cobjStore[cintTargetS].strcod;
          document.getElementById('INP_CdeText').value = cobjStore[cintTargetS].strtxt;
          document.getElementById('INP_CdeVat').selectedIndex = -1;
-         document.getElementById('INP_CdeVad').selectedIndex = -1;
          var objObject = document.getElementById('INP_CdeVat');
          for (var i=0;i<objObject.length;i++) {
             if (objObject.options[i].value == cobjStore[cintTargetS].strvat) {
-               objObject.selectedIndex = i;
-               break;
-            }
-         }
-         objObject = document.getElementById('INP_CdeVad');
-         for (var i=0;i<objObject.length;i++) {
-            if (objObject.options[i].value == cobjStore[cintTargetS].strvad) {
                objObject.selectedIndex = i;
                break;
             }
@@ -529,10 +532,10 @@
          objEnqValue.style.display = 'none';
          objEnqValue.style.visibility = 'hidden';
          document.getElementById('hedCode').innerText = 'Delete Code';
-         document.getElementById('ENQ_CdeCode').value = cobjStore[cintTargetS].strcod;
-         document.getElementById('ENQ_CdeText').value = cobjStore[cintTargetS].strtxt;
-         document.getElementById('ENQ_CdeValType').value = cobjStore[cintTargetS].strvat;
-         document.getElementById('ENQ_CdeValData').value = cobjStore[cintTargetS].strvad;
+         document.getElementById('ENQ_CdeCode').innerText = cobjStore[cintTargetS].strcod;
+         document.getElementById('ENQ_CdeText').innerText = cobjStore[cintTargetS].strtxt;
+         document.getElementById('ENQ_CdeValType').innerText = cobjStore[cintTargetS].strvat;
+         document.getElementById('ENQ_CdeValData').innerText = cobjStore[cintTargetS].strvad;
       } else {
          objDspStore.style.display = 'none';
          objDspStore.style.visibility = 'hidden';
@@ -640,33 +643,14 @@
       }
       var objYarra = new Array();
       if (cintMode == 'A') {
-         var intInsert = 1;
-         for (var i=0;i<cobjStore.length;i++) {
-            if (cobjStore[i].strnod == 'G' &&
-                cobjStore[i].strgrp > strGrpCode) {
-               intInsert = i;
-               break;
-            }
-         }
-         var j = 0;
-         for (var i=0;i<intInsert;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         objYarra[j] = new clsStore('1','G','*ROOT',strGrpCode,'',strGrpText,'','','');
-         j++;
-         for (var i=intInsert;i<cobjStore.length;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         cobjStore.length = 0;
-         for (i=0;i<objYarra.length;i++) {
-            cobjStore[i] = objYarra[i];
-         }
+         cobjStore[cobjStore.length] = new clsStore('1','G',strGrpCode,'',strGrpText,'','','');
       } else if (cintMode == 'U') {
-////sorting
+         if (cobjStore[cintTargetS].strgrp != strgrpCode) {
+            cintTargetW = -1;
+         }
          for (var i=0;i<cobjStore.length;i++) {
-            if (cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase()) {
+            if (i != cintTargetS &&
+                cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase()) {
                cobjStore[i].strgrp = strGrpCode;
             }
          }
@@ -764,7 +748,6 @@
       document.getElementById('INP_CdeCode').value = '';
       document.getElementById('INP_CdeText').value = '';
       document.getElementById('INP_CdeVat').selectedIndex = 0;
-      document.getElementById('INP_CdeVad').selectedIndex = 0;
       document.getElementById('INP_CdeCode').focus();
    }
    function acceptCode() {
@@ -780,16 +763,12 @@
       if (cintMode == 'A' || cintMode == 'U') {
          strCdeCode = document.getElementById('INP_CdeCode').value.toUpperCase();
          strCdeText = document.getElementById('INP_CdeText').value;
+         strCdeVat = '';
+         strCdeVad = '*MIXED';
          objObject = document.getElementById('INP_CdeVat');
          for (var i=0;i<objObject.length;i++) {
             if (objObject.options[i].selected == true) {
                strCdeVat = objObject.options[i].value.toUpperCase();
-            }
-         }
-         objObject = document.getElementById('INP_CdeVad');
-         for (var i=0;i<objObject.length;i++) {
-            if (objObject.options[i].selected == true) {
-               strCdeVad = objObject.options[i].value.toUpperCase();
             }
          }
          if (strCdeCode == '') {
@@ -837,7 +816,6 @@
                    cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
                    cobjStore[i].strcod.toUpperCase() == cobjStore[cintTargetS].strcod.toUpperCase()) {
                   intCount++;
-                  break;
                }
             }
             if (intCount > 1) {
@@ -852,34 +830,14 @@
       }
       var objYarra = new Array();
       if (cintMode == 'A') {
-         var intInsert = cintTargetS+1;
-         for (var i=cintTargetS;i<cobjStore.length;i++) {
-            if (cobjStore[i].strnod == 'C' &&
-                cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
-                cobjStore[i].strcod.toUpperCase() > strCdeCode) {
-               intInsert = i;
-               break;
-            }
-         }
-         var j = 0;
-         for (var i=0;i<intInsert;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         objYarra[j] = new clsStore(2,'C','*ROOT',cobjStore[cintTargetS].strgrp,strCdeCode,strCdeText,'',strCdeVat,strCdeVad);
-         j++;
-         for (var i=intInsert;i<cobjStore.length;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         cobjStore.length = 0;
-         for (i=0;i<objYarra.length;i++) {
-            cobjStore[i] = objYarra[i];
-         }
+         cobjStore[cobjStore.length] = new clsStore('2','C',cobjStore[cintTargetS].strgrp,strCdeCode,strCdeText,'',strCdeVat,strCdeVad);
       } else if (cintMode == 'U') {
-////sorting
+         if (cobjStore[cintTargetS].strcod != strCdeCode) {
+            cintTargetW = -1;
+         }
          for (var i=0;i<cobjStore.length;i++) {
-            if (cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
+            if (i != cintTargetS &&
+                cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
                 cobjStore[i].strcod.toUpperCase() == cobjStore[cintTargetS].strcod.toUpperCase()) {
                cobjStore[i].strcod = strCdeCode;
             }
@@ -894,7 +852,7 @@
          var objYarra = new Array();
          var j = 0;
          for (var i=0;i<cobjStore.length;i++) {
-            if (cobjStore[i].strgrp.toUpperCase() != strGroup &&
+            if (cobjStore[i].strgrp.toUpperCase() != strGroup ||
                 cobjStore[i].strcod.toUpperCase() != strCode) {
                objYarra[j] = cobjStore[i];
                j++;
@@ -947,14 +905,13 @@
          alert('Target must be code for a new value');
          return;
       }
-      if (cobjStore[cintTargetS].strVat == '*SINGLE') {
+      if (cobjStore[cintTargetS].strvat == '*SINGLE') {
          var intCount = 0;
          for (var i=0;i<cobjStore.length;i++) {
             if (cobjStore[i].strnod == 'V' &&
                 cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
                 cobjStore[i].strcod.toUpperCase() == cobjStore[cintTargetS].strcod.toUpperCase()) {
                intCount++;
-               break;
             }
          }
          if (intCount > 1) {
@@ -1039,43 +996,17 @@
       }
       var objYarra = new Array();
       if (cintMode == 'A') {
-         var intInsert = cintTargetS+1;
-         for (var i=cintTargetS;i<cobjStore.length;i++) {
-            if (cobjStore[i].strnod == 'V' &&
-                cobjStore[i].strgrp.toUpperCase() == cobjStore[cintTargetS].strgrp.toUpperCase() &&
-                cobjStore[i].strcod.toUpperCase() == cobjStore[cintTargetS].strcod.toUpperCase() &&
-                cobjStore[i].strval > strCdeValue) {
-               intInsert = i;
-               break;
-            }
-         }
-         var j = 0;
-         for (var i=0;i<intInsert;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         objYarra[j] = new clsStore(3,'V','*ROOT',cobjStore[cintTargetS].strgrp,cobjStore[cintTargetS].strcod,'',strCdeValue,'','');
-         j++;
-         for (var i=intInsert;i<cobjStore.length;i++) {
-            objYarra[j] = cobjStore[i];
-            j++;
-         }
-         cobjStore.length = 0;
-         for (i=0;i<objYarra.length;i++) {
-            cobjStore[i] = objYarra[i];
-         }
+         cobjStore[cobjStore.length] = new clsStore('3','V',cobjStore[cintTargetS].strgrp,cobjStore[cintTargetS].strcod,'',strCdeValue,'','');
       } else if (cintMode == 'U') {
-///sorting
+         if (cobjStore[cintTargetS].strval != strCdeValue) {
+            cintTargetW = -1;
+         }
          cobjStore[cintTargetS].strval = strCdeValue;
       } else if (cintMode == 'D') {
-         var strGroup = cobjStore[cintTargetS].strgrp.toUpperCase();
-         var strCode = cobjStore[cintTargetS].strcod.toUpperCase();
          var objYarra = new Array();
          var j = 0;
          for (var i=0;i<cobjStore.length;i++) {
-            if (cobjStore[i].strgrp.toUpperCase() != strGroup &&
-                cobjStore[i].strcod.toUpperCase() != strCode ||
-                cobjStore[i].strval.toUpperCase() != strCode) {
+            if (i != cintTargetS) {
                objYarra[j] = cobjStore[i];
                j++;
             }
@@ -1222,9 +1153,9 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_das_configuration_define_help.htm');parent.setHeading('<%=strHeading%> - Data Store Definition');parent.showContent();loadStore();showError();">
+<body class="clsBody02" scroll="none" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_das_configuration_define_help.htm');parent.setHeading('<%=strHeading%> - Data Store Definition');parent.showContent();loadStore();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table id="dspStore" class="clsGrid02" style="display:block;visibility:visible" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspStore" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr><%if objForm.Fields("DTA_DasAction").Value = "*CREATE" then%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Data Store:&nbsp;</nobr></td>
@@ -1257,9 +1188,11 @@
             </table>
          </nobr></td>
       </tr>
-      <tr>
+      <tr height=98% >
          <td align=center colspan=2 nowrap><nobr>
-            <table id="tabStore" class="clsGrid02" cols=1 align=center cellpadding="0" cellspacing="0"></table>
+            <div class="clsScroll01" style="background-color=#ffffff;">
+               <table id="tabStore" class="clsGrid01" cols=1 align=center cellpadding="0" cellspacing="0"></table>
+            </div>
          </nobr></td>
       </tr>
       <tr>
@@ -1352,17 +1285,6 @@
             </select>
          </nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Code Value Data:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="INP_CdeVad">
-               <option value="*UPPER">*UPPER
-               <option value="*MIXED">*MIXED
-               <option value="*NUMBER">*NUMBER
-               <option value="*DATE">*DATE
-            </select>
-         </nobr></td>
-      </tr>
       </table></nobr></td></tr>
       <tr id="enqCode" style="display:none;visibility:hidden"><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
@@ -1376,10 +1298,6 @@
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Code Value Type:&nbsp;</nobr></td>
          <td id="ENQ_CdeValType" class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Code Value Data:&nbsp;</nobr></td>
-         <td id="ENQ_CdeValData" class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>

@@ -166,7 +166,7 @@ sub ProcessDefineLoad()
       '// Retrieve the data store
       '//
       strQuery = "select t01.dss_system,"
-      strQuery = strQuery & " t01.dss_description,"
+      strQuery = strQuery & " t01.dss_description"
       strQuery = strQuery & " from lics_das_system t01"
       strQuery = strQuery & " where t01.dss_system = '" & objForm.Fields("DTA_DasSystem").Value & "'"
       strReturn = objSelection.Execute("STORE", strQuery, 0)
@@ -282,7 +282,7 @@ sub ProcessDeleteLoad()
    '// Retrieve the data store
    '//
    strQuery = "select t01.dss_system,"
-   strQuery = strQuery & " t01.dss_description,"
+   strQuery = strQuery & " t01.dss_description"
    strQuery = strQuery & " from lics_das_system t01"
    strQuery = strQuery & " where t01.dss_system = '" & objForm.Fields("DTA_DasSystem").Value & "'"
    strReturn = objSelection.Execute("STORE", strQuery, 0)
