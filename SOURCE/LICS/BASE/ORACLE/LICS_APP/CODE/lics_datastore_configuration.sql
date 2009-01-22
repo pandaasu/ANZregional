@@ -81,6 +81,7 @@ create or replace package body lics_datastore_configuration as
            from lics_das_value t01
           where t01.dsv_system = rcd_code.dsc_system
             and t01.dsv_group = rcd_code.dsc_group
+            and t01.dsv_code = rcd_code.dsc_code
           order by t01.dsv_sequence asc;
       rcd_value csr_value%rowtype;
 
