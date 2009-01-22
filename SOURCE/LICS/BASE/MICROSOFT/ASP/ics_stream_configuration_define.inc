@@ -1216,9 +1216,9 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_stream_configuration_define_help.htm');parent.setHeading('<%=strHeading%> - Stream Definition');parent.showContent();loadStream();showError();">
+<body class="clsBody02" scroll="nonr" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_stream_configuration_define_help.htm');parent.setHeading('<%=strHeading%> - Stream Definition');parent.showContent();loadStream();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
-   <table id="dspStream" class="clsGrid02" style="display:block;visibility:visible" align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspStream" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr><%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stream Code:&nbsp;</nobr></td>
@@ -1261,9 +1261,11 @@
             </table>
          </nobr></td>
       </tr>
-      <tr>
+      <tr height=98% >
          <td align=center colspan=2 nowrap><nobr>
-            <table id="tabStream" class="clsGrid02" cols=1 align=center cellpadding="0" cellspacing="0"></table>
+            <div class="clsScroll01" style="background-color=#ffffff;">
+               <table id="tabStream" class="clsGrid01" cols=1 align=center cellpadding="0" cellspacing="0"></table>
+            </div>
          </nobr></td>
       </tr>
       <tr>
