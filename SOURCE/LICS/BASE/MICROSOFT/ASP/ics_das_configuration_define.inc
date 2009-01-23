@@ -641,7 +641,6 @@
             return;
          }
       }
-      var objYarra = new Array();
       if (cintMode == 'A') {
          cobjStore[cobjStore.length] = new clsStore('1','G',strGrpCode,'',strGrpText,'','','');
       } else if (cintMode == 'U') {
@@ -828,7 +827,6 @@
             return;
          }
       }
-      var objYarra = new Array();
       if (cintMode == 'A') {
          cobjStore[cobjStore.length] = new clsStore('2','C',cobjStore[cintTargetS].strgrp,strCdeCode,strCdeText,'',strCdeVat,strCdeVad);
       } else if (cintMode == 'U') {
@@ -994,7 +992,6 @@
             return;
          }
       }
-      var objYarra = new Array();
       if (cintMode == 'A') {
          cobjStore[cobjStore.length] = new clsStore('3','V',cobjStore[cintTargetS].strgrp,cobjStore[cintTargetS].strcod,'',strCdeValue,'','');
       } else if (cintMode == 'U') {
