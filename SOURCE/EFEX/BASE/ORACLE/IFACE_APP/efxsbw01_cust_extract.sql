@@ -31,6 +31,7 @@ create or replace package efxsbw01_cust_extract as
     2008/11   Steve Gregan   Modified to send empty file (just first row)
     2008/11   Steve Gregan   Modified to distributer customer id
     2008/12   Steve Gregan   Modified to include modified date
+    2009/01   Steve Gregan   Modified to check the customer sales territory modified date
 
    *******************************************************************************/
 
@@ -116,9 +117,11 @@ create or replace package body efxsbw01_cust_extract as
                 cust_channel t04,
                 market t05,
                 (select t01.customer_id,
-                        t01.sales_territory_id
+                        t01.sales_territory_id,
+                        t01.modified_date
                    from (select t01.customer_id,
                                 t01.sales_territory_id,
+                                t01.modified_date,
                                 rank() over (partition by t01.customer_id
                                                  order by t01.sales_territory_id asc) as rnkseq
                            from cust_sales_territory t01
@@ -172,6 +175,7 @@ create or replace package body efxsbw01_cust_extract as
                  trunc(t02.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t03.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t04.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t06.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t07.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t08.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t09.modified_date) >= trunc(sysdate) - var_history or
