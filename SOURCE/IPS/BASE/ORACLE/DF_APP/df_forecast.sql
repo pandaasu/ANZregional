@@ -1181,14 +1181,18 @@ create or replace package body df_forecast as
                                      where dg.dmnd_grp_type_id = dt.dmnd_grp_type_id
                                        and dg.dmnd_grp_id = dgo.dmnd_grp_id
                                        and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_supply);
+         commit;
+
          lics_logging.write_log('--> Inserting new supply DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          insert into dmnd_data select * from dmnd_temp;
+         commit;
 
          /*-*/
          /* Clear the temporary forecast table
          /*-*/
          lics_logging.write_log('--> Deleting temporary data for forecast ('||to_char(var_fcst_id)||')');
          delete from dmnd_temp;
+         commit;
 
          /*-*/
          /* Insert/update the forecast source
