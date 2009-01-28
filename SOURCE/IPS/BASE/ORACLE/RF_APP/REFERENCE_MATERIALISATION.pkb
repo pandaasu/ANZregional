@@ -24,10 +24,10 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
        INSERT INTO lads_cla_chr
        VALUES tabRec(idx);
        
-       /* commit at every 1000 rows inserted */
-       IF MOD(idx, 1000) = 0 THEN
-         COMMIT;
-       END IF;
+       /* commit at every 10000 rows inserted */
+        --       IF MOD(idx, 10000) = 0 THEN
+        --         COMMIT;
+        --       END IF;
      END LOOP;
      COMMIT;
   EXCEPTION
@@ -156,13 +156,13 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
 
       BEGIN
         EXECUTE IMMEDIATE 'delete from ' || i_dest_table;
-
-        logit.LOG ('Deleted Records : ' || SQL%ROWCOUNT);
+        logit.LOG ('Deleted '||i_dest_table||' Records : ' || SQL%ROWCOUNT);
+        
         COMMIT;
       EXCEPTION
         WHEN OTHERS THEN
           ROLLBACK;
-          v_processing_msg := 'Unable to delete destination table. ' || common.create_sql_error_msg;
+          v_processing_msg := 'Unable to delete destination table '||i_dest_table ||'.'|| common.create_sql_error_msg;
           RAISE common.ge_error;
       END;
 
