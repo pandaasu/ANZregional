@@ -243,8 +243,7 @@ create or replace package body lads_saplad05 as
                commit;
             end loop;
             close csr_header;
-            delete from lads_bom_det where (stlal,matnr,werks) in (select stlal,matnr,werks from lads_bom_hdr where idoc_timestamp != rcd_lads_control.idoc_timestamp);
-            delete from lads_bom_hdr where idoc_timestamp != rcd_lads_control.idoc_timestamp;
+            update bds_bom_hdr set bds_lads_status = '4' where sap_idoc_timestamp != rcd_lads_control.idoc_timestamp;
             commit;
          exception
             when others then
@@ -428,6 +427,7 @@ create or replace package body lads_saplad05 as
                 t01.matnr,
                 t01.werks,
                 t01.stlan,
+                t01.hdruv,
                 t01.bmeng,
                 t01.bmein,
                 t01.stlst,
@@ -443,7 +443,7 @@ create or replace package body lads_saplad05 as
                         substr(t01.tab_data,11,18) as matnr,
                         substr(t01.tab_data,29,4) as werks,
                         substr(t01.tab_data,33,1) as stlan,
-                        t02.datuv,
+                        t02.datuv as hdruv,
                         t02.bmeng,
                         t02.bmein,
                         t02.stlst
@@ -522,7 +522,7 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.matnr := lads_trim_code(trim(rcd_bom_data.matnr));
             rcd_lads_bom_hdr.werks := trim(rcd_bom_data.werks);
             rcd_lads_bom_hdr.stlan := trim(rcd_bom_data.stlan);
-            rcd_lads_bom_hdr.datuv := trim(rcd_bom_data.datuv);
+            rcd_lads_bom_hdr.datuv := trim(rcd_bom_data.hdruv);
             rcd_lads_bom_hdr.datub := '99991231';
             rcd_lads_bom_hdr.bmeng := lads_to_number(replace(trim(rcd_bom_data.bmeng),'.',null))/1000;
             rcd_lads_bom_hdr.bmein := trim(rcd_bom_data.bmein);
@@ -532,6 +532,7 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
             rcd_lads_bom_hdr.lads_date := sysdate;
             rcd_lads_bom_hdr.lads_status := '1';
+            rcd_lads_bom_hdr.lads_flattened := '0'; 
             insert into lads_bom_hdr values rcd_lads_bom_hdr;
          end if;
 
@@ -548,8 +549,8 @@ create or replace package body lads_saplad05 as
          rcd_lads_bom_det.idnrk := lads_trim_code(trim(rcd_bom_data.idnrk));
          rcd_lads_bom_det.menge := lads_to_number(replace(trim(rcd_bom_data.menge),'.',null))/1000;
          rcd_lads_bom_det.meins := trim(rcd_bom_data.meins);
-         rcd_lads_bom_det.datuv := rcd_lads_bom_hdr.datuv;
-         rcd_lads_bom_det.datub := rcd_lads_bom_hdr.datub;
+         rcd_lads_bom_det.datuv := trim(rcd_bom_data.datuv);
+         rcd_lads_bom_det.datub := '99991231';
          insert into lads_bom_det values rcd_lads_bom_det;
 
       end loop;
