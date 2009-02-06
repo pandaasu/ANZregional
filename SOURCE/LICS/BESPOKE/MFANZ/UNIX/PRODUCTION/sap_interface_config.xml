@@ -48,5 +48,16 @@
         SapSystem="11"
         SapTables="T415A,EORD"
         SapFilters="*NONE,WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
-        RetrievalModes="*ALL,*BATCH"/>          
+        RetrievalModes="*ALL,*BATCH"/>
+    <interface identifier="SAPLAD05#01"
+        description="SAP to LADS Factory BOM"
+        class="com.isi.lad.cSapLad05"
+        SapClient="002"
+        SapUserId="*PROMPTED"
+        SapPassword="*PROMPTED"
+        SapLanguage="EN"
+        SapServer="sapapp.na.mars"
+        SapSystem="11"
+        MASTFilters="WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
+        Logging="0"/>
 </configuration>
