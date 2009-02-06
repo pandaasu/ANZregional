@@ -122,9 +122,11 @@ sub ProcessSelect()
    '//
    lngSize = 0
    strQuery = "select"
+   strQuery = strQuery & " t01.dsv_code||';'||trim(substr(t01.dsv_value,1,20)),"
    strQuery = strQuery & " trim(substr(t01.dsv_value,1,20)),"
    strQuery = strQuery & " substr(t01.dsv_value,21)"
-   strQuery = strQuery & " from table(lics_datastore.retrieve_value('LADS','SAP_INTERFACE','SAPLAD02')) t01"
+   strQuery = strQuery & " from table(lics_datastore.retrieve_value('LADS','SAP_INTERFACE',null)) t01"
+   strQuery = strQuery & " order by t01.dsv_code||';'||trim(substr(t01.dsv_value,1,20)) asc"
    strReturn = objSelection.Execute("INTERFACE", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
@@ -138,6 +140,7 @@ end sub
 sub ProcessSubmit()
 
    dim strStatement
+   dim arySplit
 
    '//
    '// Create the procedure object
@@ -148,9 +151,10 @@ sub ProcessSubmit()
    '//
    '// Submit the SAP interface
    '//
+   arySplit = split(objSecurity.FixString(objForm.Fields("SLT_Interface").Value), ";", -1, 1)
    strStatement = "lics_trigger_submitter.execute('SAP Table Interface'"
-   strStatement = strStatement & ",'lics_sap_processor.execute_inbound(''SAPLAD02'',"
-   strStatement = strStatement & "''" & objSecurity.FixString(objForm.Fields("SLT_Interface").Value) & "'',"
+   strStatement = strStatement & ",'lics_sap_processor.execute_inbound(''" & arySplit(0) & "'',"
+   strStatement = strStatement & "''" & arySplit(1) & "'',"
    strStatement = strStatement & "''" & objSecurity.FixString(objForm.Fields("SLT_User").Value) & "'',"
    strStatement = strStatement & "''" & objSecurity.FixString(objForm.Fields("SLT_password").Value) & "'',"
    strStatement = strStatement & "''*NONE'')"

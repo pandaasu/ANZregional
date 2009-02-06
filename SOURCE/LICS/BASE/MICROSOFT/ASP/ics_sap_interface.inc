@@ -74,7 +74,7 @@
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" name="sltInterface" onChange="selectInterface(this);">
                <option value="" selected>** select interface **<%for i = 0 to objSelection.ListCount("INTERFACE") - 1%>
-               <option value="<%=objSelection.ListValue01("INTERFACE",i)%>">(<%=objSelection.ListValue01("INTERFACE",i)%>)&nbsp;<%=objSelection.ListValue02("INTERFACE",i)%><%next%>
+               <option value="<%=objSelection.ListValue01("INTERFACE",i)%>">(<%=objSelection.ListValue02("INTERFACE",i)%>)&nbsp;<%=objSelection.ListValue03("INTERFACE",i)%><%next%>
             </select>
          </nobr></td>
       </tr>
