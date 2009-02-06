@@ -99,4 +99,15 @@
                LadsPassword="justreading"
                LadsHistoryDays="30"
                Logging="0"/>
+    <interface identifier="SAPLAD05#01"
+	       description="SAP to LADS Factory BOM"
+	       class="com.isi.lad.cSapLad05"
+	       SapClient="002"
+	       SapUserId="*PROMPTED"
+	       SapPassword="*PROMPTED"
+	       SapLanguage="EN"
+	       SapServer="sapapb.na.mars"
+	       SapSystem="02"
+	       MASTFilters="WERKS LIKE 'AU%' OR WERKS LIKE 'NZ%'"
+               Logging="0"/>
  </configuration>
