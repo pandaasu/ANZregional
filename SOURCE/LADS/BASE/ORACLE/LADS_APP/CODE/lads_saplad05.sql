@@ -229,10 +229,12 @@ create or replace package body lads_saplad05 as
          /*-*/
          /* Rebuild the BDS factory BOM
          /* **notes**
-         /* 1. Flatten the new BOM data (commit after each)
-         /* 2. Delete any redundant BDS data
+         /* 1. Delete any redundant LADS data
+         /* 2. Flatten the new BOM data (commit after each)
          /*-*/
          begin
+            update lads_bom_hdr set lads_status = '4' where idoc_timestamp != rcd_lads_control.idoc_timestamp;
+            commit;
             open csr_header;
             loop
                fetch csr_header into rcd_header;
@@ -243,8 +245,6 @@ create or replace package body lads_saplad05 as
                commit;
             end loop;
             close csr_header;
-            update bds_bom_hdr set bds_lads_status = '4' where sap_idoc_timestamp != rcd_lads_control.idoc_timestamp;
-            commit;
          exception
             when others then
                lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -495,12 +495,6 @@ create or replace package body lads_saplad05 as
    begin
 
       /*-*/
-      /* Initialise the sequence for current stream action
-      /*-*/
-      delete from lads_bom_det;
-      delete from lads_bom_hdr;
-
-      /*-*/
       /* Retrieve the BOM data
       /*-*/
       var_savkey := '**START**';
@@ -533,6 +527,12 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.lads_date := sysdate;
             rcd_lads_bom_hdr.lads_status := '1';
             rcd_lads_bom_hdr.lads_flattened := '0'; 
+            delete from lads_bom_det where stlal = rcd_lads_bom_hdr.stlal
+                                       and matnr = rcd_lads_bom_hdr.matnr
+                                       and werks = rcd_lads_bom_hdr.werks;
+            delete from lads_bom_hdr where stlal = rcd_lads_bom_hdr.stlal
+                                       and matnr = rcd_lads_bom_hdr.matnr
+                                       and werks = rcd_lads_bom_hdr.werks;
             insert into lads_bom_hdr values rcd_lads_bom_hdr;
             rcd_lads_bom_det.detseq := 0;
          end if;
