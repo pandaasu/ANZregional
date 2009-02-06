@@ -534,6 +534,7 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.lads_status := '1';
             rcd_lads_bom_hdr.lads_flattened := '0'; 
             insert into lads_bom_hdr values rcd_lads_bom_hdr;
+            rcd_lads_bom_det.detseq := 0;
          end if;
 
          /*-*/
