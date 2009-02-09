@@ -72,8 +72,8 @@
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" name="sltPeriod" onChange="selectPeriod(this);">
                <option value="*LAST"<%if objForm.Fields("DTA_Period").Value = "*LAST" then%> selected<%end if%>>Consumer response data for the previous three periods
-               <option value="*CURRENT"<%if objForm.Fields("DTA_Period").Value = "*CURRENT" then%> selected<%end if%>>Consumer response data for the current period<%for intCount = 1 to 13%><%intPeriod = intPeriod - 1%><%if intPeriod mod 100 = 0 then%><%intPeriod = intPeriod - 88%><%end if%>
-               <option value="<%=cstr(intPeriod)%>"<%if objForm.Fields("DTA_Period").Value = "<%=cstr(intPeriod)%>" then%> selected<%end if%>>Consumer response data for <%=cstr(intPeriod)%><%next%>
+               <option value="*CURRENT"<%if objForm.Fields("DTA_Period").Value = "*CURRENT" then%> selected<%end if%>>Consumer response data for the current period<%for intCount = 1 to 13%><%lngPeriod = lngPeriod - 1%><%if lngPeriod mod 100 = 0 then%><%lngPeriod = lngPeriod - 87%><%end if%>
+               <option value="<%=cstr(lngPeriod)%>"<%if objForm.Fields("DTA_Period").Value = cstr(lngPeriod) then%> selected<%end if%>>Consumer response data for <%=cstr(lngPeriod)%><%next%>
             </select>
          </nobr></td>
       </tr>

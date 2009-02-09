@@ -27,6 +27,8 @@
    dim objSecurity
    dim objSelection
    dim objProcedure
+   dim intCount
+   dim lngPeriod
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -109,8 +111,6 @@
 sub ProcessSelect()
 
    dim strQuery
-   dim intCount
-   dim intPeriod
 
    '//
    '// Create the selection object
@@ -121,15 +121,14 @@ sub ProcessSelect()
    '//
    '// Retrieve the current period
    '//
-   lngSize = 0
-   strQuery = "select to_char(t01.mars_period,'yyyypp')"
+   strQuery = "select to_char(t01.mars_period,'fm000000')"
    strQuery = strQuery & " from mars_date t01"
    strQuery = strQuery & " where trunc(t01.calendar_date) = trunc(sysdate)"
    strReturn = objSelection.Execute("PERIOD", strQuery, 0)
    if strReturn <> "*OK" then
       strMode = "FATAL"
    end if
-   intPeriod = objSelection.ListValue01("PERIOD",0)
+   lngPeriod = clng(objSelection.ListValue01("PERIOD",0))
 
    '//
    '// Initialise the data fields
@@ -162,7 +161,7 @@ sub ProcessSubmit()
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
    else
-      strConfirm = "Care BW Extract - Period(" & objSecurity.FixString(objForm.Fields("DTA_Period").Value) & ") Action( & objSecurity.FixString(objForm.Fields("DTA_Action").Value) & ") submitted"
+      strConfirm = "Care BW Extract - Period(" & objSecurity.FixString(objForm.Fields("DTA_Period").Value) & ") Action(" & objSecurity.FixString(objForm.Fields("DTA_Action").Value) & ") submitted"
    end if
    strMode = "SELECT"
    call ProcessSelect
