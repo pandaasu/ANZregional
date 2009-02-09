@@ -2,7 +2,7 @@
 <script language="javascript">
 <!--
    function showError() {
-      document.main.INP_Interface.focus();<%if strError <> "" then%>
+      document.main.sltPeriod.focus();<%if strError <> "" then%>
       alert('<%=strError%>');<%end if%>
       return;
    }
@@ -25,7 +25,7 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Period must be selected';
       }
-      if (document.main.INP_Ation.value == '') {
+      if (document.main.INP_Action.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Action must be selected';
       }
