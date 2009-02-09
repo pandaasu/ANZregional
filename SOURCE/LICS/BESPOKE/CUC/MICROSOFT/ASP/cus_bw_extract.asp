@@ -154,7 +154,7 @@ sub ProcessSubmit()
    '//
    '// Submit the BW extract
    '//
-   strStatement = "lics_trigger_submitter.execute('CARE BW Extract','cr_app.care_bw_extract("
+   strStatement = "lics_trigger_submitter.execute('CARE BW Extract','cr_app.care_bw_extract.execute("
    strStatement = strStatement & "''" & objSecurity.FixString(objForm.Fields("DTA_Period").Value) & "'',"
    strStatement = strStatement & "''" & objSecurity.FixString(objForm.Fields("DTA_Action").Value) & "'')',"
    strStatement = strStatement & "'CARE_SAPBW_EXTRACT')"
