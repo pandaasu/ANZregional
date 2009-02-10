@@ -1,8 +1,8 @@
 <html>
 <script language="javascript">
 <!--
-   function showError() {<%if strError <> "" then%>
-      alert('<%=strError%>');<%else%>return;<%end if%>
+   function showError() {<%if strReturn <> "*OK" then%>
+      alert('<%=strReturn%>');<%else%>return;<%end if%>
    }
    function document.onmouseover() {
       var objElement = window.event.srcElement;

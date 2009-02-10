@@ -136,7 +136,7 @@ sub ProcessSelect()
    '// Retrieve the cross reference data list
    '//
    lngSize = 0
-   strQuery = "select
+   strQuery = "select"
    strQuery = strQuery & " t01.code,"
    strQuery = strQuery & " t01.xref_type,"
    strQuery = strQuery & " t01.xref_desc,"

@@ -59,7 +59,7 @@
          alert(strMessage);
          return;
       }
-      document.main.DTA_code.value = document.main.INP_Code.value;
+      document.main.DTA_Code.value = document.main.INP_Code.value;
       document.main.DTA_XrefType.value = document.main.INP_XrefType.value;
       document.main.DTA_XrefDesc.value = document.main.INP_XrefDesc.value;
       document.main.DTA_BWCode.value = document.main.INP_BWCode.value;

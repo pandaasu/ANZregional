@@ -40,7 +40,7 @@
    '// Initialise the script
    '//
    strTarget = "cuc_bw_extract.asp"
-   strHeading = "Care BW Extract"
+   strHeading = "Care BW Extract Execution"
    strError = ""
    strConfirm = ""
 
