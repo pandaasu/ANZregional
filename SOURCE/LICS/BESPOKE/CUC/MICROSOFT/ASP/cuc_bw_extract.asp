@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : cus_bw_extract.asp                                 //
+'// Script  : cuc_bw_extract.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : February 2009                                      //
 '// Text    : This script implements the Care BW extract         //
@@ -39,7 +39,7 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "cus_bw_extract.asp"
+   strTarget = "cuc_bw_extract.asp"
    strHeading = "Care BW Extract"
    strError = ""
    strConfirm = ""
@@ -180,6 +180,6 @@ sub PaintFatal()%>
 '// Paint response routine //
 '////////////////////////////
 sub PaintResponse()%>
-<!--#include file="cus_bw_extract.inc"-->
+<!--#include file="cuc_bw_extract.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->

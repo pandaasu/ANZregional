@@ -64,7 +64,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('cus_bw_extract_help.htm');parent.setHeading('<%=strHeading%> - Submit');parent.showContent();showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('cuc_bw_extract_help.htm');parent.setHeading('<%=strHeading%> - Submit');parent.showContent();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
       <tr>
