@@ -186,7 +186,7 @@ sub ProcessInsertAccept()
    '//
    '// Insert the cross reference data
    '//
-   strStatement = "cr_app.care_bw_xref_maint.insert_data("
+   strStatement = "cr_app.care_bw_maintenance.insert_data("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Code").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_XrefType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_XrefDesc").Value) & "',"
@@ -267,7 +267,7 @@ sub ProcessUpdateAccept()
    '//
    '// Update the cross reference data
    '//
-   strStatement = "cr_app.care_bw_xref_maint.update_data("
+   strStatement = "cr_app.care_bw_maintenance.update_data("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Code").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_XrefType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_XrefDesc").Value) & "',"
@@ -348,7 +348,7 @@ sub ProcessDeleteAccept()
    '//
    '// Delete the cross reference data
    '//
-   strStatement = "cr_app.care_bw_xref_maint.delete_data("
+   strStatement = "cr_app.care_bw_maintenance.delete_data("
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Code").Value) & "')"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
