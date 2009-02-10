@@ -45,6 +45,7 @@ alter table cr.care_bw_xref
 /* Authority
 /**/
 grant select, insert, update, delete on cr.care_bw_xref to cr_app;
+grant select on cr.care_bw_xref to public;
 
 /**/
 /* Synonym
