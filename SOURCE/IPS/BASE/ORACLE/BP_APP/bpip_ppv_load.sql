@@ -46,13 +46,14 @@ create or replace package body bp_app.bpip_ppv_load as
    /*-*/
    con_delimiter constant varchar2(32)  := ';';
    con_qualifier constant varchar2(10) := '"';
+   con_heading_count constant number := 1;
 
    /*-*/
    /* Private definitions 
    /*-*/
    var_trn_start boolean;
-   var_trn_ignore boolean;
    var_trn_error boolean;
+   var_trn_count number;
    rcd_load_bpip_batch load_bpip_batch%rowtype;
    rcd_load_ppv_data load_ppv_data%rowtype;
    var_batch_id_01 number;
@@ -74,8 +75,8 @@ create or replace package body bp_app.bpip_ppv_load as
       /* Initialise the transaction variables
       /*-*/
       var_trn_start := false;
-      var_trn_ignore := false;
       var_trn_error := false;
+      var_trn_count := 0;
 
       /*-*/
       /* Initialise the inbound definitions
@@ -146,7 +147,8 @@ create or replace package body bp_app.bpip_ppv_load as
       /* IGNORE - Ignore the data row when required */
       /*--------------------------------------------*/
 
-      if var_trn_ignore = true then
+      var_trn_count := var_trn_count + 1;
+      if var_trn_count <= con_heading_count then
          return;
       end if;
 
@@ -254,12 +256,12 @@ create or replace package body bp_app.bpip_ppv_load as
       rcd_load_ppv_data.plant := lics_inbound_utility.get_variable('PLANT');
       rcd_load_ppv_data.local_currency := lics_inbound_utility.get_variable('LOCAL_CURRENCY');
       rcd_load_ppv_data.ppv_type := lics_inbound_utility.get_variable('PPV_TYPE');
-      rcd_load_ppv_data.ppv_total := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_TOTAL'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
-      rcd_load_ppv_data.ppv_po := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_PO'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
-      rcd_load_ppv_data.ppv_invoice := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_INVOICE'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
-      rcd_load_ppv_data.ppv_finance := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_FINANCE'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
-      rcd_load_ppv_data.ppv_freight := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_FREIGHT'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
-      rcd_load_ppv_data.ppv_other := to_number(replace(replace(lics_inbound_utility.get_variable('PPV_OTHER'),rcd_load_ppv_data.local_currency,null),' ',null),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_total := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_TOTAL')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_po := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_PO')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_invoice := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_INVOICE')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_finance := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_FINANCE')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_freight := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_FREIGHT')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
+      rcd_load_ppv_data.ppv_other := to_number(translate(upper(lics_inbound_utility.get_variable('PPV_OTHER')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.99');
       rcd_load_ppv_data.status := 'LOADED';
       rcd_load_ppv_data.error_msg := null;
       rcd_load_ppv_data.bus_sgmnt := null;
@@ -339,19 +341,10 @@ create or replace package body bp_app.bpip_ppv_load as
       /*-*/
       /* Commit/rollback the transaction as required 
       /*-*/
-      if var_trn_ignore = true then
+      if var_trn_error = true then
 
          /*-*/
          /* Rollback the transaction
-         /* **note** - releases transaction lock
-         /*-*/
-         rollback;
-
-      elsif var_trn_error = true then
-
-         /*-*/
-         /* Rollback the transaction
-         /* **note** - releases transaction lock
          /*-*/
          rollback;
 
@@ -366,7 +359,6 @@ create or replace package body bp_app.bpip_ppv_load as
 
          /*-*/
          /* Commit the transaction
-         /* **note** - releases transaction lock
          /*-*/
          commit;
 

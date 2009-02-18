@@ -46,13 +46,14 @@ create or replace package body bp_app.bpip_inv_load as
    /*-*/
    con_delimiter constant varchar2(32)  := ';';
    con_qualifier constant varchar2(10) := '"';
+   con_heading_count constant number := 1;
 
    /*-*/
    /* Private definitions 
    /*-*/
    var_trn_start boolean;
-   var_trn_ignore boolean;
    var_trn_error boolean;
+   var_trn_count number;
    rcd_load_bpip_batch load_bpip_batch%rowtype;
    rcd_load_inv_data load_inv_data%rowtype;
    var_batch_id_01 number;
@@ -74,8 +75,8 @@ create or replace package body bp_app.bpip_inv_load as
       /* Initialise the transaction variables
       /*-*/
       var_trn_start := false;
-      var_trn_ignore := false;
       var_trn_error := false;
+      var_trn_count := 0;
 
       /*-*/
       /* Initialise the inbound definitions
@@ -129,7 +130,8 @@ create or replace package body bp_app.bpip_inv_load as
       /* IGNORE - Ignore the data row when required */
       /*--------------------------------------------*/
 
-      if var_trn_ignore = true then
+      var_trn_count := var_trn_count + 1;
+      if var_trn_count <= con_heading_count then
          return;
       end if;
 
@@ -225,7 +227,7 @@ create or replace package body bp_app.bpip_inv_load as
       rcd_load_inv_data.plant := lics_inbound_utility.get_variable('PLANT');
       rcd_load_inv_data.material := lics_inbound_utility.get_variable('MATERIAL');
       rcd_load_inv_data.stock_type := lics_inbound_utility.get_variable('STOCK_TYPE');
-      rcd_load_inv_data.inventory_qty := replace(lics_inbound_utility.get_number('INVENTORY_QTY','999,999,999,990.999'),' ',null);
+      rcd_load_inv_data.inventory_qty := to_number(translate(upper(lics_inbound_utility.get_variable('INVENTORY_QTY')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.999');
       rcd_load_inv_data.status := 'LOADED';
       rcd_load_inv_data.error_msg := null;
       rcd_load_inv_data.bus_sgmnt := null;
@@ -305,19 +307,10 @@ create or replace package body bp_app.bpip_inv_load as
       /*-*/
       /* Commit/rollback the transaction as required 
       /*-*/
-      if var_trn_ignore = true then
+      if var_trn_error = true then
 
          /*-*/
          /* Rollback the transaction
-         /* **note** - releases transaction lock
-         /*-*/
-         rollback;
-
-      elsif var_trn_error = true then
-
-         /*-*/
-         /* Rollback the transaction
-         /* **note** - releases transaction lock
          /*-*/
          rollback;
 
@@ -332,7 +325,6 @@ create or replace package body bp_app.bpip_inv_load as
 
          /*-*/
          /* Commit the transaction
-         /* **note** - releases transaction lock
          /*-*/
          commit;
 
