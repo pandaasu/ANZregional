@@ -83,8 +83,8 @@ create or replace package body bp_app.bpip_ppv_load as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('PERIOD',1);
-      lics_inbound_utility.set_csv_definition('COMPANY',2);
+      lics_inbound_utility.set_csv_definition('COMPANY',1);
+      lics_inbound_utility.set_csv_definition('PERIOD',2);
       lics_inbound_utility.set_csv_definition('POSTING_DATE',3);
       lics_inbound_utility.set_csv_definition('DOCUMENT_NO',4);
       lics_inbound_utility.set_csv_definition('DOCUMENT_TYPE',5);
@@ -99,13 +99,15 @@ create or replace package body bp_app.bpip_ppv_load as
       lics_inbound_utility.set_csv_definition('ITEM_TEXT',14);
       lics_inbound_utility.set_csv_definition('PLANT',15);
       lics_inbound_utility.set_csv_definition('LOCAL_CURRENCY',16);
-      lics_inbound_utility.set_csv_definition('PPV_TYPE',17);
-      lics_inbound_utility.set_csv_definition('PPV_TOTAL',18);
-      lics_inbound_utility.set_csv_definition('PPV_PO',19);
-      lics_inbound_utility.set_csv_definition('PPV_INVOICE',20);
-      lics_inbound_utility.set_csv_definition('PPV_FINANCE',21);
-      lics_inbound_utility.set_csv_definition('PPV_FREIGHT',22);
-      lics_inbound_utility.set_csv_definition('PPV_OTHER',23);
+      lics_inbound_utility.set_csv_definition('DOCUMENT_CURRENCY',17);
+      lics_inbound_utility.set_csv_definition('PPV_TYPE',18);
+      lics_inbound_utility.set_csv_definition('PPV_DESC',19);
+      lics_inbound_utility.set_csv_definition('PPV_TOTAL',20);
+      lics_inbound_utility.set_csv_definition('PPV_PO',21);
+      lics_inbound_utility.set_csv_definition('PPV_INVOICE',22);
+      lics_inbound_utility.set_csv_definition('PPV_FINANCE',23);
+      lics_inbound_utility.set_csv_definition('PPV_FREIGHT',24);
+      lics_inbound_utility.set_csv_definition('PPV_OTHER',25);
 
    /*-------------------*/
    /* Exception handler */
@@ -128,15 +130,6 @@ create or replace package body bp_app.bpip_ppv_load as
    /* This procedure performs the on data routine */
    /***********************************************/
    procedure on_data(par_record in varchar2) is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_mars_date is
-         select t01.mars_period
-           from mars_date t01
-          where trunc(t01.calendar_date) = trunc(sysdate);
-      rcd_mars_date csr_mars_date%rowtype;
      
    /*-------------*/
    /* Begin block */
@@ -174,22 +167,12 @@ create or replace package body bp_app.bpip_ppv_load as
          var_trn_start := true;
 
          /*-*/
-         /* Retrieve the mars period based on SYSDATE
-         /*-*/
-         open csr_mars_date;
-         fetch csr_mars_date into rcd_mars_date;
-         if csr_mars_date%notfound then
-            raise_application_error(-20000, 'Date ' || to_char(sysdate,'yyyy/mm/dd') || ' not found in MARS_DATE');
-         end if;
-         close csr_mars_date;
-
-         /*-*/
          /* Set the batch header values
          /*-*/
          rcd_load_bpip_batch.batch_id := null;
          rcd_load_bpip_batch.batch_type_code := 'PPV';
          rcd_load_bpip_batch.company := lics_inbound_utility.get_variable('COMPANY');
-         rcd_load_bpip_batch.period := to_char(rcd_mars_date.mars_period,'fm000000');
+         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('PERIOD'),8,4)||substr(lics_inbound_utility.get_variable('PERIOD'),5,2);
          rcd_load_bpip_batch.dataentity := 'ACTUALS';
          rcd_load_bpip_batch.status := 'LOADED';
          rcd_load_bpip_batch.loaded_by := 370;

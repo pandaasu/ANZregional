@@ -152,15 +152,6 @@ create or replace package body bp_app.bpip_mrp_load as
       var_year number;
       var_period number;
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_mars_date is
-         select t01.mars_period
-           from mars_date t01
-          where trunc(t01.calendar_date) = trunc(sysdate);
-      rcd_mars_date csr_mars_date%rowtype;
-     
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -197,23 +188,13 @@ create or replace package body bp_app.bpip_mrp_load as
          var_trn_start := true;
 
          /*-*/
-         /* Retrieve the mars period based on SYSDATE
-         /*-*/
-         open csr_mars_date;
-         fetch csr_mars_date into rcd_mars_date;
-         if csr_mars_date%notfound then
-            raise_application_error(-20000, 'Date ' || to_char(sysdate,'yyyy/mm/dd') || ' not found in MARS_DATE');
-         end if;
-         close csr_mars_date;
-
-         /*-*/
          /* Set the batch header values
          /*-*/
          rcd_load_bpip_batch.batch_id := null;
          rcd_load_bpip_batch.batch_type_code := 'MRP';
          rcd_load_bpip_batch.company := lics_inbound_utility.get_variable('COMPANY');
-         rcd_load_bpip_batch.period := to_char(rcd_mars_date.mars_period,'fm000000');
-         rcd_load_bpip_batch.dataentity := 'ACTUALS';
+         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),5,4)||substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),2,2);
+         rcd_load_bpip_batch.dataentity := substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),5,4)||' BR'||substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),2,2);
          rcd_load_bpip_batch.status := 'LOADED';
          rcd_load_bpip_batch.loaded_by := 370;
          rcd_load_bpip_batch.load_start_time := sysdate;
@@ -259,7 +240,7 @@ create or replace package body bp_app.bpip_mrp_load as
          var_period := to_number(substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),1,3));
          var_year := to_number(substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),5,4));
          for idx in 1..13 loop
-            tbl_period(tbl_period.count+1) := '13/'||to_char(var_period,'fm000')||'.'||to_char(var_year,'fm0000');
+            tbl_period(idx) := '13/'||to_char(var_period,'fm000')||'.'||to_char(var_year,'fm0000');
             var_period := var_period + 1;
             if var_period > 13 then
                var_year := var_year + 1;
@@ -329,7 +310,7 @@ create or replace package body bp_app.bpip_mrp_load as
 
       /*-*/
       /* Create the period data
-      /*-*
+      /*-*/
       for idx in 1..13 loop
 
          /*-*/

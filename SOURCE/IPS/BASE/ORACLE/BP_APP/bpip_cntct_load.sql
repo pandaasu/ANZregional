@@ -122,6 +122,12 @@ create or replace package body bp_app.bpip_cntct_load as
    procedure on_data(par_record in varchar2) is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_year number;
+      var_period number;
+
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_mars_date is
@@ -174,6 +180,13 @@ create or replace package body bp_app.bpip_cntct_load as
             raise_application_error(-20000, 'Date ' || to_char(sysdate,'yyyy/mm/dd') || ' not found in MARS_DATE');
          end if;
          close csr_mars_date;
+         var_year := to_number(substr(to_char(rcd_mars_date.mars_period,'fm000000'),1,4));
+         var_period := to_number(substr(to_char(rcd_mars_date.mars_period,'fm000000'),5,2));
+         var_period := var_period - 1;
+         if var_period < 1 then
+            var_year := var_year - 1;
+            var_period := 13;
+         end if;
 
          /*-*/
          /* Set the batch header values
@@ -181,8 +194,8 @@ create or replace package body bp_app.bpip_cntct_load as
          rcd_load_bpip_batch.batch_id := null;
          rcd_load_bpip_batch.batch_type_code := 'CONTRACTS';
          rcd_load_bpip_batch.company := lics_inbound_utility.get_variable('COMPANY');
-         rcd_load_bpip_batch.period := to_char(rcd_mars_date.mars_period,'fm000000');
-         rcd_load_bpip_batch.dataentity := 'ACTUALS';
+         rcd_load_bpip_batch.period := null;
+         rcd_load_bpip_batch.dataentity := to_char(var_year,'fm0000')||' BR'||to_char(var_period,'fm00');
          rcd_load_bpip_batch.status := 'LOADED';
          rcd_load_bpip_batch.loaded_by := 370;
          rcd_load_bpip_batch.load_start_time := sysdate;
