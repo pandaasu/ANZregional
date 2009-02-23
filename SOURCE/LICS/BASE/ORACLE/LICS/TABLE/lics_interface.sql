@@ -15,6 +15,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added int_search column
+ 2008/11   Steve Gregan   Added user invocation columns (CHINA INTERFACE LOADER)
 
 *******************************************************************************/
 
@@ -37,7 +38,10 @@ create table lics_interface
     int_ema_group                varchar2(64 char)               null,
     int_search                   varchar2(256 char)              null,
     int_procedure                varchar2(256 char)              not null,
-    int_status                   varchar2(1 char)                not null);
+    int_status                   varchar2(1 char)                not null,
+    int_usr_invocation           varchar2(1 char)                null,
+    int_usr_validation           varchar2(256 char)              null,
+    int_usr_message              varchar2(64 char)               null);
 
 /**/
 /* Comments
@@ -59,6 +63,9 @@ comment on column lics_interface.int_ema_group is 'Interface - email group';
 comment on column lics_interface.int_search is 'Interface - search procedure';
 comment on column lics_interface.int_procedure is 'Interface - processing procedure';
 comment on column lics_interface.int_status is 'Interface - interface status';
+comment on column lics_interface.int_usr_invocation is 'Interface - user invocation indicator (0=No or 1=Yes)';
+comment on column lics_interface.int_usr_validation is 'Interface - user invocation validation procedure';
+comment on column lics_interface.int_usr_message is 'Interface - user invocation message name (*OUTBOUND only)';
 
 /**/
 /* Primary Key Constraint
