@@ -117,11 +117,6 @@ create or replace package body iface_app.cadefx01_loader as
    /*-------------*/
    begin
 
-      /*-*/
-      /* Reset the transaction variables
-      /*-*/
-      var_trn_start := true;
-
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
@@ -173,7 +168,7 @@ create or replace package body iface_app.cadefx01_loader as
       close csr_customer;
       rcd_route_plan.user_id := rcd_users.user_id;
       rcd_route_plan.route_plan_date := lics_inbound_utility.get_date('ROUTE_PLAN_DATE','yyyymmdd');
-      rcd_route_plan.route_plan_order := ics_inbound_utility.get_number('ROUTE_PLAN_ORDER',null);
+      rcd_route_plan.route_plan_order := lics_inbound_utility.get_number('ROUTE_PLAN_ORDER',null);
       rcd_route_plan.customer_id := rcd_customer.customer_id;
       rcd_route_plan.status := lics_inbound_utility.get_variable('STATUS');
       rcd_route_plan.modified_user := lics_inbound_utility.get_variable('MODIFIED_USER');
