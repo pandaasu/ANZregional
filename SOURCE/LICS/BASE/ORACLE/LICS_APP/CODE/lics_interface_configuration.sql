@@ -22,6 +22,7 @@ create or replace package lics_interface_configuration as
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added optional search procedure
+ 2008/11   Steve Gregan   Added user invocation functionality columns (CHINA INTERFACE LOADER)
 
 *******************************************************************************/
 
@@ -60,6 +61,44 @@ create or replace package lics_interface_configuration as
                              par_search in varchar2,
                              par_procedure in varchar2,
                              par_status in varchar2) return varchar2;
+   function insert_interface(par_interface in varchar2,
+                             par_description in varchar2,
+                             par_type in varchar2,
+                             par_group in varchar2,
+                             par_priority in number,
+                             par_hdr_history in number,
+                             par_dta_history in number,
+                             par_fil_path in varchar2,
+                             par_fil_prefix in varchar2,
+                             par_fil_sequence in number,
+                             par_fil_extension in varchar2,
+                             par_opr_alert in varchar2,
+                             par_ema_group in varchar2,
+                             par_search in varchar2,
+                             par_procedure in varchar2,
+                             par_status in varchar2,
+                             par_usr_invocation in varchar2,
+                             par_usr_validation in varchar2,
+                             par_usr_message in varchar2) return varchar2;
+   function update_interface(par_interface in varchar2,
+                             par_description in varchar2,
+                             par_type in varchar2,
+                             par_group in varchar2,
+                             par_priority in number,
+                             par_hdr_history in number,
+                             par_dta_history in number,
+                             par_fil_path in varchar2,
+                             par_fil_prefix in varchar2,
+                             par_fil_sequence in number,
+                             par_fil_extension in varchar2,
+                             par_opr_alert in varchar2,
+                             par_ema_group in varchar2,
+                             par_search in varchar2,
+                             par_procedure in varchar2,
+                             par_status in varchar2,
+                             par_usr_invocation in varchar2,
+                             par_usr_validation in varchar2,
+                             par_usr_message in varchar2) return varchar2;
    function delete_interface(par_interface in varchar2) return varchar2;
 
 end lics_interface_configuration;
@@ -100,6 +139,115 @@ create or replace package body lics_interface_configuration as
                              par_search in varchar2,
                              par_procedure in varchar2,
                              par_status in varchar2) return varchar2 is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Insert the interface
+      /*-*/
+      return insert_interface(par_interface,
+                              par_description,
+                              par_type,
+                              par_group,
+                              par_priority,
+                              par_hdr_history,
+                              par_dta_history,
+                              par_fil_path,
+                              par_fil_prefix,
+                              par_fil_sequence,
+                              par_fil_extension,
+                              par_opr_alert,
+                              par_ema_group,
+                              par_search,
+                              par_procedure,
+                              par_status,
+                              null,
+                              null,
+                              null);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end insert_interface;
+
+   /*******************************************************/
+   /* This function performs the update interface routine */
+   /*******************************************************/
+   function update_interface(par_interface in varchar2,
+                             par_description in varchar2,
+                             par_type in varchar2,
+                             par_group in varchar2,
+                             par_priority in number,
+                             par_hdr_history in number,
+                             par_dta_history in number,
+                             par_fil_path in varchar2,
+                             par_fil_prefix in varchar2,
+                             par_fil_sequence in number,
+                             par_fil_extension in varchar2,
+                             par_opr_alert in varchar2,
+                             par_ema_group in varchar2,
+                             par_search in varchar2,
+                             par_procedure in varchar2,
+                             par_status in varchar2) return varchar2 is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Update the interface
+      /*-*/
+      return update_interface(par_interface,
+                              par_description,
+                              par_type,
+                              par_group,
+                              par_priority,
+                              par_hdr_history,
+                              par_dta_history,
+                              par_fil_path,
+                              par_fil_prefix,
+                              par_fil_sequence,
+                              par_fil_extension,
+                              par_opr_alert,
+                              par_ema_group,
+                              par_search,
+                              par_procedure,
+                              par_status,
+                              null,
+                              null,
+                              null);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_interface;
+
+   /*******************************************************/
+   /* This function performs the insert interface routine */
+   /*******************************************************/
+   function insert_interface(par_interface in varchar2,
+                             par_description in varchar2,
+                             par_type in varchar2,
+                             par_group in varchar2,
+                             par_priority in number,
+                             par_hdr_history in number,
+                             par_dta_history in number,
+                             par_fil_path in varchar2,
+                             par_fil_prefix in varchar2,
+                             par_fil_sequence in number,
+                             par_fil_extension in varchar2,
+                             par_opr_alert in varchar2,
+                             par_ema_group in varchar2,
+                             par_search in varchar2,
+                             par_procedure in varchar2,
+                             par_status in varchar2,
+                             par_usr_invocation in varchar2,
+                             par_usr_validation in varchar2,
+                             par_usr_message in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -146,6 +294,9 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_search := par_search;
       rcd_lics_interface.int_procedure := par_procedure;
       rcd_lics_interface.int_status := par_status;
+      rcd_lics_interface.int_usr_invocation := nvl(par_usr_invocation,lics_constant.status_inactive);
+      rcd_lics_interface.int_usr_validation := par_usr_validation;
+      rcd_lics_interface.int_usr_message := par_usr_message;
 
       /*-*/
       /* Validate the parameter values
@@ -203,6 +354,10 @@ create or replace package body lics_interface_configuration as
          rcd_lics_interface.int_status != lics_constant.status_active then
          var_message := var_message || chr(13) || 'Status must be active or inactive';
       end if;
+      if rcd_lics_interface.int_usr_invocation != lics_constant.status_inactive and
+         rcd_lics_interface.int_usr_invocation != lics_constant.status_active then
+         var_message := var_message || chr(13) || 'User invocation must be active or inactive';
+      end if;
 
       /*-*/
       /* Interface must not already exist
@@ -240,7 +395,10 @@ create or replace package body lics_interface_configuration as
           int_ema_group,
           int_search,
           int_procedure,
-          int_status)
+          int_status,
+          int_usr_invocation,
+          int_usr_validation,
+          int_usr_message)
          values(rcd_lics_interface.int_interface,
                 rcd_lics_interface.int_description,
                 rcd_lics_interface.int_type,
@@ -256,7 +414,10 @@ create or replace package body lics_interface_configuration as
                 rcd_lics_interface.int_ema_group,
                 rcd_lics_interface.int_search,
                 rcd_lics_interface.int_procedure,
-                rcd_lics_interface.int_status);
+                rcd_lics_interface.int_status,
+                rcd_lics_interface.int_usr_invocation,
+                rcd_lics_interface.int_usr_validation,
+                rcd_lics_interface.int_usr_message);
 
       /*-*/
       /* Commit the database
@@ -311,7 +472,10 @@ create or replace package body lics_interface_configuration as
                              par_ema_group in varchar2,
                              par_search in varchar2,
                              par_procedure in varchar2,
-                             par_status in varchar2) return varchar2 is
+                             par_status in varchar2,
+                             par_usr_invocation in varchar2,
+                             par_usr_validation in varchar2,
+                             par_usr_message in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -358,6 +522,9 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_search := par_search;
       rcd_lics_interface.int_procedure := par_procedure;
       rcd_lics_interface.int_status := par_status;
+      rcd_lics_interface.int_usr_invocation := nvl(par_usr_invocation,lics_constant.status_inactive);
+      rcd_lics_interface.int_usr_validation := par_usr_validation;
+      rcd_lics_interface.int_usr_message := par_usr_message;
 
       /*-*/
       /* Validate the parameter values
@@ -415,6 +582,10 @@ create or replace package body lics_interface_configuration as
          rcd_lics_interface.int_status != lics_constant.status_active then
          var_message := var_message || chr(13) || 'Status must be active or inactive';
       end if;
+      if rcd_lics_interface.int_usr_invocation != lics_constant.status_inactive and
+         rcd_lics_interface.int_usr_invocation != lics_constant.status_active then
+         var_message := var_message || chr(13) || 'User invocation must be active or inactive';
+      end if;
 
       /*-*/
       /* Interface must already exist and be the same type
@@ -454,7 +625,10 @@ create or replace package body lics_interface_configuration as
              int_ema_group = rcd_lics_interface.int_ema_group,
              int_search = rcd_lics_interface.int_search,
              int_procedure = rcd_lics_interface.int_procedure,
-             int_status = rcd_lics_interface.int_status
+             int_status = rcd_lics_interface.int_status,
+             int_usr_invocation = rcd_lics_interface.int_usr_invocation,
+             int_usr_validation = rcd_lics_interface.int_usr_validation,
+             int_usr_message = rcd_lics_interface.int_usr_message
          where int_interface = rcd_lics_interface.int_interface;
 
       /*-*/

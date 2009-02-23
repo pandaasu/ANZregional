@@ -20,7 +20,7 @@ create or replace package lics_interface_loader as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2008/11   Steve Gregan   Created
+    2008/11   Steve Gregan   Created (CHINA INTERFACE LOADER)
 
    *******************************************************************************/
 
@@ -68,6 +68,7 @@ create or replace package body lics_interface_loader as
       var_result varchar2(4000);
       var_fil_name varchar2(64);
       var_opened boolean;
+      var_instance number(15,0);
       var_fil_handle utl_file.file_type;
 
       /*-*/
@@ -152,9 +153,9 @@ create or replace package body lics_interface_loader as
             if csr_lics_temp%notfound then
                exit;
             end if;
-            execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_data(:data); end;' using out var_result, rcd_lics_data_01.dat_record;
+            execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_data(:data); end;' using out var_result, rcd_lics_temp.dat_record;
             if not(var_result is null) then
-               var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' ||var_result;
+               var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' || var_result;
             end if;
          end loop;
          close csr_lics_temp;
@@ -198,20 +199,19 @@ create or replace package body lics_interface_loader as
             end loop;
             close csr_lics_temp;
             utl_file.fclose(var_fil_handle);
-            exception
-               when others then
-                  if var_opened = true then
-                     begin
-                        utl_file.fclose(var_fil_handle);
-                     exception
-                        when others then
-                           null;
-                     end;
-                  end if;
-                  raise_application_error(-20000, 'File system exception (' || rcd_lics_interface.int_fil_path || '-' || var_fil_name || ') - ' || substr(SQLERRM, 1, 1024));
-            end;
-            var_opened := false;
+         exception
+            when others then
+               if var_opened = true then
+                  begin
+                     utl_file.fclose(var_fil_handle);
+                  exception
+                     when others then
+                        null;
+                  end;
+               end if;
+               raise_application_error(-20000, 'File system exception (' || rcd_lics_interface.int_fil_path || '-' || var_fil_name || ') - ' || substr(SQLERRM, 1, 1024));
          end;
+         var_opened := false;
       end if;
 
       /*-*/
@@ -222,7 +222,7 @@ create or replace package body lics_interface_loader as
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
          lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
-         lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
+         var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
          open csr_lics_temp;
          loop
             fetch csr_lics_temp into rcd_lics_temp;
@@ -295,8 +295,7 @@ create or replace package body lics_interface_loader as
       /*-*/
       delete from lics_temp;
       commit;
-      var_dta_seq := 0;
-
+      
       /*-*/
       /* Parse the XML input
       /*-*/
@@ -308,7 +307,7 @@ create or replace package body lics_interface_loader as
       /*-*/
       /* Retrieve and process the primary node
       /*-*/
-      var_wrkr := 0;
+      var_dta_seq := 0;
       obj_xml_element := xmlDom.getDocumentElement(obj_xml_document);
       obj_xml_node := xmlDom.makeNode(obj_xml_element);
       read_xml_child(obj_xml_node);
@@ -339,7 +338,7 @@ create or replace package body lics_interface_loader as
       obj_xml_element xmlDom.domElement;
       obj_xml_node xmlDom.domNode;
       obj_xml_node_list xmlDom.domNodeList;
-      rcd_lics_temp lics_temp%rowtype;
+      var_string varchar2(4000 char);
 
    /*-------------*/
    /* Begin block */
@@ -355,13 +354,12 @@ create or replace package body lics_interface_loader as
          when 'XR' then
             var_dta_seq := var_dta_seq + 1;
          when '#CDATA-SECTION' then
-            rcd_lics_temp.dat_dta_seq := var_dta_seq;
-            rcd_lics_temp.dat_record := xmlDom.getNodeValue(par_xml_node);
+            var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
             insert into lics_temp
                (dat_dta_seq,
                 dat_record)
-               values(rcd_lics_temp.dat_dta_seq,
-                      rcd_lics_temp.dat_record);
+               values(var_dta_seq,
+                      var_string);
          else raise_application_error(-20000, 'read_xml_stream - Type (' || xmlDom.getNodeName(par_xml_node) || ') not recognised');
       end case;
 
