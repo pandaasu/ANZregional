@@ -35,6 +35,9 @@
       if (document.main.INP_IntSearch.value != document.main.DTA_IntSearch.value) {bolChange = true;}
       if (document.main.INP_IntProcedure.value != document.main.DTA_IntProcedure.value) {bolChange = true;}
       if (document.main.INP_IntStatus.value != document.main.DTA_IntStatus.value) {bolChange = true;}
+      if (document.main.INP_IntUsrInvocation.value != document.main.DTA_IntUsrInvocation.value) {bolChange = true;}
+      if (document.main.INP_IntUsrValidation.value != document.main.DTA_IntUsrValidation.value) {bolChange = true;}
+      if (document.main.INP_IntUsrMessage.value != document.main.DTA_IntUsrMessage.value) {bolChange = true;}
       if (bolChange == true) {
          bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
          return bolReturn;
@@ -105,6 +108,23 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Interface processing procedure must be entered';
       }
+      if (document.main.INP_IntUsrInvocation.value == '1') {
+         if (document.main.INP_IntType.value != '*OUTBOUND') {
+            if (document.main.INP_IntUsrMessage.value != '') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'User invocation outbound message can only be entered for *OUTBOUND';
+            }
+         }
+      } else {
+         if (document.main.INP_IntUsrValidation.value != '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'User invocation validation procedure can only be entered when user invocation selected';
+         }
+         if (document.main.INP_IntUsrMessage.value != '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'User invocation outbound message can only be entered when user invocation selected';
+         }
+      }
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -124,6 +144,9 @@
       document.main.DTA_IntSearch.value = document.main.INP_IntSearch.value;
       document.main.DTA_IntProcedure.value = document.main.INP_IntProcedure.value;
       document.main.DTA_IntStatus.value = document.main.INP_IntStatus.value;
+      document.main.DTA_IntUsrInvocation.value = document.main.INP_IntUsrInvocation.value;
+      document.main.DTA_IntUsrValidation.value = document.main.INP_IntUsrValidation.value;
+      document.main.DTA_IntUsrMessage.value = document.main.INP_IntUsrMessage.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'UPDATE_ACCEPT';
       document.main.submit();
@@ -137,6 +160,9 @@
    }
    function selectStatus(objSelect) {
       document.main.INP_IntStatus.value = objSelect.options[objSelect.selectedIndex].value;
+   }
+   function selectInvocation(objSelect) {
+      document.main.INP_IntUsrInvocation.value = objSelect.options[objSelect.selectedIndex].value;
    }
    function setSelect(objInput) {
       objInput.select();
@@ -246,6 +272,27 @@
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;User Invocation:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="sltIntUsrInvocation" onChange="selectInvocation(this);">
+               <option value="0"<%if objForm.Fields("DTA_IntUsrInvocation").Value = "0" or objForm.Fields("DTA_IntStatus").Value = "" then%> selected<%end if%>>Inactive
+               <option value="1"<%if objForm.Fields("DTA_IntUsrInvocation").Value = "1" then%> selected<%end if%>>Active
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;User Invocation Validation Procedure:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_IntUsrValidation" size="64" maxlength="256" value="<%=replace(objForm.Fields("DTA_IntUsrValidation").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;User Invocation Outbound Message:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_IntUsrMessage" size="64" maxlength="64" value="<%=replace(objForm.Fields("DTA_IntUsrMessage").Value, """", "&#34;", 1, -1, 1)%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
@@ -277,9 +324,13 @@
    <input type="hidden" name="DTA_IntSearch" value="<%=replace(objForm.Fields("DTA_IntSearch").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_IntProcedure" value="<%=replace(objForm.Fields("DTA_IntProcedure").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
+   <input type="hidden" name="DTA_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
+   <input type="hidden" name="DTA_IntUsrValidation" value="<%=replace(objForm.Fields("DTA_IntUsrValidation").Value, """", "&#34;", 1, -1, 1)%>">
+   <input type="hidden" name="DTA_IntUsrMessage" value="<%=replace(objForm.Fields("DTA_IntUsrMessage").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="INP_IntType" value="<%=objForm.Fields("DTA_IntType").Value%>">
    <input type="hidden" name="INP_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
    <input type="hidden" name="INP_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
+   <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
 </form>
 </body>
 </html>

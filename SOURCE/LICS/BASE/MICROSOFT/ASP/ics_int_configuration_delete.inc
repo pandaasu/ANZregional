@@ -91,6 +91,9 @@
    <input type="hidden" name="DTA_IntSearch" value="<%=objForm.Fields("DTA_IntSearch").Value%>">
    <input type="hidden" name="DTA_IntProcedure" value="<%=objForm.Fields("DTA_IntProcedure").Value%>">
    <input type="hidden" name="DTA_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
+   <input type="hidden" name="DTA_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
+   <input type="hidden" name="DTA_IntUsrValidation" value="<%=objForm.Fields("DTA_IntUsrValidation").Value%>">
+   <input type="hidden" name="DTA_IntUsrMessage" value="<%=objForm.Fields("DTA_IntUsrMessage").Value%>">
 </form>
 </body>
 </html>

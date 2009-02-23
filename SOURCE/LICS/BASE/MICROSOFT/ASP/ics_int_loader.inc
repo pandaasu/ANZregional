@@ -2,7 +2,7 @@
 <script language="javascript">
 <!--
    function showError() {
-      document.main.INP_Interface.focus();<%if strError <> "" then%>
+      document.main.sltInterface.focus();<%if strError <> "" then%>
       alert('<%=strError%>');<%end if%>
       return;
    }
@@ -58,12 +58,28 @@
       objInput.select();
    }
    function readTextFile(strTextFile) {
-      document.main.DTA_LoadStream.value = loadStreamXML(strTextFile,'*NO');
+      var objHidden;
+      var intPart = 0;
+      var aryStream = loadStreamXML(strTextFile,'*NO').match(RegExp('.{1,2000}','g'));
+      for (var i=0;i<aryStream.length;i++) {
+         intPart++;
+         objHidden = document.createElement('input');
+         objHidden.setAttribute('type','hidden');
+         objHidden.setAttribute('name','StreamPart'+intPart);
+         objHidden.setAttribute('value',aryStream[i]);
+         document.forms['main'].appendChild(objHidden);
+      }
+      objHidden = document.createElement('input');
+      objHidden.setAttribute('type','hidden');
+      objHidden.setAttribute('name','StreamCount');
+      objHidden.setAttribute('value',intPart);
+      document.forms['main'].appendChild(objHidden);
       return true;
    }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
+<!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_stream_xml.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
@@ -109,7 +125,6 @@
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="SLT_Interface" value="<%=objForm.Fields("SLT_Interface").Value%>">
    <input type="hidden" name="INP_Interface" value="<%=objForm.Fields("SLT_Interface").Value%>">
-   <input type="hidden" name="DTA_LoadStream" value="">
 </form>
 </body>
 </html>

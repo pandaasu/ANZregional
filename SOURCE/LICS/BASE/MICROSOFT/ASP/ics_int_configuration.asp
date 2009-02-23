@@ -175,6 +175,9 @@ sub ProcessInsertLoad()
    call objForm.AddField("DTA_IntSearch", "")
    call objForm.AddField("DTA_IntProcedure", "")
    call objForm.AddField("DTA_IntStatus", "1")
+   call objForm.AddField("DTA_IntUsrInvocation", "")
+   call objForm.AddField("DTA_IntUsrValidation", "")
+   call objForm.AddField("DTA_IntUsrMessage", "")
 
    '//
    '// Set the mode
@@ -215,7 +218,10 @@ sub ProcessInsertAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntEmaGroup").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntSearch").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntProcedure").Value) & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "'"
+   strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -266,7 +272,10 @@ sub ProcessUpdateLoad()
    strQuery = strQuery & " t01.int_ema_group,"
    strQuery = strQuery & " t01.int_search,"
    strQuery = strQuery & " t01.int_procedure,"
-   strQuery = strQuery & " t01.int_status"
+   strQuery = strQuery & " t01.int_status,"
+   strQuery = strQuery & " t01.int_usr_invocation,"
+   strQuery = strQuery & " t01.int_usr_validation,"
+   strQuery = strQuery & " t01.int_usr_message"
    strQuery = strQuery & " from lics_interface t01"
    strQuery = strQuery & " where t01.int_interface = '" & objForm.Fields("DTA_IntInterface").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -295,7 +304,9 @@ sub ProcessUpdateLoad()
    call objForm.AddField("DTA_IntSearch", objSelection.ListValue14("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntProcedure", objSelection.ListValue15("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntStatus", objSelection.ListValue16("LIST",objSelection.ListLower("LIST")))
-
+   call objForm.AddField("DTA_IntUsrInvocation", objSelection.ListValue17("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntUsrValidation", objSelection.ListValue18("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntUsrMessage", objSelection.ListValue19("LIST",objSelection.ListLower("LIST")))
    '//
    '// Set the mode
    '//
@@ -335,7 +346,10 @@ sub ProcessUpdateAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntEmaGroup").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntSearch").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntProcedure").Value) & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "'"
+   strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -386,7 +400,10 @@ sub ProcessDeleteLoad()
    strQuery = strQuery & " t01.int_ema_group,"
    strQuery = strQuery & " t01.int_search,"
    strQuery = strQuery & " t01.int_procedure,"
-   strQuery = strQuery & " t01.int_status"
+   strQuery = strQuery & " t01.int_status,"
+   strQuery = strQuery & " t01.int_usr_invocation,"
+   strQuery = strQuery & " t01.int_usr_validation,"
+   strQuery = strQuery & " t01.int_usr_message"
    strQuery = strQuery & " from lics_interface t01"
    strQuery = strQuery & " where t01.int_interface = '" & objForm.Fields("DTA_IntInterface").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -415,6 +432,9 @@ sub ProcessDeleteLoad()
    call objForm.AddField("DTA_IntSearch", objSelection.ListValue14("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntProcedure", objSelection.ListValue15("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntStatus", objSelection.ListValue16("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntUsrInvocation", objSelection.ListValue17("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntUsrValidation", objSelection.ListValue18("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntUsrMessage", objSelection.ListValue19("LIST",objSelection.ListLower("LIST")))
 
    '//
    '// Set the mode

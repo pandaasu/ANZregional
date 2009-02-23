@@ -124,7 +124,7 @@ sub ProcessSelect()
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & "t01.int_interface,"
+   strQuery = strQuery & " t01.int_interface,"
    strQuery = strQuery & " t01.int_description"
    strQuery = strQuery & " from lics_interface t01"
    strQuery = strQuery & " where t01.int_usr_invocation = '1' and t01.int_status = '1'"
@@ -142,7 +142,7 @@ end sub
 sub ProcessSubmit()
 
    dim strStatement
-   dim lngIndex
+   dim lngCount
 
    '//
    '// Create the procedure object
@@ -160,11 +160,10 @@ sub ProcessSubmit()
    '// Load the form data
    '//
    call objProcedure.Execute("lics_form.clear_form")
-   lngIndex = 1
-   do while lngIndex <= len(objForm.Fields("DTA_LoadStream").Value)
-      call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(mid(objForm.Fields("DTA_LoadStream").Value,lngIndex,2000)) & "')")
-      lngIndex = lngIndex + 2000
-   loop
+   lngCount = clng(objForm.Fields("StreamCount").Value)
+   for i = 1 to lngCount
+      call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
+   next
 
    '//
    '// Execute the interface loader
