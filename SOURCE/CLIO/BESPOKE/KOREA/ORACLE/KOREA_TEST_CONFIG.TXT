@@ -14,8 +14,8 @@ set define ^;
 /*-*/
 connect site_app/xxxxx@ap0112t.ap.mars
 
-@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\KOREA\ORACLE\site_app\wmsapl01_loader.sql;
-@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\KOREA\ORACLE\site_app\wmsapl02_loader.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\KOREA\ORACLE\site_app\steics01_loader.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\KOREA\ORACLE\site_app\wmsics01_loader.sql;
 
 
 /*-*/
@@ -23,12 +23,31 @@ connect site_app/xxxxx@ap0112t.ap.mars
 /*-*/
 connect lics_app/xxxxxx@ap0112t.ap.mars
 
-insert into lics_interface values('WMSICS01','Korea WMS to ICS - Stock on hand interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'stephen.gregan@ap.effem.com',null,'site_app.wmsapl01_loader','1');
-insert into lics_interface values('WMSICS02','Korea XXX to ICS - Intransit interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'stephen.gregan@ap.effem.com',null,'site_app.wmsapl01_loader','1');
-insert into lics_interface values('ICSAPL01','Korea ICS to Apollo - Stock on hand interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL01_',15,'DAT',null,'stephen.gregan@ap.effem.com',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1');
-insert into lics_interface values('ICSAPL02','Korea ICS to Apollo - Intransit interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL02_',15,'DAT',null,'stephen.gregan@ap.effem.com',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1');
+insert into lics_interface values('STEICS02','Korea Site to ICS - Intransit interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'stephen.gregan@ap.effem.com',null,'site_app.steics01_loader','1','1',null,null);
+insert into lics_interface values('WMSICS01','Korea WMS to ICS - Stock on hand interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'stephen.gregan@ap.effem.com',null,'site_app.wmsics01_loader','1','0',null,null);
+insert into lics_interface values('ICSAPL01','Korea ICS to Apollo - Stock on hand interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL01_',15,'DAT',null,'stephen.gregan@ap.effem.com',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
+insert into lics_interface values('ICSAPL02','Korea ICS to Apollo - Intransit interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL02_',15,'DAT',null,'stephen.gregan@ap.effem.com',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
 
 commit;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--NOT REQUIRED--
+
 
 insert into lics_das_group values('KOREA','ATLAS_STOCK_TYPE','Atlas stock types','LICS_APP',sysdate);
 insert into lics_das_code values('KOREA','ATLAS_STOCK_TYPE','0001','Storage location and stock status','*LIST','*UPPER','LICS_APP',sysdate);
@@ -71,3 +90,4 @@ commit;
 0009	S	X
 0009	X	X
 0009	R	X
+
