@@ -1,19 +1,19 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package site_app.steics02_validation as
+create or replace package ics_app.ics_steics02_validation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : steics02_validation
-    Owner   : site_app
+    Package : ics_steics02_validation
+    Owner   : ics_app
     Author  : Steve Gregan
 
     Description
     -----------
-    Morpheous - Interface STEICS02 Validation (Korea Order)
+    Site to ICS - STEICS02 - Orders Interface Validation (Korea)
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -26,13 +26,13 @@ create or replace package site_app.steics02_validation as
    /*-*/
    function on_data(par_record in varchar2) return varchar2;
 
-end steics02_validation;
+end ics_steics02_validation;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body site_app.steics02_validation as
+create or replace package body ics_app.ics_steics02_validation as
 
    /***********************************************/
    /* This procedure performs the on data routine */
@@ -95,11 +95,11 @@ create or replace package body site_app.steics02_validation as
    /*-------------*/
    end on_data;
 
-end steics02_validation;
+end ics_steics02_validation;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym steics02_validation for ics_app.steics02_validation;
-grant execute on steics02_validation to public;
+create or replace public synonym ics_steics02_validation for ics_app.ics_steics02_validation;
+grant execute on ics_steics02_validation to public;

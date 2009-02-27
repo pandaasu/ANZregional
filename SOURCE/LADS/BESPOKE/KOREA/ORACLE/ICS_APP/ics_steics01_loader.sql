@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package site_app.steics01_loader as
+create or replace package ics_app.ics_steics01_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : steics01_loader
-    Owner   : site_app
+    Package : ics_steics01_loader
+    Owner   : ics_app
 
     Description
     -----------
-    Site to ICS - STEICS01 - Intransit Interface (Korea)
+    Site to ICS - STEICS01 - Intransit Interface Loader (Korea)
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package site_app.steics01_loader as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end steics01_loader;
+end ics_steics01_loader;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body site_app.steics01_loader as
+create or replace package body ics_app.ics_steics01_loader as
 
    /*-*/
    /* Private exceptions
@@ -252,11 +252,11 @@ create or replace package body site_app.steics01_loader as
    /*-------------*/
    end on_end;
 
-end steics01_loader;
+end ics_steics01_loader;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym steics01_loader for site_app.steics01_loader;
-grant execute on site_app.steics01_loader to lics_app;
+create or replace public synonym ics_steics01_loader for ics_app.ics_steics01_loader;
+grant execute on ics_app.ics_steics01_loader to lics_app;

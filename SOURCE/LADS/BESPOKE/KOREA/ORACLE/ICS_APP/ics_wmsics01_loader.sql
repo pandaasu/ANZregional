@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package site_app.wmsics01_loader as
+create or replace package ics_app.ics_wmsics01_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : wmsics01_loader
-    Owner   : site_app
+    Package : ics_wmsics01_loader
+    Owner   : ics_app
 
     Description
     -----------
-    WMS to ICS - WMSICS01 - Stock On Hand Interface (Korea)
+    WMS to ICS - WMSICS01 - Stock On Hand Interface Loader (Korea)
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package site_app.wmsics01_loader as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end wmsics01_loader;
+end ics_wmsics01_loader;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body site_app.wmsics01_loader as
+create or replace package body ics_app.ics_wmsics01_loader as
 
    /*-*/
    /* Private exceptions
@@ -243,11 +243,11 @@ create or replace package body site_app.wmsics01_loader as
    /*-------------*/
    end on_end;
 
-end wmsics01_loader;
+end ics_wmsics01_loader;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym wmsics01_loader for site_app.wmsics01_loader;
-grant execute on site_app.wmsics01_loader to lics_app;
+create or replace public synonym ics_wmsics01_loader for ics_app.ics_wmsics01_loader;
+grant execute on ics_app.ics_wmsics01_loader to lics_app;

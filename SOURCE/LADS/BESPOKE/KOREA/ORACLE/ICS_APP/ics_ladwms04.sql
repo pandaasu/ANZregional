@@ -1,33 +1,33 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ics_app.ics_ladwms03 as
+create or replace package ics_app.ics_ladwms04 as
 
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
  System  : LADS
- Package : ics_ladwms03
+ Package : ics_ladwms04
  Owner   : ICS_APP
  Author  : Steve Gregan
 
  Description
  -----------
-    LADS -> KOREA WAREHOUSE MATERIAL MASTER EXTRACT
+    LADS -> KOREA WAREHOUSE CUSTOMER MASTER EXTRACT
 
     PARAMETERS:
 
       1. PAR_DAYS - number of days of changes to extract
-            0 = full extract (extract all materials)
-            n = number provided will extract changed materials for sysdate - n
+            0 = full extract (extract all customers)
+            n = number provided will extract changed customers for sysdate - n
             DEFAULT = no parameter specified, default is 0 (full extract)
 
 
 
  YYYY/MM   Author               Description
  -------   ------               -----------
- 2009/02   Steve Gregan         Created (based on China extract)
+ 2009/02   Steve Gregan         Created
 
  NOTES:
   * It is assumed that material codes for China will not exceed 8 character in length (Zou Kai)
@@ -55,13 +55,13 @@ create or replace package ics_app.ics_ladwms03 as
    /*-*/
    procedure execute(par_days in number default 0);
 
-end ics_ladwms03;
+end ics_ladwms04;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ics_app.ics_ladwms03 as
+create or replace package body ics_app.ics_ladwms04 as
 
    /*-*/
    /* Private exceptions
@@ -77,7 +77,7 @@ create or replace package body ics_app.ics_ladwms03 as
    /*-*/
    /* Constants
    /*-*/
-   var_interface constant varchar2(8) := 'LADWMS03';
+   var_interface constant varchar2(8) := 'LADWMS04';
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -415,11 +415,11 @@ create or replace package body ics_app.ics_ladwms03 as
    /*-------------*/
    end format_xml_str;
 
-end ics_ladwms03;
+end ics_ladwms04;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ics_ladwms03 for ics_app.ics_ladwms03;
-grant execute on ics_app.ics_ladwms03 to lics_app;
+create or replace public synonym ics_ladwms04 for ics_app.ics_ladwms04;
+grant execute on ics_app.ics_ladwms04 to lics_app;
