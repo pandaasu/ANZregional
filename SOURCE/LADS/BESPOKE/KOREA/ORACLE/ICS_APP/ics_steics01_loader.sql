@@ -78,19 +78,14 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('TARGET_DEST',1);
-      lics_inbound_utility.set_csv_definition('LOAD_ID',2);
-      lics_inbound_utility.set_csv_definition('SOURCE_PLANT',3);
-      lics_inbound_utility.set_csv_definition('SHIP_DATE',4);
-      lics_inbound_utility.set_csv_definition('ARRIV_DATE',5);
-      lics_inbound_utility.set_csv_definition('BEST_BEFORE',6);
-      lics_inbound_utility.set_csv_definition('TRANSMODE',7);
-      lics_inbound_utility.set_csv_definition('IN_ITEM',8);
-      lics_inbound_utility.set_csv_definition('QTY',9);
-      lics_inbound_utility.set_csv_definition('ATLASSTOCKTYPE',10);
-      lics_inbound_utility.set_csv_definition('ORDERTYPE',11);
-      lics_inbound_utility.set_csv_definition('U_VEHCLLD_UDC1',12);
-      lics_inbound_utility.set_csv_definition('SOURCE_STATUS',13);
+      lics_inbound_utility.set_csv_definition('DELIVERY',1);
+      lics_inbound_utility.set_csv_definition('SOURCE_PLANT',2);
+      lics_inbound_utility.set_csv_definition('SHIP_DATE',3);
+      lics_inbound_utility.set_csv_definition('DELVERY_DATE',4);
+      lics_inbound_utility.set_csv_definition('EXPIRY_DATE',5);
+      lics_inbound_utility.set_csv_definition('MATERIAL',6);
+      lics_inbound_utility.set_csv_definition('QTY',7);
+      lics_inbound_utility.set_csv_definition('ORDERTYPE',8);
 
    /*-------------------*/
    /* Exception handler */
@@ -149,19 +144,18 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       /* Build the inbound data array
       /*-*/
-      var_output := lics_inbound_utility.get_variable('TARGET_DEST')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('LOAD_ID')||',';
+      var_output := 'KR01,';
+      var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('ARRIV_DATE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('BEST_BEFORE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('TRANSMODE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('IN_ITEM')||',';
+      var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
+      var_output := var_output||lics_inbound_utility.get_variable('EXPIRY_DATE')||',';
+      var_output := var_output||lics_inbound_utility.get_variable('MATERIAL')||',';
       var_output := var_output||lics_inbound_utility.get_variable('QTY')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('ATLASSTOCKTYPE')||',';
+      var_output := var_output||'X,';
       var_output := var_output||lics_inbound_utility.get_variable('ORDERTYPE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('U_VEHCLLD_UDC1')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('SOURCE_STATUS')||',';
+      var_output := var_output||'On Water,';
+      var_output := var_output||'3,';
       var_output := var_output||to_char(tbl_outbound.count + 1)||',';
       tbl_outbound(tbl_outbound.count + 1) := var_output;
 
