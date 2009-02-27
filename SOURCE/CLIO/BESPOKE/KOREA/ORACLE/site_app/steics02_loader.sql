@@ -209,11 +209,6 @@ create or replace package body site_app.steics02_loader as
       when others then
 
          /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
          /* Save the exception
          /*-*/
          var_exception := substr(SQLERRM, 1, 2048);
@@ -251,9 +246,11 @@ create or replace package body site_app.steics02_loader as
       /*----------------------------------------------*/
 
       /*-*/
-      /* Complete the previous transaction
+      /* Complete the previous transaction and reset
       /*-*/
       complete_transaction;
+      var_trn_error := false;
+      tbl_outbound.delete;
 
       /*-------------------------------*/
       /* PARSE - Parse the data record */
@@ -268,8 +265,7 @@ create or replace package body site_app.steics02_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      var_trn_error := false;
-      tbl_outbound.delete;
+
       tbl_outbound(tbl_outbound.count + 1) := lics_inbound_utility.get_variable('HDR_DATA');
 
       /*-*/
