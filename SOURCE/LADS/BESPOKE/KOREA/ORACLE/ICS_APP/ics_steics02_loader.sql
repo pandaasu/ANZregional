@@ -315,7 +315,7 @@ create or replace package body ics_app.ics_steics02_loader as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end process_record_htc;
+   end process_record_htx;
 
    /**************************************************/
    /* This procedure performs the record DET routine */

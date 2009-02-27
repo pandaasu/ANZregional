@@ -176,7 +176,7 @@ create or replace package body ics_app.ics_wmsics01_loader as
             when others then
                var_number := false;
          end;
-         if ((var_number = false and upper(substr(var_in_item,1,1)) >= 'A' and upper(substr(var_in_item,1,1)) <= 'Z')) or
+         if ((var_number = false and upper(substr(var_in_item,1,1)) >= 'A' and upper(substr(var_in_item,1,1)) <= 'Z') or
              (var_number = true and length(var_in_item) = 8)) then
             var_output := var_in_item||',';
             var_output := var_output||var_sap_plant||',';
