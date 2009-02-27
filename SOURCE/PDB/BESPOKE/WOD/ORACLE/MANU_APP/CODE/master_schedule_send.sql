@@ -1,5 +1,3 @@
-DROP PACKAGE MANU_APP.MASTER_SCHEDULE_SEND;
-
 CREATE OR REPLACE PACKAGE MANU_APP.Master_Schedule_Send AS
 /******************************************************************************
    NAME:       Send_Schedule
@@ -15,17 +13,16 @@ CREATE OR REPLACE PACKAGE MANU_APP.Master_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        14-Sep-05   Jeff Phillipson  Created this package.
+   1.1        25-Feb-09   Daniel Owen      Updated to support schedule resending
 ******************************************************************************/
 
  
-  PROCEDURE EXECUTE(i_plant_code IN VARCHAR2);
+  PROCEDURE EXECUTE(i_plant_code IN VARCHAR2, i_resend IN NUMBER DEFAULT 0);
  
 
 END Master_Schedule_Send;
 /
 
-
-DROP PACKAGE BODY MANU_APP.MASTER_SCHEDULE_SEND;
 
 CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 /******************************************************************************
@@ -52,6 +49,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        21-Sep-05   Jeff Phillipson  Created this package body.
+   1.1        25-Feb-09   Daniel Owen      Updated to support schedule resending
 ******************************************************************************/
    
 	/*-*/
@@ -85,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 	/* Start of process
 	/*-*/
    
-    PROCEDURE EXECUTE(i_plant_code IN VARCHAR2)
+    PROCEDURE EXECUTE(i_plant_code IN VARCHAR2, i_resend IN NUMBER DEFAULT 0)
 	AS
 	
 		var_prodn_version    VARCHAR2(4)  := '0001';
@@ -95,10 +93,9 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 		var_matl 			 VARCHAR2(32);
 		var_seq				 NUMBER;
 		var_sched_days       NUMBER DEFAULT Re_Timing_Common.SCHEDULE_DAYS;
-        var_start_date       DATE DEFAULT TO_DATE(Re_Timing.GET_FIRM('AU20'),'dd/mm/yyyy hh24:mi');
-        var_end_date         DATE;
-		var_offset           NUMBER;
-	 
+    var_start_date       DATE DEFAULT TO_DATE(Re_Timing.GET_FIRM('AU20'),'dd/mm/yyyy hh24:mi');
+    var_end_date         DATE;
+    MESSAGE_CODE VARCHAR(3);	 
 	 
 		/*-*/
 		/* start time based on 7am start and end 
@@ -135,17 +132,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 		/* get the schedule end date
 		/*-*/
 		var_end_date := TO_DATE(NEXT_DAY(TRUNC(SYSDATE),'Sunday') + var_sched_days - 7,'dd/mm/yyyy hh24:mi:ss');
-		
-		/*
-		var_end_date := var_start_date + var_sched_days;
-		
-		var_offset := TO_NUMBER(TO_CHAR(var_end_date,'d'));
-		IF var_offset = 7 THEN
-		    var_offset := 0;
-		END IF;
-   		var_end_date := TO_DATE(TRUNC(var_end_date) - var_offset,'dd/mm/yyyy hh24:mi');
-		*/
-		
+			
 		/*-*/
 		/* set up the common code for trigger and data file
 		/*-*/
@@ -161,23 +148,42 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 		   /*  specify path and file name for remote transfer  
 		   /*-*/
 		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_fil_name || var_timestamp);
+       
+        /* Message codes and start date are different between normal sends and resends */
+        /* The type of send is determined by the value of the i_resend (optional) parameter */
+        /* i_resend defaults to 0 if not supplied */
+        IF i_resend = 0 THEN -- First Send (Use "normal message codes")
+           MESSAGE_CODE := CASE i_plant_code
+              WHEN 'AU20' THEN Re_Timing_Common.SCHEDULE_CODE_AU20
+              WHEN 'AU21' THEN Re_Timing_Common.SCHEDULE_CODE_AU21
+              WHEN 'AU22' THEN Re_Timing_Common.SCHEDULE_CODE_AU22
+              WHEN 'AU25' THEN Re_Timing_Common.SCHEDULE_CODE_AU25
+           END;
+        ELSE -- Resend. (Use alternate message codes and modify startdate)
+           MESSAGE_CODE := CASE i_plant_code
+              WHEN 'AU20' THEN Re_Timing_Common.SCHEDULE_RESEND_CODE_AU20
+              WHEN 'AU21' THEN Re_Timing_Common.SCHEDULE_RESEND_CODE_AU21
+              WHEN 'AU22' THEN Re_Timing_Common.SCHEDULE_RESEND_CODE_AU22
+              WHEN 'AU25' THEN Re_Timing_Common.SCHEDULE_RESEND_CODE_AU25
+           END;
+            -- Schedule resends must skip an extra day (compared to first schedule send) to avoid newly converted process orders 
+            var_start_date := var_start_date + 1;
+        END IF;
  
 		   OPEN csr_po;
     	   LOOP
        	   FETCH csr_po INTO  rcd_po;
        	   EXIT WHEN csr_po%NOTFOUND;
 								
-			/*-*/
-		    /*  append records 
-			/*-*/			   
-
-	        Manu_Remote_Loader.append_data('CTL' || LPAD(CASE i_plant_code WHEN 'AU20' THEN Re_Timing_Common.SCHEDULE_CODE_AU20
-										                  WHEN 'AU21' THEN Re_Timing_Common.SCHEDULE_CODE_AU21
-										                  WHEN 'AU22' THEN Re_Timing_Common.SCHEDULE_CODE_AU22
-														  ELSE Re_Timing_Common.SCHEDULE_CODE_AU25 END,3,'0') 
+			 /*-*/
+		     /*  append records 
+			 /*-*/
+      
+	            Manu_Remote_Loader.append_data('CTL' || LPAD(MESSAGE_CODE,3,'0') 
 	                       					|| TO_CHAR(TRUNC(var_serialise_code),'YYYYMMDD')
 	              			  				|| TO_CHAR(var_serialise_code,'HH24MISS')
-								  			);				   
+								  			);	
+
 				
 				IF ASCII(RTRIM(LTRIM(SUBSTR(rcd_po.matl_code,1,1)))) >= 48 AND  ASCII(RTRIM(LTRIM(SUBSTR(rcd_po.matl_code,1,1)))) <= 57 THEN
 	             -- Alpha start character to material code 
@@ -240,19 +246,13 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 			/* Create interface - append data - and close task 
 			/*-*/
 		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_trig_name || var_timestamp);
-		 
-		   Manu_Remote_Loader.append_data('HDR'
+       
+              Manu_Remote_Loader.append_data('HDR'
 		                				 || RPAD('Z_PRODUCTION_SCHEDULE',32,' ')
-							 			 || RPAD(CASE i_plant_code WHEN 'AU20' THEN Re_Timing_Common.SCHEDULE_CODE_AU20
-										     		  			   WHEN 'AU21' THEN Re_Timing_Common.SCHEDULE_CODE_AU21
-											 					   WHEN 'AU22' THEN Re_Timing_Common.SCHEDULE_CODE_AU22
-											 					   ELSE Re_Timing_Common.SCHEDULE_CODE_AU25 END,64,' ') -- address value for Cannery Schedule 
+							 			 || RPAD(MESSAGE_CODE,64,' ') -- address value for Cannery Schedule 
 							 			|| RPAD(' ',20,' ')
 							 			|| RPAD(TO_CHAR(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
-							 			|| RPAD(CASE i_plant_code WHEN 'AU20' THEN Re_Timing_Common.SCHEDULE_CODE_AU20
-										 	     		  		  WHEN 'AU21' THEN Re_Timing_Common.SCHEDULE_CODE_AU21
-												 				  WHEN 'AU22' THEN Re_Timing_Common.SCHEDULE_CODE_AU22
-												 				  ELSE Re_Timing_Common.SCHEDULE_CODE_AU25 END,3,' ')
+							 			|| RPAD(MESSAGE_CODE,3,' ')
 										/* address value for Cannery Schedule */
 							 			|| '64'  -- Atlas status 
 							 			|| LPAD(TO_CHAR(var_count),6,'0') -- number of schedule records 
@@ -260,7 +260,7 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 							 			|| RPAD('COUNT', 20,' ')
 							 			|| '05'
 							 			|| '0300' -- delay in seconds 
-										);
+										);         
 							 
          Manu_Remote_Loader.finalise_interface(cst_prc_script1 || var_timestamp);
 	  
@@ -316,11 +316,5 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Master_Schedule_Send AS
 END Master_Schedule_Send;
 /
 
-
-DROP PUBLIC SYNONYM MASTER_SCHEDULE_SEND;
-
-CREATE PUBLIC SYNONYM MASTER_SCHEDULE_SEND FOR MANU_APP.MASTER_SCHEDULE_SEND;
-
-
-GRANT EXECUTE ON MANU_APP.MASTER_SCHEDULE_SEND TO APPSUPPORT;
-
+create or replace public synonym master_schedule_send for manu_app.master_schedule_send;
+grant execute on manu_app.master_schedule_send to appsupport;
