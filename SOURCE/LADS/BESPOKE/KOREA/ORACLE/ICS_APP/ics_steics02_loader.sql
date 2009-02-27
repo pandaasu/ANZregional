@@ -196,7 +196,7 @@ create or replace package body ics_app.ics_steics02_loader as
       for idx in 1..tbl_outbound.count loop
          lics_outbound_loader.append_data(tbl_outbound(idx));
       end loop;
-      ics_outbound_loader.finalise_interface;
+      lics_outbound_loader.finalise_interface;
 
    /*-------------------*/
    /* Exception handler */
