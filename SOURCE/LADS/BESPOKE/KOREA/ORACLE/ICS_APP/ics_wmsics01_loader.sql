@@ -138,7 +138,6 @@ create or replace package body ics_app.ics_wmsics01_loader as
       for idx in 1..tbl_inbound.count loop
          dbms_lob.writeappend(var_clob, length(tbl_inbound(idx)), tbl_inbound(idx));
       end loop;
-      dbms_lob.close(var_clob);
 
       /*-*/
       /* Parse the XML input
