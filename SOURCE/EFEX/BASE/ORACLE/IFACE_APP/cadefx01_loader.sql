@@ -205,19 +205,21 @@ create or replace package body iface_app.cadefx01_loader as
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      begin
-         insert into route_plan values rcd_route_plan;
-      exception
-         when dup_val_on_index then
-            update route_plan
-               set customer_id = rcd_route_plan.customer_id,
-                   status = rcd_route_plan.status,
-                   modified_user = rcd_route_plan.modified_user,
-                   modified_date = rcd_route_plan.modified_date
-             where user_id = rcd_route_plan.user_id
-               and route_plan_date = rcd_route_plan.route_plan_date
-               and route_plan_order = rcd_route_plan.route_plan_order;
-      end;
+      if rcd_route_plan.status != 'X' then
+         begin
+            insert into route_plan values rcd_route_plan;
+         exception
+            when dup_val_on_index then
+               update route_plan
+                  set customer_id = rcd_route_plan.customer_id,
+                      status = rcd_route_plan.status,
+                      modified_user = rcd_route_plan.modified_user,
+                      modified_date = rcd_route_plan.modified_date
+                where user_id = rcd_route_plan.user_id
+                  and route_plan_date = rcd_route_plan.route_plan_date
+                  and route_plan_order = rcd_route_plan.route_plan_order;
+         end;
+      end if;
 
    /*-------------------*/
    /* Exception handler */
