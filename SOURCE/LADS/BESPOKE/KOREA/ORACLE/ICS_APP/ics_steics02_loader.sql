@@ -265,8 +265,7 @@ create or replace package body ics_app.ics_steics02_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-
-      tbl_outbound(tbl_outbound.count + 1) := lics_inbound_utility.get_variable('HDR_DATA');
+      tbl_outbound(tbl_outbound.count + 1) := rpad(nvl(lics_inbound_utility.get_variable('HDR_DATA'),' '),127,' ');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -303,7 +302,7 @@ create or replace package body ics_app.ics_steics02_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      tbl_outbound(tbl_outbound.count + 1) := lics_inbound_utility.get_variable('HTX_DATA');
+      tbl_outbound(tbl_outbound.count + 1) := rpad(nvl(lics_inbound_utility.get_variable('HTX_DATA'),' '),79,' ');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -340,7 +339,7 @@ create or replace package body ics_app.ics_steics02_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      tbl_outbound(tbl_outbound.count + 1) := lics_inbound_utility.get_variable('DET_DATA');
+      tbl_outbound(tbl_outbound.count + 1) := rpad(nvl(lics_inbound_utility.get_variable('DET_DATA'),' '),90,' ');
 
       /*-*/
       /* Retrieve exceptions raised

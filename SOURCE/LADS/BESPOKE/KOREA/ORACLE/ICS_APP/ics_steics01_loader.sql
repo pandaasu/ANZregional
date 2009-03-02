@@ -78,14 +78,15 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('DELIVERY',1);
-      lics_inbound_utility.set_csv_definition('SOURCE_PLANT',2);
-      lics_inbound_utility.set_csv_definition('SHIP_DATE',3);
-      lics_inbound_utility.set_csv_definition('DELVERY_DATE',4);
-      lics_inbound_utility.set_csv_definition('EXPIRY_DATE',5);
-      lics_inbound_utility.set_csv_definition('MATERIAL',6);
-      lics_inbound_utility.set_csv_definition('QTY',7);
-      lics_inbound_utility.set_csv_definition('ORDERTYPE',8);
+      lics_inbound_utility.set_csv_definition('PLANT',1);
+      lics_inbound_utility.set_csv_definition('DELIVERY',2);
+      lics_inbound_utility.set_csv_definition('SOURCE_PLANT',3);
+      lics_inbound_utility.set_csv_definition('SHIP_DATE',4);
+      lics_inbound_utility.set_csv_definition('DELVERY_DATE',5);
+      lics_inbound_utility.set_csv_definition('EXPIRY_DATE',6);
+      lics_inbound_utility.set_csv_definition('MATERIAL',7);
+      lics_inbound_utility.set_csv_definition('QTY',8);
+      lics_inbound_utility.set_csv_definition('ORDERTYPE',9);
 
    /*-------------------*/
    /* Exception handler */
@@ -144,7 +145,8 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       /* Build the inbound data array
       /*-*/
-      var_output := lics_inbound_utility.get_variable('DELIVERY')||',';
+      var_output := lics_inbound_utility.get_variable('PLANT')||',';
+      var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
       var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
