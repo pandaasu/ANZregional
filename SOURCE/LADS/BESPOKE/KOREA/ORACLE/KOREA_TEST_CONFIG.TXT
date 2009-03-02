@@ -28,12 +28,12 @@ connect ics_app/icscell@ap0112t.ap.mars
 /*-*/
 connect lics_app/licscell@ap0112t.ap.mars
 
-insert into lics_interface values('STEICS01','Korea Site to ICS - Intransit interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'ics_app.ics_steics01_loader','1','1',null,null);
-insert into lics_interface values('STEICS02','Korea Site to ICS - Orders interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'ics_app.steics02_loader','1','1','ics_app.ics_steics02_validation',null);
+insert into lics_interface values('STEICS01','Korea Site to ICS - Inbound summary interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'ics_app.ics_steics01_loader','1','1',null,null);
+insert into lics_interface values('STEICS02','Korea Site to ICS - Orders interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'ics_app.ics_steics02_loader','1','1','ics_app.ics_steics02_validation',null);
 insert into lics_interface values('WMSICS01','Korea WMS to ICS - Stock on hand interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'ics_app.ics_wmsics01_loader','1','0',null,null);
 insert into lics_interface values('ICSAPL01','Korea ICS to Apollo - Stock on hand interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL01_',15,'DAT',null,'"ISI ICS Test Group"@esosn1',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
 insert into lics_interface values('ICSAPL02','Korea ICS to Apollo - Intransit interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL02_',15,'DAT',null,'"ISI ICS Test Group"@esosn1',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
-insert into lics_interface values('ICSATL01','Korea ICS to Atlas - Orders interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSATL01_',15,'DAT',null,'"ISI ICS Test Group"@esosn1',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
+insert into lics_interface values('CISATL27','CIS to Atlas - Sales Orders interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','CISATL27_',15,'DAT',null,'"ISI ICS Test Group"@esosn1',null,'/ics/lad/hk/test/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
 
 commit;
 
@@ -41,12 +41,12 @@ commit;
 
 
 
-insert into lics_interface values('STEICS01','Korea Site to ICS - Intransit interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'ics_app.ics_steics01_loader','1','1',null,null);
-insert into lics_interface values('STEICS02','Korea Site to ICS - Orders interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'ics_app.ics_steics02_loader','1','1','ics_app.ics_steics02_validation',null);
+insert into lics_interface values('STEICS01','Korea Site to ICS - Inbound summary interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'ics_app.ics_steics01_loader','1','1',null,null);
+insert into lics_interface values('STEICS02','Korea Site to ICS - Orders interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'ics_app.ics_ics_steics02_loader','1','1','ics_app.ics_steics02_validation',null);
 insert into lics_interface values('WMSICS01','Korea WMS to ICS - Stock on hand interface','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'ics_app.ics_wmsics01_loader','1','0',null,null);
 insert into lics_interface values('ICSAPL01','Korea ICS to Apollo - Stock on hand interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL01_',15,'DAT',null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'/ics/lad/prod/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
 insert into lics_interface values('ICSAPL02','Korea ICS to Apollo - Intransit interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSAPL02_',15,'DAT',null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'/ics/lad/prod/bin/ics_outbound_ftp.sh <PATH> wodu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>','1','0',null,null);
-insert into lics_interface values('ICSATL01','Korea ICS to Atlas - Orders interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','ICSATL01_',15,'DAT',null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'/ics/lad/prod/bin/ics_outbound_dj.sh QL.IN.ICSATL01 ICSATL01 <PATH>','1','0',null,null);
+insert into lics_interface values('CISATL27','CIS to Atlas - Sales Orders interface','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','CISATL27_',15,'DAT',null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'/ics/lad/prod/bin/ics_outbound_dj.sh QL.IN.CISATL27 CISATL27 <PATH>','1','0',null,null);
 
 commit;
 
