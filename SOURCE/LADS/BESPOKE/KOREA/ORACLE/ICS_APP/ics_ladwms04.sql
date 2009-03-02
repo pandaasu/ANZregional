@@ -29,25 +29,6 @@ create or replace package ics_app.ics_ladwms04 as
  -------   ------               -----------
  2009/02   Steve Gregan         Created
 
- NOTES:
-  * It is assumed that material codes for China will not exceed 8 character in length (Zou Kai)
-  * The weight and volume provided to DHL should be the weight of the
-    PC for all finished goods (material type = FERT), POS materials (material type = ZPRM)
-    and packaging materials (material type = VERP)
-  * The weight (field = MATL_GROSS_WGT) provided to DHL must be in KGs.  Currently,
-    it seems we maintain weight in either grams or kilograms. So if weight is maintained
-    in grams (GRM) = then weight/1000 And therefore, field = MATL_WGT_UOM can be hard-coded to KG
-    If the weight is not maintained in either grams or kgs, then please leave the Weight
-    as 0000000000.000 and Weight UOM fields as blank  This will prompt the warehouse to enter
-    this in themselves instead.
-  * The volume (field = MATL_VOL_PER_BASE) provided to DHL must be in cubic metres (M3).  Currently,
-    it seems we maintain the volume in either cubic decimetres (DMQ) or cubic metres (M3).
-    If volume is in cubic decimetres (DMQ), then volume/1000  (ie. 1000 cubic decimetres = 1 cubic metre)
-    If volume is in cubic centimetres (CMQ), then volume/1000000 (ie. 1,000,000 cubic cm = 1 cubic metre)
-    If volume is not maintained in either cubic metres, cubic decimetres or cubic centimetres, then leave
-    the Volume as 000000000.000 and Volume UOM fields blank.  This will prompt the warehouse to enter this
-    in themselves instead.
-
 *******************************************************************************/
 
    /*-*/
@@ -93,118 +74,85 @@ create or replace package body ics_app.ics_ladwms04 as
       /*-*/
       /* Local Cursors
       /*-*/
-      cursor csr_matl_master is
-         select decode(substr(a.matnr,1,1),'0',lpad(ltrim(a.matnr,'0'),8,'0'),trim(a.matnr)) as matl_code,
-                b.material_desc_en as matl_desc_en,
-                e.material_desc as matl_desc_zh,
-                null as matl_desc_cn,
-                to_char(sysdate,'YYYYMMDD') as hdr_snd_date,
-                a.mtart as matl_type,
-                a.spart as matl_division,
-                null as matl_brand,
-                '0000000000.000' as matl_gross_wgt,
-                'KG' as matl_wgt_uom,
-                a.xchpf as matl_btch_mng_flag,
-                to_char(a.mhdhb) as matl_dhl_shelf_life,
-                '0000000000.000' as matl_vol_per_base,
-                'M3' as matl_vol_uom,
-                decode(c.matl_pce_value,null,null,'PC') as matl_a_uom,
-                decode(c.matl_pce_value,null,'0',c.matl_pce_umrez) as matl_a_factor,
-                decode(c.matl_pce_value,null,null,c.matl_pce_ean11) as matl_a_ean11,
+      cursor csr_cust_master is
+         select a.customer_code as sap_customer_code,
+                max(c.name || ' ' || c.name_02 ||  ' ' || c.name_03 ||  ' ' || c.name_04) as sap_customer_name,
+                max(b.ship_to_cust_code) as ship_to_cust_code,
+                max(b.ship_to_cust_name) as ship_to_cust_name,
+                max(b.bill_to_cust_code) as bill_to_cust_code,
+                max(b.bill_to_cust_name) as bill_to_cust_name,
+                max(b.salesman_code) as salesman_code,
+                max(b.salesman_name) as salesman_name,
+                max(b.city_code) as city_code,
+                max(b.city_name) as city_name,
+                max(b.hub_city_code) as hub_city_code,
+                max(b.hub_city_name) as hub_city_name,
+                max(d.street) as address_street_en,
+                max(d.search_term_01) as address_sort_en,
+                max(d.region_code) as region_code,
+                max(a.plant_code) as plant_code,
+                max(e.vat_registration_number) as vat_registration_number,
+                max(decode(nvl(a.deletion_flag,'-'),'X','I','A')) as customer_status,
+                max(f.insurance_number) as insurance_number,
+                max(g.sap_cust_code_level_3) as buying_grp_code,
+                max(g.cust_name_en_level_3) as buying_grp_name,
+                max(g.sap_cust_code_level_4) as key_account_code,
+                max(g.cust_name_en_level_4) as key_account_name,
+                max(h.sap_sub_channel_code) as channel_code,
+                max(h.sap_sub_channel_desc) as channel_name,
+                max(h.sap_channel_code) as channel_grp_code,
+                max(h.sap_channel_desc) as channel_grp_name,
                 case
-                   when c.matl_sb_value is not null then 'SB'
-                   when c.matl_pac_value is not null then 'PK'
-                   else null
-                end as matl_b_uom,
-                case
-                   when c.matl_sb_value is not null and
-                        c.matl_pac_value is not null then
-                      case
-                         when c.matl_sb_umren = 0 or c.matl_sb_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'0')
-                      end
-                   when c.matl_sb_value is not null then
-                      case
-                         when c.matl_sb_umren = 0 or c.matl_sb_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'0')
-                      end
-                   when c.matl_pac_value is not null then
-                      case
-                         when c.matl_pac_umren = 0 or c.matl_pac_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_pac_umrez)/c.matl_pac_umren)),'0')
-                      end
-                   else '0'
-                end as matl_b_factor,
-                case
-                   when c.matl_sb_value is not null and
-                        c.matl_pac_value is not null then
-                      c.matl_sb_ean11
-                   when c.matl_sb_value is not null then
-                      c.matl_sb_ean11
-                   when c.matl_pac_value is not null then
-                      c.matl_pac_ean11
-                end as matl_b_ean11,
-                decode(c.matl_cs_value,null,null,'CS') as matl_c_uom,
-                decode(c.matl_cs_value,null,'0',nvl(to_char((c.matl_cs_umrez*c.matl_pce_umren)),'0')) as matl_c_factor,
-                decode(c.matl_cs_value,null,null,c.matl_cs_ean11) as matl_c_ean11,
-                decode(c.matl_ea_value,null,null,'EA') as matl_base_uom,
-                decode(c.matl_ea_value,null,'0',nvl(c.matl_pce_umren,'0')) as matl_base_factor,
-                decode(c.matl_ea_value,null,null,c.matl_ea_ean11) as matl_base_ean11
-         from lads_mat_hdr a,
-              material_dim b,
-              (select matnr,
-                      decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
-                 from (select t01.matnr,
-                              t01.spras_iso,
-                              t01.maktx as sls_text,
-                              null as mkt_text
-                         from lads_mat_mkt t01
-                        union all
-                       select t01.matnr,
-                              t01.spras_iso,
-                              null as sls_txt,
-                              substr(max(t02.tdline),1,40) as mkt_text
-                         from lads_mat_txh t01,
-                              lads_mat_txl t02
-                        where t01.matnr = t02.matnr(+)
-                          and t01.txhseq = t02.txhseq(+)
-                          and trim(substr(t01.tdname,19,6)) = '137 10'
-                          and t01.tdobject = 'MVKE'
-                          and t02.txlseq = 1
-                        group by t01.matnr, t01.spras_iso)
-                where spras_iso = 'ZH'
-                group by matnr, spras_iso) e,
-              (select matnr,
-                      max(case when meinh = 'PCE' then 'x' end) as matl_pce_value,
-                      max(case when meinh = 'PCE' then ean11 end) as matl_pce_ean11,
-                      max(case when meinh = 'PCE' then umren end) as matl_pce_umren,
-                      max(case when meinh = 'PCE' then umrez end) as matl_pce_umrez,
-                      max(case when meinh = 'SB' then 'x' end) as matl_sb_value,
-                      max(case when meinh = 'SB' then ean11 end) as matl_sb_ean11,
-                      max(case when meinh = 'SB' then umren end) as matl_sb_umren,
-                      max(case when meinh = 'SB' then umrez end) as matl_sb_umrez,
-                      max(case when meinh = 'CS' then 'x' end) as matl_cs_value,
-                      max(case when meinh = 'CS' then ean11 end) as matl_cs_ean11,
-                      max(case when meinh = 'CS' then umrez end) as matl_cs_umrez,
-                      max(case when meinh = 'EA' then 'x' end) as matl_ea_value,
-                      max(case when meinh = 'EA' then ean11 end) as matl_ea_ean11,
-                      max(case when meinh = 'PK' then 'x' end) as matl_pac_value,
-                      max(case when meinh = 'PK' then umren end) as matl_pac_umren,
-                      max(case when meinh = 'PK' then umrez end) as matl_pac_umrez,
-                      max(case when meinh = 'PK' then ean11 end) as matl_pac_ean11
-               from lads_mat_uom
-               where meinh in ('PCE','SB','CS','EA','PK')
-               group by matnr) c,
-              lads_mat_mrc d
-         where ltrim(a.matnr,'0') = b.sap_material_code
-           and a.matnr = e.matnr(+)
-           and a.matnr = c.matnr(+)
-           and a.matnr = d.matnr
-           and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
-           and a.mtart in ('FERT','ZPRM','VERP')
-           and d.werks = 'CN03'
-           and d.mmsta in ('03','20');
-      rec_matl_master csr_matl_master%rowtype;
+                   when max(a.account_group_code) = '0001' 
+                    and nvl(max(c.search_term_02),'x') not in ('SHIPTO','BILLTO') 
+                    and max(a.order_block_flag) is null 
+                    and max(i.order_block_flag) is null then 'ACTIVE'
+                   else 'INACTIVE'
+                end as swb_status,
+                max(to_char(a.bds_lads_date,'yyyymmddhh24miss')) as bds_lads_date
+         from bds_cust_header a,
+              (select t01.customer_code,
+                      max(case when t01.partner_funcn_code = 'WE' then t01.partner_cust_code end) as ship_to_cust_code,
+                      max(case when t01.partner_funcn_code = 'WE' then t02.name end) as ship_to_cust_name,
+                      max(case when t01.partner_funcn_code = 'RE' then t01.partner_cust_code end) as bill_to_cust_code,
+                      max(case when t01.partner_funcn_code = 'RE' then t02.name end) as bill_to_cust_name,
+                      max(case when t01.partner_funcn_code = 'ZB' then t01.partner_cust_code end) as salesman_code,
+                      max(case when t01.partner_funcn_code = 'ZB' then t02.name end) as salesman_name,
+                      max(case when t01.partner_funcn_code = 'ZA' then t01.partner_cust_code end) as city_code,
+                      max(case when t01.partner_funcn_code = 'ZA' then t02.name end) as city_name,
+                      max(case when t01.partner_funcn_code = 'ZT' then t01.partner_cust_code end) as hub_city_code,
+                      max(case when t01.partner_funcn_code = 'ZT' then t02.name end) as hub_city_name
+               from bds_cust_sales_area_pnrfun t01,
+                    bds_addr_customer t02
+               where t01.partner_cust_code = t02.customer_code(+)
+                 and t01.partner_funcn_code in ('WE','RE','ZB','ZA','ZT')
+               group by t01.customer_code) b,
+              bds_addr_customer c,
+              bds_addr_detail d,
+              bds_cust_vat e,
+              bds_cust_comp f,
+              std_hier g,
+              bds_customer_classfctn_en h,
+              bds_cust_sales_area i
+         where a.customer_code = b.customer_code(+)
+           and a.customer_code = c.customer_code(+)
+           and a.customer_code = d.address_code(+)
+           and a.customer_code = e.customer_code(+)
+           and a.customer_code = f.customer_code(+)
+           and a.customer_code = h.sap_customer_code(+)
+           and a.customer_code = i.customer_code
+           and i.sales_org_code = '135'
+           and i.distbn_chnl_code = '10'
+           and i.division_code = '51'
+           and e.country_code(+) = 'CN'
+           and f.company_code(+) = '135'
+           and ltrim(i.customer_code,'0') = ltrim(g.sap_hier_cust_code(+),'0')
+           and i.sales_org_code = g.sap_sales_org_code(+)
+           and i.distbn_chnl_code = g.sap_distbn_chnl_code(+)
+           and i.division_code = g.sap_division_code(+)
+           and trunc(a.bds_lads_date) >= trunc(sysdate) - var_history
+         group by a.customer_code;
+      rec_cust_master csr_cust_master%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -229,90 +177,61 @@ create or replace package body ics_app.ics_ladwms04 as
       /* Write XML Header
       /*-*/
       lics_outbound_loader.append_data('<?xml version="1.0" encoding="UTF-8"?>');
-      lics_outbound_loader.append_data('<recordset>');
+      lics_outbound_loader.append_data('<CUSTOMER_MASTER>');
 
       /*-*/
       /* Write XML Control record
+      /* ** notes** 1. CTL_NAME - security defined against this tag on gateway
       /*-*/
       lics_outbound_loader.append_data('<CTL>');
-      /*-*/
       lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
       lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
-
-      /*-*/
-      /* TEST ENVIRONMENT (security defined against this tag on gateway)
-      /*-*/
-      -- lics_outbound_loader.append_data('<CTL_NAME>MCHNDHLB2BT2</CTL_NAME>');
-
-      /*-*/
-      /* PRODUCTION ENVIRONMENT (security defined against this tag on gateway)
-      /*-*/
+      --TEST-- lics_outbound_loader.append_data('<CTL_NAME>MCHNDHLB2BT2</CTL_NAME>');
       lics_outbound_loader.append_data('<CTL_NAME>ACHNDHLP1</CTL_NAME>');
-
       lics_outbound_loader.append_data('</CTL>');
 
       /*-*/
       /* Open cursor for output
       /*-*/
-      open csr_matl_master;
+      open csr_cust_master;
       loop
-         fetch csr_matl_master into rec_matl_master;
-         if (csr_matl_master%notfound) then
+         fetch csr_cust_master into rec_cust_master;
+         if csr_cust_master%notfound then
             exit;
          end if;
 
          /*-*/
-         /* Only select naterials with an english or chinese description
+         /* Append data lines
          /*-*/
-         if not(rec_matl_master.matl_desc_en is null) or not(rec_matl_master.matl_desc_zh is null) then
-
-            /*-*/
-            /* Append Data Lines
-            /*-*/
-            lics_outbound_loader.append_data('<HDR>');
-            /*-*/
-            lics_outbound_loader.append_data('<HDR_RECORD_ID>HDR</HDR_RECORD_ID>');
-            lics_outbound_loader.append_data('<HDR_MATERIAL>' || rec_matl_master.matl_code || '</HDR_MATERIAL>');
-            if not(rec_matl_master.matl_desc_zh is null) then
-               lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_zh),' ') || '</HDR_MATL_DESC>');
-            else
-               lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_en),' ') || '</HDR_MATL_DESC>');
-            end if;
-            lics_outbound_loader.append_data('<HDR_MATL_DESC_CN> </HDR_MATL_DESC_CN>');
-            lics_outbound_loader.append_data('<HDR_RECORD_DATE>' || nvl(rec_matl_master.hdr_snd_date,' ') || '</HDR_RECORD_DATE>');
-            lics_outbound_loader.append_data('<HDR_MATL_TYPE>' || nvl(rec_matl_master.matl_type,' ') || '</HDR_MATL_TYPE>');
-            lics_outbound_loader.append_data('<HDR_MATL_DIVISION>' || nvl(rec_matl_master.matl_division,' ') || '</HDR_MATL_DIVISION>');
-            lics_outbound_loader.append_data('<HDR_MATL_BRAND> </HDR_MATL_BRAND>');
-            lics_outbound_loader.append_data('<HDR_GROSS_WEIGHT>' || nvl(rec_matl_master.matl_gross_wgt,' ') || '</HDR_GROSS_WEIGHT>');
-            lics_outbound_loader.append_data('<HDR_WEIGHT_UOM>' || nvl(rec_matl_master.matl_wgt_uom,' ') || '</HDR_WEIGHT_UOM>');
-            lics_outbound_loader.append_data('<HDR_BATCH_MNGD>' || nvl(rec_matl_master.matl_btch_mng_flag,' ') || '</HDR_BATCH_MNGD>');
-            lics_outbound_loader.append_data('<HDR_SHELF_LIFE>' || nvl(rec_matl_master.matl_dhl_shelf_life,' ') || '</HDR_SHELF_LIFE>');
-            lics_outbound_loader.append_data('<HDR_UNIT_VOLUME>' || nvl(rec_matl_master.matl_vol_per_base,' ') || '</HDR_UNIT_VOLUME>');
-            lics_outbound_loader.append_data('<HDR_VOLUME_UOM>' || nvl(rec_matl_master.matl_vol_uom,' ') || '</HDR_VOLUME_UOM>');
-            lics_outbound_loader.append_data('<HDR_UOM_A>' || nvl(rec_matl_master.matl_a_uom,' ') || '</HDR_UOM_A>');
-            lics_outbound_loader.append_data('<HDR_UOM_A_FACTOR>' || nvl(rec_matl_master.matl_a_factor,' ') || '</HDR_UOM_A_FACTOR>');
-            lics_outbound_loader.append_data('<HDR_UOM_A_EAN>' || nvl(rec_matl_master.matl_a_ean11,' ') || '</HDR_UOM_A_EAN>');
-            lics_outbound_loader.append_data('<HDR_UOM_B>' || nvl(rec_matl_master.matl_b_uom,' ') || '</HDR_UOM_B>');
-            lics_outbound_loader.append_data('<HDR_UOM_B_FACTOR>' || nvl(rec_matl_master.matl_b_factor,' ') || '</HDR_UOM_B_FACTOR>');
-            lics_outbound_loader.append_data('<HDR_UOM_B_EAN>' || nvl(rec_matl_master.matl_b_ean11,' ') || '</HDR_UOM_B_EAN>');
-            lics_outbound_loader.append_data('<HDR_UOM_C>' || nvl(rec_matl_master.matl_c_uom,' ') || '</HDR_UOM_C>');
-            lics_outbound_loader.append_data('<HDR_UOM_C_FACTOR>' || nvl(rec_matl_master.matl_c_factor,' ') || '</HDR_UOM_C_FACTOR>');
-            lics_outbound_loader.append_data('<HDR_UOM_C_EAN>' || nvl(rec_matl_master.matl_c_ean11,' ') || '</HDR_UOM_C_EAN>');
-            lics_outbound_loader.append_data('<HDR_UOM_BASE>' || nvl(rec_matl_master.matl_base_uom,' ') || '</HDR_UOM_BASE>');
-            lics_outbound_loader.append_data('<HDR_UOM_BASE_FACTOR>' || nvl(rec_matl_master.matl_base_factor,' ') || '</HDR_UOM_BASE_FACTOR>');
-            lics_outbound_loader.append_data('<HDR_UOM_BASE_EAN>' || nvl(rec_matl_master.matl_base_ean11,' ') || '</HDR_UOM_BASE_EAN>');
-            /*-*/
-            lics_outbound_loader.append_data('</HDR>');
-
+         lics_outbound_loader.append_data('<HDR>');
+         /*-*/
+         lics_outbound_loader.append_data('<HDR_RECORD_ID>HDR</HDR_RECORD_ID>');
+         lics_outbound_loader.append_data('<HDR_CUSTOMER_CODE>' || rec_cust_master.cust_code || '</HDR_CUSTOMER_CODE>');
+         if not(rec_cust_master.matl_desc_zh is null) then
+            lics_outbound_loader.append_data('<HDR_CUSTOMER_NAME>' || nvl(format_xml_str(rec_matl_master.matl_desc_zh),' ') || '</HDR_CUSTOMER_NAME>');
+         else
+            lics_outbound_loader.append_data('<HDR_CUSTOMER_NAME>' || nvl(format_xml_str(rec_matl_master.matl_desc_en),' ') || '</HDR_CUSTOMER_NAME>');
          end if;
+         lics_outbound_loader.append_data('<HDR_BUS_REG_NUM>????</HDR_BUS_REG_NUM>');
+         lics_outbound_loader.append_data('<HDR_BUS_TYPE' || nvl(rec_matl_master.hdr_snd_date,' ') || '</HDR_BUS_TYPE>');
+         lics_outbound_loader.append_data('<HDR_BUS_CATEGORY>' || nvl(rec_matl_master.matl_type,' ') || '</HDR_BUS_CATEGORY>');
+         lics_outbound_loader.append_data('<HDR_PRESIDENT_NAME> </HDR_PRESIDENT_NAME>');
+         lics_outbound_loader.append_data('<HDR_POST_CODE>' || nvl(rec_matl_master.matl_gross_wgt,' ') || '</HDR_POST_CODE>');
+         lics_outbound_loader.append_data('<HDR_ADDRESS>' || nvl(rec_matl_master.matl_wgt_uom,' ') || '</HDR_ADDRESS>');
+         lics_outbound_loader.append_data('<HDR_TELEPHONE>' || nvl(rec_matl_master.matl_btch_mng_flag,' ') || '</HDR_TELEPHONE>');
+         lics_outbound_loader.append_data('<HDR_FAX>' || nvl(rec_matl_master.matl_dhl_shelf_life,' ') || '</HDR_FAX>');
+         lics_outbound_loader.append_data('<HDR_SALES_PERSON>' || nvl(rec_matl_master.matl_vol_per_base,' ') || '</HDR_FAX>');
+         lics_outbound_loader.append_data('<HDR_SALES_TELEPHONE>' || nvl(rec_matl_master.matl_vol_uom,' ') || '</HDR_SALES_TELEPHONE>');
+         /*-*/
+         lics_outbound_loader.append_data('</HDR>');
 
       end loop;
-      close csr_matl_master;
+      close csr_cust_master;
 
       /*-*/
       /* Write XML Footer details
       /*-*/
-      lics_outbound_loader.append_data('</recordset>');
+      lics_outbound_loader.append_data('</CUSTOMER_MASTER>');
 
       /*-*/
       /* Finalise Interface

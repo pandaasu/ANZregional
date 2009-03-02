@@ -96,7 +96,7 @@ create or replace package body ics_app.ics_ladwms03 as
       cursor csr_matl_master is
          select decode(substr(a.matnr,1,1),'0',lpad(ltrim(a.matnr,'0'),8,'0'),trim(a.matnr)) as matl_code,
                 b.material_desc_en as matl_desc_en,
-                e.material_desc as matl_desc_zh,
+                e.material_desc as matl_desc_ko,
                 null as matl_desc_cn,
                 to_char(sysdate,'YYYYMMDD') as hdr_snd_date,
                 a.mtart as matl_type,
@@ -168,11 +168,11 @@ create or replace package body ics_app.ics_ladwms03 as
                               lads_mat_txl t02
                         where t01.matnr = t02.matnr(+)
                           and t01.txhseq = t02.txhseq(+)
-                          and trim(substr(t01.tdname,19,6)) = '137 10'
+                          and trim(substr(t01.tdname,19,6)) = '157 10'
                           and t01.tdobject = 'MVKE'
                           and t02.txlseq = 1
                         group by t01.matnr, t01.spras_iso)
-                where spras_iso = 'ZH'
+                where spras_iso = 'KO'
                 group by matnr, spras_iso) e,
               (select matnr,
                       max(case when meinh = 'PCE' then 'x' end) as matl_pce_value,
@@ -202,7 +202,7 @@ create or replace package body ics_app.ics_ladwms03 as
            and a.matnr = d.matnr
            and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
            and a.mtart in ('FERT','ZPRM','VERP')
-           and d.werks = 'CN03'
+           and d.werks = 'KR01'
            and d.mmsta in ('03','20');
       rec_matl_master csr_matl_master%rowtype;
 
@@ -247,7 +247,7 @@ create or replace package body ics_app.ics_ladwms03 as
       /*-*/
       /* PRODUCTION ENVIRONMENT (security defined against this tag on gateway)
       /*-*/
-      lics_outbound_loader.append_data('<CTL_NAME>ACHNDHLP1</CTL_NAME>');
+      lics_outbound_loader.append_data('<CTL_NAME>ASEADHLP1</CTL_NAME>');
 
       lics_outbound_loader.append_data('</CTL>');
 
@@ -273,8 +273,8 @@ create or replace package body ics_app.ics_ladwms03 as
             /*-*/
             lics_outbound_loader.append_data('<HDR_RECORD_ID>HDR</HDR_RECORD_ID>');
             lics_outbound_loader.append_data('<HDR_MATERIAL>' || rec_matl_master.matl_code || '</HDR_MATERIAL>');
-            if not(rec_matl_master.matl_desc_zh is null) then
-               lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_zh),' ') || '</HDR_MATL_DESC>');
+            if not(rec_matl_master.matl_desc_ko is null) then
+               lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_ko),' ') || '</HDR_MATL_DESC>');
             else
                lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_en),' ') || '</HDR_MATL_DESC>');
             end if;
