@@ -144,18 +144,14 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       /* Build the inbound data array
       /*-*/
-      var_output := 'KR01,';
-      var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
+      var_output := lics_inbound_utility.get_variable('DELIVERY')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
       var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
       var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
       var_output := var_output||lics_inbound_utility.get_variable('EXPIRY_DATE')||',';
       var_output := var_output||lics_inbound_utility.get_variable('MATERIAL')||',';
       var_output := var_output||lics_inbound_utility.get_variable('QTY')||',';
-      var_output := var_output||'X,';
       var_output := var_output||lics_inbound_utility.get_variable('ORDERTYPE')||',';
-      var_output := var_output||'On Water,';
-      var_output := var_output||'3,';
       var_output := var_output||to_char(tbl_outbound.count + 1)||',';
       tbl_outbound(tbl_outbound.count + 1) := var_output;
 
