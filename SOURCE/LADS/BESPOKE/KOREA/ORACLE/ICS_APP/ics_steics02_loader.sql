@@ -192,7 +192,7 @@ create or replace package body ics_app.ics_steics02_loader as
       /*-*/
       /* Create the outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('ICSATL01', null, null);
+      var_instance := lics_outbound_loader.create_interface('CISATL27', null, null);
       for idx in 1..tbl_outbound.count loop
          lics_outbound_loader.append_data(tbl_outbound(idx));
       end loop;
