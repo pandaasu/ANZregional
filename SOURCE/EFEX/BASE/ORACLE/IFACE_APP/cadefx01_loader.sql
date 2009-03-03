@@ -248,7 +248,6 @@ create or replace package body iface_app.cadefx01_loader as
    /*-------------*/
    begin
 
-
       /*-*/
       /* Commit/rollback the previous route plan as required
       /*-*/
