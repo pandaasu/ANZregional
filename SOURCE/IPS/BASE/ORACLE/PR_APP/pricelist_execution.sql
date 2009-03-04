@@ -441,7 +441,7 @@ create or replace package body pricelist_execution as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PRICELIST_REPORTING - EXECUTE_REPORT - ' || substr(SQLERRM, 1, 2048));
+         raise_application_error(-20000, 'PRICELIST_EXECUTION - EXECUTE_REPORT - ' || substr(SQLERRM, 1, 2048));
 
    /*-------------*/
    /* End routine */
