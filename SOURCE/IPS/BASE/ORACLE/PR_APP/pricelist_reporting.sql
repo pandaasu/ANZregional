@@ -1,455 +1,1003 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package pricelist_reporting as
+CREATE OR REPLACE PACKAGE pricelist_reporting AS
+  /******************************************************************************
+     NAME:       PRICELIST_REPORTING
+     PURPOSE:    This carries out pricing lookup functions based on available
+                 input parameters.
 
-   /******************************************************************************/
-   /* Package Definition                                                         */
-   /******************************************************************************/
-   /**
-    Package : pricelist_reporting
-    Owner   : pr_app
+     REVISIONS:
+     Ver        Date        Author           Description
+     ---------  ----------  ---------------  ------------------------------------
+     1.0        30/09/2004  Chris Horn       1. Created this package.
+  ******************************************************************************/
 
-    Description
-    -----------
-    Price List Generator - Reporting
+  -- Default Reference Return Cursor.
+  TYPE t_ref_cursor IS REF CURSOR;
 
-    This package contain the procedures for the price list generator reporting.
+  SUBTYPE st_message_string IS VARCHAR2 (500);
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2008/12   Steve Gregan   Created
+  -----------------------------------------------------------------------------
+  -- Food Pricing Conditions.
+  -----------------------------------------------------------------------------
+  FUNCTION apply_zr05 (
+    i_current_price         IN  NUMBER,
+    i_sales_org             IN  VARCHAR2,
+    i_distribution_channel  IN  VARCHAR2,
+    i_division              IN  VARCHAR2,
+    i_region                IN  VARCHAR2,
+    i_material              IN  VARCHAR2)
+    RETURN NUMBER;
 
-   *******************************************************************************/
+  PRAGMA RESTRICT_REFERENCES (apply_zr05, WNDS, RNPS, WNPS);
 
-   /*-*/
-   /* Public declarations
-   /*-*/
-   function execute_report(par_report_id in number, par_report_date in varchar2) return pricelist_data pipelined;
+  FUNCTION apply_zv01 (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_distribution_channel IN VARCHAR2, i_price_list IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER;
 
-end pricelist_reporting;
+  FUNCTION apply_zv01 (i_current_price IN NUMBER, i_invoicing_party IN VARCHAR2, i_traded_unit_code IN VARCHAR2, i_info_type_catalogue IN VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_zv01, WNDS, RNPS, WNPS);
+
+  FUNCTION apply_zk32 (
+    i_current_price  IN  NUMBER,
+    i_sales_org      IN  VARCHAR2,
+    i_dstrbtn_chnl   IN  VARCHAR2,
+    i_division       IN  VARCHAR2,
+    i_trade_sector   IN  VARCHAR2,
+    i_region         IN  VARCHAR2,
+    i_brand_flag     IN  VARCHAR2,
+    i_material       IN  VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_zk32, WNDS, RNPS, WNPS);
+
+  FUNCTION apply_zk45_and_zk46 (
+    i_current_price      IN  NUMBER,
+    i_sales_org          IN  VARCHAR2,
+    i_dstrbtn_chnl       IN  VARCHAR2,
+    i_division           IN  VARCHAR2,
+    i_storage_condition  IN  VARCHAR2,
+    i_trade_sector       IN  VARCHAR2,
+    i_brand_flag         IN  VARCHAR2,
+    i_material           IN  VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_zk32, WNDS, RNPS, WNPS);
+
+  FUNCTION get_pricing_unit_zr05 (
+    i_sales_org             IN  VARCHAR2,
+    i_distribution_channel  IN  VARCHAR2,
+    i_division              IN  VARCHAR2,
+    i_region                IN  VARCHAR2,
+    i_material              IN  VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_pricing_unit_zr05, WNDS, RNPS, WNPS);
+
+  FUNCTION get_pricing_unit_zv01 (i_sales_org IN VARCHAR2, i_distribution_channel IN VARCHAR2, i_price_list IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  FUNCTION get_pricing_unit_zv01 (i_invoicing_party IN VARCHAR2, i_traded_unit_code IN VARCHAR2, i_info_type_catalogue IN VARCHAR2)
+    RETURN VARCHAR2;
+
+
+  PRAGMA RESTRICT_REFERENCES (get_pricing_unit_zv01, WNDS, RNPS, WNPS);
+
+  -----------------------------------------------------------------------------
+  -- New Zealand Pricing Conditions.
+  -----------------------------------------------------------------------------
+  FUNCTION apply_zn00 (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_zn00, WNDS, RNPS, WNPS);
+
+  FUNCTION apply_redist (i_current_price IN NUMBER, i_dsply_strg_cndtn_code IN VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_redist, WNDS, RNPS, WNPS);
+
+  FUNCTION get_pricing_unit_zn00 (i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_pricing_unit_zn00, WNDS, RNPS, WNPS);
+
+  FUNCTION get_zn00_status (i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_zn00_status, WNDS, RNPS, WNPS);
+
+  -----------------------------------------------------------------------------
+  -- Generic Code
+  -----------------------------------------------------------------------------
+  -- This procedure is called by the client to run a particular price list.
+  -- o_result return 0 for success, 1 for failure/error
+  PROCEDURE run_pricelist (o_result OUT INTEGER, o_result_msg OUT st_message_string, i_price_list IN st_message_string, o_return_cursor OUT t_ref_cursor);
+  -- This procedure is called by the client to run a particular price list.
+
+  -- o_result return 0 for success, 1 for failure/error
+  PROCEDURE run_report (o_result OUT INTEGER, o_result_msg OUT st_message_string, i_report IN st_message_string, i_report_orderby IN st_message_string, o_return_cursor OUT t_ref_cursor);
+
+  FUNCTION apply_zrsp (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (apply_zrsp, WNDS, RNPS, WNPS);
+
+  FUNCTION get_product_category (i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_product_category, WNDS, RNPS, WNPS);
+
+  FUNCTION get_product_type (i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_product_type, WNDS, RNPS, WNPS);
+
+  FUNCTION get_market_segment (i_material IN VARCHAR2)
+    RETURN VARCHAR2;
+
+  PRAGMA RESTRICT_REFERENCES (get_market_segment, WNDS, RNPS, WNPS);
+
+  FUNCTION no_consumer_units (i_mltpck_qty_code IN VARCHAR2)
+    RETURN NUMBER;
+
+  PRAGMA RESTRICT_REFERENCES (no_consumer_units, WNDS, RNPS, WNPS);
+
+
+END pricelist_reporting;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body pricelist_reporting as
 
-   /*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+CREATE OR REPLACE PACKAGE BODY pricelist_reporting AS
+  PROCEDURE run_pricelist (o_result OUT INTEGER, o_result_msg OUT st_message_string, i_price_list IN st_message_string, o_return_cursor OUT t_ref_cursor) IS
+  BEGIN
+    -- Run return cursor
+    o_result := 0;
+    o_result_msg := NULL;
 
-   /********************************************************/
-   /* This procedure performs the report execution routine */
-   /********************************************************/
-   function execute_report(par_report_id in number, par_report_date in varchar2) return pricelist_data pipelined is
+    OPEN o_return_cursor FOR 'SELECT * FROM ' || i_price_list || ' ORDER BY BRAND_FLAG_LONG_DESC, PRODUCT_CATEGORY, PRODUCT_TYPE, SIZE_CODE';
+  EXCEPTION
+    WHEN OTHERS THEN
+      o_result := 1;
+      o_result_msg := SQLERRM;
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_report_id number;
-      var_report_date date;
-      var_report_item_type report_item.report_item_type%type;
-      var_output varchar2(4000);
-      var_query varchar2(32767);
-      var_select_found boolean;
-      var_order_found boolean;
-      var_break_count integer;
-      var_data_count integer;
-      var_break_level integer;
-      var_cursor integer;
-      var_status integer;
-      var_column_count integer;
-      var_row_count integer;
-      var_rcd_table dbms_sql.desc_tab;
-      type rcd_data is record(save_value varchar2(4000),
-                              this_value varchar2(4000),
-                              item_type varchar2(1),
-                              data_frmt varchar2(4000),
-                              name_frmt varchar2(4000),
-                              name_ovrd varchar2(200));
-      type typ_data is table of rcd_data index by binary_integer;
-      tbl_data typ_data;
- 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_report is 
-         select t01.*
-           from report t01
-          where t01.report_id = var_report_id;
-      rcd_report csr_report%rowtype;
+      OPEN o_return_cursor FOR
+        SELECT NULL
+        FROM DUAL
+        WHERE 1 = 0;
+  END run_pricelist;
 
-      cursor csr_price_mdl is 
-         select t01.sql_from_tables,
-                t01.sql_where_joins
-           from price_mdl t01
-          where t01.price_mdl_id = rcd_report.price_mdl_id;
-      rcd_price_mdl csr_price_mdl%rowtype;
+  PROCEDURE run_report (
+    o_result          OUT     INTEGER,
+    o_result_msg      OUT     st_message_string,
+    i_report          IN      st_message_string,
+    i_report_orderby  IN      st_message_string,
+    o_return_cursor   OUT     t_ref_cursor) IS
+    v_sql  VARCHAR2 (4000);
+  BEGIN
+    -- Run return cursor
+    o_result := 0;
+    o_result_msg := NULL;
+    v_sql := 'SELECT * FROM ' || i_report;
 
-      cursor csr_report_item is 
-         select t01.report_item_id,
-                t01.report_item_type,
-                nvl(t01.name_ovrd,t02.price_item_name) as name_ovrd,
-                t01.name_frmt,
-                t01.data_frmt,
-                t02.sql_select
-           from report_item t01,
-                price_item t02
-          where t01.report_id = var_report_id
-            and t01.price_item_id = t02.price_item_id
-            and t01.report_item_type = var_report_item_type
-          order by t01.sort_order asc;
-      rcd_report_item csr_report_item%rowtype;
+    IF i_report_orderby IS NOT NULL THEN
+      v_sql := v_sql || ' ORDER BY ' || i_report_orderby;
+    END IF;
 
-      cursor csr_report_term is 
-         select t01.value,
-                t01.data_frmt
-           from report_term t01
-          where t01.report_id = var_report_id
-          order by t01.offset_x asc;
-      rcd_report_term csr_report_term%rowtype;
+    OPEN o_return_cursor FOR v_sql;
+  EXCEPTION
+    WHEN OTHERS THEN
+      o_result := 1;
+      o_result_msg := SQLERRM;
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
+      OPEN o_return_cursor FOR
+        SELECT NULL
+        FROM DUAL
+        WHERE 1 = 0;
+  END run_report;
 
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
+  FUNCTION apply_condition (
+    i_current_price  IN  NUMBER,
+    i_rate           IN  mfanz_price_list_dtl.rate_qty_or_pcntg%TYPE,
+    i_type           IN  mfanz_price_list_dtl.crrncy_or_prcntg%TYPE)
+    RETURN NUMBER IS
+    v_result  NUMBER;
+  BEGIN
+    IF i_type = '%' THEN
+      v_result := ROUND ( (i_current_price * (100 + i_rate) ) / 100, 2);
+    ELSE
+      v_result := i_current_price + i_rate;
+    END IF;
 
-      /*-*/
-      /* Validate the parameter values
-      /*-*/
-      if par_report_id is null then
-         raise_application_error(-20000, 'Report identifier must be specified');
-      end if;
-      var_report_id := par_report_id;
-      if par_report_date is null then
-         var_report_date := trunc(sysdate);
-      else
-         begin
-            var_report_date := to_date(par_report_date,'YYYYMMDD');
-         exception
-            when others then
-               raise_application_error(-20000, 'Unable to convert (' || var_report_date || ') to a date using format YYYYMMDD');
-         end;
-      end if;
+    RETURN v_result;
+  END apply_condition;
 
-      /*-*/
-      /* Retrieve the report
-      /*-*/
-      open csr_report;
-      fetch csr_report into rcd_report;
-      if csr_report%notfound then
-         raise_application_error(-20000, 'Report (' || to_char(var_report_id) || ') does not exist');
-      end if;
-      close csr_report;
+  FUNCTION apply_zr05 (
+    i_current_price         IN  NUMBER,
+    i_sales_org             IN  VARCHAR2,
+    i_distribution_channel  IN  VARCHAR2,
+    i_division              IN  VARCHAR2,
+    i_region                IN  VARCHAR2,
+    i_material              IN  VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
 
-      /*-*/
-      /* Retrieve the price model
-      /*-*/
-      open csr_price_mdl;
-      fetch csr_price_mdl into rcd_price_mdl;
-      if csr_price_mdl%notfound then
-         raise_application_error(-20000, 'Report (' || to_char(var_report_id) || ') pricing model not found');
-      end if;
-      close csr_price_mdl;
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Region / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZR05' AND
+           t01.cndtn_table = '771' AND
+           t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_division || i_region || i_material;
 
-      /*-*/
-      /* Initialise the report
-      /*-*/
-      tbl_data.delete;
-      var_select_found := false;
-      var_order_found := false;
-      var_break_count := 0;
-      var_data_count := 0;
-      var_query := 'select';
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
 
-      /*-*/
-      /* Retrieve the report items (BREAK)
-      /*-*/
-      var_report_item_type := 'B';
-      open csr_report_item;
-      loop
-         fetch csr_report_item into rcd_report_item;
-         if csr_report_item%notfound then
-            exit;
-         end if;
-         if var_select_found = true then
-            var_query := var_query || ',';
-         end if;
-         var_query := var_query || ' ' || trim(rcd_report_item.sql_select) || ' as b' || to_char(var_break_count+1,'fm00');
-         var_select_found := true;
-         var_break_count := var_break_count + 1;
-         tbl_data(tbl_data.count+1).save_value := '*NULL*';
-         tbl_data(tbl_data.count).this_value := '*NULL*';
-         tbl_data(tbl_data.count).item_type := rcd_report_item.report_item_type;
-         tbl_data(tbl_data.count).data_frmt := rcd_report_item.data_frmt;
-         tbl_data(tbl_data.count).name_frmt := rcd_report_item.name_frmt;
-         tbl_data(tbl_data.count).name_ovrd := rcd_report_item.name_ovrd;
-      end loop;
-      close csr_report_item;
+      -- Check Access Sequence : Sales Org / Distribution Channel / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZR05' AND t01.cndtn_table = '811' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_material;
 
-      /*-*/
-      /* Retrieve the report items (DATA)
-      /*-*/
-      var_report_item_type := 'D';
-      open csr_report_item;
-      loop
-         fetch csr_report_item into rcd_report_item;
-         if csr_report_item%notfound then
-            exit;
-         end if;
-         if var_select_found = true then
-            var_query := var_query || ',';
-         end if;
-         var_query := var_query || ' ' || trim(rcd_report_item.sql_select) || ' as d' || to_char(var_data_count+1,'fm00');
-         var_select_found := true;
-         var_data_count := var_data_count + 1;
-         tbl_data(tbl_data.count+1).save_value := '*NULL*';
-         tbl_data(tbl_data.count).this_value := '*NULL*';
-         tbl_data(tbl_data.count).item_type := rcd_report_item.report_item_type;
-         tbl_data(tbl_data.count).data_frmt := rcd_report_item.data_frmt;
-         tbl_data(tbl_data.count).name_frmt := rcd_report_item.name_frmt;
-         tbl_data(tbl_data.count).name_ovrd := rcd_report_item.name_ovrd;
-      end loop;
-      close csr_report_item;
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
 
-      /*-*/
-      /* Validate the report structure
-      /*-*/
-      if var_data_count = 0 then
-         raise_application_error(-20000, 'Report (' || to_char(var_report_id) || ') must have at least one report item to bring back for display');
-      end if;
+      -- Check Access Sequence : Sales Org / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZR05' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
 
-      /*-*/
-      /* Set the table information
-      /*-*/
-      var_query := var_query || ' from report t1a, report_matl t1b, price_sales_org t1c, price_distbn_chnl t1d, matl t1, matl_by_sales_area t2';
-      if not(rcd_price_mdl.sql_from_tables is null) and not(rcd_price_mdl.sql_where_joins is null) then
-         var_query := var_query || ', ' || trim(rcd_price_mdl.sql_from_tables);
-      end if;
-      var_query := var_query || ' where t1a.report_id = ' || to_char(var_report_id);
-      var_query := var_query || ' and t1a.report_id = t1b.report_id';
-      var_query := var_query || ' and t1b.matl_code = t1.matl_code';
-      var_query := var_query || ' and t1b.matl_code = t2.matl_code';
-      var_query := var_query || ' and t1a.price_sales_org_id = t1c.price_sales_org_id';
-      var_query := var_query || ' and t1c.price_sales_org_code = t2.sales_org';
-      var_query := var_query || ' and t1a.price_distbn_chnl_id = t1d.price_distbn_chnl_id';
-      var_query := var_query || ' and t1d.price_distbn_chnl_code = t2.dstrbtn_chnl';
-      if not(rcd_price_mdl.sql_from_tables is null) and not(rcd_price_mdl.sql_where_joins is null) then
-         var_query := var_query || trim(rcd_price_mdl.sql_where_joins);
-      end if;
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
 
-      /*-*/
-      /* Retrieve the order by clause (BREAK)
-      /*-*/
-      var_report_item_type := 'B';
-      open csr_report_item;
-      loop
-         fetch csr_report_item into rcd_report_item;
-         if csr_report_item%notfound then
-            exit;
-         end if;
-         if var_order_found = false then
-            var_query := var_query || ' order by';
-         else
-            var_query := var_query || ',';
-         end if;
-         var_query := var_query || ' ' || rcd_report_item.sql_select;
-         var_order_found := true;
-      end loop;
-      close csr_report_item;
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
 
-      /*-*/
-      /* Retrieve the order by clause (ORDER)
-      /*-*/
-      var_report_item_type := 'O';
-      open csr_report_item;
-      loop
-         fetch csr_report_item into rcd_report_item;
-         if csr_report_item%notfound then
-            exit;
-         end if;
-         if var_order_found = false then
-            var_query := var_query || ' order by';
-         else
-            var_query := var_query || ',';
-         end if;
-         var_query := var_query || ' ' || rcd_report_item.sql_select;
-         var_order_found := true;
-      end loop;
-      close csr_report_item;
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zr05;
 
-      /*-*/
-      /* Initialise the price list functions used by the report query
-      /*-*/
-      pricelist_functions.set_pricelist_date(var_report_date);
+  FUNCTION apply_zrsp (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
 
-      /*-*/
-      /* Parse and execute the report query
-      /*-*/
-      var_cursor := dbms_sql.open_cursor;
-      begin
-         dbms_sql.parse(var_cursor, var_query, dbms_sql.native);
-         dbms_sql.describe_columns(var_cursor, var_column_count, var_rcd_table);
-         for idx in 1..var_column_count loop
-            dbms_sql.define_column(var_cursor,idx,tbl_data(idx).this_value,4000);
-         end loop;
-         var_status := dbms_sql.execute(var_cursor);
-      exception
-         when others then
-            raise_application_error(-20000, 'Report (' || to_char(var_report_id) || ') query error - ' || substr(SQLERRM, 1, 1024));
-      end;
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZRSP' AND t01.cndtn_table = '599' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
 
-      /*-*/
-      /* Start the report
-      /*-*/
-      pipe row('<table border=0 cellpadding="0" cellspacing="0">');
-      if rcd_report.report_name_frmt is null then
-         pipe row('<tr><td colspan='||var_data_count||'>'||rcd_report.report_name||'</td></tr>');
-      else
-         pipe row('<tr><td colspan='||var_data_count||' style="'||rcd_report.report_name_frmt||'>'||rcd_report.report_name||'"</td></tr>');
-      end if;
-      var_output := '<tr>';
-      for idx in var_break_count+1..var_column_count loop
-         if tbl_data(idx).item_type = 'D' then
-            if tbl_data(idx).name_frmt is null then
-               var_output := var_output || '<td>'||tbl_data(idx).name_ovrd||'</td>';
-            else
-               var_output := var_output || '<td style="'||tbl_data(idx).name_frmt||'">'||tbl_data(idx).name_ovrd||'</td>';
-            end if;
-         end if;
-      end loop;
-      var_output := var_output || '</tr>';
-      pipe row(var_output);
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
 
-      /*-*/
-      /* Retrieve the report data
-      /*-*/
-      var_row_count := 0;
-      loop
-         if dbms_sql.fetch_rows(var_cursor) = 0 then
-            exit;
-         end if;
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
 
-         /*-*/
-         /* Load the row data array
-         /*-*/
-         var_row_count := var_row_count + 1;
-         for idx in 1..var_column_count loop
-            dbms_sql.column_value(var_cursor,idx,tbl_data(idx).this_value);
-         end loop;
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zrsp;
 
-         /*-*/
-         /* Check for report break changes and output when required
-         /*-*/
-         if var_break_count != 0 then
-            var_break_level := 0;
-            for idx in reverse 1..var_break_count loop
-               if tbl_data(idx).item_type = 'B' then
-                  if tbl_data(idx).this_value != tbl_data(idx).save_value then
-                     var_break_level := idx;
-                  end if;
-               end if;
-            end loop;
-            if var_break_level != 0 then
-               for idx in var_break_level..var_break_count loop
-                  if tbl_data(idx).item_type = 'B' then
-                     tbl_data(idx).save_value := tbl_data(idx).this_value;
-                     if tbl_data(idx).data_frmt is null then
-                        var_output := '<tr><td colspan='||to_char(var_data_count)||'>'||tbl_data(idx).this_value||'</td></tr>';
-                     else
-                        var_output := '<tr><td colspan='||to_char(var_data_count)||' style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td></tr>';
-                     end if;
-                     pipe row(var_output);
-                  end if;
-               end loop;
-            end if;
-         end if;
+  FUNCTION get_pricing_unit_zr05 (
+    i_sales_org             IN  VARCHAR2,
+    i_distribution_channel  IN  VARCHAR2,
+    i_division              IN  VARCHAR2,
+    i_region                IN  VARCHAR2,
+    i_material              IN  VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  VARCHAR2 (4);
+  BEGIN
+    v_result := NULL;
 
-         /*-*/
-         /* Output the report data
-         /*-*/
-         var_output := '<tr>';
-         for idx in var_break_count+1..var_column_count loop
-            if tbl_data(idx).item_type = 'D' then
-               if tbl_data(idx).data_frmt is null then
-                  var_output := var_output||'<td>'||tbl_data(idx).this_value||'</td>';
-               else
-                  var_output := var_output||'<td style="'||tbl_data(idx).data_frmt||'">'||tbl_data(idx).this_value||'</td>';
-               end if;
-            end if;
-         end loop;
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
+    -- Check Access Sequence : Sales Org / Distribution Channel / Division / Region / Material
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t01.prcng_unit
+        INTO   v_result
+        FROM pricelist_current_prices t01
+        WHERE t01.cndtn_type = 'ZR05' AND
+         t01.cndtn_table = '771' AND
+         t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_division || i_region || i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
 
-      end loop;
-      dbms_sql.close_cursor(var_cursor);
+    -- Check Access Sequence : Sales Org / Distribution Channel / Material
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t01.prcng_unit
+        INTO   v_result
+        FROM pricelist_current_prices t01
+        WHERE t01.cndtn_type = 'ZR05' AND t01.cndtn_table = '811' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
 
-      /*-*/
-      /* Empty report
-      /*-*/
-      if var_row_count = 0 then
-         pipe row('<tr><td colspan='||var_data_count||'>NO DETAILS</td></tr>');
-      end if;
+    -- Check Access Sequence : Sales Org / Material
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t01.prcng_unit
+        INTO   v_result
+        FROM pricelist_current_prices t01
+        WHERE t01.cndtn_type = 'ZR05' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
 
-      /*-*/
-      /* Retrieve the terms and conditions
-      /*-*/
-      open csr_report_term;
-      loop
-         fetch csr_report_term into rcd_report_term;
-         if csr_report_term%notfound then
-            exit;
-         end if;
-         if rcd_report_term.data_frmt is null then
-            var_output := var_output||'<tr><td colspan='||to_char(var_data_count)||'>'||rcd_report_term.value||'</td></tr>';
-         else
-            var_output := var_output||'<tr><td colspan='||to_char(var_data_count)||' style="'||rcd_report_term.data_frmt||'">'||rcd_report_term.value||'</td></tr>';
-         end if;
-      end loop;
-      close csr_report_term;
+    -- Now return the result.
+    RETURN v_result;
+  END get_pricing_unit_zr05;
 
-      /*-*/
-      /* End the report
-      /*-*/
-      pipe row('</table>');
+  FUNCTION get_pricing_unit_zv01 (i_sales_org IN VARCHAR2, i_distribution_channel IN VARCHAR2, i_price_list IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  VARCHAR2 (4);
+  BEGIN
+    v_result := NULL;
 
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
+    -- Lookup the pricing unit.
+    BEGIN
+      SELECT t01.prcng_unit
+      INTO   v_result
+      FROM pricelist_current_prices t01
+      WHERE t01.cndtn_type = 'ZV01' AND t01.cndtn_table = '956' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_price_list || i_material;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
 
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
+    -- Now return the result.
+    RETURN v_result;
+  END get_pricing_unit_zv01;
 
-      /**/
-      /* Exception trap
-      /**/
-      when others then
+  FUNCTION get_pricing_unit_zv01 (i_invoicing_party IN VARCHAR2, i_traded_unit_code IN VARCHAR2, i_info_type_catalogue IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  VARCHAR2 (4);
+  BEGIN
+    v_result := NULL;
 
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PRICELIST_REPORTING - EXECUTE_REPORT - ' || substr(SQLERRM, 1, 2048));
+    -- Lookup the pricing unit.
+    BEGIN
+      SELECT t01.prcng_unit
+      INTO   v_result
+      FROM pricelist_current_prices t01
+      WHERE t01.cndtn_type = 'ZV01' AND
+       t01.cndtn_table = '969' AND
+       t01.vrbl_key = LPAD (i_invoicing_party, 10, '0') || RPAD (i_traded_unit_code, 18) || i_info_type_catalogue;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
 
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end execute_report;
+    -- Now return the result.
+    RETURN v_result;
+  END get_pricing_unit_zv01;
 
-end pricelist_reporting;
+  FUNCTION apply_zk32 (
+    i_current_price  IN  NUMBER,
+    i_sales_org      IN  VARCHAR2,
+    i_dstrbtn_chnl   IN  VARCHAR2,
+    i_division       IN  VARCHAR2,
+    i_trade_sector   IN  VARCHAR2,
+    i_region         IN  VARCHAR2,
+    i_brand_flag     IN  VARCHAR2,
+    i_material       IN  VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
+
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Region / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND t01.cndtn_table = '771'
+           AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_region || i_material;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel /Division / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND t01.cndtn_table = '967' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_material;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel /Division / Brand Flag
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND t01.cndtn_table = '772' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_brand_flag;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel /Division / Region / Brand Flag
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND t01.cndtn_table = '773'
+           AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_region || i_brand_flag;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Trade Sector / Region
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND
+           t01.cndtn_table = '767' AND
+           t01.vrbl_key = TRIM (RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_trade_sector || i_region);
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Trade Sector
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK32' AND t01.cndtn_table = '768' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_trade_sector;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zk32;
+
+  FUNCTION apply_zk45_and_zk46 (
+    i_current_price      IN  NUMBER,
+    i_sales_org          IN  VARCHAR2,
+    i_dstrbtn_chnl       IN  VARCHAR2,
+    i_division           IN  VARCHAR2,
+    i_storage_condition  IN  VARCHAR2,
+    i_trade_sector       IN  VARCHAR2,
+    i_brand_flag         IN  VARCHAR2,
+    i_material           IN  VARCHAR2)
+    RETURN NUMBER IS
+    v_found_zk45  BOOLEAN;
+    v_rate_zk45   pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type_zk45   pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_found_zk46  BOOLEAN;
+    v_rate_zk46   pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type_zk46   pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_rate_comb   pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_result      NUMBER;
+  BEGIN
+    -- This one is not mandatory so if there are not matching conditions just do a pass through.
+    v_result := i_current_price;
+    v_found_zk45 := FALSE;
+    v_found_zk46 := FALSE;
+
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Storage Condition
+      IF v_found_zk45 = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate_zk45, v_type_zk45
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK45' AND t01.cndtn_table = '766'
+           AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_storage_condition;
+
+          v_found_zk45 := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel /Division / Material
+      IF v_found_zk46 = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate_zk46, v_type_zk46
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK46' AND t01.cndtn_table = '967' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_material;
+
+          v_found_zk46 := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel /Division / Brand Flag
+      IF v_found_zk46 = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate_zk46, v_type_zk46
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK46' AND t01.cndtn_table = '772' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_brand_flag;
+
+          v_found_zk46 := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+
+      -- Check Access Sequence : Sales Org / Distribution Channel / Division / Trade Sector
+      IF v_found_zk46 = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate_zk46, v_type_zk46
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZK46' AND t01.cndtn_table = '768' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_dstrbtn_chnl || i_division || i_trade_sector;
+
+          v_found_zk46 := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found_zk45 = TRUE THEN
+      v_rate_comb := v_rate_zk45;
+
+      IF v_found_zk46 = TRUE THEN
+        IF v_rate_zk46 = -100 THEN
+          v_rate_comb := 0;
+        END IF;
+      END IF;
+
+      v_result := apply_condition (i_current_price, v_rate_comb, '%');
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zk45_and_zk46;
+
+  FUNCTION apply_zv01 (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_distribution_channel IN VARCHAR2, i_price_list IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
+
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Distribution Channel / Price List / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZV01' AND t01.cndtn_table = '956'
+           AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_distribution_channel || i_price_list || i_material;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zv01;
+
+  FUNCTION apply_zv01 (i_current_price IN NUMBER, i_invoicing_party IN VARCHAR2, i_traded_unit_code IN VARCHAR2, i_info_type_catalogue IN VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
+
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Distribution Channel / Price List / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZV01' AND
+           t01.cndtn_table = '969' AND
+           t01.vrbl_key = LPAD (i_invoicing_party, 10, '0') || RPAD (i_traded_unit_code, 18) || i_info_type_catalogue;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zv01;
+
+  FUNCTION apply_zn00 (i_current_price IN NUMBER, i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN NUMBER IS
+    v_found   BOOLEAN;
+    v_rate    pricelist_current_prices.rate_qty_or_pcntg%TYPE;
+    v_type    pricelist_current_prices.crrncy_or_prcntg%TYPE;
+    v_result  NUMBER;
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
+
+    IF i_current_price IS NOT NULL THEN
+      -- Check Access Sequence : Sales Org / Material
+      IF v_found = FALSE THEN
+        BEGIN
+          SELECT t01.rate_qty_or_pcntg, t01.crrncy_or_prcntg
+          INTO   v_rate, v_type
+          FROM pricelist_current_prices t01
+          WHERE t01.cndtn_type = 'ZN00' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
+
+          v_found := TRUE;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      END IF;
+    END IF;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      v_result := apply_condition (i_current_price, v_rate, v_type);
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END apply_zn00;
+
+  FUNCTION apply_redist (i_current_price IN NUMBER, i_dsply_strg_cndtn_code IN VARCHAR2)
+    RETURN NUMBER IS
+    v_result  NUMBER;
+  BEGIN
+    IF i_dsply_strg_cndtn_code = '01' THEN   -- Chilled 6%
+      v_result := ROUND ( (i_current_price * (100 - 6) ) / 100, 2);
+    ELSIF i_dsply_strg_cndtn_code = '02' THEN   -- Fozen 9%
+      v_result := ROUND ( (i_current_price * (100 - 9) ) / 100, 2);
+    ELSIF i_dsply_strg_cndtn_code = '03' THEN   -- Shelf Stable (Ambient) 4%
+      v_result := ROUND ( (i_current_price * (100 - 4) ) / 100, 2);
+    ELSE
+      v_result := i_current_price;
+    END IF;
+
+    RETURN v_result;
+  END apply_redist;
+
+  FUNCTION get_pricing_unit_zn00 (i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  VARCHAR2 (4);
+  BEGIN
+    v_result := NULL;
+
+    -- Check Access Sequence : Sales Org / Material
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t01.prcng_unit
+        INTO   v_result
+        FROM pricelist_current_prices t01
+        WHERE t01.cndtn_type = 'ZN00' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END get_pricing_unit_zn00;
+
+  FUNCTION get_zn00_status (i_sales_org IN VARCHAR2, i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_found      BOOLEAN;
+    v_from_date  pricelist_current_prices.from_date%TYPE;
+    v_to_date    pricelist_current_prices.TO_DATE%TYPE;
+    v_date       pricelist_current_prices.from_date%TYPE;
+    v_result     VARCHAR2 (50);
+  BEGIN
+    v_result := NULL;
+    v_found := FALSE;
+
+    -- Check Access Sequence : Sales Org / Material
+    BEGIN
+      SELECT t01.from_date, t01.TO_DATE
+      INTO   v_from_date, v_to_date
+      FROM pricelist_current_prices t01
+      WHERE t01.cndtn_type = 'ZN00' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material;
+
+      v_found := TRUE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
+
+    -- Then perform a check to see if a condition was found.
+    IF v_found = TRUE THEN
+      IF v_from_date > TO_CHAR (SYSDATE, 'YYYYMMDD') THEN
+        v_result := 'Launch ' || TO_CHAR (TO_DATE (v_from_date, 'YYYYMMDD'), 'DD/MM/YYYY');
+      ELSIF v_from_date > TO_CHAR (SYSDATE - 28, 'YYYYMMDD') THEN
+        BEGIN
+          SELECT MIN (t01.from_date) AS from_date
+          INTO   v_date
+          FROM pricelist_all_prices t01
+          WHERE t01.cndtn_type = 'ZN00' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material AND t01.from_date < v_from_date;
+
+          IF v_date IS NULL THEN
+            v_result := 'New';
+          ELSE
+            v_result := 'Changed ' || TO_CHAR (TO_DATE (v_from_date, 'YYYYMMDD'), 'DD/MM/YYYY');
+          END IF;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      ELSIF v_to_date < TO_CHAR (SYSDATE + 28, 'YYYYMMDD') THEN
+        BEGIN
+          SELECT MAX (t01.TO_DATE) AS TO_DATE
+          INTO   v_date
+          FROM pricelist_all_prices t01
+          WHERE t01.cndtn_type = 'ZN00' AND t01.cndtn_table = '812' AND t01.vrbl_key = RPAD (i_sales_org, 4) || i_material AND t01.TO_DATE > v_to_date;
+
+          IF v_date IS NULL THEN
+            v_result := 'Discontinue ' || TO_CHAR (TO_DATE (v_to_date, 'YYYYMMDD'), 'DD/MM/YYYY');
+          ELSE
+            v_result := 'Changing ' || TO_CHAR (TO_DATE (v_to_date, 'YYYYMMDD'), 'DD/MM/YYYY');
+          END IF;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+      ELSE
+        -- Otherwise it is an established product in which case the text should be left blank.
+        v_result := NULL;
+      END IF;
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END get_zn00_status;
+
+  FUNCTION get_product_category (i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  local_classn.local_classn_desc%TYPE;
+  --Lookup the product category
+  BEGIN
+    v_result := NULL;
+
+    BEGIN
+      SELECT l01.local_classn_desc
+      INTO   v_result
+      FROM local_classn l01, local_classn_type l02, local_matl_classn l03
+      WHERE l03.local_classn_type_code = l02.local_classn_type_code AND
+       l01.local_classn_type_code = l02.local_classn_type_code AND
+       l03.local_classn_code = l01.local_classn_code AND
+       l03.matl_code = i_material AND
+       l03.local_matl_classn_status = 'ACTIVE' AND
+       l02.local_classn_type_code = 5;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
+
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t02.prdct_ctgry_long_desc
+        INTO   v_result
+        FROM mfanz_fg_matl_clssfctn t01, prdct_ctgry t02
+        WHERE t01.prdct_ctgry_code = t02.prdct_ctgry_code AND t01.matl_code = i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END get_product_category;
+
+  FUNCTION get_market_segment (i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  local_classn.local_classn_desc%TYPE;
+  --Lookup the product category
+  BEGIN
+    v_result := NULL;
+
+    BEGIN
+      SELECT l01.local_classn_desc
+      INTO   v_result
+      FROM local_classn l01, local_classn_type l02, local_matl_classn l03
+      WHERE l03.local_classn_type_code = l02.local_classn_type_code AND
+       l01.local_classn_type_code = l02.local_classn_type_code AND
+       l03.local_classn_code = l01.local_classn_code AND
+       l03.matl_code = i_material AND
+       l03.local_matl_classn_status = 'ACTIVE' AND
+       l02.local_classn_type_code = 4;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
+
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t02.mkt_sgmnt_long_desc
+        INTO   v_result
+        FROM mfanz_fg_matl_clssfctn t01, mkt_sgmnt t02
+        WHERE t01.mkt_sgmnt_code = t02.mkt_sgmnt_code AND t01.matl_code = i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END get_market_segment;
+
+  FUNCTION get_product_type (i_material IN VARCHAR2)
+    RETURN VARCHAR2 IS
+    v_result  local_classn.local_classn_desc%TYPE;
+  --Lookup the product category
+  BEGIN
+    v_result := NULL;
+
+    BEGIN
+      SELECT l01.local_classn_desc
+      INTO   v_result
+      FROM local_classn l01, local_classn_type l02, local_matl_classn l03
+      WHERE l03.local_classn_type_code = l02.local_classn_type_code AND
+       l01.local_classn_type_code = l02.local_classn_type_code AND
+       l03.local_classn_code = l01.local_classn_code AND
+       l03.matl_code = i_material AND
+       l03.local_matl_classn_status = 'ACTIVE' AND
+       l02.local_classn_type_code = 6;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+    END;
+
+    IF v_result IS NULL THEN
+      BEGIN
+        SELECT t02.prdct_type_long_desc
+        INTO   v_result
+        FROM mfanz_fg_matl_clssfctn t01, prdct_type t02
+        WHERE t01.prdct_type_code = t02.prdct_type_code AND t01.matl_code = i_material;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL;
+      END;
+    END IF;
+
+    -- Now return the result.
+    RETURN v_result;
+  END get_product_type;
+
+  FUNCTION no_consumer_units (i_mltpck_qty_code IN VARCHAR2)
+    RETURN NUMBER IS
+    v_qty  NUMBER;
+  BEGIN
+    v_qty := 1;
+    -- Now try and conver number.
+    v_qty := TO_NUMBER (i_mltpck_qty_code);
+
+    IF v_qty < 2 OR v_qty > 50 THEN
+      v_qty := 1;
+    END IF;
+
+    RETURN v_qty;
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN v_qty;
+  END;
+END pricelist_reporting;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym pricelist_reporting for dw_app.pricelist_reporting;
-grant execute on pricelist_reporting to public;
