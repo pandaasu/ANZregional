@@ -27,6 +27,7 @@ create or replace package efxcad01_customer as
     -------   ------         -----------
     2008/08   Steve Gregan   Created
     2008/10   Steve Gregan   Added secondary sales person to interface
+    2009/03   Steve Gregan   Modified to check the customer sales territory modified date
 
    *******************************************************************************/
 
@@ -140,9 +141,11 @@ create or replace package body efxcad01_customer as
                 cust_channel t04,
                 market t05,
                 (select t01.customer_id,
-                        t01.sales_territory_id
+                        t01.sales_territory_id,
+                        t01.modified_date
                    from (select t01.customer_id,
                                 t01.sales_territory_id,
+                                t01.modified_date,
                                 rank() over (partition by t01.customer_id
                                                  order by t01.sales_territory_id asc) as rnkseq
                            from cust_sales_territory t01
@@ -209,7 +212,16 @@ create or replace package body efxcad01_customer as
             and t20.sales_territory_id = t21.sales_territory_id(+)
             and t21.user_id = t22.user_id(+)
             and t05.market_id = con_market_id
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history
+            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t02.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t03.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t04.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t06.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t07.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t08.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t09.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t10.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t12.modified_date) >= trunc(sysdate) - var_history)
             and trunc(t01.modified_date) > to_date('20080914','yyyymmdd');
       rcd_customer csr_customer%rowtype;
 
