@@ -12,7 +12,7 @@ create or replace package ics_app.ics_steics01_loader as
 
     Description
     -----------
-    Site to ICS - STEICS01 - Intransit Interface Loader (Korea)
+    Site to ICS - STEICS01 - Inbound Summary Interface Loader (Korea)
 
     YYYY/MM   Author         Description
     -------   ------         -----------
