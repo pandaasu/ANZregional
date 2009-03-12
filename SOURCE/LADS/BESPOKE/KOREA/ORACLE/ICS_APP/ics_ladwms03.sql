@@ -295,7 +295,7 @@ create or replace package body ics_app.ics_ladwms03 as
             else
                lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_en),' ') || '</HDR_MATL_DESC>');
             end if;
-            lics_outbound_loader.append_data('<HDR_MATL_DESC_KR> </HDR_MATL_DESC_KR>');
+            lics_outbound_loader.append_data('<HDR_MATL_DESC_KR>' || nvl(format_xml_str(rec_matl_master.matl_desc_ko),' ') || '</HDR_MATL_DESC_KR>');
             lics_outbound_loader.append_data('<HDR_RECORD_DATE>' || nvl(rec_matl_master.hdr_snd_date,' ') || '</HDR_RECORD_DATE>');
             lics_outbound_loader.append_data('<HDR_MATL_TYPE>' || nvl(rec_matl_master.matl_type,' ') || '</HDR_MATL_TYPE>');
             lics_outbound_loader.append_data('<HDR_MATL_DIVISION>' || nvl(rec_matl_master.matl_division,' ') || '</HDR_MATL_DIVISION>');
@@ -318,9 +318,9 @@ create or replace package body ics_app.ics_ladwms03 as
             lics_outbound_loader.append_data('<HDR_UOM_BASE>' || nvl(rec_matl_master.matl_base_uom,' ') || '</HDR_UOM_BASE>');
             lics_outbound_loader.append_data('<HDR_UOM_BASE_FACTOR>' || nvl(rec_matl_master.matl_base_factor,' ') || '</HDR_UOM_BASE_FACTOR>');
             lics_outbound_loader.append_data('<HDR_UOM_BASE_EAN>' || nvl(rec_matl_master.matl_base_ean11,' ') || '</HDR_UOM_BASE_EAN>');
-            lics_outbound_loader.append_data('<HDR_LENGTH>' || nvl(rec_matl_master.matl_length,' ') || '</HDR_LENGTH>');
-            lics_outbound_loader.append_data('<HDR_WIDTH>' || nvl(rec_matl_master.matl_width,' ') || '</HDR_WIDTH>');
-            lics_outbound_loader.append_data('<HDR_DEPTH>' || nvl(rec_matl_master.matl_depth,' ') || '</HDR_DEPTH>');
+            lics_outbound_loader.append_data('<HDR_LENGTH>' || nvl(rec_matl_master.matl_length,'0') || '</HDR_LENGTH>');
+            lics_outbound_loader.append_data('<HDR_WIDTH>' || nvl(rec_matl_master.matl_width,'0') || '</HDR_WIDTH>');
+            lics_outbound_loader.append_data('<HDR_DEPTH>' || nvl(rec_matl_master.matl_depth,'0') || '</HDR_DEPTH>');
             lics_outbound_loader.append_data('<HDR_DIM_UOM>' || nvl(rec_matl_master.matl_dim_uom,' ') || '</HDR_DIM_UOM>');
             /*-*/
             lics_outbound_loader.append_data('</HDR>');
