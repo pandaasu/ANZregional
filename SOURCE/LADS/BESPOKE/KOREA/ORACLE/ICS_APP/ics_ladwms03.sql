@@ -95,7 +95,7 @@ create or replace package body ics_app.ics_ladwms03 as
       /*-*/
       cursor csr_matl_master is
          select decode(substr(a.matnr,1,1),'0',lpad(ltrim(a.matnr,'0'),8,'0'),trim(a.matnr)) as matl_code,
-                b.material_desc_en as matl_desc_en,
+                b.material_desc as matl_desc_en,
                 e.material_desc as matl_desc_ko,
                 null as matl_desc_cn,
                 to_char(sysdate,'YYYYMMDD') as hdr_snd_date,
@@ -149,9 +149,34 @@ create or replace package body ics_app.ics_ladwms03 as
                 decode(c.matl_cs_value,null,null,c.matl_cs_ean11) as matl_c_ean11,
                 decode(c.matl_ea_value,null,null,'EA') as matl_base_uom,
                 decode(c.matl_ea_value,null,'0',nvl(c.matl_pce_umren,'0')) as matl_base_factor,
-                decode(c.matl_ea_value,null,null,c.matl_ea_ean11) as matl_base_ean11
+                decode(c.matl_ea_value,null,null,c.matl_ea_ean11) as matl_base_ean11,
+                a.laeng as matl_length,
+                a.breit as matl_width,
+                a.hoehe as matl_depth,
+                a.meabm as matl_dim_uom
          from lads_mat_hdr a,
-              material_dim b,
+              (select matnr,
+                      decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
+                 from (select t01.matnr,
+                              t01.spras_iso,
+                              t01.maktx as sls_text,
+                              null as mkt_text
+                         from lads_mat_mkt t01
+                        union all
+                       select t01.matnr,
+                              t01.spras_iso,
+                              null as sls_txt,
+                              substr(max(t02.tdline),1,40) as mkt_text
+                         from lads_mat_txh t01,
+                              lads_mat_txl t02
+                        where t01.matnr = t02.matnr(+)
+                          and t01.txhseq = t02.txhseq(+)
+                          and trim(substr(t01.tdname,19,6)) = '157 10'
+                          and t01.tdobject = 'MVKE'
+                          and t02.txlseq = 1
+                        group by t01.matnr, t01.spras_iso)
+                where spras_iso = 'EN'
+                group by matnr, spras_iso) b,
               (select matnr,
                       decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
                  from (select t01.matnr,
@@ -196,14 +221,15 @@ create or replace package body ics_app.ics_ladwms03 as
                where meinh in ('PCE','SB','CS','EA','PK')
                group by matnr) c,
               lads_mat_mrc d
-         where ltrim(a.matnr,'0') = b.sap_material_code
+         where a.matnr = b.matnr(+)
            and a.matnr = e.matnr(+)
            and a.matnr = c.matnr(+)
            and a.matnr = d.matnr
            and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
            and a.mtart in ('FERT','ZPRM','VERP')
-           and d.werks = 'KR01'
-           and d.mmsta in ('03','20');
+           and d.werks = 'KR02'
+           and d.mmsta in ('03','20')
+         order by a.matnr asc;
       rec_matl_master csr_matl_master%rowtype;
 
    /*-------------*/
@@ -229,26 +255,17 @@ create or replace package body ics_app.ics_ladwms03 as
       /* Write XML Header
       /*-*/
       lics_outbound_loader.append_data('<?xml version="1.0" encoding="UTF-8"?>');
-      lics_outbound_loader.append_data('<recordset>');
+      lics_outbound_loader.append_data('<Material_Master>');
 
       /*-*/
       /* Write XML Control record
+      /* ** notes** 1. CTL_NAME - security defined against this tag on gateway
       /*-*/
       lics_outbound_loader.append_data('<CTL>');
-      /*-*/
       lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
       lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
-
-      /*-*/
-      /* TEST ENVIRONMENT (security defined against this tag on gateway)
-      /*-*/
-      -- lics_outbound_loader.append_data('<CTL_NAME>MCHNDHLB2BT2</CTL_NAME>');
-
-      /*-*/
-      /* PRODUCTION ENVIRONMENT (security defined against this tag on gateway)
-      /*-*/
-      lics_outbound_loader.append_data('<CTL_NAME>ASEADHLP1</CTL_NAME>');
-
+      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
+      --PROD-- lics_outbound_loader.append_data('<CTL_NAME>APP002CTKR</CTL_NAME>');
       lics_outbound_loader.append_data('</CTL>');
 
       /*-*/
@@ -262,9 +279,9 @@ create or replace package body ics_app.ics_ladwms03 as
          end if;
 
          /*-*/
-         /* Only select naterials with an english or chinese description
+         /* Only select naterials with an english or korean description
          /*-*/
-         if not(rec_matl_master.matl_desc_en is null) or not(rec_matl_master.matl_desc_zh is null) then
+         if not(rec_matl_master.matl_desc_en is null) or not(rec_matl_master.matl_desc_ko is null) then
 
             /*-*/
             /* Append Data Lines
@@ -278,7 +295,7 @@ create or replace package body ics_app.ics_ladwms03 as
             else
                lics_outbound_loader.append_data('<HDR_MATL_DESC>' || nvl(format_xml_str(rec_matl_master.matl_desc_en),' ') || '</HDR_MATL_DESC>');
             end if;
-            lics_outbound_loader.append_data('<HDR_MATL_DESC_CN> </HDR_MATL_DESC_CN>');
+            lics_outbound_loader.append_data('<HDR_MATL_DESC_KR> </HDR_MATL_DESC_KR>');
             lics_outbound_loader.append_data('<HDR_RECORD_DATE>' || nvl(rec_matl_master.hdr_snd_date,' ') || '</HDR_RECORD_DATE>');
             lics_outbound_loader.append_data('<HDR_MATL_TYPE>' || nvl(rec_matl_master.matl_type,' ') || '</HDR_MATL_TYPE>');
             lics_outbound_loader.append_data('<HDR_MATL_DIVISION>' || nvl(rec_matl_master.matl_division,' ') || '</HDR_MATL_DIVISION>');
@@ -301,9 +318,12 @@ create or replace package body ics_app.ics_ladwms03 as
             lics_outbound_loader.append_data('<HDR_UOM_BASE>' || nvl(rec_matl_master.matl_base_uom,' ') || '</HDR_UOM_BASE>');
             lics_outbound_loader.append_data('<HDR_UOM_BASE_FACTOR>' || nvl(rec_matl_master.matl_base_factor,' ') || '</HDR_UOM_BASE_FACTOR>');
             lics_outbound_loader.append_data('<HDR_UOM_BASE_EAN>' || nvl(rec_matl_master.matl_base_ean11,' ') || '</HDR_UOM_BASE_EAN>');
+            lics_outbound_loader.append_data('<HDR_LENGTH>' || nvl(rec_matl_master.matl_length,' ') || '</HDR_LENGTH>');
+            lics_outbound_loader.append_data('<HDR_WIDTH>' || nvl(rec_matl_master.matl_width,' ') || '</HDR_WIDTH>');
+            lics_outbound_loader.append_data('<HDR_DEPTH>' || nvl(rec_matl_master.matl_depth,' ') || '</HDR_DEPTH>');
+            lics_outbound_loader.append_data('<HDR_DIM_UOM>' || nvl(rec_matl_master.matl_dim_uom,' ') || '</HDR_DIM_UOM>');
             /*-*/
             lics_outbound_loader.append_data('</HDR>');
-
          end if;
 
       end loop;
@@ -312,7 +332,7 @@ create or replace package body ics_app.ics_ladwms03 as
       /*-*/
       /* Write XML Footer details
       /*-*/
-      lics_outbound_loader.append_data('</recordset>');
+      lics_outbound_loader.append_data('</Material_Master>');
 
       /*-*/
       /* Finalise Interface
