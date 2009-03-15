@@ -37,6 +37,7 @@ create or replace package dw_mart_sales02 as
     2008/08   Steve Gregan   Modified to GSV AUD
     2008/08   Linden Glen    Changed csr_order_extract_02 in order_extract to use hier_link_cust_code in join
     2008/10   Steve Gregan   Added PTW/PTG/LYRM1/LYRM2/P01-26FCST/P01-26BR
+    2009/02   Steve Gregan   Removed *NZMKT from *MFANZ forecasts
 
    *******************************************************************************/
 
@@ -1365,11 +1366,16 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
                 nvl(sum(t01.fcst_value_aud),0) as yee_gsv,
                 nvl(sum(t01.fcst_qty_net_tonnes),0) as yee_ton
-           from fcst_fact t01
-          where t01.company_code = par_company_code
+           from fcst_fact t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'OP'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
           group by t01.company_code,
                    t01.cust_code,
                    t01.matl_zrep_code,
@@ -1389,11 +1395,16 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(t01.fcst_qty),0) as yee_qty,
                 nvl(sum(t01.fcst_value_aud),0) as yee_gsv,
                 nvl(sum(t01.fcst_qty_net_tonnes),0) as yee_ton
-           from fcst_fact t01
-          where t01.company_code = par_company_code
+           from fcst_fact t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_cyr_str_yyyypp
             and t01.fcst_yyyypp <= var_cyr_end_yyyypp
             and t01.fcst_type_code = 'ROB'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
           group by t01.company_code,
                    t01.cust_code,
                    t01.matl_zrep_code,
@@ -1497,11 +1508,16 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from fcst_fact t01
-          where t01.company_code = par_company_code
+           from fcst_fact t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'BR'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
           group by t01.company_code,
                    t01.cust_code,
                    t01.matl_zrep_code,
@@ -1605,11 +1621,16 @@ create or replace package body dw_mart_sales02 as
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
                 nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from fcst_fact t01
-          where t01.company_code = par_company_code
+           from fcst_fact t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
             and t01.fcst_yyyypp >= var_ytg_str_yyyypp
             and t01.fcst_yyyypp <= var_nyr_end_yyyypp
             and t01.fcst_type_code = 'FCST'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
           group by t01.company_code,
                    t01.cust_code,
                    t01.matl_zrep_code,
