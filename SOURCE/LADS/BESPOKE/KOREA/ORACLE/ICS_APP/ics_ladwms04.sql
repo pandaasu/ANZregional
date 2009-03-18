@@ -76,16 +76,16 @@ create or replace package body ics_app.ics_ladwms04 as
       /*-*/
       cursor csr_cust_master is
          select ltrim(t01.customer_code,'0') as customer_code,
-                t03.name || ' ' || t03.name_02 || ' ' || t03.name_03 || ' ' || t03.name_04 as customer_name,
+                trim(t03.name || ' ' || t03.name_02 || ' ' || t03.name_03 || ' ' || t03.name_04) as customer_name,
                 t01.tax_number_02 as bus_reg_num,
                 t01.business_type as bus_type,
                 t01.industry_type as bus_category,
                 t01.representative_name as president_name,
                 t03.city_post_code as post_code,
-                t03.street_supplement_01 || ' ' || t03.street_supplement_02 as address,
+                trim(t03.street_supplement_01 || ' ' || t03.street_supplement_02) as address,
                 t04.phone_number as telephone,
                 t05.fax_number as fax,
-                t06.name || ' ' || t06.name_02 || ' ' || t06.name_03 || ' ' || t06.name_04 as sales_person,
+                trim(t06.name || ' ' || t06.name_02 || ' ' || t06.name_03 || ' ' || t06.name_04) as sales_person,
                 t07.phone_number as sales_telephone
          from bds_cust_header t01,
               (select t01.customer_code,
@@ -202,9 +202,9 @@ create or replace package body ics_app.ics_ladwms04 as
          lics_outbound_loader.append_data('<HDR_RECORD_ID>HDR</HDR_RECORD_ID>');
          lics_outbound_loader.append_data('<HDR_CUSTOMER_CODE>' || format_xml_str(rec_cust_master.customer_code) || '</HDR_CUSTOMER_CODE>');
          lics_outbound_loader.append_data('<HDR_CUSTOMER_NAME>' || nvl(format_xml_str(rec_cust_master.customer_name),' ') || '</HDR_CUSTOMER_NAME>');
-         lics_outbound_loader.append_data('<HDR_BUS_REG_NUM>????</HDR_BUS_REG_NUM>');
-         lics_outbound_loader.append_data('<HDR_BUS_TYPE' || nvl(format_xml_str(rec_cust_master.bus_reg_num),' ') || '</HDR_BUS_TYPE>');
-         lics_outbound_loader.append_data('<HDR_BUS_CATEGORY>' || nvl(format_xml_str(rec_cust_master.bus_type),' ') || '</HDR_BUS_CATEGORY>');
+         lics_outbound_loader.append_data('<HDR_BUS_REG_NUM>' || nvl(format_xml_str(rec_cust_master.bus_reg_num),' ') || '</HDR_BUS_REG_NUM>');
+         lics_outbound_loader.append_data('<HDR_BUS_TYPE>' || nvl(format_xml_str(rec_cust_master.bus_type),' ') || '</HDR_BUS_TYPE>');
+         lics_outbound_loader.append_data('<HDR_BUS_CATEGORY>' || nvl(format_xml_str(rec_cust_master.bus_category),' ') || '</HDR_BUS_CATEGORY>');
          lics_outbound_loader.append_data('<HDR_PRESIDENT_NAME>' || nvl(format_xml_str(rec_cust_master.president_name),' ') || '</HDR_PRESIDENT_NAME>');
          lics_outbound_loader.append_data('<HDR_POST_CODE>' || nvl(format_xml_str(rec_cust_master.post_code),' ') || '</HDR_POST_CODE>');
          lics_outbound_loader.append_data('<HDR_ADDRESS>' || nvl(format_xml_str(rec_cust_master.address),' ') || '</HDR_ADDRESS>');
