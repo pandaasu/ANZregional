@@ -199,7 +199,6 @@ create or replace package body ics_app.ics_ladwms04 as
          /*-*/
          lics_outbound_loader.append_data('<HDR>');
          /*-*/
-         lics_outbound_loader.append_data('<HDR_RECORD_ID>HDR</HDR_RECORD_ID>');
          lics_outbound_loader.append_data('<HDR_CUSTOMER_CODE>' || format_xml_str(rec_cust_master.customer_code) || '</HDR_CUSTOMER_CODE>');
          lics_outbound_loader.append_data('<HDR_CUSTOMER_NAME>' || nvl(format_xml_str(rec_cust_master.customer_name),' ') || '</HDR_CUSTOMER_NAME>');
          lics_outbound_loader.append_data('<HDR_BUS_REG_NUM>' || nvl(format_xml_str(rec_cust_master.bus_reg_num),' ') || '</HDR_BUS_REG_NUM>');
@@ -210,7 +209,7 @@ create or replace package body ics_app.ics_ladwms04 as
          lics_outbound_loader.append_data('<HDR_ADDRESS>' || nvl(format_xml_str(rec_cust_master.address),' ') || '</HDR_ADDRESS>');
          lics_outbound_loader.append_data('<HDR_TELEPHONE>' || nvl(format_xml_str(rec_cust_master.telephone),' ') || '</HDR_TELEPHONE>');
          lics_outbound_loader.append_data('<HDR_FAX>' || nvl(format_xml_str(rec_cust_master.fax),' ') || '</HDR_FAX>');
-         lics_outbound_loader.append_data('<HDR_SALES_PERSON>' || nvl(format_xml_str(rec_cust_master.sales_person),' ') || '</HDR_FAX>');
+         lics_outbound_loader.append_data('<HDR_SALES_PERSON>' || nvl(format_xml_str(rec_cust_master.sales_person),' ') || '</HDR_SALES_PERSON>');
          lics_outbound_loader.append_data('<HDR_SALES_TELEPHONE>' || nvl(format_xml_str(rec_cust_master.sales_telephone),' ') || '</HDR_SALES_TELEPHONE>');
          /*-*/
          lics_outbound_loader.append_data('</HDR>');
