@@ -150,14 +150,14 @@ create or replace package body ics_app.ics_wmsics01_loader as
       /*-*/
       /* Retrieve parent node
       /*-*/
-      obj_xml_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/Freshness_Report');
+      obj_xml_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/FRESHNESS_REPORT');
 
       /*-*/
       /* Retrieve and process the HDR nodes
       /* **notes** 1. Only FG materials are forwarded to Apollo
       /*              (Materials with 8 digits or materials starting with English letter(s) are to be regarded as FGs)
       /*-*/
-      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/Freshness_Report/HDR');
+      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/FRESHNESS_REPORT/HDR');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          var_in_item := xslProcessor.valueOf(obj_xml_node,'IN_ITEM');
