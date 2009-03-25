@@ -23,7 +23,7 @@ CREATE OR REPLACE PACKAGE         ods_efex_validation as
  -------   ------         -----------
  2007/10   John Cho       Created package.
  2007/10   Kris Lee       Completed procedures.
- 2009/03   Steve Gregan   Changed validation tests to include status 'X'
+ 2009/03   Steve Gregan   Changed distribution validation tests to include status 'X'
 
 *******************************************************************************/
 
