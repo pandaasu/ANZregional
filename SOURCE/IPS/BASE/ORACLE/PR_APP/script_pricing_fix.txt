@@ -8,10 +8,17 @@ connect pr/price@ap0073d.ap.mars
 /* Modify the tables
 /*-*/
 alter table report add 
-   (report_name_frmt varchar2(4000) null);
+   (report_name_frmt varchar2(4000) null,
+    create_user varchar2(30) null,
+    update_user varchar2(30) null,
+    email_address varchar2(64) null);
 comment on column report.report_name_frmt is 'Report name format string - HTML format';
+comment on column report.create_user is 'Report created by user';
+comment on column report.update_user is 'Report last updated by user';
+comment on column report.email_address is 'Report email address';
 
 alter table report drop column report_name_frmt_id;
+alter table report drop column owner_id;
 
 alter table report_item add 
    (name_frmt varchar2(4000) null,
@@ -19,16 +26,19 @@ alter table report_item add
 comment on column report_item.name_frmt is 'Report item name format string - HTML format';
 comment on column report_item.data_frmt is 'Report item data format string - HTML format';
 
-alter table report_term add 
-   (data_frmt varchar2(4000) null);
-comment on column report_term.data_frmt is 'Report term data format string - HTML format';
+drop and recreate report_term
 
 alter table report_item drop column name_frmt_id;
 alter table report_item drop column data_frmt_id;
 alter table report_term drop column frmt_id;
 
-drop table frmt_hdr;
+
+alter table report add (auto_matl_update varchar2(1) null);
+comment on column report.auto_matl_update is 'Report materials automatically updated';
+
 drop table frmt_detl;
+drop table frmt_hdr;
+drop table frmt_type;
 
 
 grant select on price_item to lics_app;
@@ -39,3 +49,11 @@ grant select on price_distbn_chnl to lics_app;
 grant select on report_grp to lics_app;
 grant select on report to lics_app;
 grant select on report_item to lics_app;
+grant select on report_term to lics_app;
+grant select on report_matl to lics_app;
+grant select on report_rule to lics_app;
+grant select on report_rule_detl to lics_app;
+grant select on price_rule_type to lics_app;
+
+
+
