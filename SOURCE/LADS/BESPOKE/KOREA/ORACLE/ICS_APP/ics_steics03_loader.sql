@@ -79,9 +79,9 @@ create or replace package body ics_app.ics_steics03_loader as
       lics_inbound_utility.set_csv_definition('WAREHOUSE',1);
       lics_inbound_utility.set_csv_definition('SUPPLIER',2);
       lics_inbound_utility.set_csv_definition('SHIP_PERIOD',3);
-      lics_inbound_utility.set_csv_definition('ITEM',4);
-      lics_inbound_utility.set_csv_definition('FORECAST',5);
-      lics_inbound_utility.set_csv_definition('OVEKR02',6);
+      lics_inbound_utility.set_csv_definition('MATERIAL',4);
+      lics_inbound_utility.set_csv_definition('FORECAST_QTY',5);
+      lics_inbound_utility.set_csv_definition('OUTSTAND_QTY',6);
       lics_inbound_utility.set_csv_definition('EXPT_AVAIL_DATE',7);
 
       /*-*/
@@ -144,9 +144,9 @@ create or replace package body ics_app.ics_steics03_loader as
       rcd_kor_shp_summary.warehouse := lics_inbound_utility.get_variable('WAREHOUSE');
       rcd_kor_shp_summary.supplier := lics_inbound_utility.get_variable('SUPPLIER');
       rcd_kor_shp_summary.ship_period := lics_inbound_utility.get_variable('SHIP_PERIOD');
-      rcd_kor_shp_summary.item := lics_inbound_utility.get_variable('ITEM');
-      rcd_kor_shp_summary.forecast := lics_inbound_utility.get_variable('FORECAST');
-      rcd_kor_shp_summary.ovekr02 := lics_inbound_utility.get_variable('OVEKR02');
+      rcd_kor_shp_summary.material := lics_inbound_utility.get_variable('MATERIAL');
+      rcd_kor_shp_summary.forecast_qty := lics_inbound_utility.get_variable('FORECAST_QTY');
+      rcd_kor_shp_summary.outstand_qty := lics_inbound_utility.get_variable('OUTSTAND_QTY');
       rcd_kor_shp_summary.expt_avail_date := lics_inbound_utility.get_variable('EXPT_AVAIL_DATE');
 
       /*-*/

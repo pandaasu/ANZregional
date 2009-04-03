@@ -106,8 +106,6 @@ create or replace package body ics_app.ics_wmsics01_loader as
       obj_xml_stream xmlDom.domNode;
       obj_xml_node_list xmlDom.domNodeList;
       obj_xml_node xmlDom.domNode;
-      var_number boolean;
-      var_work number;
       var_output varchar2(2000 char);
       var_in_item varchar2(256 char);
       var_sap_plant varchar2(256 char);
@@ -118,6 +116,16 @@ create or replace package body ics_app.ics_wmsics01_loader as
       var_acbbd2 varchar2(256 char);
       var_stock_type varchar2(256 char);
       var_timestamp varchar2(256 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_material is
+         select t01.matnr,
+                t01.mtart
+           from lads_mat_hdr t01
+          where ltrim(t01.matnr,' 0') = var_in_item;
+      rcd_material csr_material%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -159,24 +167,33 @@ create or replace package body ics_app.ics_wmsics01_loader as
       /*-*/
       obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/FRESHNESS_REPORT/HDR');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
+
+         /*-*/
+         /* Retrieve the HDR node values
+         /*-*/
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          var_in_item := xslProcessor.valueOf(obj_xml_node,'IN_ITEM');
          var_sap_plant := xslProcessor.valueOf(obj_xml_node,'SAP_PLANT');
          var_avail_date := xslProcessor.valueOf(obj_xml_node,'AVAIL_DATE');
          var_qty := xslProcessor.valueOf(obj_xml_node,'QTY');
-         var_stor_loc := xslProcessor.valueOf(obj_xml_node,'STOR_LOC');
+         var_stor_loc := xslProcessor.valueOf(obj_xml_node,'STOR_SLOC');
          var_stock_status := xslProcessor.valueOf(obj_xml_node,'STOCK_STATUS');
          var_acbbd2 := xslProcessor.valueOf(obj_xml_node,'ACBBD2');
-         var_number := false;
-         begin
-            var_work := to_number(var_in_item);
-            var_number := true;
-         exception
-            when others then
-               var_number := false;
-         end;
-         if ((var_number = false and upper(substr(var_in_item,1,1)) >= 'A' and upper(substr(var_in_item,1,1)) <= 'Z') or
-             (var_number = true and length(var_in_item) = 8)) then
+
+         /*-*/
+         /* Retrieve the material code
+         /*-*/
+         open csr_material;
+         fetch csr_material into rcd_material;
+         if csr_material%notfound then
+            rcd_material.mtart := 'XXXX';
+         end if;
+         close csr_material;
+
+         /*-*/
+         /* Output finished good materials only
+         /*-*/
+         if rcd_material.mtart = 'FERT' then
             var_output := var_in_item||',';
             var_output := var_output||var_sap_plant||',';
             var_output := var_output||var_avail_date||',';
@@ -192,6 +209,7 @@ create or replace package body ics_app.ics_wmsics01_loader as
             var_output := var_output||to_char(tbl_outbound.count+1)||',';
             tbl_outbound(tbl_outbound.count+1) := var_output;
          end if;
+
       end loop;
 
       /*-*/
@@ -200,14 +218,16 @@ create or replace package body ics_app.ics_wmsics01_loader as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
-      /* Create the outbound interface
+      /* Create the outbound interface when required
       /*-*/
-      var_timestamp := to_char(sysdate,'yyyymmddhh24miss');
-      var_instance := lics_outbound_loader.create_interface('ICSAPL01', null, 'IN_ONHAND_SUP_STG_LADASU02.3.dat');
-      for idx in 1..tbl_outbound.count loop
-         lics_outbound_loader.append_data(tbl_outbound(idx)||to_char(tbl_outbound.count)||','||var_timestamp);
-      end loop;
-      lics_outbound_loader.finalise_interface;
+      if tbl_outbound.count != 0 then
+         var_timestamp := to_char(sysdate,'yyyymmddhh24miss');
+         var_instance := lics_outbound_loader.create_interface('ICSAPL01', null, 'IN_ONHAND_SUP_STG_LADASU02.3.dat');
+         for idx in 1..tbl_outbound.count loop
+            lics_outbound_loader.append_data(tbl_outbound(idx)||to_char(tbl_outbound.count)||','||var_timestamp);
+         end loop;
+         lics_outbound_loader.finalise_interface;
+      end if;
 
    /*-------------------*/
    /* Exception handler */

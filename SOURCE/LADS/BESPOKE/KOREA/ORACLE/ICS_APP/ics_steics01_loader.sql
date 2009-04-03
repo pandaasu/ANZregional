@@ -53,8 +53,7 @@ create or replace package body ics_app.ics_steics01_loader as
    /*-*/
    var_trn_error boolean;
    var_trn_count number;
-   type typ_outbound is table of varchar2(2000 char) index by binary_integer;
-   tbl_outbound typ_outbound;
+   rcd_kor_inb_summary kor_inb_summary%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -71,7 +70,6 @@ create or replace package body ics_app.ics_steics01_loader as
       /*-*/
       var_trn_error := false;
       var_trn_count := 0;
-      tbl_outbound.delete;
 
       /*-*/
       /* Initialise the inbound definitions
@@ -82,11 +80,18 @@ create or replace package body ics_app.ics_steics01_loader as
       lics_inbound_utility.set_csv_definition('DELIVERY',2);
       lics_inbound_utility.set_csv_definition('SOURCE_PLANT',3);
       lics_inbound_utility.set_csv_definition('SHIP_DATE',4);
-      lics_inbound_utility.set_csv_definition('DELVERY_DATE',5);
+      lics_inbound_utility.set_csv_definition('DELIVERY_DATE',5);
       lics_inbound_utility.set_csv_definition('EXPIRY_DATE',6);
       lics_inbound_utility.set_csv_definition('MATERIAL',7);
       lics_inbound_utility.set_csv_definition('QTY',8);
       lics_inbound_utility.set_csv_definition('ORDERTYPE',9);
+      lics_inbound_utility.set_csv_definition('SHIP_PERIOD',10);
+      lics_inbound_utility.set_csv_definition('RSMN_DATE',11);
+
+      /*-*/
+      /* Delete the existing Korea inbound summary data
+      /*-*/
+      delete from kor_inb_summary;
 
    /*-------------------*/
    /* Exception handler */
@@ -109,11 +114,6 @@ create or replace package body ics_app.ics_steics01_loader as
    /* This procedure performs the on data routine */
    /***********************************************/
    procedure on_data(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_output varchar2(2000 char);
 
    /*-------------*/
    /* Begin block */
@@ -143,19 +143,24 @@ create or replace package body ics_app.ics_steics01_loader as
       /*--------------------------------------*/
 
       /*-*/
-      /* Build the inbound data array
+      /* Retrieve field values
       /*-*/
-      var_output := lics_inbound_utility.get_variable('PLANT')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('EXPIRY_DATE')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('MATERIAL')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('QTY')||',';
-      var_output := var_output||lics_inbound_utility.get_variable('ORDERTYPE')||',';
-      var_output := var_output||to_char(tbl_outbound.count + 1)||',';
-      tbl_outbound(tbl_outbound.count + 1) := var_output;
+      rcd_kor_inb_summary.plant := lics_inbound_utility.get_variable('PLANT');
+      rcd_kor_inb_summary.delivery := lics_inbound_utility.get_variable('DELIVERY');
+      rcd_kor_inb_summary.source_plant := lics_inbound_utility.get_variable('SOURCE_PLANT');
+      rcd_kor_inb_summary.ship_date := lics_inbound_utility.get_variable('SHIP_DATE');
+      rcd_kor_inb_summary.delivery_date := lics_inbound_utility.get_variable('DELIVERY__DATE');
+      rcd_kor_inb_summary.expiry_date := lics_inbound_utility.get_variable('EXPIRY_DATE');
+      rcd_kor_inb_summary.material := lics_inbound_utility.get_variable('MATERIAL');
+      rcd_kor_inb_summary.qty := lics_inbound_utility.get_variable('QTY');
+      rcd_kor_inb_summary.ordertype := lics_inbound_utility.get_variable('ORDERTYPE');
+      rcd_kor_inb_summary.ship_period := lics_inbound_utility.get_variable('SHIP_PERIOD');
+      rcd_kor_inb_summary.rsmn_date := lics_inbound_utility.get_variable('RSMN_DATE');
+
+      /*-*/
+      /* Insert the inbound summary row
+      /*-*/
+      insert into kor_inb_summary values rcd_kor_inb_summary;
 
    /*-------------------*/
    /* Exception handler */
@@ -183,8 +188,6 @@ create or replace package body ics_app.ics_steics01_loader as
       /* Local definitions
       /*-*/
       var_exception varchar2(4000);
-      var_instance number(15,0);
-      var_timestamp varchar2(256 char);
 
    /*-------------*/
    /* Begin block */
@@ -195,21 +198,14 @@ create or replace package body ics_app.ics_steics01_loader as
       /* Ignore when required
       /*-*/
       if var_trn_error = true then
-         return;
-      end if;
-      if tbl_outbound.count = 0 then
+         rollback;
          return;
       end if;
 
       /*-*/
-      /* Create the outbound interface
+      /* Commit the database
       /*-*/
-      var_timestamp := to_char(sysdate,'yyyymmddhh24miss');
-      var_instance := lics_outbound_loader.create_interface('ICSAPL02', null, 'IN_INTRANSIT_SUP_STG_LADASU03.3.dat');
-      for idx in 1..tbl_outbound.count loop
-         lics_outbound_loader.append_data(tbl_outbound(idx)||to_char(tbl_outbound.count)||','||var_timestamp);
-      end loop;
-      lics_outbound_loader.finalise_interface;
+      commit;
 
    /*-------------------*/
    /* Exception handler */
@@ -222,17 +218,14 @@ create or replace package body ics_app.ics_steics01_loader as
       when others then
 
          /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
          /* Save the exception
          /*-*/
          var_exception := substr(SQLERRM, 1, 2048);
-
-         /*-*/
-         /* Finalise the outbound loader when required
-         /*-*/
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(var_exception);
-            lics_outbound_loader.finalise_interface;
-         end if;
 
          /*-*/
          /* Add the exception to the interface
