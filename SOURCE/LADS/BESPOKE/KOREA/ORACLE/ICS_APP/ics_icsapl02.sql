@@ -55,20 +55,49 @@ create or replace package body ics_app.ics_icsapl02 as
       var_output varchar2(2000 char);
       type typ_outbound is table of varchar2(2000 char) index by binary_integer;
       tbl_outbound typ_outbound;
+      var_tot_order number;
+      var_fut_spply number;
 
       /*-*/
       /* Local Cursors
       /*-*/
       cursor csr_kor_inb_summary is
          select t01.*
-         from kor_inb_summary t01
-         order by t01.xxxx asc;
+           from kor_inb_summary t01
+          order by t01.plant asc,
+                   t01.material asc,
+                   t01.ship_period asc;
       rcd_kor_inb_summary csr_kor_inb_summary%rowtype;
 
       cursor csr_kor_shp_summary is
-         select t01.*
-         from kor_shp_summary t01
-         order by t01.xxxx asc;
+         select t01.*,
+                t02.shipped_qty,
+                t03.ship_date,
+                rank() over (partition by t01.warehouse,
+                                          t01.material,
+                                          t01.ship_period
+                                 order by t01.expt_avail_date asc) as rnkseq
+           from kor_shp_summary t01,
+                (select t01.plant,
+                        t01.material,
+                        t01.ship_period,
+                        sum(to_number(nvl(t01.qty,0))) as shipped_qty
+                   from kor_inb_summary t01
+                  group by t01.plant,
+                           t01.material,
+                           t01.ship_period) t02,
+                (select to_char(t01.mars_period) as ship_period,
+                        to_char(max(t01.calendar_date),'yyyymmdd') as ship_date
+                   from mars_date t01
+                  group by to_char(t01.mars_period)) t03
+          where t01.warehouse = t02.plant(+)
+            and t01.material = t02.material(+)
+            and t01.ship_period = t02.ship_period(+)
+            and t01.ship_period = t03.ship_period(+)
+          order by t01.warehouse asc,
+                   t01.material asc,
+                   t01.ship_period asc,
+                   t01.expt_avail_date asc;
       rcd_kor_shp_summary csr_kor_shp_summary%rowtype;
 
    /*-------------*/
@@ -94,16 +123,19 @@ create or replace package body ics_app.ics_icsapl02 as
          /*-*/
          /* Output the intransit interface data when required
          /*-*/
-         if not(rcd_kor_inb_summary.xxxx is null) then
-            var_output := lics_inbound_utility.get_variable('PLANT')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('EXPIRY_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('MATERIAL')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('QTY')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('ORDERTYPE')||',';
+         if not(rcd_kor_inb_summary.rsmn_date is null) then
+            var_output := rcd_kor_inb_summary.plant||',';
+            var_output := var_output||rcd_kor_inb_summary.delivery||',';
+            var_output := var_output||rcd_kor_inb_summary.source_plant||',';
+            var_output := var_output||rcd_kor_inb_summary.ship_date||',';
+            var_output := var_output||rcd_kor_inb_summary.delivery_date||',';
+            var_output := var_output||rcd_kor_inb_summary.expiry_date||',';
+            var_output := var_output||rcd_kor_inb_summary.material||',';
+            var_output := var_output||rcd_kor_inb_summary.qty||',';
+            var_output := var_output||'F'||',';
+            var_output := var_output||rcd_kor_inb_summary.ordertype||',';
+            var_output := var_output||'ON_WATER'||',';
+            var_output := var_output||'3'||',';
             var_output := var_output||to_char(tbl_outbound.count + 1)||',';
             tbl_outbound(tbl_outbound.count + 1) := var_output;
          end if;
@@ -122,18 +154,31 @@ create or replace package body ics_app.ics_icsapl02 as
          end if;
 
          /*-*/
+         /* Calculate the values
+         /*-*/
+         var_tot_order := rcd_kor_shp_summary.forecast_qty + rcd_kor_shp_summary.outstand_qty;
+         if rcd_kor_shp_summary.rnkseq = 1 then
+            var_fut_spply := var_tot_order - rcd_kor_shp_summary.shipped_qty;
+         else
+            var_fut_spply := var_tot_order;
+         end if;
+
+         /*-*/
          /* Output the intransit interface data when required
          /*-*/
-         if not(rcd_kor_shp_summary.xxxx is null) then
-            var_output := lics_inbound_utility.get_variable('PLANT')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('DELIVERY')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('SOURCE_PLANT')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('SHIP_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('DELVERY_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('EXPIRY_DATE')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('MATERIAL')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('QTY')||',';
-            var_output := var_output||lics_inbound_utility.get_variable('ORDERTYPE')||',';
+         if var_tot_order > 0 or var_fut_spply > 0 then
+            var_output := rcd_kor_shp_summary.warehouse||',';
+            var_output := var_output||rcd_kor_shp_summary.ship_period||',';
+            var_output := var_output||''||',';
+            var_output := var_output||rcd_kor_shp_summary.ship_date||',';
+            var_output := var_output||rcd_kor_shp_summary.expt_avail_date||',';
+            var_output := var_output||''||',';
+            var_output := var_output||rcd_kor_shp_summary.material||',';
+            var_output := var_output||to_char(var_fut_spply)||',';
+            var_output := var_output||'F'||',';
+            var_output := var_output||''||',';
+            var_output := var_output||'TOTAL_FUTURE_SUPPLY'||',';
+            var_output := var_output||'3'||',';
             var_output := var_output||to_char(tbl_outbound.count + 1)||',';
             tbl_outbound(tbl_outbound.count + 1) := var_output;
          end if;
@@ -180,6 +225,11 @@ create or replace package body ics_app.ics_icsapl02 as
             lics_outbound_loader.add_exception(var_exception);
             lics_outbound_loader.finalise_interface;
          end if;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'ICS_ICSAPL02 - EXECUTE - FATAL ERROR - ' || var_exception);
 
    /*-------------*/
    /* End routine */
