@@ -158,9 +158,21 @@ create or replace package body ics_app.ics_steics01_loader as
       rcd_kor_inb_summary.rsmn_date := lics_inbound_utility.get_variable('RSMN_DATE');
 
       /*-*/
-      /* Insert the inbound summary row
+      /* Insert the inbound summary row when required
       /*-*/
-      insert into kor_inb_summary values rcd_kor_inb_summary;
+      if not(rcd_kor_inb_summary.plant is null) or
+         not(rcd_kor_inb_summary.delivery is null) or
+         not(rcd_kor_inb_summary.source_plant is null) or
+         not(rcd_kor_inb_summary.ship_date is null) or
+         not(rcd_kor_inb_summary.delivery_date is null) or
+         not(rcd_kor_inb_summary.expiry_date is null) or
+         not(rcd_kor_inb_summary.material is null) or
+         not(rcd_kor_inb_summary.qty is null) or
+         not(rcd_kor_inb_summary.ordertype is null) or
+         not(rcd_kor_inb_summary.ship_period is null) or
+         not(rcd_kor_inb_summary.rsmn_date is null) then
+         insert into kor_inb_summary values rcd_kor_inb_summary;
+      end if;
 
    /*-------------------*/
    /* Exception handler */

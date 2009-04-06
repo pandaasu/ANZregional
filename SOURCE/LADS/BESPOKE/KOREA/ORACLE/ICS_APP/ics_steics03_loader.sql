@@ -150,9 +150,17 @@ create or replace package body ics_app.ics_steics03_loader as
       rcd_kor_shp_summary.expt_avail_date := lics_inbound_utility.get_variable('EXPT_AVAIL_DATE');
 
       /*-*/
-      /* Insert the shipment summary row
+      /* Insert the shipment summary row when required
       /*-*/
-      insert into kor_shp_summary values rcd_kor_shp_summary;
+      if not(rcd_kor_shp_summary.warehouse is null) or
+         not(rcd_kor_shp_summary.supplier is null) or
+         not(rcd_kor_shp_summary.ship_period is null) or
+         not(rcd_kor_shp_summary.material is null) or
+         not(rcd_kor_shp_summary.forecast_qty is null) or
+         not(rcd_kor_shp_summary.outstand_qty is null) or
+         not(rcd_kor_shp_summary.expt_avail_date is null) then
+         insert into kor_shp_summary values rcd_kor_shp_summary;
+      end if;
 
    /*-------------------*/
    /* Exception handler */
