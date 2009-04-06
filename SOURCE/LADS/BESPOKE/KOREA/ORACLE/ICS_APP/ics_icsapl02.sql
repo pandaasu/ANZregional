@@ -244,3 +244,4 @@ end ics_icsapl02;
 /**************************/
 create or replace public synonym ics_icsapl02 for ics_app.ics_icsapl02;
 grant execute on ics_app.ics_icsapl02 to lics_app;
+grant execute on ics_app.ics_icsapl02 to site_app;
