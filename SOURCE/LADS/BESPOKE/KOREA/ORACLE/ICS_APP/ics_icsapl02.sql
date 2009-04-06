@@ -123,7 +123,7 @@ create or replace package body ics_app.ics_icsapl02 as
          /*-*/
          /* Output the intransit interface data when required
          /*-*/
-         if not(rcd_kor_inb_summary.rsmn_date is null) then
+         if rcd_kor_inb_summary.rsmn_date is null then
             var_output := rcd_kor_inb_summary.plant||',';
             var_output := var_output||rcd_kor_inb_summary.delivery||',';
             var_output := var_output||rcd_kor_inb_summary.source_plant||',';
