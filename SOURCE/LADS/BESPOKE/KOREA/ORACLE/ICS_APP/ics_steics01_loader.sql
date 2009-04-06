@@ -149,7 +149,7 @@ create or replace package body ics_app.ics_steics01_loader as
       rcd_kor_inb_summary.delivery := lics_inbound_utility.get_variable('DELIVERY');
       rcd_kor_inb_summary.source_plant := lics_inbound_utility.get_variable('SOURCE_PLANT');
       rcd_kor_inb_summary.ship_date := lics_inbound_utility.get_variable('SHIP_DATE');
-      rcd_kor_inb_summary.delivery_date := lics_inbound_utility.get_variable('DELIVERY__DATE');
+      rcd_kor_inb_summary.delivery_date := lics_inbound_utility.get_variable('DELIVERY_DATE');
       rcd_kor_inb_summary.expiry_date := lics_inbound_utility.get_variable('EXPIRY_DATE');
       rcd_kor_inb_summary.material := lics_inbound_utility.get_variable('MATERIAL');
       rcd_kor_inb_summary.qty := lics_inbound_utility.get_variable('QTY');

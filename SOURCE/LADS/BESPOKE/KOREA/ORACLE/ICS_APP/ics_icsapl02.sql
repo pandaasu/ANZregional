@@ -166,7 +166,7 @@ create or replace package body ics_app.ics_icsapl02 as
          /*-*/
          /* Output the intransit interface data when required
          /*-*/
-         if var_tot_order > 0 or var_fut_spply > 0 then
+         if var_tot_order > 0 and var_fut_spply > 0 then
             var_output := rcd_kor_shp_summary.warehouse||',';
             var_output := var_output||rcd_kor_shp_summary.ship_period||',';
             var_output := var_output||''||',';
