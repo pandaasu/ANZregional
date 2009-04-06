@@ -156,9 +156,9 @@ create or replace package body ics_app.ics_icsapl02 as
          /*-*/
          /* Calculate the values
          /*-*/
-         var_tot_order := rcd_kor_shp_summary.forecast_qty + rcd_kor_shp_summary.outstand_qty;
+         var_tot_order := nvl(rcd_kor_shp_summary.forecast_qty,0) + nvl(rcd_kor_shp_summary.outstand_qty,0);
          if rcd_kor_shp_summary.rnkseq = 1 then
-            var_fut_spply := var_tot_order - rcd_kor_shp_summary.shipped_qty;
+            var_fut_spply := var_tot_order - nvl(rcd_kor_shp_summary.shipped_qty,0);
          else
             var_fut_spply := var_tot_order;
          end if;
