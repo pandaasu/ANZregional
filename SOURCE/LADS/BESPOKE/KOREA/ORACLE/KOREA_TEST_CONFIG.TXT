@@ -64,7 +64,7 @@ insert into lics_interface values('LADWMS04','LADS to Korea Warehouse - XML Cust
 commit;
 
 
-insert into lics_job values('APOLLO_INTRANSIT','SAP BW Consumer Response Execution (12:00AM Daily)',null,20,null,'"ISI ICS Test Group"@esosn1','*PROCEDURE',null,'ics_app.icsapl02.execute','lics_schedule_tz(''*ALL'',0,''Asia/Shanghai'')','lics_schedule_tz(''*ALL'',0,''Asia/Shanghai'')','0');
+insert into lics_job values('APOLLO_INTRANSIT','Korea ICS to Apollo Intransit Extract (Hourly)',null,20,null,'"ISI ICS Test Group"@esosn1','*PROCEDURE',null,'ics_app.icsapl02.execute','trunc(sysdate+1/24,''HH24'')','trunc(sysdate+1/24,''HH24'')','0');
 
 
 
