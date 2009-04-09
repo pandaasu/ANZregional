@@ -191,6 +191,7 @@ sub ProcessForm()
    strQuery = strQuery & " where t01.hea_interface = t02.int_interface(+)"
    strQuery = strQuery & " and t01.hea_status = '3'"
    strQuery = strQuery & " group by t01.hea_interface"
+   strQuery = strQuery & " union all"
    strQuery = strQuery & " select"
    strQuery = strQuery & " '*STREAM_'||t01.sta_job_group as backlog_code,"
    strQuery = strQuery & " t01.sta_job_group||' - Stream procedures' as backlog_desc,"
