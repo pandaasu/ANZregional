@@ -198,9 +198,9 @@ create or replace package body ics_app.ics_wmsics01_loader as
             var_output := var_output||var_sap_plant||',';
             var_output := var_output||var_avail_date||',';
             var_output := var_output||var_qty||',';
-            if trim(var_stor_loc) = '0001' and (trim(var_stock_status) = '' or trim(var_stock_status) = 'S') then
+            if trim(var_stor_loc) = '0001' and (var_stock_status is null or trim(var_stock_status) = '' or trim(var_stock_status) = 'S') then
                var_output := var_output||'F,';
-            elsif trim(var_stor_loc) = '0009' and trim(var_stock_status) = '' then
+            elsif trim(var_stor_loc) = '0009' and (var_stock_status is null or trim(var_stock_status) = '') then
                var_output := var_output||'F,';
             else
                var_output := var_output||'X,';
