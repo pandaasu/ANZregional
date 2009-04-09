@@ -199,7 +199,7 @@ sub ProcessForm()
    strQuery = strQuery & " count(*) as backlog_count"
    strQuery = strQuery & " from lics_str_action t01"
    strQuery = strQuery & " where t01.sta_status = '*CREATED'"
-   strQuery = strQuery & " group by t01.sta_job_group
+   strQuery = strQuery & " group by t01.sta_job_group"
    strQuery = strQuery & " union all"
    strQuery = strQuery & " select"
    strQuery = strQuery & " '*TRIGGER_'||t01.tri_group as backlog_code,"
