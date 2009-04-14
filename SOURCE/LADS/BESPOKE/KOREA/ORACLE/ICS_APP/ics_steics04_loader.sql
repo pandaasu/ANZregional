@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ics_app.ics_steics03_loader as
+create or replace package ics_app.ics_steics04_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : ics_steics03_loader
+    Package : ics_steics04_loader
     Owner   : ics_app
 
     Description
     -----------
-    Site to ICS - STEICS03 - Pet - Shipment Summary Interface Loader (Korea)
+    Site to ICS - STEICS04 - Snack - Shipment Summary Interface Loader (Korea)
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package ics_app.ics_steics03_loader as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end ics_steics03_loader;
+end ics_steics04_loader;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ics_app.ics_steics03_loader as
+create or replace package body ics_app.ics_steics04_loader as
 
    /*-*/
    /* Private exceptions
@@ -141,7 +141,7 @@ create or replace package body ics_app.ics_steics03_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_kor_shp_summary.segment := 'PET';
+      rcd_kor_shp_summary.segment := 'SNACK';
       rcd_kor_shp_summary.warehouse := lics_inbound_utility.get_variable('WAREHOUSE');
       rcd_kor_shp_summary.supplier := lics_inbound_utility.get_variable('SUPPLIER');
       rcd_kor_shp_summary.ship_period := lics_inbound_utility.get_variable('SHIP_PERIOD');
@@ -238,11 +238,11 @@ create or replace package body ics_app.ics_steics03_loader as
    /*-------------*/
    end on_end;
 
-end ics_steics03_loader;
+end ics_steics04_loader;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ics_steics03_loader for ics_app.ics_steics03_loader;
-grant execute on ics_app.ics_steics03_loader to lics_app;
+create or replace public synonym ics_steics04_loader for ics_app.ics_steics04_loader;
+grant execute on ics_app.ics_steics04_loader to lics_app;
