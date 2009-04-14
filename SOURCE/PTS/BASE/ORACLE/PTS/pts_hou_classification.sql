@@ -20,7 +20,7 @@
 /**/
 create table pts.pts_hou_classification
    (hcl_hou_code                    number                        not null,
-    hcl_sit_code                    varchar2(32 char)             not null,
+    hcl_uni_code                    varchar2(32 char)             not null,
     hcl_tab_code                    varchar2(32 char)             not null,
     hcl_fld_code                    varchar2(32 char)             not null,
     hcl_fld_value                   varchar2(4000 char)           not null);
@@ -30,7 +30,7 @@ create table pts.pts_hou_classification
 /**/
 comment on table pts.pts_hou_classification is 'Household Classification Table';
 comment on column pts.pts_hou_classification.hcl_hou_code is 'Household code';
-comment on column pts.pts_hou_classification.hcl_sit_code is 'Site code';
+comment on column pts.pts_hou_classification.hcl_uni_code is 'Unit code';
 comment on column pts.pts_hou_classification.hcl_tab_code is 'System table code';
 comment on column pts.pts_hou_classification.hcl_fld_code is 'System field code';
 comment on column pts.pts_hou_classification.hcl_fld_value is 'Classification field value';
@@ -39,13 +39,13 @@ comment on column pts.pts_hou_classification.hcl_fld_value is 'Classification fi
 /* Primary Key Constraint
 /**/
 alter table pts.pts_hou_classification
-   add constraint pts_hou_classification_pk primary key (hcl_hou_code, hcl_sit_code, hcl_tab_code, hcl_fld_code, hcl_fld_value);
+   add constraint pts_hou_classification_pk primary key (hcl_hou_code, hcl_uni_code, hcl_tab_code, hcl_fld_code, hcl_fld_value);
 
 /**/
 /* Indexes
 /**/
 create index pts_hou_classification_ix01 on pts.pts_hou_classification
-   (hcl_sit_code, hcl_tab_code, hcl_fld_code, hcl_fld_value, hcl_hou_code);
+   (hcl_uni_code, hcl_tab_code, hcl_fld_code, hcl_fld_value, hcl_hou_code);
 
 /**/
 /* Authority
