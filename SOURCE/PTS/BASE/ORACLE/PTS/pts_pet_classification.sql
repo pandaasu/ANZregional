@@ -39,13 +39,13 @@ comment on column pts.pts_pet_classification.pcl_fld_value is 'Classification fi
 /* Primary Key Constraint
 /**/
 alter table pts.pts_pet_classification
-   add constraint pts_pet_classification_pk primary key (pcl_pet_code, pcl_sit_code, pcl_tab_code, pcl_fld_code, pcl_fld_value);
+   add constraint pts_pet_classification_pk primary key (pcl_pet_code, pcl_uni_code, pcl_tab_code, pcl_fld_code, pcl_fld_value);
 
 /**/
 /* Indexes
 /**/
 create index pts_pet_classification_ix01 on pts.pts_pet_classification
-   (pcl_sit_code, pcl_tab_code, pcl_fld_code, pcl_fld_value, pcl_pet_code);
+   (pcl_uni_code, pcl_tab_code, pcl_fld_code, pcl_fld_value, pcl_pet_code);
 
 /**/
 /* Authority
