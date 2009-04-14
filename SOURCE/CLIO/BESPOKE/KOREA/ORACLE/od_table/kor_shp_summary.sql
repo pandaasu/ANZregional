@@ -19,7 +19,8 @@
 /* Table creation
 /**/
 create table od.kor_shp_summary
-   (warehouse                         varchar2(128 char)         null,
+   (segment                           varchar2(128 char)         null,
+    warehouse                         varchar2(128 char)         null,
     supplier                          varchar2(128 char)         null,
     ship_period                       varchar2(128 char)         null,
     material                          varchar2(128 char)         null,
