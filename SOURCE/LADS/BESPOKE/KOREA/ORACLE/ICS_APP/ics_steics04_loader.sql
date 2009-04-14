@@ -44,7 +44,8 @@ create or replace package body ics_app.ics_steics04_loader as
    /*-*/
    /* Private constants 
    /*-*/
-   con_delimiter constant varchar2(32)  := ',';
+   con_segment constant varchar2(128) := 'SNACK';
+   con_delimiter constant varchar2(32) := ',';
    con_qualifier constant varchar2(10) := '"';
    con_heading_count constant number := 1;
 
@@ -87,7 +88,7 @@ create or replace package body ics_app.ics_steics04_loader as
       /*-*/
       /* Delete the existing Korea shipment summary data
       /*-*/
-      delete from kor_shp_summary;
+      delete from kor_shp_summary where segment = con_segment;
 
    /*-------------------*/
    /* Exception handler */
@@ -141,7 +142,7 @@ create or replace package body ics_app.ics_steics04_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_kor_shp_summary.segment := 'SNACK';
+      rcd_kor_shp_summary.segment := con_segment;
       rcd_kor_shp_summary.warehouse := lics_inbound_utility.get_variable('WAREHOUSE');
       rcd_kor_shp_summary.supplier := lics_inbound_utility.get_variable('SUPPLIER');
       rcd_kor_shp_summary.ship_period := lics_inbound_utility.get_variable('SHIP_PERIOD');
