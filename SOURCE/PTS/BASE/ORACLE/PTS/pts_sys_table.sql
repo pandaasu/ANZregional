@@ -34,7 +34,7 @@ create table pts.pts_sys_table
 comment on table pts.pts_sys_table is 'System Table Table';
 comment on column pts.pts_sys_table.sta_tab_code is 'System table code';
 comment on column pts.pts_sys_table.sta_tab_text is 'System table text';
-comment on column pts.pts_sys_table.sta_ent_code is 'Entity code (*HOUSEHOLD or *PET)';
+comment on column pts.pts_sys_table.sta_ent_code is 'System entity code';
 
 /**/
 /* Primary Key Constraint
