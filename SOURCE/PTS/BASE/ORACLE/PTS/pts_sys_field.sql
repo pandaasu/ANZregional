@@ -30,11 +30,12 @@ create table pts.pts_sys_field
     sfi_fld_status                  varchar2(1 char)              not null,
     sfi_upd_user                    varchar2(30 char)             not null,
     sfi_upd_date                    date                          not null
-    sfi_fld_maintainable            varchar2(1 char)              not null,
-    sfi_fld_selectable              varchar2(1 char)              not null,
-    sfi_fld_mandatory               varchar2(1 char)              not null,
-    sfi_fld_type                    varchar2(20 char)             not null,
-    sfi_fld_default                 varchar2(4000)                null);
+    sfi_fld_upd_user                varchar2(1 char)              not null,
+    sfi_fld_sel_type                varchar2(32 char)             not null,
+    sfi_fld_sel_sql                 varchar2(4000)                null,
+    sfi_fld_rul_type                varchar2(32 char)             not null,
+    sfi_fld_rul_sel_sql             varchar2(4000)                null,
+    sfi_fld_rul_tes_sql             varchar2(4000)                null);
 
 /**/
 /* Comments
@@ -46,11 +47,12 @@ comment on column pts.pts_sys_field.sfi_fld_text is 'System field text';
 comment on column pts.pts_sys_field.sfi_fld_status is 'System field status (0=Inactive or 1=Active)';
 comment on column pts.pts_sys_field.sfi_upd_user is 'System field update user';
 comment on column pts.pts_sys_field.sfi_upd_date is 'System field update date';
-comment on column pts.pts_sys_field.sfi_fld_maintainable is 'System field user maintainable (0=No, 1=Yes)';
-comment on column pts.pts_sys_field.sfi_fld_selectable is 'System field selectable (0=No, 1=Yes)';
-comment on column pts.pts_sys_field.sfi_fld_mandatory is 'System field mandatory (0=No or 1=Yes)';
-comment on column pts.pts_sys_field.sfi_fld_type is 'System field type (*SINGLE_LIST, *MULTIPLE_LIST, *SINGLE_TEXT, *SINGLE_NUMBER, *SINGLE_PERCENT)';
-comment on column pts.pts_sys_field.sfi_fld_default is 'System field default (text representation of value)';
+comment on column pts.pts_sys_field.sfi_fld_upd_user is 'System field user updatable (0=No, 1=Yes)';
+comment on column pts.pts_sys_field.sfi_fld_sel_type is 'System field selection type (*LOGIC, *OPT_SINGLE_LIST, *OPT_MULTIPLE_LIST, *MAN_SINGLE_LIST, *MAN_MULTIPLE_LIST)';
+comment on column pts.pts_sys_field.sfi_fld_sel_sql is 'System field selection SQL';
+comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type ('*NONE,*LIST, *EXCLUSIVE_LIST, *TEXT, *NUMBER, *PERCENT)';
+comment on column pts.pts_sys_field.sfi_fld_rul_sel_sql is 'System field rule selection SQL';
+comment on column pts.pts_sys_field.sfi_fld_rul_tes_sql is 'System field rule test SQL';
 
 /**/
 /* Primary Key Constraint

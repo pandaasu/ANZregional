@@ -28,8 +28,8 @@ create table pts.pts_sys_value
     sva_fld_code                    varchar2(32 char)             not null,
     sva_val_code                    number                        not null,
     sva_val_text                    varchar2(120 char)            not null,
-    sva_upd_user                    varchar2(30 char)             not null,
-    sva_upd_date                    date                          not null);
+    sva_val_status                  varchar2(1 char)              not null,
+    sva_val_rul_sql                 varchar2(4000)                null);
 
 /**/
 /* Comments
@@ -37,10 +37,10 @@ create table pts.pts_sys_value
 comment on table pts.pts_sys_value is 'System Value Table';
 comment on column pts.pts_sys_value.sva_tab_code is 'System table code';
 comment on column pts.pts_sys_value.sva_fld_code is 'System field code';
-comment on column pts.pts_sys_value.sva_val_code is 'System value code (sequence generated)';
+comment on column pts.pts_sys_value.sva_val_code is 'System value code';
 comment on column pts.pts_sys_value.sva_val_text is 'System value text';
-comment on column pts.pts_sys_value.sva_upd_user is 'System value update user';
-comment on column pts.pts_sys_value.sva_upd_date is 'System value update date';
+comment on column pts.pts_sys_value.sva_val_status is 'System value status (0=Inactive or 1=Active)';
+comment on column pts.pts_sys_value.sva_val_rul_sql is 'System value rule SQL';
 
 /**/
 /* Primary Key Constraint
