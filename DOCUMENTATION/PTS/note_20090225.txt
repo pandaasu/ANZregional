@@ -1,0 +1,24 @@
+business segment = 01 for SNACK
+
+changed to 08 for WRIGLEYS impacted 
+
+called material division in the plant BDS schema
+
+
+
+
+0.68315   - USD conversion
+- how much does WOD site team spend to support existing app?
+- include header information
+- include details on the fact it is being developed in house by Steve
+- 
+
+Raising SFAR:
+
+AP S&F Approvers:
+-----------------
+Rodrigo Melecchi
+Andrew Poll
+Andrew Loader
+Anthony Howard
+
