@@ -1,0 +1,73 @@
+
+   SAM CLASSN
+   ----------
+   MFA Asian Home Dishes = Asian Style Stir Fry
+   MFA Asian Home Dishes meal frequency = Once / week or more often
+   MFA Asian Home Dishes meal type = Chinese
+   MFA Asian Home Dishes cooking method = Use Only fresh  
+
+-----------------------------------
+-- SAMPLE CLASSIFICATION EXTRACT --
+-----------------------------------
+
+select seltext from (
+select sample_classn_type_code, '1' as seltype, 1 as selseqn,
+  'insert into pts_sys_field values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','''||trim(replace(sample_classn_type_desc,'''',''''''))||''',''*HOUSEHOLD'','''||decode(s_c_type_status,1,1,2,0,0)||''',user,sysdate,''1'',''*OPT_MULTIPLE_LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''*LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''''*SAM_CLASSIFICATION'''' and pcl_fld_code='||sample_classn_type_code||' and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>)'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '2' as seltype, sample_classn_code as selseqn,
+  'insert into pts_sys_value values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','||sample_classn_code||','''||trim(replace(sample_classn_desc,'''',''''''))||''','''||decode(sample_classn_status,1,1,2,0,0)||''',null);' as seltext
+  from sample_classn
+union all
+select sample_classn_type_code, '3' as seltype, 1 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 2 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 3 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL_ALL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 4 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL_ALL'');' as seltext
+  from sample_classn_type
+) order by sample_classn_type_code,seltype, selseqn;
+
+
+--------------------------------
+-- PET CLASSIFICATION EXTRACT --
+--------------------------------
+
+select seltext from (
+select sample_classn_type_code, '1' as seltype, 1 as selseqn,
+  'insert into pts_sys_field values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','''||trim(replace(sample_classn_type_desc,'''',''''''))||''',''*HOUSEHOLD'','''||decode(s_c_type_status,1,1,2,0,0)||''',user,sysdate,''1'',''*OPT_MULTIPLE_LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''*LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''''*SAM_CLASSIFICATION'''' and pcl_fld_code='||sample_classn_type_code||' and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>)'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '2' as seltype, sample_classn_code as selseqn,
+  'insert into pts_sys_value values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','||sample_classn_code||','''||trim(replace(sample_classn_desc,'''',''''''))||''','''||decode(sample_classn_status,1,1,2,0,0)||''',null);' as seltext
+  from sample_classn
+union all
+select sample_classn_type_code, '3' as seltype, 1 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 2 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 3 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL_ALL'');' as seltext
+  from sample_classn_type
+union all
+select sample_classn_type_code, '3' as seltype, 4 as selseqn,
+  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL_ALL'');' as seltext
+  from sample_classn_type
+) order by sample_classn_type_code,seltype, selseqn;
+
+
+
+
+                       

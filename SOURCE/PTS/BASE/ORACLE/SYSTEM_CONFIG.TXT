@@ -1,0 +1,23 @@
+
+-------------------
+-- SYSTEM ENTITY --
+-------------------
+
+insert into pts_sys_entity values('*HOUSEHOLD','Household');
+insert into pts_sys_entity values('*PET','Pet');
+insert into pts_sys_entity values('*SAMPLE','Sample');
+insert into pts_sys_entity values('*INTERVIEWER','Interviewer');
+commit;
+
+------------------
+-- SYSTEM TABLE --
+------------------
+
+insert into pts_sys_table values('*HOU_DEFINITION','Household definition data','*HOUSEHOLD','*TABLE',);
+insert into pts_sys_table values('*HOU_CLASSIFICATION','Household classification data','*HOUSEHOLD','*CLASS');
+insert into pts_sys_table values('*PET_DEFINITION','Pet definition data','*PET','*TABLE');
+insert into pts_sys_table values('*PET_CLASSIFICATION','Pet classification data','*PET','*CLASS');
+insert into pts_sys_table values('*SAM_DEFINITION','Sample definition data','*SAMPLE','*TABLE');
+insert into pts_sys_table values('*SAM_CLASSIFICATION','Sample classification data','*SAMPLE','*CLASS');
+insert into pts_sys_table values('*INT_DEFINITION','Interviewer definition data','*INTERVIEWER','*TABLE');
+commit;
