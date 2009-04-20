@@ -21,8 +21,9 @@
 create table pts.pts_hou_classification
    (hcl_hou_code                    number                        not null,
     hcl_tab_code                    varchar2(32 char)             not null,
-    hcl_fld_code                    varchar2(32 char)             not null,
-    hcl_fld_value                   number                        not null);
+    hcl_fld_code                    number                        not null,
+    hcl_fld_value                   number                        not null,
+    hcl_fld_text                    varchar2(4000 char)           null);
 
 /**/
 /* Comments
@@ -31,7 +32,8 @@ comment on table pts.pts_hou_classification is 'Household Classification Table';
 comment on column pts.pts_hou_classification.hcl_hou_code is 'Household code';
 comment on column pts.pts_hou_classification.hcl_tab_code is 'System table code';
 comment on column pts.pts_hou_classification.hcl_fld_code is 'System field code';
-comment on column pts.pts_hou_classification.hcl_fld_value is 'Classification field value';
+comment on column pts.pts_hou_classification.hcl_fld_value is 'System field value';
+comment on column pts.pts_hou_classification.hcl_fld_text is 'System field text';
 
 /**/
 /* Primary Key Constraint

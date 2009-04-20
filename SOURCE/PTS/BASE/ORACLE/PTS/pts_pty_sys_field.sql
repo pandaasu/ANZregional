@@ -21,7 +21,7 @@
 create table pts.pts_pty_sys_field
    (psf_pet_type                    number                        not null,
     psf_tab_code                    varchar2(32 char)             not null,
-    psf_fld_code                    varchar2(32 char)             not null,
+    psf_fld_code                    number                        not null,
     psf_val_type                    varchar2(32 char)             not null);
 
 /**/

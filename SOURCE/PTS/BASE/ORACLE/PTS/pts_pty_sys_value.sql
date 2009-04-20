@@ -21,7 +21,7 @@
 create table pts.pts_pty_sys_value
    (psv_pet_type                    number                        not null,
     psv_tab_code                    varchar2(32 char)             not null,
-    psv_fld_code                    varchar2(32 char)             not null,
+    psv_fld_code                    number                        not null,
     psv_val_code                    number                        not null);
 
 /**/

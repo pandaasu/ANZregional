@@ -26,8 +26,7 @@
 create table pts.pts_sys_table
    (sta_tab_code                    varchar2(32 char)             not null,
     sta_tab_text                    varchar2(120 char)            not null,
-    sta_ent_code                    varchar2(32 char)             not null,
-    sta_tab_type                    varchar2(32 char)             not null);
+    sta_ent_code                    varchar2(32 char)             not null);
 
 /**/
 /* Comments
@@ -36,7 +35,6 @@ comment on table pts.pts_sys_table is 'System Table Table';
 comment on column pts.pts_sys_table.sta_tab_code is 'System table code';
 comment on column pts.pts_sys_table.sta_tab_text is 'System table text';
 comment on column pts.pts_sys_table.sta_ent_code is 'System entity code';
-comment on column pts.pts_sys_table.sta_tab_type is 'System table type (*TABLE or *CLASS');
 
 /**/
 /* Primary Key Constraint
