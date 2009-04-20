@@ -29,7 +29,7 @@ create table pts.pts_sys_value
     sva_val_code                    number                        not null,
     sva_val_text                    varchar2(120 char)            not null,
     sva_val_status                  varchar2(1 char)              not null,
-    sva_val_rul_sql                 varchar2(4000)                null);
+    sva_val_rul_sql                 varchar2(4000 char)           null);
 
 /**/
 /* Comments

@@ -24,13 +24,13 @@ create table pts.pts_pet_definition
     pde_pet_status                  number                        not null,
     pde_upd_user                    varchar2(30 char)             not null,
     pde_upd_date                    date                          not null,
-    pde_pet_type                    number                        null,
+    pde_pet_type                    number                        not null,
     pde_hou_code                    number                        not null,
     pde_birth_year                  number                        not null,
     pde_del_notifier                number                        not null,
     pde_test_date                   date                          not null,
-    pde_feed_comment                varchar2(4000 char)           not null,
-    pde_health_comment              varchar2(4000 char)           not null);
+    pde_feed_comment                varchar2(4000 char)           null,
+    pde_health_comment              varchar2(4000 char)           null);
 
 /**/
 /* Comments
