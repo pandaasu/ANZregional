@@ -3,526 +3,520 @@
 -- SYSTEM PET FIELD/VALUE --
 ----------------------------
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet type','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',1,'Pet code','1',user,sysdate,'0',
                                  '*LOGIC',
-                                 'select pty_pet_type, pty_typ_text from pts_pet_type where pty_status = ''1'' order by pty_pet_type asc',
-                                 '*LIST',
-                                 'select pty_pet_type, pty_typ_text from pts_pet_type where pty_status = ''1'' order by pty_pet_type asc',
-                                 'p1.pde_pet_type<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_EQUAL');
+                                 null,
+                                 '*NUMBER',
+                                 null,
+                                 'p1.pde_pet_code<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*PET_DEFINITION',1,'*SELECT_WHEN_EQ');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet name','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',2,'Pet type','1',user,sysdate,'0',
+                                 '*LOGIC',
+                                 'select pty_pet_type, pty_typ_text from pts_pet_type where pty_status = ''2'' order by pty_pet_type asc',
+                                 '*LIST',
+                                 'select pty_pet_type, pty_typ_text from pts_pet_type where pty_status = ''2'' order by pty_pet_type asc',
+                                 'p1.pde_pet_type<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*PET_DEFINITION',2,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',2,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_DEFINITION',3,'Pet name','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null
                                  '*TEXT',
                                  null,
                                  'upper(nvl(p1.pde_pet_name,'*NULL'))<%RULE_TEST%>upper(''<%RULE_VALUE%>'')');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_LIKE');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_LIKE');
+insert into pts_sys_select values('*PET_DEFINITION',3,'*SELECT_WHEN_LIKE');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet status','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',4,'Pet status','1',user,sysdate,'0',
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',4))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',4))',
                                  'p1.pde_pet_status<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_value values('*PET_DEFINITION',9999,1,'Available','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,2,'On Test','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,3,'Suspended','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,4,'Flagged For Deletion','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,5,'Suspended On Test','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,9,'Deleted','1',null);
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_value values('*PET_DEFINITION',4,1,'Available','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',4,2,'On Test','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',4,3,'Suspended','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',4,4,'Flagged For Deletion','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',4,5,'Suspended On Test','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',4,9,'Deleted','1',null);
+insert into pts_sys_select values('*PET_DEFINITION',4,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',4,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet deletion notifier','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',5,'Pet deletion notifier','1',user,sysdate,'0',
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',5))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',5))',
                                  'nvl(p1.pde_del_notifier,0)<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_value values('*PET_DEFINITION',9999,1,'Interviewer','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,2,'Auditor','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,3,'Office','1',null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,4,'Household','1',null);
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_value values('*PET_DEFINITION',5,1,'Interviewer','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',5,2,'Auditor','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',5,3,'Office','1',null);
+insert into pts_sys_value values('*PET_DEFINITION',5,4,'Household','1',null);
+insert into pts_sys_select values('*PET_DEFINITION',5,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',5,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_DEFINITION','PDE_PET_AGE','Pet age','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',6,'Pet age','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null,
                                  '*NUMBER',
                                  null,
                                  '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_NOT_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_LT');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_GT');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_LE');
-insert into pts_sys_select values('*PET_DEFINITION','PDE_PET_AGE','*SELECT_WHEN_GE');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_LT');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_GT');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_LE');
+insert into pts_sys_select values('*PET_DEFINITION',6,'*SELECT_WHEN_GE');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet feeding comments','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',7,'Pet feeding comments','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null
                                  '*TEXT',
                                  null,
                                  'upper(nvl(p1.pde_feed_comment,'*NULL'))<%RULE_TEST%>upper(''<%RULE_VALUE%>'')');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_LIKE');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_LIKE');
+insert into pts_sys_select values('*PET_DEFINITION',7,'*SELECT_WHEN_LIKE');
+insert into pts_sys_select values('*PET_DEFINITION',7,'*SELECT_WHEN_NOT_LIKE');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet health comments','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',8,'Pet health comments','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null
                                  '*TEXT',
                                  null,
                                  'upper(nvl(p1.pde_health_comment,'*NULL'))<%RULE_TEST%>upper(''<%RULE_VALUE%>'')');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_LIKE');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_LIKE');
+insert into pts_sys_select values('*PET_DEFINITION',8,'*SELECT_WHEN_LIKE');
+insert into pts_sys_select values('*PET_DEFINITION',8,'*SELECT_WHEN_NOT_LIKE');
 
-insert into pts_sys_field values('*PET_DEFINITION',31,'Pet type household status','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',9,'Pet type household status','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null,
                                  '*EXCLUSIVE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',31))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9))',
                                  null);
-insert into pts_sys_value values('*PET_DEFINITION',31,1,'Only one pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code having count(*) = 1)');
-insert into pts_sys_value values('*PET_DEFINITION',31,2,'One of many pet types','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code having count(*) > 1)');
-insert into pts_sys_select values('*PET_DEFINITION',31,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION',31,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_value values('*PET_DEFINITION',9,1,'Only one pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code having count(*) = 1)');
+insert into pts_sys_value values('*PET_DEFINITION',9,2,'One of many pet types','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code having count(*) > 1)');
+insert into pts_sys_select values('*PET_DEFINITION',9,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',9,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_DEFINITION',9999,'Pet type household count','1',user,sysdate,'0',
+insert into pts_sys_field values('*PET_DEFINITION',10,'Pet type household count','1',user,sysdate,'0',
                                  '*LOGIC',
                                  null,
                                  '*EXCLUSIVE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_DEFINITION'',10))',
                                  null);
-insert into pts_sys_value values('*PET_DEFINITION',9999,1,'Only one pet of this pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code and hpt_pet_type=p1.pde_pet_type and hpt_pet_count=1)');
-insert into pts_sys_value values('*PET_DEFINITION',9999,2,'One of many pets of this pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code and hpt_pet_type=p1.pde_pet_type and hpt_pet_count>1)');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_DEFINITION',9999,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_value values('*PET_DEFINITION',10,1,'Only one pet of this pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code and hpt_pet_type=p1.pde_pet_type and hpt_pet_count=1)');
+insert into pts_sys_value values('*PET_DEFINITION',10,2,'One of many pets of this pet type','1','exists(select 1 from pts_hou_pet_type where hpt_hou_code=p1.pde_hou_code and hpt_pet_type=p1.pde_pet_type and hpt_pet_count>1)');
+insert into pts_sys_select values('*PET_DEFINITION',10,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_DEFINITION',10,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet breed','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',1,'Pet breed','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',1))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'Afghan Hound','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'Alsation / German Sheperd','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'Aust Cattle Dog','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Aust Kelpie','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',1))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=1 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',1,1,'Afghan Hound','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',1,2,'Alsation / German Sheperd','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',1,3,'Aust Cattle Dog','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',1,4,'Aust Kelpie','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',1,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',1,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',12,'Pet fusiness','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',2,'Pet fussiness','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',12))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',2))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',12))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=12 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',12,1,'Very Fussy','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',12,2,'Fussy','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',12,3,'Eats Most','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',12,4,'Eats All','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',12,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',12,'*SELECT_WHEN_NOT_EQUAL');
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',2))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=2 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',2,1,'Very Fussy','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',2,2,'Fussy','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',2,3,'Eats Most','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',2,4,'Eats All','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',2,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',2,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',7,'Pet sex','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',3,'Pet sex','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',3))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',3))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=3 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',3,1,'Male','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',3,2,'Female','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',3,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',3,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',4,'Pet health restrictions','1',user,sysdate,'1',
+                                 '*OPT_MULTIPLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',4))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',4))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=4 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,1,'NO DRY','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,2,'NO CAN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,3,'NO CHILL','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,4,'NO PAL','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,5,'NO OFFAL','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,6,'NO BEEF','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,7,'NO SWEETSv
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,8,'NO COOKED BONES','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,9,'NO WET','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,10,'NO MILK','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,11,'NO RIVAL CAN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,12,'NO LIVER','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,13,'NO WHISKETTES','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,14,'NO FISH','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,15,'NO MEATYBITES','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,16,'TARGETTED SELECTION FOR 15 DOG','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,17,'NO WHISKAS','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,18,'NO WORMER','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,19,'NO GENERICS','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,20,'NO CHUM','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,21,'NEW PANELISTS','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,22,'NO CHUB','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,23,'NO RASK/DENTABONE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,24,'NO CHICKEN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,25,'NO PASTA/RICE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,26,'NO LUCKY DOG CAN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,27,'NO CASSEROLE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,28,'NO ARTIFICIALLY COLOURED BISCU','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,29,'NO TUNA','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,30,'NO KIT-E-KAT','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,31,'NO DINE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,32,'NO CHEESE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,33,'NO LOAF','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,34,'NO SOYA BEAN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,35,'NO RABBIT','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,36,'NO GO CAT (DRY)','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,37,'NO JELLYMEAT','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,38,'NO PILCHARDS','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,39,'NO SARDINES','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,40,'NO CORN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,41,'NO MARROWBONE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,42,'NO LAMB','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,43,'NO KANGAROO','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,44,'NO SNAPPY TOM','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,45,'NO SALMON','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,46,'NO VEGETABLES','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,47,'NO MY DOG','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,48,'NO MEAT','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,49,'NO DIFFERENCE TESTS','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,50,'NO CHEF','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,51,'NO GARFIELD','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,52,'NO POTATO','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,53,'NO PEDIGREE','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,54,'NO EGG','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,55,'NO PURINA ONE FISH','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',4,56,'NO LARGER CANS (SS ONLY)','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',4,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',4,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',4,'*SELECT_WHEN_EQUAL_ALL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',4,'*SELECT_WHEN_NOT_EQUAL_ALL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',5,'Pet desexed','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',5))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',5))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=5 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',5,1,'Yes','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',5,2,'No','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',5,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',5,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',6,'Pet pedigree','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',6))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',6))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=6 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',6,1,'Yes','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',6,2,'No','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',6,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',6,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',7,'Pet relationship','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',7))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',7))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=7 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',7,1,'Male','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',7,2,'Female','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',7,1,'Personal','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',7,2,'Family','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',7,3,'Working','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',7,4,'Other','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',7,5,'Feeding Facility','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',7,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',7,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',35,'Pet health restrictions','1',user,sysdate,'1',
-                                 '*OPT_MULTIPLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',35))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',35))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=35 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,1,'NO DRY','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,2,'NO CAN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,3,'NO CHILL','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,4,'NO PAL','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,5,'NO OFFAL','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,6,'NO BEEF','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,7,'NO SWEETSv
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,8,'NO COOKED BONES','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,9,'NO WET','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,10,'NO MILK','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,11,'NO RIVAL CAN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,12,'NO LIVER','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,13,'NO WHISKETTES','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,14,'NO FISH','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,15,'NO MEATYBITES','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,16,'TARGETTED SELECTION FOR 15 DOG','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,17,'NO WHISKAS','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,18,'NO WORMER','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,19,'NO GENERICS','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,20,'NO CHUM','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,21,'NEW PANELISTS','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,22,'NO CHUB','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,23,'NO RASK/DENTABONE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,24,'NO CHICKEN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,25,'NO PASTA/RICE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,26,'NO LUCKY DOG CAN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,27,'NO CASSEROLE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,28,'NO ARTIFICIALLY COLOURED BISCU','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,29,'NO TUNA','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,30,'NO KIT-E-KAT','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,31,'NO DINE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,32,'NO CHEESE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,33,'NO LOAF','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,34,'NO SOYA BEAN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,35,'NO RABBIT','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,36,'NO GO CAT (DRY)','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,37,'NO JELLYMEAT','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,38,'NO PILCHARDS','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,39,'NO SARDINES','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,40,'NO CORN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,41,'NO MARROWBONE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,42,'NO LAMB','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,43,'NO KANGAROO','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,44,'NO SNAPPY TOM','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,45,'NO SALMON','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,46,'NO VEGETABLES','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,47,'NO MY DOG','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,48,'NO MEAT','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,49,'NO DIFFERENCE TESTS','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,50,'NO CHEF','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,51,'NO GARFIELD','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,52,'NO POTATO','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,53,'NO PEDIGREE','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,54,'NO EGG','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,55,'NO PURINA ONE FISH','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',35,56,'NO LARGER CANS (SS ONLY)','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',35,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',35,'*SELECT_WHEN_NOT_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',35,'*SELECT_WHEN_EQUAL_ALL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',35,'*SELECT_WHEN_NOT_EQUAL_ALL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet desexed','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'Yes','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'No','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet pedigree','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'Yes','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'No','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',8,'Pet relationship','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',8,'Pet size','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',8))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',8))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=8 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',8,1,'Personal','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',8,2,'Family','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',8,3,'Working','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',8,4,'Other','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',8,5,'Feeding Facility','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',8,1,'Large','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',8,2,'Medium','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',8,3,'Small','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',8,4,'Toy','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',9,'Pet size','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',9,'Pet activity level','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9,1,'Large','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9,2,'Medium','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9,3,'Small','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9,4,'Toy','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',9,1,'Extremely Active','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',9,2,'Active','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',9,3,'Fairly Inactive','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',9,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',9,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',10,'Pet activity level','1',user,sysdate,'1',
+             
+insert into pts_sys_field values('*PET_CLASSIFICATION',10,'Pet awake','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',10))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',10))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=10 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',10,1,'Extremely Active','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',10,2,'Active','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',10,3,'Fairly Inactive','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,1,'All Outside','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,2,'Mostly Outside','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,3,'Mostly Inside','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,4,'All Inside','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,5,'Balanced','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',10,6,'Feeding Facility','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',10,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',10,'*SELECT_WHEN_NOT_EQUAL');
-             
-insert into pts_sys_field values('*PET_CLASSIFICATION',11,'Pet awake','1',user,sysdate,'1',
+insert into pts_sys_select values('*PET_CLASSIFICATION',10,'*SELECT_WHEN_NOT_EQUAL');   
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',11,'Pet asleep','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',11))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',11))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=11 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,1,'All Outside','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,2,'Mostly Outside','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,3,'Mostly Inside','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,4,'All Inside','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,5,'Balanced','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',11,6,'Feeding Facility','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',11,1,'Bedroom','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',11,2,'Any other room in house','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',11,3,'Kennel/Basket','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',11,4,'Outside','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',11,5,'Feeding Facility','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',11,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',11,'*SELECT_WHEN_NOT_EQUAL');   
+insert into pts_sys_select values('*PET_CLASSIFICATION',11,'*SELECT_WHEN_NOT_EQUAL'); 
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',17,'Pet asleep','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',12,'Pet meals','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',17))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',12))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',17))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=17 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',17,1,'Bedroom','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',17,2,'Any other room in house','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',17,3,'Kennel/Basket','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',17,4,'Outside','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',17,5,'Feeding Facility','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',17,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',17,'*SELECT_WHEN_NOT_EQUAL'); 
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',13,'Pet meals','1',user,sysdate,'1',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',12))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=12 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,1,'1 Main','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,2,'1 Main & 1 Small','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,3,'1 Main & 2 Small','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,4,'Several Small','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,5,'2 Equal Size','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,6,'.','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,7,'.','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',12,8,'.','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',12,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',12,'*SELECT_WHEN_NOT_EQUAL'); 
+                            
+insert into pts_sys_field values('*PET_CLASSIFICATION',13,'Pet main meal','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',13))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',13))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=13 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,1,'1 Main','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,2,'1 Main & 1 Small','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,3,'1 Main & 2 Small','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,4,'Several Small','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,5,'2 Equal Size','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,6,'.','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,7,'.','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',13,8,'.','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,1,'Morning','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,2,'Midday','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,3,'Evening','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,4,'Available all day','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,5,'Only at set meal times','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',13,6,'Mixed in with other foods','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',13,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',13,'*SELECT_WHEN_NOT_EQUAL'); 
-                            
-insert into pts_sys_field values('*PET_CLASSIFICATION',14,'Pet main meal','1',user,sysdate,'1',
+insert into pts_sys_select values('*PET_CLASSIFICATION',13,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',14,'Pet can feeding frequency','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',14))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',14))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=14 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,1,'Morning','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,2,'Midday','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,3,'Evening','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,4,'Available all day','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,5,'Only at set meal times','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,6,'Mixed in with other foods','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',14,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',14,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',14,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',14,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',14,5,'Occasionally','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',14,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',14,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',14,'Pet main meal','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',15,'Pet chub feeding frequency','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',14))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',15))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',14))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=14 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,1,'Morning','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,2,'Midday','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,3,'Evening','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,4,'Available all day','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,5,'Only at set meal times','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',14,6,'Mixed in with other foods','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',14,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',14,'*SELECT_WHEN_NOT_EQUAL');
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',15))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=15 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',15,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',15,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',15,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',15,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',15,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',15,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',15,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet can feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet chub feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet dry feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet chilled feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet semi-moist feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet scrap/raw feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet meat/fish feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet bones feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet special drinks frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',9999,'Pet snacks feeding frequency','1',user,sysdate,'1',
-                                 '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',9999))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',9999))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=9999 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,1,'5 to 7 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,2,'3 to 4 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,3,'1 to 2 times/week','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,4,'Never','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',9999,5,'Occasionally','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',9999,'*SELECT_WHEN_NOT_EQUAL');
-
-insert into pts_sys_field values('*PET_CLASSIFICATION',16,'Pet feeding preference','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',16,'Pet dry feeding frequency','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',16))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',16))',
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=16 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',16,1,'Meat','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',16,2,'Fish','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',16,3,'No Preference','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',16,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',16,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',16,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',16,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',16,5,'Occasionally','1',null);
 insert into pts_sys_select values('*PET_CLASSIFICATION',16,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',16,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',37,'Pet food format','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',17,'Pet chilled feeding frequency','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',37))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',17))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',37))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=37 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,1,'Traditional solid format','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,2,'Chunks in gravy','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,3,'Chunks in jelly','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,4,'Mince','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,5,'Fish in a solid format','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,6,'Fish in a jelly','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',37,7,'Multiple','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',37,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',37,'*SELECT_WHEN_NOT_EQUAL');
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',17))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=17 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',17,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',17,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',17,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',17,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',17,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',17,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',17,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*PET_CLASSIFICATION',60,'Pet environment','1',user,sysdate,'1',
+insert into pts_sys_field values('*PET_CLASSIFICATION',18,'Pet semi-moist feeding frequency','1',user,sysdate,'1',
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',60))',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',18))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',60))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=60 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
-insert into pts_sys_value values('*PET_CLASSIFICATION',60,1,'Household','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',60,2,'Cattery','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',60,3,'WPCN','1',null);
-insert into pts_sys_value values('*PET_CLASSIFICATION',60,4,'Japan','1',null);
-insert into pts_sys_select values('*PET_CLASSIFICATION',60,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLASSIFICATION',60,'*SELECT_WHEN_NOT_EQUAL');
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',18))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=18 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',18,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',18,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',18,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',18,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',18,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',18,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',18,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',19,'Pet scrap/raw feeding frequency','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',19))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',19))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=19 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',19,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',19,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',19,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',19,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',19,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',19,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',19,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',20,'Pet meat/fish feeding frequency','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',20))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',20))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=20 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',20,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',20,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',20,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',20,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',20,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',20,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',20,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',21,'Pet bones feeding frequency','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',21))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',21))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=21 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',21,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',21,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',21,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',21,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',21,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',21,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',21,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',22,'Pet special drinks frequency','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',22))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',22))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=22 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',22,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',22,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',22,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',22,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',22,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',22,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',22,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',23,'Pet snacks feeding frequency','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',23))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',23))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=23 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',23,1,'5 to 7 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',23,2,'3 to 4 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',23,3,'1 to 2 times/week','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',23,4,'Never','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',23,5,'Occasionally','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',23,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',23,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',24,'Pet feeding preference','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',24))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',24))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=24 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',24,1,'Meat','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',24,2,'Fish','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',24,3,'No Preference','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',24,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',24,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',25,'Pet food format','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',25))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',25))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=25 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,1,'Traditional solid format','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,2,'Chunks in gravy','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,3,'Chunks in jelly','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,4,'Mince','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,5,'Fish in a solid format','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,6,'Fish in a jelly','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',25,7,'Multiple','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',25,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',25,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*PET_CLASSIFICATION',26,'Pet environment','1',user,sysdate,'1',
+                                 '*OPT_SINGLE_LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',26))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_pet_function.list_classification(''*PET_CLASSIFICATION'',26))',
+                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_CLASSIFICATION'' and pcl_fld_code=26 and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>'));
+insert into pts_sys_value values('*PET_CLASSIFICATION',26,1,'Household','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',26,2,'Cattery','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',26,3,'WPCN','1',null);
+insert into pts_sys_value values('*PET_CLASSIFICATION',26,4,'Japan','1',null);
+insert into pts_sys_select values('*PET_CLASSIFICATION',26,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLASSIFICATION',26,'*SELECT_WHEN_NOT_EQUAL');
+
+commit;
 
 -----------------------------------------------
 -- SYSTEM PET TYPE FIELD/VALUE RELATIONSHIPS --

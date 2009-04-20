@@ -13,11 +13,41 @@ commit;
 -- SYSTEM TABLE --
 ------------------
 
-insert into pts_sys_table values('*HOU_DEFINITION','Household definition data','*HOUSEHOLD','*TABLE',);
-insert into pts_sys_table values('*HOU_CLASSIFICATION','Household classification data','*HOUSEHOLD','*CLASS');
-insert into pts_sys_table values('*PET_DEFINITION','Pet definition data','*PET','*TABLE');
-insert into pts_sys_table values('*PET_CLASSIFICATION','Pet classification data','*PET','*CLASS');
-insert into pts_sys_table values('*SAM_DEFINITION','Sample definition data','*SAMPLE','*TABLE');
-insert into pts_sys_table values('*SAM_CLASSIFICATION','Sample classification data','*SAMPLE','*CLASS');
-insert into pts_sys_table values('*INT_DEFINITION','Interviewer definition data','*INTERVIEWER','*TABLE');
+insert into pts_sys_table values('*HOU_DEFINITION','Household definition data','*HOUSEHOLD');
+insert into pts_sys_table values('*HOU_CLASSIFICATION','Household classification data','*HOUSEHOLD');
+insert into pts_sys_table values('*HOU_SAMPLE','Pet sample data','*HOUSEHOLD');
+insert into pts_sys_table values('*PET_DEFINITION','Pet definition data','*PET');
+insert into pts_sys_table values('*PET_CLASSIFICATION','Pet classification data','*PET');
+insert into pts_sys_table values('*PET_SAMPLE','Pet sample data','*PET');
+insert into pts_sys_table values('*SAM_DEFINITION','Sample definition data','*SAMPLE');
+insert into pts_sys_table values('*INT_DEFINITION','Interviewer definition data','*INTERVIEWER');
 commit;
+
+
+
+
+--GEOG_ZONE_TYPE_CODE             	8
+--GEOG_ZONE_CODE                  	0
+HHOLD_CODE                      	74837
+PET_CODE                        	149418   ????????  705917
+PET_TYPE_CODE                   	8
+QUESTION_CODE                   	1682
+RCMPY_CODE                      	1
+SAMPLE_CLASSN_CODE              	0
+SAMPLE_CLASSN_TYPE_CODE         	50
+SAMPLE_CODE                     	6986
+SESSION_CODE                    	12345
+SLCT_CRT_SET_CODE               	120
+PET_BREED_CODE                  	152
+TEST_CODE                       	4340
+TEST_TYPE_CODE                  	111
+INTVIEWER_CODE                  	24
+
+
+HOU_DEF_FLD = 14
+HOU_CLA_FLD = 15
+PET_DEF_FLD = 10
+PET_CLA_FLD = 26
+
+
+SAM_CLA_FLD = 49
