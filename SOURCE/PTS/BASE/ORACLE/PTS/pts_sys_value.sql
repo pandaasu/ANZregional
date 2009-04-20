@@ -25,7 +25,7 @@
 /**/
 create table pts.pts_sys_value
    (sva_tab_code                    varchar2(32 char)             not null,
-    sva_fld_code                    varchar2(32 char)             not null,
+    sva_fld_code                    number                        not null,
     sva_val_code                    number                        not null,
     sva_val_text                    varchar2(120 char)            not null,
     sva_val_status                  varchar2(1 char)              not null,

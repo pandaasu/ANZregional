@@ -25,7 +25,7 @@
 /**/
 create table pts.pts_sys_select
    (sse_tab_code                    varchar2(32 char)             not null,
-    sse_fld_code                    varchar2(32 char)             not null,
+    sse_fld_code                    number                        not null,
     sse_sel_code                    varchar2(32 char)             not null);
 
 /**/
