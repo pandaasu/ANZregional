@@ -25,7 +25,7 @@
 /**/
 create table pts.pts_sys_field
    (sfi_tab_code                    varchar2(32 char)             not null,
-    sfi_fld_code                    varchar2(32 char)             not null,
+    sfi_fld_code                    number                        not null,
     sfi_fld_text                    varchar2(120 char)            not null,
     sfi_fld_status                  varchar2(1 char)              not null,
     sfi_upd_user                    varchar2(30 char)             not null,
