@@ -32,7 +32,7 @@ comment on table pts.pts_wor_sel_rule is 'Work Selection Rule Table';
 comment on column pts.pts_wor_sel_rule.wsr_sel_group is 'Selection group (*GROUP01 - *GROUP99)';
 comment on column pts.pts_wor_sel_rule.wsr_tab_code is 'System table code';
 comment on column pts.pts_wor_sel_rule.wsr_fld_code is 'System field code';
-comment on column pts.pts_wor_sel_rule.wsr_sel_code is 'System rule code';
+comment on column pts.pts_wor_sel_rule.wsr_rul_code is 'System rule code';
 
 /**/
 /* Authority
