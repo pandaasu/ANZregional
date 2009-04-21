@@ -27,7 +27,8 @@ create table pts.pts_sys_rule
    (sru_rul_code                    varchar2(32 char)             not null,
     sru_rul_cond                    varchar2(32 char)             not null,
     sru_rul_test                    varchar2(32 char)             not null,
-    sru_rul_lnot                    varchar2(1 char)              not null);
+    sru_rul_lnot                    varchar2(1 char)              not null,
+    sru_rul_tflg                    varchar2(1 char)              not null);
 
 /**/
 /* Comments
@@ -37,6 +38,7 @@ comment on column pts.pts_sys_rule.sru_rul_code is 'System rule code';
 comment on column pts.pts_sys_rule.sru_rul_cond is 'System rule condition';
 comment on column pts.pts_sys_rule.sru_rul_test is 'System rule test';
 comment on column pts.pts_sys_rule.sru_rul_lnot is 'System rule logical not (0=no or 1=yes)';
+comment on column pts.pts_sys_rule.sru_rul_tflg is 'System rule test only flag (0=no or 1=yes)';
 
 /**/
 /* Primary Key Constraint
