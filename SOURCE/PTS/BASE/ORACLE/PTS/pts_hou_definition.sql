@@ -32,7 +32,6 @@ create table pts.pts_hou_definition
     hde_loc_country                 varchar2(32 char)             null,
     hde_tel_areacode                varchar2(32 char)             null,
     hde_tel_number                  varchar2(32 char)             null,
-   -- hde_tel_mobile                  varchar2(32 char)             not null,
     hde_con_surname                 varchar2(120 char)            null,
     hde_con_fullname                varchar2(120 char)            null,
     hde_con_birth_year              number                        null,

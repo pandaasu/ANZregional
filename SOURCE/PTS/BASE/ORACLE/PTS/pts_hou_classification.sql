@@ -23,7 +23,7 @@ create table pts.pts_hou_classification
     hcl_tab_code                    varchar2(32 char)             not null,
     hcl_fld_code                    number                        not null,
     hcl_val_code                    number                        not null,
-    hcl_fld_text                    varchar2(4000 char)           null);
+    hcl_val_text                    varchar2(4000 char)           null);
 
 /**/
 /* Comments
@@ -33,7 +33,7 @@ comment on column pts.pts_hou_classification.hcl_hou_code is 'Household code';
 comment on column pts.pts_hou_classification.hcl_tab_code is 'System table code';
 comment on column pts.pts_hou_classification.hcl_fld_code is 'System field code';
 comment on column pts.pts_hou_classification.hcl_val_code is 'System value code';
-comment on column pts.pts_hou_classification.hcl_fld_text is 'System field text';
+comment on column pts.pts_hou_classification.hcl_val_text is 'System value text';
 
 /**/
 /* Primary Key Constraint

@@ -20,15 +20,15 @@
 /**/
 create table pts.pts_pet_definition
    (pde_pet_code                    number                        not null,
-    pde_pet_name                    varchar2(120 char)            not null
     pde_pet_status                  number                        not null,
     pde_upd_user                    varchar2(30 char)             not null,
     pde_upd_date                    date                          not null,
-    pde_pet_type                    number                        not null,
-    pde_hou_code                    number                        not null,
-    pde_birth_year                  number                        not null,
-    pde_del_notifier                number                        not null,
-    pde_test_date                   date                          not null,
+    pde_pet_name                    varchar2(120 char)            null,
+    pde_pet_type                    number                        null,
+    pde_hou_code                    number                        null,
+    pde_birth_year                  number                        null,
+    pde_del_notifier                number                        null,
+    pde_test_date                   date                          null,
     pde_feed_comment                varchar2(4000 char)           null,
     pde_health_comment              varchar2(4000 char)           null);
 
@@ -37,10 +37,10 @@ create table pts.pts_pet_definition
 /**/
 comment on table pts.pts_pet_definition is 'Pet Definition Table';
 comment on column pts.pts_pet_definition.pde_pet_code is 'Pet code';
-comment on column pts.pts_pet_definition.pde_pet_name is 'Pet name';
 comment on column pts.pts_pet_definition.pde_pet_status is 'Pet status';
 comment on column pts.pts_pet_definition.pde_upd_user is 'Pet update user';
 comment on column pts.pts_pet_definition.pde_upd_date is 'Pet update date';
+comment on column pts.pts_pet_definition.pde_pet_name is 'Pet name';
 comment on column pts.pts_pet_definition.pde_pet_type is 'Pet type code';
 comment on column pts.pts_pet_definition.pde_hou_code is 'Household code';
 comment on column pts.pts_pet_definition.pde_birth_year is 'Pet birth year';
