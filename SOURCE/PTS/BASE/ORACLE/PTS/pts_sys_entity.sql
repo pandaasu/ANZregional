@@ -25,7 +25,8 @@
 /**/
 create table pts.pts_sys_entity
    (sen_ent_code                    varchar2(32 char)             not null,
-    sen_ent_text                    varchar2(120 char)            not null);
+    sen_ent_text                    varchar2(120 char)            not null,
+    sen_ent_sel_sql                 varchar2(4000)                null);
 
 /**/
 /* Comments
@@ -33,6 +34,7 @@ create table pts.pts_sys_entity
 comment on table pts.pts_sys_entity is 'System Entity Table';
 comment on column pts.pts_sys_entity.sen_ent_code is 'System entity code';
 comment on column pts.pts_sys_entity.sen_ent_text is 'System entity text';
+comment on column pts.pts_sys_entity.sen_ent_sel_sql is 'System entity selection SQL';
 
 /**/
 /* Primary Key Constraint
