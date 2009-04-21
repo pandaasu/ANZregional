@@ -24,8 +24,8 @@ create table pts.pts_tes_sel_value
     tsv_tab_code                    varchar2(32 char)             not null,
     tsv_fld_code                    number                        not null,
     tsv_val_code                    number                        not null,
-    tsv_fld_text                    varchar2(4000 char)           not null,
-    tsv_fld_percent                 number                        not null,
+    tsv_val_text                    varchar2(256 char)            null,
+    tsv_val_pcnt                    number                        null,
     tsv_req_pan_count               number                        not null,
     tsv_req_res_count               number                        not null,
     tsv_sel_pan_count               number                        not null,
@@ -40,8 +40,8 @@ comment on column pts.pts_tes_sel_value.tsv_sel_group is 'Selection group code (
 comment on column pts.pts_tes_sel_value.tsv_tab_code is 'System table code';
 comment on column pts.pts_tes_sel_value.tsv_fld_code is 'System field code';
 comment on column pts.pts_tes_sel_value.tsv_val_code is 'System value code';
-comment on column pts.pts_tes_sel_value.tsv_fld_text is 'Field text';
-comment on column pts.pts_tes_sel_value.tsv_fld_percent is 'Field percent';
+comment on column pts.pts_tes_sel_value.tsv_val_text is 'Value text';
+comment on column pts.pts_tes_sel_value.tsv_val_pcnt is 'Value percent';
 comment on column pts.pts_tes_sel_value.tsv_req_pan_count is 'Value requested panel count';
 comment on column pts.pts_tes_sel_value.tsv_req_res_count is 'Value requested reserve count';
 comment on column pts.pts_tes_sel_value.tsv_sel_pan_count is 'Value selected panel count';
@@ -52,12 +52,6 @@ comment on column pts.pts_tes_sel_value.tsv_sel_res_count is 'Value selected res
 /**/
 alter table pts.pts_tes_sel_value
    add constraint pts_tes_sel_value_pk primary key (tsv_tes_code, tsv_sel_group, tsv_tab_code, tsv_fld_code, tsv_val_code);
-
-/**/
-/* Indexes
-/**/
-create index pts_tes_sel_value_ix01 on pts.pts_tes_sel_value
-   (tsv_site, tsv_cla_entity, tsv_cla_value);
 
 /**/
 /* Authority
