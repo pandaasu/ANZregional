@@ -50,7 +50,7 @@ comment on column pts.pts_sys_field.sfi_upd_date is 'System field update date';
 comment on column pts.pts_sys_field.sfi_fld_upd_user is 'System field user updatable (0=No, 1=Yes)';
 comment on column pts.pts_sys_field.sfi_fld_sel_type is 'System field selection type (*LOGIC, *OPT_SINGLE_LIST, *OPT_MULTIPLE_LIST, *MAN_SINGLE_LIST, *MAN_MULTIPLE_LIST, *TEXT, *NUMBER)';
 comment on column pts.pts_sys_field.sfi_fld_sel_sql is 'System field selection SQL';
-comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*LIST, *EXCLUSIVE_LIST, *TEXT, *NUMBER)';
+comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*LIST, *TEXT, *NUMBER)';
 comment on column pts.pts_sys_field.sfi_fld_rul_sel_sql is 'System field rule selection SQL';
 comment on column pts.pts_sys_field.sfi_fld_rul_tes_sql is 'System field rule test SQL';
 

@@ -27,9 +27,7 @@ create table pts.pts_sys_value
    (sva_tab_code                    varchar2(32 char)             not null,
     sva_fld_code                    number                        not null,
     sva_val_code                    number                        not null,
-    sva_val_text                    varchar2(120 char)            not null,
-    sva_val_status                  varchar2(1 char)              not null,
-    sva_val_rul_sql                 varchar2(4000)                null);
+    sva_val_text                    varchar2(120 char)            not null);
 
 /**/
 /* Comments
@@ -39,8 +37,6 @@ comment on column pts.pts_sys_value.sva_tab_code is 'System table code';
 comment on column pts.pts_sys_value.sva_fld_code is 'System field code';
 comment on column pts.pts_sys_value.sva_val_code is 'System value code';
 comment on column pts.pts_sys_value.sva_val_text is 'System value text';
-comment on column pts.pts_sys_value.sva_val_status is 'System value status (0=Inactive or 1=Active)';
-comment on column pts.pts_sys_value.sva_val_rul_sql is 'System value rule SQL';
 
 /**/
 /* Primary Key Constraint

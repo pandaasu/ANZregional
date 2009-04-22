@@ -22,6 +22,7 @@ create table pts.pts_tes_sel_group
    (tsg_tes_code                    number                        not null,
     tsg_sel_group                   varchar2(32 char)             not null,
     tsg_sel_text                    varchar2(120 char)            not null,
+    tsg_sel_pcnt                    number                        not null,
     tsg_req_pan_count               number                        not null,
     tsg_req_res_count               number                        not null,
     tsg_sel_pan_count               number                        not null,
@@ -34,6 +35,7 @@ comment on table pts.pts_tes_sel_group is 'Test Selection Group Table';
 comment on column pts.pts_tes_sel_group.tsg_test is 'Test code';
 comment on column pts.pts_tes_sel_group.tsg_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_tes_sel_group.tsg_sel_text is 'Selection group text';
+comment on column pts.pts_tes_sel_group.tsg_sel_pcnt is 'Selection mix percentage';
 comment on column pts.pts_tes_sel_group.tsg_req_pan_count is 'Selection group requested panel count';
 comment on column pts.pts_tes_sel_group.tsg_req_res_count is 'Selection group requested reserve count';
 comment on column pts.pts_tes_sel_group.tsg_sel_pan_count is 'Selection group selected panel count';

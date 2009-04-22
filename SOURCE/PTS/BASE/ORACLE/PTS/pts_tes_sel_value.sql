@@ -41,7 +41,7 @@ comment on column pts.pts_tes_sel_value.tsv_tab_code is 'System table code';
 comment on column pts.pts_tes_sel_value.tsv_fld_code is 'System field code';
 comment on column pts.pts_tes_sel_value.tsv_val_code is 'System value code';
 comment on column pts.pts_tes_sel_value.tsv_val_text is 'Value text';
-comment on column pts.pts_tes_sel_value.tsv_val_pcnt is 'Value percent';
+comment on column pts.pts_tes_sel_value.tsv_val_pcnt is 'Value percent mix';
 comment on column pts.pts_tes_sel_value.tsv_req_pan_count is 'Value requested panel count';
 comment on column pts.pts_tes_sel_value.tsv_req_res_count is 'Value requested reserve count';
 comment on column pts.pts_tes_sel_value.tsv_sel_pan_count is 'Value selected panel count';
