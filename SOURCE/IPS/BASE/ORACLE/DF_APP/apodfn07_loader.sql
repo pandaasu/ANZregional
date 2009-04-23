@@ -43,15 +43,17 @@ create or replace package body apodfn07_loader as
    pragma exception_init(application_exception, -20000);
 
    /*-*/
+   /* Private constants 
+   /*-*/
+   con_delimiter constant varchar2(32)  := ';';
+   con_qualifier constant varchar2(10) := '"';
+
+   /*-*/
    /* Private definitions 
    /*-*/
    var_trn_start boolean;
-   var_trn_ignore boolean;
    var_trn_error boolean;
-   rcd_load_file load_file%rowtype;
-   rcd_load_sply load_sply%rowtype;
-   var_count number;
-   var_result_msg varchar2(3900);
+   rcd_dmnd_mapping dmnd_mapping%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -66,29 +68,30 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Initialise the transaction variables
       /*-*/
-      var_trn_start := true;
-      var_trn_ignore := false;
+      var_trn_start := false;
       var_trn_error := false;
-      var_count := 0;
-
-
-
-Model	*DmdUnit	*DmdGroup	*DFULoc	*Item	*SKULoc	*Eff	*Disc	AllocFactor	SupersedeSw	ConvFactor
-
 
       /*-*/
       /* Initialise the inbound definitions
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_definition('DET','ITEM',8);
-      lics_inbound_utility.set_definition('DET','DEST',5);
-      lics_inbound_utility.set_definition('DET','QTY',20);
-      lics_inbound_utility.set_definition('DET','SHIPDATE',8);
-      lics_inbound_utility.set_definition('DET','BLANKS1',48);
-      lics_inbound_utility.set_definition('DET','CASTING_DATE',8);
+      lics_inbound_utility.set_csv_definition('MODEL',1);
+      lics_inbound_utility.set_csv_definition('DMD_UNIT',2);
+      lics_inbound_utility.set_csv_definition('DMD_GROUP',3);
+      lics_inbound_utility.set_csv_definition('DFU_LOCN',4);
+      lics_inbound_utility.set_csv_definition('ITEM',5);
+      lics_inbound_utility.set_csv_definition('SKU_LOCN',6);
+      lics_inbound_utility.set_csv_definition('STR_DATE',7);
+      lics_inbound_utility.set_csv_definition('END_DATE',8);
+      lics_inbound_utility.set_csv_definition('ALLOC_FACTOR',9);
+      lics_inbound_utility.set_csv_definition('SUPERCEDE',10);
+      lics_inbound_utility.set_csv_definition('CONV_FACTOR',11);
 
-
+      /*-*/
+      /* Delete the existing demand mapping data
+      /*-*/ 
+      delete from dmnd_mapping;
 
    /*-------------------*/
    /* Exception handler */
@@ -116,20 +119,12 @@ Model	*DmdUnit	*DmdGroup	*DFULoc	*Item	*SKULoc	*Eff	*Disc	AllocFactor	SupersedeS
    /* Begin block */
    /*-------------*/
    begin
-        
-      /*--------------------------------------------*/
-      /* IGNORE - Ignore the data row when required */
-      /*--------------------------------------------*/
-
-      if var_trn_ignore = true then
-         return;
-      end if;
 
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
 
-      lics_inbound_utility.parse_record('DET', par_record);
+      lics_inbound_utility.parse_csv_record(par_record, con_delimiter, con_qualifier);
 
       /*--------------------------------------*/
       /* RETRIEVE - Retrieve the field values */
@@ -138,17 +133,16 @@ Model	*DmdUnit	*DmdGroup	*DFULoc	*Item	*SKULoc	*Eff	*Disc	AllocFactor	SupersedeS
       /*-*/
       /* Retrieve field values
       /*-*/
-      var_count := var_count + 1;
-      rcd_load_sply.item := trim(lics_inbound_utility.get_variable('ITEM'));
-      rcd_load_sply.dest := rtrim(lics_inbound_utility.get_variable('DEST'));
-      rcd_load_sply.qty := lics_inbound_utility.get_number('QTY',null);
-      rcd_load_sply.schedshipdate := lics_inbound_utility.get_date('SHIPDATE','yyyymmdd');
-      rcd_load_sply.mars_week := demand_forecast.sql_get_mars_week (rcd_load_sply.schedshipdate);
-      rcd_load_sply.casting_mars_week := demand_forecast.sql_get_mars_week(lics_inbound_utility.get_date('CASTING_DATE','yyyymmdd')-3);
-      rcd_load_sply.file_id := rcd_load_file.file_id;
-      rcd_load_sply.file_line := var_count;
-      rcd_load_sply.status := common.gc_loaded;
-      rcd_load_sply.error_msg := null;
+      rcd_dmnd_mapping.model := lics_inbound_utility.get_variable('MODEL');
+      rcd_dmnd_mapping.dmd_unit := lics_inbound_utility.get_variable('DMD_UNIT');
+      rcd_dmnd_mapping.dmd_group := lics_inbound_utility.get_variable('DMD_GROUP');
+      rcd_dmnd_mapping.dfu_locn := lics_inbound_utility.get_variable('DFU_LOCN');
+      rcd_dmnd_mapping.item := lics_inbound_utility.get_variable('ITEM');
+      rcd_dmnd_mapping.sku_locn := lics_inbound_utility.get_variable('SKU_LOCN');
+      rcd_dmnd_mapping.str_date := nvl(lics_inbound_utility.get_date('STR_DATE','dd/mm/yyyy'),to_date('01/01/0001','dd/mm/yyyy'));
+      rcd_dmnd_mapping.end_date := nvl(lics_inbound_utility.get_date('END_DATE','dd/mm/yyyy'),to_date('31/12/9999','dd/mm/yyyy'));
+      rcd_dmnd_mapping.alloc_factor := nvl(lics_inbound_utility.get_number('ALLOC_FACTOR',null),1);
+      rcd_dmnd_mapping.conv_factor := nvl(lics_inbound_utility.get_number('CONV_FACTOR',null),1);
 
       /*-*/
       /* Retrieve exceptions raised
@@ -169,28 +163,10 @@ Model	*DmdUnit	*DmdGroup	*DFULoc	*Item	*SKULoc	*Eff	*Disc	AllocFactor	SupersedeS
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      insert into load_sply
-         (item, 
-          dest, 
-          schedshipdate, 
-          qty, 
-          status,
-          error_msg,
-          casting_mars_week,
-          mars_week,
-          file_id,
-          file_line)
-      values 
-         (rcd_load_sply.item, 
-          rcd_load_sply.dest, 
-          rcd_load_sply.schedshipdate,
-          rcd_load_sply.qty, 
-          rcd_load_sply.status,
-          rcd_load_sply.error_msg,
-          rcd_load_sply.casting_mars_week,
-          rcd_load_sply.mars_week,
-          rcd_load_sply.file_id,
-          rcd_load_sply.file_line);
+      /*-*/
+      /* Insert the demand mapping data
+      /*-*/
+      insert into dmnd_mapping values rcd_dmnd_mapping;
       
    /*-------------------*/
    /* Exception handler */
@@ -230,9 +206,7 @@ Model	*DmdUnit	*DmdGroup	*DFULoc	*Item	*SKULoc	*Eff	*Disc	AllocFactor	SupersedeS
       /*-*/
       /* Commit/rollback the interface as required
       /*-*/
-      if var_trn_ignore = true then
-         rollback;
-      elsif var_trn_error = true then
+      if var_trn_error = true then
          rollback;
       else
          commit;
