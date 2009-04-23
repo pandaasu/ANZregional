@@ -32,7 +32,7 @@ create table pts.pts_tes_sel_group
 /* Comments
 /**/
 comment on table pts.pts_tes_sel_group is 'Test Selection Group Table';
-comment on column pts.pts_tes_sel_group.tsg_test is 'Test code';
+comment on column pts.pts_tes_sel_group.tsg_tes_code is 'Test code';
 comment on column pts.pts_tes_sel_group.tsg_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_tes_sel_group.tsg_sel_text is 'Selection group text';
 comment on column pts.pts_tes_sel_group.tsg_sel_pcnt is 'Selection mix percentage';
