@@ -1,6 +1,4 @@
 
-set define ^
-
 ----------------------------------
 -- SYSTEM HOUSEHOLD FIELD/VALUE --
 ----------------------------------
@@ -112,9 +110,9 @@ insert into pts_sys_select values('*HOU_DEFINITION',12,'*SELECT_WHEN_LIKE');
 
 insert into pts_sys_field values('*HOU_DEFINITION',13,'Household status','1',user,sysdate,'0','0',5,
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_DEFINITION'',13))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',13))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_DEFINITION'',13))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',13))',
                                  'nvl(h1.hde_hou_status,0)<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_value values('*HOU_DEFINITION',13,1,'Available');
 insert into pts_sys_value values('*HOU_DEFINITION',13,2,'On Test');
@@ -127,9 +125,9 @@ insert into pts_sys_select values('*HOU_DEFINITION',13,'*SELECT_WHEN_NOT_EQUAL')
 
 insert into pts_sys_field values('*HOU_DEFINITION',14,'Household delete notifier','1',user,sysdate,'0','0',5,
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_DEFINITION'',14))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',14))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_DEFINITION'',14))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',14))',
                                  'nvl(h1.hde_del_notifier,0)<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_value values('*HOU_DEFINITION',14,1,'Interviewer');
 insert into pts_sys_value values('*HOU_DEFINITION',14,2,'Auditor');
@@ -137,6 +135,17 @@ insert into pts_sys_value values('*HOU_DEFINITION',14,3,'Office');
 insert into pts_sys_value values('*HOU_DEFINITION',14,4,'Household');
 insert into pts_sys_select values('*HOU_DEFINITION',14,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*HOU_DEFINITION',14,'*SELECT_WHEN_NOT_EQUAL');
+
+insert into pts_sys_field values('*HOU_DEFINITION',15,'Household pet test status','1',user,sysdate,'0','0',5,
+                                 '*LOGIC',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',15))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_DEFINITION'',15))',
+                                 'exists(select 1 from (select pde_hou_code, case when max(pde_pet_status)=1 then 1 else 2 end typ_code from pts_pet_definition where pde_pet_status in (1,2) group by pde_hou_code) where pde_hou_code=h1.hde_hou_code and typ_code<%RULE_TEST%><%RULE_VALUE%>)');
+insert into pts_sys_value values('*HOU_DEFINITION',15,1,'At least one household pet available');
+insert into pts_sys_value values('*HOU_DEFINITION',15,2,'No household pets available');
+insert into pts_sys_select values('*HOU_DEFINITION',15,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*HOU_DEFINITION',15,'*SELECT_WHEN_NOT_EQUAL');
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',1,'Household occupant male adults','1',user,sysdate,'0','1',5,
                                  '*NUMBER',
@@ -245,9 +254,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',8,'*SELECT_WHEN_GE');
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',9,'Household urbanisation','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',9))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',9))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',9))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',9))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=9 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',9,1,'Inner City');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',9,2,'City Suburbs/Town');
@@ -258,9 +267,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',9,'*SELECT_WHEN_EQUAL_MI
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',10,'Household gross income','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',10))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',10))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',10))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',10))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=10 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',10,1,'Under 20,000');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',10,2,'20,001-29,000');
@@ -273,9 +282,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',10,'*SELECT_WHEN_EQUAL_M
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',11,'Contact sex','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',11))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',11))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',11))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',11))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=11 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',11,1,'Male');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',11,2,'Female');
@@ -285,9 +294,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',11,'*SELECT_WHEN_EQUAL_M
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',12,'Contact work status','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',12))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',12))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',12))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',12))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=12 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',12,1,'Full Time');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',12,2,'Part Time');
@@ -302,9 +311,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',12,'*SELECT_WHEN_EQUAL_M
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',13,'Contact education type','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',13))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',13))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',13))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',13))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=13 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',13,1,'Primary School');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',13,2,'Secondary School');
@@ -315,9 +324,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',13,'*SELECT_WHEN_EQUAL_M
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',14,'Contact marital status','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',14))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',14))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',14))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',14))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=14 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',14,1,'Married/De Facto');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',14,2,'Divorced/Separated');
@@ -329,9 +338,9 @@ insert into pts_sys_select values('*HOU_CLASSIFICATION',14,'*SELECT_WHEN_EQUAL_M
 
 insert into pts_sys_field values('*HOU_CLASSIFICATION',15,'Contact age range','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',15))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',15))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',15))',
+                                 'select val_code, val_text from table(pts_app.pts_hou_function.list_classification(''*HOU_CLASSIFICATION'',15))',
                                  'exists(select 1 from pts_hou_classification where hcl_hou_code=h1.hde_hou_code and hcl_tab_code=''*HOU_CLASSIFICATION'' and hcl_fld_code=15 and hcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',15,1,'< 20');
 insert into pts_sys_value values('*HOU_CLASSIFICATION',15,2,'21 to 25');
