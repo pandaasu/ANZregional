@@ -23,7 +23,7 @@ create table pts.pts_hou_classification
     hcl_tab_code                    varchar2(32 char)             not null,
     hcl_fld_code                    number                        not null,
     hcl_val_code                    number                        not null,
-    hcl_val_text                    varchar2(4000 char)           null);
+    hcl_val_text                    varchar2(256 char)            null);
 
 /**/
 /* Comments

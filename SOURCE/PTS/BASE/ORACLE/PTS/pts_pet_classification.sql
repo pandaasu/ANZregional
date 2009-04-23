@@ -23,7 +23,7 @@ create table pts.pts_pet_classification
     pcl_tab_code                    varchar2(32 char)             not null,
     pcl_fld_code                    number                        not null,
     pcl_val_code                    number                        not null,
-    pcl_val_text                    varchar2(4000 char)           null);
+    pcl_val_text                    varchar2(256 char)            null);
 
 /**/
 /* Comments
