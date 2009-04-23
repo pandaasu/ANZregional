@@ -26,9 +26,9 @@ create table pts.pts_tes_sel_value
     tsv_val_code                    number                        not null,
     tsv_val_text                    varchar2(256 char)            null,
     tsv_val_pcnt                    number                        null,
-    tsv_req_pan_count               number                        not null,
+    tsv_req_mem_count               number                        not null,
     tsv_req_res_count               number                        not null,
-    tsv_sel_pan_count               number                        not null,
+    tsv_sel_mem_count               number                        not null,
     tsv_sel_res_count               number                        not null);
 
 /**/
@@ -42,9 +42,9 @@ comment on column pts.pts_tes_sel_value.tsv_fld_code is 'System field code';
 comment on column pts.pts_tes_sel_value.tsv_val_code is 'System value code';
 comment on column pts.pts_tes_sel_value.tsv_val_text is 'Value text';
 comment on column pts.pts_tes_sel_value.tsv_val_pcnt is 'Value percent mix';
-comment on column pts.pts_tes_sel_value.tsv_req_pan_count is 'Value requested panel count';
+comment on column pts.pts_tes_sel_value.tsv_req_mem_count is 'Value requested member count';
 comment on column pts.pts_tes_sel_value.tsv_req_res_count is 'Value requested reserve count';
-comment on column pts.pts_tes_sel_value.tsv_sel_pan_count is 'Value selected panel count';
+comment on column pts.pts_tes_sel_value.tsv_sel_mem_count is 'Value selected member count';
 comment on column pts.pts_tes_sel_value.tsv_sel_res_count is 'Value selected reserve count';
 
 /**/
