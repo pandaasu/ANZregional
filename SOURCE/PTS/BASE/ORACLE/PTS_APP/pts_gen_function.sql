@@ -25,7 +25,7 @@ create or replace package pts_app.pts_gen_function as
    /*-*/
    /* Public declarations
    /*-*/
-   function select_list(par_query in varchar2) return pts_sel_list_type pipelined;
+   function select_list(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined;
    function to_number(par_number in varchar2) return number;
    function to_date(par_date in varchar2, par_format in varchar2) return date;
 
@@ -46,7 +46,7 @@ create or replace package body pts_app.pts_gen_function as
    /*****************************************************/
    /* This procedure performs the pet_selection routine */
    /*****************************************************/
-   function select_list(par_query in varchar2) return pts_sel_list_type pipelined is
+   function select_list(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined is
 
       /*-*/
       /* Local definitions
@@ -55,13 +55,20 @@ create or replace package body pts_app.pts_gen_function as
       var_query varchar2(32767);
       type typ_dynamic_cursor is ref cursor;
       var_dynamic_cursor typ_dynamic_cursor;
- 
+
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_entity is 
+         select t01.sen_ent_sel_sql
+           from pts_sys_entity t01
+          where t01.sen_ent_code = upper(par_ent_code);
+      rcd_entity csr_entity%rowtype;
+
       cursor csr_group is 
          select t01.wsg_sel_group
            from pts_wor_sel_group t01
+          where (par_sel_group is null or t01.wsg_sel_group = upper(par_sel_group))
           order by t01.wsg_sel_group;
       rcd_group csr_group%rowtype;
 
@@ -84,14 +91,9 @@ create or replace package body pts_app.pts_gen_function as
 
       cursor csr_value is 
          select t01.wsv_val_code,
-                t01.wsv_val_text,
-                t02.sva_val_rul_sql
-           from pts_wor_sel_value t01,
-                pts_sys_value t02
-          where t01.wsv_tab_code = t02.sva_tab_code(+)
-            and t01.wsv_fld_code = t02.sva_fld_code(+)
-            and t01.wsv_val_code = t02.sva_val_code(+)
-            and t01.wsv_sel_group = rcd_rule.wsr_sel_group
+                t01.wsv_val_text
+           from pts_wor_sel_value t01
+          where t01.wsv_sel_group = rcd_rule.wsr_sel_group
             and t01.wsv_tab_code = rcd_rule.wsr_tab_code
             and t01.wsv_fld_code = rcd_rule.wsr_fld_code
           order by t01.wsv_val_code;
@@ -107,10 +109,15 @@ create or replace package body pts_app.pts_gen_function as
       /*------------------------------------------------*/
 
       /*-*/
-      /* Initialise the list query
+      /* Initialise the select query
       /*-*/
-      --var_query := 'select p1.pde_pet_code from pts_pet_definition p1, pts_hou_definition h1 where p1.pde_hou_code = h1.hde_hou_code(+)';
-      var_query := par_query;
+      var_query := null;
+      open csr_entity;
+      fetch csr_entity into rcd_entity;
+      if csr_entity%found then
+         var_query := rcd_entity.sen_ent_sel_sql;
+      end if;
+      close csr_entity;
 
       /*-*/
       /* Process the selection groups
@@ -185,8 +192,6 @@ create or replace package body pts_app.pts_gen_function as
                   end if;
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*NUMBER' then
                   var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
-               elsif upper(rcd_rule.sfi_fld_rul_type) = '*EXCLUSIVE_LIST' then
-                  var_query := var_query||rcd_value.sva_val_rul_sql;
                end if;
             end loop;
             close csr_value;
