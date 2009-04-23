@@ -52,7 +52,7 @@ comment on column pts.pts_sys_field.sfi_fld_upd_user is 'System field user updat
 comment on column pts.pts_sys_field.sfi_fld_inp_leng is 'System field input length for select and rule - *TEXT(1 to 256), *NUMBER(1 to 15), all other types (0)';
 comment on column pts.pts_sys_field.sfi_fld_sel_type is 'System field selection type (*LOGIC, *OPT_SINGLE_LIST, *OPT_MULTIPLE_LIST, *MAN_SINGLE_LIST, *MAN_MULTIPLE_LIST, *TEXT, *NUMBER, *PERCENT)';
 comment on column pts.pts_sys_field.sfi_fld_sel_sql is 'System field selection SQL';
-comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*LIST, *TEXT, *NUMBER, *PERCENT)';
+comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*NONE, *LIST, *TEXT, *NUMBER, *PERCENT)';
 comment on column pts.pts_sys_field.sfi_fld_rul_sel_sql is 'System field rule selection SQL';
 comment on column pts.pts_sys_field.sfi_fld_rul_tes_sql is 'System field rule test SQL';
 
