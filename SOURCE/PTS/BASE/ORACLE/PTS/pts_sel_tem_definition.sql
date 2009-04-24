@@ -24,7 +24,7 @@ create table pts.pts_sel_tem_definition
     std_tem_status                  varchar2(1 char)              not null,
     std_upd_user                    varchar2(30 char)             not null,
     std_upd_date                    date                          not null,
-    std_tar_code                    number                        not null);
+    std_tes_target                  number                        not null);
 
 /**/
 /* Comments
@@ -35,7 +35,7 @@ comment on column pts.pts_sel_tem_definition.std_tem_text is 'Selection template
 comment on column pts.pts_sel_tem_definition.std_tem_status is 'Selection template status (0=Inactive or 1=Active)';
 comment on column pts.pts_sel_tem_definition.std_upd_user is 'Selection template update user';
 comment on column pts.pts_sel_tem_definition.std_upd_date is 'Selection template update date';
-comment on column pts.pts_sel_tem_definition.std_tar_code is 'Selection template test target code';
+comment on column pts.pts_sel_tem_definition.std_tes_target is 'Selection template test target code';
 
 /**/
 /* Primary Key Constraint
