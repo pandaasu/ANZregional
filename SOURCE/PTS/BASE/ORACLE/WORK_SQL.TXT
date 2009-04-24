@@ -37,37 +37,287 @@ select sample_classn_type_code, '3' as seltype, 4 as selseqn,
 ) order by sample_classn_type_code,seltype, selseqn;
 
 
+-----------------------
+-- HOUSEHOLD EXTRACT --
+-----------------------
+
+select
+  'insert into pts_hou_definition values('||
+  pet_code||','||
+  pet_status||',user,sysdate,'||
+  decode(pet_name,null,'null',''''||trim(replace(pet_name,'''',''''''))||'''')||','||
+  decode(pet_type_code,null,'null',pet_type_code)||','||
+  decode(hhold_code,null,'null',hhold_code)||','||
+  decode(pet_year_of_birth,null,'null',pet_year_of_birth)||','||
+  decode(delete_noted_by,null,'null',delete_noted_by)||','||
+  decode(pet_last_tested,null,'null','to_date('''||to_char(pet_last_tested,'yyyymmdd')||''',''yyyymmdd'')')||','||
+  decode(feeding_comments,null,'null',''''||trim(replace(feeding_comments,'''',''''''))||'''')||','||
+  decode(pet_health_comments,null,'null',''''||trim(replace(pet_health_comments,'''',''''''))||'''')||');' as seltext
+  from pet order by pet_code;
+
+
+------------------------
+-- GEOGRAPHIC EXTRACT --
+------------------------
+
+select
+  'insert into pts_geo_zone values('||
+  geog_zone_type_code||','||
+  geog_zone_code||','||
+  decode(geog_zone_desc,null,'null',''''||trim(replace(geog_zone_desc,'''',''''''))||'''')||','''||
+  decode(status,1,1,2,0,0)||''',user,sysdate,'||
+  decode(geog_zone_type_owner_code,null,'null',geog_zone_type_owner_code)||','||
+  decode(geog_zone_owner_code,null,'null',geog_zone_owner_code)||');' as seltext
+  from geog_zone where status = 1 order by geog_zone_type_code, geog_zone_code;
+
 --------------------------------
--- PET CLASSIFICATION EXTRACT --
+-- SELECTION TEMPLATE EXTRACT --
 --------------------------------
 
-select seltext from (
-select sample_classn_type_code, '1' as seltype, 1 as selseqn,
-  'insert into pts_sys_field values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','''||trim(replace(sample_classn_type_desc,'''',''''''))||''',''*HOUSEHOLD'','''||decode(s_c_type_status,1,1,2,0,0)||''',user,sysdate,''1'',''*OPT_MULTIPLE_LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''*LIST'',''select val_code, val_text from table(pts_sam_function.list_classification(''''*SAM_CLASSIFICATION'''','||sample_classn_type_code||'))'',''exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''''*SAM_CLASSIFICATION'''' and pcl_fld_code='||sample_classn_type_code||' and pcl_fld_value<%RULE_TEST%><%RULE_VALUE%>)'');' as seltext
-  from sample_classn_type
-union all
-select sample_classn_type_code, '2' as seltype, sample_classn_code as selseqn,
-  'insert into pts_sys_value values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||','||sample_classn_code||','''||trim(replace(sample_classn_desc,'''',''''''))||''','''||decode(sample_classn_status,1,1,2,0,0)||''',null);' as seltext
-  from sample_classn
-union all
-select sample_classn_type_code, '3' as seltype, 1 as selseqn,
-  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL'');' as seltext
-  from sample_classn_type
-union all
-select sample_classn_type_code, '3' as seltype, 2 as selseqn,
-  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL'');' as seltext
-  from sample_classn_type
-union all
-select sample_classn_type_code, '3' as seltype, 3 as selseqn,
-  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_EQUAL_ALL'');' as seltext
-  from sample_classn_type
-union all
-select sample_classn_type_code, '3' as seltype, 4 as selseqn,
-  'insert into pts_sys_select values(''*SAM_CLASSIFICATION'','||sample_classn_type_code||',''*SELECT_WHEN_NOT_EQUAL_ALL'');' as seltext
-  from sample_classn_type
-) order by sample_classn_type_code,seltype, selseqn;
+select
+  'insert into pts_sel_tem_definition values('||
+  slct_crt_set_code||','||
+  decode(slct_crt_set_desc,null,'null',''''||trim(replace(slct_crt_set_desc,'''',''''''))||'''')||','''||
+  decode(slct_crt_set_status,1,1,2,0,0)||''',user,sysdate,'||
+  decode(restricted_access,null,'null',restricted_access)||');' as seltext
+  from select_criteria_set order by slct_crt_set_code;
 
 
 
+
+
+-----------------
+-- PET EXTRACT --
+-----------------
+set termout off 
+
+set pagesize 60
+set newpage 0
+set linesize 198
+
+spool c:\isiwork\data\salary_list.txt
+
+select
+  'insert into pts_pet_definition values('||
+  pet_code||','||
+  pet_status||',user,sysdate,'||
+  decode(pet_name,null,'null',''''||trim(replace(pet_name,'''',''''''))||'''')||','||
+  decode(pet_type_code,null,'null',pet_type_code)||','||
+  decode(hhold_code,null,'null',hhold_code)||','||
+  decode(pet_year_of_birth,null,'null',pet_year_of_birth)||','||
+  decode(delete_noted_by,null,'null',delete_noted_by)||','||
+  decode(pet_last_tested,null,'null','to_date('''||to_char(pet_last_tested,'yyyymmdd')||''',''yyyymmdd'')')||','||
+  decode(feeding_comments,null,'null',''''||trim(replace(feeding_comments,'''',''''''))||'''')||','||
+  decode(pet_health_comments,null,'null',''''||trim(replace(pet_health_comments,'''',''''''))||'''')||');' as seltext
+  from pet where pet_type_code != 4 order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',1,'||pet_breed_code||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_breed_code is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',2,'||pet_fussiness||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_fussiness is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',3,'||pet_sex||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_sex is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',4,'||health_rstrct||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_health_restrict is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',5,'||pet_desexed||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_desexed is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',6,'||pet_pedigree||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_pedigree is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',7,'||pet_relationship||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_relationship is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',8,'||pet_size||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_size is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',9,'||pet_act_level||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_act_level is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',10,'||pet_awake||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_awake is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',11,'||pet_asleep||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_asleep is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',12,'||pet_meals||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_meals is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',13,'||main_meal||',null);' as seltext
+  from pet where pet_type_code != 4 and main_meal is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',14,'||can_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and can_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',15,'||chub_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and chub_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',16,'||dry_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and dry_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',17,'||chilled_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and chilled_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',18,'||semi_moist_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and semi_moist_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',19,'||scrap_raw_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and scrap_raw_freq is not null order by pet_code;
+ 
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',20,'||meat_fish_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and meat_fish_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',21,'||bones_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and bones_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',22,'||milk_special_drinks||',null);' as seltext
+  from pet where pet_type_code != 4 and milk_special_drinks is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',23,'||snak_freq||',null);' as seltext
+  from pet where pet_type_code != 4 and snak_freq is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',24,'||feeding_preference||',null);' as seltext
+  from pet where pet_type_code != 4 and feeding_preference is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',25,'||format||',null);' as seltext
+  from pet where pet_type_code != 4 and format is not null order by pet_code;
+
+select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFICATION'',26,'||pet_environment||',null);' as seltext
+  from pet where pet_type_code != 4 and pet_environment is not null order by pet_code;
+
+spool off;
+
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',4,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 4 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',5,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 5 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',6,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 6 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',7,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 7 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',40,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 40 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',41,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 41 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',42,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 42 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',43,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 43 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',44,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 44 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',45,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 45 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',46,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 46 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',47,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 47 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',48,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 48 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',49,'||t1.sample_classn_code||',null);' as seltext
+  from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 49 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
+
+
+----------------------
+-- QUESTION EXTRACT --
+----------------------
+
+select 'insert into pts_que_definition values('||question_code||','''||trim(replace(question_text,'''',''''''))||''','''||decode(question_status,1,1,2,0,0)||''',user,sysdate,''*GROUP'','||response_type||','||decode(response_from,null,'null',response_from)||','||decode(response_to,null,'null',response_to)||');'  from question order by question_code;
+
+
+-------------------------
+-- INTERVIEWER EXTRACT --
+-------------------------
+
+select 'insert into pts_int_definition values('||intviewer_code||','''||decode(intviewer_status,1,1,2,0,0)||''',user,sysdate,'||geog_zone_type_code||','||geog_zone_code||','''||trim(replace(intviewer_name,'''',''''''))||''','''||trim(replace(intviewer_locn_street,'''',''''''))||''','''||trim(replace(intviewer_locn_town,'''',''''''))||''','''||trim(replace(intviewer_locn_postcode,'''',''''''))||''','''||trim(replace(intviewer_locn_country,'''',''''''))||''','''||trim(replace(intviewer_phone_areacode,'''',''''''))||''','''||trim(replace(intviewer_phone_num,'''',''''''))||''');' from interviewer order by intviewer_code asc;
+
+-----------------------
+-- HOUSEHOLD EXTRACT --
+-----------------------
+
+select
+  'insert into pts_hou_definition values('||
+  hhold_code||','||
+  household_status||',user,sysdate,'||
+  decode(geog_zone_type_code,null,'null',geog_zone_type_code)||','||
+  decode(geog_zone_code,null,'null',geog_zone_code)||','||
+  decode(delete_noted_by,null,'null',delete_noted_by)||','||
+  decode(panel_joined_date,null,'null','to_date('''||to_char(panel_joined_date,'yyyymmdd')||''',''yyyymmdd'')')||','||
+  decode(hhold_last_used,null,'null','to_date('''||to_char(hhold_last_used,'yyyymmdd')||''',''yyyymmdd'')')||','||
+  decode(hhold_locn_street,null,'null',''''||trim(replace(hhold_locn_street,'''',''''''))||'''')||','||
+  decode(hhold_locn_town,null,'null',''''||trim(replace(hhold_locn_town,'''',''''''))||'''')||','||
+  decode(hhold_locn_postcode,null,'null',''''||trim(replace(hhold_locn_postcode,'''',''''''))||'''')||','||
+  decode(hhold_locn_country,null,'null',''''||trim(replace(hhold_locn_country,'''',''''''))||'''')||','||
+  decode(hhold_phone_areacode,null,'null',''''||trim(replace(hhold_phone_areacode,'''',''''''))||'''')||','||
+  decode(hhold_phone_num,null,'null',''''||trim(replace(hhold_phone_num,'''',''''''))||'''')||','||
+  decode(prcpt_name,null,'null',''''||trim(replace(prcpt_name,'''',''''''))||'''')||','||
+  decode(prcpt_name,null,'null',''''||trim(replace(prcpt_name,'''',''''''))||'''')||','||
+  decode(prcpt_year_of_birth,null,'null',prcpt_year_of_birth)||','||
+  decode(hhold_notes,null,'null',''''||trim(replace(hhold_notes,'''',''''''))||'''')||');' as seltext
+  from household order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',1,1,'''||occ_adult_male||''');' as seltext
+  from household where occ_adult_male is not null and occ_adult_male != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',2,1,'''||occ_child_15_18||''');' as seltext
+  from household where occ_child_15_18 is not null and occ_child_15_18 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',3,1,'''||occ_child_5_14||''');' as seltext
+  from household where occ_child_5_14 is not null and occ_child_5_14 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',4,1,'''||occ_child_under_5||''');' as seltext
+  from household where occ_child_under_5 is not null and occ_child_under_5 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',5,1,'''||occ_adult_female||''');' as seltext
+  from household where occ_adult_female is not null and occ_adult_female != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',6,1,'''||female_occ_child_15_18||''');' as seltext
+  from household where female_occ_child_15_18 is not null and female_occ_child_15_18 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',7,1,'''||female_occ_child_5_14||''');' as seltext
+  from household where female_occ_child_5_14 is not null and female_occ_child_5_14 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',8,1,'''||female_occ_child_under_5||''');' as seltext
+  from household where female_occ_child_under_5 is not null and female_occ_child_under_5 != 0 order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',9,'||urbanisation||',null);' as seltext
+  from household where urbanisation is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',10,'||hhold_gross_income||',null);' as seltext
+  from household where hhold_gross_income is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',11,'||prcpt_sex||',null);' as seltext
+  from household where prcpt_sex is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',12,'||prcpt_work_status||',null);' as seltext
+  from household where prcpt_work_status is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',13,'||prcpt_education||',null);' as seltext
+  from household where prcpt_education is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',14,'||prcpt_mrtl_status||',null);' as seltext
+  from household where prcpt_mrtl_status is not null order by hhold_code;
+
+select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLASSIFICATION'',15,'||prcpt_age_range||',null);' as seltext
+  from household where prcpt_age_range is not null order by hhold_code;
+
+spool off;
 
                        
