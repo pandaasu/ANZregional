@@ -56,7 +56,6 @@ create or replace package body pts_app.pts_pet_function as
            from pts_sys_value t01
           where t01.sva_tab_code = upper(par_tab_code)
             and t01.sva_fld_code = par_fld_code
-            and t01.sva_val_status = '1'
           order by t01.sva_val_code asc;
       rcd_system_all csr_system_all%rowtype;
 
@@ -129,7 +128,6 @@ create or replace package body pts_app.pts_pet_function as
            from pts_sys_value t01
           where t01.sva_tab_code = upper(par_tab_code)
             and t01.sva_fld_code = par_fld_code
-            and t01.sva_val_status = '1'
           order by t01.sva_val_code asc;
       rcd_system_all csr_system_all%rowtype;
 
@@ -139,7 +137,6 @@ create or replace package body pts_app.pts_pet_function as
            from pts_sys_value t01
           where t01.sva_tab_code = upper(par_tab_code)
             and t01.sva_fld_code = par_fld_code
-            and t01.sva_val_status = '1'
             and t01.sva_val_code in (select psv_val_code 
                                        from pts_pty_sys_value
                                       where psv_pet_type = par_pet_type
