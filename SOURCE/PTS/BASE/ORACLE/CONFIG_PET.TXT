@@ -112,6 +112,22 @@ insert into pts_sys_select values('*PET_DEFINITION',10,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_DEFINITION',10,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_DEFINITION',10,'*SELECT_WHEN_EQUAL_MIX');
 
+insert into pts_sys_field values('*PET_DEFINITION',11,'Pet age minimum','1',user,sysdate,'0','1',5,
+                                 '*LOGIC',
+                                 null,
+                                 '*NUMBER',
+                                 null,
+                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*PET_DEFINITION',11,'*SELECT_WHEN_GE');
+
+insert into pts_sys_field values('*PET_DEFINITION',12,'Pet age maximum','1',user,sysdate,'0','1',5,
+                                 '*LOGIC',
+                                 null,
+                                 '*NUMBER',
+                                 null,
+                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*PET_DEFINITION',12,'*SELECT_WHEN_LE');
+
 insert into pts_sys_field values('*PET_CLASSIFICATION',1,'Pet breed','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_classification(<%PET_TYPE%>,''*PET_CLASSIFICATION'',1))',
