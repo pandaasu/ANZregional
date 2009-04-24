@@ -2,7 +2,7 @@
 /* Table Definition                                                           */
 /******************************************************************************/
 /**
- Object : pts_test_sel_panel
+ Object : pts_tes_sel_panel
  Owner  : pts
 
  Description
@@ -18,7 +18,7 @@
 /**/
 /* Table creation
 /**/
-create table pts.pts_test_sel_panel
+create table pts.pts_tes_sel_panel
    (tsp_tes_code                    number                        not null,
     tsp_sel_group                   varchar2(32 char)             not null,
     tsp_hou_code                    number                        not null,
@@ -28,25 +28,25 @@ create table pts.pts_test_sel_panel
 /**/
 /* Comments
 /**/
-comment on table pts.pts_test_sel_panel is 'Test Selection Panel Table';
-comment on column pts.pts_test_sel_panel.tsp_tes_code is 'Test code';
-comment on column pts.pts_test_sel_panel.tsp_sel_group is 'Selection group code (*SET01 - *SET99)';
-comment on column pts.pts_test_sel_panel.tsp_hou_code is 'Household code';
-comment on column pts.pts_test_sel_panel.tsp_pet_code is 'Pet code (product test type *HHOLD = zero)';
-comment on column pts.pts_test_sel_panel.tsp_status is 'Panel status (*ACTIVE, *RESERVE, *RECRUITED)';
+comment on table pts.pts_tes_sel_panel is 'Test Selection Panel Table';
+comment on column pts.pts_tes_sel_panel.tsp_tes_code is 'Test code';
+comment on column pts.pts_tes_sel_panel.tsp_sel_group is 'Selection group code (*SET01 - *SET99)';
+comment on column pts.pts_tes_sel_panel.tsp_hou_code is 'Household code';
+comment on column pts.pts_tes_sel_panel.tsp_pet_code is 'Pet code (product test type *HHOLD = zero)';
+comment on column pts.pts_tes_sel_panel.tsp_status is 'Panel status (*ACTIVE, *RESERVE, *RECRUITED)';
 
 /**/
 /* Primary Key Constraint
 /**/
-alter table pts.pts_test_sel_panel
-   add constraint pts_test_sel_panel_pk primary key (tsp_tes_code, tsp_sel_group, tsp_hou_code, tsp_pet_code);
+alter table pts.pts_tes_sel_panel
+   add constraint pts_tes_sel_panel_pk primary key (tsp_tes_code, tsp_sel_group, tsp_hou_code, tsp_pet_code);
 
 /**/
 /* Authority
 /**/
-grant select, insert, update, delete on pts.pts_test_sel_panel to pts_app;
+grant select, insert, update, delete on pts.pts_tes_sel_panel to pts_app;
 
 /**/
 /* Synonym
 /**/
-create or replace public synonym pts_test_sel_panel for pts.pts_test_sel_panel;           
+create or replace public synonym pts_tes_sel_panel for pts.pts_tes_sel_panel;           
