@@ -578,11 +578,22 @@ insert into pts_sys_field values('*PET_SAMPLE',46,'Pet Milk Brand','1',user,sysd
                                  'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_SAMPLE'' and pcl_fld_code=46 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
 insert into pts_sys_value values('*PET_SAMPLE',46,307,'RSPCA (DRINKS)');
 insert into pts_sys_value values('*PET_SAMPLE',46,308,'PETS OWN (DRINKS)');
+
 insert into pts_sys_value values('*PET_SAMPLE',46,309,'GENERIC (DRY DOG)','0',null);
+
+
 insert into pts_sys_value values('*PET_SAMPLE',46,310,'CHEWSLIE (SNACKS)','0',null);
+
+
 insert into pts_sys_value values('*PET_SAMPLE',46,311,'CHOMPS (SNACKS)','0',null);
+
+
 insert into pts_sys_value values('*PET_SAMPLE',46,312,'BEEFY SLICES (SNACKS)','0',null);
+
+
 insert into pts_sys_value values('*PET_SAMPLE',46,313,'TOTEMS (SNACKS)','0',null);
+
+
 insert into pts_sys_value values('*PET_SAMPLE',46,625,'VITA PET (DRINKS)');
 insert into pts_sys_value values('*PET_SAMPLE',46,997,'OTHER (CAT DRINKS)');
 insert into pts_sys_value values('*PET_SAMPLE',46,998,'STD MILK (CAT DRINKS)');
