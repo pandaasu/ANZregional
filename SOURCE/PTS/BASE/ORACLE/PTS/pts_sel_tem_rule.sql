@@ -19,7 +19,7 @@
 /* Table creation
 /**/
 create table pts.pts_sel_tem_rule
-   (str_sel_template                number                        not null,
+   (str_stm_code                    number                        not null,
     str_sel_group                   varchar2(32 char)             not null,
     str_tab_code                    varchar2(32 char)             not null,
     str_fld_code                    number                        not null,
@@ -29,7 +29,7 @@ create table pts.pts_sel_tem_rule
 /* Comments
 /**/
 comment on table pts.pts_sel_tem_rule is 'Selection Template Rule Table';
-comment on column pts.pts_sel_tem_rule.str_sel_template is 'Selection template code';
+comment on column pts.pts_sel_tem_rule.str_stm_code is 'Selection template code';
 comment on column pts.pts_sel_tem_rule.str_sel_group is 'Selection group (*GROUP01 - *GROUP99)';
 comment on column pts.pts_sel_tem_rule.str_tab_code is 'System table code';
 comment on column pts.pts_sel_tem_rule.str_fld_code is 'System field code';
@@ -39,7 +39,7 @@ comment on column pts.pts_sel_tem_rule.str_rul_code is 'System rule code';
 /* Primary Key Constraint
 /**/
 alter table pts.pts_sel_tem_rule
-   add constraint pts_sel_tem_rule_pk primary key (str_sel_template, str_sel_group, str_tab_code, str_fld_code);
+   add constraint pts_sel_tem_rule_pk primary key (str_stm_code, str_sel_group, str_tab_code, str_fld_code);
 
 /**/
 /* Authority

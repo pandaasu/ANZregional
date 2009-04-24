@@ -37,7 +37,7 @@ create table pts.pts_hou_definition
     hde_con_surname                 varchar2(120 char)            null,
     hde_con_fullname                varchar2(120 char)            null,
     hde_con_birth_year              number                        null,
-    hde_notes                       varchar2(4000 char)           null);                                                                                                                                                                              
+    hde_notes                       varchar2(2000 char)           null);                                                                                                                                                                              
 
 /**/
 /* Comments

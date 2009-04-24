@@ -19,7 +19,7 @@
 /* Table creation
 /**/
 create table pts.pts_sel_tem_group
-   (stg_sel_template                number                        not null,
+   (stg_stm_code                    number                        not null,
     stg_sel_group                   varchar2(32 char)             not null,
     stg_sel_text                    varchar2(120 char)            not null,
     stg_sel_pcnt                    number                        not null);
@@ -28,7 +28,7 @@ create table pts.pts_sel_tem_group
 /* Comments
 /**/
 comment on table pts.pts_sel_tem_group is 'Selection Template Group Table';
-comment on column pts.pts_sel_tem_group.stg_sel_template is 'Selection template code';
+comment on column pts.pts_sel_tem_group.stg_stm_code is 'Selection template code';
 comment on column pts.pts_sel_tem_group.stg_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_sel_tem_group.stg_sel_text is 'Selection group text';
 comment on column pts.pts_sel_tem_group.stg_sel_pcnt is 'Selection mix percentage';
@@ -37,7 +37,7 @@ comment on column pts.pts_sel_tem_group.stg_sel_pcnt is 'Selection mix percentag
 /* Primary Key Constraint
 /**/
 alter table pts.pts_sel_tem_group
-   add constraint pts_sel_tem_group_pk primary key (stg_sel_template, stg_sel_group);
+   add constraint pts_sel_tem_group_pk primary key (stg_stm_code, stg_sel_group);
 
 /**/
 /* Authority

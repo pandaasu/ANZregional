@@ -29,8 +29,8 @@ create table pts.pts_pet_definition
     pde_birth_year                  number                        null,
     pde_del_notifier                number                        null,
     pde_test_date                   date                          null,
-    pde_feed_comment                varchar2(4000 char)           null,
-    pde_health_comment              varchar2(4000 char)           null);
+    pde_feed_comment                varchar2(2000 char)           null,
+    pde_health_comment              varchar2(2000 char)           null);
 
 /**/
 /* Comments

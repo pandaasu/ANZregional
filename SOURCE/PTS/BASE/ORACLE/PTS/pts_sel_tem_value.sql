@@ -19,7 +19,7 @@
 /* Table creation
 /**/
 create table pts.pts_sel_tem_value
-   (stv_sel_template                number                        not null,
+   (stv_stm_code                    number                        not null,
     stv_sel_group                   varchar2(32 char)             not null,
     stv_tab_code                    varchar2(32 char)             not null,
     stv_fld_code                    number                        not null,
@@ -31,7 +31,7 @@ create table pts.pts_sel_tem_value
 /* Comments
 /**/
 comment on table pts.pts_sel_tem_value is 'Selection Template Value Table';
-comment on column pts.pts_sel_tem_value.stv_sel_template is 'Selection template code';
+comment on column pts.pts_sel_tem_value.stv_stm_code is 'Selection template code';
 comment on column pts.pts_sel_tem_value.stv_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_sel_tem_value.stv_tab_code is 'System table code';
 comment on column pts.pts_sel_tem_value.stv_fld_code is 'System field code';
@@ -43,7 +43,7 @@ comment on column pts.pts_sel_tem_value.stv_val_pcnt is 'Value percent mix';
 /* Primary Key Constraint
 /**/
 alter table pts.pts_sel_tem_value
-   add constraint pts_sel_tem_value_pk primary key (stv_sel_template, stv_sel_group, stv_tab_code, stv_fld_code, stv_val_code);
+   add constraint pts_sel_tem_value_pk primary key (stv_stm_code, stv_sel_group, stv_tab_code, stv_fld_code, stv_val_code);
 
 /**/
 /* Authority
