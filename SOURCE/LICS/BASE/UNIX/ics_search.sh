@@ -97,57 +97,51 @@ exec_search()
     log_file "INFO: [exec_search] Executing search of files matching [${FILE_PATTERN}*] for pattern [${GREP_PATTERN}] for time range [${TIME_STR} to ${TIME_END}]" "HARMLESS"
 
     # Define variables
-    typeset -i match_count=0
-    SEARCH_RESULT=""
+    typeset -i MATCH_COUNT=0
+    typeset -i MAX_RCD_COUNT=20
     MAX_RCDS="Maximum number of returnable results reached ...."
-    typeset -i MAX_RCDS_BYTES=`echo ${MAX_RCDS} | wc -c`
-    MAX_REACHED=FALSE
 
     # Create the time range files
     touch -t ${TIME_STR} ${TMP_STR}
     touch -t ${TIME_END} ${TMP_END}
 
     # Log the find command
-    FIND_CMD="find ${ARCHIVE_PATH} -name ${FILE_PATTERN}* -newer ${TMP_STR} \! -newer ${TMP_END} -exec zgrep -q ${GREP_PATTERN} '{}' \; -print"
+    FIND_CMD="find ${ARCHIVE_PATH} -name \"${FILE_PATTERN}*\" -newer ${TMP_STR} \! -newer ${TMP_END} -exec zgrep -q ${GREP_PATTERN} '{}' \; -print"
     log_file "INFO: [exec_search] Find Command [${FIND_CMD}]" "HARMLESS"
 
     # Retrieve any matching files
-    find ${ARCHIVE_PATH} -name ${FILE_PATTERN}* -newer ${TMP_STR} \! -newer ${TMP_END} -exec zgrep -q ${GREP_PATTERN} '{}' \; -print | while read file
-    do
-       if [[ ${MAX_REACHED} = "TRUE" ]] ; then 
-          break
-       fi
-       
-       match_count=${match_count}+1
-       RESULT=`ls -lrt ${file} | awk '{ print $9 " - TIME: " $6 " " $7", " $8 " SIZE(bytes): " $5}'`
-       typeset -i SEARCH_RESULT_BYTES=`echo ${SEARCH_RESULT} | wc -c`
-       typeset -i RESULT_BYTES=`echo ${RESULT} | wc -c`
-       SEARCH_STAT="[${match_count}] matches found"
-       typeset -i SEARCH_STAT_BYTES=`echo ${SEARCH_STAT} | wc -c`
-       typeset -i BYTE_CHECK=${SEARCH_RESULT_BYTES}+${MAX_RCDS_BYTES}+${RESULT_BYTES}+${SEARCH_STAT_BYTES}
-       
-       if [[  ${BYTE_CHECK} -gt 3700 ]] ; then
-          SEARCH_RESULT=`echo "${SEARCH_RESULT} \n ${MAX_RCDS}"`
-          MAX_REACHED=TRUE
-       else
-          SEARCH_RESULT=`echo "${SEARCH_RESULT} \n ${RESULT}"`
-       fi 
+    for LINE in `eval "$FIND_CMD"`
+    do          
+        RESULT=`ls -lrt ${LINE} | awk '{ print $9 " - TIME: " $6 " " $7", " $8 " SIZE(bytes): " $5}'`
+
+        if [[ ${MATCH_COUNT} -eq 0 ]] ; then
+            SEARCH_RESULT=${RESULT}
+        else        
+            SEARCH_RESULT="${SEARCH_RESULT} \n${RESULT}"
+        fi
+        
+        MATCH_COUNT=${MATCH_COUNT}+1
+
+        if [[ ${MATCH_COUNT} -eq ${MAX_RCD_COUNT} ]] ; then
+            SEARCH_RESULT="${SEARCH_RESULT} \n${MAX_RCDS}"
+            break;
+        fi
     done
 
     # Set the serach result
-    if [[ ${match_count} = 0 ]] ; then
-       SEARCH_RESULT="[${match_count}] matches found"
+    if [[ ${MATCH_COUNT} = 0 ]] ; then
+       SEARCH_RESULT="[${MATCH_COUNT}] matches found"
     else
        # Append Search statistics
-       SEARCH_RESULT=`echo "${SEARCH_RESULT} \n\n ${SEARCH_STAT}"`
-    fi
+       SEARCH_RESULT="${SEARCH_RESULT} \n\n[${MATCH_COUNT}] matches found"
+    fi 
 
     # Echo output to standard out for website Java code to pickup
     echo "<DATA>"
     echo "${SEARCH_RESULT}"
     echo "</DATA>"
 
-    log_file "INFO: [exec_search] Search Execution complete - ${match_count} matches found" "HARMLESS"
+    log_file "INFO: [exec_search] Search Execution complete - ${MATCH_COUNT} matches found" "HARMLESS"
 }
 
 # ---------------------------------------------------------------------------
@@ -182,4 +176,5 @@ exit 0                     # Exit: Exit script with successful flag (0)
 # 2.1     03-MAR-2008 T. Keon       Added calls to utility script files for
 #                                   common functions and standardised the
 #                                   script code
+# 2.2     24-APR-2009 T. Keon       Added support for Linux environment
 # ---------------------------------------------------------------------------
