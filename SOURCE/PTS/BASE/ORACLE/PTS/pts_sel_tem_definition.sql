@@ -19,18 +19,18 @@
 /* Table creation
 /**/
 create table pts.pts_sel_tem_definition
-   (std_tem_code                    number                        not null,
+   (std_sel_template                number                        not null,
     std_tem_text                    varchar2(120 char)            not null,
     std_tem_status                  varchar2(1 char)              not null,
     std_upd_user                    varchar2(30 char)             not null,
     std_upd_date                    date                          not null,
-    std_tes_target                  number                        not null);
+    std_tes_target                  number                        null);
 
 /**/
 /* Comments
 /**/
 comment on table pts.pts_sel_tem_definition is 'Selection Template Table';
-comment on column pts.pts_sel_tem_definition.std_tem_code is 'Selection template code';
+comment on column pts.pts_sel_tem_definition.std_sel_template is 'Selection template code';
 comment on column pts.pts_sel_tem_definition.std_tem_text is 'Selection template text';
 comment on column pts.pts_sel_tem_definition.std_tem_status is 'Selection template status (0=Inactive or 1=Active)';
 comment on column pts.pts_sel_tem_definition.std_upd_user is 'Selection template update user';
@@ -41,7 +41,7 @@ comment on column pts.pts_sel_tem_definition.std_tes_target is 'Selection templa
 /* Primary Key Constraint
 /**/
 alter table pts.pts_sel_tem_definition
-   add constraint pts_sel_tem_definition_pk primary key (std_tem_code);
+   add constraint pts_sel_tem_definition_pk primary key (std_sel_template);
 
 /**/
 /* Authority
