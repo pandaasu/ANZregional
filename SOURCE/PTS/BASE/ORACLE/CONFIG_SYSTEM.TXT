@@ -38,7 +38,7 @@ insert into pts_sys_rule values('*SELECT_WHEN_GE',' or ','>=','0','0');
 insert into pts_sys_rule values('*SELECT_WHEN_EQUAL_ALL',' and ','=','0','0');
 insert into pts_sys_rule values('*SELECT_WHEN_NOT_EQUAL_ALL',' and ','=','1','0');
 insert into pts_sys_rule values('*SELECT_WHEN_LIKE_ALL',' and ',' like ','0','0');
-insert into pts_sys_rule values('*SELECT_WHEN_NOT_LIKE_ALL',' and ',' like ','0','0');
+insert into pts_sys_rule values('*SELECT_WHEN_NOT_LIKE_ALL',' and ',' like ','1','0');
 insert into pts_sys_rule values('*SELECT_WHEN_EQUAL_MIX',' or ','=','0','1');
 commit;
 
@@ -47,10 +47,10 @@ commit;
 -- GEOGRAPHIC TYPE/ZONE --
 --------------------------
 
-insert into pts_geo_type values(10,'Country','1',user,sysdate,'',null);
-insert into pts_geo_type values(20,'Location','1',user,sysdate,'',10);
-insert into pts_geo_type values(30,'District','1',user,sysdate,'',20);
-insert into pts_geo_type values(40,'Area','1',user,sysdate,'',30);
+insert into pts_geo_type values(10,'Country','1',user,sysdate,null);
+insert into pts_geo_type values(20,'Location','1',user,sysdate,10);
+insert into pts_geo_type values(30,'District','1',user,sysdate,20);
+insert into pts_geo_type values(40,'Area','1',user,sysdate,30);
 insert into pts_geo_zone values(10,1,'Australia','1',user,sysdate,null,null);
 insert into pts_geo_zone values(10,2,'New Zealand','1',user,sysdate,null,null);
 insert into pts_geo_zone values(10,4,'USA','1',user,sysdate,null,null);
