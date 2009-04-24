@@ -51,6 +51,9 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Local definitions
       /*-*/
+      var_group_found boolean;
+      var_rule_found boolean;
+      var_value_found boolean;
       var_sel_code number;
       var_query varchar2(32767);
       type typ_dynamic_cursor is ref cursor;
@@ -73,7 +76,10 @@ create or replace package body pts_app.pts_gen_function as
       rcd_group csr_group%rowtype;
 
       cursor csr_rule is 
-         select t02.sfi_fld_rul_type,
+         select t01.wsr_sel_group,
+                t01.wsr_tab_code,
+                t01.wsr_fld_code,
+                t02.sfi_fld_rul_type,
                 t02.sfi_fld_rul_tes_sql,
                 t03.sru_rul_cond,
                 t03.sru_rul_test,

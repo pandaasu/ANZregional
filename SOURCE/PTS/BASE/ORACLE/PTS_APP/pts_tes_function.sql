@@ -46,7 +46,7 @@ create or replace package body pts_app.pts_tes_function as
    /* Private declarations
    /*-*/
    procedure clear_panel(par_tes_code in number, par_req_mem_count in number, par_req_res_count in number);
-   procedure select_pet_panel(par_tes_code in number, par_pan_type in varchar2);
+   procedure select_pet_panel(par_tes_code in number, par_pan_type in varchar2, par_pet_multiple in varchar2);
    procedure select_hou_panel(par_tes_code in number, par_pan_type in varchar2);
 
    /*-*/
@@ -65,8 +65,8 @@ create or replace package body pts_app.pts_tes_function as
                                tab_code varchar2(32 char),
                                fld_code number,
                                rul_code varchar2(32 char),
-                               str_rule number,
-                               end_rule number,
+                               str_value number,
+                               end_value number,
                                sel_count number);
    type typ_sel_rule is table of rcd_sel_rule index by binary_integer;
    tbl_sel_rule typ_sel_rule;
@@ -138,17 +138,17 @@ create or replace package body pts_app.pts_tes_function as
          close csr_test;
       exception
          when others then
-            raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') is locked');
+            raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') is locked');
       end;
       if var_found = false then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') does not exist');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
       end if;
       if rcd_test.tde_tes_target != 1 then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') must be target (Pet Test) - panel selection not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') must be target (Pet Test) - panel selection not allowed');
       end if;
       if rcd_test.tde_tes_status != 1 and
          rcd_test.tde_tes_status != 5 then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') must be status (Raised or Errored) - panel selection not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') must be status (Raised or Errored) - panel selection not allowed');
       end if;
 
       /*-*/
@@ -159,8 +159,8 @@ create or replace package body pts_app.pts_tes_function as
       var_tes_error := null;
       begin
          clear_panel(rcd_test.tde_tes_code, rcd_test.tde_req_mem_count, rcd_test.tde_req_res_count);
-         select_pet_panel(rcd_test.tde_tes_code, '*MEMBER');
-         select_pet_panel(rcd_test.tde_tes_code, '*RESERVE');
+         select_pet_panel(rcd_test.tde_tes_code, '*MEMBER', nvl(rcd_test.tde_hou_pet_multiple,'0'));
+         select_pet_panel(rcd_test.tde_tes_code, '*RESERVE', nvl(rcd_test.tde_hou_pet_multiple,'0'));
       exception
          when others then
             var_tes_status := 5;
@@ -259,17 +259,17 @@ create or replace package body pts_app.pts_tes_function as
          close csr_test;
       exception
          when others then
-            raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') is locked');
+            raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') is locked');
       end;
       if var_found = false then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') does not exist');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
       end if;
       if rcd_test.tde_tes_target != 2 then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') must be target (Household Test) - panel selection not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') must be target (Household Test) - panel selection not allowed');
       end if;
       if rcd_test.tde_tes_status != 1 and
          rcd_test.tde_tes_status != 5 then
-         raise_application_error(-20000, 'Test code (' || to_char(var_test_code) || ') must be status (Raised or Errored) - panel selection not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') must be status (Raised or Errored) - panel selection not allowed');
       end if;
 
       /*-*/
@@ -353,7 +353,7 @@ create or replace package body pts_app.pts_tes_function as
          select t01.*
            from pts_tes_sel_group t01
           where t01.tsg_tes_code = par_tes_code
-          order by t01.tsg_sel_group;
+          order by t01.tsg_sel_group asc;
       rcd_group csr_group%rowtype;
 
       cursor csr_rule is 
@@ -361,7 +361,8 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_sel_rule t01
           where t01.tsr_tes_code = par_tes_code
             and t01.tsr_sel_group = var_sel_group
-          order by t01.tsr_dsp_seqn;
+          order by t01.tsr_tab_code asc,
+                   t01.tsr_fld_code asc;
       rcd_rule csr_rule%rowtype;
 
       cursor csr_value is 
@@ -369,9 +370,9 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_sel_value t01
           where t01.tsv_tes_code = par_tes_code
             and t01.tsv_sel_group = rcd_rule.tsr_sel_group
-            and t01.tsv_tab_code = rcd_rule.tsr_tab_value
-            and t01.tsv_fld_code = rcd_rule.tsr_fld_value
-          order by t01.tsv_dsp_seqn;
+            and t01.tsv_tab_code = rcd_rule.tsr_tab_code
+            and t01.tsv_fld_code = rcd_rule.tsr_fld_code
+          order by t01.tsv_val_code asc;
       rcd_value csr_value%rowtype;
 
    /*-------------*/
@@ -404,7 +405,7 @@ create or replace package body pts_app.pts_tes_function as
          /*-*/
          /* Create the work selection group
          /*-*/
-         insert into pts_wor_sel_rule
+         insert into pts_wor_sel_group
             values(rcd_group.tsg_sel_group);
 
          /*-*/
@@ -489,10 +490,10 @@ create or replace package body pts_app.pts_tes_function as
             tbl_sel_rule(tbl_sel_rule.count).str_value := 0;
             tbl_sel_rule(tbl_sel_rule.count).end_value := 0;
             tbl_sel_rule(tbl_sel_rule.count).sel_count := 0;
-            if tbl_sel_group(idx).str_rule = 0 then
-               tbl_sel_group(idx).str_rule := tbl_sel_rule.count;
+            if tbl_sel_group(idg).str_rule = 0 then
+               tbl_sel_group(idg).str_rule := tbl_sel_rule.count;
             end if;
-            tbl_sel_group(idx).end_rule := tbl_sel_rule.count;
+            tbl_sel_group(idg).end_rule := tbl_sel_rule.count;
 
             /*-*/
             /* Process the selection group rule values
@@ -520,11 +521,11 @@ create or replace package body pts_app.pts_tes_function as
                /* Load the value array
                /*-*/
                tbl_sel_value(tbl_sel_value.count+1).sel_group := rcd_value.tsv_sel_group;
-               tbl_sel_value(tbl_sel_value.count).tab_code := rcd_value.tsv_cla_code;
+               tbl_sel_value(tbl_sel_value.count).tab_code := rcd_value.tsv_tab_code;
                tbl_sel_value(tbl_sel_value.count).fld_code := rcd_value.tsv_fld_code;
                tbl_sel_value(tbl_sel_value.count).val_code := rcd_value.tsv_val_code;
-               tbl_sel_value(tbl_sel_value.count).fld_text := rcd_value.tsv_fld_text;
-               tbl_sel_value(tbl_sel_value.count).fld_pcnt := rcd_value.tsv_fld_pcnt;
+               tbl_sel_value(tbl_sel_value.count).val_text := rcd_value.tsv_val_text;
+               tbl_sel_value(tbl_sel_value.count).val_pcnt := rcd_value.tsv_val_pcnt;
                tbl_sel_value(tbl_sel_value.count).req_mem_count := 0;
                tbl_sel_value(tbl_sel_value.count).req_res_count := 0;
                tbl_sel_value(tbl_sel_value.count).sel_mem_count := 0;
@@ -532,8 +533,8 @@ create or replace package body pts_app.pts_tes_function as
                tbl_sel_value(tbl_sel_value.count).sel_count := 0;
                tbl_sel_value(tbl_sel_value.count).fld_count := 0;
                if tbl_sel_rule(tbl_sel_rule.count).rul_code = '*SELECT_WHEN_EQ_MIX' then
-                  tbl_sel_value(tbl_sel_value.count).req_mem_count := round(tbl_sel_group(idg).req_mem_count * nvl(rcd_value.tsv_fld_pcnt,0), 0);
-                  tbl_sel_value(tbl_sel_value.count).req_res_count := round(tbl_sel_group(idg).req_res_count * nvl(rcd_value.tsv_fld_pcnt,0), 0);
+                  tbl_sel_value(tbl_sel_value.count).req_mem_count := round(tbl_sel_group(idg).req_mem_count * nvl(rcd_value.tsv_val_pcnt,0), 0);
+                  tbl_sel_value(tbl_sel_value.count).req_res_count := round(tbl_sel_group(idg).req_res_count * nvl(rcd_value.tsv_val_pcnt,0), 0);
                   var_tsv_mem_count := var_tsv_mem_count + tbl_sel_value(tbl_sel_value.count).req_mem_count;
                   var_tsv_res_count := var_tsv_res_count + tbl_sel_value(tbl_sel_value.count).req_res_count;
                end if;
@@ -558,7 +559,7 @@ create or replace package body pts_app.pts_tes_function as
                   if var_tsv_mem_count != tbl_sel_group(idg).req_mem_count then
                      tbl_sel_value(tbl_sel_rule(tbl_sel_rule.count).end_value).req_mem_count := tbl_sel_value(tbl_sel_rule(tbl_sel_rule.count).end_value).req_mem_count + (tbl_sel_group(idg).req_mem_count - var_tsv_mem_count);
                   end if;
-                  if var_tsv_res_count != tbl_sel_rule(tbl_sel_rule.count).req_res_count then
+                  if var_tsv_res_count != tbl_sel_group(idg).req_res_count then
                      tbl_sel_value(tbl_sel_rule(tbl_sel_rule.count).end_value).req_res_count := tbl_sel_value(tbl_sel_rule(tbl_sel_rule.count).end_value).req_res_count + (tbl_sel_group(idg).req_res_count - var_tsv_res_count);
                   end if;
                end if;
@@ -625,7 +626,7 @@ create or replace package body pts_app.pts_tes_function as
    /********************************************************/
    /* This procedure performs the select pet panel routine */
    /********************************************************/
-   procedure select_pet_panel(par_tes_code in number, par_pan_type in varchar2) is
+   procedure select_pet_panel(par_tes_code in number, par_pan_type in varchar2, par_pet_multiple in varchar2) is
 
       /*-*/
       /* Autonomous transaction
@@ -636,6 +637,7 @@ create or replace package body pts_app.pts_tes_function as
       /* Local definitions
       /*-*/
       rcd_pts_tes_sel_panel pts_tes_sel_panel%rowtype;
+      var_sel_group varchar2(32);
       var_set_tot_count number;
       var_set_sel_count number;
       var_pan_selected boolean;
@@ -658,9 +660,9 @@ create or replace package body pts_app.pts_tes_function as
                 t02.hde_geo_zone
            from pts_pet_definition t01,
                 pts_hou_definition t02,
-                table(pts_app.pts_gen_function.pet_selection('*PET',var_sel_group)) t03
+                table(pts_app.pts_gen_function.select_list('*PET',var_sel_group)) t03
           where t01.pde_hou_code = t02.hde_hou_code
-            and t01.pde_pet_code = t03.pan_code
+            and t01.pde_pet_code = t03.sel_code
             and t01.pde_pet_status = 1
             and t01.pde_pet_code not in (select nvl(tsp_pet_code,-1)
                                            from pts_tes_sel_panel
@@ -687,7 +689,7 @@ create or replace package body pts_app.pts_tes_function as
                         pts_sys_field t02
                   where t01.pcl_tab_code = t02.sfi_tab_code
                     and t01.pcl_fld_code = t02.sfi_fld_code
-                    and t01.pcl_hou_code = rcd_panel.pde_pet_code
+                    and t01.pcl_pet_code = rcd_panel.pde_pet_code
                     and t02.sfi_fld_rul_type = '*LIST') t01
           order by t01.tab_code asc,
                    t01.fld_code asc,
@@ -781,9 +783,9 @@ create or replace package body pts_app.pts_tes_function as
             /*          2. Non percentage mix rules are satisfied in the SQL
             /*          3. Percentage mix rules are satisfied by matched selected counts
             /*-*/
-            for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
+            for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                tbl_sel_rule(idr).sel_count := 0;
-               if tbl_sel_rule(idr).rul_test != '*SELECT_WHEN_EQUAL_MIX' then
+               if tbl_sel_rule(idr).rul_code != '*SELECT_WHEN_EQUAL_MIX' then
                   tbl_sel_rule(idr).sel_count := 1;
                else
                   for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
@@ -799,7 +801,7 @@ create or replace package body pts_app.pts_tes_function as
                      end loop;
                   end loop;
                   for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
-                     if upper(par_pan_type) := '*MEMBER' then
+                     if upper(par_pan_type) = '*MEMBER' then
                         if tbl_sel_value(idv).req_mem_count > tbl_sel_value(idv).sel_mem_count then
                            if tbl_sel_value(idv).fld_count = 1 then
                               tbl_sel_value(idv).sel_count := 1;
@@ -832,7 +834,7 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             var_set_tot_count := 0;
             var_set_sel_count := 0;
-            for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
+            for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                var_set_tot_count := var_set_tot_count + 1;
                if tbl_sel_rule(idr).sel_count = 1 then
                   var_set_sel_count := var_set_sel_count + 1;
@@ -852,7 +854,7 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Check for multiple panel pets when required 
                /*-*/
-               if rcd_test.tde_hou_pet_multiple = '0' then
+               if par_pet_multiple = '0' then
                   open csr_panel_check;
                   fetch csr_panel_check into rcd_panel_check;
                   if csr_panel_check%found then
@@ -901,10 +903,10 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Update the internal selection counts
                /*-*/
-               if upper(par_pan_type) := '*MEMBER' then
+               if upper(par_pan_type) = '*MEMBER' then
                   tbl_sel_group(idg).sel_mem_count := tbl_sel_group(idg).sel_mem_count + 1;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               tbl_sel_value(idv).sel_mem_count := tbl_sel_value(idv).sel_mem_count + 1;
@@ -914,8 +916,8 @@ create or replace package body pts_app.pts_tes_function as
                   end loop;
                else
                   tbl_sel_group(idg).sel_res_count := tbl_sel_group(idg).sel_res_count + 1;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               tbl_sel_value(idv).sel_res_count := tbl_sel_value(idv).sel_res_count + 1;
@@ -928,12 +930,12 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Insert the new panel member
                /*-*/
-               rcd_pts_tes_sel_panel.tsp_tes_code := rcd_test.tde_tes_code;
+               rcd_pts_tes_sel_panel.tsp_tes_code := par_tes_code;
                rcd_pts_tes_sel_panel.tsp_sel_group := tbl_sel_group(idg).sel_group;
                rcd_pts_tes_sel_panel.tsp_hou_code := rcd_panel.pde_hou_code;
                rcd_pts_tes_sel_panel.tsp_pet_code := rcd_panel.pde_pet_code;
                rcd_pts_tes_sel_panel.tsp_status := upper(par_pan_type);
-               insert into pts_tes_sel_panel using rcd_pts_tes_sel_panel;
+               insert into pts_tes_sel_panel values rcd_pts_tes_sel_panel;
 
                /*-*/
                /* Update the pet status
@@ -945,13 +947,13 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Update the test counts
                /*-*/
-               if upper(par_pan_type) := '*MEMBER' then
+               if upper(par_pan_type) = '*MEMBER' then
                   update pts_tes_sel_group
                      set tsg_sel_mem_count = tsg_sel_mem_count + 1
                    where tsg_tes_code = par_tes_code
                      and tsg_sel_group = tbl_sel_group(idg).sel_group;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               update pts_tes_sel_value
@@ -970,8 +972,8 @@ create or replace package body pts_app.pts_tes_function as
                      set tsg_sel_res_count = tsg_sel_res_count + 1
                    where tsg_tes_code = par_tes_code
                      and tsg_sel_group = tbl_sel_group(idg).sel_group;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               update pts_tes_sel_value
@@ -1004,7 +1006,7 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             /* Exit the panel loop when group panel requirements satisfied
             /*-*/
-            if upper(par_pan_type) := '*MEMBER' then
+            if upper(par_pan_type) = '*MEMBER' then
                if tbl_sel_group(idg).sel_mem_count >= tbl_sel_group(idg).req_mem_count then
                   exit;
                end if;
@@ -1058,6 +1060,7 @@ create or replace package body pts_app.pts_tes_function as
       /* Local definitions
       /*-*/
       rcd_pts_tes_sel_panel pts_tes_sel_panel%rowtype;
+      var_sel_group varchar2(32);
       var_set_tot_count number;
       var_set_sel_count number;
       var_pan_selected boolean;
@@ -1074,9 +1077,9 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_panel is 
          select t01.hde_hou_code,
                 t01.hde_geo_zone
-           from pts_hou_definition t01
-                table(pts_app.pts_gen_function.pet_selection('*HOUSEHOLD',var_sel_group)) t02
-          where t01.hde_hou_code = t02.pan_code
+           from pts_hou_definition t01,
+                table(pts_app.pts_gen_function.select_list('*HOUSEHOLD',var_sel_group)) t02
+          where t01.hde_hou_code = t02.sel_code
             and t01.hde_hou_status = 1
             and t01.hde_hou_code not in (select nvl(tsp_hou_code,-1)
                                            from pts_tes_sel_panel
@@ -1093,7 +1096,7 @@ create or replace package body pts_app.pts_tes_function as
                         pts_sys_field t02
                   where t01.hcl_tab_code = t02.sfi_tab_code
                     and t01.hcl_fld_code = t02.sfi_fld_code
-                    and t01.hcl_hou_code = rcd_panel.pde_hou_code
+                    and t01.hcl_hou_code = rcd_panel.hde_hou_code
                     and t02.sfi_fld_rul_type = '*LIST') t01
           order by t01.tab_code asc,
                    t01.fld_code asc,
@@ -1168,9 +1171,9 @@ create or replace package body pts_app.pts_tes_function as
             /*          2. Non percentage mix rules are satisfied in the SQL
             /*          3. Percentage mix rules are satisfied by matched selected counts
             /*-*/
-            for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
+            for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                tbl_sel_rule(idr).sel_count := 0;
-               if tbl_sel_rule(idr).rul_test != '*SELECT_WHEN_EQUAL_MIX' then
+               if tbl_sel_rule(idr).rul_code != '*SELECT_WHEN_EQUAL_MIX' then
                   tbl_sel_rule(idr).sel_count := 1;
                else
                   for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
@@ -1186,7 +1189,7 @@ create or replace package body pts_app.pts_tes_function as
                      end loop;
                   end loop;
                   for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
-                     if upper(par_pan_type) := '*MEMBER' then
+                     if upper(par_pan_type) = '*MEMBER' then
                         if tbl_sel_value(idv).req_mem_count > tbl_sel_value(idv).sel_mem_count then
                            if tbl_sel_value(idv).fld_count = 1 then
                               tbl_sel_value(idv).sel_count := 1;
@@ -1219,7 +1222,7 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             var_set_tot_count := 0;
             var_set_sel_count := 0;
-            for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
+            for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                var_set_tot_count := var_set_tot_count + 1;
                if tbl_sel_rule(idr).sel_count = 1 then
                   var_set_sel_count := var_set_sel_count + 1;
@@ -1276,10 +1279,10 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Update the internal selection counts
                /*-*/
-               if upper(par_pan_type) := '*MEMBER' then
+               if upper(par_pan_type) = '*MEMBER' then
                   tbl_sel_group(idg).sel_mem_count := tbl_sel_group(idg).sel_mem_count + 1;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               tbl_sel_value(idv).sel_mem_count := tbl_sel_value(idv).sel_mem_count + 1;
@@ -1289,8 +1292,8 @@ create or replace package body pts_app.pts_tes_function as
                   end loop;
                else
                   tbl_sel_group(idg).sel_res_count := tbl_sel_group(idg).sel_res_count + 1;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               tbl_sel_value(idv).sel_res_count := tbl_sel_value(idv).sel_res_count + 1;
@@ -1303,12 +1306,12 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Insert the new panel member
                /*-*/
-               rcd_pts_tes_sel_panel.tsp_tes_code := rcd_test.tde_tes_code;
+               rcd_pts_tes_sel_panel.tsp_tes_code := par_tes_code;
                rcd_pts_tes_sel_panel.tsp_sel_group := tbl_sel_group(idg).sel_group;
                rcd_pts_tes_sel_panel.tsp_hou_code := rcd_panel.hde_hou_code;
                rcd_pts_tes_sel_panel.tsp_pet_code := null;
                rcd_pts_tes_sel_panel.tsp_status := upper(par_pan_type);
-               insert into pts_tes_sel_panel using rcd_pts_tes_sel_panel;
+               insert into pts_tes_sel_panel values rcd_pts_tes_sel_panel;
 
                /*-*/
                /* Update the household status
@@ -1320,13 +1323,13 @@ create or replace package body pts_app.pts_tes_function as
                /*-*/
                /* Update the test counts
                /*-*/
-               if upper(par_pan_type) := '*MEMBER' then
+               if upper(par_pan_type) = '*MEMBER' then
                   update pts_tes_sel_group
                      set tsg_sel_mem_count = tsg_sel_mem_count + 1
                    where tsg_tes_code = par_tes_code
                      and tsg_sel_group = tbl_sel_group(idg).sel_group;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               update pts_tes_sel_value
@@ -1345,8 +1348,8 @@ create or replace package body pts_app.pts_tes_function as
                      set tsg_sel_res_count = tsg_sel_res_count + 1
                    where tsg_tes_code = par_tes_code
                      and tsg_sel_group = tbl_sel_group(idg).sel_group;
-                  for idr in tbl_sel_group(idg).str_value..tbl_sel_group(idg).end_value loop
-                     if tbl_sel_rule(idr).rul_test = '*SELECT_WHEN_EQUAL_MIX' then
+                  for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
+                     if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                         for idv in tbl_sel_rule(idr).str_value..tbl_sel_rule(idr).end_value loop
                            if tbl_sel_value(idv).sel_count = 1 then
                               update pts_tes_sel_value
@@ -1379,7 +1382,7 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             /* Exit the panel loop when group panel requirements satisfied
             /*-*/
-            if upper(par_pan_type) := '*MEMBER' then
+            if upper(par_pan_type) = '*MEMBER' then
                if tbl_sel_group(idg).sel_mem_count >= tbl_sel_group(idg).req_mem_count then
                   exit;
                end if;
