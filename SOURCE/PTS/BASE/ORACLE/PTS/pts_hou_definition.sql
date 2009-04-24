@@ -67,7 +67,7 @@ comment on column pts.pts_hou_definition.hde_notes is 'Household notes';
 /* Primary Key Constraint
 /**/
 alter table pts.pts_hou_definition
-   add constraint pts_hou_definition_pk primary key (hde_household);
+   add constraint pts_hou_definition_pk primary key (hde_hou_code);
 
 /**/
 /* Indexes

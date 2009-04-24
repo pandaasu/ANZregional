@@ -20,7 +20,7 @@
 /**/
 create table pts.pts_int_definition
    (ide_int_code                    number                        not null,
-    ide_status                      number                        not null,
+    ide_int_status                  number                        not null,
     ide_upd_user                    varchar2(30 char)             not null,
     ide_upd_date                    date                          not null,
     ide_geo_type                    number                        null,

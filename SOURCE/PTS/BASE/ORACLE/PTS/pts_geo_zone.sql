@@ -32,13 +32,13 @@ create table pts.pts_geo_zone
 /* Comments
 /**/
 comment on table pts.pts_geo_zone is 'Geographic Zone Table';
-comment on column pts.pts_geo_type.gzo_geo_type is 'Geographic zone type';
+comment on column pts.pts_geo_zone.gzo_geo_type is 'Geographic zone type';
 comment on column pts.pts_geo_zone.gzo_geo_zone is 'Geographic zone code';
 comment on column pts.pts_geo_zone.gzo_zon_text is 'Geographic zone text';
 comment on column pts.pts_geo_zone.gzo_zon_status is 'Geographic zone status (0=Inactive or 1=Active)';
 comment on column pts.pts_geo_zone.gzo_upd_user is 'Geographic zone update user';
 comment on column pts.pts_geo_zone.gzo_upd_date is 'Geographic zone update date';
-comment on column pts.pts_geo_type.gzo_par_type is 'Geographic parent type (null or geographic type)';
+comment on column pts.pts_geo_zone.gzo_par_type is 'Geographic parent type (null or geographic type)';
 comment on column pts.pts_geo_zone.gzo_par_zone is 'Geographic parent code (null or geographic code)';
 
 /**/
