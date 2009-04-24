@@ -435,7 +435,6 @@ insert into pts_sys_value values('*PET_CLASSIFICATION',8,4,'Toy');
 insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_EQUAL_MIX');
-insert into pts_sys_select values('*PET_CLASSIFICATION',8,'*SELECT_WHEN_EQUAL_MIX');
 
 insert into pts_sys_field values('*PET_CLASSIFICATION',9,'Pet activity level','1',user,sysdate,'1','1',5,
                                  '*OPT_SINGLE_LIST',
