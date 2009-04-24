@@ -48,7 +48,7 @@ insert into pts_sys_select values('*PET_SAMPLE',4,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
 
 
-insert into pts_sys_field values('*PET_SAMPLE',5,'Breeder','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',5,'Breeder','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',5))',
                                  '*LIST','select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',5))',
@@ -59,7 +59,7 @@ insert into pts_sys_select values('*PET_SAMPLE',5,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',5,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',5,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',6,'Target','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',6,'Target','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',6))',
                                  '*LIST',
@@ -106,7 +106,7 @@ insert into pts_sys_select values('*PET_SAMPLE',6,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',6,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',6,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',7,'Exelpet','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',7,'Exelpet','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',7))',
                                  '*LIST',
@@ -124,23 +124,7 @@ insert into pts_sys_select values('*PET_SAMPLE',7,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',7,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',7,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',8,'Pasta meals (use with old vers','*HOUSEHOLD','1',user,sysdate,'1','1',5,
-                                 '*OPT_MULTIPLE_LIST',
-                                 'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',8))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',8))',
-                                 'exists(select 1 from pts_pet_classification where pcl_pet_code=p1.pde_pet_code and pcl_tab_code=''*PET_SAMPLE'' and pcl_fld_code=8 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)');
-insert into pts_sys_value values('*PET_SAMPLE',8,1,'DOLMIO CHUNKY (SPAG BOL)');
-insert into pts_sys_value values('*PET_SAMPLE',8,2,'RAGULETTO (SPAG BOLOGNAISE)');
-insert into pts_sys_value values('*PET_SAMPLE',8,3,'OTHER (SPAG BOLOGNAISE)');
-insert into pts_sys_value values('*PET_SAMPLE',8,4,'DOLMIO TRADITIONAL (SPAG BOL)');
-insert into pts_sys_value values('*PET_SAMPLE',8,5,'DOLMIO OTHER (SPAG BOL)');
-insert into pts_sys_select values('*PET_SAMPLE',8,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_SAMPLE',8,'*SELECT_WHEN_NOT_EQUAL');
-insert into pts_sys_select values('*PET_SAMPLE',8,'*SELECT_WHEN_EQUAL_ALL');
-insert into pts_sys_select values('*PET_SAMPLE',8,'*SELECT_WHEN_NOT_EQUAL_ALL');
-
-insert into pts_sys_field values('*PET_SAMPLE',40,'Pet Single Serve Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',40,'Pet Single Serve Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',40))',
                                  '*LIST',
@@ -177,7 +161,7 @@ insert into pts_sys_select values('*PET_SAMPLE',40,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',40,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',40,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',41,'Pet Canned Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',41,'Pet Canned Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',41))',
                                  '*LIST',
@@ -314,7 +298,7 @@ insert into pts_sys_select values('*PET_SAMPLE',41,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',41,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',41,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',42,'Pet Chilled Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',42,'Pet Chilled Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',42))',
                                  '*LIST',
@@ -408,7 +392,7 @@ insert into pts_sys_select values('*PET_SAMPLE',42,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',42,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',42,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',43,'Pet Chub Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',43,'Pet Chub Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',43))',
                                  '*LIST',
@@ -428,7 +412,7 @@ insert into pts_sys_select values('*PET_SAMPLE',43,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',43,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',43,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',44,'Pet Dry Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',44,'Pet Dry Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',44))',
                                  '*LIST',
@@ -573,7 +557,7 @@ insert into pts_sys_select values('*PET_SAMPLE',44,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',44,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',44,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',45,'Pet Semi-Moist Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',45,'Pet Semi-Moist Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',45))',
                                  '*LIST',
@@ -587,7 +571,7 @@ insert into pts_sys_select values('*PET_SAMPLE',45,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',45,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',45,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',46,'Pet Milk Brand','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',46,'Pet Milk Brand','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST','select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',46))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',46))',
@@ -608,7 +592,7 @@ insert into pts_sys_select values('*PET_SAMPLE',46,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',46,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',46,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',47,'PET SNACKS','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',47,'PET SNACKS','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',47))',
                                  '*LIST',
@@ -666,7 +650,7 @@ insert into pts_sys_select values('*PET_SAMPLE',47,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',47,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',47,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',48,'PET BIRD BRANDS','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',48,'PET BIRD BRANDS','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',48))',
                                  '*LIST',
@@ -699,7 +683,7 @@ insert into pts_sys_select values('*PET_SAMPLE',48,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAMPLE',48,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAMPLE',48,'*SELECT_WHEN_NOT_EQUAL_ALL');
 
-insert into pts_sys_field values('*PET_SAMPLE',49,'Pet Vitamins & Supplements','*PET','1',user,sysdate,'1','1',5,
+insert into pts_sys_field values('*PET_SAMPLE',49,'Pet Vitamins & Supplements','1',user,sysdate,'1','1',5,
                                  '*OPT_MULTIPLE_LIST',
                                  'select val_code, val_text from table(pts_app.pts_pet_function.list_sample(''*PET_SAMPLE'',49))',
                                  '*LIST',
