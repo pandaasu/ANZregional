@@ -6,7 +6,7 @@
 select
   'insert into pts_sam_definition values('||
   sample_code||','||
-  decode(sample_desc,null,'null',''''||trim(replace(sample_desc,'''',''''''))||'''')||','||
+  decode(sample_desc,null,'null',''''||trim(replace(sample_desc,'''',''''''))||'''')||','''||
   decode(sample_status,1,1,2,0,0)||''',user,sysdate,'||
   decode(unit_of_measure,null,'null',unit_of_measure)||','||
   decode(sample_size,null,'null',sample_size)||','||
