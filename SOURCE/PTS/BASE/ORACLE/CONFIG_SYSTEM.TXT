@@ -13,14 +13,14 @@ commit;
 -- SYSTEM TABLE --
 ------------------
 
-insert into pts_sys_table values('*HOU_DEFINITION','Household definition data','*HOUSEHOLD');
-insert into pts_sys_table values('*HOU_CLASSIFICATION','Household classification data','*HOUSEHOLD');
-insert into pts_sys_table values('*HOU_SAMPLE','Pet sample data','*HOUSEHOLD');
-insert into pts_sys_table values('*PET_DEFINITION','Pet definition data','*PET');
-insert into pts_sys_table values('*PET_CLASSIFICATION','Pet classification data','*PET');
-insert into pts_sys_table values('*PET_SAMPLE','Pet sample data','*PET');
-insert into pts_sys_table values('*SAM_DEFINITION','Sample definition data','*SAMPLE');
-insert into pts_sys_table values('*INT_DEFINITION','Interviewer definition data','*INTERVIEWER');
+insert into pts_sys_table values('*HOU_DEF','Household definition data','*HOUSEHOLD');
+insert into pts_sys_table values('*HOU_CLA','Household classification data','*HOUSEHOLD');
+insert into pts_sys_table values('*HOU_SAM','Household sample data','*HOUSEHOLD');
+insert into pts_sys_table values('*PET_DEF','Pet definition data','*PET');
+insert into pts_sys_table values('*PET_CLA','Pet classification data','*PET');
+insert into pts_sys_table values('*PET_SAM','Pet sample data','*PET');
+insert into pts_sys_table values('*SAM_DEF','Sample definition data','*SAMPLE');
+insert into pts_sys_table values('*INT_DEF','Interviewer definition data','*INTERVIEWER');
 commit;
 
 -----------------
