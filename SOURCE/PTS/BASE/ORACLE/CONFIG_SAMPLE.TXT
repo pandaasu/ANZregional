@@ -1,38 +1,61 @@
+--------------------------
+-- SAMPLE CONFIGURATION --
+--------------------------
 
--------------------
--- SYSTEM ENTITY --
--------------------
+insert into pts_sys_field values('*SAM_DEF',1,'Sample code','1',user,sysdate,'0','0',15,
+                                 '*LOGIC',
+                                 null,
+                                 '*NUMBER',
+                                 null,
+                                 's1.sde_sam_code<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*SAM_DEF',1,'*SELECT_WHEN_EQ');
 
+insert into pts_sys_field values('*SAM_DEF',2,'Sample name','1',user,sysdate,'0','0',120,
+                                 '*LOGIC',
+                                 null,
+                                 '*TEXT',
+                                 null,
+                                 'upper(nvl(s1.sde_sam_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*SAM_DEF',2,'*SELECT_WHEN_LIKE');
 
+insert into pts_sys_field values('*SAM_DEF',3,'Sample prepared location','1',user,sysdate,'1','0',5,
+                                 '*LOGIC',
+                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',3))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',3))',
+                                 'nvl(s1.sde_pre_locn,0)<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_value values('*SAM_DEF',3,1,'UBA Pilot Plant');
+insert into pts_sys_value values('*SAM_DEF',3,2,'UBA Factory - Bathurst');
+insert into pts_sys_value values('*SAM_DEF',3,3,'UBA Factory - Flexi');
+insert into pts_sys_value values('*SAM_DEF',3,4,'UBA Factory - Canning');
+insert into pts_sys_value values('*SAM_DEF',3,5,'UBA Factory - Wanganui');
+insert into pts_sys_value values('*SAM_DEF',3,6,'UBA Factory - Snacks');
+insert into pts_sys_value values('*SAM_DEF',3,7,'UBA Factory - Wacol');
+insert into pts_sys_value values('*SAM_DEF',3,8,'UBA Co-Packers');
+insert into pts_sys_value values('*SAM_DEF',3,9,'UNK Supermarket/ Vet');
+insert into pts_sys_value values('*SAM_DEF',3,10,'UNK Other Mars Unit');
+insert into pts_sys_value values('*SAM_DEF',3,11,'UNK Consultants');
+insert into pts_sys_value values('*SAM_DEF',3,12,'UNK Competitors');
+insert into pts_sys_value values('*SAM_DEF',3,13,'UBA Exelpet');
+insert into pts_sys_value values('*SAM_DEF',3,14,'MCA Mars Confectionery');
+insert into pts_sys_value values('*SAM_DEF',3,15,'UBA Nutriceuticals');
+insert into pts_sys_value values('*SAM_DEF',3,16,'MFA Masterfoods');
+insert into pts_sys_value values('*SAM_DEF',3,17,'MCA Kenman Kandy');
+insert into pts_sys_value values('*SAM_DEF',3,18,'UBA Factory - Wacol');
+insert into pts_sys_value values('*SAM_DEF',3,19,'UBA Factory - Single Serve');
+insert into pts_sys_select values('*SAM_DEF',3,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*SAM_DEF',3,'*SELECT_WHEN_NOT_EQUAL');
 
+insert into pts_sys_field values('*SAM_DEF',4,'Sample size','1',user,sysdate,'1','0',5,
+                                 '*LOGIC',
+                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
+                                 '*LIST',
+                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
+                                 'nvl(s1.sde_pre_locn,0)<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_value values('*SAM_DEF',4,1,'Gram');
+insert into pts_sys_select values('*SAM_DEF',4,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*SAM_DEF',4,'*SELECT_WHEN_NOT_EQUAL');
 
+commit;
 
-TEST_TYPE - method, desc, length
-
-	TEST_TYPE_DAY - param_code (day)
-
-		TEST_TYPE_QUESTN - param_code, question_code
-
-
-
-
-
-TEST - test_type, company, select_code, status, restricted_access, requester, aim, reason, prediction, test title, etc
-
-	TEST_DAY - param_code
-
-		TEST_QUESTION - param_code, question_code, delete_allowed, test_quest_id, sample_specific
-
-	TEST_KEYWORD - keyword
-
-	TEST_SAMPLE - sample_code, market_research_code, report_code, sample_id
-
-
-
-
-SELECT_TEMPLATE - select_code, status, desc, restricted_access
-
-
-
-
-TEST_PARAMS - Day desc (1 to 25)
+   
