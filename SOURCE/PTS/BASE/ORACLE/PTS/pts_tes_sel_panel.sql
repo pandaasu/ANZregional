@@ -30,7 +30,7 @@ create table pts.pts_tes_sel_panel
 /**/
 comment on table pts.pts_tes_sel_panel is 'Test Selection Panel Table';
 comment on column pts.pts_tes_sel_panel.tsp_tes_code is 'Test code';
-comment on column pts.pts_tes_sel_panel.tsp_sel_group is 'Selection group code (*SET01 - *SET99)';
+comment on column pts.pts_tes_sel_panel.tsp_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_tes_sel_panel.tsp_hou_code is 'Household code';
 comment on column pts.pts_tes_sel_panel.tsp_pet_code is 'Pet code (product test type *HHOLD = zero)';
 comment on column pts.pts_tes_sel_panel.tsp_status is 'Panel status (*ACTIVE, *RESERVE, *RECRUITED)';
