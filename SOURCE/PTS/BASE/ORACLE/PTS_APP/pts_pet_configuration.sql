@@ -25,7 +25,8 @@ create or replace package pts_app.pts_pet_configuration as
    /*-*/
    /* Public declarations
    /*-*/
-   function list_pets return pts_pet_list_type pipelined;
+   function get_list_data return pts_pet_list_type pipelined;
+   function get_list_cntl return pts_pet_cntl_type pipelined;
    function get_pet(par_pet_code in number) return pts_pet_data_type pipelined;
    function get_pet_class(par_pet_code in number) return pts_pet_class_type pipelined;
    function get_pet_sample(par_pet_code in number) return pts_pet_sample_type pipelined;
@@ -53,10 +54,18 @@ create or replace package body pts_app.pts_pet_configuration as
    rcd_pts_pet_definition pts_pet_definition%rowtype;
    rcd_pts_pet_classification pts_pet_classification%rowtype;
 
-   /************************************************/
-   /* This procedure performs the get pets routine */
-   /************************************************/
-   function list_pets return pts_pet_list_type pipelined is
+   /*-*/
+   /* Private definitions
+   /*-*/
+   var_str_list number;
+   var_end_list number;
+   var_str_code number;
+   var_end_code number;
+
+   /*****************************************************/
+   /* This procedure performs the get list data routine */
+   /******************************************************/
+   function get_list_data return pts_pet_list_type pipelined is
 
       /*-*/
       /* Local definitions
@@ -70,12 +79,17 @@ create or replace package body pts_app.pts_pet_configuration as
       obj_rul_node xmlDom.domNode;
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
+      var_disp_mode varchar2(32);
+      var_page_size number;
+      var_row_count number;
+      var_row_more boolean;
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_select is 
-         select t01.pde_pet_code,
+      cursor csr_select_frwd is 
+         select rownum,
+                t01.pde_pet_code,
                 t01.pde_hou_code,
                 t01.pde_pet_type,
                 t02.hde_geo_zone
@@ -84,8 +98,25 @@ create or replace package body pts_app.pts_pet_configuration as
                 table(pts_app.pts_gen_function.select_list('*PET',null)) t03
           where t01.pde_hou_code = t02.hde_hou_code(+)
             and t01.pde_pet_code = t03.sel_code
-          order by xxxxxx;
-      rcd_select csr_select%rowtype;
+            and t01.pde_pet_code > var_end_code
+          order by t01.pde_pet_code asc;
+      rcd_select_frwd csr_select_frwd%rowtype;
+
+      cursor csr_select_back is 
+         select rownum,
+                t01.pde_pet_code,
+                t01.pde_hou_code,
+                t01.pde_pet_type,
+                t02.hde_geo_zone
+           from pts_pet_definition t01,
+                pts_hou_definition t02,
+                table(pts_app.pts_gen_function.select_list('*PET',null)) t03
+          where t01.pde_hou_code = t02.hde_hou_code(+)
+            and t01.pde_pet_code = t03.sel_code
+            and t01.pde_pet_code < var_end_code
+            and rownum <= var_page_size + 1;
+          order by t01.pde_pet_code desc;
+      rcd_select_back csr_select_back%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -115,9 +146,10 @@ create or replace package body pts_app.pts_pet_configuration as
       /* Retrieve and process the stream header
       /*-*/
       obj_pts_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_STREAM');
-      ORDER_BY := upper(xslProcessor.valueOf(obj_pts_stream,'@CODE'));
-      PAGE_SIZE := xslProcessor.valueOf(obj_pts_stream,'@TEXT');
-      START_KEY := xslProcessor.valueOf(obj_pts_stream,'@STATUS');
+      var_disp_mode := upper(xslProcessor.valueOf(obj_pts_stream,'@DISPMODE'));
+      var_page_size := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@PAGESIZE')),20);
+      var_str_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@STRCODE')),0);
+      var_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@ENDCODE')),0);
 
       /*-*/
       /* Retrieve and process the stream nodes
@@ -126,20 +158,24 @@ create or replace package body pts_app.pts_pet_configuration as
       obj_grp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_STREAM/GROUPS/GROUP');
       for idg in 0..xmlDom.getLength(obj_grp_list)-1 loop
          obj_grp_node := xmlDom.item(obj_grp_list,idg);
-         rcd_pts_wor_sel_group.wsg_sel_group := upper(xslProcessor.valueOf(obj_grp_node,'@NAME'));
+         rcd_pts_wor_sel_group.wsg_sel_group := upper(xslProcessor.valueOf(obj_grp_node,'@SELGROUP'));
          insert into pts_wor_sel_group values rcd_pts_wor_sel_group;
          obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULES/RULE');
          for idr in 0..xmlDom.getLength(obj_rul_list)-1 loop
             obj_rul_node := xmlDom.item(obj_rul_list,idr);
             rcd_pts_wor_sel_rule.wsr_sel_group := rcd_pts_wor_sel_group.wsg_sel_group;
-            rcd_pts_wor_sel_rule.wsr_xxxxxx := upper(xslProcessor.valueOf(obj_rul_node,'@XXXX'));
+            rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCODE'));
+            rcd_pts_wor_sel_rule.wsr_fld_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCODE'));
+            rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCODE'));
             insert into pts_wor_sel_rule values rcd_pts_wor_sel_rule;
             obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUES/VALUE');
             for idv in 0..xmlDom.getLength(obj_val_list)-1 loop
                obj_val_node := xmlDom.item(obj_val_list,idv);
                rcd_pts_wor_sel_value.wsv_sel_group := rcd_pts_wor_sel_rule.wsr_sel_group;
-               rcd_pts_wor_sel_value.wsv_xxxx := rcd_pts_wor_sel_group.wsr_xxxxx;
-               rcd_pts_wor_sel_value.wsv_xxxxxx := upper(xslProcessor.valueOf(obj_val_node,'@XXXX'));
+               rcd_pts_wor_sel_value.wsv_tab_code := rcd_pts_wor_sel_rule.wsr_tab_code;
+               rcd_pts_wor_sel_value.wsv_fld_code := rcd_pts_wor_sel_rule.wsr_rul_code;
+               rcd_pts_wor_sel_value.wsv_val_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_val_node,'@VALCODE'));
+               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTEXT'));
                insert into pts_wor_sel_value values rcd_pts_wor_sel_value;
             end loop;
          end loop;
@@ -151,22 +187,79 @@ create or replace package body pts_app.pts_pet_configuration as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
-      /* Retrieve the pet selection list
+      /* Initialise the list control values
       /*-*/
-      open csr_select;
-      loop
-         fetch csr_select into rcd_select;
-         if csr_select%notfound then
-            exit;
+      var_str_list := 1;
+      var_end_list := 1;
+      var_str_code := 0;
+      var_end_code := 0;
+
+      /*-*/
+      /* Retrieve the pet selection list and pipe the results
+      /*-*/
+      var_row_count := 0;
+      var_row_more := false;
+      if var_disp_mode != '*PREV' then
+         open csr_select_fwrd;
+         loop
+            fetch csr_select_fwrd into rcd_select_fwrd;
+            if csr_select_fwrd%notfound then
+               exit;
+            end if;
+            var_row_count := var_row_count + 1;
+            if rcd_select.rownum <= var_page_size then
+               pipe row(pts_pet_list_object(rcd_select_fwrd.xxx,rcd_select_fwrd.xxx));
+               if var_row_count = 1 then
+                  var_str_code := rcd_select_fwrd.pet_code;
+               end if;
+               var_end_code := rcd_select_fwrd.pet_code;
+            else
+               var_row_more := true;
+            end if;
+         end loop;
+         close csr_select_fwrd;
+      else
+         open csr_select_back;
+         loop
+            fetch csr_select_back into rcd_select_back;
+            if csr_select_back%notfound then
+               exit;
+            end if;
+            var_row_count := var_row_count + 1;
+            if rcd_select.rownum <= var_page_size then
+               pipe row(pts_pet_list_object(rcd_select_back.xxx,rcd_select_back.xxx));
+               if var_row_count = 1 then
+                  var_str_code := rcd_select_back.pet_code;
+               end if;
+               var_end_code := rcd_select_back.pet_code;
+            else
+               var_row_more := true;
+            end if;
+         end loop;
+         close csr_select_back;
+      end if;
+
+      /*-*/
+      /* Set the list property indicators
+      /*-*/
+      if var_row_count != 0 then
+         if var_disp_mode = '*START' then
+            var_str_list := 1;
+            if var_row_more = true then
+               var_end_list := 0;
+            end if;
+         elsif var_disp_mode = '*PREV' then
+            if var_row_more = true then
+               var_str_list := 0;
+            end if;
+            var_end_list := 0;
+         elsif var_disp_mode = '*NEXT' then
+            var_str_list := 0;
+            if var_row_more = true then
+               var_end_list := 0;
+            end if;
          end if;
-
-         /*-*/
-         /* Pipe the pet selection list object
-         /*-*/
-         pipe row(pts_pet_list_object(rcd_select.xxx,rcd_select.xxx));
-
-      end loop;
-      close csr_select;
+      end if;
 
       /*-*/
       /* Return
@@ -186,12 +279,56 @@ create or replace package body pts_app.pts_pet_configuration as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_PET_CONFIGURATION - LIST_PETS - ' || substr(SQLERRM, 1, 2048));
+         raise_application_error(-20000, 'PTS_PET_CONFIGURATION - GET_LIST_DATA - ' || substr(SQLERRM, 1, 2048));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end list_pets;
+   end get_list_data;
+
+   /********************************************************/
+   /* This procedure performs the get list control routine */
+   /********************************************************/
+   function get_list_cntl return pts_pet_cntl_type pipelined is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Return the list control data
+      /*-*/
+      pipe row(pts_pet_cntl_object(var_str_list,var_end_list,var_str_code,var_end_code));
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_PET_CONFIGURATION - GET_LIST_CNTL - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_list_cntl;
 
    /**************************************************/
    /* This procedure performs the define pet routine */

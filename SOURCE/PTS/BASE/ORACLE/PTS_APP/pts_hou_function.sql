@@ -335,7 +335,7 @@ create or replace package body pts_app.pts_hou_function as
          if csr_classification%found then
             pipe row(pts_cla_text_object(rcd_classification.hcl_val_text));
          else
-            pipe row(pts_cla_text_object(0));
+            pipe row(pts_cla_text_object(null));
          end if;
       end loop;
       close csr_classification;
