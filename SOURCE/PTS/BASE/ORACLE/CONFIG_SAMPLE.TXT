@@ -1,0 +1,38 @@
+
+-------------------
+-- SYSTEM ENTITY --
+-------------------
+
+
+
+
+
+TEST_TYPE - method, desc, length
+
+	TEST_TYPE_DAY - param_code (day)
+
+		TEST_TYPE_QUESTN - param_code, question_code
+
+
+
+
+
+TEST - test_type, company, select_code, status, restricted_access, requester, aim, reason, prediction, test title, etc
+
+	TEST_DAY - param_code
+
+		TEST_QUESTION - param_code, question_code, delete_allowed, test_quest_id, sample_specific
+
+	TEST_KEYWORD - keyword
+
+	TEST_SAMPLE - sample_code, market_research_code, report_code, sample_id
+
+
+
+
+SELECT_TEMPLATE - select_code, status, desc, restricted_access
+
+
+
+
+TEST_PARAMS - Day desc (1 to 25)
