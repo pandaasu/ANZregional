@@ -1,0 +1,19 @@
+
+-----------------
+-- PET EXTRACT --
+-----------------
+
+select
+  'insert into pts_sam_definition values('||
+  sample_code||','||
+  decode(sample_desc,null,'null',''''||trim(replace(sample_desc,'''',''''''))||'''')||','||
+  decode(sample_status,1,1,2,0,0)||''',user,sysdate,'||
+  decode(unit_of_measure,null,'null',unit_of_measure)||','||
+  decode(sample_size,null,'null',sample_size)||','||
+  decode(prepared_location,null,'null',prepared_location)||','||
+  decode(prepared_date,null,'null','to_date('''||to_char(prepared_date,'yyyymmdd')||''',''yyyymmdd'')')||','||
+  decode(external_recipe_reference,null,'null',''''||trim(replace(external_recipe_reference,'''',''''''))||'''')||','||
+  decode(plop_code,null,'null',''''||trim(replace(plop_code,'''',''''''))||'''')||');' as seltext
+  from sample order by sample_code;
+
+select 'commit;' from dual;
