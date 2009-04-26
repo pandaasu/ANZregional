@@ -57,7 +57,7 @@ select
 
 
 ------------------------
--- GEOGRAPHIC EXTRACT --
+-- GEOGRAPHIC EXTRACT -- DONE
 ------------------------
 
 select
@@ -71,7 +71,7 @@ select
   from geog_zone where status = 1 order by geog_zone_type_code, geog_zone_code;
 
 --------------------------------
--- SELECTION TEMPLATE EXTRACT --
+-- SELECTION TEMPLATE EXTRACT -- DONE
 --------------------------------
 
 select
@@ -87,7 +87,7 @@ select
 
 
 -----------------
--- PET EXTRACT --
+-- PET EXTRACT -- DONE
 -----------------
 set termout off 
 
@@ -192,6 +192,10 @@ select 'insert into pts_pet_classification values('||pet_code||',''*PET_CLASSIFI
 spool off;
 
 
+------------------------
+-- PET SAMPLE EXTRACT -- TODO
+------------------------
+
 select 'insert into pts_pet_classification values('||t1.pet_code||',''*PET_SAMPLE'',4,'||t1.sample_classn_code||',null);' as seltext
   from pet_sample_classn t1, pet t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 4 and t1.sample_classn_code is not null and t2.pet_type_code != 4 order by t1.pet_code, t1.sample_classn_code;
 
@@ -243,13 +247,13 @@ select 'insert into pts_que_definition values('||question_code||','''||trim(repl
 
 
 -------------------------
--- INTERVIEWER EXTRACT --
+-- INTERVIEWER EXTRACT -- DONE
 -------------------------
 
 select 'insert into pts_int_definition values('||intviewer_code||','''||decode(intviewer_status,1,1,2,0,0)||''',user,sysdate,'||geog_zone_type_code||','||geog_zone_code||','''||trim(replace(intviewer_name,'''',''''''))||''','''||trim(replace(intviewer_locn_street,'''',''''''))||''','''||trim(replace(intviewer_locn_town,'''',''''''))||''','''||trim(replace(intviewer_locn_postcode,'''',''''''))||''','''||trim(replace(intviewer_locn_country,'''',''''''))||''','''||trim(replace(intviewer_phone_areacode,'''',''''''))||''','''||trim(replace(intviewer_phone_num,'''',''''''))||''');' from interviewer order by intviewer_code asc;
 
 -----------------------
--- HOUSEHOLD EXTRACT --
+-- HOUSEHOLD EXTRACT -- TODO
 -----------------------
 
 select

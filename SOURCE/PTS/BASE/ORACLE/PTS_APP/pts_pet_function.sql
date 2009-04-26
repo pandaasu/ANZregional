@@ -7,7 +7,7 @@ create or replace package pts_app.pts_pet_function as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : pts_app.pts_pet_function
+    Package : pts_pet_function
     Owner   : pts_app
 
     Description
@@ -25,6 +25,7 @@ create or replace package pts_app.pts_pet_function as
    /*-*/
    /* Public declarations
    /*-*/
+   function list_pet_type return pts_pet_typ_list_type pipelined;
    function list_classification(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
    function list_classification(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
    function get_class_code(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined;
@@ -44,6 +45,69 @@ create or replace package body pts_app.pts_pet_function as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*****************************************************/
+   /* This procedure performs the list pet type routine */
+   /*****************************************************/
+   function list_pet_type return pts_pet_typ_list_type pipelined is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_pet_type is
+         select t01.pty_pet_type,
+                t01.pty_typ_text
+           from pts_pet_type t01
+          where t01.pty_typ_status = '1'
+          order by t01.pty_pet_type asc;
+      rcd_pet_type csr_pet_type%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the pet type values
+      /*-*/
+      open csr_pet_type;
+      loop
+         fetch csr_pet_type into rcd_pet_type;
+         if csr_system_all%notfound then
+            exit;
+         end if;
+         pipe row(pts_pet_typ_list_object(rcd_pet_type.pty_pet_type,rcd_pet_type.pty_pet_text));
+      end loop;
+      close csr_pet_type;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_PET_FUNCTION - LIST_PET_TYPE - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_pet_type;
 
    /***********************************************************/
    /* This procedure performs the list classification routine */
@@ -418,4 +482,4 @@ end pts_pet_function;
 /* Package Synonym/Grants */
 /**************************/
 create or replace public synonym pts_pet_function for pts_app.pts_pet_function;
-grant execute on pts_pet_function to public;
+grant execute on pts_app.pts_pet_function to public;

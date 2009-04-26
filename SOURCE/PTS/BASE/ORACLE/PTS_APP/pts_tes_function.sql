@@ -7,7 +7,7 @@ create or replace package pts_app.pts_tes_function as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : pts_app.pts_tes_function
+    Package : pts_tes_function
     Owner   : pts_app
 
     Description
