@@ -26,7 +26,7 @@ create or replace package pts_app.pts_hou_function as
    /* Public declarations
    /*-*/
    function list_geo_zone return pts_geo_list_type pipelined;
-   function list_classification(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
+   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
    function get_class_code(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined;
    function get_class_number(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_numb_type pipelined;
    function get_class_text(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_text_type pipelined;
@@ -112,7 +112,7 @@ create or replace package body pts_app.pts_hou_function as
    /***********************************************************/
    /* This procedure performs the list classification routine */
    /***********************************************************/
-   function list_classification(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
+   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
 
       /*-*/
       /* Local cursors
@@ -166,12 +166,12 @@ create or replace package body pts_app.pts_hou_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_HOU_FUNCTION - LIST_CLASSIFICATION - ' || substr(SQLERRM, 1, 2048));
+         raise_application_error(-20000, 'PTS_HOU_FUNCTION - LIST_CLASS - ' || substr(SQLERRM, 1, 2048));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end list_classification;
+   end list_class;
 
    /***************************************************************/
    /* This procedure performs the get classification code routine */
