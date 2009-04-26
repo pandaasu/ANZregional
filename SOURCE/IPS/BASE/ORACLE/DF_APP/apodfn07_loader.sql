@@ -53,7 +53,7 @@ create or replace package body apodfn07_loader as
    /*-*/
    var_trn_start boolean;
    var_trn_error boolean;
-   rcd_dmnd_mapping dmnd_mapping%rowtype;
+   rcd_dmnd_sku_mapping dmnd_sku_mapping%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -89,9 +89,9 @@ create or replace package body apodfn07_loader as
       lics_inbound_utility.set_csv_definition('CONV_FACTOR',11);
 
       /*-*/
-      /* Delete the existing demand mapping data
+      /* Delete the existing demand SKU mapping data
       /*-*/ 
-      delete from dmnd_mapping;
+      delete from dmnd_sku_mapping;
 
    /*-------------------*/
    /* Exception handler */
@@ -133,16 +133,16 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_dmnd_mapping.model := lics_inbound_utility.get_variable('MODEL');
-      rcd_dmnd_mapping.dmd_unit := lics_inbound_utility.get_variable('DMD_UNIT');
-      rcd_dmnd_mapping.dmd_group := lics_inbound_utility.get_variable('DMD_GROUP');
-      rcd_dmnd_mapping.dfu_locn := lics_inbound_utility.get_variable('DFU_LOCN');
-      rcd_dmnd_mapping.item := lics_inbound_utility.get_variable('ITEM');
-      rcd_dmnd_mapping.sku_locn := lics_inbound_utility.get_variable('SKU_LOCN');
-      rcd_dmnd_mapping.str_date := nvl(lics_inbound_utility.get_date('STR_DATE','dd/mm/yyyy'),to_date('01/01/0001','dd/mm/yyyy'));
-      rcd_dmnd_mapping.end_date := nvl(lics_inbound_utility.get_date('END_DATE','dd/mm/yyyy'),to_date('31/12/9999','dd/mm/yyyy'));
-      rcd_dmnd_mapping.alloc_factor := nvl(lics_inbound_utility.get_number('ALLOC_FACTOR',null),1);
-      rcd_dmnd_mapping.conv_factor := nvl(lics_inbound_utility.get_number('CONV_FACTOR',null),1);
+      rcd_dmnd_sku_mapping.model := lics_inbound_utility.get_variable('MODEL');
+      rcd_dmnd_sku_mapping.dmd_unit := lics_inbound_utility.get_variable('DMD_UNIT');
+      rcd_dmnd_sku_mapping.dmd_group := lics_inbound_utility.get_variable('DMD_GROUP');
+      rcd_dmnd_sku_mapping.dfu_locn := lics_inbound_utility.get_variable('DFU_LOCN');
+      rcd_dmnd_sku_mapping.item := lics_inbound_utility.get_variable('ITEM');
+      rcd_dmnd_sku_mapping.sku_locn := lics_inbound_utility.get_variable('SKU_LOCN');
+      rcd_dmnd_sku_mapping.str_date := nvl(lics_inbound_utility.get_date('STR_DATE','dd/mm/yyyy'),to_date('01/01/0001','dd/mm/yyyy'));
+      rcd_dmnd_sku_mapping.end_date := nvl(lics_inbound_utility.get_date('END_DATE','dd/mm/yyyy'),to_date('31/12/9999','dd/mm/yyyy'));
+      rcd_dmnd_sku_mapping.alloc_factor := nvl(lics_inbound_utility.get_number('ALLOC_FACTOR',null),1);
+      rcd_dmnd_sku_mapping.conv_factor := nvl(lics_inbound_utility.get_number('CONV_FACTOR',null),1);
 
       /*-*/
       /* Retrieve exceptions raised
@@ -166,7 +166,7 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Insert the demand mapping data
       /*-*/
-      insert into dmnd_mapping values rcd_dmnd_mapping;
+      insert into dmnd_sku_mapping values rcd_dmnd_sku_mapping;
       
    /*-------------------*/
    /* Exception handler */
