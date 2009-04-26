@@ -46,16 +46,35 @@ insert into pts_sys_value values('*SAM_DEF',3,19,'UBA Factory - Single Serve');
 insert into pts_sys_select values('*SAM_DEF',3,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*SAM_DEF',3,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*SAM_DEF',4,'Sample size','1',user,sysdate,'1','0',5,
+insert into pts_sys_field values('*SAM_DEF',4,'Sample unit of measure','1',user,sysdate,'1','0',5,
                                  '*LOGIC',
                                  'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
                                  '*LIST',
                                  'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
-                                 'nvl(s1.sde_pre_locn,0)<%RULE_TEST%><%RULE_VALUE%>');
+                                 'nvl(s1.sde_uom_code,0)<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_value values('*SAM_DEF',4,1,'Gram');
+insert into pts_sys_value values('*SAM_DEF',4,2,'Kilogram');
+insert into pts_sys_value values('*SAM_DEF',4,3,'Millilitre');
+insert into pts_sys_value values('*SAM_DEF',4,4,'Piece');
+insert into pts_sys_value values('*SAM_DEF',4,5,'Stick');
+insert into pts_sys_value values('*SAM_DEF',4,6,'Unit');
 insert into pts_sys_select values('*SAM_DEF',4,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*SAM_DEF',4,'*SELECT_WHEN_NOT_EQUAL');
 
-commit;
+insert into pts_sys_field values('*SAM_DEF',5,'Sample external recipe reference','1',user,sysdate,'0','0',32,
+                                 '*LOGIC',
+                                 null,
+                                 '*TEXT',
+                                 null,
+                                 'nvl(trim(s1.sde_ext_rec_refnr),''*NULL'')<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*SAM_DEF',5,'*SELECT_WHEN_EQUAL');
 
-   
+insert into pts_sys_field values('*SAM_DEF',6,'Sample PLOP code','1',user,sysdate,'0','0',32,
+                                 '*LOGIC',
+                                 null,
+                                 '*TEXT',
+                                 null,
+                                 'nvl(trim(s1.sde_plop_code),''*NULL'')<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_select values('*SAM_DEF',6,'*SELECT_WHEN_EQUAL');
+
+commit;
