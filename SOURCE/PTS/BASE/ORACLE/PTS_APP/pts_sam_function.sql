@@ -69,6 +69,9 @@ create or replace package body pts_app.pts_sam_function as
       var_disp_mode varchar2(32);
       var_page_size number;
       var_row_count number;
+      rcd_pts_wor_sel_group pts_wor_sel_group%rowtype;
+      rcd_pts_wor_sel_rule pts_wor_sel_rule%rowtype;
+      rcd_pts_wor_sel_value pts_wor_sel_value%rowtype;
 
       /*-*/
       /* Local cursors
@@ -77,12 +80,12 @@ create or replace package body pts_app.pts_sam_function as
          select rownum,
                 t01.sde_sam_code,
                 t01.sde_sam_text,
-                decode(t01.sde_sam_status,'0','Inactive,'1','Active,t01.sde_sam_status) as sde_sam_status
-           from pts_sam_definition t01
-                table(pts_app.pts_gen_function.select_list('*SAMPLE',null)) t03
-          where t01.sde_sam_code = t03.sel_code
+                decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
+           from pts_sam_definition t01,
+                table(pts_app.pts_gen_function.select_list('*SAMPLE',null)) t02
+          where t01.sde_sam_code = t02.sel_code
             and t01.sde_sam_code > var_end_code
-            and rownum <= var_page_size + 1;
+            and rownum <= var_page_size + 1
           order by t01.sde_sam_code asc;
       rcd_select csr_select%rowtype;
 
@@ -144,7 +147,7 @@ create or replace package body pts_app.pts_sam_function as
                rcd_pts_wor_sel_value.wsv_tab_code := rcd_pts_wor_sel_rule.wsr_tab_code;
                rcd_pts_wor_sel_value.wsv_fld_code := rcd_pts_wor_sel_rule.wsr_rul_code;
                rcd_pts_wor_sel_value.wsv_val_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_val_node,'@VALCODE'));
-               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTEXT'));
+               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTEXT');
                insert into pts_wor_sel_value values rcd_pts_wor_sel_value;
             end loop;
          end loop;
@@ -173,7 +176,7 @@ create or replace package body pts_app.pts_sam_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_page_size then
-            pipe row(pts_pet_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_textt,rcd_select.sde_sam_status));
+            pipe row(pts_sam_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_text,rcd_select.sde_sam_status));
             var_end_code := rcd_select.sde_sam_code;
          else
             var_lst_more := 1;
@@ -209,7 +212,7 @@ create or replace package body pts_app.pts_sam_function as
    /********************************************************/
    /* This procedure performs the get list control routine */
    /********************************************************/
-   function get_list_cntl return pts_pet_cntl_type pipelined is
+   function get_list_cntl return pts_sam_cntl_type pipelined is
 
    /*-------------*/
    /* Begin block */
