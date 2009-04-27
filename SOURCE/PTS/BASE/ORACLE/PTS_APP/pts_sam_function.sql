@@ -25,6 +25,7 @@ create or replace package pts_app.pts_sam_function as
    /*-*/
    /* Public declarations
    /*-*/
+   procedure set_list_data;
    function get_list_data return pts_sam_list_type pipelined;
    function get_list_cntl return pts_sam_cntl_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
@@ -46,13 +47,15 @@ create or replace package body pts_app.pts_sam_function as
    /*-*/
    /* Private definitions
    /*-*/
-   var_lst_more number;
-   var_end_code number;
+   pvar_dsp_mode varchar2(32);
+   pvar_pag_size number;
+   pvar_lst_more number;
+   pvar_end_code number;
 
    /*****************************************************/
-   /* This procedure performs the get list data routine */
-   /******************************************************/
-   function get_list_data return pts_sam_list_type pipelined is
+   /* This procedure performs the set list data routine */
+   /*****************************************************/
+   procedure set_list_data is
 
       /*-*/
       /* Local definitions
@@ -66,28 +69,9 @@ create or replace package body pts_app.pts_sam_function as
       obj_rul_node xmlDom.domNode;
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
-      var_disp_mode varchar2(32);
-      var_page_size number;
-      var_row_count number;
       rcd_pts_wor_sel_group pts_wor_sel_group%rowtype;
       rcd_pts_wor_sel_rule pts_wor_sel_rule%rowtype;
       rcd_pts_wor_sel_value pts_wor_sel_value%rowtype;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_select is 
-         select rownum,
-                t01.sde_sam_code,
-                t01.sde_sam_text,
-                decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
-           from pts_sam_definition t01,
-                table(pts_app.pts_gen_function.select_list('*SAMPLE',null)) t02
-          where t01.sde_sam_code = t02.sel_code
-            and t01.sde_sam_code > var_end_code
-            and rownum <= var_page_size + 1
-          order by t01.sde_sam_code asc;
-      rcd_select csr_select%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -117,11 +101,11 @@ create or replace package body pts_app.pts_sam_function as
       /* Retrieve and process the stream header
       /*-*/
       obj_pts_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_STREAM');
-      var_disp_mode := upper(xslProcessor.valueOf(obj_pts_stream,'@DISPMODE'));
-      var_page_size := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@PAGESIZE')),20);
-      var_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@ENDCODE')),0);
-      if var_disp_mode = '*START' then
-         var_end_code := 0;
+      pvar_dsp_mode := upper(xslProcessor.valueOf(obj_pts_stream,'@DISPMODE'));
+      pvar_pag_size := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@PAGESIZE')),20);
+      pvar_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@ENDCODE')),0);
+      if pvar_dsp_mode = '*START' then
+         pvar_end_code := 0;
       end if;
 
       /*-*/
@@ -158,6 +142,60 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       xmlDom.freeDocument(obj_xml_document);
 
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - SET_LIST_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end set_list_data;
+
+   /*****************************************************/
+   /* This procedure performs the get list data routine */
+   /******************************************************/
+   function get_list_data return pts_sam_list_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_lst_more number;
+      var_end_code number;
+      var_row_count number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_select is 
+         select t01.sde_sam_code,
+                t01.sde_sam_text,
+                decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
+           from pts_sam_definition t01
+          where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.select_list('*SAMPLE',null)))
+            and t01.sde_sam_code > pvar_end_code
+          order by t01.sde_sam_code asc;
+      rcd_select csr_select%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
       /*-*/
       /* Initialise the list control values
       /*-*/
@@ -175,14 +213,17 @@ create or replace package body pts_app.pts_sam_function as
             exit;
          end if;
          var_row_count := var_row_count + 1;
-         if var_row_count <= var_page_size then
+         if var_row_count <= pvar_pag_size then
             pipe row(pts_sam_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_text,rcd_select.sde_sam_status));
             var_end_code := rcd_select.sde_sam_code;
          else
             var_lst_more := 1;
+            exit;
          end if;
       end loop;
       close csr_select;
+      pvar_lst_more := var_lst_more;
+      pvar_end_code := var_end_code;
 
       /*-*/
       /* Return
@@ -226,7 +267,7 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Return the list control data
       /*-*/
-      pipe row(pts_sam_cntl_object(var_lst_more,var_end_code));
+      pipe row(pts_sam_cntl_object(pvar_lst_more,pvar_end_code));
 
       /*-*/
       /* Return
@@ -316,6 +357,19 @@ create or replace package body pts_app.pts_sam_function as
    /* End routine */
    /*-------------*/
    end list_class;
+
+/*----------------------*/
+/* Initialisation block */
+/*----------------------*/
+begin
+
+   /*-*/
+   /* Initialise the package variables
+   /*-*/
+   pvar_dsp_mode := '*START';
+   pvar_pag_size := 20;
+   pvar_lst_more := 0;
+   pvar_end_code := 0;
 
 end pts_sam_function;
 /
