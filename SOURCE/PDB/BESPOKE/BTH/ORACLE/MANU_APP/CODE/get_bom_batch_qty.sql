@@ -33,7 +33,7 @@ begin
   from bds_bom_all t01
   where t01.bom_plant = 'AU30'
     and t01.item_number is not null
-    and t01.bom_material_code = '1043330'
+    and t01.bom_material_code = par_matl
     and t01.bom_alternative = get_alternate(t01.bom_material_code) 
     and decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) = get_alternate_date(t01.bom_material_code)
   group by t01.bom_base_qty;
