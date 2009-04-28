@@ -88,12 +88,6 @@ comment on column tolas_factryxfer.purch_ord_line is 'Line item number in the pu
 comment on column tolas_factryxfer.gl_account is 'General ledger account code';
 
 /**/
-/* Primary Key Constraint 
-/**/
-alter table esched.tolas_factryxfer
-   add constraint tolas_factryxfer_pk primary key (transmit_date,transmit_time,warehouse_ref,plant_1,sloc_1,plant_2,sloc_2,material);
-
-/**/
 /* Authority 
 /**/
 grant select, update, delete, insert on esched.tolas_factryxfer to esched_app with grant option;

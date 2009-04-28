@@ -15,6 +15,7 @@ create or replace package esched_app.tolpdb02_loader as
   dd-mmm-yyyy  Author           Description 
   -----------  ------           ----------- 
   20-Nov-2008  Trevor Keon      Created 
+  21-Apr-2009  Trevor Keon      Removed primary key validation
 *******************************************************************************/
 
   /*-*/
@@ -348,53 +349,6 @@ create or replace package body esched_app.tolpdb02_loader as
     /* Retrieve exceptions raised 
     /*-*/
     if ( lics_inbound_utility.has_errors = true ) then
-      var_trn_error := true;
-    end if;
-
-    /*----------------------------------------*/
-    /* VALIDATION - Validate the field values */
-    /*----------------------------------------*/
-
-    /*-*/
-    /* Validate the primary keys 
-    /*-*/
-    if ( rcd_hdr.transmit_date is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.TRANSMIT_DATE');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.transmit_time is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.TRANSMIT_TIME');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.warehouse_ref is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.WAREHOUSE_REF');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.plant_1 is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_1');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.sloc_1 is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.SLOC_1');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.plant_2 is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.PLANT_2');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.sloc_2 is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.SLOC_2');
-      var_trn_error := true;
-    end if;
-    
-    if ( rcd_hdr.material is null) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.MATERIAL');
       var_trn_error := true;
     end if;
              
