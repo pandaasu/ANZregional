@@ -2,7 +2,7 @@
 /* Table Definition                                                           */
 /******************************************************************************/
 /**
- Table   : dmnd_mapping
+ Table   : dmnd_sku_mapping
  Owner   : df
  Author  : Steve Gregan
 
@@ -19,7 +19,7 @@
 /**/
 /* Table creation
 /**/
-create table df.dmnd_mapping
+create table df.dmnd_sku_mapping
    (model_code                  varchar2(32)               not null,
     dmd_unit                    varchar2(32)               not null,
     dmd_group                   varchar2(32)               not null,
@@ -34,16 +34,16 @@ create table df.dmnd_mapping
 /**/
 /* Primary Key Constraint
 /**/
-alter table df.dmnd_mapping
-   add constraint dmnd_mapping_pk primary key (fcst_id, source_type);
+alter table df.dmnd_sku_mapping
+   add constraint dmnd_sku_mapping_pk primary key (fcst_id, source_type);
 
 /**/
 /* Authority
 /**/
-grant select, insert, update, delete on df.dmnd_mapping to df_app;
+grant select, insert, update, delete on df.dmnd_sku_mapping to df_app;
 
 /**/
 /* Synonym
 /**/
-create or replace public synonym dmnd_mapping for df.dmnd_mapping;
+create or replace public synonym dmnd_sku_mapping for df.dmnd_sku_mapping;
 
