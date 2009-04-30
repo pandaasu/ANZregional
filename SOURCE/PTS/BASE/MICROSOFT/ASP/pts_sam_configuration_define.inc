@@ -44,9 +44,9 @@
       objInput.select();
    }
 
-   //////////////////////////////
-   // Initialisation Functions //
-   //////////////////////////////
+   ///////////////////////
+   // Control Functions //
+   ///////////////////////
    function initialise() {
       objSamStat.options.length = 0;
       objSamStat.options[0] = new Option('Inactive','0');
@@ -60,9 +60,7 @@
       <%=objSelection.ListValue01("PRELOCN",i)%><%next%><%end if%>
    }
 
-   ///////////////////////
-   // Control Functions //
-   ///////////////////////
+
 
 // TRY REMOVING VISIBLE - WILL HELP WITH REFERENCING OBJECTS
 
@@ -276,17 +274,17 @@
    var cstrDefineMode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*UPDATE" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*UPDSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=UPD,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*CREATE" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*CRTSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CRT,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*COPY" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*CPYSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CPY,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -308,6 +306,9 @@
          document.getElementById('DEF_PreDate').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('PREDATE');
          document.getElementById('DEF_ExtRfnr').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('EXTRFNR');
          document.getElementById('DEF_PlopCde').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('PLOPCDE');
+
+RETRIEVE STATUS, UOPM AND LOCN LISTS
+
          var objSamStat = document.getElementById('DEF_SamStat');
          objSamStat.selectedIndex = -1;
          for (var i=0;i<objSamStat.length;i++) {
@@ -362,7 +363,7 @@
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_STREAM><REQUEST' ACTION=*DEFINE"';
+      strXML = strXML+'<PTS_STREAM><REQUEST ACTION=*DEFSAM"';
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
       strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
@@ -392,9 +393,9 @@
       document.getElementById('PRO_SamCode').focus();
    }
 
-   //////////////////////
-   // Search Functions //
-   //////////////////////
+   ///////////////////////////
+   // Search Rule Functions //
+   ///////////////////////////
    var cstrSearchMode;
    var cobjSearchRow;
    function clsSchValue(strValCde,strValTxt) {
@@ -439,6 +440,7 @@
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
                objRow.setAttribute('rultyp',objElements[i].getAttribute('RULTYP'));
                objRow.setAttribute('rulcde','');
+               objRow.setAttribute('rulcnd','');
                objRow.setAttribute('valary',new Array());
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
@@ -474,6 +476,7 @@
          objRow = objTable.rows[i];
          if (objRow.getAttribute('grpcde') == strGroup && objRow.getAttribute('tabcde') != '*GROUP') {
             objRow.setAttribute('rulcde','');
+            objRow.setAttribute('rulcnd','');
             objRow.getAttribute('valary').length = 0;
             objRow.cells[1].innerText = objRow.getAttribute('fldtxt')+' - *ALL';
          }
@@ -506,6 +509,7 @@
       var objTable = document.getElementById('tabRule');
       var objRow = objTable.rows[intRow];
       objRow.setAttribute('rulcde','');
+      objRow.setAttribute('rulcnd','');
       objRow.getAttribute('valary').length = 0;
       objRow.cells[1].innerText = objRow.getAttribute('fldtxt')+' - *ALL';
    }
@@ -534,7 +538,7 @@
             var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
-                  objSelRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
+                  objSelRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
                   if (cobjSearchRow.getAttribute('rulcde') == objElements[i].getAttribute('RULCDE')) {
                      objSelRulCode.options[i].selected = true;
                   }
@@ -546,11 +550,11 @@
             for (var i=0;i<objValues.length;i++) {
                objSelSelValue.options[i] = new Option(objValues[i].valtxt,objValues[i].valcde);
             }
-            displaySchList;
+            displaySchList();
             objSelRulCode.focus();
-
          } else if (cobjSearchRow.getAttribute('rultyp') == '*NUMBER') {
             var objSenRulCode = document.getElementById('SEN_RulCode');
+            var objSenSelValue = document.getElementById('SEN_SelValue');
             objSenRulCode.options.length = 0;
             objSenRulCode.selectedIndex = 1;
             var objElements = objDocument.documentElement.childNodes;
@@ -562,10 +566,16 @@
                   }
                }
             }
+            objSenSelValue.value = '';
+            var objValues = cobjSearchRow.getAttribute('valary');
+            if (objValues.length != 0) {
+               objSenSelValue.value = objValues[0].valtxt;
+            }
             displayRuleNumb();
             objSenRulCode.focus();
          } else if (cobjSearchRow.getAttribute('rultyp') == '*TEXT') {
             var objSetRulCode = document.getElementById('SET_RulCode');
+            var objSetSelValue = document.getElementById('SET_SelValue');
             objSetRulCode.options.length = 0;
             objSetRulCode.selectedIndex = 1;
             var objElements = objDocument.documentElement.childNodes;
@@ -577,6 +587,11 @@
                   }
                }
             }
+            objSetSelValue.value = '';
+            var objValues = cobjSearchRow.getAttribute('valary');
+            if (objValues.length != 0) {
+               objSetSelValue.value = objValues[0].valtxt;
+            }
             displayRuleText();
             objSetRulCode.focus();
          } else {
@@ -584,12 +599,186 @@
          }
       }
    }
-
-
-
-
-   function doSearchSelect() {
+   function doSchRuleSelect() {
       if (!processForm()) {return;}
+      requestSearchSelect();
+   }
+   function doSchRuleCancel() {
+      displayPrompt();
+      document.getElementById('PRO_SamCode').focus();
+   }
+
+   ///////////////////////////
+   // Search List Functions //
+   ///////////////////////////
+   function doSchListCancel() {
+      displaySchRule();
+   }
+   function doSchListAccept() {
+      if (!processForm()) {return;}
+      var objSelRulCode = document.getElementById('SEL_RulCode');
+      var objSelSelValue = document.getElementById('SEL_SelValue');
+      var strMessage = '';
+      if (objSelRulCode.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection rule must be selected';
+      }
+      if (objSelSelValue.options.length == 0) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'At least one rule value must be selected';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var aryRulData = objSelRulValue[objSelRulCode.selectedIndex].value.split(':');
+      cobjSearchRow.setAttribute('rulcde',aryRulData[0]);
+      cobjSearchRow.setAttribute('rulcnd',aryRulData[1]);
+      var strText = cobjSearchRow.getAttribute('fldtxt')+' '+aryRulData[0];
+      var objValues = cobjSearchRow.getAttribute('valary');
+      objValues.length = 0;
+      for (var i=0;i<objSelSelValue.options.length;i++) {
+         if (objSelSelValue.options[i].selected == true) {
+            objValues[i] = new clsSchValue(objSelSelValue[i].value,objSelSelValue[i].text);
+            if (i == 0) {
+               strText = strText+' '+objSelSelValue[i].text;
+            } else {
+               strText = strText+' '+aryRulData[1]+' '+objSelSelValue[i].text;
+            }
+         }
+      }
+      cobjSearchRow.cells[1].innerText = strText;
+      displaySchList();
+      objSelRulCode.focus();
+   }
+   function selectSchListValues() {
+      var objSelRulValue = document.getElementById('SEL_RulValue');
+      var objSelSelValue = document.getElementById('SEL_SelValue');
+      var bolFound;
+      for (var i=0;i<objSelRulValue.options.length;i++) {
+         if (objSelRulValue.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;i<objSelSelValue.options.length;i++) {
+               if(objSelRulValue[i].value == objSelSelValue[i].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objSelSelValue.options[objSelSelValue.options.length] = new Option(objSelRulValue[i].text,objSelRulValue[i].value);
+            }
+         }
+      }
+      var objWork = new Array();
+      var intIndex = 0
+      for (var i=0;i<objSelSelValue.options.length;i++) {
+         objWork[intIndex] = objSelSelValue[i];
+         intIndex++;
+      }
+      objWork.sort(sortSchListValues);
+      objSelSelValue.options.length = 0;
+      objSelSelValue.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSelSelValue.options[i] = objWork[i];
+      }
+   }
+   function removeSchListValues() {
+      var objSelSelValue = document.getElementById('SEL_SelValue');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objSelSelValue.options.length;i++) {
+         if (objSelSelValue.options[i].selected == false) {
+            objWork[intIndex] = objSelSelValue[i];
+            intIndex++;
+         }
+      }
+      objSelSelValue.options.length = 0;
+      objSelSelValue.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSelSelValue.options[i] = objWork[i];
+      }
+   }
+   function sortSchListValues(obj01, obj02) {
+      if (obj01.value < obj02.value) {
+         return -1;
+      } else if (obj01.value > obj02.value) {
+         return 1;
+      }
+      return 0;
+   }
+
+   /////////////////////////////
+   // Search Number Functions //
+   /////////////////////////////
+   function doSchNumbCancel() {
+      displaySchRule();
+   }
+   function doSchNumbAccept() {
+      if (!processForm()) {return;}
+      var objSenRulCode = document.getElementById('SEN_RulCode');
+      var objSenSelValue = document.getElementById('SEN_SelValue');
+      var strMessage = '';
+      if (objSenRulCode.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection rule must be selected';
+      }
+      if (objSenSelValue.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection value must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var aryRulData = objSenRulValue[objSenRulCode.selectedIndex].value.split(':');
+      cobjSearchRow.setAttribute('rulcde',aryRulData[0]);
+      cobjSearchRow.setAttribute('rulcnd',aryRulData[1]);
+      var objValues = cobjSearchRow.getAttribute('valary');
+      objValues.length = 0;
+      objValues[0] = new clsSchValue('1',objSenSelValue.value);
+      cobjSearchRow.cells[1].innerText = cobjSearchRow.getAttribute('fldtxt')+' '+aryRulData[0]+' '+objSenSelValue.value;
+      displaySchList();
+      objSelRulCode.focus();
+   }
+
+   ///////////////////////////
+   // Search Text Functions //
+   ///////////////////////////
+   function doSchTextCancel() {
+      displaySchRule();
+   }
+   function doSchTextAccept() {
+      if (!processForm()) {return;}
+      var objSetRulCode = document.getElementById('SET_RulCode');
+      var objSetSelValue = document.getElementById('SET_SelValue');
+      var strMessage = '';
+      if (objSetRulCode.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection rule must be selected';
+      }
+      if (objSetSelValue.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection value must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var aryRulData = objSetRulValue[objSetRulCode.selectedIndex].value.split(':');
+      cobjSearchRow.setAttribute('rulcde',aryRulData[0]);
+      cobjSearchRow.setAttribute('rulcnd',aryRulData[1]);
+      var objValues = cobjSearchRow.getAttribute('valary');
+      objValues.length = 0;
+      objValues[0] = new clsSchValue('1',objSetSelValue.value);
+      cobjSearchRow.cells[1].innerText = cobjSearchRow.getAttribute('fldtxt')+' '+aryRulData[0]+' '+objSetSelValue.value;
+      displaySchList();
+      objSelRulCode.focus();
+   }
+
+   /////////////////////////////
+   // Search Select Functions //
+   /////////////////////////////
+   function requestSearchSelect() {
       cstrSearchMode = '*SLT';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*SCHDTA" ENDCDE="0">';
       var objTable = document.getElementById('tabSchRule');
@@ -620,9 +809,9 @@
          strXML = strXML+'</GROUPS>';
       }
       strXML = strXML+'</REQUEST></PTS_STREAM>';
-      doPostRequest('<%=strBase%>pts_sam_define.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
-   function doSearchMore() {
+   function doSchSlctMore() {
       if (!processForm()) {return;}
       cstrSearchMode = '*MOR';
       var strSearchEndCode = document.getElementById('HID_SearchEndCode');
@@ -655,7 +844,7 @@
          strXML = strXML+'</GROUPS>';
       }
       strXML = strXML+'</REQUEST></PTS_STREAM>';
-      doPostRequest('<%=strBase%>pts_sam_define.asp,function(strResponse) {searchResponse(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function checkSearchResponse(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -663,7 +852,7 @@
       } else {
          var objDocument = loadXML(strResponse);
          if (varDocument == null) {return;}
-         var objTable = document.getElementById('tabSchSlct');
+         var objTable = document.getElementById('SES_SelList');
          var objRow;
          var objCell;
          if (cstrSearchMode == '*SLT') {
@@ -680,7 +869,7 @@
                objRow.setAttribute('rulnam',cobjRules[i].rulnam);
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerText = '<nobr><a class="clsSelect" href="javascript:doSearchSelectCode(\''+objElements[i].getAttribute('SAMCODE')+'\');">Select</a></nobr>';
+               objCell.innerText = '<nobr><a class="clsSelect" href="javascript:doSchSlctAccept(\''+objElements[i].getAttribute('SAMCODE')+'\');">Select</a></nobr>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(1);
@@ -695,98 +884,25 @@
                objCell.style.whiteSpace = 'nowrap';
             }
          }
+         if (objTable.rows.length == 0) {
+            objRow = objTable.insertRow(-1);
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = 3;
+            objCell.innerText = 'NO DATA FOUND';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+         }
+         displaySchSlct();
       }
    }
-
-
-*** ADD THE NO RECORS FOUND MESSAGE - COLSPAN = 3
-
-
-
-**********HERE***************
-
-
-   function doSelectRequest(objSelected) {
-      if (cobjSelected) {
-         if (cobjSelected.className == 'clsListX') {
-            cobjSelected.className = 'clsList';
-         } else {
-            cobjSelected.className = 'clsListB';
-         }
-      }
-      cobjSelected = objSelected;
-      cobjSelected.className = 'clsListBX';
-      cstrSelected = 'RH';
-      cintSelected = cobjSelected.parentNode.rowIndex;
-      cobjRow = document.getElementById('tabRule').rows[cintSelected];
-      document.getElementById('PRO_SamCode').value = 'xxxxxxxxxxxxxxxx';
+   function doSchSlctAccept(strCode) {
+      document.getElementById('PRO_SamCode').value = strCode;
       displayPrompt();
       document.getElementById('PRO_SamCode').focus();
    }
-
-   function selectRuleValues() {
-      var objSelRulValue = document.getElementById('SEL_RulValue');
-      var objSelSelValue = document.getElementById('SEL_SelValue');
-      var bolFound;
-      for (var i=0;i<objSelRulValue.options.length;i++) {
-         if (objSelRulValue.options[i].selected == true) {
-            bolFound = false;
-            for (var j=0;i<objSelSelValue.options.length;i++) {
-               if(objSelRulValue[i].value == objSelSelValue[i].value) {
-                  bolFound = true;
-                  break;
-               }
-            }
-            if (!bolFound) {
-               objSelSelValue.options[objSelSelValue.options.length] = new Option(objSelRulValue[i].text,objSelRulValue[i].value);
-               objSelSelValue.options[objSelSelValue.options.length-1].setAttribute('repid','0');
-               objSelSelValue.options[objSelSelValue.options.length-1].setAttribute('prcid',objSelRulValue[i].value);
-            }
-         }
-      }
-      var objWork = new Array();
-      var intIndex = 0
-      for (var i=0;i<objSelSelValue.options.length;i++) {
-         objWork[intIndex] = objSelSelValue[i];
-         intIndex++;
-      }
-      objWork.sort(sortRuleValues);
-      objSelSelValue.options.length = 0;
-      objSelSelValue.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSelSelValue.options[i] = objWork[i];
-      }
+   function doSchSlctCancel() {
+      displaySchRule();
    }
-   function removeRuleValues() {
-      var objSelRulValue = document.getElementById('SEL_RulValue');
-      var objSelSelValue = document.getElementById('SEL_SelValue');
-      var objWork = new Array();
-      var intIndex = 0;
-      for (var i=0;i<objSelSelValue.options.length;i++) {
-         if (objSelSelValue.options[i].selected == false) {
-            objWork[intIndex] = objSelSelValue[i];
-            intIndex++;
-         }
-      }
-      objSelSelValue.options.length = 0;
-      objSelSelValue.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSelSelValue.options[i] = objWork[i];
-      }
-   }
-   function sortRuleValues(obj01, obj02) {
-      if (obj01.value < obj02.value) {
-         return -1;
-      } else if (obj01.value > obj02.value) {
-         return 1;
-      }
-      return 0;
-   }
-
-
-
-
-
 
 // -->
 </script>
@@ -823,7 +939,7 @@
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doPromptCreate();">&nbsp;Copy&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
                </tr>
@@ -910,8 +1026,10 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doSchRuleCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doSchRuleSelect();">&nbsp;Select&nbsp;</a></nobr></td>
                </tr>
             </table>
@@ -948,8 +1066,8 @@
                            <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
                               <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
                                  <tr>
-                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeRuleValues();"></nobr></td>
-                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectRuleValues();"></nobr></td>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeSchListValues();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectSchListValues();"></nobr></td>
                                  </tr>
                               </table>
                            </nobr></td>
@@ -1042,14 +1160,20 @@
       <tr>
          <td id="hedSchSlct" class="clsFunction" align=center colspan=2 nowrap><nobr>Sample Selection</nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doSchSlctMore();">&nbsp;More&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
-               <table id="tabSchSlct" class="clsTableBody" cols=2 align=left cellpadding="2" cellspacing="1"></table>
+               <table id="SEL_SelList" class="clsTableBody" cols=2 align=left cellpadding="2" cellspacing="1"></table>
             </div>
          </nobr></td>
       </tr>
