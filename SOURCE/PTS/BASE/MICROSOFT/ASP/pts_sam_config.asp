@@ -123,20 +123,6 @@ sub PaintFunction()%>
    ///////////////////////
    // Control Functions //
    ///////////////////////
-   function initialise() {
-      objSamStat.options.length = 0;
-      objSamStat.options[0] = new Option('Inactive','0');
-      objSamStat.options[1] = new Option('Active','1');
-      objSamStat.selectedIndex = 1;
-      var objUomCode = document.getElementById('DEF_UomCode');
-      objUomCode.options.length = 0;<%if objSelection.ListCount("UOMCODE") <> 0 then%><%for i = objSelection.ListLower("UOMCODE") to objSelection.ListUpper("UOMCODE")%>
-      <%=objSelection.ListValue01("UOMCODE",i)%><%next%><%end if%>
-      var objPreLocn = document.getElementById('DEF_PreLocn');
-      objPreLocn.options.length = 0;<%if objSelection.ListCount("PRELOCN") <> 0 then%><%for i = objSelection.ListLower("PRELOCN") to objSelection.ListUpper("PRELOCN")%>
-      <%=objSelection.ListValue01("PRELOCN",i)%><%next%><%end if%>
-   }
-
-
 
 // TRY REMOVING VISIBLE - WILL HELP WITH REFERENCING OBJECTS
 
@@ -343,24 +329,23 @@ sub PaintFunction()%>
    // Define Functions //
    //////////////////////
 
-
 // DO I NEED TO DO THIS .replace(/"/g,'&#34;') FOR SAMTEXT ETC
 // DO I NEED TO DO FIXXML
 
    var cstrDefineMode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*UPDSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=UPD,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*CRTSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CRT,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*CPYSAM" SAMCODE="'+fixXML(strCode)+'"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CPY,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -372,39 +357,59 @@ sub PaintFunction()%>
          displayDefine();
          if (cstrDefineMode == '*UPD') {
             document.getElementById('hedDefine').innerText = 'Update Sample';
-            document.getElementById('DEF_SamCode').innerText = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('SAMCODE');
          } else {
             document.getElementById('hedDefine').innerText = 'Create Sample';
-            document.getElementById('DEF_SamCode').innerText = '*NEW';
          }
-         document.getElementById('DEF_SamText').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('SAMTEXT');
-         document.getElementById('DEF_UomSize').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('UOMSIZE');
-         document.getElementById('DEF_PreDate').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('PREDATE');
-         document.getElementById('DEF_ExtRfnr').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('EXTRFNR');
-         document.getElementById('DEF_PlopCde').value = objDocument.getElementByTagName('SAMPLE')[0].getAttribute('PLOPCDE');
-
-RETRIEVE STATUS, UOPM AND LOCN LISTS
-
+         document.getElementById('DEF_SamCode').innerText = '';
+         document.getElementById('DEF_SamText').value = '';
+         document.getElementById('DEF_UomSize').value = '';
+         document.getElementById('DEF_PreDate').value = '';
+         document.getElementById('DEF_ExtRfnr').value = '';
+         document.getElementById('DEF_PlopCde').value = '';
          var objSamStat = document.getElementById('DEF_SamStat');
+         var objUomCode = document.getElementById('DEF_UomCode');
+         var objPreLocn = document.getElementById('DEF_PreLocn');
+         objSamStat.options.length = 0;
+         objUomCode.options.length = 0;
+         objPreLocn.options.length = 0;
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'STA_LIST') {
+               objSamStat.options[i] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'UOM_LIST') {
+               objUomCode.options[i] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'PRE_LIST') {
+               objPreLocn.options[i] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'SAMPLE') {
+               if (cstrDefineMode == '*UPD') {
+                  document.getElementById('DEF_SamCode').innerText = objElements[i].getAttribute('SAMCODE');
+               } else {
+                  document.getElementById('DEF_SamCode').innerText = '*NEW';
+               }
+               document.getElementById('DEF_SamText').value = objElements[i].getAttribute('SAMTEXT');
+               document.getElementById('DEF_UomSize').value = objElements[i].getAttribute('UOMSIZE');
+               document.getElementById('DEF_PreDate').value = objElements[i].getAttribute('PREDATE');
+               document.getElementById('DEF_ExtRfnr').value = objElements[i].getAttribute('EXTRFNR');
+               document.getElementById('DEF_PlopCde').value = objElements[i].getAttribute('PLOPCDE');
+            }
+         }
          objSamStat.selectedIndex = -1;
          for (var i=0;i<objSamStat.length;i++) {
-            if (objSamStat.options[i].value == objDocument.getElementByTagName('SAMPLE')[0].getAttribute('SAMSTAT')) {
+            if (objSamStat.options[i].value == objElements[i].getAttribute('SAMSTAT')) {
                objSamStat.options[i].selected = true;
                break;
             }
          }
-         var objUomCod = document.getElementById('DEF_UomCode');
          objUomCod.selectedIndex = -1;
          for (var i=0;i<objUomCod.length;i++) {
-            if (objUomCod.options[i].value == objDocument.getElementByTagName('SAMPLE')[0].getAttribute('UOMCODE')) {
+            if (objUomCod.options[i].value == objElements[i].getAttribute('UOMCODE')) {
                objUomCod.options[i].selected = true;
                break;
             }
          }
-         var objPreLocn = document.getElementById('DEF_PreLocn');
          objPreLocn.selectedIndex = -1;
          for (var i=0;i<objPreLocn.length;i++) {
-            if (objPreLocn.options[i].value == objDocument.getElementByTagName('SAMPLE')[0].getAttribute('PRELOCN')) {
+            if (objPreLocn.options[i].value == objElements[i].getAttribute('PRELOCN')) {
                objPreLocn.options[i].selected = true;
                break;
             }
@@ -439,7 +444,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_STREAM><REQUEST ACTION=*DEFSAM"';
+      strXML = strXML+'<PTS_REQUEST ACTION=*DEFSAM"';
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
       strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
@@ -450,7 +455,6 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
       strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
       strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
       strXML = strXML+'/>';
-      strXML = strXML+'</PTS_STREAM>';
       doPostRequest('<%=strBase%>pts_sam_define.asp,function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
@@ -480,7 +484,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
    }
    function doSearchAddGroup() {
       if (!processForm()) {return;}
-      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*LSTSYSFLD" ENTCDE="*SAMPLE"/></PTS_STREAM>';
+      strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="*SAMPLE" TESFLG="0"/>';
       doPostRequest('<%=strBase%>pts_sys_field_list.asp,function(strResponse) {checkSearchAddGroup(strResponse);},false,streamXML(strXML));
    }
    function checkSearchAddGroup(strResponse) {
@@ -592,7 +596,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
    function doSearchUpdateRule(intRow) {
       var objTable = document.getElementById('tabSchRule');
       cobjSearchRow = objTable.rows[intRow];
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*LSTSYSRUL" TABCDE="'+cobjSearchRow.getAttribute('tabcde')+'" FLDCDE="'+cobjSearchRow.getAttribute('fldcde')+'"/></PTS_STREAM>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TABCDE="'+cobjSearchRow.getAttribute('tabcde')+'" FLDCDE="'+cobjSearchRow.getAttribute('fldcde')+'"/>';
       doPostRequest('<%=strBase%>pts_sys_rule_list.asp,function(strResponse) {checkSearchUpdateRule(strResponse);},false,streamXML(strXML));
    }
    function checkSearchUpdateRule(strResponse) {
@@ -619,7 +623,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
                      objSelRulCode.options[i].selected = true;
                   }
                } else if (objElements[i].nodeName == 'VALUE') {
-                  objSelRulValue.options[i] = new Option('('+objElements[i].getAttribute('VALCDE')+') '+objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+                  objSelRulValue.options[i] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
                }
             }
             var objValues = cobjSearchRow.getAttribute('valary');
@@ -856,7 +860,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
    /////////////////////////////
    function requestSearchSelect() {
       cstrSearchMode = '*SLT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*SCHDTA" ENDCDE="0">';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SCHDTA" ENDCDE="0"/>';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -891,7 +895,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
       if (!processForm()) {return;}
       cstrSearchMode = '*MOR';
       var strSearchEndCode = document.getElementById('HID_SearchEndCode');
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_STREAM><REQUEST ACTION="*SCHDTA" ENDCDE="'+strSearchEndCode+'">';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SCHDTA" ENDCDE="'+strSearchEndCode+'"/>';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -991,7 +995,7 @@ RETRIEVE STATUS, UOPM AND LOCN LISTS
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="nonr" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_sam_configuration_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');initialise();">
+<body class="clsBody02" scroll="nonr" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_sam_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');">
    <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
          <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Sample Prompt</nobr></td>
