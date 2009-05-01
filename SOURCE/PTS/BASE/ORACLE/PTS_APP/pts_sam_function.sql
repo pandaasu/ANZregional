@@ -47,7 +47,6 @@ create or replace package body pts_app.pts_sam_function as
    /*-*/
    /* Private definitions
    /*-*/
-   pvar_dsp_mode varchar2(32);
    pvar_pag_size number;
    pvar_lst_more number;
    pvar_end_code number;
@@ -90,6 +89,16 @@ create or replace package body pts_app.pts_sam_function as
       delete from pts_wor_sel_value;
 
       /*-*/
+      /* Set the list defaults
+      /*-*/
+      pvar_pag_size := 20;
+      pvar_lst_more := 0;
+      pvar_end_code := 0;
+      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
       obj_xml_parser := xmlParser.newParser();
@@ -100,13 +109,9 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Retrieve and process the stream header
       /*-*/
-      obj_pts_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_STREAM');
-      pvar_dsp_mode := upper(xslProcessor.valueOf(obj_pts_stream,'@DISPMODE'));
-      pvar_pag_size := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@PAGESIZE')),20);
-      pvar_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@ENDCODE')),0);
-      if pvar_dsp_mode = '*START' then
-         pvar_end_code := 0;
-      end if;
+      obj_pts_stream := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      pvar_pag_size := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@PAGSIZ')),20);
+      pvar_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_stream,'@ENDCDE')),0);
 
       /*-*/
       /* Retrieve and process the stream nodes
@@ -120,9 +125,9 @@ create or replace package body pts_app.pts_sam_function as
          for idr in 0..xmlDom.getLength(obj_rul_list)-1 loop
             obj_rul_node := xmlDom.item(obj_rul_list,idr);
             rcd_pts_wor_sel_rule.wsr_sel_group := rcd_pts_wor_sel_group.wsg_sel_group;
-            rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCODE'));
-            rcd_pts_wor_sel_rule.wsr_fld_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCODE'));
-            rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCODE'));
+            rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
+            rcd_pts_wor_sel_rule.wsr_fld_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
+            rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
             insert into pts_wor_sel_rule values rcd_pts_wor_sel_rule;
             obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUES/VALUE');
             for idv in 0..xmlDom.getLength(obj_val_list)-1 loop
@@ -130,8 +135,8 @@ create or replace package body pts_app.pts_sam_function as
                rcd_pts_wor_sel_value.wsv_sel_group := rcd_pts_wor_sel_rule.wsr_sel_group;
                rcd_pts_wor_sel_value.wsv_tab_code := rcd_pts_wor_sel_rule.wsr_tab_code;
                rcd_pts_wor_sel_value.wsv_fld_code := rcd_pts_wor_sel_rule.wsr_rul_code;
-               rcd_pts_wor_sel_value.wsv_val_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_val_node,'@VALCODE'));
-               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTEXT');
+               rcd_pts_wor_sel_value.wsv_val_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
+               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTXT');
                insert into pts_wor_sel_value values rcd_pts_wor_sel_value;
             end loop;
          end loop;
@@ -366,7 +371,6 @@ begin
    /*-*/
    /* Initialise the package variables
    /*-*/
-   pvar_dsp_mode := '*START';
    pvar_pag_size := 20;
    pvar_lst_more := 0;
    pvar_end_code := 0;

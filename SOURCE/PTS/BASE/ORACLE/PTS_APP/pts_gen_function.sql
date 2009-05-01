@@ -318,6 +318,9 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Parse the XML input
       /*-*/
+      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
+         return;
+      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -428,6 +431,9 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Parse the XML input
       /*-*/
+      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
+         return;
+      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -550,6 +556,9 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Parse the XML input
       /*-*/
+      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
+         return;
+      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
