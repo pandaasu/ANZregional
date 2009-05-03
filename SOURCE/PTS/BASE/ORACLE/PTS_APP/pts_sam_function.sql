@@ -279,7 +279,7 @@ create or replace package body pts_app.pts_sam_function as
 
       cursor csr_list is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data('*SAMDEF',var_fld_code)) t01
+           from table(pts_app.pts_gen_function.list_sel_data('*SAM_DEF',var_fld_code)) t01
           order by t01.val_code;
       rcd_list csr_list%rowtype;
 
@@ -456,7 +456,7 @@ create or replace package body pts_app.pts_sam_function as
 
       cursor csr_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data('*SAMDEF',var_fld_code)) t01
+           from table(pts_app.pts_gen_function.list_sel_data('*SAM_DEF',var_fld_code)) t01
           where t01.val_code = var_val_code;
       rcd_code csr_code%rowtype;
 
