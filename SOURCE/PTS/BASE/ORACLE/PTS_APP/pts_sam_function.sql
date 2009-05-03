@@ -27,7 +27,7 @@ create or replace package pts_app.pts_sam_function as
    /*-*/
    procedure set_list_data;
    function get_list_data return pts_sam_list_type pipelined;
-   function retrieve_data(par_user in varchar2) return pts_xml_type pipelined;
+   function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
