@@ -48,7 +48,6 @@ create or replace package body pts_app.pts_sam_function as
    /* Private definitions
    /*-*/
    pvar_pag_size number;
-   pvar_lst_more number;
    pvar_end_code number;
 
    /*****************************************************/
@@ -94,7 +93,6 @@ create or replace package body pts_app.pts_sam_function as
       /* Set the list defaults
       /*-*/
       pvar_pag_size := 20;
-      pvar_lst_more := 0;
       pvar_end_code := 0;
 
       /*-*/
@@ -184,8 +182,6 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Local definitions
       /*-*/
-      var_lst_more number;
-      var_end_code number;
       var_row_count number;
 
       /*-*/
@@ -211,12 +207,6 @@ create or replace package body pts_app.pts_sam_function as
       /*------------------------------------------------*/
 
       /*-*/
-      /* Initialise the list control values
-      /*-*/
-      var_lst_more := 0;
-      var_end_code := 0;
-
-      /*-*/
       /* Retrieve the pet selection list and pipe the results
       /*-*/
       var_row_count := 0;
@@ -229,15 +219,11 @@ create or replace package body pts_app.pts_sam_function as
          var_row_count := var_row_count + 1;
          if var_row_count <= pvar_pag_size then
             pipe row(pts_sam_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_text,rcd_select.sde_sam_status));
-            var_end_code := rcd_select.sde_sam_code;
          else
-            var_lst_more := 1;
             exit;
          end if;
       end loop;
       close csr_select;
-      pvar_lst_more := var_lst_more;
-      pvar_end_code := var_end_code;
 
       /*-*/
       /* Return
@@ -611,7 +597,6 @@ begin
    /* Initialise the package variables
    /*-*/
    pvar_pag_size := 20;
-   pvar_lst_more := 0;
    pvar_end_code := 0;
 
 end pts_sam_function;
