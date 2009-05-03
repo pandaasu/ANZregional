@@ -187,7 +187,7 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_select is 
+      cursor csr_select is
          select t01.sde_sam_code,
                 t01.sde_sam_text,
                 decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
@@ -227,7 +227,7 @@ create or replace package body pts_app.pts_sam_function as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -278,7 +278,7 @@ create or replace package body pts_app.pts_sam_function as
 
       cursor csr_list is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data(*SAMDEF',var_fld_code)) t01
+           from table(pts_app.pts_gen_function.list_sel_data('*SAMDEF',var_fld_code)) t01
           order by t01.val_code;
       rcd_list csr_list%rowtype;
 
@@ -330,9 +330,9 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Pipe the sample status XML
       /*-*/
-      var_output := '<STA_LIST VALCDE="0" VALTXT="Inactive"/>;
+      var_output := '<STA_LIST VALCDE="0" VALTXT="Inactive"/>';
       pipe row(pts_xml_object(var_output));
-      var_output := '<STA_LIST VALCDE="1" VALTXT="Active"/>;
+      var_output := '<STA_LIST VALCDE="1" VALTXT="Active"/>';
       pipe row(pts_xml_object(var_output));
 
       /*-*/
@@ -345,7 +345,7 @@ create or replace package body pts_app.pts_sam_function as
          if csr_list%notfound then
             exit;
          end if;
-         var_output := '<UOM_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>;
+         var_output := '<UOM_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
       close csr_list;
@@ -360,7 +360,7 @@ create or replace package body pts_app.pts_sam_function as
          if csr_list%notfound then
             exit;
          end if;
-         var_output := '<PRE_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>;
+         var_output := '<PRE_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
       close csr_list;
@@ -455,7 +455,7 @@ create or replace package body pts_app.pts_sam_function as
 
       cursor csr_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data(*SAMDEF',var_fld_code)) t01
+           from table(pts_app.pts_gen_function.list_sel_data('*SAMDEF',var_fld_code)) t01
           where t01.val_code = var_val_code;
       rcd_code csr_code%rowtype;
 
@@ -495,28 +495,28 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Validate the input
       /*-*/
-      if rcd_lics_str_header.sde_sam_text is null then
+      if rcd_pts_sam_definition.sde_sam_text is null then
          raise_application_error(-20000, 'Sample description must be supplied');
       end if;
-      if rcd_lics_str_header.sde_sam_status is null then
+      if rcd_pts_sam_definition.sde_sam_status is null then
          raise_application_error(-20000, 'Sample status must be supplied');
       else
-         if rcd_lics_str_header.sde_sam_status != '0' and rcd_lics_str_header.sde_sam_status != '1' then
+         if rcd_pts_sam_definition.sde_sam_status != '0' and rcd_pts_sam_definition.sde_sam_status != '1' then
             raise_application_error(-20000, 'Sample status must be active or inactive');
          end if;
       end if;
-      if rcd_lics_str_header.sde_upd_user is null then
+      if rcd_pts_sam_definition.sde_upd_user is null then
          raise_application_error(-20000, 'Update user must be supplied');
       end if;
-      if not(rcd_lics_str_header.sde_uom_code is null) and rcd_lics_str_header.sde_uom_size is null then
+      if not(rcd_pts_sam_definition.sde_uom_code is null) and rcd_pts_sam_definition.sde_uom_size is null then
          raise_application_error(-20000, 'Unit of measure size must be supplied when unit of measure supplied');
       end if;
-      if not(rcd_lics_str_header.sde_pre_locn is null) and rcd_lics_str_header.sde_pre_date is null then
+      if not(rcd_pts_sam_definition.sde_pre_locn is null) and rcd_pts_sam_definition.sde_pre_date is null then
          raise_application_error(-20000, 'Prepared date must be supplied when prepared location supplied');
       end if;
-      if not(rcd_lics_str_header.sde_uom_code is null) then
+      if not(rcd_pts_sam_definition.sde_uom_code is null) then
          var_fld_code := 4;
-         var_val_code := rcd_lics_str_header.sde_uom_code;
+         var_val_code := rcd_pts_sam_definition.sde_uom_code;
          open csr_code;
          fetch csr_code into rcd_code;
          if csr_code%notfound then
@@ -524,9 +524,9 @@ create or replace package body pts_app.pts_sam_function as
          end if;
          close csr_code;
       end if;
-      if not(rcd_lics_str_header.sde_pre_locn is null) then
+      if not(rcd_pts_sam_definition.sde_pre_locn is null) then
          var_fld_code := 3;
-         var_val_code := rcd_lics_str_header.sde_pre_locn;
+         var_val_code := rcd_pts_sam_definition.sde_pre_locn;
          open csr_code;
          fetch csr_code into rcd_code;
          if csr_code%notfound then
@@ -542,16 +542,16 @@ create or replace package body pts_app.pts_sam_function as
       fetch csr_check into rcd_check;
       if csr_check%found then
          update pts_sam_definition
-            set sde_sam_text = rcd_lics_str_header.sde_sam_text,
-                sde_sam_status = rcd_lics_str_header.sde_sam_status,
-                sde_upd_user = rcd_lics_str_header.sde_upd_user,
-                sde_upd_date = rcd_lics_str_header.sde_upd_date,
-                sde_uom_code = rcd_lics_str_header.sde_uom_code,
-                sde_uom_size = rcd_lics_str_header.sde_uom_size,
-                sde_pre_locn = rcd_lics_str_header.sde_pre_locn,
-                sde_pre_date = rcd_lics_str_header.sde_pre_date,
-                sde_ext_rec_refnr = rcd_lics_str_header.sde_ext_rec_refnr,
-                sde_plop_code = rcd_lics_str_header.sde_plop_code
+            set sde_sam_text = rcd_pts_sam_definition.sde_sam_text,
+                sde_sam_status = rcd_pts_sam_definition.sde_sam_status,
+                sde_upd_user = rcd_pts_sam_definition.sde_upd_user,
+                sde_upd_date = rcd_pts_sam_definition.sde_upd_date,
+                sde_uom_code = rcd_pts_sam_definition.sde_uom_code,
+                sde_uom_size = rcd_pts_sam_definition.sde_uom_size,
+                sde_pre_locn = rcd_pts_sam_definition.sde_pre_locn,
+                sde_pre_date = rcd_pts_sam_definition.sde_pre_date,
+                sde_ext_rec_refnr = rcd_pts_sam_definition.sde_ext_rec_refnr,
+                sde_plop_code = rcd_pts_sam_definition.sde_plop_code
           where sde_sam_code = rcd_pts_sam_definition.sde_sam_code;
       else
          insert into pts_sam_definition values rcd_pts_sam_definition;
