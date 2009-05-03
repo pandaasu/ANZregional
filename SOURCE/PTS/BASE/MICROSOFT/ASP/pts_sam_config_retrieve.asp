@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the price type value list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_data('" & GetUser() & "'))"
+   strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
