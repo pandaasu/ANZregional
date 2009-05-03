@@ -123,9 +123,6 @@ sub PaintFunction()%>
    ///////////////////////
    // Control Functions //
    ///////////////////////
-
-// TRY REMOVING VISIBLE - WILL HELP WITH REFERENCING OBJECTS
-
    function displayPrompt() {
       var objDspPrompt = document.getElementById('dspPrompt');
       var objDspDefine = document.getElementById('dspDefine');
@@ -328,25 +325,21 @@ sub PaintFunction()%>
    //////////////////////
    // Define Functions //
    //////////////////////
-
-// DO I NEED TO DO THIS .replace(/"/g,'&#34;') FOR SAMTEXT ETC
-// DO I NEED TO DO FIXXML
-
    var cstrDefineMode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDSAM" SAMCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=UPD,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTSAM" SAMCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CRT,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYSAM" SAMCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp?Mode=CPY,function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -396,10 +389,10 @@ sub PaintFunction()%>
                break;
             }
          }
-         objUomCod.selectedIndex = -1;
-         for (var i=0;i<objUomCod.length;i++) {
-            if (objUomCod.options[i].value == objElements[i].getAttribute('UOMCODE')) {
-               objUomCod.options[i].selected = true;
+         objUomCode.selectedIndex = -1;
+         for (var i=0;i<objUomCode.length;i++) {
+            if (objUomCode.options[i].value == objElements[i].getAttribute('UOMCODE')) {
+               objUomCode.options[i].selected = true;
                break;
             }
          }
@@ -440,7 +433,7 @@ sub PaintFunction()%>
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION=*DEFSAM"';
+      strXML = strXML+'<PTS_REQUEST ACTION="*DEFSAM"';
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
       strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
@@ -451,7 +444,7 @@ sub PaintFunction()%>
       strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
       strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
       strXML = strXML+'/>';
-      doPostRequest('<%=strBase%>pts_sam_config_update.asp,function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -481,7 +474,7 @@ sub PaintFunction()%>
    function doSearchAddGroup() {
       if (!processForm()) {return;}
       strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="*SAMPLE" TESFLG="0"/>';
-      doPostRequest('<%=strBase%>pts_sys_field_list.asp,function(strResponse) {checkSearchAddGroup(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sys_field_list.asp',function(strResponse) {checkSearchAddGroup(strResponse);},false,streamXML(strXML));
    }
    function checkSearchAddGroup(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -593,7 +586,7 @@ sub PaintFunction()%>
       var objTable = document.getElementById('tabSchRule');
       cobjSearchRow = objTable.rows[intRow];
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TABCDE="'+cobjSearchRow.getAttribute('tabcde')+'" FLDCDE="'+cobjSearchRow.getAttribute('fldcde')+'"/>';
-      doPostRequest('<%=strBase%>pts_sys_rule_list.asp,function(strResponse) {checkSearchUpdateRule(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sys_rule_list.asp',function(strResponse) {checkSearchUpdateRule(strResponse);},false,streamXML(strXML));
    }
    function checkSearchUpdateRule(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -636,7 +629,7 @@ sub PaintFunction()%>
             var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
-                  objSenRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
+                  objSenRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
                   if (cobjSearchRow.getAttribute('rulcde') == objElements[i].getAttribute('RULCDE')) {
                      objSenRulCode.options[i].selected = true;
                   }
@@ -657,7 +650,7 @@ sub PaintFunction()%>
             var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
-                  objSetRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
+                  objSetRulCode.options[i] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
                   if (cobjSearchRow.getAttribute('rulcde') == objElements[i].getAttribute('RULCDE')) {
                      objSetRulCode.options[i].selected = true;
                   }
@@ -671,7 +664,7 @@ sub PaintFunction()%>
             displayRuleText();
             objSetRulCode.focus();
          } else {
-            alert('Unknown Rule Type ('+cobjSearchRow.getAttribute('rultyp')]+')');
+            alert('Unknown Rule Type ('+cobjSearchRow.getAttribute('rultyp')+')');
          }
       }
    }
@@ -735,7 +728,7 @@ sub PaintFunction()%>
          if (objSelRulValue.options[i].selected == true) {
             bolFound = false;
             for (var j=0;i<objSelSelValue.options.length;i++) {
-               if(objSelRulValue[i].value == objSelSelValue[i].value) {
+               if (objSelRulValue[i].value == objSelSelValue[i].value) {
                   bolFound = true;
                   break;
                }
@@ -856,7 +849,7 @@ sub PaintFunction()%>
    /////////////////////////////
    function requestSearchSelect() {
       cstrSearchMode = '*SLT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="0"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="0">';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -885,7 +878,7 @@ sub PaintFunction()%>
          strXML = strXML+'</GROUPS>';
       }
       strXML = strXML+'</PTS_REQUEST>';
-      doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_search.asp',function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function doSchSlctMore() {
       if (!processForm()) {return;}
@@ -895,7 +888,7 @@ sub PaintFunction()%>
       if (objList.rows.length != 0) {
          strEndCode = objList.rows[objList.rows.length-1].getAttribute('selcde');
       }
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="'+strEndCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="'+strEndCode+'">';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -924,7 +917,7 @@ sub PaintFunction()%>
          strXML = strXML+'</GROUPS>';
       }
       strXML = strXML+'</PTS_REQUEST>';
-      doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_search.asp',function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function checkSearchResponse(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {
@@ -988,15 +981,17 @@ sub PaintFunction()%>
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_xml.inc"-->
-<!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="nonr" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_sam_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');">
-   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_sam_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();">
+   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
          <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Sample Prompt</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>

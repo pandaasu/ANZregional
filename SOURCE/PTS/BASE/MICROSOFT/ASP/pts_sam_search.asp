@@ -58,6 +58,8 @@ sub ProcessRequest()
 
    dim strStatement
    dim lngCount
+   dim intIndex
+   dim i
 
    '//
    '// Create the procedure object
@@ -75,7 +77,7 @@ sub ProcessRequest()
    next
 
    '//
-   '// Set the sample serach data
+   '// Set the sample search data
    '//
    call objProcedure.Execute("pts_app.pts_sam_function.set_list_data")
    if strReturn <> "*OK" then
@@ -92,7 +94,7 @@ sub ProcessRequest()
    '// Retrieve the sample list
    '//
    strStatement = "select xml_text from table(pts_app.pts_sam_function.get_list_data)"
-   strReturn = objSelection.Execute("RESPONSE", strQuery, 0)
+   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
    end if

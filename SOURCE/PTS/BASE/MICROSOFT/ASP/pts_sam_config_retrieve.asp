@@ -59,6 +59,8 @@ sub ProcessRequest()
 
    dim strStatement
    dim lngCount
+   dim intIndex
+   dim i
 
    '//
    '// Create the procedure object
@@ -85,7 +87,7 @@ sub ProcessRequest()
    '// Retrieve the price type value list
    '//
    strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_data('" & GetUser() & "'))"
-   strReturn = objSelection.Execute("RESPONSE", strQuery, 0)
+   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
    end if

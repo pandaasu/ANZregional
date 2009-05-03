@@ -17,7 +17,6 @@
    dim objForm
    dim objSecurity
    dim objProcedure
-   dim objSelection
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -49,7 +48,6 @@
    '//
    set objForm = nothing
    set objSecurity = nothing
-   set objSelection = nothing
    set objProcedure = nothing
 
 '/////////////////////////////
@@ -59,6 +57,7 @@ sub ProcessRequest()
 
    dim strStatement
    dim lngCount
+   dim i
 
    '//
    '// Create the procedure object
@@ -76,31 +75,11 @@ sub ProcessRequest()
    next
 
    '//
-   '// Create the selection object
+   '// Perform the sample update
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve the price type value list
-   '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.update_data('" & GetUser() & "'))"
-   strReturn = objSelection.Execute("RESPONSE", strQuery, 0)
+   call objProcedure.Execute("pts_app.pts_sam_function.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
-   end if
-
-   '//
-   '// Return the response string
-   '//
-   if strReturn = "*OK" then
-      Response.Buffer = true
-      Response.ContentType = "text/xml"
-      Response.AddHeader "Cache-Control", "no-cache"
-      Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-         call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
-      next
    end if
 
 end sub%>
