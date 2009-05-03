@@ -3,11 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product System)                               //
-'// Script  : pts_sam_config_update.asp                          //
+'// Script  : pts_sam_search.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the sample definition       //
-'//           update functionality                               //
+'// Text    : This script implements the sample serach           //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +27,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_SAM_CONFIG")
+   strReturn = GetSecurity()
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -76,15 +75,23 @@ sub ProcessRequest()
    next
 
    '//
+   '// Set the sample serach data
+   '//
+   call objProcedure.Execute("pts_app.pts_sam_function.set_list_data")
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the price type value list
+   '// Retrieve the sample list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.update_data('" & GetUser() & "'))"
+   strStatement = "select xml_text from table(pts_app.pts_sam_function.get_list_data)"
    strReturn = objSelection.Execute("RESPONSE", strQuery, 0)
    if strReturn <> "*OK" then
       exit sub

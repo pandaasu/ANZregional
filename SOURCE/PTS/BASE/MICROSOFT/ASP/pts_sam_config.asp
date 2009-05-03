@@ -31,7 +31,7 @@
    '// Initialise the script
    '//
    strTarget = "pts_sam_config.asp"
-   strHeading = "Sample Configuration"
+   strHeading = "Sample Maintenance"
 
    '//
    '// Get the base string
@@ -381,11 +381,7 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'PRE_LIST') {
                objPreLocn.options[i] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SAMPLE') {
-               if (cstrDefineMode == '*UPD') {
-                  document.getElementById('DEF_SamCode').innerText = objElements[i].getAttribute('SAMCODE');
-               } else {
-                  document.getElementById('DEF_SamCode').innerText = '*NEW';
-               }
+               document.getElementById('DEF_SamCode').innerText = objElements[i].getAttribute('SAMCODE');
                document.getElementById('DEF_SamText').value = objElements[i].getAttribute('SAMTEXT');
                document.getElementById('DEF_UomSize').value = objElements[i].getAttribute('UOMSIZE');
                document.getElementById('DEF_PreDate').value = objElements[i].getAttribute('PREDATE');
@@ -860,7 +856,7 @@ sub PaintFunction()%>
    /////////////////////////////
    function requestSearchSelect() {
       cstrSearchMode = '*SLT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SCHDTA" ENDCDE="0"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="0"/>';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -888,14 +884,18 @@ sub PaintFunction()%>
          }
          strXML = strXML+'</GROUPS>';
       }
-      strXML = strXML+'</REQUEST></PTS_STREAM>';
+      strXML = strXML+'</PTS_REQUEST>';
       doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function doSchSlctMore() {
       if (!processForm()) {return;}
       cstrSearchMode = '*MOR';
-      var strSearchEndCode = document.getElementById('HID_SearchEndCode');
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SCHDTA" ENDCDE="'+strSearchEndCode+'"/>';
+      var strEndCode = '0';
+      var objList = document.getElementById('SES_SelList');
+      if (objList.rows.length != 0) {
+         strEndCode = objList.rows[objList.rows.length-1].getAttribute('selcde');
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="'+strEndCode+'"/>';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
       var objValues;
@@ -923,7 +923,7 @@ sub PaintFunction()%>
          }
          strXML = strXML+'</GROUPS>';
       }
-      strXML = strXML+'</REQUEST></PTS_STREAM>';
+      strXML = strXML+'</PTS_REQUEST>';
       doPostRequest('<%=strBase%>pts_sam_search.asp,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function checkSearchResponse(strResponse) {
@@ -944,9 +944,7 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SAMPLE') {
                objRow = objTable.insertRow(-1);
-               objRow.setAttribute('rultyp','RH');
-               objRow.setAttribute('rulid',cobjRules[i].rulid);
-               objRow.setAttribute('rulnam',cobjRules[i].rulnam);
+               objRow.setAttribute('selcde',objElements[i].getAttribute('SAMCODE'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
                objCell.innerText = '<nobr><a class="clsSelect" href="javascript:doSchSlctAccept(\''+objElements[i].getAttribute('SAMCODE')+'\');">Select</a></nobr>';
