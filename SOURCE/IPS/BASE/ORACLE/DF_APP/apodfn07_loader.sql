@@ -133,7 +133,7 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
-      rcd_dmnd_sku_mapping.model := lics_inbound_utility.get_variable('MODEL');
+      rcd_dmnd_sku_mapping.model_code := lics_inbound_utility.get_variable('MODEL');
       rcd_dmnd_sku_mapping.dmd_unit := lics_inbound_utility.get_variable('DMD_UNIT');
       rcd_dmnd_sku_mapping.dmd_group := lics_inbound_utility.get_variable('DMD_GROUP');
       rcd_dmnd_sku_mapping.dfu_locn := lics_inbound_utility.get_variable('DFU_LOCN');
@@ -219,3 +219,9 @@ create or replace package body apodfn07_loader as
 
 end apodfn07_loader; 
 /
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym apodfn07_loader for df_app.apodfn07_loader;
+grant execute on df_app.apodfn07_loader to lics_app;
