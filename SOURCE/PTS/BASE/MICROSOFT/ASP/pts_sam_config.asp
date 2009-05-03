@@ -2,7 +2,7 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : ICS (Interface Control System)                     //
+'// System  : PTS (Product System)                               //
 '// Script  : pts_sam_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
@@ -448,14 +448,14 @@ sub PaintFunction()%>
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
       strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
-      strXML = strXML+' UOMCODE="'+fixXML(objSamStat.options[objUomCode.selectedIndex].value)+'"';
+      strXML = strXML+' UOMCODE="'+fixXML(objUomCode.options[objUomCode.selectedIndex].value)+'"';
       strXML = strXML+' UOMSIZE="'+fixXML(document.getElementById('DEF_UomSize').value)+'"';
-      strXML = strXML+' PRELOCN="'+fixXML(objSamStat.options[objPreLocn.selectedIndex].value)+'"';
+      strXML = strXML+' PRELOCN="'+fixXML(objPreLocn.options[objPreLocn.selectedIndex].value)+'"';
       strXML = strXML+' PREDATE="'+fixXML(document.getElementById('DEF_PreDate').value)+'"';
       strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
       strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
       strXML = strXML+'/>';
-      doPostRequest('<%=strBase%>pts_sam_define.asp,function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_sam_config_update.asp,function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       if (strResponse.substring(0,3) != '*OK') {

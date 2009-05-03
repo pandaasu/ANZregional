@@ -3,11 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product System)                               //
-'// Script  : pts_sam_config_update.asp                          //
+'// Script  : pts_sys_fld_list.asp                               //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the sample definition       //
-'//           update functionality                               //
+'// Text    : This script implements the system field list       //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +27,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_SAM_CONFIG")
+   strReturn = GetSecurity()
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -84,7 +83,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the price type value list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.get_define)"
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.list_fld_data)"
    strReturn = objSelection.Execute("RESPONSE", strQuery, 0)
    if strReturn <> "*OK" then
       exit sub
