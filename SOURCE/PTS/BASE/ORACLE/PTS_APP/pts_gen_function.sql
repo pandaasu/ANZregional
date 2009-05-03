@@ -29,6 +29,7 @@ create or replace package pts_app.pts_gen_function as
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
    function list_sel_data return pts_xml_type pipelined;
+   function list_sel_data(par_tab_code in varchar2, par_fld_code in varchar2) return pts_cla_list_type pipelined;
    function to_number(par_number in varchar2) return number;
    function to_date(par_date in varchar2, par_format in varchar2) return date;
 
@@ -329,6 +330,7 @@ create or replace package body pts_app.pts_gen_function as
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_ent_code := upper(xslProcessor.valueOf(obj_pts_request,'@ENTCDE'));
       var_tes_flag := upper(xslProcessor.valueOf(obj_pts_request,'@TESFLG'));
+      xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTFLD' then
          raise_application_error(-20000, 'Invalid request action');
       end if;
@@ -442,6 +444,7 @@ create or replace package body pts_app.pts_gen_function as
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
       var_fld_code := pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
+      xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTRUL' then
          raise_application_error(-20000, 'Invalid request action');
       end if;
@@ -567,6 +570,7 @@ create or replace package body pts_app.pts_gen_function as
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
       var_fld_code := pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
+      xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTRUL' then
          raise_application_error(-20000, 'Invalid request action');
       end if;
@@ -595,6 +599,89 @@ create or replace package body pts_app.pts_gen_function as
             var_output := '<VALUE VALCDE="'||var_val_code||'"';
             var_output := var_output||' VALTXT="('||var_val_code||') '||var_val_text||'"/>';
             pipe row(pts_xml_object(var_output));
+         end loop;
+         close var_dynamic_cursor;
+      end if;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_SEL_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_sel_data;
+
+   /***********************************************************/
+   /* This procedure performs the list selection data routine */
+   /***********************************************************/
+   function list_sel_data(par_tab_code in varchar2, par_fld_code in varchar2) return pts_cla_list_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_val_code number;
+      var_val_text varchar2(256);
+      type typ_dynamic_cursor is ref cursor;
+      var_dynamic_cursor typ_dynamic_cursor;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_field is
+         select t01.sfi_fld_sel_sql
+           from pts_sys_field t01
+          where t01.sfi_tab_code = upper(par_tab_code)
+            and t01.sfi_fld_code = upper(par_fld_code);
+      rcd_field csr_field%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the field definition
+      /*-*/
+      open csr_field;
+      fetch csr_field into rcd_field;
+      if csr_field%notfound then
+         raise_application_error(-20000, 'Field table('||par_tab_code||') field('||to_char(par_fld_code)||') does not exist');
+      end if;
+      close csr_field;
+
+      /*-*/
+      /* Pipe the system field selection value XML
+      /*-*/
+      if not(rcd_field.sfi_fld_sel_sql is null) then
+         open var_dynamic_cursor for rcd_field.sfi_fld_sel_sql;
+         loop
+            fetch var_dynamic_cursor into var_val_code, var_val_text;
+            if var_dynamic_cursor%notfound then
+               exit;
+            end if;
+            pipe row(pts_cla_list_object(var_val_code,'('||var_val_code||') '||var_val_text));
          end loop;
          close var_dynamic_cursor;
       end if;
