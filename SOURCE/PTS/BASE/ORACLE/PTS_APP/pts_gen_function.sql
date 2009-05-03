@@ -29,7 +29,7 @@ create or replace package pts_app.pts_gen_function as
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
    function list_sel_data return pts_xml_type pipelined;
-   function list_sel_data(par_tab_code in varchar2, par_fld_code in varchar2) return pts_cla_list_type pipelined;
+   function list_sel_data(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
    function to_number(par_number in varchar2) return number;
    function to_date(par_date in varchar2, par_format in varchar2) return date;
 
