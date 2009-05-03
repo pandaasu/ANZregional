@@ -631,7 +631,7 @@ create or replace package body pts_app.pts_gen_function as
    /***********************************************************/
    /* This procedure performs the list selection data routine */
    /***********************************************************/
-   function list_sel_data(par_tab_code in varchar2, par_fld_code in varchar2) return pts_cla_list_type pipelined is
+   function list_sel_data(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
 
       /*-*/
       /* Local definitions
@@ -649,7 +649,7 @@ create or replace package body pts_app.pts_gen_function as
          select t01.sfi_fld_sel_sql
            from pts_sys_field t01
           where t01.sfi_tab_code = upper(par_tab_code)
-            and t01.sfi_fld_code = upper(par_fld_code);
+            and t01.sfi_fld_code = par_fld_code;
       rcd_field csr_field%rowtype;
 
    /*-------------*/
