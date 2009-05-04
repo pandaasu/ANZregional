@@ -28,10 +28,9 @@ create or replace package pts_app.pts_gen_function as
    function select_list(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined;
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
-   function list_sel_data return pts_xml_type pipelined;
-   function list_sel_data(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
-   function to_number(par_number in varchar2) return number;
-   function to_date(par_date in varchar2, par_format in varchar2) return date;
+   function list_pet_type return pts_cla_list_type pipelined;
+   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
+   function list_class(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
 end pts_gen_function;
 /
@@ -443,7 +442,7 @@ create or replace package body pts_app.pts_gen_function as
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
-      var_fld_code := pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
+      var_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTRUL' then
          raise_application_error(-20000, 'Invalid request action');
@@ -517,35 +516,21 @@ create or replace package body pts_app.pts_gen_function as
    /*-------------*/
    end list_rul_data;
 
-   /***********************************************************/
-   /* This procedure performs the list selection data routine */
-   /***********************************************************/
-   function list_sel_data return pts_xml_type pipelined is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_tab_code varchar2(32);
-      var_fld_code number;
-      var_val_code number;
-      var_val_text varchar2(256);
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
-      var_output varchar2(2000 char);
+   /*****************************************************/
+   /* This procedure performs the list pet type routine */
+   /*****************************************************/
+   function list_pet_type return pts_cla_list_type pipelined is
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_field is
-         select t01.sfi_fld_sel_sql
-           from pts_sys_field t01
-          where t01.sfi_tab_code = var_tab_code
-            and t01.sfi_fld_code = var_fld_code;
-      rcd_field csr_field%rowtype;
+      cursor csr_pet_type is
+         select t01.pty_pet_type,
+                t01.pty_typ_text
+           from pts_pet_type t01
+          where t01.pty_typ_status = '1'
+          order by t01.pty_pet_type asc;
+      rcd_pet_type csr_pet_type%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -557,55 +542,195 @@ create or replace package body pts_app.pts_gen_function as
       /*------------------------------------------------*/
 
       /*-*/
-      /* Parse the XML input
+      /* Retrieve the pet type values
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
+      open csr_pet_type;
+      loop
+         fetch csr_pet_type into rcd_pet_type;
+         if csr_pet_type%notfound then
+            exit;
+         end if;
+         pipe row(pts_cla_list_object(rcd_pet_type.pty_pet_type,'('||rcd_pet_type.pty_pet_type||') '||rcd_pet_type.pty_typ_text));
+      end loop;
+      close csr_pet_type;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_PET_TYPE - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_pet_type;
+
+   /***********************************************************/
+   /* This procedure performs the list classification routine */
+   /***********************************************************/
+   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_system_all is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = upper(par_tab_code)
+            and t01.sva_fld_code = par_fld_code
+          order by t01.sva_val_code asc;
+      rcd_system_all csr_system_all%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the pet system values
+      /*-*/
+      open csr_system_all;
+      loop
+         fetch csr_system_all into rcd_system_all;
+         if csr_system_all%notfound then
+            exit;
+         end if;
+         pipe row(pts_cla_list_object(rcd_system_all.sva_val_code,'('||rcd_system_all.sva_val_code||') '||rcd_system_all.sva_val_text));
+      end loop;
+      close csr_system_all;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_CLASS - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_class;
+
+   /***********************************************************/
+   /* This procedure performs the list classification routine */
+   /***********************************************************/
+   function list_class(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_system_field is
+         select t01.*
+           from pts_pty_sys_field t01
+          where t01.psf_pet_type = par_pet_type
+            and t01.psf_tab_code = upper(par_tab_code)
+            and t01.psf_fld_code = par_fld_code;
+      rcd_system_field csr_system_field%rowtype;
+
+      cursor csr_system_all is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = upper(par_tab_code)
+            and t01.sva_fld_code = par_fld_code
+          order by t01.sva_val_code asc;
+      rcd_system_all csr_system_all%rowtype;
+
+      cursor csr_system_select is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = upper(par_tab_code)
+            and t01.sva_fld_code = par_fld_code
+            and t01.sva_val_code in (select psv_val_code 
+                                       from pts_pty_sys_value
+                                      where psv_pet_type = par_pet_type
+                                        and psv_tab_code = upper(par_tab_code)
+                                        and psv_fld_code = par_fld_code)
+          order by t01.sva_val_code asc;
+      rcd_system_select csr_system_select%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the pet type system field
+      /*-*/
+      open csr_system_field;
+      fetch csr_system_field into rcd_system_field;
+      if csr_system_field%notfound then
          return;
       end if;
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
-      var_fld_code := pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
-      xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*LSTRUL' then
-         raise_application_error(-20000, 'Invalid request action');
-      end if;
+      close csr_system_field;
 
       /*-*/
-      /* Retrieve the field definition
+      /* Retrieve the pet type system values
       /*-*/
-      open csr_field;
-      fetch csr_field into rcd_field;
-      if csr_field%notfound then
-         raise_application_error(-20000, 'Field table('||var_tab_code||') field('||to_char(var_fld_code)||') does not exist');
-      end if;
-      close csr_field;
-
-      /*-*/
-      /* Pipe the system field selection value XML
-      /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?>'));
-      if not(rcd_field.sfi_fld_sel_sql is null) then
-         open var_dynamic_cursor for rcd_field.sfi_fld_sel_sql;
+      if upper(rcd_system_field.psf_val_type) = '*ALL' then
+         open csr_system_all;
          loop
-            fetch var_dynamic_cursor into var_val_code, var_val_text;
-            if var_dynamic_cursor%notfound then
+            fetch csr_system_all into rcd_system_all;
+            if csr_system_all%notfound then
                exit;
             end if;
-            var_output := '<VALUE VALCDE="'||var_val_code||'"';
-            var_output := var_output||' VALTXT="('||var_val_code||') '||var_val_text||'"/>';
-            pipe row(pts_xml_object(var_output));
+            pipe row(pts_cla_list_object(rcd_system_all.sva_val_code,'('||rcd_system_all.sva_val_code||') '||rcd_system_all.sva_val_text));
          end loop;
-         close var_dynamic_cursor;
+         close csr_system_all;
+      elsif upper(rcd_system_field.psf_val_type) = '*SELECT' then
+         open csr_system_select;
+         loop
+            fetch csr_system_select into rcd_system_select;
+            if csr_system_select%notfound then
+               exit;
+            end if;
+            pipe row(pts_cla_list_object(rcd_system_select.sva_val_code,'('||rcd_system_select.sva_val_code||') '||rcd_system_select.sva_val_text));
+         end loop;
+         close csr_system_select;
+      else
+         return;
       end if;
 
       /*-*/
       /* Return
-      /*-*/
+      /*-*/  
       return;
 
    /*-------------------*/
@@ -621,163 +746,12 @@ create or replace package body pts_app.pts_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_SEL_DATA - ' || substr(SQLERRM, 1, 2048));
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_CLASS - ' || substr(SQLERRM, 1, 2048));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end list_sel_data;
-
-   /***********************************************************/
-   /* This procedure performs the list selection data routine */
-   /***********************************************************/
-   function list_sel_data(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_val_code number;
-      var_val_text varchar2(256);
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
-      var_output varchar2(2000 char);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_field is
-         select t01.sfi_fld_sel_sql
-           from pts_sys_field t01
-          where t01.sfi_tab_code = upper(par_tab_code)
-            and t01.sfi_fld_code = par_fld_code;
-      rcd_field csr_field%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the field definition
-      /*-*/
-      open csr_field;
-      fetch csr_field into rcd_field;
-      if csr_field%notfound then
-         raise_application_error(-20000, 'Field table('||par_tab_code||') field('||to_char(par_fld_code)||') does not exist');
-      end if;
-      close csr_field;
-
-      /*-*/
-      /* Pipe the system field selection value XML
-      /*-*/
-      if not(rcd_field.sfi_fld_sel_sql is null) then
-         open var_dynamic_cursor for rcd_field.sfi_fld_sel_sql;
-         loop
-            fetch var_dynamic_cursor into var_val_code, var_val_text;
-            if var_dynamic_cursor%notfound then
-               exit;
-            end if;
-            pipe row(pts_cla_list_object(var_val_code,'('||var_val_code||') '||var_val_text));
-         end loop;
-         close var_dynamic_cursor;
-      end if;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_SEL_DATA - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end list_sel_data;
-
-   /**************************************************/
-   /* This procedure performs the to number function */
-   /**************************************************/
-   function to_number(par_number in varchar2) return number is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_return number;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Return the number value
-      /*-*/
-      var_return := null;
-      begin
-         if substr(par_number,length(par_number),1) = '-' then
-            var_return := to_number('-' || substr(par_number,1,length(par_number) - 1));
-         else
-            var_return := to_number(par_number);
-         end if;
-      exception
-         when others then
-            null;
-      end;
-      return var_return;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end to_number;
-
-   /************************************************/
-   /* This procedure performs the to date function */
-   /************************************************/
-   function to_date(par_date in varchar2, par_format in varchar2) return date is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_return date;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Return the date value
-      /*-*/
-      var_return := null;
-      begin
-         var_return := to_date(par_date,par_format);
-      exception
-         when others then
-            null;
-      end;
-      return var_return;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end to_date;
+   end list_class;
 
 end pts_gen_function;
 /

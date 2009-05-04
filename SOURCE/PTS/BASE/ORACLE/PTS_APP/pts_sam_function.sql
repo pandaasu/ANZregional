@@ -29,7 +29,6 @@ create or replace package pts_app.pts_sam_function as
    function get_list_data return pts_sam_list_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
 end pts_sam_function;
 /
@@ -112,7 +111,7 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      pvar_end_code := nvl(pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@ENDCDE')),0);
+      pvar_end_code := nvl(pts_to_number(xslProcessor.valueOf(obj_pts_request,'@ENDCDE')),0);
       if var_action != '*SELDTA' then
          raise_application_error(-20000, 'Invalid request action');
       end if;
@@ -134,7 +133,7 @@ create or replace package body pts_app.pts_sam_function as
             obj_rul_node := xmlDom.item(obj_rul_list,idr);
             rcd_pts_wor_sel_rule.wsr_sel_group := rcd_pts_wor_sel_group.wsg_sel_group;
             rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
-            rcd_pts_wor_sel_rule.wsr_fld_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
+            rcd_pts_wor_sel_rule.wsr_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
             rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
             insert into pts_wor_sel_rule values rcd_pts_wor_sel_rule;
             obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUES/VALUE');
@@ -143,7 +142,7 @@ create or replace package body pts_app.pts_sam_function as
                rcd_pts_wor_sel_value.wsv_sel_group := rcd_pts_wor_sel_rule.wsr_sel_group;
                rcd_pts_wor_sel_value.wsv_tab_code := rcd_pts_wor_sel_rule.wsr_tab_code;
                rcd_pts_wor_sel_value.wsv_fld_code := rcd_pts_wor_sel_rule.wsr_rul_code;
-               rcd_pts_wor_sel_value.wsv_val_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
+               rcd_pts_wor_sel_value.wsv_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
                rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTXT');
                insert into pts_wor_sel_value values rcd_pts_wor_sel_value;
             end loop;
@@ -155,6 +154,11 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       xmlDom.freeDocument(obj_xml_document);
 
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -164,6 +168,11 @@ create or replace package body pts_app.pts_sam_function as
       /* Exception trap
       /**/
       when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
 
          /*-*/
          /* Raise an exception to the calling application
@@ -264,8 +273,6 @@ create or replace package body pts_app.pts_sam_function as
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
       var_sam_code varchar2(32);
-      var_req_code number;
-      var_fld_code number;
       var_output varchar2(2000 char);
 
       /*-*/
@@ -274,14 +281,18 @@ create or replace package body pts_app.pts_sam_function as
       cursor csr_sample is
          select t01.*
            from pts_sam_definition t01
-          where t01.sde_sam_code = var_req_code;
+          where t01.sde_sam_code = pts_to_number(var_sam_code);
       rcd_sample csr_sample%rowtype;
 
-      cursor csr_list is
+      cursor csr_uom_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data('*SAM_DEF',var_fld_code)) t01
-          order by t01.val_code;
-      rcd_list csr_list%rowtype;
+           from table(pts_app.pts_gen_function.list_class('*SAM_DEF',4)) t01;
+      rcd_uom_code csr_uom_code%rowtype;
+
+      cursor csr_pre_locn is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_class('*SAM_DEF',3)) t01;
+      rcd_pre_locn csr_pre_locn%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -313,8 +324,7 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Retrieve the existing sample when required
       /*-*/
-      if var_action != '*UPDSAM' or var_action != '*CPYSAM' then
-         var_req_code := pts_app.pts_gen_function.to_number(var_sam_code);
+      if var_action = '*UPDSAM' or var_action = '*CPYSAM' then
          open csr_sample;
          fetch csr_sample into rcd_sample;
          if csr_sample%notfound then
@@ -339,32 +349,30 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Pipe the unit of measure XML
       /*-*/
-      var_fld_code := 4;
-      open csr_list;
+      open csr_uom_code;
       loop
-         fetch csr_list into rcd_list;
-         if csr_list%notfound then
+         fetch csr_uom_code into rcd_uom_code;
+         if csr_uom_code%notfound then
             exit;
          end if;
-         var_output := '<UOM_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>';
+         var_output := '<UOM_LIST VALCDE="'||rcd_uom_code.val_code||'" VALTXT="'||rcd_uom_code.val_text||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
-      close csr_list;
+      close csr_uom_code;
 
       /*-*/
       /* Pipe the prepared location XML
       /*-*/
-      var_fld_code := 3;
-      open csr_list;
+      open csr_pre_locn;
       loop
-         fetch csr_list into rcd_list;
-         if csr_list%notfound then
+         fetch csr_pre_locn into rcd_pre_locn;
+         if csr_pre_locn%notfound then
             exit;
          end if;
-         var_output := '<PRE_LIST VALCDE="'||rcd_list.val_code||'" VALTXT="'||rcd_list.val_text||'"/>';
+         var_output := '<PRE_LIST VALCDE="'||rcd_pre_locn.val_code||'" VALTXT="'||rcd_pre_locn.val_text||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
-      close csr_list;
+      close csr_pre_locn;
 
       /*-*/
       /* Pipe the sample XML
@@ -441,9 +449,9 @@ create or replace package body pts_app.pts_sam_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
-      var_fld_code number;
-      var_val_code number;
       rcd_pts_sam_definition pts_sam_definition%rowtype;
+      type typ_dynamic_cursor is ref cursor;
+      var_dynamic_cursor typ_dynamic_cursor;
 
       /*-*/
       /* Local cursors
@@ -454,11 +462,17 @@ create or replace package body pts_app.pts_sam_function as
           where t01.sde_sam_code = rcd_pts_sam_definition.sde_sam_code;
       rcd_check csr_check%rowtype;
 
-      cursor csr_code is
+      cursor csr_uom_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_sel_data('*SAM_DEF',var_fld_code)) t01
-          where t01.val_code = var_val_code;
-      rcd_code csr_code%rowtype;
+           from table(pts_app.pts_gen_function.list_class('*SAM_DEF',4)) t01
+          where t01.val_code = rcd_pts_sam_definition.sde_uom_code;
+      rcd_uom_code csr_uom_code%rowtype;
+
+      cursor csr_pre_locn is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_class('*SAM_DEF',3)) t01
+          where t01.val_code = rcd_pts_sam_definition.sde_pre_locn;
+      rcd_pre_locn csr_pre_locn%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -477,15 +491,15 @@ create or replace package body pts_app.pts_sam_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      rcd_pts_sam_definition.sde_sam_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@SAMCODE'));
+      rcd_pts_sam_definition.sde_sam_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@SAMCODE'));
       rcd_pts_sam_definition.sde_sam_text := xslProcessor.valueOf(obj_pts_request,'@SAMTEXT');
       rcd_pts_sam_definition.sde_sam_status := xslProcessor.valueOf(obj_pts_request,'@SAMSTAT');
       rcd_pts_sam_definition.sde_upd_user := upper(par_user);
       rcd_pts_sam_definition.sde_upd_date := sysdate;
-      rcd_pts_sam_definition.sde_uom_code := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@UOMCODE'));
-      rcd_pts_sam_definition.sde_uom_size := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@UOMSIZE'));
-      rcd_pts_sam_definition.sde_pre_locn := pts_app.pts_gen_function.to_number(xslProcessor.valueOf(obj_pts_request,'@PRECODE'));
-      rcd_pts_sam_definition.sde_pre_date := pts_app.pts_gen_function.to_date(xslProcessor.valueOf(obj_pts_request,'@PREDATE'),'dd/mm/yyyy');
+      rcd_pts_sam_definition.sde_uom_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@UOMCODE'));
+      rcd_pts_sam_definition.sde_uom_size := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@UOMSIZE'));
+      rcd_pts_sam_definition.sde_pre_locn := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PRECODE'));
+      rcd_pts_sam_definition.sde_pre_date := pts_to_date(xslProcessor.valueOf(obj_pts_request,'@PREDATE'),'dd/mm/yyyy');
       rcd_pts_sam_definition.sde_ext_rec_refnr := xslProcessor.valueOf(obj_pts_request,'@EXTRFNR');
       rcd_pts_sam_definition.sde_plop_code := xslProcessor.valueOf(obj_pts_request,'@PLOPCDE');
       xmlDom.freeDocument(obj_xml_document);
@@ -516,24 +530,20 @@ create or replace package body pts_app.pts_sam_function as
          raise_application_error(-20000, 'Prepared date must be supplied when prepared location supplied');
       end if;
       if not(rcd_pts_sam_definition.sde_uom_code is null) then
-         var_fld_code := 4;
-         var_val_code := rcd_pts_sam_definition.sde_uom_code;
-         open csr_code;
-         fetch csr_code into rcd_code;
-         if csr_code%notfound then
-            raise_application_error(-20000, 'Unit of measure ('||to_char(var_val_code)||') does not exist');
+         open csr_uom_code;
+         fetch csr_uom_code into rcd_uom_code;
+         if csr_uom_code%notfound then
+            raise_application_error(-20000, 'Unit of measure ('||to_char(rcd_pts_sam_definition.sde_uom_code)||') does not exist');
          end if;
-         close csr_code;
+         close csr_uom_code;
       end if;
       if not(rcd_pts_sam_definition.sde_pre_locn is null) then
-         var_fld_code := 3;
-         var_val_code := rcd_pts_sam_definition.sde_pre_locn;
-         open csr_code;
-         fetch csr_code into rcd_code;
-         if csr_code%notfound then
-            raise_application_error(-20000, 'Prepared location ('||to_char(var_val_code)||') does not exist');
+         open csr_pre_locn;
+         fetch csr_pre_locn into rcd_pre_locn;
+         if csr_pre_locn%notfound then
+            raise_application_error(-20000, 'Prepared location ('||to_char(rcd_pts_sam_definition.sde_pre_locn)||') does not exist');
          end if;
-         close csr_code;
+         close csr_pre_locn;
       end if;
 
       /*-*/
@@ -588,70 +598,6 @@ create or replace package body pts_app.pts_sam_function as
    /* End routine */
    /*-------------*/
    end update_data;
-
-   /***********************************************************/
-   /* This procedure performs the list classification routine */
-   /***********************************************************/
-   function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_system_all is
-         select t01.sva_val_code,
-                t01.sva_val_text
-           from pts_sys_value t01
-          where t01.sva_tab_code = upper(par_tab_code)
-            and t01.sva_fld_code = par_fld_code
-          order by t01.sva_val_code asc;
-      rcd_system_all csr_system_all%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the pet system values
-      /*-*/
-      open csr_system_all;
-      loop
-         fetch csr_system_all into rcd_system_all;
-         if csr_system_all%notfound then
-            exit;
-         end if;
-         pipe row(pts_cla_list_object(rcd_system_all.sva_val_code,rcd_system_all.sva_val_text));
-      end loop;
-      close csr_system_all;
-
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_SAM_FUNCTION - LIST_CLASS - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end list_class;
 
 /*----------------------*/
 /* Initialisation block */
