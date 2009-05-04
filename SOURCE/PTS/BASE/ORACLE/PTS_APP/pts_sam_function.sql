@@ -318,7 +318,8 @@ create or replace package body pts_app.pts_sam_function as
       var_sam_code := xslProcessor.valueOf(obj_pts_request,'@SAMCODE');
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDSAM' and var_action != '*CRTSAM' and var_action != '*CPYSAM' then
-         raise_application_error(-20000, 'Invalid request action');
+         pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR><ERROR ERRTXT="'||pts_to_xml('Invalid request action')||'"/></PTS_ERROR>'));
+         return;
       end if;
 
       /*-*/
@@ -328,7 +329,8 @@ create or replace package body pts_app.pts_sam_function as
          open csr_sample;
          fetch csr_sample into rcd_sample;
          if csr_sample%notfound then
-            raise_application_error(-20000, 'Sample ('||var_sam_code||') does not exist');
+            pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR><ERROR ERRTXT="'||pts_to_xml('Sample ('||var_sam_code||') does not exist')||'"/></PTS_ERROR>'));
+            return;
          end if;
          close csr_sample;
       end if;
@@ -336,41 +338,39 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Pipe the XML start
       /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?>'));
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
 
       /*-*/
       /* Pipe the sample status XML
       /*-*/
-      var_output := '<STA_LIST VALCDE="0" VALTXT="Inactive"/>';
-      pipe row(pts_xml_object(var_output));
-      var_output := '<STA_LIST VALCDE="1" VALTXT="Active"/>';
-      pipe row(pts_xml_object(var_output));
+      pipe row(pts_xml_object('<STA_LIST VALCDE="0" VALTXT="Inactive"/>'));
+      pipe row(pts_xml_object('<STA_LIST VALCDE="1" VALTXT="Active"/>'));
 
       /*-*/
       /* Pipe the unit of measure XML
       /*-*/
+      pipe row(pts_xml_object('<UOM_LIST VALCDE="" VALTXT="** NO UNIT OF MEASURE **"/>'));
       open csr_uom_code;
       loop
          fetch csr_uom_code into rcd_uom_code;
          if csr_uom_code%notfound then
             exit;
          end if;
-         var_output := '<UOM_LIST VALCDE="'||rcd_uom_code.val_code||'" VALTXT="'||rcd_uom_code.val_text||'"/>';
-         pipe row(pts_xml_object(var_output));
+         pipe row(pts_xml_object('<UOM_LIST VALCDE="'||rcd_uom_code.val_code||'" VALTXT="'||pts_to_xml(rcd_uom_code.val_text)||'"/>'));
       end loop;
       close csr_uom_code;
 
       /*-*/
       /* Pipe the prepared location XML
       /*-*/
+      pipe row(pts_xml_object('<PRE_LIST VALCDE="" VALTXT="** NO PREPARED LOCATION **"/>'));
       open csr_pre_locn;
       loop
          fetch csr_pre_locn into rcd_pre_locn;
          if csr_pre_locn%notfound then
             exit;
          end if;
-         var_output := '<PRE_LIST VALCDE="'||rcd_pre_locn.val_code||'" VALTXT="'||rcd_pre_locn.val_text||'"/>';
-         pipe row(pts_xml_object(var_output));
+         pipe row(pts_xml_object('<PRE_LIST VALCDE="'||rcd_pre_locn.val_code||'" VALTXT="'||pts_to_xml(rcd_pre_locn.val_text)||'"/>'));
       end loop;
       close csr_pre_locn;
 
@@ -379,25 +379,25 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       if var_action = '*UPDSAM' then
          var_output := '<SAMPLE SAMCODE="'||to_char(rcd_sample.sde_sam_code)||'"';
-         var_output := var_output||' SAMTEXT="'||rcd_sample.sde_sam_text||'"';
+         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_sample.sde_sam_text)||'"';
          var_output := var_output||' SAMSTAT="'||rcd_sample.sde_sam_status||'"';
          var_output := var_output||' UOMCODE="'||to_char(rcd_sample.sde_uom_code)||'"';
          var_output := var_output||' UOMSIZE="'||to_char(rcd_sample.sde_uom_size)||'"';
          var_output := var_output||' PRELOCN="'||to_char(rcd_sample.sde_pre_locn)||'"';
          var_output := var_output||' PREDATE="'||to_char(rcd_sample.sde_pre_date,'dd/mm/yyyy')||'"';
-         var_output := var_output||' EXTRFNR="'||rcd_sample.sde_ext_rec_refnr||'"';
-         var_output := var_output||' PLOPCDE="'||rcd_sample.sde_plop_code||'"/>';
+         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_sample.sde_ext_rec_refnr)||'"';
+         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_sample.sde_plop_code)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYSAM' then
          var_output := '<SAMPLE SAMCODE="*NEW"';
-         var_output := var_output||' SAMTEXT="'||rcd_sample.sde_sam_text||'"';
+         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_sample.sde_sam_text)||'"';
          var_output := var_output||' SAMSTAT="'||rcd_sample.sde_sam_status||'"';
          var_output := var_output||' UOMCODE="'||to_char(rcd_sample.sde_uom_code)||'"';
          var_output := var_output||' UOMSIZE="'||to_char(rcd_sample.sde_uom_size)||'"';
          var_output := var_output||' PRELOCN="'||to_char(rcd_sample.sde_pre_locn)||'"';
          var_output := var_output||' PREDATE="'||to_char(rcd_sample.sde_pre_date,'dd/mm/yyyy')||'"';
-         var_output := var_output||' EXTRFNR="'||rcd_sample.sde_ext_rec_refnr||'"';
-         var_output := var_output||' PLOPCDE="'||rcd_sample.sde_plop_code||'"/>';
+         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_sample.sde_ext_rec_refnr)||'"';
+         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_sample.sde_plop_code)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTSAM' then
          var_output := '<SAMPLE SAMCODE="*NEW"';
@@ -411,6 +411,11 @@ create or replace package body pts_app.pts_sam_function as
          var_output := var_output||' PLOPCDE=""/>';
          pipe row(pts_xml_object(var_output));
       end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
 
       /*-*/
       /* Return

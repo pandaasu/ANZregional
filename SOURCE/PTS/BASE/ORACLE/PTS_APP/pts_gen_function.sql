@@ -337,7 +337,7 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Pipe the system field XML
       /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?>'));
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
       open csr_field;
       loop
          fetch csr_field into rcd_field;
@@ -346,12 +346,17 @@ create or replace package body pts_app.pts_gen_function as
          end if;
          var_output := '<FIELD TABCDE="'||rcd_field.sfi_tab_code||'"';
          var_output := var_output||' FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'"';
-         var_output := var_output||' FLDTXT="'||rcd_field.sfi_fld_text||'"';
+         var_output := var_output||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"';
          var_output := var_output||' INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'"';
          var_output := var_output||' RULTYP="'||rcd_field.sfi_fld_rul_type||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
       close csr_field;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
 
       /*-*/
       /* Return
@@ -461,15 +466,14 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Pipe the system field rule XML
       /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?>'));
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
       open csr_rule;
       loop
          fetch csr_rule into rcd_rule;
          if csr_rule%notfound then
             exit;
          end if;
-         var_output := '<RULE RULCDE="'||rcd_rule.sru_rul_code||'"';
-         var_output := var_output||' RULCND="'||rcd_rule.sru_rul_cond||'"/>';
+         var_output := '<RULE RULCDE="'||rcd_rule.sru_rul_code||'" RULCND="'||rcd_rule.sru_rul_cond||'"/>';
          pipe row(pts_xml_object(var_output));
       end loop;
       close csr_rule;
@@ -484,12 +488,16 @@ create or replace package body pts_app.pts_gen_function as
             if var_dynamic_cursor%notfound then
                exit;
             end if;
-            var_output := '<VALUE VALCDE="'||var_val_code||'"';
-            var_output := var_output||' VALTXT="('||var_val_code||') '||var_val_text||'"/>';
+            var_output := '<VALUE VALCDE="'||var_val_code||'" VALTXT="'||pts_to_xml(var_val_text)||'"/>';
             pipe row(pts_xml_object(var_output));
          end loop;
          close var_dynamic_cursor;
       end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
 
       /*-*/
       /* Return
