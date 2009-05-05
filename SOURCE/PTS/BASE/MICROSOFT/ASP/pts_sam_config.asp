@@ -323,7 +323,7 @@ sub PaintFunction()%>
    }
    function doPromptSelect() {
       if (!processForm()) {return;}
-      requestSearchSelect();
+      requestSearchSelect('*PROMPT');
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
@@ -466,12 +466,29 @@ sub PaintFunction()%>
       strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
       strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
       strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
+   }
+   function requestDefineAccept(strXML) {
       doPostRequest('<%=strBase%>pts_sam_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
+      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
+
+   //   if (strResponse.length <= 3) {return;}
+   //   var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+    //  if (objDocument == null) {return;}
+    //  var objElements = objDocument.documentElement.childNodes;
+   //   if (objElements.length != 0) {
+    //     if (objElements[0].nodeName == 'ERROR') {
+    //        alert(objElements[0].getAttribute('ERRTXT'));
+    //        return;
+    //     }
+    //  }
+
          displayPrompt();
          document.getElementById('PRO_SamCode').value = '';
          document.getElementById('PRO_SamCode').focus();
@@ -487,6 +504,7 @@ sub PaintFunction()%>
    ///////////////////////////
    // Search Rule Functions //
    ///////////////////////////
+   var cstrSearchBack;
    var cstrSearchMode;
    var cobjSearchRow;
    function clsSchValue(strValCde,strValTxt) {
@@ -496,14 +514,27 @@ sub PaintFunction()%>
    function doSchRuleAddGroup() {
       if (!processForm()) {return;}
       strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="*SAMPLE" TESFLG="0"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestSchRuleAddGroup(\''+strXML+'\');',10);
+   }
+   function requestSchRuleAddGroup(strXML) {
       doPostRequest('<%=strBase%>pts_sys_fld_list.asp',function(strResponse) {checkSchRuleAddGroup(strResponse);},false,streamXML(strXML));
    }
    function checkSchRuleAddGroup(strResponse) {
+      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
+         if (strResponse.length <= 3) {return;}
          var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
+         var objElements = objDocument.documentElement.childNodes;
+         if (objElements.length != 0) {
+            if (objElements[0].nodeName == 'ERROR') {
+               alert(objElements[0].getAttribute('ERRTXT'));
+               return;
+            }
+         }
          var objTable = document.getElementById('tabSchRule');
          var objRow;
          var objCell;
@@ -522,7 +553,6 @@ sub PaintFunction()%>
          objCell.innerText = '';
          objCell.className = 'clsLabelFB';
          objCell.style.whiteSpace = 'nowrap';
-         var objElements = objDocument.documentElement.childNodes;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'FIELD') {
                objRow = objTable.insertRow(-1);
@@ -609,14 +639,27 @@ sub PaintFunction()%>
       var objTable = document.getElementById('tabSchRule');
       cobjSearchRow = objTable.rows[intRow];
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TABCDE="'+cobjSearchRow.getAttribute('tabcde')+'" FLDCDE="'+cobjSearchRow.getAttribute('fldcde')+'"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestSearchUpdateRule(\''+strXML+'\');',10);
+   }
+   function requestSearchUpdateRule(strXML) {
       doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSearchUpdateRule(strResponse);},false,streamXML(strXML));
    }
    function checkSearchUpdateRule(strResponse) {
+      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
+         if (strResponse.length <= 3) {return;}
          var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
+         var objElements = objDocument.documentElement.childNodes;
+         if (objElements.length != 0) {
+            if (objElements[0].nodeName == 'ERROR') {
+               alert(objElements[0].getAttribute('ERRTXT'));
+               return;
+            }
+         }
          if (cobjSearchRow.getAttribute('rultyp') == '*LIST') {
             var objSelRulCode = document.getElementById('SEL_RulCode');
             var objSelRulValue = document.getElementById('SEL_RulValue');
@@ -627,7 +670,6 @@ sub PaintFunction()%>
             objSelRulValue.selectedIndex = -1;
             objSelSelValue.options.length = 0;
             objSelSelValue.selectedIndex = -1;
-            var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSelRulCode.options[objSelRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
@@ -649,7 +691,6 @@ sub PaintFunction()%>
             var objSenSelValue = document.getElementById('SEN_SelValue');
             objSenRulCode.options.length = 0;
             objSenRulCode.selectedIndex = 1;
-            var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSenRulCode.options[objSenRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
@@ -670,7 +711,6 @@ sub PaintFunction()%>
             var objSetSelValue = document.getElementById('SET_SelValue');
             objSetRulCode.options.length = 0;
             objSetRulCode.selectedIndex = 1;
-            var objElements = objDocument.documentElement.childNodes;
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSetRulCode.options[objSetRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE')+':'+objElements[i].getAttribute('RULCND'));
@@ -693,7 +733,7 @@ sub PaintFunction()%>
    }
    function doSchRuleSelect() {
       if (!processForm()) {return;}
-      requestSearchSelect();
+      requestSearchSelect('*SEARCH');
    }
    function doSchRuleCancel() {
       displayPrompt();
@@ -865,7 +905,8 @@ sub PaintFunction()%>
    /////////////////////////////
    // Search Select Functions //
    /////////////////////////////
-   function requestSearchSelect() {
+   function requestSearchSelect(strBack) {
+      cstrSearchBack = strBack;
       cstrSearchMode = '*SLT';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="0">';
       var objTable = document.getElementById('tabSchRule');
@@ -1005,7 +1046,11 @@ sub PaintFunction()%>
       document.getElementById('PRO_SamCode').focus();
    }
    function doSchSlctCancel() {
-      displaySchRule();
+      if (cstrSearchBack == '*PROMPT') {
+         displayPrompt();
+      } else {
+         displaySchRule();
+      }
    }
 
 // -->
