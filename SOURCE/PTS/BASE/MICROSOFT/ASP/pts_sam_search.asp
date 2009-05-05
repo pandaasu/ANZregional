@@ -77,9 +77,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Set the sample search data
+   '// Set the search data
    '//
-   call objProcedure.Execute("pts_app.pts_sam_function.set_list_data")
+   call objProcedure.Execute("pts_app.pts_gen_function.set_list_data")
    if strReturn <> "*OK" then
       exit sub
    end if
