@@ -31,6 +31,7 @@ create or replace package care_bw_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/11   Steve Gregan   Created
+    2009/02   Trevor Keon    Changed output files to be a constant name
 
    *******************************************************************************/
 
@@ -89,6 +90,7 @@ create or replace package body care_bw_extract as
       var_errors boolean;
       var_save_tran varchar2(10);
       var_suffix number;
+      var_file_count number;
       var_output varchar2(4000);
       var_text varchar2(128);
       type typ_output is table of varchar2(4000) index by binary_integer;
@@ -178,6 +180,7 @@ create or replace package body care_bw_extract as
       var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
       var_report := lics_setting_configuration.retrieve_setting(con_rpt_group, con_rpt_code);
       var_errors := false;
+      var_file_count := 1;
 
       /*-*/
       /* Validate the parameters
@@ -339,7 +342,8 @@ create or replace package body care_bw_extract as
                   /*-*/
                   /* Create the interface
                   /*-*/
-                  var_file_name := 'CA_CONTACTS_'||rcd_period.yyyypp||'.csv';
+                  var_file_name := 'CA_CONTACTS_'||var_file_count||'.csv';
+                  var_file_count := var_file_count + 1;
                   var_instance := lics_outbound_loader.create_interface('CARSBW01',null,var_file_name);
 
                   /*-*/
