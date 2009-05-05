@@ -2,11 +2,11 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : PTS (Product System)                               //
-'// Script  : pts_sam_config_update.asp                          //
+'// System  : PTS (Product Testing System)                       //
+'// Script  : pts_pet_config_update.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the sample definition       //
+'// Text    : This script implements the pet definition          //
 '//           update functionality                               //
 '//////////////////////////////////////////////////////////////////
 
@@ -27,7 +27,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_SAM_CONFIG")
+   strReturn = GetSecurityCheck("PTS_PET_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -75,7 +75,7 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the sample update
+   '// Perform the pet update
    '//
    call objProcedure.Execute("pts_app.pts_sam_function.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then

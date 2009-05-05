@@ -2,11 +2,11 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : PTS (Product System)                               //
-'// Script  : pts_sam_config_retrieve.asp                        //
+'// System  : PTS (Product Testing System)                       //
+'// Script  : pts_pet_config_retrieve.asp                        //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the sample definition       //
+'// Text    : This script implements the pet definition          //
 '//           retrieve functionality                             //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_SAM_CONFIG")
+   strReturn = GetSecurityCheck("PTS_PET_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the price type value list
+   '// Retrieve the pet definition
    '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_data)"
+   strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

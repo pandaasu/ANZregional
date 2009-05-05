@@ -2,7 +2,7 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : PTS (Product System)                               //
+'// System  : PTS (Product Testing System)                       //
 '// Script  : pts_sam_config_update.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //

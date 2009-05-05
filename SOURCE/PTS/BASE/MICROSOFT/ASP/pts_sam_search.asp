@@ -2,11 +2,11 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : PTS (Product System)                               //
+'// System  : PTS (Product Testing System)                       //
 '// Script  : pts_sam_search.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the sample serach           //
+'// Text    : This script implements the sample search           //
 '//////////////////////////////////////////////////////////////////
 
    '//
