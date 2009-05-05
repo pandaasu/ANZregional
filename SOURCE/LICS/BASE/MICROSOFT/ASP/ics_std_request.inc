@@ -25,8 +25,10 @@
       objSelf.funCallback = strCallback;
       objSelf.objRequest.onreadystatechange = function() {doRequestCallback(objSelf)}
       objSelf.objRequest.open("POST",strUrl,bolAsynchronous);
-      objSelf.objRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-      objSelf.objRequest.send(escape(strData));
+      objSelf.objRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=utf-8");
+      objSelf.objRequest.setRequestHeader("Content-Length",strData.length);
+      objSelf.objRequest.setRequestHeader("Connection","close");
+      objSelf.objRequest.send(strData);
    }
    function doRequestCallback(objSelf) {
       if (objSelf.objRequest.readyState == 4) {

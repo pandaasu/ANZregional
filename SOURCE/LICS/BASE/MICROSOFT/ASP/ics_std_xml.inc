@@ -4,7 +4,7 @@
    // XML script //
    ////////////////
    function streamXML(strXML) {
-      var aryStream ;
+      var aryStream;
       var strStream = '';
       var intPart = 0;
       aryStream = strXML.match(RegExp('.{1,2000}','g'));
