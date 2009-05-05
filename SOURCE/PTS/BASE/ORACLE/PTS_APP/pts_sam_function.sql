@@ -25,8 +25,8 @@ create or replace package pts_app.pts_sam_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure set_list_data;
    function get_list_data return pts_sam_list_type pipelined;
+   function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
 
@@ -44,154 +44,15 @@ create or replace package body pts_app.pts_sam_function as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /*-*/
-   /* Private definitions
-   /*-*/
-   pvar_pag_size number;
-   pvar_end_code number;
-
-   /*****************************************************/
-   /* This procedure performs the set list data routine */
-   /*****************************************************/
-   procedure set_list_data is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      obj_grp_list xmlDom.domNodeList;
-      obj_grp_node xmlDom.domNode;
-      obj_rul_list xmlDom.domNodeList;
-      obj_rul_node xmlDom.domNode;
-      obj_val_list xmlDom.domNodeList;
-      obj_val_node xmlDom.domNode;
-      rcd_pts_wor_sel_group pts_wor_sel_group%rowtype;
-      rcd_pts_wor_sel_rule pts_wor_sel_rule%rowtype;
-      rcd_pts_wor_sel_value pts_wor_sel_value%rowtype;
-      var_action varchar2(32);
-      var_group boolean;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Clear the work selection temporary tables
-      /*-*/
-      delete from pts_wor_sel_group;
-      delete from pts_wor_sel_rule;
-      delete from pts_wor_sel_value;
-
-      /*-*/
-      /* Set the list defaults
-      /*-*/
-      pvar_pag_size := 20;
-      pvar_end_code := 0;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-
-      /*-*/
-      /* Retrieve and process the stream header
-      /*-*/
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      pvar_end_code := nvl(pts_to_number(xslProcessor.valueOf(obj_pts_request,'@ENDCDE')),0);
-      if var_action != '*SELDTA' then
-         raise_application_error(-20000, 'Invalid request action');
-      end if;
-
-      /*-*/
-      /* Retrieve and process the stream nodes
-      /*-*/
-      obj_grp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/GROUPS/GROUP');
-      for idg in 0..xmlDom.getLength(obj_grp_list)-1 loop
-         obj_grp_node := xmlDom.item(obj_grp_list,idg);
-         var_group := false;
-         obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULES/RULE');
-         for idr in 0..xmlDom.getLength(obj_rul_list)-1 loop
-            if var_group = false then
-               rcd_pts_wor_sel_group.wsg_sel_group := upper(xslProcessor.valueOf(obj_grp_node,'@GRPCDE'));
-               insert into pts_wor_sel_group values rcd_pts_wor_sel_group;
-               var_group := true;
-            end if;
-            obj_rul_node := xmlDom.item(obj_rul_list,idr);
-            rcd_pts_wor_sel_rule.wsr_sel_group := rcd_pts_wor_sel_group.wsg_sel_group;
-            rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
-            rcd_pts_wor_sel_rule.wsr_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
-            rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
-            insert into pts_wor_sel_rule values rcd_pts_wor_sel_rule;
-            obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUES/VALUE');
-            for idv in 0..xmlDom.getLength(obj_val_list)-1 loop
-               obj_val_node := xmlDom.item(obj_val_list,idv);
-               rcd_pts_wor_sel_value.wsv_sel_group := rcd_pts_wor_sel_rule.wsr_sel_group;
-               rcd_pts_wor_sel_value.wsv_tab_code := rcd_pts_wor_sel_rule.wsr_tab_code;
-               rcd_pts_wor_sel_value.wsv_fld_code := rcd_pts_wor_sel_rule.wsr_rul_code;
-               rcd_pts_wor_sel_value.wsv_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
-               rcd_pts_wor_sel_value.wsv_val_text := xslProcessor.valueOf(obj_val_node,'@VALTXT');
-               insert into pts_wor_sel_value values rcd_pts_wor_sel_value;
-            end loop;
-         end loop;
-      end loop;
-
-      /*-*/
-      /* Free the XML document
-      /*-*/
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - SET_LIST_DATA - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end set_list_data;
-
    /*****************************************************/
    /* This procedure performs the get list data routine */
-   /******************************************************/
+   /*****************************************************/
    function get_list_data return pts_sam_list_type pipelined is
 
       /*-*/
       /* Local definitions
       /*-*/
+      var_pag_size number;
       var_row_count number;
 
       /*-*/
@@ -202,8 +63,8 @@ create or replace package body pts_app.pts_sam_function as
                 t01.sde_sam_text,
                 decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
            from pts_sam_definition t01
-          where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.select_list('*SAMPLE',null)))
-            and t01.sde_sam_code > pvar_end_code
+          where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SAMPLE',null)))
+            and t01.sde_sam_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
           order by t01.sde_sam_code asc;
       rcd_select csr_select%rowtype;
 
@@ -217,8 +78,9 @@ create or replace package body pts_app.pts_sam_function as
       /*------------------------------------------------*/
 
       /*-*/
-      /* Retrieve the pet selection list and pipe the results
+      /* Retrieve the sample list and pipe the results
       /*-*/
+      var_pag_size := 20;
       var_row_count := 0;
       open csr_select;
       loop
@@ -227,7 +89,7 @@ create or replace package body pts_app.pts_sam_function as
             exit;
          end if;
          var_row_count := var_row_count + 1;
-         if var_row_count <= pvar_pag_size then
+         if var_row_count <= var_pag_size then
             pipe row(pts_sam_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_text,rcd_select.sde_sam_status));
          else
             exit;
@@ -259,6 +121,95 @@ create or replace package body pts_app.pts_sam_function as
    /* End routine */
    /*-------------*/
    end get_list_data;
+
+   /*****************************************************/
+   /* This procedure performs the retrieve list routine */
+   /*****************************************************/
+   function retrieve_list return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_pag_size number;
+      var_row_count number;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_list is
+         select t01.sde_sam_code,
+                t01.sde_sam_text,
+                decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
+           from pts_sam_definition t01
+          where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SAMPLE',null)))
+            and t01.sde_sam_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+          order by t01.sde_sam_code asc;
+      rcd_list csr_list%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Retrieve the sample list and pipe the results
+      /*-*/
+      var_pag_size := 20;
+      var_row_count := 0;
+      open csr_list;
+      loop
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
+            exit;
+         end if;
+         var_row_count := var_row_count + 1;
+         if var_row_count <= var_pag_size then
+            pipe row(pts_xml_object('<SAMPLE SAMCODE="'||to_char(rcd_list.sde_sam_code)||'" SAMTEXT="'||pts_to_xml(rcd_list.sde_sam_text)||'" SAMSTAT="'||rcd_list.sde_sam_status||'"/>'));
+         else
+            exit;
+         end if;
+      end loop;
+      close csr_list;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_SAM_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_list;
 
    /*****************************************************/
    /* This procedure performs the retrieve data routine */
@@ -603,17 +554,6 @@ create or replace package body pts_app.pts_sam_function as
    /* End routine */
    /*-------------*/
    end update_data;
-
-/*----------------------*/
-/* Initialisation block */
-/*----------------------*/
-begin
-
-   /*-*/
-   /* Initialise the package variables
-   /*-*/
-   pvar_pag_size := 20;
-   pvar_end_code := 0;
 
 end pts_sam_function;
 /
