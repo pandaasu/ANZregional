@@ -93,7 +93,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the sample list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_sam_function.get_list_data)"
+   strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
