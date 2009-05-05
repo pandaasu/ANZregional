@@ -29,6 +29,7 @@ create or replace package ics_ladwms02 as
  -------   ------               -----------
  2007/08   Steve Gregan         Created
  2007/08   Steve Gregan         Added XML header (requested by Zou Kai)
+ 2009/01   Trevor Keon          Changed date filter from LAEDA to LADS_DATE
 
  NOTES:
   * It is assumed that material codes for China will not exceed 8 character in length (Zou Kai)
@@ -201,7 +202,7 @@ create or replace package body ics_ladwms02 as
            and a.matnr = e.matnr(+)
            and a.matnr = c.matnr(+)
            and a.matnr = d.matnr
-           and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
+           and a.lads_date > (sysdate - var_days)
            and a.mtart in ('FERT','ZPRM','VERP')
            and d.werks = 'CN03'
            and d.mmsta in ('03','20');

@@ -1,3 +1,4 @@
+create or replace package ics_app.ics_sbwics01 as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -16,8 +17,6 @@
   22-Apr-2008  Trevor Keon      Created 
   22-Jul-2008  Trevor Keon      Changed precision for case_qty
 *******************************************************************************/
-
-create or replace package ics_app.ics_sbwics01 as
 
   /*-*/
   /* Public declarations 
