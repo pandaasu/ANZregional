@@ -897,7 +897,6 @@ sub PaintFunction()%>
          }
       }
       strXML = strXML+'</PTS_REQUEST>';
-alert(strXML);
       doActivityStart(document.body);
       window.setTimeout('requestSchSlct(\''+strXML+'\');',10);
    }
@@ -939,7 +938,6 @@ alert(strXML);
          }
       }
       strXML = strXML+'</PTS_REQUEST>';
-alert(strXML);
       doActivityStart(document.body);
       window.setTimeout('requestSchSlct(\''+strXML+'\');',10);
    }
