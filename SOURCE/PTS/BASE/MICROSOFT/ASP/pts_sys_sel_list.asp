@@ -92,6 +92,15 @@ sub ProcessRequest()
    end if
 
    '//
+   '// Retrieve any messages
+   '//
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
+   strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
    '// Return the response string
    '//
    if strReturn = "*OK" then
@@ -99,9 +108,14 @@ sub ProcessRequest()
       Response.ContentType = "text/xml"
       Response.AddHeader "Cache-Control", "no-cache"
       Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-         call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+      for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
+         call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
+      if objSelection.ListCount("MESSAGE") = 0 then
+         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
+            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+         next
+      end if
    end if
 
 end sub%>

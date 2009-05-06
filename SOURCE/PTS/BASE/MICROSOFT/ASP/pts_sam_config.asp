@@ -323,10 +323,16 @@ sub PaintFunction()%>
    }
    function doPromptSelect() {
       if (!processForm()) {return;}
-      requestSearchSelect('*PROMPT');
+      cstrSearchScript = 'pts_sam_search.asp';
+      cstrSearchBack = '*PROMPT';
+      cobjSearchTarget = document.getElementById('PRO_SamCode');
+      requestSearchSelect();
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
+      cstrSearchScript = 'pts_sam_search.asp';
+      cstrSearchBack = '*SEARCH';
+      cobjSearchTarget = document.getElementById('PRO_SamCode');
       displaySchRule();
    }
 
@@ -354,15 +360,19 @@ sub PaintFunction()%>
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-         if (strResponse.length <= 3) {return;}
          var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
+         var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
-         if (objElements.length != 0) {
-            if (objElements[0].nodeName == 'ERROR') {
-               alert(objElements[0].getAttribute('ERRTXT'));
-               return;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
             }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
          }
          displayDefine();
          if (cstrDefineMode == '*UPD') {
@@ -433,27 +443,6 @@ sub PaintFunction()%>
       var objSamStat = document.getElementById('DEF_SamStat');
       var objUomCode = document.getElementById('DEF_UomCode');
       var objPreLocn = document.getElementById('DEF_PreLocn');
-      var strMessage = '';
-      if (document.getElementById('DEF_SamText').value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Sample description must be entered';
-      }
-      if (objSamStat.selectedIndex == -1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Sample status must be selected';
-      }
-      if (objUomCode.selectedIndex == -1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Sample unit of measure must be selected';
-      }
-      if (objPreLocn.selectedIndex == -1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Sample prepared location must be selected';
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSAM"';
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
@@ -477,18 +466,22 @@ sub PaintFunction()%>
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-
-   //   if (strResponse.length <= 3) {return;}
-   //   var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-    //  if (objDocument == null) {return;}
-    //  var objElements = objDocument.documentElement.childNodes;
-   //   if (objElements.length != 0) {
-    //     if (objElements[0].nodeName == 'ERROR') {
-    //        alert(objElements[0].getAttribute('ERRTXT'));
-    //        return;
-    //     }
-    //  }
-
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
          displayPrompt();
          document.getElementById('PRO_SamCode').value = '';
          document.getElementById('PRO_SamCode').focus();
@@ -504,7 +497,9 @@ sub PaintFunction()%>
    ///////////////////////////
    // Search Rule Functions //
    ///////////////////////////
+   var cstrSearchScript;
    var cstrSearchBack;
+   var cobjSearchTarget;
    var cstrSearchMode;
    var cobjSearchRow;
    function clsSchValue(strValCde,strValTxt) {
@@ -618,12 +613,15 @@ sub PaintFunction()%>
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (objRow.getAttribute('tabcde') == '*GROUP') {
+            objRow.cells[0].innerHTML = '<a class="clsSelect" href="javascript:doSearchClearGroup(\''+objRow.rowIndex+'\');">Clear</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doSearchDeleteGroup(\''+objRow.rowIndex+'\');">Delete</a>';
             if (!bolFound) {
                objRow.cells[1].innerText = 'SELECTION GROUP - WHERE';
             } else {
                objRow.cells[1].innerText = 'SELECTION GROUP - OR';
             }
             bolFound = true;
+         } else {
+            objRow.cells[0].innerHTML = '<a class="clsSelect" href="javascript:doSearchClearRule(\''+objRow.rowIndex+'\');">Clear</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doSearchUpdateRule(\''+objRow.rowIndex+'\');">Update</a>';
          }
       }
    }
@@ -733,11 +731,11 @@ sub PaintFunction()%>
    }
    function doSchRuleSelect() {
       if (!processForm()) {return;}
-      requestSearchSelect('*SEARCH');
+      requestSearchSelect();
    }
    function doSchRuleCancel() {
       displayPrompt();
-      document.getElementById('PRO_SamCode').focus();
+      cstrSearchTarget.focus();
    }
 
    ///////////////////////////
@@ -774,7 +772,7 @@ sub PaintFunction()%>
          if (i == 0) {
             strText = strText+' '+objSelSelValue[i].text;
          } else {
-            strText = strText+' '+aryRulData[1]+' '+objSelSelValue[i].text;
+            strText = strText+'; '+objSelSelValue[i].text;
          }
       }
       cobjSearchRow.cells[1].innerText = strText;
@@ -905,41 +903,11 @@ sub PaintFunction()%>
    /////////////////////////////
    // Search Select Functions //
    /////////////////////////////
-   function requestSearchSelect(strBack) {
-      cstrSearchBack = strBack;
+   function requestSearchSelect() {
       cstrSearchMode = '*SLT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="0">';
-      var objTable = document.getElementById('tabSchRule');
-      var objRow;
-      var objValues;
-      var intGroup = 0;
-      if (objTable.rows.length != 0) {
-         for (var i=0;i<objTable.rows.length;i++) {
-            var objRow = objTable.rows[i];
-            if (objRow.getAttribute('tabcde') == '*GROUP') {
-               if (intGroup > 0) {
-                  strXML = strXML+'</GROUP>';
-               }
-               intGroup++;
-               strXML = strXML+'<GROUP GRPCDE="*GROUP'+intGroup+'">';
-            } else {
-               if (objRow.getAttribute('rulcde') != '' && objRow.getAttribute('valary').length != 0) {
-                  strXML = strXML+'<RULE TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'" RULCDE="'+objRow.getAttribute('rulcde')+'">';
-                  var objValues = objRow.getAttribute('valary');
-                  for (var j=0;j<objValues.length;j++) {
-                     strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
-                  }
-                  strXML = strXML+'</RULE>';
-               }
-            }
-         }
-         if (intGroup > 0) {
-            strXML = strXML+'</GROUP>';
-         }
-      }
-      strXML = strXML+'</PTS_REQUEST>';
+      var strEndCode = '0';
       doActivityStart(document.body);
-      window.setTimeout('requestSchSlct(\''+strXML+'\');',10);
+      window.setTimeout('requestSchSlct(\''+strEndCode+'\');',10);
    }
    function doSchSlctMore() {
       if (!processForm()) {return;}
@@ -949,6 +917,10 @@ sub PaintFunction()%>
       if (objList.rows.length != 0) {
          strEndCode = objList.rows[objList.rows.length-1].getAttribute('selcde');
       }
+      doActivityStart(document.body);
+      window.setTimeout('requestSchSlct(\''+strEndCode+'\');',10);
+   }
+   function requestSchSlct(strEndCode) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="'+strEndCode+'">';
       var objTable = document.getElementById('tabSchRule');
       var objRow;
@@ -979,11 +951,7 @@ sub PaintFunction()%>
          }
       }
       strXML = strXML+'</PTS_REQUEST>';
-      doActivityStart(document.body);
-      window.setTimeout('requestSchSlct(\''+strXML+'\');',10);
-   }
-   function requestSchSlct(strXML) {
-      doPostRequest('<%=strBase%>pts_sam_search.asp',function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>'+cstrSearchScript,function(strResponse) {checkSearchResponse(strResponse);},false,streamXML(strXML));
    }
    function checkSearchResponse(strResponse) {
       doActivityStop();
@@ -1009,31 +977,31 @@ sub PaintFunction()%>
                objTable.deleteRow(i);
             }
          }
+         var intColCount = 0;
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'SAMPLE') {
+            if (objElements[i].nodeName == 'LSTCTL') {
+               intColCount = objElements[i].getAttribute('COLCNT');
+            } else if (objElements[i].nodeName == 'LSTROW') {
                objRow = objTable.insertRow(-1);
-               objRow.setAttribute('selcde',objElements[i].getAttribute('SAMCODE'));
+               objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerHTML = '<a class="clsSelect" href="javascript:doSchSlctAccept(\''+objElements[i].getAttribute('SAMCODE')+'\');">Select</a>';
+               objCell.innerHTML = '<a class="clsSelect" href="javascript:doSchSlctAccept(\''+objElements[i].getAttribute('SELCDE')+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(1);
-               objCell.colSpan = 1;
-               objCell.innerText = '('+objElements[i].getAttribute('SAMCODE')+') '+objElements[i].getAttribute('SAMTEXT');
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(2);
-               objCell.colSpan = 1;
-               objCell.innerText = objElements[i].getAttribute('SAMSTAT');
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
+               for (var j=1;j<=intColCount;j++) {
+                  objCell = objRow.insertCell(j);
+                  objCell.colSpan = 1;
+                  objCell.innerText = objElements[i].getAttribute('COL'+j);
+                  objCell.className = 'clsLabelFN';
+                  objCell.style.whiteSpace = 'nowrap';
+               }
             }
          }
          if (objTable.rows.length == 0) {
             objRow = objTable.insertRow(-1);
             objCell = objRow.insertCell(0);
-            objCell.colSpan = 3;
+            objCell.colSpan = intColCount+1;
             objCell.innerText = 'NO DATA FOUND';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
@@ -1041,9 +1009,9 @@ sub PaintFunction()%>
       }
    }
    function doSchSlctAccept(strCode) {
-      document.getElementById('PRO_SamCode').value = strCode;
+      cstrSearchTarget.value = strCode;
       displayPrompt();
-      document.getElementById('PRO_SamCode').focus();
+      cstrSearchTarget.focus();
    }
    function doSchSlctCancel() {
       if (cstrSearchBack == '*PROMPT') {
@@ -1373,7 +1341,7 @@ sub PaintFunction()%>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
-               <table id="SEL_SelList" class="clsTableBody" cols=3 align=left cellpadding="2" cellspacing="1"></table>
+               <table id="SEL_SelList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
             </div>
          </nobr></td>
       </tr>
