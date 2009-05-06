@@ -58,7 +58,7 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_select is
+      cursor csr_list is
          select t01.sde_sam_code,
                 t01.sde_sam_text,
                 decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
@@ -66,7 +66,7 @@ create or replace package body pts_app.pts_sam_function as
           where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SAMPLE',null)))
             and t01.sde_sam_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
           order by t01.sde_sam_code asc;
-      rcd_select csr_select%rowtype;
+      rcd_list csr_list%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -82,20 +82,20 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       var_pag_size := 20;
       var_row_count := 0;
-      open csr_select;
+      open csr_list;
       loop
-         fetch csr_select into rcd_select;
-         if csr_select%notfound then
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_sam_list_object(rcd_select.sde_sam_code,rcd_select.sde_sam_text,rcd_select.sde_sam_status));
+            pipe row(pts_sam_list_object(rcd_list.sde_sam_code,rcd_list.sde_sam_text,rcd_list.sde_sam_status));
          else
             exit;
          end if;
       end loop;
-      close csr_select;
+      close csr_list;
 
       /*-*/
       /* Return
@@ -157,9 +157,15 @@ create or replace package body pts_app.pts_sam_function as
       /*------------------------------------------------*/
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
 
       /*-*/
       /* Retrieve the sample list and pipe the results
@@ -174,7 +180,7 @@ create or replace package body pts_app.pts_sam_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<SAMPLE SAMCODE="'||to_char(rcd_list.sde_sam_code)||'" SAMTEXT="'||pts_to_xml(rcd_list.sde_sam_text)||'" SAMSTAT="'||rcd_list.sde_sam_status||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.sde_sam_code)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL2="'||pts_to_xml(rcd_list.sde_sam_status)||'"/>'));
          else
             exit;
          end if;
@@ -204,7 +210,7 @@ create or replace package body pts_app.pts_sam_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_SAM_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SAM_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -229,11 +235,11 @@ create or replace package body pts_app.pts_sam_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_sample is
+      cursor csr_retrieve is
          select t01.*
            from pts_sam_definition t01
           where t01.sde_sam_code = pts_to_number(var_sam_code);
-      rcd_sample csr_sample%rowtype;
+      rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_uom_code is
          select t01.*
@@ -255,11 +261,13 @@ create or replace package body pts_app.pts_sam_function as
       /*------------------------------------------------*/
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -269,7 +277,7 @@ create or replace package body pts_app.pts_sam_function as
       var_sam_code := xslProcessor.valueOf(obj_pts_request,'@SAMCODE');
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDSAM' and var_action != '*CRTSAM' and var_action != '*CPYSAM' then
-         pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR><ERROR ERRTXT="'||pts_to_xml('Invalid request action')||'"/></PTS_ERROR>'));
+         pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
 
@@ -277,13 +285,13 @@ create or replace package body pts_app.pts_sam_function as
       /* Retrieve the existing sample when required
       /*-*/
       if var_action = '*UPDSAM' or var_action = '*CPYSAM' then
-         open csr_sample;
-         fetch csr_sample into rcd_sample;
-         if csr_sample%notfound then
-            pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR><ERROR ERRTXT="'||pts_to_xml('Sample ('||var_sam_code||') does not exist')||'"/></PTS_ERROR>'));
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%notfound then
+            pts_gen_function.add_mesg_data('Sample ('||var_sam_code||') does not exist');
             return;
          end if;
-         close csr_sample;
+         close csr_retrieve;
       end if;
 
       /*-*/
@@ -329,26 +337,26 @@ create or replace package body pts_app.pts_sam_function as
       /* Pipe the sample XML
       /*-*/
       if var_action = '*UPDSAM' then
-         var_output := '<SAMPLE SAMCODE="'||to_char(rcd_sample.sde_sam_code)||'"';
-         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_sample.sde_sam_text)||'"';
-         var_output := var_output||' SAMSTAT="'||rcd_sample.sde_sam_status||'"';
-         var_output := var_output||' UOMCODE="'||to_char(rcd_sample.sde_uom_code)||'"';
-         var_output := var_output||' UOMSIZE="'||to_char(rcd_sample.sde_uom_size)||'"';
-         var_output := var_output||' PRELOCN="'||to_char(rcd_sample.sde_pre_locn)||'"';
-         var_output := var_output||' PREDATE="'||to_char(rcd_sample.sde_pre_date,'dd/mm/yyyy')||'"';
-         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_sample.sde_ext_rec_refnr)||'"';
-         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_sample.sde_plop_code)||'"/>';
+         var_output := '<SAMPLE SAMCODE="'||to_char(rcd_retrieve.sde_sam_code)||'"';
+         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_retrieve.sde_sam_text)||'"';
+         var_output := var_output||' SAMSTAT="'||rcd_retrieve.sde_sam_status||'"';
+         var_output := var_output||' UOMCODE="'||to_char(rcd_retrieve.sde_uom_code)||'"';
+         var_output := var_output||' UOMSIZE="'||to_char(rcd_retrieve.sde_uom_size)||'"';
+         var_output := var_output||' PRELOCN="'||to_char(rcd_retrieve.sde_pre_locn)||'"';
+         var_output := var_output||' PREDATE="'||to_char(rcd_retrieve.sde_pre_date,'dd/mm/yyyy')||'"';
+         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_retrieve.sde_ext_rec_refnr)||'"';
+         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_retrieve.sde_plop_code)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYSAM' then
          var_output := '<SAMPLE SAMCODE="*NEW"';
-         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_sample.sde_sam_text)||'"';
-         var_output := var_output||' SAMSTAT="'||rcd_sample.sde_sam_status||'"';
-         var_output := var_output||' UOMCODE="'||to_char(rcd_sample.sde_uom_code)||'"';
-         var_output := var_output||' UOMSIZE="'||to_char(rcd_sample.sde_uom_size)||'"';
-         var_output := var_output||' PRELOCN="'||to_char(rcd_sample.sde_pre_locn)||'"';
-         var_output := var_output||' PREDATE="'||to_char(rcd_sample.sde_pre_date,'dd/mm/yyyy')||'"';
-         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_sample.sde_ext_rec_refnr)||'"';
-         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_sample.sde_plop_code)||'"/>';
+         var_output := var_output||' SAMTEXT="'||pts_to_xml(rcd_retrieve.sde_sam_text)||'"';
+         var_output := var_output||' SAMSTAT="'||rcd_retrieve.sde_sam_status||'"';
+         var_output := var_output||' UOMCODE="'||to_char(rcd_retrieve.sde_uom_code)||'"';
+         var_output := var_output||' UOMSIZE="'||to_char(rcd_retrieve.sde_uom_size)||'"';
+         var_output := var_output||' PRELOCN="'||to_char(rcd_retrieve.sde_pre_locn)||'"';
+         var_output := var_output||' PREDATE="'||to_char(rcd_retrieve.sde_pre_date,'dd/mm/yyyy')||'"';
+         var_output := var_output||' EXTRFNR="'||pts_to_xml(rcd_retrieve.sde_ext_rec_refnr)||'"';
+         var_output := var_output||' PLOPCDE="'||pts_to_xml(rcd_retrieve.sde_plop_code)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTSAM' then
          var_output := '<SAMPLE SAMCODE="*NEW"';
@@ -386,7 +394,7 @@ create or replace package body pts_app.pts_sam_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_SAM_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SAM_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -436,11 +444,13 @@ create or replace package body pts_app.pts_sam_function as
    begin
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -448,48 +458,49 @@ create or replace package body pts_app.pts_sam_function as
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       rcd_pts_sam_definition.sde_sam_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@SAMCODE'));
-      rcd_pts_sam_definition.sde_sam_text := xslProcessor.valueOf(obj_pts_request,'@SAMTEXT');
+      rcd_pts_sam_definition.sde_sam_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@SAMTEXT'));
       rcd_pts_sam_definition.sde_sam_status := xslProcessor.valueOf(obj_pts_request,'@SAMSTAT');
       rcd_pts_sam_definition.sde_upd_user := upper(par_user);
       rcd_pts_sam_definition.sde_upd_date := sysdate;
       rcd_pts_sam_definition.sde_uom_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@UOMCODE'));
       rcd_pts_sam_definition.sde_uom_size := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@UOMSIZE'));
-      rcd_pts_sam_definition.sde_pre_locn := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PRECODE'));
+      rcd_pts_sam_definition.sde_pre_locn := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PRELOCN'));
       rcd_pts_sam_definition.sde_pre_date := pts_to_date(xslProcessor.valueOf(obj_pts_request,'@PREDATE'),'dd/mm/yyyy');
-      rcd_pts_sam_definition.sde_ext_rec_refnr := xslProcessor.valueOf(obj_pts_request,'@EXTRFNR');
-      rcd_pts_sam_definition.sde_plop_code := xslProcessor.valueOf(obj_pts_request,'@PLOPCDE');
+      rcd_pts_sam_definition.sde_ext_rec_refnr := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@EXTRFNR'));
+      rcd_pts_sam_definition.sde_plop_code := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PLOPCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*DEFSAM' then
-         raise_application_error(-20000, 'Invalid request action');
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
       end if;
 
       /*-*/
       /* Validate the input
       /*-*/
       if rcd_pts_sam_definition.sde_sam_text is null then
-         raise_application_error(-20000, 'Sample description must be supplied');
+         pts_gen_function.add_mesg_data('Sample description must be supplied');
       end if;
       if rcd_pts_sam_definition.sde_sam_status is null then
-         raise_application_error(-20000, 'Sample status must be supplied');
+         pts_gen_function.add_mesg_data('Sample status must be supplied');
       else
          if rcd_pts_sam_definition.sde_sam_status != '0' and rcd_pts_sam_definition.sde_sam_status != '1' then
-            raise_application_error(-20000, 'Sample status must be active or inactive');
+            pts_gen_function.add_mesg_data('Sample status must be active or inactive');
          end if;
       end if;
       if rcd_pts_sam_definition.sde_upd_user is null then
-         raise_application_error(-20000, 'Update user must be supplied');
+         pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
-      if not(rcd_pts_sam_definition.sde_uom_code is null) and rcd_pts_sam_definition.sde_uom_size is null then
-         raise_application_error(-20000, 'Unit of measure size must be supplied when unit of measure supplied');
+      if rcd_pts_sam_definition.sde_uom_code is null and not(rcd_pts_sam_definition.sde_uom_size is null) then
+         pts_gen_function.add_mesg_data('Unit of measure must be supplied when unit of measure size supplied');
       end if;
-      if not(rcd_pts_sam_definition.sde_pre_locn is null) and rcd_pts_sam_definition.sde_pre_date is null then
-         raise_application_error(-20000, 'Prepared date must be supplied when prepared location supplied');
+      if rcd_pts_sam_definition.sde_pre_locn is null and not(rcd_pts_sam_definition.sde_pre_date is null) then
+         pts_gen_function.add_mesg_data('Prepared location must be supplied when prepared date supplied');
       end if;
       if not(rcd_pts_sam_definition.sde_uom_code is null) then
          open csr_uom_code;
          fetch csr_uom_code into rcd_uom_code;
          if csr_uom_code%notfound then
-            raise_application_error(-20000, 'Unit of measure ('||to_char(rcd_pts_sam_definition.sde_uom_code)||') does not exist');
+            pts_gen_function.add_mesg_data('Unit of measure ('||to_char(rcd_pts_sam_definition.sde_uom_code)||') does not exist');
          end if;
          close csr_uom_code;
       end if;
@@ -497,11 +508,14 @@ create or replace package body pts_app.pts_sam_function as
          open csr_pre_locn;
          fetch csr_pre_locn into rcd_pre_locn;
          if csr_pre_locn%notfound then
-            raise_application_error(-20000, 'Prepared location ('||to_char(rcd_pts_sam_definition.sde_pre_locn)||') does not exist');
+            pts_gen_function.add_mesg_data('Prepared location ('||to_char(rcd_pts_sam_definition.sde_pre_locn)||') does not exist');
          end if;
          close csr_pre_locn;
       end if;
-
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+     
       /*-*/
       /* Retrieve and process the sample definition
       /*-*/
@@ -521,6 +535,7 @@ create or replace package body pts_app.pts_sam_function as
                 sde_plop_code = rcd_pts_sam_definition.sde_plop_code
           where sde_sam_code = rcd_pts_sam_definition.sde_sam_code;
       else
+         select pts_sam_sequence.nextval into rcd_pts_sam_definition.sde_sam_code from dual;
          insert into pts_sam_definition values rcd_pts_sam_definition;
       end if;
       close csr_check;
@@ -548,7 +563,7 @@ create or replace package body pts_app.pts_sam_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_SAM_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SAM_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */

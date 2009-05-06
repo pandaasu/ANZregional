@@ -25,6 +25,10 @@ create or replace package pts_app.pts_gen_function as
    /*-*/
    /* Public declarations
    /*-*/
+   procedure clear_mesg_data;
+   function get_mesg_count return number;
+   procedure add_mesg_data(par_message in varchar2);
+   function get_mesg_data return pts_xml_type pipelined;
    procedure set_list_data;
    function get_list_from return pts_sel_list_type pipelined;
    function get_list_data(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined;
@@ -53,6 +57,177 @@ create or replace package body pts_app.pts_gen_function as
    /* Private definitions
    /*-*/
    pvar_end_code number;
+   type ptyp_mesg is table of varchar2(2000 char) index by binary_integer;
+   ptbl_mesg ptyp_mesg;
+
+   /**********************************************************/
+   /* This procedure performs the clear message data routine */
+   /**********************************************************/
+   procedure clear_mesg_data is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      ptbl_mesg.delete;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_GEN_FUNCTION - CLEAR_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear_mesg_data;
+
+   /*********************************************************/
+   /* This procedure performs the get message count routine */
+   /*********************************************************/
+   function get_mesg_count return number is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Return the message data count
+      /*-*/
+      return ptbl_mesg.count;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_GEN_FUNCTION - GET_MESG_COUNT - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_mesg_count;
+
+   /********************************************************/
+   /* This procedure performs the add message data routine */
+   /********************************************************/
+   procedure add_mesg_data(par_message in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Add the message data
+      /*-*/
+      ptbl_mesg(ptbl_mesg.count+1) := par_message;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_GEN_FUNCTION - ADD_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end add_mesg_data;
+
+   /********************************************************/
+   /* This procedure performs the get message data routine */
+   /********************************************************/
+   function get_mesg_data return pts_xml_type pipelined is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Pipe the message data when required
+      /*-*/
+      if ptbl_mesg.count != 0 then
+         pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR>'));
+      end if;
+      for idx in 1..ptbl_mesg.count loop
+         pipe row(pts_xml_object('<ERROR ERRTXT="'||pts_to_xml(ptbl_mesg(idx))||'"/>'));
+      end loop;
+      if ptbl_mesg.count != 0 then
+         pipe row(pts_xml_object('</PTS_ERROR>'));
+      end if;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_GEN_FUNCTION - GET_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_mesg_data;
 
    /*****************************************************/
    /* This procedure performs the set list data routine */
@@ -99,11 +274,13 @@ create or replace package body pts_app.pts_gen_function as
       pvar_end_code := 0;
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -116,7 +293,8 @@ create or replace package body pts_app.pts_gen_function as
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       pvar_end_code := nvl(pts_to_number(xslProcessor.valueOf(obj_pts_request,'@ENDCDE')),0);
       if var_action != '*SELDTA' then
-         raise_application_error(-20000, 'Invalid request action');
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
       end if;
 
       /*-*/
@@ -180,7 +358,7 @@ create or replace package body pts_app.pts_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - SET_LIST_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_GEN_FUNCTION - SET_LIST_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -717,11 +895,13 @@ create or replace package body pts_app.pts_gen_function as
 -- TAKE INTO ACCOUNT THE DISPLAY GROUPING AND SEQUENCE
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -732,7 +912,8 @@ create or replace package body pts_app.pts_gen_function as
       var_tes_flag := upper(xslProcessor.valueOf(obj_pts_request,'@TESFLG'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTFLD' then
-         raise_application_error(-20000, 'Invalid request action');
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
       end if;
 
       /*-*/
@@ -777,7 +958,7 @@ create or replace package body pts_app.pts_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_FLD_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_GEN_FUNCTION - LIST_FLD_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -798,10 +979,6 @@ create or replace package body pts_app.pts_gen_function as
       var_action varchar2(32);
       var_tab_code varchar2(32);
       var_fld_code number;
-      var_val_code number;
-      var_val_text varchar2(256);
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
       var_output varchar2(2000 char);
 
       /*-*/
@@ -826,6 +1003,15 @@ create or replace package body pts_app.pts_gen_function as
           order by t02.sru_rul_code asc;
       rcd_rule csr_rule%rowtype;
 
+      cursor csr_value is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = var_tab_code
+            and t01.sva_fld_code = var_fld_code
+          order by t01.sva_val_code asc;
+      rcd_value csr_value%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -836,11 +1022,13 @@ create or replace package body pts_app.pts_gen_function as
       /*------------------------------------------------*/
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
-      if dbms_lob.getlength(lics_form.get_clob('PTS_STREAM')) = 0 then
-         return;
-      end if;
       obj_xml_parser := xmlParser.newParser();
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
@@ -851,7 +1039,8 @@ create or replace package body pts_app.pts_gen_function as
       var_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*LSTRUL' then
-         raise_application_error(-20000, 'Invalid request action');
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
       end if;
 
       /*-*/
@@ -860,7 +1049,8 @@ create or replace package body pts_app.pts_gen_function as
       open csr_field;
       fetch csr_field into rcd_field;
       if csr_field%notfound then
-         raise_application_error(-20000, 'Field table('||var_tab_code||') field('||to_char(var_fld_code)||') does not exist');
+         pts_gen_function.add_mesg_data('Field table('||var_tab_code||') field('||to_char(var_fld_code)||') does not exist');
+         return;
       end if;
       close csr_field;
 
@@ -874,25 +1064,24 @@ create or replace package body pts_app.pts_gen_function as
          if csr_rule%notfound then
             exit;
          end if;
-         var_output := '<RULE RULCDE="'||rcd_rule.sru_rul_code||'" RULCND="'||rcd_rule.sru_rul_cond||'"/>';
-         pipe row(pts_xml_object(var_output));
+         pipe row(pts_xml_object('<RULE RULCDE="'||rcd_rule.sru_rul_code||'"/>'));
       end loop;
       close csr_rule;
 
       /*-*/
-      /* Pipe the system field rule value XML
+      /* Pipe the system field rule value XML when required
       /*-*/
-      if not(rcd_field.sfi_fld_rul_sel_sql is null) then
-         open var_dynamic_cursor for rcd_field.sfi_fld_rul_sel_sql;
+      if upper(rcd_field.sfi_fld_rul_type) = '*LIST' then
+         open csr_value;
          loop
-            fetch var_dynamic_cursor into var_val_code, var_val_text;
-            if var_dynamic_cursor%notfound then
+            fetch csr_value into rcd_value;
+            if csr_value%notfound then
                exit;
             end if;
-            var_output := '<VALUE VALCDE="'||var_val_code||'" VALTXT="'||pts_to_xml(var_val_text)||'"/>';
+            var_output := '<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||rcd_value.sva_val_code||') '||rcd_value.sva_val_text)||'"/>';
             pipe row(pts_xml_object(var_output));
          end loop;
-         close var_dynamic_cursor;
+         close csr_valuel;
       end if;
 
       /*-*/
@@ -918,7 +1107,7 @@ create or replace package body pts_app.pts_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_RUL_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_GEN_FUNCTION - LIST_RUL_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -1170,6 +1359,7 @@ begin
    /*-*/
    /* Initialise the package variables
    /*-*/
+   ptbl_mesg.delete;
    pvar_end_code := 0;
 
 end pts_gen_function;
