@@ -32,10 +32,10 @@ create table df.dmnd_sku_mapping
     conv_factor                 number                     not null);
 
 /**/
-/* Primary Key Constraint
+/* Indexes
 /**/
-alter table df.dmnd_sku_mapping
-   add constraint dmnd_sku_mapping_pk primary key (fcst_id, source_type);
+create index dmnd_sku_mapping_ix01 on df.dmnd_sku_mapping
+   (dmd_unit, dmd_group, dfu_locn, str_date, end_date);
 
 /**/
 /* Authority
