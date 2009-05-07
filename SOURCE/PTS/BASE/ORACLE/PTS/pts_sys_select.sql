@@ -26,7 +26,7 @@
 create table pts.pts_sys_select
    (sse_tab_code                    varchar2(32 char)             not null,
     sse_fld_code                    number                        not null,
-    sse_sel_code                    varchar2(32 char)             not null);
+    sse_rul_code                    varchar2(32 char)             not null);
 
 /**/
 /* Comments
@@ -34,13 +34,13 @@ create table pts.pts_sys_select
 comment on table pts.pts_sys_select is 'System Select Table';
 comment on column pts.pts_sys_select.sse_tab_code is 'System table code';
 comment on column pts.pts_sys_select.sse_fld_code is 'System field code';
-comment on column pts.pts_sys_select.sse_sel_code is 'System select code';
+comment on column pts.pts_sys_select.sse_rul_code is 'System rule code';
 
 /**/
 /* Primary Key Constraint
 /**/
 alter table pts.pts_sys_select
-   add constraint pts_sys_select_pk primary key (sse_tab_code, sse_fld_code, sse_sel_code);
+   add constraint pts_sys_select_pk primary key (sse_tab_code, sse_fld_code, sse_rul_code);
 
 /**/
 /* Authority
