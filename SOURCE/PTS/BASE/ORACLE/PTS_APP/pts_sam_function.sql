@@ -180,7 +180,7 @@ create or replace package body pts_app.pts_sam_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.sde_sam_code)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL2="'||pts_to_xml(rcd_list.sde_sam_status)||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.sde_sam_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL2="'||pts_to_xml(rcd_list.sde_sam_status)||'"/>'));
          else
             exit;
          end if;

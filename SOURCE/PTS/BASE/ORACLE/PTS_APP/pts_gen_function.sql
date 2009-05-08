@@ -867,20 +867,26 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_table is
+         select t02.sta_tab_code,
+                t02.sta_tab_text
+           from pts_sys_link t01,
+                pts_sys_table t02
+          where t01.sli_tab_code = t02.sta_tab_code
+            and t01.sli_ent_code = var_ent_code
+          order by t02.sta_tab_code asc;
+      rcd_table csr_table%rowtype;
+
       cursor csr_field is
-         select t02.sfi_tab_code,
-                t02.sfi_fld_code,
-                t02.sfi_fld_text,
-                t02.sfi_fld_inp_leng,
-                t02.sfi_fld_rul_type
-           from pts_sys_table t01,
-                pts_sys_field t02
-          where t01.sta_tab_code = t02.sfi_tab_code
-            and t01.sta_ent_code = var_ent_code
-            and (var_tes_flag != '1' or (var_tes_flag = '1' and t02.sfi_fld_tes_rule = '1'))
-            and t02.sfi_fld_status = '1'
-          order by t02.sfi_tab_code asc,
-                   t02.sfi_fld_code asc;
+         select t01.sfi_fld_code,
+                t01.sfi_fld_text,
+                t01.sfi_fld_inp_leng,
+                t01.sfi_fld_rul_type
+           from pts_sys_field t01
+          where t01.sfi_tab_code = rcd_table.sta_tab_code
+            and (t01.sfi_fld_tes_rule != '1' or (var_tes_flag = '1' and t01.sfi_fld_tes_rule = '1'))
+            and t01.sfi_fld_status = '1'
+          order by t01.sfi_fld_code asc;
       rcd_field csr_field%rowtype;
 
    /*-------------*/
@@ -891,8 +897,6 @@ create or replace package body pts_app.pts_gen_function as
       /*------------------------------------------------*/
       /* NOTE - This procedure must not commit/rollback */
       /*------------------------------------------------*/
-
--- TAKE INTO ACCOUNT THE DISPLAY GROUPING AND SEQUENCE
 
       /*-*/
       /* Clear the message data
@@ -920,20 +924,31 @@ create or replace package body pts_app.pts_gen_function as
       /* Pipe the system field XML
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      open csr_field;
+      open csr_table;
       loop
-         fetch csr_field into rcd_field;
-         if csr_field%notfound then
+         fetch csr_table into rcd_table;
+         if csr_table%notfound then
             exit;
          end if;
-         var_output := '<FIELD TABCDE="'||rcd_field.sfi_tab_code||'"';
-         var_output := var_output||' FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'"';
-         var_output := var_output||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"';
-         var_output := var_output||' INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'"';
-         var_output := var_output||' RULTYP="'||rcd_field.sfi_fld_rul_type||'"/>';
+         var_output := '<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>';
          pipe row(pts_xml_object(var_output));
+
+         open csr_field;
+         loop
+            fetch csr_field into rcd_field;
+            if csr_field%notfound then
+               exit;
+            end if;
+            var_output := '<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'"';
+            var_output := var_output||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"';
+            var_output := var_output||' INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'"';
+            var_output := var_output||' RULTYP="'||rcd_field.sfi_fld_rul_type||'"/>';
+            pipe row(pts_xml_object(var_output));
+         end loop;
+         close csr_field;
+
       end loop;
-      close csr_field;
+      close csr_table;
 
       /*-*/
       /* Pipe the XML end
@@ -985,19 +1000,17 @@ create or replace package body pts_app.pts_gen_function as
       /* Local cursors
       /*-*/
       cursor csr_field is
-         select t01.sfi_fld_inp_leng,
-                t01.sfi_fld_rul_sel_sql
+         select t01.sfi_fld_rul_type
            from pts_sys_field t01
           where t01.sfi_tab_code = var_tab_code
             and t01.sfi_fld_code = var_fld_code;
       rcd_field csr_field%rowtype;
 
       cursor csr_rule is
-         select t02.sru_rul_code,
-                t02.sru_rul_cond
+         select t02.sru_rul_code
            from pts_sys_select t01,
                 pts_sys_rule t02
-          where t01.sse_sel_code = t02.sru_rul_code
+          where t01.sse_rul_code = t02.sru_rul_code
             and t01.sse_tab_code = var_tab_code
             and t01.sse_fld_code = var_fld_code
           order by t02.sru_rul_code asc;
@@ -1078,10 +1091,9 @@ create or replace package body pts_app.pts_gen_function as
             if csr_value%notfound then
                exit;
             end if;
-            var_output := '<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||rcd_value.sva_val_code||') '||rcd_value.sva_val_text)||'"/>';
-            pipe row(pts_xml_object(var_output));
+            pipe row(pts_xml_object('<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||rcd_value.sva_val_code||') '||rcd_value.sva_val_text)||'"/>'));
          end loop;
-         close csr_valuel;
+         close csr_value;
       end if;
 
       /*-*/
