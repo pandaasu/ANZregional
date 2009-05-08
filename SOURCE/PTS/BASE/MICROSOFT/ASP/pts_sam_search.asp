@@ -91,6 +91,25 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
+   '// Retrieve any messages
+   '//
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
+   strReturn = objSelection.Execute("SETDATA", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+   if objSelection.ListCount("SETDATA") <> 0 then
+      Response.Buffer = true
+      Response.ContentType = "text/xml"
+      Response.AddHeader "Cache-Control", "no-cache"
+      Response.Write(strReturn)
+      for intIndex = 0 to objSelection.ListCount("SETDATA") - 1
+         call Response.Write(objSelection.ListValue01("SETDATA",intIndex))
+      next
+      exit sub
+   end if
+
+   '//
    '// Retrieve the sample list
    '//
    strStatement = "select xml_text from table(pts_app.pts_sam_function.retrieve_list)"
