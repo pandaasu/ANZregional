@@ -2,7 +2,7 @@
 <% option explicit %>
 <%
 '//////////////////////////////////////////////////////////////////
-'// System  : PTS (Product System)                               //
+'// System  : PTS (Product Testing System)                       //
 '// Script  : pts_sys_fld_list.asp                               //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
@@ -83,7 +83,7 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the price type value list
+   '// Retrieve the system field list
    '//
    strStatement = "select xml_text from table(pts_app.pts_gen_function.list_fld_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
