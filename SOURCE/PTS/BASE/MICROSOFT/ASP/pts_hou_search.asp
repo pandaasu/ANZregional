@@ -91,10 +91,38 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
+   '// Retrieve any messages
+   '//
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
+   strReturn = objSelection.Execute("SETDATA", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+   if objSelection.ListCount("SETDATA") <> 0 then
+      Response.Buffer = true
+      Response.ContentType = "text/xml"
+      Response.AddHeader "Cache-Control", "no-cache"
+      Response.Write(strReturn)
+      for intIndex = 0 to objSelection.ListCount("SETDATA") - 1
+         call Response.Write(objSelection.ListValue01("SETDATA",intIndex))
+      next
+      exit sub
+   end if
+
+   '//
    '// Retrieve the household list
    '//
    strStatement = "select xml_text from table(pts_app.pts_hou_function.retrieve_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
+   '// Retrieve any messages
+   '//
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
+   strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
    end if
@@ -107,9 +135,14 @@ sub ProcessRequest()
       Response.ContentType = "text/xml"
       Response.AddHeader "Cache-Control", "no-cache"
       Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-         call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+      for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
+         call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
+      if objSelection.ListCount("MESSAGE") = 0 then
+         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
+            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+         next
+      end if
    end if
 
 end sub%>

@@ -17,6 +17,7 @@
    dim objForm
    dim objSecurity
    dim objProcedure
+   dim objSelection
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -48,6 +49,7 @@
    '//
    set objForm = nothing
    set objSecurity = nothing
+   set objSelection = nothing
    set objProcedure = nothing
 
 '/////////////////////////////
@@ -57,6 +59,7 @@ sub ProcessRequest()
 
    dim strStatement
    dim lngCount
+   dim intIndex
    dim i
 
    '//
@@ -77,9 +80,37 @@ sub ProcessRequest()
    '//
    '// Perform the pet update
    '//
-   call objProcedure.Execute("pts_app.pts_sam_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("pts_app.pts_pet_function.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
+   end if
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve any messages
+   '//
+   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
+   strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
+   '// Return the response string
+   '//
+   if strReturn = "*OK" then
+      Response.Buffer = true
+      Response.ContentType = "text/xml"
+      Response.AddHeader "Cache-Control", "no-cache"
+      Response.Write(strReturn)
+      for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
+         call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
+      next
    end if
 
 end sub%>

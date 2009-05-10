@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_pet_config_retrieve.asp                        //
+'// Script  : pts_hou_config_update.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the pet definition          //
-'//           retrieve functionality                             //
+'// Text    : This script implements the household definition    //
+'//           update functionality                               //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_PET_CONFIG")
+   strReturn = GetSecurityCheck("PTS_HOU_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,19 +78,18 @@ sub ProcessRequest()
    next
 
    '//
+   '// Perform the household update
+   '//
+   call objProcedure.Execute("pts_app.pts_hou_function.update_data('" & GetUser() & "')")
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve the pet definition
-   '//
-   strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_data)"
-   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
-   if strReturn <> "*OK" then
-      exit sub
-   end if
 
    '//
    '// Retrieve any messages
@@ -112,11 +111,6 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
-      if objSelection.ListCount("MESSAGE") = 0 then
-         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
-         next
-      end if
    end if
 
 end sub%>
