@@ -939,7 +939,7 @@ create or replace package body pts_app.pts_gen_function as
             if csr_field%notfound then
                exit;
             end if;
-            if tab_flag = false then
+            if var_tab_flag = false then
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
@@ -1097,7 +1097,7 @@ create or replace package body pts_app.pts_gen_function as
             if csr_value%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||rcd_value.sva_val_code||') '||rcd_value.sva_val_text)||'"/>'));
+            pipe row(pts_xml_object('<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value.sva_val_code)||') '||rcd_value.sva_val_text)||'"/>'));
          end loop;
          close csr_value;
       end if;
@@ -1141,10 +1141,9 @@ create or replace package body pts_app.pts_gen_function as
       /* Local cursors
       /*-*/
       cursor csr_geo_zone is
-         select t01.gzo_geo_zone,
-                t01.gzo_geo_text
+         select t01.*
            from pts_geo_zone t01
-          where t01. gzo_geo_type = par_geo_type
+          where t01.gzo_geo_type = par_geo_type
           order by t01.gzo_geo_zone asc;
       rcd_geo_zone csr_geo_zone%rowtype;
 
@@ -1166,7 +1165,7 @@ create or replace package body pts_app.pts_gen_function as
          if csr_geo_zone%notfound then
             exit;
          end if;
-         pipe row(pts_geo_list_object(rcd_geo_zone.gzo_geo_zone,rcd_geo_zone.gzo_geo_text));
+         pipe row(pts_geo_list_object(rcd_geo_zone.gzo_geo_zone,'('||to_char(rcd_geo_zone.gzo_geo_zone)||') '||rcd_geo_zone.gzo_zon_status,rcd_geo_zone.gzo_zon_status));
       end loop;
       close csr_geo_zone;
 
@@ -1204,8 +1203,7 @@ create or replace package body pts_app.pts_gen_function as
       /* Local cursors
       /*-*/
       cursor csr_pet_type is
-         select t01.pty_pet_type,
-                t01.pty_typ_text
+         select t01.*
            from pts_pet_type t01
           order by t01.pty_pet_type asc;
       rcd_pet_type csr_pet_type%rowtype;
@@ -1228,7 +1226,7 @@ create or replace package body pts_app.pts_gen_function as
          if csr_pet_type%notfound then
             exit;
          end if;
-         pipe row(pts_pty_list_object(rcd_pet_type.pty_pet_type,'('||rcd_pet_type.pty_pet_type||') '||rcd_pet_type.pty_typ_text));
+         pipe row(pts_pty_list_object(rcd_pet_type.pty_pet_type,'('||to_char(rcd_pet_type.pty_pet_type)||') '||rcd_pet_type.pty_typ_text,rcd_pet_type.pty_typ_status));
       end loop;
       close csr_pet_type;
 

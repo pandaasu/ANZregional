@@ -310,7 +310,7 @@ create or replace package body pts_app.pts_hou_function as
          var_output := var_output||' DATUSED="'||to_char(rcd_retrieve.hde_dat_used,'dd/mm/yyyy')||'"';
          var_output := var_output||' LOCSTRT="'||pts_to_xml(rcd_retrieve.hde_loc_street)||'"';
          var_output := var_output||' LOCTOWN="'||pts_to_xml(rcd_retrieve.hde_loc_town)||'"';
-         var_output := var_output||' LOCPCDE="'||pts_to_xml(rcd_retrieve.hde_loc_postcde)||'"';
+         var_output := var_output||' LOCPCDE="'||pts_to_xml(rcd_retrieve.hde_loc_postcode)||'"';
          var_output := var_output||' LOCCNTY="'||pts_to_xml(rcd_retrieve.hde_loc_country)||'"';
          var_output := var_output||' TELACDE="'||pts_to_xml(rcd_retrieve.hde_tel_areacode)||'"';
          var_output := var_output||' TELNUMB="'||pts_to_xml(rcd_retrieve.hde_tel_number)||'"';
@@ -328,7 +328,7 @@ create or replace package body pts_app.pts_hou_function as
          var_output := var_output||' DATUSED="'||to_char(rcd_retrieve.hde_dat_used,'dd/mm/yyyy')||'"';
          var_output := var_output||' LOCSTRT="'||pts_to_xml(rcd_retrieve.hde_loc_street)||'"';
          var_output := var_output||' LOCTOWN="'||pts_to_xml(rcd_retrieve.hde_loc_town)||'"';
-         var_output := var_output||' LOCPCDE="'||pts_to_xml(rcd_retrieve.hde_loc_postcde)||'"';
+         var_output := var_output||' LOCPCDE="'||pts_to_xml(rcd_retrieve.hde_loc_postcode)||'"';
          var_output := var_output||' LOCCNTY="'||pts_to_xml(rcd_retrieve.hde_loc_country)||'"';
          var_output := var_output||' TELACDE="'||pts_to_xml(rcd_retrieve.hde_tel_areacode)||'"';
          var_output := var_output||' TELNUMB="'||pts_to_xml(rcd_retrieve.hde_tel_number)||'"';
@@ -373,7 +373,7 @@ create or replace package body pts_app.pts_hou_function as
             if csr_field%notfound then
                exit;
             end if;
-            if tab_flag = false then
+            if var_tab_flag = false then
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
@@ -451,7 +451,7 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_check is
          select t01.*
            from pts_hou_definition t01
-          where t01.hde_sam_code = rcd_pts_hou_definition.hde_sam_code;
+          where t01.hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
       rcd_check csr_check%rowtype;
 
       cursor csr_sta_code is
@@ -660,7 +660,7 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_classification is
          select nvl(t01.hcl_val_code,0) as hcl_val_code
            from pts_hou_classification t01
-          where t01.hcl_pet_code = par_hou_code
+          where t01.hcl_hou_code = par_hou_code
             and t01.hcl_tab_code = upper(par_tab_code)
             and t01.hcl_val_code = par_fld_code;
       rcd_classification csr_classification%rowtype;
@@ -724,7 +724,7 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_classification is
          select nvl(t01.hcl_val_text,0) as hcl_val_text
            from pts_hou_classification t01
-          where t01.hcl_pet_code = par_hou_code
+          where t01.hcl_hou_code = par_hou_code
             and t01.hcl_tab_code = upper(par_tab_code)
             and t01.hcl_val_code = par_fld_code;
       rcd_classification csr_classification%rowtype;
@@ -788,7 +788,7 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_classification is
          select t01.hcl_val_text as hcl_val_text
            from pts_hou_classification t01
-          where t01.hcl_pet_code = par_hou_code
+          where t01.hcl_hou_code = par_hou_code
             and t01.hcl_tab_code = upper(par_tab_code)
             and t01.hcl_val_code = par_fld_code;
       rcd_classification csr_classification%rowtype;

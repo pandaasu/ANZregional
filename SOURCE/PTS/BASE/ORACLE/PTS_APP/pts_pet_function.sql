@@ -198,7 +198,7 @@ create or replace package body pts_app.pts_pet_function as
          select t01.pcl_val_code,
                 t01.pcl_val_text
            from pts_pet_classification t01
-          where t01.pcl_hou_code = pts_to_number(var_pet_code)
+          where t01.pcl_pet_code = pts_to_number(var_pet_code)
             and t01.pcl_tab_code = rcd_table.sta_tab_code
             and t01.pcl_fld_code = rcd_field.sfi_fld_code
           order by t01.pcl_val_code asc;
@@ -342,7 +342,7 @@ create or replace package body pts_app.pts_pet_function as
             if csr_field%notfound then
                exit;
             end if;
-            if tab_flag = false then
+            if var_tab_flag = false then
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
@@ -431,40 +431,26 @@ create or replace package body pts_app.pts_pet_function as
 
       cursor csr_pet_type is
          select t01.*
-           from table(pts_app.pts_gen_function.list_class('*PET_DEF',1)) t01
-          where t01.val_code = rcd_pts_pet_definition.pde_pet_type;
+           from table(pts_app.pts_gen_function.list_pet_type) t01
+          where t01.pty_code = rcd_pts_pet_definition.pde_pet_type;
       rcd_pet_type csr_pet_type%rowtype;
 
       cursor csr_hou_code is
          select t01.*
            from pts_hou_definition t01
-          where t01.hou_code = rcd_pts_pet_definition.pde_hou_code;
+          where t01.hde_hou_code = rcd_pts_pet_definition.pde_hou_code;
       rcd_hou_code csr_hou_code%rowtype;
 
       cursor csr_del_note is
          select t01.*
            from table(pts_app.pts_gen_function.list_class('*PET_DEF',5)) t01
-          where t01.val_code = rcd_pts_hou_definition.hde_del_notifier;
+          where t01.val_code = rcd_pts_pet_definition.pde_del_notifier;
       rcd_del_note csr_del_note%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
-
-
-   (pde_pet_code                    number                        not null,
-    pde_pet_status                  number                        not null,
-    pde_upd_user                    varchar2(30 char)             not null,
-    pde_upd_date                    date                          not null,
-    pde_pet_name                    varchar2(120 char)            null,
-    pde_pet_type                    number                        null,
-    pde_hou_code                    number                        null,
-    pde_birth_year                  number                        null,
-    pde_del_notifier                number                        null,
-    pde_test_date                   date                          null,
-    pde_feed_comment                varchar2(2000 char)           null,
-    pde_health_comment              varchar2(2000 char)           null);
 
       /*-*/
       /* Parse the XML input
@@ -541,6 +527,7 @@ create or replace package body pts_app.pts_pet_function as
          fetch csr_hou_code into rcd_hou_code;
          if csr_hou_code%notfound then
             pts_gen_function.add_mesg_data('Household code ('||to_char(rcd_pts_pet_definition.pde_hou_code)||') does not exist');
+         end if;
          close csr_hou_code;
       end if;
       if not(rcd_pts_pet_definition.pde_del_notifier is null) then
@@ -668,7 +655,7 @@ create or replace package body pts_app.pts_pet_function as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -732,7 +719,7 @@ create or replace package body pts_app.pts_pet_function as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -796,7 +783,7 @@ create or replace package body pts_app.pts_pet_function as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
