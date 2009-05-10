@@ -61,7 +61,7 @@ create or replace package body pts_app.pts_sam_function as
       cursor csr_list is
          select t01.sde_sam_code,
                 t01.sde_sam_text,
-                decode(t01.sde_sam_status,'0','Inactive','1','Active',t01.sde_sam_status) as sde_sam_status
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*SAM_DEF' and sva_fld_code = 9 and sva_val_code = t01.sde_sam_status),'*UNKNOWN') as sde_sam_status
            from pts_sam_definition t01
           where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SAMPLE',null)))
             and t01.sde_sam_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
