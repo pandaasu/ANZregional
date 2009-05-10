@@ -428,7 +428,7 @@
             alert(strMessage);
             return;
          }
-         if (cstrSearchRulTyp == '*LIST') {
+         if (cstrSearchRulTyp != '*NUMBER' && cstrSearchRulTyp != '*TEXT') {
             var objSelRulCode = document.getElementById('SEL_RulCode');
             var objSelRulValue = document.getElementById('SEL_RulValue');
             var objSelSelValue = document.getElementById('SEL_SelValue');
