@@ -35,7 +35,8 @@ create or replace package pts_app.pts_gen_function as
    function test_list(par_ent_code in varchar2, par_sel_group in varchar2) return pts_xml_type pipelined;
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
-   function list_pet_type return pts_cla_list_type pipelined;
+   function list_geo_zone(par_geo_type in number) return pts_geo_list_type pipelined;
+   function list_pet_type return pts_pty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
    function list_class(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
@@ -862,6 +863,7 @@ create or replace package body pts_app.pts_gen_function as
       var_action varchar2(32);
       var_ent_code varchar2(32);
       var_tes_flag varchar2(32);
+      var_tab_flag boolean;
       var_output varchar2(2000 char);
 
       /*-*/
@@ -874,7 +876,7 @@ create or replace package body pts_app.pts_gen_function as
                 pts_sys_table t02
           where t01.sli_tab_code = t02.sta_tab_code
             and t01.sli_ent_code = var_ent_code
-          order by t02.sta_tab_code asc;
+          order by t02.sta_tab_text asc;
       rcd_table csr_table%rowtype;
 
       cursor csr_field is
@@ -884,9 +886,9 @@ create or replace package body pts_app.pts_gen_function as
                 t01.sfi_fld_rul_type
            from pts_sys_field t01
           where t01.sfi_tab_code = rcd_table.sta_tab_code
-            and (t01.sfi_fld_tes_rule != '1' or (var_tes_flag = '1' and t01.sfi_fld_tes_rule = '1'))
+            and (var_tes_flag = '0' or (var_tes_flag = '1' and t01.sfi_fld_tes_rule = '1'))
             and t01.sfi_fld_status = '1'
-          order by t01.sfi_fld_code asc;
+          order by t01.sfi_fld_text asc;
       rcd_field csr_field%rowtype;
 
    /*-------------*/
@@ -930,14 +932,16 @@ create or replace package body pts_app.pts_gen_function as
          if csr_table%notfound then
             exit;
          end if;
-         var_output := '<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>';
-         pipe row(pts_xml_object(var_output));
-
+         var_tab_flag := false;
          open csr_field;
          loop
             fetch csr_field into rcd_field;
             if csr_field%notfound then
                exit;
+            end if;
+            if tab_flag = false then
+               var_tab_flag := true;
+               pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
             var_output := '<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'"';
             var_output := var_output||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"';
@@ -946,7 +950,6 @@ create or replace package body pts_app.pts_gen_function as
             pipe row(pts_xml_object(var_output));
          end loop;
          close csr_field;
-
       end loop;
       close csr_table;
 
@@ -992,6 +995,7 @@ create or replace package body pts_app.pts_gen_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
+      var_tes_flag varchar2(32);
       var_tab_code varchar2(32);
       var_fld_code number;
       var_output varchar2(2000 char);
@@ -1013,6 +1017,7 @@ create or replace package body pts_app.pts_gen_function as
           where t01.sse_rul_code = t02.sru_rul_code
             and t01.sse_tab_code = var_tab_code
             and t01.sse_fld_code = var_fld_code
+            and (t02.sru_rul_tflg = '0' or (var_tes_flag = '1' and t02.sru_rul_tflg = '1'))
           order by t02.sru_rul_code asc;
       rcd_rule csr_rule%rowtype;
 
@@ -1048,6 +1053,7 @@ create or replace package body pts_app.pts_gen_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tes_flag := upper(xslProcessor.valueOf(obj_pts_request,'@TESFLG'));
       var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
       var_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       xmlDom.freeDocument(obj_xml_document);
@@ -1126,10 +1132,73 @@ create or replace package body pts_app.pts_gen_function as
    /*-------------*/
    end list_rul_data;
 
+   /************************************************************/
+   /* This procedure performs the list geographic zone routine */
+   /************************************************************/
+   function list_geo_zone(par_geo_type in number) return pts_geo_list_type pipelined is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_geo_zone is
+         select t01.gzo_geo_zone,
+                t01.gzo_geo_text
+           from pts_geo_zone t01
+          where t01. gzo_geo_type = par_geo_type
+          order by t01.gzo_geo_zone asc;
+      rcd_geo_zone csr_geo_zone%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the geographic zone values
+      /*-*/
+      open csr_geo_zone;
+      loop
+         fetch csr_geo_zone into rcd_geo_zone;
+         if csr_geo_zone%notfound then
+            exit;
+         end if;
+         pipe row(pts_geo_list_object(rcd_geo_zone.gzo_geo_zone,rcd_geo_zone.gzo_geo_text));
+      end loop;
+      close csr_geo_zone;
+
+      /*-*/
+      /* Return
+      /*-*/  
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_GEO_ZONE - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_geo_zone;
+
    /*****************************************************/
    /* This procedure performs the list pet type routine */
    /*****************************************************/
-   function list_pet_type return pts_cla_list_type pipelined is
+   function list_pet_type return pts_pty_list_type pipelined is
 
       /*-*/
       /* Local cursors
@@ -1138,7 +1207,6 @@ create or replace package body pts_app.pts_gen_function as
          select t01.pty_pet_type,
                 t01.pty_typ_text
            from pts_pet_type t01
-          where t01.pty_typ_status = '1'
           order by t01.pty_pet_type asc;
       rcd_pet_type csr_pet_type%rowtype;
 
@@ -1160,7 +1228,7 @@ create or replace package body pts_app.pts_gen_function as
          if csr_pet_type%notfound then
             exit;
          end if;
-         pipe row(pts_cla_list_object(rcd_pet_type.pty_pet_type,'('||rcd_pet_type.pty_pet_type||') '||rcd_pet_type.pty_typ_text));
+         pipe row(pts_pty_list_object(rcd_pet_type.pty_pet_type,'('||rcd_pet_type.pty_pet_type||') '||rcd_pet_type.pty_typ_text));
       end loop;
       close csr_pet_type;
 
