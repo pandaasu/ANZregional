@@ -1,7 +1,7 @@
 <script language="javascript">
 <!--
    ///////////////////////////
-   // Search Rule Functions //
+   // Class Functions //
    ///////////////////////////
    var cstrSearchEntity;
    var cstrSearchHeading;
