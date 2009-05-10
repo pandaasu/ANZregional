@@ -21,7 +21,7 @@
 create table pts.pts_sam_definition
    (sde_sam_code                    number                        not null,
     sde_sam_text                    varchar2(120 char)            not null,
-    sde_sam_status                  varchar2(1 char)              not null,
+    sde_sam_status                  number                        not null,
     sde_upd_user                    varchar2(30 char)             not null,
     sde_upd_date                    date                          not null,
     sde_uom_code                    number                        null,
@@ -37,7 +37,7 @@ create table pts.pts_sam_definition
 comment on table pts.pts_sam_definition is 'Sample Definition Table';
 comment on column pts.pts_sam_definition.sde_sam_code is 'Sample code';
 comment on column pts.pts_sam_definition.sde_sam_text is 'Sample text';
-comment on column pts.pts_sam_definition.sde_sam_status is 'Sample status (0=Inactive or 1=Active)';
+comment on column pts.pts_sam_definition.sde_sam_status is 'Sample status';
 comment on column pts.pts_sam_definition.sde_upd_user is 'Sample update user';
 comment on column pts.pts_sam_definition.sde_upd_date is 'Sample update date';
 comment on column pts.pts_sam_definition.sde_uom_code is 'Unit of measure code';
