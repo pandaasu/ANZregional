@@ -192,7 +192,9 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_field is
          select t01.sfi_fld_code,
-                t01.sfi_fld_text
+                t01.sfi_fld_text,
+                t01.sfi_fld_inp_leng,
+                t01.sfi_fld_sel_type
            from pts_sys_field t01
           where t01.sfi_tab_code = rcd_table.sta_tab_code
             and t01.sfi_fld_status = '1'
@@ -201,9 +203,14 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_classification is
          select t01.hcl_val_code,
-                t01.hcl_val_text
-           from pts_hou_classification t01
-          where t01.hcl_hou_code = pts_to_number(var_hou_code)
+                t01.hcl_val_text,
+                t02.sva_val_code,
+                t02.sva_val_text
+           from pts_hou_classification t01,
+                pts_sys_value t02
+          where t01.hcl_tab_code = t02.sva_tab_code(+)
+            and t01.hcl_fld_code = t02.sva_fld_code(+)
+            and t01.hcl_hou_code = pts_to_number(var_hou_code)
             and t01.hcl_tab_code = rcd_table.sta_tab_code
             and t01.hcl_fld_code = rcd_field.sfi_fld_code
           order by t01.hcl_val_code asc;
@@ -377,7 +384,7 @@ create or replace package body pts_app.pts_hou_function as
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
-            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"/>'));
+            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
             if var_action != '*CRTHOU' then
                open csr_classification;
                loop
@@ -385,7 +392,11 @@ create or replace package body pts_app.pts_hou_function as
                   if csr_classification%notfound then
                      exit;
                   end if;
-                  pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_classification.hcl_val_code)||' VALTXT="'||pts_to_xml(rcd_classification.hcl_val_text)||'"/>'));
+                  if rcd_classification.sva_val_code is null then
+                     pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_classification.hcl_val_code)||'" VALTXT="'||pts_to_xml(rcd_classification.hcl_val_text)||'"/>'));
+                  else
+                     pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_classification.hcl_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_classification.sva_val_code)||') '||rcd_classification.sva_val_text)||'"/>'));
+                  end if;
                end loop;
                close csr_classification;
             end if;

@@ -35,6 +35,7 @@ create or replace package pts_app.pts_gen_function as
    function test_list(par_ent_code in varchar2, par_sel_group in varchar2) return pts_xml_type pipelined;
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
+   function list_sel_data return pts_xml_type pipelined;
    function list_geo_zone(par_geo_type in number) return pts_geo_list_type pipelined;
    function list_pet_type return pts_pty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
@@ -1097,7 +1098,7 @@ create or replace package body pts_app.pts_gen_function as
             if csr_value%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<VALUE VALCDE="'||rcd_value.sva_val_code||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value.sva_val_code)||') '||rcd_value.sva_val_text)||'"/>'));
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value.sva_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value.sva_val_code)||') '||rcd_value.sva_val_text)||'"/>'));
          end loop;
          close csr_value;
       end if;
@@ -1131,6 +1132,161 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end list_rul_data;
+
+   /***********************************************************/
+   /* This procedure performs the list selection data routine */
+   /***********************************************************/
+   function list_sel_data return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tab_code varchar2(32);
+      var_fld_code number;
+      var_pet_type number;
+      var_val_type varchar2(32);
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      /*-*/
+      /* Retrieve the pet type system field
+      /*-*/
+      cursor csr_field is
+         select t01.*
+           from pts_pty_sys_field t01
+          where t01.psf_pet_type = var_pet_type
+            and t01.psf_tab_code = var_tab_code
+            and t01.psf_fld_code = var_fld_code;
+      rcd_field csr_field%rowtype;
+
+      cursor csr_value_all is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = var_tab_code
+            and t01.sva_fld_code = var_fld_code
+          order by t01.sva_val_code asc;
+      rcd_value_all csr_value_all%rowtype;
+
+      cursor csr_value_select is
+         select t01.sva_val_code,
+                t01.sva_val_text
+           from pts_sys_value t01
+          where t01.sva_tab_code = var_tab_code
+            and t01.sva_fld_code = var_fld_code
+            and t01.sva_val_code in (select psv_val_code
+                                       from pts_pty_sys_value
+                                      where psv_pet_type = var_pet_type
+                                        and psv_tab_code = var_tab_code
+                                        and psv_fld_code = var_fld_code)
+          order by t01.sva_val_code asc;
+      rcd_value_select csr_value_select%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tab_code := upper(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
+      var_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
+      var_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETTYPE'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*LSTSEL' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the pet type firld selection type wghen required
+      /*-*/
+      var_val_type := '*ALL';
+      if not(var_pet_type is null) then
+         open csr_field;
+         fetch csr_field into rcd_field;
+         if csr_field%found then
+            var_val_type := rcd_field.psf_val_type;
+         end if;
+         close csr_field;
+      end if;
+
+      /*-*/
+      /* Pipe the system selection value XML when required
+      /*-*/
+      if upper(var_val_type) = '*SELECT' then
+         open csr_value_select;
+         loop
+            fetch csr_value_select into rcd_value_select;
+            if csr_value_select%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value_select.sva_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value_select.sva_val_code)||') '||rcd_value_select.sva_val_text)||'"/>'));
+         end loop;
+         close csr_value_select;
+      else
+         open csr_value_all;
+         loop
+            fetch csr_value_all into rcd_value_all;
+            if csr_value_all%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value_all.sva_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value_all.sva_val_code)||') '||rcd_value_all.sva_val_text)||'"/>'));
+         end loop;
+         close csr_value_all;
+      end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_GEN_FUNCTION - LIST_SEL_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_sel_data;
 
    /************************************************************/
    /* This procedure performs the list geographic zone routine */
