@@ -430,7 +430,7 @@ create or replace package body pts_app.pts_gen_function as
                 t01.wsr_tab_code,
                 t01.wsr_fld_code,
                 t02.sfi_fld_rul_type,
-                t02.sfi_fld_rul_tes_sql,
+                t02.sfi_fld_rul_sql,
                 t03.sru_rul_cond,
                 t03.sru_rul_test,
                 t03.sru_rul_lnot
@@ -543,15 +543,15 @@ create or replace package body pts_app.pts_gen_function as
                end if;
                var_value_found := true;
                if upper(rcd_rule.sfi_fld_rul_type) = '*LIST' then
-                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
+                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*TEXT' then
                   if upper(trim(rcd_rule.sru_rul_test)) = 'LIKE' then
-                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>','upper(''%'||rcd_value.wsv_val_text||'%'')');
+                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>','upper(''%'||rcd_value.wsv_val_text||'%'')');
                   else
-                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',''''||rcd_value.wsv_val_text||'''');
+                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',''''||rcd_value.wsv_val_text||'''');
                   end if;
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*NUMBER' then
-                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
+                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
                end if;
             end loop;
             close csr_value;
@@ -658,7 +658,7 @@ create or replace package body pts_app.pts_gen_function as
                 t01.wsr_tab_code,
                 t01.wsr_fld_code,
                 t02.sfi_fld_rul_type,
-                t02.sfi_fld_rul_tes_sql,
+                t02.sfi_fld_rul_sql,
                 t03.sru_rul_cond,
                 t03.sru_rul_test,
                 t03.sru_rul_lnot
@@ -771,15 +771,15 @@ create or replace package body pts_app.pts_gen_function as
                end if;
                var_value_found := true;
                if upper(rcd_rule.sfi_fld_rul_type) = '*LIST' then
-                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
+                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*TEXT' then
                   if upper(trim(rcd_rule.sru_rul_test)) = 'LIKE' then
-                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>','upper(''%'||rcd_value.wsv_val_text||'%'')');
+                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>','upper(''%'||rcd_value.wsv_val_text||'%'')');
                   else
-                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',''''||rcd_value.wsv_val_text||'''');
+                     var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',''''||rcd_value.wsv_val_text||'''');
                   end if;
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*NUMBER' then
-                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_tes_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
+                  var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
                end if;
             end loop;
             close csr_value;

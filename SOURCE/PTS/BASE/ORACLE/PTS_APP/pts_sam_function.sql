@@ -25,6 +25,7 @@ create or replace package pts_app.pts_sam_function as
    /*-*/
    /* Public declarations
    /*-*/
+   function select_list return pts_xml_type pipelined;
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
@@ -42,6 +43,102 @@ create or replace package body pts_app.pts_sam_function as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /***************************************************/
+   /* This procedure performs the select list routine */
+   /***************************************************/
+   function select_list return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_pag_size number;
+      var_row_count number;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_list is
+         select t01.sde_sam_code,
+                t01.sde_sam_text,
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*SAM_DEF' and sva_fld_code = 9 and sva_val_code = t01.sde_sam_status),'*UNKNOWN') as sde_sam_status
+           from pts_sam_definition t01
+          where t01.sde_sam_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SAMPLE',null)))
+            and t01.sde_sam_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+            and t01.sde_sam_status = '1'
+          order by t01.sde_sam_code asc;
+      rcd_list csr_list%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
+
+      /*-*/
+      /* Retrieve the sample list and pipe the results
+      /*-*/
+      var_pag_size := 20;
+      var_row_count := 0;
+      open csr_list;
+      loop
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
+            exit;
+         end if;
+         var_row_count := var_row_count + 1;
+         if var_row_count <= var_pag_size then
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.sde_sam_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.sde_sam_code)||') '||rcd_list.sde_sam_text)||'" COL2="'||pts_to_xml(rcd_list.sde_sam_status)||'"/>'));
+         else
+            exit;
+         end if;
+      end loop;
+      close csr_list;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SAM_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_list;
 
    /*****************************************************/
    /* This procedure performs the retrieve list routine */
