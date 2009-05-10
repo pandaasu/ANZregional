@@ -1031,6 +1031,19 @@ create or replace package body pts_app.pts_gen_function as
           order by t01.sva_val_code asc;
       rcd_value csr_value%rowtype;
 
+      cursor csr_hou_zone is
+         select t01.*
+           from pts_geo_zone t01
+          where t01.gzo_geo_type = 40
+          order by t01.gzo_geo_zone asc;
+      rcd_hou_zone csr_hou_zone%rowtype;
+
+      cursor csr_pet_type is
+         select t01.*
+           from pts_pet_type t01
+          order by t01.pty_pet_type asc;
+      rcd_pet_type csr_pet_type%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1101,6 +1114,26 @@ create or replace package body pts_app.pts_gen_function as
             pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value.sva_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value.sva_val_code)||') '||rcd_value.sva_val_text)||'"/>'));
          end loop;
          close csr_value;
+      elsif upper(rcd_field.sfi_fld_rul_type) = '*HOU_ZONE' then
+         open csr_hou_zone;
+         loop
+            fetch csr_hou_zone into rcd_hou_zone;
+            if csr_hou_zone%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_hou_zone.gzo_geo_zone)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_hou_zone.gzo_geo_zone)||') '||rcd_hou_zone.gzo_zon_text)||'"/>'));
+         end loop;
+         close csr_hou_zone;
+      elsif upper(rcd_field.sfi_fld_rul_type) = '*PET_TYPE' then
+         open csr_pet_type;
+         loop
+            fetch csr_pet_type into rcd_pet_type;
+            if csr_pet_type%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_pet_type.pty_pet_type)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_pet_type.pty_pet_type)||') '||rcd_pet_type.pty_typ_text)||'"/>'));
+         end loop;
+         close csr_pet_type;
       end if;
 
       /*-*/
@@ -1321,7 +1354,7 @@ create or replace package body pts_app.pts_gen_function as
          if csr_geo_zone%notfound then
             exit;
          end if;
-         pipe row(pts_geo_list_object(rcd_geo_zone.gzo_geo_zone,'('||to_char(rcd_geo_zone.gzo_geo_zone)||') '||rcd_geo_zone.gzo_zon_status,rcd_geo_zone.gzo_zon_status));
+         pipe row(pts_geo_list_object(rcd_geo_zone.gzo_geo_zone,'('||to_char(rcd_geo_zone.gzo_geo_zone)||') '||rcd_geo_zone.gzo_zon_text,rcd_geo_zone.gzo_zon_status));
       end loop;
       close csr_geo_zone;
 
