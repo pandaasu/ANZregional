@@ -156,9 +156,12 @@ create or replace package body pts_app.pts_pet_function as
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
-         select t01.*
-           from pts_pet_definition t01
-          where t01.pde_pet_code = pts_to_number(var_pet_code);
+         select t01.*,
+                decode(t02.hde_hou_code,null,'** NO HOUSEHOLD **','('||t02.hde_hou_code||') '||t02.hde_con_fullname||' '||hde_loc_street) as hou_text
+           from pts_pet_definition t01,
+                pts_hou_definition t02
+          where t01.pde_hou_code = t02.hde_hou_code(+)
+            and t01.pde_pet_code = pts_to_number(var_pet_code);
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_sta_code is
@@ -297,6 +300,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
          var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
          var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
+         var_output := var_output||' HOUTEXT="'||to_char(rcd_retrieve.hou_text)||'"';
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
@@ -308,6 +312,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
          var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
          var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
+         var_output := var_output||' HOUTEXT="'||to_char(rcd_retrieve.hou_text)||'"';
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
