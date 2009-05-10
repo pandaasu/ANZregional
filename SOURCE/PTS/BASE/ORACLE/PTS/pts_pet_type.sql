@@ -21,7 +21,7 @@
 create table pts.pts_pet_type
    (pty_pet_type                    number                        not null,
     pty_typ_text                    varchar2(120 char)            not null,
-    pty_typ_status                  varchar2(1 char)              not null,
+    pty_typ_status                  number                        not null,
     pty_upd_user                    varchar2(30 char)             not null,
     pty_upd_date                    date                          not null);
 
@@ -31,7 +31,7 @@ create table pts.pts_pet_type
 comment on table pts.pts_pet_type is 'Pet Type Table';
 comment on column pts.pts_pet_type.pty_pet_type is 'Pet type code';
 comment on column pts.pts_pet_type.pty_typ_text is 'Pet type text';
-comment on column pts.pts_pet_type.pty_typ_status is 'Pet type status (0=Inactive or 1=Active)';
+comment on column pts.pts_pet_type.pty_typ_status is 'Pet type status';
 comment on column pts.pts_pet_type.pty_upd_user is 'Pet type update user';
 comment on column pts.pts_pet_type.pty_upd_date is 'Pet type update date';
 

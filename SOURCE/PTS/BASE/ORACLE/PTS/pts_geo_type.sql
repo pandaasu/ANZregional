@@ -26,7 +26,7 @@
 create table pts.pts_geo_type
    (gty_geo_type                    number                        not null,
     gty_typ_text                    varchar2(120 char)            not null,
-    gty_typ_status                  varchar2(1 char)              not null,
+    gty_typ_status                  number                        not null,
     gty_upd_user                    varchar2(30 char)             not null,
     gty_upd_date                    date                          not null,
     gty_par_type                    number                        null);
@@ -37,7 +37,7 @@ create table pts.pts_geo_type
 comment on table pts.pts_geo_type is 'Geographic Type Table';
 comment on column pts.pts_geo_type.gty_geo_type is 'Geographic type code';
 comment on column pts.pts_geo_type.gty_typ_text is 'Geographic type text';
-comment on column pts.pts_geo_type.gty_typ_status is 'Geographic type status (0=Inactive or 1=Active)';
+comment on column pts.pts_geo_type.gty_typ_status is 'Geographic type status';
 comment on column pts.pts_geo_type.gty_upd_user is 'Geographic type update user';
 comment on column pts.pts_geo_type.gty_upd_date is 'Geographic type update date';
 comment on column pts.pts_geo_type.gty_par_type is 'Geographic parent type (null or geographic type code)';

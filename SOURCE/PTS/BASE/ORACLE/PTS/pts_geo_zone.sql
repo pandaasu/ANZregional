@@ -22,7 +22,7 @@ create table pts.pts_geo_zone
    (gzo_geo_type                    number                        not null,
     gzo_geo_zone                    number                        not null,
     gzo_zon_text                    varchar2(120 char)            not null,
-    gzo_zon_status                  varchar2(1 char)              not null,
+    gzo_zon_status                  number                        not null,
     gzo_upd_user                    varchar2(30 char)             not null,
     gzo_upd_date                    date                          not null,
     gzo_par_type                    number                        null,
@@ -35,7 +35,7 @@ comment on table pts.pts_geo_zone is 'Geographic Zone Table';
 comment on column pts.pts_geo_zone.gzo_geo_type is 'Geographic zone type';
 comment on column pts.pts_geo_zone.gzo_geo_zone is 'Geographic zone code';
 comment on column pts.pts_geo_zone.gzo_zon_text is 'Geographic zone text';
-comment on column pts.pts_geo_zone.gzo_zon_status is 'Geographic zone status (0=Inactive or 1=Active)';
+comment on column pts.pts_geo_zone.gzo_zon_status is 'Geographic zone status';
 comment on column pts.pts_geo_zone.gzo_upd_user is 'Geographic zone update user';
 comment on column pts.pts_geo_zone.gzo_upd_date is 'Geographic zone update date';
 comment on column pts.pts_geo_zone.gzo_par_type is 'Geographic parent type (null or geographic type)';
