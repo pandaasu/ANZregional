@@ -406,7 +406,7 @@
       }
    }
    function requestSchFeldUpdate(strXML) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="'+cstrSearchTest+'" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
       doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSchFeldUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkSchFeldUpdate(strResponse) {
