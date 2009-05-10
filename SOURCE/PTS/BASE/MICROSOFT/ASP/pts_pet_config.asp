@@ -472,7 +472,9 @@ sub PaintFunction()%>
    function doDefineClaSelect(intRow) {
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRow];
-      doClaUpdate(intRow,objRow.getAttribute('tabcde'),objRow.getAttribute('fldcde'),objRow.getAttribute('fldtxt'),objRow.getAttribute('inplen'),objRow.getAttribute('seltyp'),objRow.getAttribute('valary'))
+      var objPetType = document.getElementById('DEF_PetType');
+      var strPetType = objPetType.options[objPetType.selectedIndex].value;
+      doClaUpdate(intRow,objRow.getAttribute('tabcde'),objRow.getAttribute('fldcde'),objRow.getAttribute('fldtxt'),objRow.getAttribute('inplen'),objRow.getAttribute('seltyp'),strPetType,objRow.getAttribute('valary'))
    }
    function doDefineClaCancel() {
       displayScreen('dspDefine');

@@ -505,7 +505,7 @@
             displayScreen('dspSchText');
             objSetRulCode.focus();
          } else {
-            alert('Unknown Rule Type ('+cstrSearchRulCde+')');
+            alert('Unknown Rule Type ('+cstrSearchRulTyp+')');
          }
       }
    }

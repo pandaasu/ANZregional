@@ -19,7 +19,7 @@
                         </tr>
                         <tr>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="CLL_LstValue" name="CLA_ClaValue" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="CLL_LstValue" name="CLL_LstValue" style="width:300px" multiple size=20></select>
                            </nobr></td>
                            <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
                               <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
@@ -30,7 +30,7 @@
                               </table>
                            </nobr></td>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="CLL_ClaValue" name="SEL_SelValue" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="CLL_ClaValue" name="CLL_ClaValue" style="width:300px" multiple size=20></select>
                            </nobr></td>
                         </tr>
                      </table>
