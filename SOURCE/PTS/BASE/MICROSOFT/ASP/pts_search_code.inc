@@ -74,8 +74,6 @@
          cstrSearchHeading = cobjSearchArray[cintSearchInstance].hedtxt;
          cstrSearchScript = cobjSearchArray[cintSearchInstance].srvnam;
          cobjSearchData = cobjSearchArray[cintSearchInstance].schdat;
-         var objScreen;
-         var objHeading;
          for (var i=0;i<cobjScreens.length;i++) {
             if (cobjScreens[i].scrnam == 'dspSchRule') {
               cobjScreens[i].hedtxt = cstrSearchHeading+' Search Rules';
@@ -405,7 +403,7 @@
          }
       }
    }
-   function requestSchFeldUpdate(strXML) {
+   function requestSchFeldUpdate() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="'+cstrSearchTest+'" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
       doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSchFeldUpdate(strResponse);},false,streamXML(strXML));
    }

@@ -126,8 +126,8 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[0].hedtxt ='Sample Prompt';
-      cobjScreens[1].hedtxt ='Sample Maintenance';
+      cobjScreens[0].hedtxt = 'Sample Prompt';
+      cobjScreens[1].hedtxt = 'Sample Maintenance';
       initSearch();
       displayScreen('dspPrompt');
       document.getElementById('PRO_SamCode').focus();
@@ -139,8 +139,8 @@ sub PaintFunction()%>
    var cobjScreens = new Array();
    function clsScreen(strScrName,strHedName) {
       this.scrnam = strScrName;
-      this.hednam= strHedName;
-      this.hedtxt= '';
+      this.hednam = strHedName;
+      this.hedtxt = '';
    }
    function displayScreen(strScreen) {
       var objScreen;
@@ -255,9 +255,9 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt ='Update Sample';
+            cobjScreens[1].hedtxt = 'Update Sample';
          } else {
-            cobjScreens[1].hedtxt ='Create Sample';
+            cobjScreens[1].hedtxt = 'Create Sample';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_SamCode').innerText = '';

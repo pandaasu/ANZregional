@@ -3,8 +3,8 @@
    /////////////////////////////
    // Class Control Functions //
    /////////////////////////////
-   var cstrSearchCancel;
-   var cobjSearchAccept;
+   var cstrClassCancel;
+   var cstrClassAccept;
    var cintRowIndex;
    var cstrClassTabCde;
    var cstrClassFldCde;
@@ -23,19 +23,17 @@
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaList','hedClaList');
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaNumb','hedClaNumb');
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaText','hedClaText');
-      var objScreen;
-      var objHeading;
       for (var i=0;i<cobjScreens.length;i++) {
          if (cobjScreens[i].scrnam == 'dspClaList') {
             cobjScreens[i].hedtxt = strHeading+' List Classification';
          } else if (cobjScreens[i].scrnam == 'dspClaNumb') {
-            cobjScreens[i].hedtxt = strHeading+' number Classification';
+            cobjScreens[i].hedtxt = strHeading+' Number Classification';
          } else if (cobjScreens[i].scrnam == 'dspClaText') {
-            cobjScreens[i].hedtxt = strHeading+' text Classification';
+            cobjScreens[i].hedtxt = strHeading+' Text Classification';
          }
       }
    }
-   function doClaUpdate(intRowIndex,strTabCde,strFldCde,strFldTxt,strInpLen,strSelTyp,strPetType,objClaVal) {
+   function doClaUpdate(intRowIndex,strTabCde,strFldCde,strFldTxt,strInpLen,strSelTyp,strPetTyp,objClaVal) {
       cintRowIndex = intRowIndex;
       cstrClassTabCde = strTabCde;
       cstrClassFldCde = strFldCde;
@@ -43,12 +41,12 @@
       cstrClassInpLen = strInpLen;
       cstrClassSelTyp = strSelTyp;
       cstrClassPetTyp = strPetTyp;
-      cobjClassClaVal = strClaVal;
+      cobjClassClaVal = objClaVal;
       doActivityStart(document.body);
       window.setTimeout('requestClaUpdate();',10);
    }
-   function requestClaUpdate(strXML) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TABCDE="'+cstrClassTabCde+'" FLDCDE="'+cstrClassFldCde+'" PETTYPE="'+cstrClassPetTyp+'"/>';
+   function requestClaUpdate() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTSEL" TABCDE="'+cstrClassTabCde+'" FLDCDE="'+cstrClassFldCde+'" PETTYPE="'+cstrClassPetTyp+'"/>';
       doPostRequest('<%=strBase%>pts_sys_sel_list.asp',function(strResponse) {checkClaUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkClaUpdate(strResponse) {
@@ -82,8 +80,10 @@
                   objCllLstValue.options[objCllLstValue.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
                }
             }
-            for (var i=0;i<cobjClassClaVal.length;i++) {
-               objCllClaValue.options[i] = new Option(cobjClassClaVal[i].valtxt,cobjClassClaVal[i].valcde);
+            if (cobjClassClaVal != '') {
+               for (var i=0;i<cobjClassClaVal.length;i++) {
+                  objCllClaValue.options[i] = new Option(cobjClassClaVal[i].valtxt,cobjClassClaVal[i].valcde);
+               }
             }
             displayScreen('dspClaList');
             objCllLstValue.focus();
@@ -92,8 +92,10 @@
             objClnClaValue.size = cstrClassInpLen;
             objClnClaValue.maxLength = cstrClassInpLen;
             objClnClaValue.value = '';
-            if (cobjClassClaVal.length != 0) {
-               objClnClaValue.value = cobjClassClaVal[0].valtxt;
+            if (cobjClassClaVal != null) {
+               if (cobjClassClaVal.length != 0) {
+                  objClnClaValue.value = cobjClassClaVal[0].valtxt;
+               }
             }
             displayScreen('dspClaNumb');
             objClnClaValue.focus();
@@ -102,8 +104,10 @@
             objCltClaValue.size = cstrClassInpLen;
             objCltClaValue.maxLength = cstrClassInpLen;
             objCltClaValue.value = '';
-            if (cobjClassClaVal.length != 0) {
-               objCltClaValue.value = cobjClassClaVal[0].valtxt;
+            if (cobjClassClaVal != null) {
+               if (cobjClassClaVal.length != 0) {
+                  objCltClaValue.value = cobjClassClaVal[0].valtxt;
+               }
             }
             displayScreen('dspClaText');
             objCltClaValue.focus();
@@ -172,7 +176,7 @@
       }
    }
    function removeClaListValues() {
-      var objCllClaValue = document.getElementById('CLA_ClaValue');
+      var objCllClaValue = document.getElementById('CLL_ClaValue');
       var objWork = new Array();
       var intIndex = 0;
       for (var i=0;i<objCllClaValue.options.length;i++) {
@@ -196,8 +200,8 @@
       return 0;
    }
 
-   /////////////////////////////
-   // Search Number Functions //
+   ////////////////////////////
+   // Class Number Functions //
    /////////////////////////////
    function doClaNumbCancel() {
       cstrClassCancel();
@@ -213,9 +217,9 @@
       cstrClassAccept(cintRowIndex,objValues);
    }
 
-   ///////////////////////////
-   // Search Text Functions //
-   ///////////////////////////
+   //////////////////////////
+   // Class Text Functions //
+   //////////////////////////
    function doClaTextCancel() {
       cstrClassCancel();
    }

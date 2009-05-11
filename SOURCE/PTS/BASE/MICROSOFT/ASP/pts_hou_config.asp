@@ -126,8 +126,8 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[0].hedtxt ='Household Prompt';
-      cobjScreens[1].hedtxt ='Household Maintenance';
+      cobjScreens[0].hedtxt = 'Household Prompt';
+      cobjScreens[1].hedtxt = 'Household Maintenance';
       initSearch();
       initClass('Household',function() {doDefineClaCancel();},function(intRowIndex,objValues) {doDefineClaAccept(intRowIndex,objValues);});
       displayScreen('dspPrompt');
@@ -328,7 +328,7 @@ sub PaintFunction()%>
          var objValues;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TABLE') {
-               objRow = ClaData.insertRow(-1);
+               objRow = objClaData.insertRow(-1);
                objCell = objRow.insertCell(0);
                objCell.colSpan = 3;
                objCell.innerText = objElements[i].getAttribute('TABTXT');
@@ -336,7 +336,7 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                strTabCode = objElements[i].getAttribute('TABCDE');
             } else if (objElements[i].nodeName == 'FIELD') {
-               objRow = ClaData.insertRow(-1);
+               objRow = objClaData.insertRow(-1);
                objRow.setAttribute('tabcde',strTabCode);
                objRow.setAttribute('fldcde',objElements[i].getAttribute('FLDCDE'));
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
