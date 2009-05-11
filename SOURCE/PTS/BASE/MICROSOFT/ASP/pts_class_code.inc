@@ -70,7 +70,7 @@
             alert(strMessage);
             return;
          }
-         if (cstrClassSelTyp == '*LIST') {
+         if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*OPT_MULTIPLE_LIST') {
             var objCllLstValue = document.getElementById('CLL_LstValue');
             var objCllClaValue = document.getElementById('CLL_ClaValue');
             objCllLstValue.options.length = 0;
@@ -122,6 +122,15 @@
    function doClaListAccept() {
       if (!processForm()) {return;}
       var objCllClaValue = document.getElementById('CLL_ClaValue');
+      var strMessage = '';
+      if (cstrClassSelTyp == '*OPT_SINGLE_LIST' && objCllClaValue.options.length > 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Only one selection is allowed';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var objValues = new Array();
       objValues.length = 0;
       if (objCllClaValue.options.length != 0) {
