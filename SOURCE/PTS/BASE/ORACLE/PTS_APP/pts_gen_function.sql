@@ -1088,9 +1088,13 @@ create or replace package body pts_app.pts_gen_function as
       close csr_field;
 
       /*-*/
-      /* Pipe the system field rule XML
+      /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the system field rule XML
+      /*-*/
       open csr_rule;
       loop
          fetch csr_rule into rcd_rule;
@@ -1265,6 +1269,11 @@ create or replace package body pts_app.pts_gen_function as
          end if;
          close csr_field;
       end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
 
       /*-*/
       /* Pipe the system selection value XML when required

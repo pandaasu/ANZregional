@@ -28,9 +28,6 @@ create or replace package pts_app.pts_hou_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   function get_class_code(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined;
-   function get_class_number(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_numb_type pipelined;
-   function get_class_text(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_text_type pipelined;
 
 end pts_hou_function;
 /
@@ -384,7 +381,7 @@ create or replace package body pts_app.pts_hou_function as
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
-            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
+            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
             if var_action != '*CRTHOU' then
                open csr_classification;
                loop
@@ -659,198 +656,6 @@ create or replace package body pts_app.pts_hou_function as
    /* End routine */
    /*-------------*/
    end update_data;
-
-   /***************************************************************/
-   /* This procedure performs the get classification code routine */
-   /***************************************************************/
-   function get_class_code(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select nvl(t01.hcl_val_code,0) as hcl_val_code
-           from pts_hou_classification t01
-          where t01.hcl_hou_code = par_hou_code
-            and t01.hcl_tab_code = upper(par_tab_code)
-            and t01.hcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the household classification value code
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_code_object(rcd_classification.hcl_val_code));
-         else
-            pipe row(pts_cla_code_object(0));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_HOU_FUNCTION - GET_CLASS_CODE - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_code;
-
-   /*****************************************************************/
-   /* This procedure performs the get classification number routine */
-   /*****************************************************************/
-   function get_class_number(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_numb_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select nvl(t01.hcl_val_text,0) as hcl_val_text
-           from pts_hou_classification t01
-          where t01.hcl_hou_code = par_hou_code
-            and t01.hcl_tab_code = upper(par_tab_code)
-            and t01.hcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the household classification value number
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_numb_object(rcd_classification.hcl_val_text));
-         else
-            pipe row(pts_cla_numb_object(0));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_HOU_FUNCTION - GET_CLASS_NUMBER - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_number;
-
-   /***************************************************************/
-   /* This procedure performs the get classification text routine */
-   /***************************************************************/
-   function get_class_text(par_hou_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_text_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select t01.hcl_val_text as hcl_val_text
-           from pts_hou_classification t01
-          where t01.hcl_hou_code = par_hou_code
-            and t01.hcl_tab_code = upper(par_tab_code)
-            and t01.hcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the household classification value text
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_text_object(rcd_classification.hcl_val_text));
-         else
-            pipe row(pts_cla_text_object('*NULL'));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/  
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_HOU_FUNCTION - GET_CLASS_TEXT - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_text;
 
 end pts_hou_function;
 /

@@ -280,7 +280,7 @@ create or replace package body pts_app.pts_pet_function as
          if csr_pet_type%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<PTY_LIST VALCDE="'||rcd_pet_type.pty_code||'" VALTXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"/>'));
+         pipe row(pts_xml_object('<PET_TYPE VALCDE="'||rcd_pet_type.pty_code||'" VALTXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"/>'));
       end loop;
       close csr_pet_type;
 
@@ -311,7 +311,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HLHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYPET' then
          var_output := '<PET PETCODE="*NEW"';
@@ -323,7 +323,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HLHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTPET' then
          var_output := '<PET PETCODE="*NEW"';
@@ -331,10 +331,11 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETNAME=""';
          var_output := var_output||' PETTYPE=""';
          var_output := var_output||' HOUCODE=""';
+         var_output := var_output||' HOUTEXT="** NO HOUSEHOLD **"';
          var_output := var_output||' BTHYEAR=""';
          var_output := var_output||' DELNOTE=""';
          var_output := var_output||' FEDCMNT=""';
-         var_output := var_output||' HLHCMNT=""/>';
+         var_output := var_output||' HTHCMNT=""/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -358,7 +359,7 @@ create or replace package body pts_app.pts_pet_function as
                var_tab_flag := true;
                pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
             end if;
-            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||' FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
+            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
             if var_action != '*CRTPET' then
                open csr_classification;
                loop
