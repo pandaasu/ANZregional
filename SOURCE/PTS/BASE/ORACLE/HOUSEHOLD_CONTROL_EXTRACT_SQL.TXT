@@ -3,100 +3,102 @@
 -- HOUSEHOLD EXTRACT --
 -----------------------
 
+insert into pts_hou_definition
 select
-  'insert into pts_hou_definition values('||
-  hhold_code||','||
-  household_status||',user,sysdate,'||
-  decode(geog_zone_type_code,null,'null',geog_zone_type_code)||','||
-  decode(geog_zone_code,null,'null',geog_zone_code)||','||
-  decode(delete_noted_by,null,'null',delete_noted_by)||','||
-  decode(panel_joined_date,null,'null','to_date('''||to_char(panel_joined_date,'yyyymmdd')||''',''yyyymmdd'')')||','||
-  decode(hhold_last_used,null,'null','to_date('''||to_char(hhold_last_used,'yyyymmdd')||''',''yyyymmdd'')')||','||
-  decode(hhold_locn_street,null,'null',''''||trim(replace(hhold_locn_street,'''',''''''))||'''')||','||
-  decode(hhold_locn_town,null,'null',''''||trim(replace(hhold_locn_town,'''',''''''))||'''')||','||
-  decode(hhold_locn_postcode,null,'null',''''||trim(replace(hhold_locn_postcode,'''',''''''))||'''')||','||
-  decode(hhold_locn_country,null,'null',''''||trim(replace(hhold_locn_country,'''',''''''))||'''')||','||
-  decode(hhold_phone_areacode,null,'null',''''||trim(replace(hhold_phone_areacode,'''',''''''))||'''')||','||
-  decode(hhold_phone_num,null,'null',''''||trim(replace(hhold_phone_num,'''',''''''))||'''')||','||
-  decode(prcpt_name,null,'null',''''||trim(replace(prcpt_name,'''',''''''))||'''')||','||
-  decode(prcpt_name,null,'null',''''||trim(replace(prcpt_name,'''',''''''))||'''')||','||
-  decode(prcpt_year_of_birth,null,'null',prcpt_year_of_birth)||','||
-  decode(hhold_notes,null,'null',''''||trim(replace(hhold_notes,'''',''''''))||'''')||');' as seltext
-  from household order by hhold_code;
+  hhold_code,
+  decode(household_status,null,9,household_status),
+  user,
+  sysdate,
+  decode(geog_zone_type_code,null,null,geog_zone_type_code),
+  decode(geog_zone_code,null,null,geog_zone_code),
+  decode(delete_noted_by,null,null,delete_noted_by),
+  decode(panel_joined_date,null,null,to_date(to_char(panel_joined_date,'yyyymmdd'),'yyyymmdd')),
+  decode(hhold_last_used,null,null,to_date(to_char(hhold_last_used,'yyyymmdd'),'yyyymmdd')),
+  decode(hhold_locn_street,null,null,trim(hhold_locn_street)),
+  decode(hhold_locn_town,null,null,trim(hhold_locn_town)),
+  decode(hhold_locn_postcode,null,null,trim(hhold_locn_postcode)),
+  decode(hhold_locn_country,null,null,trim(hhold_locn_country)),
+  decode(hhold_phone_areacode,null,null,trim(hhold_phone_areacode)),
+  decode(hhold_phone_num,null,null,trim(hhold_phone_num)),
+  decode(prcpt_name,null,null,trim(prcpt_name)),
+  decode(prcpt_name,null,null,trim(prcpt_name)),
+  decode(prcpt_year_of_birth,null,null,prcpt_year_of_birth),
+  decode(hhold_notes,null,null,trim(hhold_notes))
+  from household@wod016.ap.mars;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',1,1,occ_adult_male
+  from household@wod016.ap.mars where occ_adult_male is not null and occ_adult_male != 0;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',1,1,'''||occ_adult_male||''');' as seltext
-  from household where occ_adult_male is not null and occ_adult_male != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',2,1,occ_child_15_18
+  from household@wod016.ap.mars where occ_child_15_18 is not null and occ_child_15_18 != 0;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',3,1,occ_child_5_14
+  from household@wod016.ap.mars where occ_child_5_14 is not null and occ_child_5_14 != 0;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',2,1,'''||occ_child_15_18||''');' as seltext
-  from household where occ_child_15_18 is not null and occ_child_15_18 != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',4,1,occ_child_under_5
+  from household@wod016.ap.mars where occ_child_under_5 is not null and occ_child_under_5 != 0;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',5,1,occ_adult_female
+  from household@wod016.ap.mars where occ_adult_female is not null and occ_adult_female != 0;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',3,1,'''||occ_child_5_14||''');' as seltext
-  from household where occ_child_5_14 is not null and occ_child_5_14 != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',6,1,female_occ_child_15_18
+  from household@wod016.ap.mars where female_occ_child_15_18 is not null and female_occ_child_15_18 != 0;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',7,1,female_occ_child_5_14
+  from household@wod016.ap.mars where female_occ_child_5_14 is not null and female_occ_child_5_14 != 0;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',4,1,'''||occ_child_under_5||''');' as seltext
-  from household where occ_child_under_5 is not null and occ_child_under_5 != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',8,1,female_occ_child_under_5
+  from household@wod016.ap.mars where female_occ_child_under_5 is not null and female_occ_child_under_5 != 0;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',9,urbanisation,null
+  from household@wod016.ap.mars where urbanisation is not null;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',5,1,'''||occ_adult_female||''');' as seltext
-  from household where occ_adult_female is not null and occ_adult_female != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',10,hhold_gross_income,null
+  from household@wod016.ap.mars where hhold_gross_income is not null;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',11,prcpt_sex,null
+  from household@wod016.ap.mars where prcpt_sex is not null;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',6,1,'''||female_occ_child_15_18||''');' as seltext
-  from household where female_occ_child_15_18 is not null and female_occ_child_15_18 != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',12,prcpt_work_status,null
+  from household@wod016.ap.mars where prcpt_work_status is not null;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',13,prcpt_education,null
+  from household@wod016.ap.mars where prcpt_education is not null;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',7,1,'''||female_occ_child_5_14||''');' as seltext
-  from household where female_occ_child_5_14 is not null and female_occ_child_5_14 != 0 order by hhold_code;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',14,prcpt_mrtl_status,null
+  from household@wod016.ap.mars where prcpt_mrtl_status is not null;
+commit;
 
-select 'commit;' from dual;
+insert into pts_hou_classification 
+select hhold_code,'*HOU_CLA',15,prcpt_age_range,null
+  from household@wod016.ap.mars where prcpt_age_range is not null;
+commit;
 
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',8,1,'''||female_occ_child_under_5||''');' as seltext
-  from household where female_occ_child_under_5 is not null and female_occ_child_under_5 != 0 order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',9,'||urbanisation||',null);' as seltext
-  from household where urbanisation is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',10,'||hhold_gross_income||',null);' as seltext
-  from household where hhold_gross_income is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',11,'||prcpt_sex||',null);' as seltext
-  from household where prcpt_sex is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',12,'||prcpt_work_status||',null);' as seltext
-  from household where prcpt_work_status is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',13,'||prcpt_education||',null);' as seltext
-  from household where prcpt_education is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',14,'||prcpt_mrtl_status||',null);' as seltext
-  from household where prcpt_mrtl_status is not null order by hhold_code;
-
-select 'commit;' from dual;
-
-select 'insert into pts_hou_classification values('||hhold_code||',''*HOU_CLA'',15,'||prcpt_age_range||',null);' as seltext
-  from household where prcpt_age_range is not null order by hhold_code;
-
-select 'commit;' from dual;

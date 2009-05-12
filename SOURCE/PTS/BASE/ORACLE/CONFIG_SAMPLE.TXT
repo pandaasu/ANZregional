@@ -4,25 +4,28 @@
 
 insert into pts_sys_field values('*SAM_DEF',1,'Sample code','1',user,sysdate,'0','0',15,
                                  '*LOGIC',
-                                 null,
                                  '*NUMBER',
-                                 null,
                                  's1.sde_sam_code<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_select values('*SAM_DEF',1,'*SELECT_WHEN_EQ');
+insert into pts_sys_select values('*SAM_DEF',1,'*SELECT_WHEN_EQUAL');
+
+insert into pts_sys_field values('*SAM_DEF',9,'Sample status','1',user,sysdate,'0','1',5,
+                                 '*LOGIC',
+                                 '*LIST',
+                                 'nvl(s1.sde_uom_code,0)<%RULE_TEST%><%RULE_VALUE%>');
+insert into pts_sys_value values('*SAM_DEF',9,1,'Active');
+insert into pts_sys_value values('*SAM_DEF',9,2,'Inactive');
+insert into pts_sys_select values('*SAM_DEF',9,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*SAM_DEF',9,'*SELECT_WHEN_NOT_EQUAL');
 
 insert into pts_sys_field values('*SAM_DEF',2,'Sample name','1',user,sysdate,'0','0',120,
                                  '*LOGIC',
-                                 null,
                                  '*TEXT',
-                                 null,
                                  'upper(nvl(s1.sde_sam_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*SAM_DEF',2,'*SELECT_WHEN_LIKE');
 
 insert into pts_sys_field values('*SAM_DEF',3,'Sample prepared location','1',user,sysdate,'1','0',5,
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',3))',
-                                 '*LIST',
-                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',3))',
+                                 '*OPT_LIST',
                                  'nvl(s1.sde_pre_locn,0)<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_value values('*SAM_DEF',3,1,'UBA Pilot Plant');
 insert into pts_sys_value values('*SAM_DEF',3,2,'UBA Factory - Bathurst');
@@ -48,9 +51,7 @@ insert into pts_sys_select values('*SAM_DEF',3,'*SELECT_WHEN_NOT_EQUAL');
 
 insert into pts_sys_field values('*SAM_DEF',4,'Sample unit of measure','1',user,sysdate,'1','0',5,
                                  '*LOGIC',
-                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
                                  '*LIST',
-                                 'select val_code, val_text from table(pts_app.pts_sam_function.list_class(''*SAM_DEF'',4))',
                                  'nvl(s1.sde_uom_code,0)<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_value values('*SAM_DEF',4,1,'Gram');
 insert into pts_sys_value values('*SAM_DEF',4,2,'Kilogram');
@@ -63,17 +64,13 @@ insert into pts_sys_select values('*SAM_DEF',4,'*SELECT_WHEN_NOT_EQUAL');
 
 insert into pts_sys_field values('*SAM_DEF',5,'Sample external recipe reference','1',user,sysdate,'0','0',32,
                                  '*LOGIC',
-                                 null,
                                  '*TEXT',
-                                 null,
                                  'nvl(trim(s1.sde_ext_rec_refnr),''*NULL'')<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*SAM_DEF',5,'*SELECT_WHEN_EQUAL');
 
 insert into pts_sys_field values('*SAM_DEF',6,'Sample PLOP code','1',user,sysdate,'0','0',32,
                                  '*LOGIC',
-                                 null,
                                  '*TEXT',
-                                 null,
                                  'nvl(trim(s1.sde_plop_code),''*NULL'')<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*SAM_DEF',6,'*SELECT_WHEN_EQUAL');
 

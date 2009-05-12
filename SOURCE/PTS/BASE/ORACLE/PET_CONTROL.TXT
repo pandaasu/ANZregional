@@ -6,6 +6,7 @@ set pagesize 0;
 set newpage 0
 set trimspool on;
 set linesize 1024;
+set define ^;
 spool C:\ISI_SVN\ISI_REGIONAL\SOURCE\PTS\BASE\ORACLE\PET_DATA_LOAD.SQL;
 @C:\ISI_SVN\ISI_REGIONAL\SOURCE\PTS\BASE\ORACLE\PET_CONTROL_EXTRACT_SQL.TXT;
 spool off;
