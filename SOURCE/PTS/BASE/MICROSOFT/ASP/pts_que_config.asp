@@ -266,36 +266,34 @@ sub PaintFunction()%>
          displayScreen('dspDefine');
          document.getElementById('DEF_QueCode').value = '';
          document.getElementById('DEF_QueText').value = '';
-         document.getElementById('DEF_UomSize').value = '';
-         document.getElementById('DEF_PreDate').value = '';
-         document.getElementById('DEF_ExtRfnr').value = '';
-         document.getElementById('DEF_PlopCde').value = '';
+         document.getElementById('DEF_RspSran').value = '';
+         document.getElementById('DEF_RspEran').value = '';
          var strQueStat;
-         var strUomCode;
-         var strPreLocn;
+         var strQueType;
+         var strRspType;
          var objQueStat = document.getElementById('DEF_QueStat');
-         var objUomCode = document.getElementById('DEF_UomCode');
-         var objPreLocn = document.getElementById('DEF_PreLocn');
+         var objQueType = document.getElementById('DEF_QueType');
+         var objRspType = document.getElementById('DEF_RspType');
          objQueStat.options.length = 0;
-         objUomCode.options.length = 0;
-         objPreLocn.options.length = 0;
+         objQueType.options.length = 0;
+         objRspType.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objQueStat.options[objQueStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'UOM_LIST') {
-               objUomCode.options[objUomCode.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'PRE_LIST') {
-               objPreLocn.options[objPreLocn.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'SAMPLE') {
+            } else if (objElements[i].nodeName == 'QUE_TYPE') {
+               objQueType.options[objQueType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'RSPTYPE') {
+               objRspType.options[objRspType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'QUESTION') {
                document.getElementById('DEF_QueCode').innerText = objElements[i].getAttribute('QUECODE');
                document.getElementById('DEF_QueText').value = objElements[i].getAttribute('QUETEXT');
-               document.getElementById('DEF_UomSize').value = objElements[i].getAttribute('UOMSIZE');
-               document.getElementById('DEF_PreDate').value = objElements[i].getAttribute('PREDATE');
-               document.getElementById('DEF_ExtRfnr').value = objElements[i].getAttribute('EXTRFNR');
-               document.getElementById('DEF_PlopCde').value = objElements[i].getAttribute('PLOPCDE');
+               document.getElementById('DEF_QueType').value = objElements[i].getAttribute('QUETYPE');
+               document.getElementById('DEF_RspType').value = objElements[i].getAttribute('RSPTYPE');
+               document.getElementById('DEF_RspSran').value = objElements[i].getAttribute('RSPSRAN');
+               document.getElementById('DEF_RspEran').value = objElements[i].getAttribute('RSPERAN');
                strQueStat = objElements[i].getAttribute('QUESTAT');
-               strUomCode = objElements[i].getAttribute('UOMCODE');
-               strPreLocn = objElements[i].getAttribute('PRELOCN');
+               strQueType = objElements[i].getAttribute('QUETYPE');
+               strRspType = objElements[i].getAttribute('RSPTYPE');
             }
          }
          objQueStat.selectedIndex = -1;
@@ -305,17 +303,17 @@ sub PaintFunction()%>
                break;
             }
          }
-         objUomCode.selectedIndex = -1;
-         for (var i=0;i<objUomCode.length;i++) {
-            if (objUomCode.options[i].value == strUomCode) {
-               objUomCode.options[i].selected = true;
+         objQueType.selectedIndex = -1;
+         for (var i=0;i<objQueType.length;i++) {
+            if (objQueType.options[i].value == strQueType) {
+               objQueType.options[i].selected = true;
                break;
             }
          }
-         objPreLocn.selectedIndex = -1;
-         for (var i=0;i<objPreLocn.length;i++) {
-            if (objPreLocn.options[i].value == strPreLocn) {
-               objPreLocn.options[i].selected = true;
+         objRspType.selectedIndex = -1;
+         for (var i=0;i<objRspType.length;i++) {
+            if (objRspType.options[i].value == strRspType) {
+               objRspType.options[i].selected = true;
                break;
             }
          }
@@ -325,25 +323,23 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objQueStat = document.getElementById('DEF_QueStat');
-      var objUomCode = document.getElementById('DEF_UomCode');
-      var objPreLocn = document.getElementById('DEF_PreLocn');
+      var objQueType = document.getElementById('DEF_QueType');
+      var objRspType = document.getElementById('DEF_RspType');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFQUE"';
       strXML = strXML+' QUECODE="'+fixXML(document.getElementById('DEF_QueCode').innerText)+'"';
       strXML = strXML+' QUETEXT="'+fixXML(document.getElementById('DEF_QueText').value)+'"';
       strXML = strXML+' QUESTAT="'+fixXML(objQueStat.options[objQueStat.selectedIndex].value)+'"';
-      strXML = strXML+' UOMCODE="'+fixXML(objUomCode.options[objUomCode.selectedIndex].value)+'"';
-      strXML = strXML+' UOMSIZE="'+fixXML(document.getElementById('DEF_UomSize').value)+'"';
-      strXML = strXML+' PRELOCN="'+fixXML(objPreLocn.options[objPreLocn.selectedIndex].value)+'"';
-      strXML = strXML+' PREDATE="'+fixXML(document.getElementById('DEF_PreDate').value)+'"';
-      strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
-      strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
+      strXML = strXML+' QUETYPE="'+fixXML(objQueType.options[objQueType.selectedIndex].value)+'"';;
+      strXML = strXML+' RSPTYPE="'+fixXML(objRspType.options[objRspType.selectedIndex].value)+'"';
+      strXML = strXML+' RSPSRAN="'+fixXML(document.getElementById('DEF_RspSran').value)+'"';
+      strXML = strXML+' RSPERAN="'+fixXML(document.getElementById('DEF_RspEran').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>pts_sam_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_que_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -450,39 +446,27 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Unit Of Measure:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_UomCode"></select>
+            <select class="clsInputBN" id="DEF_QueType"></select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Unit Of Measure Size:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_UomSize" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <select class="clsInputBN" id="DEF_QueType"></select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Prepared Location:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Range Start:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_PreLocn"></select>
+            <input class="clsInputNN" type="text" name="DEF_RspSran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Prepared Date:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Range End:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PreDate" size="10" maxlength="10" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;External Recipe Reference:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ExtRfnr" size="32" maxlength="32" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;PLOP Code:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PlopCde" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_RspEran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
