@@ -512,6 +512,9 @@ create or replace package body pts_app.pts_pet_function as
       if rcd_pts_pet_definition.pde_pet_code is null and not(xslProcessor.valueOf(obj_pts_request,'@PETCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
       end if;
+      if rcd_pts_pet_definition.pde_pet_status is null and not(xslProcessor.valueOf(obj_pts_request,'@PETSTAT') is null) then
+         pts_gen_function.add_mesg_data('Pet status ('||xslProcessor.valueOf(obj_pts_request,'@PETSTAT')||') must be a number');
+      end if;
       if rcd_pts_pet_definition.pde_pet_type is null and not(xslProcessor.valueOf(obj_pts_request,'@PETTYPE') is null) then
          pts_gen_function.add_mesg_data('Pet type ('||xslProcessor.valueOf(obj_pts_request,'@PETTYPE')||') must be a number');
       end if;

@@ -545,6 +545,9 @@ create or replace package body pts_app.pts_hou_function as
       if rcd_pts_hou_definition.hde_hou_code is null and not(xslProcessor.valueOf(obj_pts_request,'@HOUCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Household code ('||xslProcessor.valueOf(obj_pts_request,'@HOUCODE')||') must be a number');
       end if;
+      if rcd_pts_hou_definition.hde_hou_status is null and not(xslProcessor.valueOf(obj_pts_request,'@HOUSTAT') is null) then
+         pts_gen_function.add_mesg_data('Household status ('||xslProcessor.valueOf(obj_pts_request,'@HOUSTAT')||') must be a number');
+      end if;
       if rcd_pts_hou_definition.hde_geo_zone is null and not(xslProcessor.valueOf(obj_pts_request,'@GEOZONE') is null) then
          pts_gen_function.add_mesg_data('Geographic zone ('||xslProcessor.valueOf(obj_pts_request,'@GEOZONE')||') must be a number');
       end if;

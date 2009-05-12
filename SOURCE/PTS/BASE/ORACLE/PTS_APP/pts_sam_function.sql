@@ -511,6 +511,9 @@ create or replace package body pts_app.pts_sam_function as
       if rcd_pts_sam_definition.sde_sam_code is null and not(xslProcessor.valueOf(obj_pts_request,'@SAMCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Sample code ('||xslProcessor.valueOf(obj_pts_request,'@SAMCODE')||') must be a number');
       end if;
+      if rcd_pts_sam_definition.sde_sam_status is null and not(xslProcessor.valueOf(obj_pts_request,'@SAMSTAT') is null) then
+         pts_gen_function.add_mesg_data('Sample status ('||xslProcessor.valueOf(obj_pts_request,'@SAMSTAT')||') must be a number');
+      end if;
       if rcd_pts_sam_definition.sde_uom_size is null and not(xslProcessor.valueOf(obj_pts_request,'@UOMSIZE') is null) then
          pts_gen_function.add_mesg_data('Unit of measure size ('||xslProcessor.valueOf(obj_pts_request,'@UOMSIZE')||') must be a number');
       end if;
