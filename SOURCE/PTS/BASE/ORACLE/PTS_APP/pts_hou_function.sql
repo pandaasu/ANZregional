@@ -372,7 +372,7 @@ create or replace package body pts_app.pts_hou_function as
       /*-*/
       /* Pipe the pet XML when required
       /*-*/
-      if var_action != '*CRTHOU' then
+      if var_action = '*UPDHOU' then
          open csr_pet;
          loop
             fetch csr_pet into rcd_pet;
