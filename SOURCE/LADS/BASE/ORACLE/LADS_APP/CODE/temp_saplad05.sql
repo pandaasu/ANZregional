@@ -488,7 +488,6 @@ create or replace package body temp_saplad05 as
             rcd_temp_bom_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
             rcd_temp_bom_hdr.lads_date := sysdate;
             rcd_temp_bom_hdr.lads_status := '1';
-            rcd_temp_bom_hdr.lads_flattened := '0';
             delete from temp_bom_det where stlal = rcd_temp_bom_hdr.stlal
                                        and matnr = rcd_temp_bom_hdr.matnr
                                        and werks = rcd_temp_bom_hdr.werks;
