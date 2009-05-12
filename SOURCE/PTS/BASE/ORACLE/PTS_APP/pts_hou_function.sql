@@ -278,14 +278,14 @@ create or replace package body pts_app.pts_hou_function as
       /*-*/
       /* Pipe the geographic zone XML
       /*-*/
-      pipe row(pts_xml_object('<GEO_LIST VALCDE="" VALTXT="** NO GEOGRAPHIC ZONE **"/>'));
+      pipe row(pts_xml_object('<GEO_ZONE VALCDE="" VALTXT="** NO GEOGRAPHIC ZONE **"/>'));
       open csr_geo_zone;
       loop
          fetch csr_geo_zone into rcd_geo_zone;
          if csr_geo_zone%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<GEO_LIST VALCDE="'||to_char(rcd_geo_zone.geo_zone)||'" VALTXT="'||pts_to_xml(rcd_geo_zone.geo_text)||'"/>'));
+         pipe row(pts_xml_object('<GEO_ZONE VALCDE="'||to_char(rcd_geo_zone.geo_zone)||'" VALTXT="'||pts_to_xml(rcd_geo_zone.geo_text)||'"/>'));
       end loop;
       close csr_geo_zone;
 
@@ -358,7 +358,7 @@ create or replace package body pts_app.pts_hou_function as
          var_output := var_output||' CONSNAM=""';
          var_output := var_output||' CONFNAM=""';
          var_output := var_output||' CONBYER=""';
-         var_output := var_output||' HOUNOTE=""';
+         var_output := var_output||' HOUNOTE=""/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
