@@ -179,6 +179,13 @@ create or replace package body pts_app.pts_hou_function as
            from table(pts_app.pts_gen_function.list_class('*HOU_DEF',14)) t01;
       rcd_del_note csr_del_note%rowtype;
 
+      cursor csr_pet is
+         select t01.*
+           from pts_pet_definition t01
+          where t01.pde_hou_code = var_hou_code
+          order by t01.pde_pet_code;
+      rcd_pet csr_pet%rowtype;
+
       cursor csr_table is
          select t01.sta_tab_code,
                 t01.sta_tab_text
@@ -360,6 +367,21 @@ create or replace package body pts_app.pts_hou_function as
          var_output := var_output||' CONBYER=""';
          var_output := var_output||' HOUNOTE=""/>';
          pipe row(pts_xml_object(var_output));
+      end if;
+
+      /*-*/
+      /* Pipe the pet XML when required
+      /*-*/
+      if var_action != '*CRTHOU' then
+         open csr_pet;
+         loop
+            fetch csr_pet into rcd_pet;
+            if csr_pet%notfound then
+               exit;
+             end if;
+            pipe row(pts_xml_object('<PET PETCODE="'||to_char(rcd_pet.pde_pet_code)||'" PETNAME="'||pts_to_xml('('||to_char(rcd_pet.pde_pet_code)||') '||rcd_pet.pde_pet_name)||'"/>'));
+         end loop;
+         close csr_pet;
       end if;
 
       /*-*/
