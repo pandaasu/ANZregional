@@ -75,6 +75,18 @@
                SapTables="AFPO"
                SapFilters="*NONE"
                RetrievalModes="*BATCH"/>
+    <interface identifier="SAPLAD02#06"
+               description="SAP to LADS Fix Interface"
+               class="com.isi.lad.cSapLad02"
+               SapClient="002"
+               SapUserId="*PROMPTED"
+               SapPassword="*PROMPTED"
+               SapLanguage="EN"
+               SapServer="sapapb.na.mars"
+               SapSystem="02"
+               SapTables="EKKO,EKPO"
+               SapFilters="BUKRS = '147' OR BUKRS = '149',BUKRS = '147' OR BUKRS = '149'"
+               RetrievalModes="*BATCH,*BATCH"/>
     <interface identifier="SAPLAD03#01"
                description="SAP to LADS Customer Hierarchy Interface"
                class="com.isi.lad.cSapLad03"
