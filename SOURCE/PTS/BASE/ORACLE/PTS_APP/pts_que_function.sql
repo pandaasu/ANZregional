@@ -268,7 +268,7 @@ create or replace package body pts_app.pts_que_function as
       /* Pipe the sample XML
       /*-*/
       if var_action = '*UPDQUE' then
-         var_output := '<SAMPLE QUECODE="'||to_char(rcd_retrieve.qde_que_code)||'"';
+         var_output := '<QUESTION QUECODE="'||to_char(rcd_retrieve.qde_que_code)||'"';
          var_output := var_output||' QUETEXT="'||pts_to_xml(rcd_retrieve.qde_que_text)||'"';
          var_output := var_output||' QUESTAT="'||rcd_retrieve.qde_que_status||'"';
          var_output := var_output||' QUETYPE="'||to_char(rcd_retrieve.qde_que_type)||'"';
@@ -277,7 +277,7 @@ create or replace package body pts_app.pts_que_function as
          var_output := var_output||' RESERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYQUE' then
-         var_output := '<SAMPLE SAMCODE="*NEW"';
+         var_output := '<QUESTION QUECODE="*NEW"';
          var_output := var_output||' QUETEXT="'||pts_to_xml(rcd_retrieve.qde_que_text)||'"';
          var_output := var_output||' QUESTAT="'||rcd_retrieve.qde_que_status||'"';
          var_output := var_output||' QUETYPE="'||to_char(rcd_retrieve.qde_que_type)||'"';
@@ -286,7 +286,7 @@ create or replace package body pts_app.pts_que_function as
          var_output := var_output||' RESERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTQUE' then
-         var_output := '<SAMPLE SAMCODE="*NEW"';
+         var_output := '<QUESTION QUECODE="*NEW"';
          var_output := var_output||' QUETEXT=""';
          var_output := var_output||' QUESTAT="1"';
          var_output := var_output||' QUETYPE="1"';
