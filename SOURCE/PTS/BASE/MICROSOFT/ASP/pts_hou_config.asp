@@ -221,18 +221,22 @@ sub PaintFunction()%>
    // Define Functions //
    //////////////////////
    var cstrDefineMode;
+   var cstrDefineCode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDHOU" HOUCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_hou_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTHOU" HOUCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_hou_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYHOU" HOUCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_hou_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
@@ -256,12 +260,12 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt ='Update Household';
+            cobjScreens[1].hedtxt ='Update Household ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt ='Create Household';
+            cobjScreens[1].hedtxt ='Create Household ('+cstrDefineCode+')';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_HouCode').innerText = '';
+         document.getElementById('DEF_HouCode').value = '';
          document.getElementById('DEF_LocStrt').value = '';
          document.getElementById('DEF_LocTown').value = '';
          document.getElementById('DEF_LocPcde').value = '';
@@ -281,15 +285,20 @@ sub PaintFunction()%>
          objHouStat.options.length = 0;
          objGeoZone.options.length = 0;
          objDelNote.options.length = 0;
-         document.getElementById('DEF_PetName').focus();
+         document.getElementById('DEF_HouStat').focus();
          var objClaData = document.getElementById('DEF_ClaData');
          var objClaFont = document.getElementById('DEF_ClaFont');
+         var objPetData = document.getElementById('DEF_PetData');
+         var objPetFont = document.getElementById('DEF_PetFont');
          var objRow;
          var objCell;
          var strTabCode;
          var objValues;
          for (var i=objClaData.rows.length-1;i>=0;i--) {
             objClaData.deleteRow(i);
+         }
+         for (var i=objPetData.rows.length-1;i>=0;i--) {
+            objPetData.deleteRow(i);
          }
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
@@ -299,7 +308,7 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'DEL_NOTE') {
                objDelNote.options[objDelNote.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'HOUSEHOLD') {
-               document.getElementById('DEF_HouCode').innerText = objElements[i].getAttribute('HOUCODE');
+               document.getElementById('DEF_HouCode').value = objElements[i].getAttribute('HOUCODE');
                document.getElementById('DEF_LocStrt').value = objElements[i].getAttribute('LOCSTRT');
                document.getElementById('DEF_LocTown').value = objElements[i].getAttribute('LOCTOWN');
                document.getElementById('DEF_LocPcde').value = objElements[i].getAttribute('LOCPCDE');
@@ -313,8 +322,17 @@ sub PaintFunction()%>
                strHouStat = objElements[i].getAttribute('HOUSTAT');
                strGeoZone = objElements[i].getAttribute('GEOZONE');
                strDelNote = objElements[i].getAttribute('DELNOTE');
+            } else if (objElements[i].nodeName == 'PET') {
+               objRow = objPetData.insertRow(-1);
+               objRow.setAttribute('petcde','PETCODE');
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('PETNAME');
+               objCell.className = 'clsLabelFB';
+               objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'TABLE') {
                objRow = objClaData.insertRow(-1);
+               objRow.setAttribute('tabcde','*HEAD');
                objCell = objRow.insertCell(0);
                objCell.colSpan = 3;
                objCell.innerText = objElements[i].getAttribute('TABTXT');
@@ -328,8 +346,7 @@ sub PaintFunction()%>
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
                objRow.setAttribute('seltyp',objElements[i].getAttribute('SELTYP'));
                objRow.setAttribute('inplen',objElements[i].getAttribute('INPLEN'));
-               objValues = new Array();
-               objRow.setAttribute('valary',objValues);
+               objRow.setAttribute('valary',new Array());
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
                objCell.innerHTML = '<a class="clsSelect" onClick="doDefineClaSelect(\''+objRow.rowIndex+'\');">Select</a>';
@@ -342,20 +359,20 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(2);
                objCell.colSpan = 1;
-               objCell.innerText = 'NO VALUES';
+               objCell.innerText = '*NONE';
                objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'VALUE') {
+               objValues = objRow.getAttribute('valary');
                objValues[objValues.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
                if (objValues.length == 1) {
                   objCell.innerText = '';
-                  if (cobjRow.getAttribute('seltyp') == '*TEXT') {
+                  if (objRow.getAttribute('seltyp') == '*TEXT') {
                      objCell.innerText = objCell.innerText+'"'+objElements[i].getAttribute('VALTXT')+'"';
                   } else {
                      objCell.innerText = objCell.innerText+objElements[i].getAttribute('VALTXT');
                   }
                } else {
-                  if (cobjRow.getAttribute('seltyp') == '*TEXT') {
+                  if (objRow.getAttribute('seltyp') == '*TEXT') {
                      objCell.innerText = objCell.innerText+', "'+objElements[i].getAttribute('VALTXT')+'"';
                   } else {
                      objCell.innerText = objCell.innerText+', '+objElements[i].getAttribute('VALTXT');
@@ -390,6 +407,12 @@ sub PaintFunction()%>
             objClaData.style.display = 'none';
             objClaFont.style.display = 'block';
          }
+         objPetData.style.display = 'block';
+         objPetFont.style.display = 'none';
+         if (objPetData.rows.length == 0) {
+            objPetData.style.display = 'none';
+            objPetFont.style.display = 'block';
+         }
       }
    }
    function doDefineAccept() {
@@ -402,7 +425,7 @@ sub PaintFunction()%>
       var objValAry;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFHOU"';
-      strXML = strXML+' HOUCODE="'+fixXML(document.getElementById('DEF_HouCode').innerText)+'"';
+      strXML = strXML+' HOUCODE="'+fixXML(document.getElementById('DEF_HouCode').value)+'"';
       strXML = strXML+' HOUSTAT="'+fixXML(objHouStat.options[objHouStat.selectedIndex].value)+'"';
       strXML = strXML+' GEOZONE="'+fixXML(objGeoZone.options[objGeoZone.selectedIndex].value)+'"';
       strXML = strXML+' DELNOTE="'+fixXML(objDelNote.options[objDelNote.selectedIndex].value)+'"';
@@ -419,13 +442,15 @@ sub PaintFunction()%>
       strXML = strXML+'>';
       for (var i=0;i<objClaData.rows.length;i++) {
          objRow = objClaData.rows[i];
-         objValAry = objRow.getAttribute(valary);
-         if (objValAry.length != 0) {
-            strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
-            for (var j=0;j<objValAry.length;j++) {
-               strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+objValAry[j].valtxt+'"/>';
+         if (objRow.getAttribute('tabcde') != '*HEAD') {
+            objValues = objRow.getAttribute('valary');
+            if (objValues.length != 0) {
+               strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
+               for (var j=0;j<objValues.length;j++) {
+                  strXML = strXML+'<VAL_DATA VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
+               }
+               strXML = strXML+'</CLA_DATA>';
             }
-            strXML = strXML+'</CLA_DATA>';
          }
       }
       strXML = strXML+'</PTS_REQUEST>';
@@ -479,7 +504,7 @@ sub PaintFunction()%>
    function doDefineClaAccept(intRowIndex,objValues) {
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRowIndex];
-      objRow.cells[2].innerText = 'NO VALUES';
+      objRow.cells[2].innerText = '*NONE';
       var objValAry = objRow.getAttribute('valary');
       objValAry.length = 0;
       for (var i=0;i<objValues.length;i++) {
@@ -499,7 +524,6 @@ sub PaintFunction()%>
             }
          }
       }
-      objRow.setAttribute('valary',objValAry);
       displayScreen('dspDefine');
       document.getElementById('DEF_ClaData').focus();
    }
@@ -551,17 +575,14 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" heoght=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
+   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center colspan=2 nowrap><nobr>Household Maintenance</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Household Maintenance</nobr></td>
+         <input type="hidden" name="DEF_HouCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Code:&nbsp;</nobr></td>
-         <td id="DEF_PetCode" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Status:&nbsp;</nobr></td>
@@ -638,18 +659,25 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Notes:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_HouNote" rows="4" cols="100" value="" onFocus="setSelect(this);"></textArea>
+            <textArea class="clsInputNN" name="DEF_HouNote" rows="4" cols="100" value="" onFocus="setSelect(this);"></textArea>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Household Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Household Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Household Pets&nbsp;</nobr></td>
       </tr>
       <tr height=100%>
-         <td align=center colspan=2 nowrap><nobr>
+         <td align=center colspan=1 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
                <table id="DEF_ClaData" class="clsTableBody" style="display:block;visibility:visible" cols=1 align=left cellpadding="2" cellspacing="1"></table>
-               <font id="DEF_ClaFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO CLASSIFICATION DEFINITIONS</font>
+               <font id="DEF_ClaFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO CLASSIFICATIONS</font>
+            </div>
+         </nobr></td>
+         <td align=center colspan=1 nowrap><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible">
+               <table id="DEF_PetData" class="clsTableBody" style="display:block;visibility:visible" cols=1 align=left cellpadding="2" cellspacing="1"></table>
+               <font id="DEF_PetFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO PETS</font>
             </div>
          </nobr></td>
       </tr>

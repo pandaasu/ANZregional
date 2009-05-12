@@ -221,18 +221,22 @@ sub PaintFunction()%>
    // Define Functions //
    //////////////////////
    var cstrDefineMode;
+   var cstrDefineCode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDPET" PETCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_pet_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTPET" PETCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_pet_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYPET" PETCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_pet_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
@@ -256,12 +260,12 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Pet';
+            cobjScreens[1].hedtxt = 'Update Pet ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Pet';
+            cobjScreens[1].hedtxt = 'Create Pet ('+cstrDefineCode+')';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_PetCode').innerText = '';
+         document.getElementById('DEF_PetCode').value = '';
          document.getElementById('DEF_PetName').value = '';
          document.getElementById('DEF_HouCode').value = '';
          document.getElementById('DEF_HouText').innerText = '';
@@ -295,7 +299,7 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'DEL_NOTE') {
                objDelNote.options[objDelNote.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'PET') {
-               document.getElementById('DEF_PetCode').innerText = objElements[i].getAttribute('PETCODE');
+               document.getElementById('DEF_PetCode').value = objElements[i].getAttribute('PETCODE');
                document.getElementById('DEF_PetName').value = objElements[i].getAttribute('PETNAME');
                document.getElementById('DEF_HouCode').value = objElements[i].getAttribute('HOUCODE');
                document.getElementById('DEF_HouText').innerText = objElements[i].getAttribute('HOUTEXT');
@@ -394,7 +398,7 @@ sub PaintFunction()%>
       var objValues;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFPET"';
-      strXML = strXML+' PETCODE="'+fixXML(document.getElementById('DEF_PetCode').innerText)+'"';
+      strXML = strXML+' PETCODE="'+fixXML(document.getElementById('DEF_PetCode').value)+'"';
       strXML = strXML+' PETNAME="'+fixXML(document.getElementById('DEF_PetName').value)+'"';
       strXML = strXML+' PETSTAT="'+fixXML(objPetStat.options[objPetStat.selectedIndex].value)+'"';
       strXML = strXML+' PETTYPE="'+fixXML(objPetType.options[objPetType.selectedIndex].value)+'"';
@@ -558,14 +562,11 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Maintenance</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Pet Maintenance</nobr></td>
+         <input type="hidden" name="DEF_PetCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Code:&nbsp;</nobr></td>
-         <td id="DEF_PetCode" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Name:&nbsp;</nobr></td>

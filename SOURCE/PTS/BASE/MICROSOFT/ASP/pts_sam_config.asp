@@ -220,18 +220,22 @@ sub PaintFunction()%>
    // Define Functions //
    //////////////////////
    var cstrDefineMode;
+   var cstrDefineCode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
+      cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYSAM" SAMCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_sam_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
@@ -255,12 +259,12 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Sample';
+            cobjScreens[1].hedtxt = 'Update Sample ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Sample';
+            cobjScreens[1].hedtxt = 'Create Sample ('+cstrDefineCode+')';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_SamCode').innerText = '';
+         document.getElementById('DEF_SamCode').value = '';
          document.getElementById('DEF_SamText').value = '';
          document.getElementById('DEF_UomSize').value = '';
          document.getElementById('DEF_PreDate').value = '';
@@ -283,7 +287,7 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'PRE_LIST') {
                objPreLocn.options[objPreLocn.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SAMPLE') {
-               document.getElementById('DEF_SamCode').innerText = objElements[i].getAttribute('SAMCODE');
+               document.getElementById('DEF_SamCode').value = objElements[i].getAttribute('SAMCODE');
                document.getElementById('DEF_SamText').value = objElements[i].getAttribute('SAMTEXT');
                document.getElementById('DEF_UomSize').value = objElements[i].getAttribute('UOMSIZE');
                document.getElementById('DEF_PreDate').value = objElements[i].getAttribute('PREDATE');
@@ -325,7 +329,7 @@ sub PaintFunction()%>
       var objPreLocn = document.getElementById('DEF_PreLocn');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSAM"';
-      strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').innerText)+'"';
+      strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').value)+'"';
       strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
       strXML = strXML+' UOMCODE="'+fixXML(objUomCode.options[objUomCode.selectedIndex].value)+'"';
@@ -423,14 +427,11 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center colspan=2 nowrap><nobr>Sample Maintenance</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Sample Maintenance</nobr></td>
+         <input type="hidden" name="DEF_SamCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Code:&nbsp;</nobr></td>
-         <td id="DEF_SamCode" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Description:&nbsp;</nobr></td>
