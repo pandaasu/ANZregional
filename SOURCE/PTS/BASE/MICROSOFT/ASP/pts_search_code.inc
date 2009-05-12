@@ -131,7 +131,7 @@
             objRow.setAttribute('fldtxt',cobjSearchData[i].fldtxt);
             objRow.setAttribute('rultyp',cobjSearchData[i].rultyp);
             objRow.setAttribute('rulcde',cobjSearchData[i].rulcde);
-            var strText = 'NO VALUES';
+            var strText = '*NONE';
             if (cobjSearchData[i].rulcde != '') {
                strText = '';
                var objValues = new Array();

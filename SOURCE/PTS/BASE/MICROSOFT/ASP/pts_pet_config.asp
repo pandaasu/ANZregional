@@ -307,6 +307,7 @@ sub PaintFunction()%>
                strDelNote = objElements[i].getAttribute('DELNOTE');
             } else if (objElements[i].nodeName == 'TABLE') {
                objRow = objClaData.insertRow(-1);
+               objRow.setAttribute('tabcde','*HEAD');
                objCell = objRow.insertCell(0);
                objCell.colSpan = 3;
                objCell.innerText = objElements[i].getAttribute('TABTXT');
@@ -320,8 +321,7 @@ sub PaintFunction()%>
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
                objRow.setAttribute('seltyp',objElements[i].getAttribute('SELTYP'));
                objRow.setAttribute('inplen',objElements[i].getAttribute('INPLEN'));
-               objValues = new Array();
-               objRow.setAttribute('valary',objValues);
+               objRow.setAttribute('valary',new Array());
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
                objCell.innerHTML = '<a class="clsSelect" onClick="doDefineClaSelect(\''+objRow.rowIndex+'\');">Select</a>';
@@ -334,20 +334,20 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(2);
                objCell.colSpan = 1;
-               objCell.innerText = 'NO VALUES';
+               objCell.innerText = '*NONE';
                objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'VALUE') {
+               objValues = objRow.getAttribute('valary');
                objValues[objValues.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
                if (objValues.length == 1) {
                   objCell.innerText = '';
-                  if (cobjRow.getAttribute('seltyp') == '*TEXT') {
+                  if (objRow.getAttribute('seltyp') == '*TEXT') {
                      objCell.innerText = objCell.innerText+'"'+objElements[i].getAttribute('VALTXT')+'"';
                   } else {
                      objCell.innerText = objCell.innerText+objElements[i].getAttribute('VALTXT');
                   }
                } else {
-                  if (cobjRow.getAttribute('seltyp') == '*TEXT') {
+                  if (objRow.getAttribute('seltyp') == '*TEXT') {
                      objCell.innerText = objCell.innerText+', "'+objElements[i].getAttribute('VALTXT')+'"';
                   } else {
                      objCell.innerText = objCell.innerText+', '+objElements[i].getAttribute('VALTXT');
@@ -391,7 +391,7 @@ sub PaintFunction()%>
       var objDelNote = document.getElementById('DEF_DelNote');
       var objClaData = document.getElementById('DEF_ClaData');
       var objRow;
-      var objValAry;
+      var objValues;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFPET"';
       strXML = strXML+' PETCODE="'+fixXML(document.getElementById('DEF_PetCode').innerText)+'"';
@@ -406,13 +406,15 @@ sub PaintFunction()%>
       strXML = strXML+'>';
       for (var i=0;i<objClaData.rows.length;i++) {
          objRow = objClaData.rows[i];
-         objValAry = objRow.getAttribute(valary);
-         if (objValAry.length != 0) {
-            strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
-            for (var j=0;j<objValAry.length;j++) {
-               strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+objValAry[j].valtxt+'"/>';
+         if (objRow.getAttribute('tabcde') != '*HEAD') {
+            objValues = objRow.getAttribute('valary');
+            if (objValues.length != 0) {
+               strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
+               for (var j=0;j<objValues.length;j++) {
+                  strXML = strXML+'<VAL_DATA VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
+               }
+               strXML = strXML+'</CLA_DATA>';
             }
-            strXML = strXML+'</CLA_DATA>';
          }
       }
       strXML = strXML+'</PTS_REQUEST>';
@@ -482,7 +484,7 @@ sub PaintFunction()%>
    function doDefineClaAccept(intRowIndex,objValues) {
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRowIndex];
-      objRow.cells[2].innerText = 'NO VALUES';
+      objRow.cells[2].innerText = '*NONE';
       var objValAry = objRow.getAttribute('valary');
       objValAry.length = 0;
       for (var i=0;i<objValues.length;i++) {
@@ -502,7 +504,6 @@ sub PaintFunction()%>
             }
          }
       }
-      objRow.setAttribute('valary',objValAry);
       displayScreen('dspDefine');
       document.getElementById('DEF_ClaData').focus();
    }
