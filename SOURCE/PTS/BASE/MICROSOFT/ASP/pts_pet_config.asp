@@ -466,7 +466,7 @@ sub PaintFunction()%>
    }
    function doDefineHouseholdCancel() {
       displayScreen('dspDefine');
-      document.getElementById('DEF_PetCode').focus();
+      document.getElementById('DEF_PetName').focus();
    }
    function doDefineHouseholdSelect(strCode,strText) {
       document.getElementById('DEF_HouCode').value = strCode;
