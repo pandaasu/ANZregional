@@ -260,7 +260,7 @@ create or replace package body pts_app.pts_que_function as
          if csr_rsp_code%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<rsp_LIST VALCDE="'||rcd_rsp_code.val_code||'" VALTXT="'||pts_to_xml(rcd_rsp_code.val_text)||'"/>'));
+         pipe row(pts_xml_object('<RSP_LIST VALCDE="'||rcd_rsp_code.val_code||'" VALTXT="'||pts_to_xml(rcd_rsp_code.val_text)||'"/>'));
       end loop;
       close csr_rsp_code;
 
