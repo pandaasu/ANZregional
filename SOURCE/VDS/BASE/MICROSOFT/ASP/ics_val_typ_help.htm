@@ -1,0 +1,23 @@
+<html>
+<head>
+   <meta http-equiv="content-type" content="text/html">
+   <link rel="stylesheet" type="text/css" href="ics_style.css">
+</head>
+<body class="clsBody03" scroll="auto" onLoad="parent.setHelpHeading('Job Configuration - Update Job Help');">
+<p class="clsNormal">
+This function facilitates the updating of existing jobs in the Interface Control System.
+</p>
+<p><font class="clsSubHeading">Job Identifier: </font><font class="clsNormal">(Mandatory) A globally unique job identifier</font></p>
+<p><font class="clsSubHeading">Job Description: </font><font class="clsNormal">(Mandatory) A description of the job</font></p>
+<p><font class="clsSubHeading">Job Resource Group: </font><font class="clsNormal">(Optional) The job resource group must match an Oracle consumer group when entered. An Oracle consumer group allows the DBA team to assign specific server resources to the job</font></p>
+<p><font class="clsSubHeading">Job Execution History: </font><font class="clsNormal">(Mandatory) A number of job execution traces to be retained in the database</font></p>
+<p><font class="clsSubHeading">Job Operator Alert Flag: </font><font class="clsNormal">(Mandatory) A flag indicating operator alerts are to be raised for execution exceptions</font></p>
+<p><font class="clsSubHeading">Job Email Group: </font><font class="clsNormal">(Optional) An email group for emails to be sent for execution exceptions</font></p>
+<p><font class="clsSubHeading">Job Type: </font><font class="clsNormal">(Mandatory) The job type - *INBOUND (interfaces coming into ICS), *OUTBOUND (interface going out from ICS), *PASSTHRU (interfaces passing through ICS), *DAEMON (background server job), *PROCEDURE (scheduled procedure)</font></p>
+<p><font class="clsSubHeading">Job Group: </font><font class="clsNormal">(Optional) A group identifier for server jobs (*INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON). Server jobs process interfaces or tasks belonging to the same group)</font></p>
+<p><font class="clsSubHeading">Job Procedure: </font><font class="clsNormal">(Optional) The Oracle procedure that will be executed by *DAEMON or *PROCEDURE</font></p>
+<p><font class="clsSubHeading">Job Next: </font><font class="clsNormal">(Mandatory) The next execution date for the job (server jobs *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON must be Oracle SYSDATE). The expression can be any valid Oracle expression that resolves to a date.</font></p>
+<p><font class="clsSubHeading">Job Interval: </font><font class="clsNormal">(Optional) The interval between execution dates for the job (server jobs *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON must not be specified). The expression can be any valid Oracle expression that resolves to a date.</font></p>
+<p><font class="clsSubHeading">Job Status: </font><font class="clsNormal">(Mandatory) A flag indicating the status of the job</p>
+</body>
+</html>
