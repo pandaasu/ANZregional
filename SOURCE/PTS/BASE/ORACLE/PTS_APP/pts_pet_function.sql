@@ -81,6 +81,11 @@ create or replace package body pts_app.pts_pet_function as
       /*------------------------------------------------*/
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -129,7 +134,7 @@ create or replace package body pts_app.pts_pet_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'PTS_PET_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -208,6 +213,7 @@ create or replace package body pts_app.pts_pet_function as
                 pts_sys_value t02
           where t01.pcl_tab_code = t02.sva_tab_code(+)
             and t01.pcl_fld_code = t02.sva_fld_code(+)
+            and t01.pcl_val_code = t02.sva_val_code(+)
             and t01.pcl_pet_code = pts_to_number(var_pet_code)
             and t01.pcl_tab_code = rcd_table.sta_tab_code
             and t01.pcl_fld_code = rcd_field.sfi_fld_code
@@ -222,6 +228,11 @@ create or replace package body pts_app.pts_pet_function as
       /*------------------------------------------------*/
       /* NOTE - This procedure must not commit/rollback */
       /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
 
       /*-*/
       /* Parse the XML input
@@ -403,7 +414,7 @@ create or replace package body pts_app.pts_pet_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -470,6 +481,11 @@ create or replace package body pts_app.pts_pet_function as
    begin
 
       /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
       /* Parse the XML input
       /*-*/
       obj_xml_parser := xmlParser.newParser();
@@ -478,6 +494,10 @@ create or replace package body pts_app.pts_pet_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*DEFPET' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
       rcd_pts_pet_definition.pde_pet_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETCODE'));
       rcd_pts_pet_definition.pde_pet_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETSTAT'));
       rcd_pts_pet_definition.pde_upd_user := upper(par_user);
@@ -488,7 +508,7 @@ create or replace package body pts_app.pts_pet_function as
       rcd_pts_pet_definition.pde_birth_year := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@BTHYEAR'));
       rcd_pts_pet_definition.pde_del_notifier := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DELNOTE'));
       rcd_pts_pet_definition.pde_feed_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@FEDCMNT'));
-      rcd_pts_pet_definition.pde_health_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@HLHCMNT'));
+      rcd_pts_pet_definition.pde_health_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@HTHCMNT'));
       if rcd_pts_pet_definition.pde_pet_code is null and not(xslProcessor.valueOf(obj_pts_request,'@PETCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
       end if;
@@ -504,9 +524,7 @@ create or replace package body pts_app.pts_pet_function as
       if rcd_pts_pet_definition.pde_del_notifier is null and not(xslProcessor.valueOf(obj_pts_request,'@DELNOTE') is null) then
          pts_gen_function.add_mesg_data('Delete notifier ('||xslProcessor.valueOf(obj_pts_request,'@DELNOTE')||') must be a number');
       end if;
-      xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*DEFPET' then
-         pts_gen_function.add_mesg_data('Invalid request action');
+      if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
@@ -514,14 +532,15 @@ create or replace package body pts_app.pts_pet_function as
       /* Validate the input
       /*-*/
       if rcd_pts_pet_definition.pde_pet_name is null then
-         raise_application_error(-20000, 'Pet name must be supplied');
+         pts_gen_function.add_mesg_data('Pet name must be supplied');
       end if;
       if rcd_pts_pet_definition.pde_pet_status is null then
-         raise_application_error(-20000, 'Pet status must be supplied');
+         pts_gen_function.add_mesg_data('Pet status must be supplied');
       end if;
       if rcd_pts_pet_definition.pde_upd_user is null then
-         raise_application_error(-20000, 'Update user must be supplied');
+         pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
+      open csr_sta_code;
       fetch csr_sta_code into rcd_sta_code;
       if csr_sta_code%notfound then
          pts_gen_function.add_mesg_data('Pet status ('||to_char(rcd_pts_pet_definition.pde_pet_status)||') does not exist');
@@ -554,6 +573,9 @@ create or replace package body pts_app.pts_pet_function as
             pts_gen_function.add_mesg_data('Delete notifier ('||to_char(rcd_pts_pet_definition.pde_del_notifier)||') does not exist');
          end if;
          close csr_del_note;
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
       end if;
 
       /*-*/
@@ -590,7 +612,7 @@ create or replace package body pts_app.pts_pet_function as
       obj_cla_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/CLA_DATA');
       for idx in 0..xmlDom.getLength(obj_cla_list)-1 loop
          obj_cla_node := xmlDom.item(obj_cla_list,idx);
-         rcd_pts_pet_classification.pcl_tab_code := pts_to_number(xslProcessor.valueOf(obj_cla_node,'@TABCDE'));
+         rcd_pts_pet_classification.pcl_tab_code := pts_from_xml(xslProcessor.valueOf(obj_cla_node,'@TABCDE'));
          rcd_pts_pet_classification.pcl_fld_code := pts_to_number(xslProcessor.valueOf(obj_cla_node,'@FLDCDE'));
          obj_val_list := xslProcessor.selectNodes(obj_cla_node,'VAL_DATA');
          for idy in 0..xmlDom.getLength(obj_val_list)-1 loop
@@ -600,6 +622,11 @@ create or replace package body pts_app.pts_pet_function as
             insert into pts_pet_classification values rcd_pts_pet_classification;
          end loop;
       end loop;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
       /* Commit the database
@@ -621,10 +648,9 @@ create or replace package body pts_app.pts_pet_function as
          /*-*/
          rollback;
 
-         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_PET_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 2048));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */

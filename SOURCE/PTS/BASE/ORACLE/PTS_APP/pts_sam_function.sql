@@ -493,6 +493,10 @@ create or replace package body pts_app.pts_sam_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*DEFSAM' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
       rcd_pts_sam_definition.sde_sam_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@SAMCODE'));
       rcd_pts_sam_definition.sde_sam_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@SAMTEXT'));
       rcd_pts_sam_definition.sde_sam_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@SAMSTAT'));
@@ -514,8 +518,7 @@ create or replace package body pts_app.pts_sam_function as
          pts_gen_function.add_mesg_data('Prepared date ('||xslProcessor.valueOf(obj_pts_request,'@PREDATE')||') must be a date in the format DD/MM/YYYY');
       end if;
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*DEFSAM' then
-         pts_gen_function.add_mesg_data('Invalid request action');
+      if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 

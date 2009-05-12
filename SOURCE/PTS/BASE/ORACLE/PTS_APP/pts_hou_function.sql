@@ -207,6 +207,7 @@ create or replace package body pts_app.pts_hou_function as
                 pts_sys_value t02
           where t01.hcl_tab_code = t02.sva_tab_code(+)
             and t01.hcl_fld_code = t02.sva_fld_code(+)
+            and t01.hcl_val_code = t02.sva_val_code(+)
             and t01.hcl_hou_code = pts_to_number(var_hou_code)
             and t01.hcl_tab_code = rcd_table.sta_tab_code
             and t01.hcl_fld_code = rcd_field.sfi_fld_code
@@ -470,7 +471,7 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_geo_zone is
          select t01.*
-           from table(pts_app.pts_gen_function.list_geo_zone(40)) t01
+           from table(pts_app.pts_gen_function.list_geo_zone(rcd_pts_hou_definition.hde_geo_type)) t01
           where t01.geo_zone = rcd_pts_hou_definition.hde_geo_zone;
       rcd_geo_zone csr_geo_zone%rowtype;
 
@@ -499,6 +500,10 @@ create or replace package body pts_app.pts_hou_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*DEFHOU' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
       rcd_pts_hou_definition.hde_hou_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUCODE'));
       rcd_pts_hou_definition.hde_hou_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUSTAT'));
       rcd_pts_hou_definition.hde_upd_user := upper(par_user);
@@ -527,9 +532,7 @@ create or replace package body pts_app.pts_hou_function as
       if rcd_pts_hou_definition.hde_con_birth_year is null and not(xslProcessor.valueOf(obj_pts_request,'@CONBYER') is null) then
          pts_gen_function.add_mesg_data('Contact birth year ('||xslProcessor.valueOf(obj_pts_request,'@CONBYER')||') must be a number');
       end if;
-      xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*DEFHOU' then
-         pts_gen_function.add_mesg_data('Invalid request action');
+      if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
@@ -545,6 +548,7 @@ create or replace package body pts_app.pts_hou_function as
       if rcd_pts_hou_definition.hde_con_fullname is null then
          pts_gen_function.add_mesg_data('Household contact full name must be supplied');
       end if;
+      open csr_sta_code;
       fetch csr_sta_code into rcd_sta_code;
       if csr_sta_code%notfound then
          pts_gen_function.add_mesg_data('Household status ('||to_char(rcd_pts_hou_definition.hde_hou_status)||') does not exist');
@@ -616,7 +620,7 @@ create or replace package body pts_app.pts_hou_function as
       obj_cla_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/CLA_DATA');
       for idx in 0..xmlDom.getLength(obj_cla_list)-1 loop
          obj_cla_node := xmlDom.item(obj_cla_list,idx);
-         rcd_pts_hou_classification.hcl_tab_code := pts_to_number(xslProcessor.valueOf(obj_cla_node,'@TABCDE'));
+         rcd_pts_hou_classification.hcl_tab_code := pts_from_xml(xslProcessor.valueOf(obj_cla_node,'@TABCDE'));
          rcd_pts_hou_classification.hcl_fld_code := pts_to_number(xslProcessor.valueOf(obj_cla_node,'@FLDCDE'));
          obj_val_list := xslProcessor.selectNodes(obj_cla_node,'VAL_DATA');
          for idy in 0..xmlDom.getLength(obj_val_list)-1 loop
@@ -626,6 +630,11 @@ create or replace package body pts_app.pts_hou_function as
             insert into pts_hou_classification values rcd_pts_hou_classification;
          end loop;
       end loop;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
       /* Commit the database
