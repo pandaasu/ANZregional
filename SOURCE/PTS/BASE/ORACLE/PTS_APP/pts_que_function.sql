@@ -272,27 +272,27 @@ create or replace package body pts_app.pts_que_function as
          var_output := var_output||' QUETEXT="'||pts_to_xml(rcd_retrieve.qde_que_text)||'"';
          var_output := var_output||' QUESTAT="'||rcd_retrieve.qde_que_status||'"';
          var_output := var_output||' QUETYPE="'||to_char(rcd_retrieve.qde_que_type)||'"';
-         var_output := var_output||' RESTYPE="'||to_char(rcd_retrieve.qde_rsp_type)||'"';
-         var_output := var_output||' RESSRAN="'||to_char(rcd_retrieve.qde_rsp_str_range)||'"';
-         var_output := var_output||' RESERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
+         var_output := var_output||' RSPTYPE="'||to_char(rcd_retrieve.qde_rsp_type)||'"';
+         var_output := var_output||' RSPSRAN="'||to_char(rcd_retrieve.qde_rsp_str_range)||'"';
+         var_output := var_output||' RSPERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYQUE' then
          var_output := '<QUESTION QUECODE="*NEW"';
          var_output := var_output||' QUETEXT="'||pts_to_xml(rcd_retrieve.qde_que_text)||'"';
          var_output := var_output||' QUESTAT="'||rcd_retrieve.qde_que_status||'"';
          var_output := var_output||' QUETYPE="'||to_char(rcd_retrieve.qde_que_type)||'"';
-         var_output := var_output||' RESTYPE="'||to_char(rcd_retrieve.qde_rsp_type)||'"';
-         var_output := var_output||' RESSRAN="'||to_char(rcd_retrieve.qde_rsp_str_range)||'"';
-         var_output := var_output||' RESERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
+         var_output := var_output||' RSPTYPE="'||to_char(rcd_retrieve.qde_rsp_type)||'"';
+         var_output := var_output||' RSPSRAN="'||to_char(rcd_retrieve.qde_rsp_str_range)||'"';
+         var_output := var_output||' RSPERAN="'||to_char(rcd_retrieve.qde_rsp_end_range)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTQUE' then
          var_output := '<QUESTION QUECODE="*NEW"';
          var_output := var_output||' QUETEXT=""';
          var_output := var_output||' QUESTAT="1"';
          var_output := var_output||' QUETYPE="1"';
-         var_output := var_output||' RESTYPE="1"';
-         var_output := var_output||' RESSRAN=""';
-         var_output := var_output||' RESERAN=""/>';
+         var_output := var_output||' RSPTYPE="1"';
+         var_output := var_output||' RSPSRAN=""';
+         var_output := var_output||' RSPERAN=""/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -398,9 +398,9 @@ create or replace package body pts_app.pts_que_function as
       rcd_pts_que_definition.qde_upd_user := upper(par_user);
       rcd_pts_que_definition.qde_upd_date := sysdate;
       rcd_pts_que_definition.qde_que_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@QUETYPE'));
-      rcd_pts_que_definition.qde_rsp_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESTYPE'));
-      rcd_pts_que_definition.qde_rsp_str_range := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESSRAN'));
-      rcd_pts_que_definition.qde_rsp_end_range := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESERAN'));
+      rcd_pts_que_definition.qde_rsp_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RSPTYPE'));
+      rcd_pts_que_definition.qde_rsp_str_range := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RSPSRAN'));
+      rcd_pts_que_definition.qde_rsp_end_range := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RSPERAN'));
       if rcd_pts_que_definition.qde_que_code is null and not(xslProcessor.valueOf(obj_pts_request,'@QUECODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Question code ('||xslProcessor.valueOf(obj_pts_request,'@QUECODE')||') must be a number');
       end if;
@@ -410,8 +410,8 @@ create or replace package body pts_app.pts_que_function as
       if rcd_pts_que_definition.qde_que_type is null and not(xslProcessor.valueOf(obj_pts_request,'@QUETYPE') is null) then
          pts_gen_function.add_mesg_data('Question type ('||xslProcessor.valueOf(obj_pts_request,'@QUETYPE')||') must be a number');
       end if;
-      if rcd_pts_que_definition.qde_rsp_type is null and not(xslProcessor.valueOf(obj_pts_request,'@RESTYPE') is null) then
-         pts_gen_function.add_mesg_data('Response type ('||xslProcessor.valueOf(obj_pts_request,'@RESTYPE')||') must be a number');
+      if rcd_pts_que_definition.qde_rsp_type is null and not(xslProcessor.valueOf(obj_pts_request,'@RSPTYPE') is null) then
+         pts_gen_function.add_mesg_data('Response type ('||xslProcessor.valueOf(obj_pts_request,'@RSPTYPE')||') must be a number');
       end if;
       xmlDom.freeDocument(obj_xml_document);
       if pts_gen_function.get_mesg_count != 0 then
