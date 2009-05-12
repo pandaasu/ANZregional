@@ -33,9 +33,9 @@ create table pts.pts_que_definition
 /* Comments
 /**/
 comment on table pts.pts_que_definition is 'Question Definition Table';
-comment on column pts.pts_que_definition.qde_question is 'Question code';
-comment on column pts.pts_que_definition.qde_text is 'Question definition text';
-comment on column pts.pts_que_definition.qde_status is 'Question status';
+comment on column pts.pts_que_definition.qde_que_code is 'Question code';
+comment on column pts.pts_que_definition.qde_que_text is 'Question definition text';
+comment on column pts.pts_que_definition.qde_que_status is 'Question status';
 comment on column pts.pts_que_definition.qde_upd_user is 'Question update user';
 comment on column pts.pts_que_definition.qde_upd_date is 'Question update date';
 comment on column pts.pts_que_definition.qde_que_group is 'Question definition group code';
