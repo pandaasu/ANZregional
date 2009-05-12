@@ -60,8 +60,10 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurity()
-   if strReturn = "*OK" then
+   strReturn = GetSecurityCheck("VDS_INT_SUBMIT")
+   if strReturn <> "*OK" then
+      strMode = "FATAL"
+   else
 
       '//
       '// Get the form data
@@ -78,6 +80,7 @@
          case "SUBMIT"
             call ProcessSubmit
          case else
+            strMode = "FATAL"
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
       end select
 
