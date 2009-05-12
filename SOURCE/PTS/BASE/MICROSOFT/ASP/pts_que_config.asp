@@ -204,7 +204,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*QUESTION','Question','pts_sam_search.asp','0',function() {doPromptQueCancel();},function(strCode,strText) {doPromptQueSelect(strCode,strText);});
+      startSchInstance('*QUESTION','Question','pts_que_search.asp','0',function() {doPromptQueCancel();},function(strCode,strText) {doPromptQueSelect(strCode,strText);});
    }
    function doPromptQueCancel() {
       displayScreen('dspPrompt');
@@ -280,15 +280,13 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objQueStat.options[objQueStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'QUE_TYPE') {
+            } else if (objElements[i].nodeName == 'TYP_LIST') {
                objQueType.options[objQueType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'RSPTYPE') {
+            } else if (objElements[i].nodeName == 'RSP_LIST') {
                objRspType.options[objRspType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'QUESTION') {
                document.getElementById('DEF_QueCode').innerText = objElements[i].getAttribute('QUECODE');
                document.getElementById('DEF_QueText').value = objElements[i].getAttribute('QUETEXT');
-               document.getElementById('DEF_QueType').value = objElements[i].getAttribute('QUETYPE');
-               document.getElementById('DEF_RspType').value = objElements[i].getAttribute('RSPTYPE');
                document.getElementById('DEF_RspSran').value = objElements[i].getAttribute('RSPSRAN');
                document.getElementById('DEF_RspEran').value = objElements[i].getAttribute('RSPERAN');
                strQueStat = objElements[i].getAttribute('QUESTAT');
@@ -430,13 +428,9 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Code:&nbsp;</nobr></td>
-         <td id="DEF_QueCode" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Description:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_QueText" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <textArea class="clsInputNN" name="DEF_QueText" rows="10" cols="120" value="" onFocus="setSelect(this);"></textArea>
          </nobr></td>
       </tr>
       <tr>
@@ -454,7 +448,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_QueType"></select>
+            <select class="clsInputBN" id="DEF_RspType"></select>
          </nobr></td>
       </tr>
       <tr>
