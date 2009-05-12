@@ -262,7 +262,7 @@ sub PaintFunction()%>
          if (cstrDefineMode == '*UPD') {
             cobjScreens[1].hedtxt = 'Update Pet ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Pet ('+cstrDefineCode+')';
+            cobjScreens[1].hedtxt = 'Create Pet (*NEW)';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_PetCode').value = '';

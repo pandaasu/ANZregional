@@ -262,7 +262,7 @@ sub PaintFunction()%>
          if (cstrDefineMode == '*UPD') {
             cobjScreens[1].hedtxt ='Update Household ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt ='Create Household ('+cstrDefineCode+')';
+            cobjScreens[1].hedtxt ='Create Household (*NEW)';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_HouCode').value = '';

@@ -261,7 +261,7 @@ sub PaintFunction()%>
          if (cstrDefineMode == '*UPD') {
             cobjScreens[1].hedtxt = 'Update Sample ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Sample ('+cstrDefineCode+')';
+            cobjScreens[1].hedtxt = 'Create Sample (*NEW)';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_SamCode').value = '';
