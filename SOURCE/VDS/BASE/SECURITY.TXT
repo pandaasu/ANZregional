@@ -1,0 +1,51 @@
+
+
+insert into lics_job values('VDS_PROCESSOR','Validation data store processor',null,20,null,'"ISI ICS Test Group"@esosn1','*DAEMON','VDS#01','lics_trigger_processor.execute_from_daemon','sysdate',null,'1');
+insert into lics_interface values('SAPVDS01','SAP to VDS - Validation Data Store Interface','*INBOUND','IB_NORM',1,5,5,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@esosn1',null,'vds_app.vds_sapvds01','1',null,null,null);
+commit;
+
+
+insert into lics_sec_menu values('VDS_STORE','Validation Data Store');
+insert into lics_sec_link values('VDS_STORE',1,'*MNU','VAL_CONFIG');
+insert into lics_sec_link values('VDS_STORE',2,'*MNU','VAL_MONITOR');
+insert into lics_sec_link values('VDS_STORE',3,'*MNU','VAL_EXECUTION');
+insert into lics_sec_link values('VDS_STORE',4,'*OPT','VDS_INT_CONFIG');
+insert into lics_sec_link values('VDS_STORE',5,'*OPT','VDS_INT_SUBMIT');
+insert into lics_sec_link values('VDS_STORE',6,'*OPT','VDS_VEW_GENERATION');
+
+insert into lics_sec_menu values('VAL_CONFIG','Validation Configuration');
+insert into lics_sec_link values('VAL_CONFIG',1,'*OPT','VAL_GRP_CONFIG');
+insert into lics_sec_link values('VAL_CONFIG',2,'*OPT','VAL_RUL_CONFIG');
+insert into lics_sec_link values('VAL_CONFIG',3,'*OPT','VAL_CLA_CONFIG');
+insert into lics_sec_link values('VAL_CONFIG',4,'*OPT','VAL_TYP_CONFIG');
+insert into lics_sec_link values('VAL_CONFIG',5,'*OPT','VAL_FIL_CONFIG');
+insert into lics_sec_link values('VAL_CONFIG',6,'*OPT','VAL_EMA_CONFIG');
+
+insert into lics_sec_menu values('VAL_MONITOR','Validation Monitoring');
+insert into lics_sec_link values('VAL_MONITOR',1,'*OPT','VAL_MSG_ENQUIRY');
+
+insert into lics_sec_menu values('VAL_EXECUTION','Validation Execution');
+insert into lics_sec_link values('VAL_EXECUTION',1,'*OPT','VAL_SNG_EXECUTE');
+insert into lics_sec_link values('VAL_EXECUTION',2,'*OPT','VAL_BCH_EXECUTE');
+
+insert into lics_sec_option values('VAL_BCH_EXECUTE','Validation Execution - Batch','ics_val_sbm.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_CLA_CONFIG','Classification Configuration','ics_val_cla.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_EMA_CONFIG','Email Configuration','ics_val_ema.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_FIL_CONFIG','Filter Configuration','ics_val_fil.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_GRP_CONFIG','Group Configuration','ics_val_grp.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_MSG_ENQUIRY','Message Enquiry','ics_val_mes.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_RUL_CONFIG','Rule Configuration','ics_val_rul.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_SNG_EXECUTE','Validation Execution - Single','ics_val_exe.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VAL_TYP_CONFIG','Type Configuration','ics_val_typ.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VDS_INT_CONFIG','Validation Data Store Interface Configuration','ics_vds_int.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VDS_INT_SUBMIT','Validation Data Store Interface Submit','ics_vds_sbm.asp?Mode=SELECT','1');
+insert into lics_sec_option values('VDS_VEW_GENERATION','Validation Data Store View Generation','ics_vds_view.asp?Mode=SELECT','1');
+
+commit;
+
+
+insert into lics_setting values('TRIGGER_SUBMIT_ALERT','VDS_VALIDATION','*NONE');
+insert into lics_setting values('TRIGGER_SUBMIT_EMAIL_GROUP','VDS_VALIDATION','"ISI ICS Test Group"@esosn1');
+insert into lics_setting values('TRIGGER_SUBMIT_JOB_GROUP','VDS_VALIDATION','VDS');
+
+commit;
