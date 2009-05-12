@@ -158,7 +158,7 @@ sub ProcessSubmit()
    strStatement = strStatement & ",''" & objSecurity.FixString(objForm.Fields("SLT_Password01").Value) & "''"
    strStatement = strStatement & ",''" & objSecurity.FixString(objForm.Fields("SLT_User02").Value) & "''"
    strStatement = strStatement & ",''" & objSecurity.FixString(objForm.Fields("SLT_Password02").Value) & "'')"
-   strStatement = strStatement & "','LADS_VALIDATION')"
+   strStatement = strStatement & "','VDS_VALIDATION')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)

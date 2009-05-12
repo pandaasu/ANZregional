@@ -146,7 +146,7 @@ sub ProcessSubmit()
    '//
    '// Submit the validation execution
    '//
-   strStatement = "lics_trigger_submitter.execute('LADS Statistics','vds_validation.statistics(''" & objSecurity.FixString(objForm.Fields("DTA_GROUP").Value) & "'')','LADS_VALIDATION')"
+   strStatement = "lics_trigger_submitter.execute('VDS Statistics','vds_validation.statistics(''" & objSecurity.FixString(objForm.Fields("DTA_GROUP").Value) & "'')','VDS_VALIDATION')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strReturn = FormatError(strReturn)
