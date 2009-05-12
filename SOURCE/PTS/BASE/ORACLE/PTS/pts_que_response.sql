@@ -20,7 +20,7 @@
 /**/
 create table pts.pts_que_response
    (qre_que_code                    number                        not null,
-    qre_res_seqn                    number                        not null,
+    qre_res_code                    number                        not null,
     qre_res_text                    varchar2(2000 char)           not null);
 
 /**/
@@ -28,7 +28,7 @@ create table pts.pts_que_response
 /**/
 comment on table pts.pts_que_response is 'Question Response Table';
 comment on column pts.pts_que_response.qre_que_code is 'Question response question sequence';
-comment on column pts.pts_que_response.qre_res_seqn is 'Question response sequence';
+comment on column pts.pts_que_response.qre_res_code is 'Question response code';
 comment on column pts.pts_que_response.qre_res_text is 'Question response text';
 
 /**/

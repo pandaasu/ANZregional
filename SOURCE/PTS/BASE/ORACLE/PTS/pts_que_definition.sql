@@ -24,7 +24,7 @@ create table pts.pts_que_definition
     qde_que_status                  number                        not null,
     qde_upd_user                    varchar2(30 char)             not null,
     qde_upd_date                    date                          not null,
-    qde_que_group                   number                        not null,
+    qde_que_type                    number                        not null,
     qde_rsp_type                    number                        not null,
     qde_rsp_str_range               number                        null,
     qde_rsp_end_range               number                        null);
@@ -38,7 +38,7 @@ comment on column pts.pts_que_definition.qde_que_text is 'Question definition te
 comment on column pts.pts_que_definition.qde_que_status is 'Question status';
 comment on column pts.pts_que_definition.qde_upd_user is 'Question update user';
 comment on column pts.pts_que_definition.qde_upd_date is 'Question update date';
-comment on column pts.pts_que_definition.qde_que_group is 'Question definition group code';
+comment on column pts.pts_que_definition.qde_que_type is 'Question type code';
 comment on column pts.pts_que_definition.qde_rsp_type is 'Question response type';
 comment on column pts.pts_que_definition.qde_rsp_str_range is 'Question response range start';
 comment on column pts.pts_que_definition.qde_rsp_end_range is 'Question response range end';              
