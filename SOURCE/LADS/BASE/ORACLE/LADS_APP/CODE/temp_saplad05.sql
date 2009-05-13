@@ -486,17 +486,17 @@ create or replace package body temp_saplad05 as
          /* Convert the detail UOM values
          /*-*/
          if trim(rcd_bom_data.meins) = 'CM' then
-            rcd_bom_data.bmein := 'CMT';
+            rcd_bom_data.meins := 'CMT';
          elsif trim(rcd_bom_data.meins) = 'G' then
-            rcd_bom_data.bmein := 'GRM';
+            rcd_bom_data.meins := 'GRM';
          elsif trim(rcd_bom_data.meins) = 'KG' then
-            rcd_bom_data.bmein := 'KGM';
+            rcd_bom_data.meins := 'KGM';
          elsif trim(rcd_bom_data.meins) = 'M' then
-            rcd_bom_data.bmein := 'MTR';
+            rcd_bom_data.meins := 'MTR';
          elsif trim(rcd_bom_data.meins) = 'MM' then
-            rcd_bom_data.bmein := 'MMT';
+            rcd_bom_data.meins := 'MMT';
          elsif trim(rcd_bom_data.meins) = 'ST' then
-            rcd_bom_data.bmein := 'PCE';
+            rcd_bom_data.meins := 'PCE';
          end if;
 
          /*-*/
