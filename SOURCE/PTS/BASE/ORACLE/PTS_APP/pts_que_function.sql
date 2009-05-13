@@ -177,6 +177,13 @@ create or replace package body pts_app.pts_que_function as
            from table(pts_app.pts_gen_function.list_class('*QUE_DEF',4)) t01;
       rcd_rsp_code csr_rsp_code%rowtype;
 
+      cursor csr_response is
+         select t01.*
+           from pts_que_response t01
+          where t01.qre_que_code = pts_to_number(var_que_code)
+          order by t01.qre_res_code;
+      rcd_response csr_response%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -297,6 +304,21 @@ create or replace package body pts_app.pts_que_function as
       end if;
 
       /*-*/
+      /* Pipe the reponse XML when required
+      /*-*/
+      if var_action != '*CRTQUE' then
+         open csr_response;
+         loop
+            fetch csr_response into rcd_response;
+            if csr_response%notfound then
+               exit;
+             end if;
+            pipe row(pts_xml_object('<QUE_RESPONSE RESCODE="'||to_char(rcd_response.qre_res_code)||'" RESTEXT="'||pts_to_xml(rcd_response.qre_res_text)||'"/>'));
+         end loop;
+         close csr_response;
+      end if;
+
+      /*-*/
       /* Pipe the XML end
       /*-*/
       pipe row(pts_xml_object('</PTS_RESPONSE>'));
@@ -337,8 +359,11 @@ create or replace package body pts_app.pts_que_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
+      obj_res_list xmlDom.domNodeList;
+      obj_res_node xmlDom.domNode;
       var_action varchar2(32);
       rcd_pts_que_definition pts_que_definition%rowtype;
+      rcd_pts_que_response pts_que_response%rowtype;
       type typ_dynamic_cursor is ref cursor;
       var_dynamic_cursor typ_dynamic_cursor;
 
@@ -413,7 +438,12 @@ create or replace package body pts_app.pts_que_function as
       if rcd_pts_que_definition.qde_rsp_type is null and not(xslProcessor.valueOf(obj_pts_request,'@RSPTYPE') is null) then
          pts_gen_function.add_mesg_data('Response type ('||xslProcessor.valueOf(obj_pts_request,'@RSPTYPE')||') must be a number');
       end if;
-      xmlDom.freeDocument(obj_xml_document);
+      if rcd_pts_que_definition.qde_rsp_str_range is null and not(xslProcessor.valueOf(obj_pts_request,'@RSPSRAN') is null) then
+         pts_gen_function.add_mesg_data('Response range start ('||xslProcessor.valueOf(obj_pts_request,'@RSPSRAN')||') must be a number');
+      end if;
+      if rcd_pts_que_definition.qde_rsp_end_range is null and not(xslProcessor.valueOf(obj_pts_request,'@RSPERAN') is null) then
+         pts_gen_function.add_mesg_data('Response range end ('||xslProcessor.valueOf(obj_pts_request,'@RSPERAN')||') must be a number');
+      end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -435,6 +465,26 @@ create or replace package body pts_app.pts_que_function as
       end if;
       if rcd_pts_que_definition.qde_upd_user is null then
          pts_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if rcd_pts_que_definition.qde_rsp_type = 1 then
+         obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/QUE_RESPONSE');
+         if xmlDom.getLength(obj_res_list) = 0 then
+            pts_gen_function.add_mesg_data('At least one discreet response value must be supplied');
+         end if;
+      end if;
+      if rcd_pts_que_definition.qde_rsp_type = 2 then
+         if rcd_pts_que_definition.qde_rsp_str_range is null then
+            pts_gen_function.add_mesg_data('Response range start must be supplied');
+         end if;
+         if rcd_pts_que_definition.qde_rsp_end_range is null then
+            pts_gen_function.add_mesg_data('Response range end must be supplied');
+         end if;
+         if (not(rcd_pts_que_definition.qde_rsp_str_range is null) and
+             not(rcd_pts_que_definition.qde_rsp_end_range is null)) then
+            if rcd_pts_que_definition.qde_rsp_end_range <= rcd_pts_que_definition.qde_rsp_str_range then
+               pts_gen_function.add_mesg_data('Response range end must be greater than the response range start');
+            end if;
+         end if;
       end if;
       open csr_sta_code;
       fetch csr_sta_code into rcd_sta_code;
@@ -479,6 +529,25 @@ create or replace package body pts_app.pts_que_function as
          insert into pts_que_definition values rcd_pts_que_definition;
       end if;
       close csr_check;
+
+      /*-*/
+      /* Retrieve and insert the question response data when required
+      /*-*/
+      if rcd_pts_que_definition.qde_rsp_type = 1 then
+         rcd_pts_que_response.qre_que_code := rcd_pts_que_definition.qde_que_code;
+         obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/QUE_RESPONSE');
+         for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
+            obj_res_node := xmlDom.item(obj_res_list,idx);
+            rcd_pts_que_response.qre_res_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESCODE'));
+            rcd_pts_que_response.qre_res_text := pts_from_xml(xslProcessor.valueOf(obj_res_node,'@RESTEXT'));
+            insert into pts_que_response values rcd_pts_que_response;
+         end loop;
+      end if;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
       /* Commit the database
