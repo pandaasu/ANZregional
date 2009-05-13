@@ -495,6 +495,12 @@ create or replace package body lads_saplad05 as
    begin
 
       /*-*/
+      /* Clear the BOM data
+      /*-*/
+      delete from lads_bom_det;
+      delete from lads_bom_hdr;
+
+      /*-*/
       /* Retrieve the BOM data
       /*-*/
       var_savkey := '**START**';
@@ -503,6 +509,32 @@ create or replace package body lads_saplad05 as
          fetch csr_bom_data into rcd_bom_data;
          if csr_bom_data%notfound then
             exit;
+         end if;
+
+         /*-*/
+         /* Convert the header UOM values
+         /*-*/
+         if trim(rcd_bom_data.bmein) = 'KG' then
+            rcd_bom_data.bmein := 'KGM';
+         elsif trim(rcd_bom_data.bmein) = 'M' then
+            rcd_bom_data.bmein := 'MTR';
+         end if;
+
+         /*-*/
+         /* Convert the detail UOM values
+         /*-*/
+         if trim(rcd_bom_data.meins) = 'CM' then
+            rcd_bom_data.bmein := 'CMT';
+         elsif trim(rcd_bom_data.meins) = 'G' then
+            rcd_bom_data.bmein := 'GRM';
+         elsif trim(rcd_bom_data.meins) = 'KG' then
+            rcd_bom_data.bmein := 'KGM';
+         elsif trim(rcd_bom_data.meins) = 'M' then
+            rcd_bom_data.bmein := 'MTR';
+         elsif trim(rcd_bom_data.meins) = 'MM' then
+            rcd_bom_data.bmein := 'MMT';
+         elsif trim(rcd_bom_data.meins) = 'ST' then
+            rcd_bom_data.bmein := 'PCE';
          end if;
 
          /*-*/
@@ -527,12 +559,6 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.lads_date := sysdate;
             rcd_lads_bom_hdr.lads_status := '1';
             rcd_lads_bom_hdr.lads_flattened := '0'; 
-            delete from lads_bom_det where stlal = rcd_lads_bom_hdr.stlal
-                                       and matnr = rcd_lads_bom_hdr.matnr
-                                       and werks = rcd_lads_bom_hdr.werks;
-            delete from lads_bom_hdr where stlal = rcd_lads_bom_hdr.stlal
-                                       and matnr = rcd_lads_bom_hdr.matnr
-                                       and werks = rcd_lads_bom_hdr.werks;
             insert into lads_bom_hdr values rcd_lads_bom_hdr;
             rcd_lads_bom_det.detseq := 0;
          end if;

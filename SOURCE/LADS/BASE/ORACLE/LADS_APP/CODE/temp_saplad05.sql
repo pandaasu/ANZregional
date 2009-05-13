@@ -457,6 +457,12 @@ create or replace package body temp_saplad05 as
    begin
 
       /*-*/
+      /* Clear the BOM data
+      /*-*/
+      delete from temp_bom_det;
+      delete from temp_bom_hdr;
+
+      /*-*/
       /* Retrieve the BOM data
       /*-*/
       var_savkey := '**START**';
@@ -465,6 +471,32 @@ create or replace package body temp_saplad05 as
          fetch csr_bom_data into rcd_bom_data;
          if csr_bom_data%notfound then
             exit;
+         end if;
+
+         /*-*/
+         /* Convert the header UOM values
+         /*-*/
+         if trim(rcd_bom_data.bmein) = 'KG' then
+            rcd_bom_data.bmein := 'KGM';
+         elsif trim(rcd_bom_data.bmein) = 'M' then
+            rcd_bom_data.bmein := 'MTR';
+         end if;
+
+         /*-*/
+         /* Convert the detail UOM values
+         /*-*/
+         if trim(rcd_bom_data.meins) = 'CM' then
+            rcd_bom_data.bmein := 'CMT';
+         elsif trim(rcd_bom_data.meins) = 'G' then
+            rcd_bom_data.bmein := 'GRM';
+         elsif trim(rcd_bom_data.meins) = 'KG' then
+            rcd_bom_data.bmein := 'KGM';
+         elsif trim(rcd_bom_data.meins) = 'M' then
+            rcd_bom_data.bmein := 'MTR';
+         elsif trim(rcd_bom_data.meins) = 'MM' then
+            rcd_bom_data.bmein := 'MMT';
+         elsif trim(rcd_bom_data.meins) = 'ST' then
+            rcd_bom_data.bmein := 'PCE';
          end if;
 
          /*-*/
@@ -488,12 +520,6 @@ create or replace package body temp_saplad05 as
             rcd_temp_bom_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
             rcd_temp_bom_hdr.lads_date := sysdate;
             rcd_temp_bom_hdr.lads_status := '1';
-            delete from temp_bom_det where stlal = rcd_temp_bom_hdr.stlal
-                                       and matnr = rcd_temp_bom_hdr.matnr
-                                       and werks = rcd_temp_bom_hdr.werks;
-            delete from temp_bom_hdr where stlal = rcd_temp_bom_hdr.stlal
-                                       and matnr = rcd_temp_bom_hdr.matnr
-                                       and werks = rcd_temp_bom_hdr.werks;
             insert into temp_bom_hdr values rcd_temp_bom_hdr;
             rcd_temp_bom_det.detseq := 0;
          end if;
