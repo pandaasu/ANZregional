@@ -617,7 +617,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <table class="clsGrid02" align=left valign=top cols=2 cellpadding="0" cellspacing="0">
+            <table class="clsPanel" align=left valign=top cols=2 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="DEF_RspType" onChange="doResponseTypeSelect(this);"></select></nobr></td>
                   <td align=left valign=center colspan=1 nowrap><nobr>

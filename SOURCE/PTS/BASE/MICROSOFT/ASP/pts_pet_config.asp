@@ -222,6 +222,7 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
+   var cstrHouCode;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -309,6 +310,7 @@ sub PaintFunction()%>
                strPetStat = objElements[i].getAttribute('PETSTAT');
                strPetType = objElements[i].getAttribute('PETTYPE');
                strDelNote = objElements[i].getAttribute('DELNOTE');
+               cstrHouCode = objElements[i].getAttribute('HOUCODE');
             } else if (objElements[i].nodeName == 'TABLE') {
                objRow = objClaData.insertRow(-1);
                objRow.setAttribute('tabcde','*HEAD');
@@ -464,6 +466,14 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       startSchInstance('*HOUSEHOLD','Household','pts_hou_search.asp','0',function() {doDefineHouseholdCancel();},function(strCode,strText) {doDefineHouseholdSelect(strCode,strText);});
    }
+   function doBlurHousehold() {
+      var objHouCode = document.getElementById('DEF_HouCode');
+      var objHouText = document.getElementById('DEF_HouText');
+      if (objHouCode.value != cstrHouCode) {
+         objHouText.innerText = '** DATA ENTRY **';
+      }
+      cstrHouCode = objHouCode.value;
+   }
    function doDefineHouseholdCancel() {
       displayScreen('dspDefine');
       document.getElementById('DEF_PetName').focus();
@@ -471,6 +481,7 @@ sub PaintFunction()%>
    function doDefineHouseholdSelect(strCode,strText) {
       document.getElementById('DEF_HouCode').value = strCode;
       document.getElementById('DEF_HouText').innerText = strText;
+      cstrHouCode = strCode;
       displayScreen('dspDefine');
       document.getElementById('DEF_HouCode').focus();
    }
@@ -589,9 +600,25 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-            <font class="clsLabelBB" id="DEF_HouText"></font>
-            <a class="clsSelect" onClick="doDefineHousehold();">Select</a>
+            <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="DEF_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);doBlurHousehold();"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=left colspan=1 nowrap><nobr>
+                     <table class="clsGrid02" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
+                              <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
+                                 <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineHousehold();">&nbsp;Select&nbsp;</a></nobr></td></tr>
+                              </table>
+                           </nobr></td>
+                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" id="DEF_HouText" align=left valign=center colspan=1 nowrap></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
       <tr>
@@ -626,7 +653,7 @@ sub PaintFunction()%>
          <td align=center colspan=2 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
                <table id="DEF_ClaData" class="clsTableBody" style="display:block;visibility:visible" cols=1 align=left cellpadding="2" cellspacing="1"></table>
-               <font id="DEF_ClaFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO CLASSIFICATION DEFINITIONS</font>
+               <font id="DEF_ClaFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO CLASSIFICATIONS</font>
             </div>
          </nobr></td>
       </tr>
