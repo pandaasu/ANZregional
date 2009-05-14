@@ -126,8 +126,10 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[2] = new clsScreen('dspResponse','hedResponse');
       cobjScreens[0].hedtxt = 'Question Prompt';
       cobjScreens[1].hedtxt = 'Question Maintenance';
+      cobjScreens[2].hedtxt = 'Question Response Maintenance';
       initSearch();
       displayScreen('dspPrompt');
       document.getElementById('PRO_QueCode').focus();
@@ -274,9 +276,11 @@ sub PaintFunction()%>
          var objQueStat = document.getElementById('DEF_QueStat');
          var objQueType = document.getElementById('DEF_QueType');
          var objRspType = document.getElementById('DEF_RspType');
+         var objResValu = document.getElementById('DEF_ResValu');
          objQueStat.options.length = 0;
          objQueType.options.length = 0;
          objRspType.options.length = 0;
+         objResValu.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objQueStat.options[objQueStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
@@ -292,6 +296,8 @@ sub PaintFunction()%>
                strQueStat = objElements[i].getAttribute('QUESTAT');
                strQueType = objElements[i].getAttribute('QUETYPE');
                strRspType = objElements[i].getAttribute('RSPTYPE');
+            } else if (objElements[i].nodeName == 'QUE_RESPONSE') {
+               objResValu.options[objResValu.options.length] = new Option('('+(objResValu.options.length+1)+') '+objElements[i].getAttribute('RESTEXT'),objElements[i].getAttribute('RESTEXT'));
             }
          }
          objQueStat.selectedIndex = -1;
@@ -315,6 +321,13 @@ sub PaintFunction()%>
                break;
             }
          }
+         if (strRspType == '1') {
+            document.getElementById('dspDiscreet').style.display = 'block';
+            document.getElementById('dspRange').style.display = 'none';
+         } else {
+            document.getElementById('dspDiscreet').style.display = 'none';
+            document.getElementById('dspRange').style.display = 'block';
+         }
          document.getElementById('DEF_QueText').focus();
       }
    }
@@ -323,16 +336,22 @@ sub PaintFunction()%>
       var objQueStat = document.getElementById('DEF_QueStat');
       var objQueType = document.getElementById('DEF_QueType');
       var objRspType = document.getElementById('DEF_RspType');
+      var objResValu = document.getElementById('DEF_ResValu');
+      var objRow;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFQUE"';
-      strXML = strXML+' QUECODE="'+fixXML(document.getElementById('DEF_QueCode').innerText)+'"';
+      strXML = strXML+' QUECODE="'+fixXML(document.getElementById('DEF_QueCode').value)+'"';
       strXML = strXML+' QUETEXT="'+fixXML(document.getElementById('DEF_QueText').value)+'"';
       strXML = strXML+' QUESTAT="'+fixXML(objQueStat.options[objQueStat.selectedIndex].value)+'"';
       strXML = strXML+' QUETYPE="'+fixXML(objQueType.options[objQueType.selectedIndex].value)+'"';;
       strXML = strXML+' RSPTYPE="'+fixXML(objRspType.options[objRspType.selectedIndex].value)+'"';
       strXML = strXML+' RSPSRAN="'+fixXML(document.getElementById('DEF_RspSran').value)+'"';
       strXML = strXML+' RSPERAN="'+fixXML(document.getElementById('DEF_RspEran').value)+'"';
-      strXML = strXML+'/>';
+      strXML = strXML+'>';
+      for (var i=0;i<objResValu.length;i++) {
+         strXML = strXML+'<QUE_RESPONSE RESCODE="'+(i+1)+'" RESTEXT="'+objResValu.options[i].value+'"/>';
+      }
+      strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -370,6 +389,156 @@ sub PaintFunction()%>
       displayScreen('dspPrompt');
       document.getElementById('PRO_QueCode').value = '';
       document.getElementById('PRO_QueCode').focus();
+   }
+   function doResponseTypeSelect(objSelect) {
+      var strValue = objSelect.options[objSelect.selectedIndex].value;
+      if (strValue == '1') {
+         document.getElementById('dspDiscreet').style.display = 'block';
+         document.getElementById('dspRange').style.display = 'none';
+      } else {
+         document.getElementById('dspDiscreet').style.display = 'none';
+         document.getElementById('dspRange').style.display = 'block';
+      }
+   }
+   function doResponseAdd() {
+      cstrResponseMode = '*ADD';
+      var objResText = document.getElementById('RES_ResText');
+      var strValue = '';
+      objResText.value = strValue;
+      displayScreen('dspResponse');
+      objResText.focus();
+   }
+   function doResponseUpdate() {
+      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
+         alert('Value must be selected for update');
+         return;
+      }
+      cstrResponseMode = '*UPD';
+      var objResValu = document.getElementById('DEF_ResValu');
+      var objResText = document.getElementById('RES_ResText');
+      cintResponseIndx = objResValu.selectedIndex;
+      var strValue = objResValu.options[cintResponseIndx].value;
+      objResText.value = strValue;
+      displayScreen('dspResponse');
+      objResText.focus();
+   }
+   function doResponseDelete() {
+      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
+         alert('Value must be selected for delete');
+         return;
+      }
+      var objResValu = document.getElementById('DEF_ResValu');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == false) {
+            objWork[intIndex] = objResValu[i];
+            intIndex++;
+         }
+      }
+      objResValu.options.length = 0;
+      objResValu.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objResValu.options[i] = objWork[i];
+         objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+      }
+   }
+   function upResponseValues() {
+      var intIndex;
+      var intSelect;
+      var objResValu = document.getElementById('DEF_ResValu');
+      intSelect = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one value can be selected to move up');
+         return;
+      }
+      if (intSelect == 1 && intIndex > 0) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objResValu.options[intIndex-1].value;
+         aryA[1] = objResValu.options[intIndex-1].text;
+         aryB[0] = objResValu.options[intIndex].value;
+         aryB[1] = objResValu.options[intIndex].text;
+         objResValu.options[intIndex-1].value = aryB[0];
+         objResValu.options[intIndex-1].text = aryB[1];
+         objResValu.options[intIndex-1].selected = true;
+         objResValu.options[intIndex].value = aryA[0];
+         objResValu.options[intIndex].text = aryA[1];
+         objResValu.options[intIndex].selected = false;
+         for (var i=0;i<objResValu.length;i++) {
+            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+         }
+      }
+   }
+   function downResponseValues() {
+      var intIndex;
+      var intSelect;
+      var objResValu = document.getElementById('DEF_ResValu');
+      intSelect = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one item can be selected to move down');
+         return;
+      }
+      if (intSelect == 1 && intIndex < objResValu.options.length-1) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objResValu.options[intIndex+1].value;
+         aryA[1] = objResValu.options[intIndex+1].text;
+         aryB[0] = objResValu.options[intIndex].value;
+         aryB[1] = objResValu.options[intIndex].text;
+         objResValu.options[intIndex+1].value = aryB[0];
+         objResValu.options[intIndex+1].text = aryB[1];
+         objResValu.options[intIndex+1].selected = true;
+         objResValu.options[intIndex].value = aryA[0];
+         objResValu.options[intIndex].text = aryA[1];
+         objResValu.options[intIndex].selected = false;
+         for (var i=0;i<objResValu.length;i++) {
+            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+         }
+      }
+   }
+
+   ////////////////////////
+   // Response Functions //
+   ////////////////////////
+   var cstrResponseCode;
+   var cintResponseIndx;
+   function doResponseCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_ResValu').focus();
+   }
+   function doResponseAccept() {
+      if (!processForm()) {return;}
+      var objResText = document.getElementById('RES_ResText');
+      var objResValu = document.getElementById('DEF_ResValu');
+      var strMessage = '';
+      if (objResText.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Response text must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      if (cstrResponseMode == '*ADD') {
+         objResValu.options[objResValu.options.length] = new Option('('+(objResValu.options.length+1)+') '+objResText.value,objResText.value);
+      } else if (cstrResponseMode == '*UPD') {
+         objResValu.options[cintResponseIndx].value = objResText.value;
+         objResValu.options[cintResponseIndx].text = '('+(cintResponseIndx+1)+') '+objResText.value;
+      }
+      displayScreen('dspDefine');
    }
 // -->
 </script>
@@ -448,19 +617,57 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_RspType"></select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Range Start:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RspSran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Range End:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RspEran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <table class="clsGrid02" align=left valign=top cols=2 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="DEF_RspType" onChange="doResponseTypeSelect(this);"></select></nobr></td>
+                  <td align=left valign=center colspan=1 nowrap><nobr>
+                     <table id="dspDiscreet" class="clsGrid02" style="display:none;visibility:visible" align=left valign=top cols=1 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+                              <table align=left border=0 cellpadding=0 cellspacing=2 cols=2>
+                                 <tr>
+                                    <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
+                                       <table class="clsTable01" align=left cols=5 cellpadding="0" cellspacing="0">
+                                          <tr>
+                                             <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseAdd();">&nbsp;Add&nbsp;</a></nobr></td>
+                                             <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                                             <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                                             <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                                             <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                                          </tr>
+                                       </table>
+                                    </nobr></td>
+                                 </tr>
+                                 <tr>
+                                    <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+                                       <select class="clsInputBN" id="DEF_ResValu" name="DEF_ResValu" style="width:400px" multiple size=10></select>
+                                    </nobr></td>
+                                    <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>
+                                       <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
+                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upResponseValues();"></nobr></td></tr>
+                                          <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downResponseValues();"></nobr></td></tr>
+                                       </table>
+                                    </nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                     <table id="dspRange" class="clsGrid02" style="display:none;visibility:visible" align=left valign=top cols=4 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Range Start:&nbsp;</nobr></td>
+                           <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+                              <input class="clsInputNN" type="text" name="DEF_RspSran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+                           </nobr></td>
+                           <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Range End:&nbsp;</nobr></td>
+                           <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+                              <input class="clsInputNN" type="text" name="DEF_RspEran" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -474,6 +681,36 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspResponse" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doResponseAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedResponse" class="clsFunction" align=center colspan=2 nowrap><nobr>Response Value Maintenance</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="RES_ResText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
