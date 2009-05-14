@@ -342,7 +342,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETNAME=""';
          var_output := var_output||' PETTYPE=""';
          var_output := var_output||' HOUCODE=""';
-         var_output := var_output||' HOUTEXT="** NO HOUSEHOLD **"';
+         var_output := var_output||' HOUTEXT="** DATA ENTRY **"';
          var_output := var_output||' BTHYEAR=""';
          var_output := var_output||' DELNOTE=""';
          var_output := var_output||' FEDCMNT=""';

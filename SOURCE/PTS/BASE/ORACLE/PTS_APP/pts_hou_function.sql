@@ -182,7 +182,7 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_pet is
          select t01.*
            from pts_pet_definition t01
-          where t01.pde_hou_code = var_hou_code
+          where t01.pde_hou_code = pts_to_number(var_hou_code)
           order by t01.pde_pet_code;
       rcd_pet csr_pet%rowtype;
 

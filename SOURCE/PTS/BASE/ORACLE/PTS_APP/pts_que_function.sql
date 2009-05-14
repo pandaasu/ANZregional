@@ -272,7 +272,7 @@ create or replace package body pts_app.pts_que_function as
       close csr_rsp_code;
 
       /*-*/
-      /* Pipe the sample XML
+      /* Pipe the question XML
       /*-*/
       if var_action = '*UPDQUE' then
          var_output := '<QUESTION QUECODE="'||to_char(rcd_retrieve.qde_que_code)||'"';
@@ -413,7 +413,7 @@ create or replace package body pts_app.pts_que_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*DEFSAM' then
+      if var_action != '*DEFQUE' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
@@ -471,6 +471,8 @@ create or replace package body pts_app.pts_que_function as
          if xmlDom.getLength(obj_res_list) = 0 then
             pts_gen_function.add_mesg_data('At least one discreet response value must be supplied');
          end if;
+         rcd_pts_que_definition.qde_rsp_str_range := null;
+         rcd_pts_que_definition.qde_rsp_end_range := null;
       end if;
       if rcd_pts_que_definition.qde_rsp_type = 2 then
          if rcd_pts_que_definition.qde_rsp_str_range is null then
@@ -524,6 +526,7 @@ create or replace package body pts_app.pts_que_function as
                 qde_rsp_str_range = rcd_pts_que_definition.qde_rsp_str_range,
                 qde_rsp_end_range = rcd_pts_que_definition.qde_rsp_end_range
           where qde_que_code = rcd_pts_que_definition.qde_que_code;
+         delete from pts_que_response where qre_que_code = rcd_pts_que_definition.qde_que_code;
       else
          select pts_que_sequence.nextval into rcd_pts_que_definition.qde_que_code from dual;
          insert into pts_que_definition values rcd_pts_que_definition;
@@ -572,7 +575,7 @@ create or replace package body pts_app.pts_que_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SAM_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_QUE_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */

@@ -520,7 +520,6 @@ create or replace package body pts_app.pts_sam_function as
       if rcd_pts_sam_definition.sde_pre_date is null and not(xslProcessor.valueOf(obj_pts_request,'@PREDATE') is null) then
          pts_gen_function.add_mesg_data('Prepared date ('||xslProcessor.valueOf(obj_pts_request,'@PREDATE')||') must be a date in the format DD/MM/YYYY');
       end if;
-      xmlDom.freeDocument(obj_xml_document);
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -592,6 +591,11 @@ create or replace package body pts_app.pts_sam_function as
          insert into pts_sam_definition values rcd_pts_sam_definition;
       end if;
       close csr_check;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
       /* Commit the database
