@@ -21,7 +21,7 @@
 create table pts.pts_que_response
    (qre_que_code                    number                        not null,
     qre_res_code                    number                        not null,
-    qre_res_text                    varchar2(2000 char)           not null);
+    qre_res_text                    varchar2(120 char)            not null);
 
 /**/
 /* Comments
