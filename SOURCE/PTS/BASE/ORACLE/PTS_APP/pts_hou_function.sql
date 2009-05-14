@@ -61,6 +61,8 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_list is
          select t01.hde_hou_code,
                 t01.hde_con_fullname,
+                t01.hde_loc_street,
+                t01.hde_loc_town,
                 nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*HOU_DEF' and sva_fld_code = 13 and sva_val_code = t01.hde_hou_status),'*UNKNOWN') as hde_hou_status
            from pts_hou_definition t01
           where t01.hde_hou_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*HOUSEHOLD',null)))
@@ -86,7 +88,7 @@ create or replace package body pts_app.pts_hou_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="4"/>'));
 
       /*-*/
       /* Retrieve the household list and pipe the results
@@ -101,7 +103,7 @@ create or replace package body pts_app.pts_hou_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.hde_hou_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.hde_hou_code)||') '||rcd_list.hde_con_fullname)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.hde_hou_code)||') '||rcd_list.hde_con_fullname)||'" COL2="'||pts_to_xml(rcd_list.hde_hou_status)||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.hde_hou_code)||'" SELTXT="'||pts_to_xml(rcd_list.hde_con_fullname||', '||rcd_list.hde_loc_street||', '||rcd_list.hde_loc_town)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.hde_hou_code)||') '||rcd_list.hde_con_fullname)||'" COL2="'||pts_to_xml(rcd_list.hde_loc_street)||'" COL3="'||pts_to_xml(rcd_list.hde_loc_town)||'" COL4="'||pts_to_xml(rcd_list.hde_hou_status)||'"/>'));
          else
             exit;
          end if;

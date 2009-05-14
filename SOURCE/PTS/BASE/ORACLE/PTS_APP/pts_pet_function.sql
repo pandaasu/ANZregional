@@ -162,7 +162,7 @@ create or replace package body pts_app.pts_pet_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
-                decode(t02.hde_hou_code,null,'** NO HOUSEHOLD **','('||t02.hde_hou_code||') '||t02.hde_con_fullname||' '||hde_loc_street) as hou_text
+                decode(t02.hde_hou_code,null,'** DATA ENTRY **','('||t02.hde_hou_code||') '||t02.hde_con_fullname||', '||hde_loc_street||', '||hde_loc_town) as hou_text
            from pts_pet_definition t01,
                 pts_hou_definition t02
           where t01.pde_hou_code = t02.hde_hou_code(+)
