@@ -4,6 +4,9 @@
          <td id="hedClaList" class="clsFunction" align=center colspan=2 nowrap><nobr>List Classification</nobr></td>
       </tr>
       <tr>
+         <td id="subClaList" class="clsLabelBB" align=center colspan=2 nowrap><nobr>List Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
@@ -61,11 +64,13 @@
          <td id="hedClaNumb" class="clsFunction" align=center colspan=2 nowrap><nobr>Number Classification</nobr></td>
       </tr>
       <tr>
+         <td id="subClaNumb" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Number Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Classification Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="CLN_ClaValue" size="15" maxlength="15" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
@@ -91,11 +96,13 @@
          <td id="hedClaText" class="clsFunction" align=center colspan=2 nowrap><nobr>Text Classification</nobr></td>
       </tr>
       <tr>
+         <td id="subClaText" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Text Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Classification Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="CLT_ClaValue" size="64" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>

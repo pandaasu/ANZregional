@@ -427,6 +427,7 @@
             return;
          }
          if (cstrSearchRulTyp != '*NUMBER' && cstrSearchRulTyp != '*TEXT') {
+            document.getElementById('subSchList').innerText = cstrSearchFldTxt;
             var objSelRulCode = document.getElementById('SEL_RulCode');
             var objSelRulValue = document.getElementById('SEL_RulValue');
             var objSelSelValue = document.getElementById('SEL_SelValue');
@@ -455,6 +456,7 @@
             displayScreen('dspSchList');
             objSelRulCode.focus();
          } else if (cstrSearchRulTyp == '*NUMBER') {
+            document.getElementById('subSchNumb').innerText = cstrSearchFldTxt;
             var objSenRulCode = document.getElementById('SEN_RulCode');
             var objSenSelValue = document.getElementById('SEN_SelValue');
             objSenRulCode.options.length = 0;
@@ -479,6 +481,7 @@
             displayScreen('dspSchNumb');
             objSenRulCode.focus();
          } else if (cstrSearchRulTyp == '*TEXT') {
+            document.getElementById('subSchText').innerText = cstrSearchFldTxt;
             var objSetRulCode = document.getElementById('SET_RulCode');
             var objSetSelValue = document.getElementById('SET_SelValue');
             objSetRulCode.options.length = 0;

@@ -64,6 +64,9 @@
          <td id="hedSchList" class="clsFunction" align=center colspan=2 nowrap><nobr>Search List Rule</nobr></td>
       </tr>
       <tr>
+         <td id="subSchList" class="clsLabelBB" align=center colspan=2 nowrap><nobr>List Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
@@ -127,6 +130,9 @@
          <td id="hedSchNumb" class="clsFunction" align=center colspan=2 nowrap><nobr>Search Number Rule</nobr></td>
       </tr>
       <tr>
+         <td id="subSchNumb" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Number Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
@@ -136,8 +142,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="SEN_SelValue" size="15" maxlength="15" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
@@ -163,6 +168,9 @@
          <td id="hedSchText" class="clsFunction" align=center colspan=2 nowrap><nobr>Search Text Rule</nobr></td>
       </tr>
       <tr>
+         <td id="subSchText" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Text Name</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
@@ -172,8 +180,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="SET_SelValue" size="64" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>

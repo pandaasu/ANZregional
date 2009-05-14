@@ -69,6 +69,7 @@
             return;
          }
          if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*OPT_MULTIPLE_LIST') {
+            document.getElementById('subClaList').innerText = cstrClassFldTxt;
             var objCllLstValue = document.getElementById('CLL_LstValue');
             var objCllClaValue = document.getElementById('CLL_ClaValue');
             objCllLstValue.options.length = 0;
@@ -88,6 +89,7 @@
             displayScreen('dspClaList');
             objCllLstValue.focus();
          } else if (cstrClassSelTyp == '*NUMBER') {
+            document.getElementById('subClaNumb').innerText = cstrClassFldTxt;
             var objClnClaValue = document.getElementById('CLN_ClaValue');
             objClnClaValue.size = cstrClassInpLen;
             objClnClaValue.maxLength = cstrClassInpLen;
@@ -100,6 +102,7 @@
             displayScreen('dspClaNumb');
             objClnClaValue.focus();
          } else if (cstrClassSelTyp == '*TEXT') {
+            document.getElementById('subClaText').innerText = cstrClassFldTxt;
             var objCltClaValue = document.getElementById('CLT_ClaValue');
             objCltClaValue.size = cstrClassInpLen;
             objCltClaValue.maxLength = cstrClassInpLen;
