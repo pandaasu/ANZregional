@@ -347,6 +347,7 @@ sub PaintFunction()%>
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
                objRow.setAttribute('seltyp',objElements[i].getAttribute('SELTYP'));
                objRow.setAttribute('inplen',objElements[i].getAttribute('INPLEN'));
+               objRow.setAttribute('savary',new Array());
                objRow.setAttribute('valary',new Array());
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
