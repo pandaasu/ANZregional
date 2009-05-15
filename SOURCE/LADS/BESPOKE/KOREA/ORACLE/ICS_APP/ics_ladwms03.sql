@@ -28,19 +28,20 @@ create or replace package ics_app.ics_ladwms03 as
  YYYY/MM   Author               Description
  -------   ------               -----------
  2009/02   Steve Gregan         Created (based on China extract)
+ 2009/05   Trevor Keon          Removed gross weight and volume hard-codes
 
  NOTES:
   * It is assumed that material codes for China will not exceed 8 character in length (Zou Kai)
   * The weight and volume provided to DHL should be the weight of the
     PC for all finished goods (material type = FERT), POS materials (material type = ZPRM)
     and packaging materials (material type = VERP)
-  * The weight (field = MATL_GROSS_WGT) provided to DHL must be in KGs.  Currently,
+  * *REMOVED - TK 05/2009* - The weight (field = MATL_GROSS_WGT) provided to DHL must be in KGs.  Currently,
     it seems we maintain weight in either grams or kilograms. So if weight is maintained
     in grams (GRM) = then weight/1000 And therefore, field = MATL_WGT_UOM can be hard-coded to KG
     If the weight is not maintained in either grams or kgs, then please leave the Weight
     as 0000000000.000 and Weight UOM fields as blank  This will prompt the warehouse to enter
     this in themselves instead.
-  * The volume (field = MATL_VOL_PER_BASE) provided to DHL must be in cubic metres (M3).  Currently,
+  * *REMOVED - TK 05/2009* - The volume (field = MATL_VOL_PER_BASE) provided to DHL must be in cubic metres (M3).  Currently,
     it seems we maintain the volume in either cubic decimetres (DMQ) or cubic metres (M3).
     If volume is in cubic decimetres (DMQ), then volume/1000  (ie. 1000 cubic decimetres = 1 cubic metre)
     If volume is in cubic centimetres (CMQ), then volume/1000000 (ie. 1,000,000 cubic cm = 1 cubic metre)
@@ -94,142 +95,158 @@ create or replace package body ics_app.ics_ladwms03 as
       /* Local Cursors
       /*-*/
       cursor csr_matl_master is
-         select decode(substr(a.matnr,1,1),'0',lpad(ltrim(a.matnr,'0'),8,'0'),trim(a.matnr)) as matl_code,
-                b.material_desc as matl_desc_en,
-                e.material_desc as matl_desc_ko,
-                null as matl_desc_cn,
-                to_char(sysdate,'YYYYMMDD') as hdr_snd_date,
-                a.mtart as matl_type,
-                a.spart as matl_division,
-                null as matl_brand,
-                '0000000000.000' as matl_gross_wgt,
-                'KG' as matl_wgt_uom,
-                a.xchpf as matl_btch_mng_flag,
-                to_char(a.mhdhb) as matl_dhl_shelf_life,
-                '0000000000.000' as matl_vol_per_base,
-                'M3' as matl_vol_uom,
-                decode(c.matl_pce_value,null,null,'PC') as matl_a_uom,
-                decode(c.matl_pce_value,null,'0',c.matl_pce_umrez) as matl_a_factor,
-                decode(c.matl_pce_value,null,null,c.matl_pce_ean11) as matl_a_ean11,
-                case
-                   when c.matl_sb_value is not null then 'SB'
-                   when c.matl_pac_value is not null then 'PK'
-                   else null
-                end as matl_b_uom,
-                case
-                   when c.matl_sb_value is not null and
-                        c.matl_pac_value is not null then
-                      case
-                         when c.matl_sb_umren = 0 or c.matl_sb_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'0')
-                      end
-                   when c.matl_sb_value is not null then
-                      case
-                         when c.matl_sb_umren = 0 or c.matl_sb_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'0')
-                      end
-                   when c.matl_pac_value is not null then
-                      case
-                         when c.matl_pac_umren = 0 or c.matl_pac_umren is null then '0'
-                         else nvl(to_char(((c.matl_pce_umren*c.matl_pac_umrez)/c.matl_pac_umren)),'0')
-                      end
-                   else '0'
-                end as matl_b_factor,
-                case
-                   when c.matl_sb_value is not null and
-                        c.matl_pac_value is not null then
-                      c.matl_sb_ean11
-                   when c.matl_sb_value is not null then
-                      c.matl_sb_ean11
-                   when c.matl_pac_value is not null then
-                      c.matl_pac_ean11
-                end as matl_b_ean11,
-                decode(c.matl_cs_value,null,null,'CS') as matl_c_uom,
-                decode(c.matl_cs_value,null,'0',nvl(to_char((c.matl_cs_umrez*c.matl_pce_umren)),'0')) as matl_c_factor,
-                decode(c.matl_cs_value,null,null,c.matl_cs_ean11) as matl_c_ean11,
-                decode(c.matl_ea_value,null,null,'EA') as matl_base_uom,
-                decode(c.matl_ea_value,null,'0',nvl(c.matl_pce_umren,'0')) as matl_base_factor,
-                decode(c.matl_ea_value,null,null,c.matl_ea_ean11) as matl_base_ean11,
-                a.laeng as matl_length,
-                a.breit as matl_width,
-                a.hoehe as matl_depth,
-                a.meabm as matl_dim_uom
-         from lads_mat_hdr a,
-              (select matnr,
-                      decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
-                 from (select t01.matnr,
-                              t01.spras_iso,
-                              t01.maktx as sls_text,
-                              null as mkt_text
-                         from lads_mat_mkt t01
-                        union all
-                       select t01.matnr,
-                              t01.spras_iso,
-                              null as sls_txt,
-                              substr(max(t02.tdline),1,40) as mkt_text
-                         from lads_mat_txh t01,
-                              lads_mat_txl t02
-                        where t01.matnr = t02.matnr(+)
-                          and t01.txhseq = t02.txhseq(+)
-                          and trim(substr(t01.tdname,19,6)) = '157 10'
-                          and t01.tdobject = 'MVKE'
-                          and t02.txlseq = 1
-                        group by t01.matnr, t01.spras_iso)
-                where spras_iso = 'EN'
-                group by matnr, spras_iso) b,
-              (select matnr,
-                      decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
-                 from (select t01.matnr,
-                              t01.spras_iso,
-                              t01.maktx as sls_text,
-                              null as mkt_text
-                         from lads_mat_mkt t01
-                        union all
-                       select t01.matnr,
-                              t01.spras_iso,
-                              null as sls_txt,
-                              substr(max(t02.tdline),1,40) as mkt_text
-                         from lads_mat_txh t01,
-                              lads_mat_txl t02
-                        where t01.matnr = t02.matnr(+)
-                          and t01.txhseq = t02.txhseq(+)
-                          and trim(substr(t01.tdname,19,6)) = '157 10'
-                          and t01.tdobject = 'MVKE'
-                          and t02.txlseq = 1
-                        group by t01.matnr, t01.spras_iso)
-                where spras_iso = 'KO'
-                group by matnr, spras_iso) e,
-              (select matnr,
-                      max(case when meinh = 'PCE' then 'x' end) as matl_pce_value,
-                      max(case when meinh = 'PCE' then ean11 end) as matl_pce_ean11,
-                      max(case when meinh = 'PCE' then umren end) as matl_pce_umren,
-                      max(case when meinh = 'PCE' then umrez end) as matl_pce_umrez,
-                      max(case when meinh = 'SB' then 'x' end) as matl_sb_value,
-                      max(case when meinh = 'SB' then ean11 end) as matl_sb_ean11,
-                      max(case when meinh = 'SB' then umren end) as matl_sb_umren,
-                      max(case when meinh = 'SB' then umrez end) as matl_sb_umrez,
-                      max(case when meinh = 'CS' then 'x' end) as matl_cs_value,
-                      max(case when meinh = 'CS' then ean11 end) as matl_cs_ean11,
-                      max(case when meinh = 'CS' then umrez end) as matl_cs_umrez,
-                      max(case when meinh = 'EA' then 'x' end) as matl_ea_value,
-                      max(case when meinh = 'EA' then ean11 end) as matl_ea_ean11,
-                      max(case when meinh = 'PK' then 'x' end) as matl_pac_value,
-                      max(case when meinh = 'PK' then umren end) as matl_pac_umren,
-                      max(case when meinh = 'PK' then umrez end) as matl_pac_umrez,
-                      max(case when meinh = 'PK' then ean11 end) as matl_pac_ean11
-               from lads_mat_uom
-               where meinh in ('PCE','SB','CS','EA','PK')
-               group by matnr) c,
-              lads_mat_mrc d
-         where a.matnr = b.matnr(+)
-           and a.matnr = e.matnr(+)
-           and a.matnr = c.matnr(+)
-           and a.matnr = d.matnr
-           and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
-           and a.mtart in ('FERT','ZPRM','VERP')
-           and d.werks = 'KR02'
-           and d.mmsta in ('03','20')
-         order by a.matnr asc;
+        select ltrim(a.matnr,'0') as matl_code,
+          b.material_desc as matl_desc_en,
+          e.material_desc as matl_desc_ko,
+          null as matl_desc_cn,
+          to_char(sysdate,'YYYYMMDD') as hdr_snd_date,
+          a.mtart as matl_type,
+          a.spart as matl_division,
+          null as matl_brand,
+          case
+             when a.gewei not in ('KGM','GRM') then to_char(0,'FM0000000000.000')
+             when a.gewei = 'GRM' then to_char(round(a.brgew/1000,3),'FM0000000000.000')
+             else to_char(a.brgew,'FM0000000000.000')
+          end as matl_gross_wgt,
+          'KG' as matl_wgt_uom,
+          a.xchpf as matl_btch_mng_flag,
+          to_char(a.mhdhb) as matl_dhl_shelf_life,
+          case
+             when a.voleh = 'MTQ' then to_char(a.volum,'FM0000000000.000')
+             when a.voleh = 'DMQ' then to_char(round(a.volum/1000,3),'FM0000000000.000')
+             when a.voleh = 'CMQ' then to_char(round(a.volum/1000000,3),'FM0000000000.000')
+             else to_char(0,'FM0000000000.000')
+          end as matl_vol_per_base,
+          'M3' as matl_vol_uom,
+          decode(c.matl_pce_value,null,null,'PC') as matl_a_uom,
+          decode(c.matl_pce_value,null,'',c.matl_pce_umrez) as matl_a_factor,
+          decode(c.matl_pce_value,null,null,c.matl_pce_ean11) as matl_a_ean11,
+          case
+            when c.matl_sb_value is not null then 'SB'
+            when c.matl_pac_value is not null then 'PK'
+            else null
+          end as matl_b_uom,
+          case
+            when c.matl_sb_value is not null and c.matl_pac_value is not null then
+              case
+                when c.matl_sb_umren = 0 or c.matl_sb_umren is null then ''
+                else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'')
+              end
+            when c.matl_sb_value is not null then
+              case
+                when c.matl_sb_umren = 0 or c.matl_sb_umren is null then ''
+                else nvl(to_char(((c.matl_pce_umren*c.matl_sb_umrez)/c.matl_sb_umren)),'')
+              end
+            when c.matl_pac_value is not null then
+              case
+                when c.matl_pac_umren = 0 or c.matl_pac_umren is null then ''
+                else nvl(to_char(((c.matl_pce_umren*c.matl_pac_umrez)/c.matl_pac_umren)),'')
+              end
+            else ''
+          end as matl_b_factor,
+          case
+            when c.matl_sb_value is not null and c.matl_pac_value is not null then c.matl_sb_ean11
+            when c.matl_sb_value is not null then c.matl_sb_ean11
+            when c.matl_pac_value is not null then c.matl_pac_ean11
+          end as matl_b_ean11,
+          decode(c.matl_cs_value,null,null,'CS') as matl_c_uom,
+          decode(c.matl_cs_value,null,'',nvl(to_char((c.matl_cs_umrez*c.matl_pce_umren)),'')) as matl_c_factor,
+          decode(c.matl_cs_value,null,null,c.matl_cs_ean11) as matl_c_ean11,
+          decode(c.matl_ea_value,null,null,'EA') as matl_base_uom,
+          decode(c.matl_ea_value,null,'',nvl(c.matl_pce_umren,'')) as matl_base_factor,
+          decode(c.matl_ea_value,null,null,c.matl_ea_ean11) as matl_base_ean11,
+          a.laeng as matl_length,
+          a.breit as matl_width,
+          a.hoehe as matl_depth,
+          a.meabm as matl_dim_uom
+        from lads_mat_hdr a,
+          (
+            select matnr,
+              decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
+            from 
+            (
+              select t01.matnr,
+                t01.spras_iso,
+                t01.maktx as sls_text,
+                null as mkt_text
+              from lads_mat_mkt t01
+              union all
+              select t01.matnr,
+                t01.spras_iso,
+                null as sls_txt,
+                substr(max(t02.tdline),1,40) as mkt_text
+              from lads_mat_txh t01,
+                lads_mat_txl t02
+              where t01.matnr = t02.matnr(+)
+                and t01.txhseq = t02.txhseq(+)
+                and trim(substr(t01.tdname,19,6)) = '157 10'
+                and t01.tdobject = 'MVKE'
+                and t02.txlseq = 1
+              group by t01.matnr, t01.spras_iso
+            )
+            where spras_iso = 'EN'
+            group by matnr, spras_iso
+          ) b,
+          (
+            select matnr,
+              decode(max(mkt_text),null,max(sls_text),max(mkt_text)) as material_desc
+            from 
+            (
+              select t01.matnr,
+                t01.spras_iso,
+                t01.maktx as sls_text,
+                null as mkt_text
+              from lads_mat_mkt t01
+              union all
+              select t01.matnr,
+                t01.spras_iso,
+                null as sls_txt,
+                substr(max(t02.tdline),1,40) as mkt_text
+              from lads_mat_txh t01,
+                lads_mat_txl t02
+              where t01.matnr = t02.matnr(+)
+                and t01.txhseq = t02.txhseq(+)
+                and trim(substr(t01.tdname,19,6)) = '157 10'
+                and t01.tdobject = 'MVKE'
+                and t02.txlseq = 1
+              group by t01.matnr, t01.spras_iso
+            )
+            where spras_iso = 'KO'
+            group by matnr, spras_iso
+          ) e,
+          (
+            select matnr,
+              max(case when meinh = 'PCE' then 'x' end) as matl_pce_value,
+              max(case when meinh = 'PCE' then ean11 end) as matl_pce_ean11,
+              max(case when meinh = 'PCE' then umren end) as matl_pce_umren,
+              max(case when meinh = 'PCE' then umrez end) as matl_pce_umrez,
+              max(case when meinh = 'SB' then 'x' end) as matl_sb_value,
+              max(case when meinh = 'SB' then ean11 end) as matl_sb_ean11,
+              max(case when meinh = 'SB' then umren end) as matl_sb_umren,
+              max(case when meinh = 'SB' then umrez end) as matl_sb_umrez,
+              max(case when meinh = 'CS' then 'x' end) as matl_cs_value,
+              max(case when meinh = 'CS' then ean11 end) as matl_cs_ean11,
+              max(case when meinh = 'CS' then umrez end) as matl_cs_umrez,
+              max(case when meinh = 'EA' then 'x' end) as matl_ea_value,
+              max(case when meinh = 'EA' then ean11 end) as matl_ea_ean11,
+              max(case when meinh = 'PK' then 'x' end) as matl_pac_value,
+              max(case when meinh = 'PK' then umren end) as matl_pac_umren,
+              max(case when meinh = 'PK' then umrez end) as matl_pac_umrez,
+              max(case when meinh = 'PK' then ean11 end) as matl_pac_ean11
+            from lads_mat_uom
+            where meinh in ('PCE','SB','CS','EA','PK')
+            group by matnr
+          ) c,
+          lads_mat_mrc d
+        where a.matnr = b.matnr(+)
+          and a.matnr = e.matnr(+)
+          and a.matnr = c.matnr(+)
+          and a.matnr = d.matnr
+          and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
+          and a.mtart in ('FERT','ZPRM','VERP')
+          and d.werks = 'KR02'
+          and d.mmsta in ('03','20')
+        order by a.matnr asc;
       rec_matl_master csr_matl_master%rowtype;
 
    /*-------------*/
