@@ -293,7 +293,8 @@ sub PaintFunction()%>
          var objRow;
          var objCell;
          var strTabCode;
-         var objValues;
+         var objSavAry;
+         var objValAry;
          for (var i=objClaData.rows.length-1;i>=0;i--) {
             objClaData.deleteRow(i);
          }
@@ -362,9 +363,11 @@ sub PaintFunction()%>
                objCell.innerText = '*NONE';
                objCell.className = 'clsLabelFN';
             } else if (objElements[i].nodeName == 'VALUE') {
-               objValues = objRow.getAttribute('valary');
-               objValues[objValues.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
-               if (objValues.length == 1) {
+               objSavAry = objRow.getAttribute('savary');
+               objSavAry[objSavAry.length] = objElements[i].getAttribute('VALCDE');
+               objValAry = objRow.getAttribute('valary');
+               objValAry[objValAry.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
+               if (objValAry.length == 1) {
                   objCell.innerText = '';
                   if (objRow.getAttribute('seltyp') == '*TEXT') {
                      objCell.innerText = objCell.innerText+'"'+objElements[i].getAttribute('VALTXT')+'"';
@@ -505,8 +508,11 @@ sub PaintFunction()%>
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRowIndex];
       objRow.cells[2].innerText = '*NONE';
+      var objSavAry = objRow.getAttribute('savary');
       var objValAry = objRow.getAttribute('valary');
       objValAry.length = 0;
+      var bolChange = false;
+      var bolFound = false;
       for (var i=0;i<objValues.length;i++) {
          objValAry[i] = new clsClaValue(objValues[i].valcde,objValues[i].valtxt);
          if (i == 0) {
@@ -523,6 +529,26 @@ sub PaintFunction()%>
                objRow.cells[2].innerText = objRow.cells[2].innerText+', '+objValues[i].valtxt;
             }
          }
+         if (!bolChange) {
+            bolFound = false;
+            for (var j=0;j<objSavAry.length;j++) {
+               if (objValues[i].valcde == objSavAry[j]) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               bolChange = true;
+            }
+         }
+      }
+      if (objValAry.length != objSavAry.length) {
+         bolChange = true;
+      }
+      if (!bolChange) {
+         objRow.cells[2].className = 'clsLabelFN';
+      } else {
+         objRow.cells[2].className = 'clsLabelFG';
       }
       displayScreen('dspDefine');
       document.getElementById('DEF_ClaData').focus();
