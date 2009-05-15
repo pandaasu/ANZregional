@@ -365,7 +365,7 @@ sub PaintFunction()%>
                objCell.className = 'clsLabelFN';
             } else if (objElements[i].nodeName == 'VALUE') {
                objSavAry = objRow.getAttribute('savary');
-               objSavAry[objSavAry.length] = objElements[i].getAttribute('VALCDE');
+               objSavAry[objSavAry.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
                objValAry = objRow.getAttribute('valary');
                objValAry[objValAry.length] = new clsClaValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
                if (objValAry.length == 1) {
@@ -447,11 +447,11 @@ sub PaintFunction()%>
       for (var i=0;i<objClaData.rows.length;i++) {
          objRow = objClaData.rows[i];
          if (objRow.getAttribute('tabcde') != '*HEAD') {
-            objValues = objRow.getAttribute('valary');
-            if (objValues.length != 0) {
+            objValAry = objRow.getAttribute('valary');
+            if (objValAry.length != 0) {
                strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
-               for (var j=0;j<objValues.length;j++) {
-                  strXML = strXML+'<VAL_DATA VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
+               for (var j=0;j<objValAry.length;j++) {
+                  strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+objValAry[j].valtxt+'"/>';
                }
                strXML = strXML+'</CLA_DATA>';
             }
@@ -509,6 +509,7 @@ sub PaintFunction()%>
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRowIndex];
       objRow.cells[2].innerText = '*NONE';
+      var strSelTyp = objRow.getAttribute('seltyp');
       var objSavAry = objRow.getAttribute('savary');
       var objValAry = objRow.getAttribute('valary');
       objValAry.length = 0;
@@ -533,9 +534,16 @@ sub PaintFunction()%>
          if (!bolChange) {
             bolFound = false;
             for (var j=0;j<objSavAry.length;j++) {
-               if (objValues[i].valcde == objSavAry[j]) {
-                  bolFound = true;
-                  break;
+               if (strSelTyp == '*NUMBER' || strSelTyp == '*TEXT') {
+                  if (objValues[i].valtxt == objSavAry[j].valtxt) {
+                     bolFound = true;
+                     break;
+                  }
+               } else {
+                  if (objValues[i].valcde == objSavAry[j].valcde) {
+                     bolFound = true;
+                     break;
+                  }
                }
             }
             if (!bolFound) {
