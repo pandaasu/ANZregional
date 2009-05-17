@@ -1,115 +1,72 @@
 <script language="javascript">
 <!--
    ///////////////////////////
-   // Search Rule Functions //
+   // Select Rule Functions //
    ///////////////////////////
    var cstrSearchEntity;
-   var cstrSearchHeading;
-   var cstrSearchScript;
-   var cobjSearchData;
-   var cstrSearchTest;
-   var cstrSearchCancel;
-   var cstrSearchAccept;
-   var cstrSearchMode;
-   var cstrSearchGrpCde;
-   var cstrSearchTabCde;
-   var cstrSearchFldCde;
-   var cstrSearchFldTxt;
-   var cstrSearchInpLen;
-   var cstrSearchRulTyp;
-   var cstrSearchRulCde;
-   var cintSearchRow;
-   var cobjSearchArray;
-   var cintSearchInstance;
-   function clsSchInstance() {
-      this.entnam = '';
-      this.hedtxt = '';
-      this.srvnam = '';
-      this.schdat = new Array();
-   }
-   function clsSchRule() {
+   var cobjSelectData;
+   var cstrSelectMode;
+   var cstrSelectGrpCde;
+   var cstrSelectTabCde;
+   var cstrSelectFldCde;
+   var cstrSelectFldTxt;
+   var cstrSelectInpLen;
+   var cstrSelectRulTyp;
+   var cstrSelectRulCde;
+   var cintSelectRow;
+   function clsSltRule() {
       this.grpcde = '';
       this.tabcde = '';
       this.fldcde = '';
       this.fldtxt = '';
       this.rultyp = '';
       this.rulcde = '';
+      this.mixpct = '';
       this.valary = new Array();
    }
-   function clsSchValue(strValCde,strValTxt) {
+   function clsSltValue(strValCde,strValTxt,strValPct) {
       this.valcde = strValCde;
       this.valtxt = strValTxt;
+      this.valpct = strValPct;
    }
-   function initSearch() {
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchRule','hedSchRule');
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchFeld','hedSchFeld');
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchList','hedSchList');
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchNumb','hedSchNumb');
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchText','hedSchText');
-      cobjScreens[cobjScreens.length] = new clsScreen('dspSchSlct','hedSchSlct');
-      cintSearchInstance = -1;
-      cobjSearchArray = new Array();
-   }
-   function startSchInstance(strEntity,strHeading,strScript,strTest,strCancel,strAccept) {
-      cstrSearchTest = strTest;
-      cstrSearchCancel = strCancel;
-      cstrSearchAccept = strAccept;
-      var intSearchInstance = -1;
-      for (var i=0;i<cobjSearchArray.length;i++) {
-         if (cobjSearchArray[i].entnam == strEntity) {
-            intSearchInstance = i;
+   function initSelect(strHeading) {
+      cobjScreens[cobjScreens.length] = new clsScreen('dspSltFeld','hedSltFeld');
+      cobjScreens[cobjScreens.length] = new clsScreen('dspSltList','hedSltList');
+      cobjScreens[cobjScreens.length] = new clsScreen('dspSltNumb','hedSltNumb');
+      cobjScreens[cobjScreens.length] = new clsScreen('dspSltText','hedSltText');
+      for (var i=0;i<cobjScreens.length;i++) {
+         if (cobjScreens[i].scrnam == 'dspSltFeld') {
+            cobjScreens[i].hedtxt = strHeading+' Selection Fields';
+         } else if (cobjScreens[i].scrnam == 'dspSltList') {
+            cobjScreens[i].hedtxt = strHeading+' Selection List Rule';
+         } else if (cobjScreens[i].scrnam == 'dspSltNumb') {
+            cobjScreens[i].hedtxt = strHeading+' Selection Number Rule';
+         } else if (cobjScreens[i].scrnam == 'dspSltText') {
+            cobjScreens[i].hedtxt = strHeading+' Selection Text Rule';
          }
       }
-      if (intSearchInstance == -1) {
-         var objInstance = new clsSchInstance();
-         objInstance.entnam = strEntity;
-         objInstance.hedtxt = strHeading;
-         objInstance.srvnam = strScript;
-         cobjSearchArray[cobjSearchArray.length] = objInstance;
-         intSearchInstance = cobjSearchArray.length-1;
-      }
-      if (cintSearchInstance != intSearchInstance) {
-         cintSearchInstance = intSearchInstance;
-         cstrSearchEntity = cobjSearchArray[cintSearchInstance].entnam;
-         cstrSearchHeading = cobjSearchArray[cintSearchInstance].hedtxt;
-         cstrSearchScript = cobjSearchArray[cintSearchInstance].srvnam;
-         cobjSearchData = cobjSearchArray[cintSearchInstance].schdat;
-         for (var i=0;i<cobjScreens.length;i++) {
-            if (cobjScreens[i].scrnam == 'dspSchRule') {
-              cobjScreens[i].hedtxt = cstrSearchHeading+' Search Rules';
-            } else if (cobjScreens[i].scrnam == 'dspSchFeld') {
-               cobjScreens[i].hedtxt = cstrSearchHeading+' Search Fields';
-            } else if (cobjScreens[i].scrnam == 'dspSchList') {
-               cobjScreens[i].hedtxt = cstrSearchHeading+' Search List Rule';
-            } else if (cobjScreens[i].scrnam == 'dspSchNumb') {
-               cobjScreens[i].hedtxt = cstrSearchHeading+' Search Number Rule';
-            } else if (cobjScreens[i].scrnam == 'dspSchText') {
-               cobjScreens[i].hedtxt = cstrSearchHeading+' Search Text Rule';
-            } else if (cobjScreens[i].scrnam == 'dspSchSlct') {
-               cobjScreens[i].hedtxt = cstrSearchHeading+' Selection';
-            }
-         }
-         loadSchData();
-      }
-      displayScreen('dspSchRule');
+      cobjSelectData = new Array();
    }
-   function loadSchData() {
-      var objTable = document.getElementById('tabSchRule');
-      var objFont = document.getElementById('fntSchRule');
+   function startSltInstance(strEntity) {
+      cstrSelectEntity = strEntity;
+   }
+   function loadSltData() {
+      var objTable = document.getElementById('tabSltRule');
+      var objFont = document.getElementById('fntSltRule');
       var objRow;
       var objCell;
       var bolFound = false;
       for (var i=objTable.rows.length-1;i>=0;i--) {
          objTable.deleteRow(i);
       }
-      for (var i=0;i<cobjSearchData.length;i++) {
-         if (cobjSearchData[i].tabcde == '*GROUP') {
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].tabcde == '*GROUP') {
             objRow = objTable.insertRow(-1);
-            objRow.setAttribute('grpcde',cobjSearchData[i].grpcde);
-            objRow.setAttribute('tabcde',cobjSearchData[i].tabcde);
+            objRow.setAttribute('grpcde',cobjSelectData[i].grpcde);
+            objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objCell = objRow.insertCell(0);
             objCell.colSpan = 1;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doSchRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSchRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
@@ -125,29 +82,29 @@
             objCell.style.whiteSpace = 'nowrap';
          } else {
             objRow = objTable.insertRow(-1);
-            objRow.setAttribute('grpcde',cobjSearchData[i].grpcde);
-            objRow.setAttribute('tabcde',cobjSearchData[i].tabcde);
-            objRow.setAttribute('fldcde',cobjSearchData[i].fldcde);
-            objRow.setAttribute('fldtxt',cobjSearchData[i].fldtxt);
-            objRow.setAttribute('rultyp',cobjSearchData[i].rultyp);
-            objRow.setAttribute('rulcde',cobjSearchData[i].rulcde);
+            objRow.setAttribute('grpcde',cobjSelectData[i].grpcde);
+            objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
+            objRow.setAttribute('fldcde',cobjSelectData[i].fldcde);
+            objRow.setAttribute('fldtxt',cobjSelectData[i].fldtxt);
+            objRow.setAttribute('rultyp',cobjSelectData[i].rultyp);
+            objRow.setAttribute('rulcde',cobjSelectData[i].rulcde);
             var strText = '*NONE';
-            if (cobjSearchData[i].rulcde != '') {
+            if (cobjSelectData[i].rulcde != '') {
                strText = '';
                var objValues = new Array();
-               for (var j=0;j<cobjSearchData[i].valary.length;j++) {
-                  objValues[j] = new clsSchValue(cobjSearchData[i].valary[j].valcde,cobjSearchData[i].valary[j].valtxt);
+               for (var j=0;j<cobjSelectData[i].valary.length;j++) {
+                  objValues[j] = new clsSltValue(cobjSelectData[i].valary[j].valcde,cobjSelectData[i].valary[j].valtxt,cobjSelectData[i].valary[j].valpct);
                   if (j == 0) {
-                     if (cobjSearchData[i].rultyp == '*TEXT') {
-                        strText = strText+'"'+cobjSearchData[i].valary[j].valtxt+'"';
+                     if (cobjSelectData[i].rultyp == '*TEXT') {
+                        strText = strText+'"'+cobjSelectData[i].valary[j].valtxt+'"';
                      } else {
-                        strText = strText+cobjSearchData[i].valary[j].valtxt;
+                        strText = strText+cobjSelectData[i].valary[j].valtxt;
                      }
                   } else {
-                     if (cobjSearchData[i].rultyp == '*TEXT') {
-                        strText = strText+', "'+cobjSearchData[i].valary[j].valtxt+'"';
+                     if (cobjSelectData[i].rultyp == '*TEXT') {
+                        strText = strText+', "'+cobjSelectData[i].valary[j].valtxt+'"';
                      } else {
-                        strText = strText+', '+cobjSearchData[i].valary[j].valtxt;
+                        strText = strText+', '+cobjSelectData[i].valary[j].valtxt;
                      }
                   }
                }
@@ -155,12 +112,12 @@
             }
             objCell = objRow.insertCell(0);
             objCell.colSpan = 1;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doSchRuleUpdRule(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSchRuleDelRule(\''+objRow.rowIndex+'\');">Delete</a>';
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleUpdRule(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelRule(\''+objRow.rowIndex+'\');">Delete</a>';
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
             objCell.colSpan = 1;
-            objCell.innerText = cobjSearchData[i].fldtxt+' ('+cobjSearchData[i].rulcde+')';
+            objCell.innerText = cobjSelectData[i].fldtxt+' ('+cobjSelectData[i].rulcde+')';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(2);
@@ -176,39 +133,39 @@
          objFont.style.display = 'block';
       }
    }
-   function updateSchData() {
-      var objTable = document.getElementById('tabSchRule');
-      var objFont = document.getElementById('fntSchRule');
+   function updateSltData() {
+      var objTable = document.getElementById('tabSltRule');
+      var objFont = document.getElementById('fntSltRule');
       var objValues;
       var bolFound = false;
-      cobjSearchData.length = 0;
+      cobjSelectData.length = 0;
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (objRow.getAttribute('tabcde') == '*GROUP') {
-            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSchRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSchRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
+            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
             if (!bolFound) {
                objRow.cells[1].innerText = 'SELECTION GROUP - WHERE';
             } else {
                objRow.cells[1].innerText = 'SELECTION GROUP - OR';
             }
             bolFound = true;
-            cobjSearchData[i] = new clsSchRule();
-            cobjSearchData[i].grpcde = objRow.getAttribute('grpcde');
-            cobjSearchData[i].tabcde = objRow.getAttribute('tabcde');
+            cobjSelectData[i] = new clsSltRule();
+            cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
+            cobjSelectData[i].tabcde = objRow.getAttribute('tabcde');
          } else {
-            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSchRuleUpdRule(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSchRuleDelRule(\''+objRow.rowIndex+'\');">Delete</a>';
-            cobjSearchData[i] = new clsSchRule();
-            cobjSearchData[i].grpcde = objRow.getAttribute('grpcde');
-            cobjSearchData[i].tabcde = objRow.getAttribute('tabcde');
-            cobjSearchData[i].fldcde = objRow.getAttribute('fldcde');
-            cobjSearchData[i].fldtxt = objRow.getAttribute('fldtxt');
-            cobjSearchData[i].rultyp = objRow.getAttribute('rultyp');
-            cobjSearchData[i].rulcde = objRow.getAttribute('rulcde');
-            if (cobjSearchData[i].rulcde != '') {
-               cobjSearchData[i].valary.length = 0;
+            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleUpdRule(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelRule(\''+objRow.rowIndex+'\');">Delete</a>';
+            cobjSelectData[i] = new clsSltRule();
+            cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
+            cobjSelectData[i].tabcde = objRow.getAttribute('tabcde');
+            cobjSelectData[i].fldcde = objRow.getAttribute('fldcde');
+            cobjSelectData[i].fldtxt = objRow.getAttribute('fldtxt');
+            cobjSelectData[i].rultyp = objRow.getAttribute('rultyp');
+            cobjSelectData[i].rulcde = objRow.getAttribute('rulcde');
+            if (cobjSelectData[i].rulcde != '') {
+               cobjSelectData[i].valary.length = 0;
                objValues = objRow.getAttribute('valary');
                for (var j=0;j<objValues.length;j++) {
-                  cobjSearchData[i].valary[j] = new clsSchValue(objValues[j].valcde,objValues[j].valtxt);
+                  cobjSelectData[i].valary[j] = new clsSltValue(objValues[j].valcde,objValues[j].valtxt,objValues[j].valpct);
                }
             }
          }
@@ -220,36 +177,36 @@
          objFont.style.display = 'block';
       }
    }
-   function addSchData(objRule) {
+   function addSltData(objRule) {
       var objWork = new Array();
       var bolGroup = false;
       var bolInsert = false;
       var intIndex = 0
-      for (var i=0;i<cobjSearchData.length;i++) {
-         if (cobjSearchData[i].grpnam != cstrSearchGrpCde) {
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].grpnam != cstrSelectGrpCde) {
             if (bolGroup && !bolInsert) {
                bolInsert = true;
                objWork[intIndex] = objRule;
                intIndex++;
             }
-            objWork[intIndex] = cobjSearchData[i];
+            objWork[intIndex] = cobjSelectData[i];
             intIndex++;
          } else {
             bolGroup = true;
-            objWork[intIndex] = cobjSearchData[i];
+            objWork[intIndex] = cobjSelectData[i];
             intIndex++;
          }
       }
       if (!bolInsert) {
          objWork[intIndex] = objRule;
       }
-      cobjSearchData.length = 0;
+      cobjSelectData.length = 0;
       for (var i=0;i<objWork.length;i++) {
-         cobjSearchData[i] = objWork[i];
+         cobjSelectData[i] = objWork[i];
       }
    }
-   function doSchRuleAddGroup() {
-      var objTable = document.getElementById('tabSchRule');
+   function doSltRuleAddGroup() {
+      var objTable = document.getElementById('tabSltRule');
       var objRow;
       var objCell;
       var strGroup;
@@ -267,16 +224,22 @@
       objCell.innerText = '';
       objCell.className = 'clsLabelFB';
       objCell.style.whiteSpace = 'nowrap';
-      updateSchData();
+      updateSltData();
+
+
+      displayScreen('dspSltGrop');
+      document.getElementById('SGR_MixPcnt').focus();
+
+
    }
-   function doSchRuleAddRule(intRow) {
-      var objTable = document.getElementById('tabSchRule');
-      cstrSearchGrpCde = objTable.rows[intRow].getAttribute('grpcde');
+   function doSltRuleAddRule(intRow) {
+      var objTable = document.getElementById('tabSltRule');
+      cstrSelectGrpCde = objTable.rows[intRow].getAttribute('grpcde');
       doActivityStart(document.body);
-      window.setTimeout('requestSchFeldList();',10);
+      window.setTimeout('requestSltFeldList();',10);
    }
-   function doSchRuleDelGroup(intRow) {
-      var objTable = document.getElementById('tabSchRule');
+   function doSltRuleDelGroup(intRow) {
+      var objTable = document.getElementById('tabSltRule');
       var strGroup = objTable.rows[intRow].getAttribute('grpcde');
       var objRow;
       for (var i=objTable.rows.length-1;i>=0;i--) {
@@ -285,45 +248,80 @@
             objTable.deleteRow(i);
          }
       }
-      updateSchData();
+      updateSltData();
    }
-   function doSchRuleUpdRule(intRow) {
-      var objTable = document.getElementById('tabSchRule');
-      cintSearchRow = intRow;
-      cstrSearchGrpCde = cobjSearchData[cintSearchRow].grpcde;
-      cstrSearchTabCde = cobjSearchData[cintSearchRow].tabcde;
-      cstrSearchFldCde = cobjSearchData[cintSearchRow].fldcde;
-      cstrSearchRulTyp = cobjSearchData[cintSearchRow].rultyp;
-      cstrSearchRulCde = cobjSearchData[cintSearchRow].rulcde;
+   function doSltRuleUpdRule(intRow) {
+      var objTable = document.getElementById('tabSltRule');
+      cintSelectRow = intRow;
+      cstrSelectGrpCde = cobjSelectData[cintSelectRow].grpcde;
+      cstrSelectTabCde = cobjSelectData[cintSelectRow].tabcde;
+      cstrSelectFldCde = cobjSelectData[cintSelectRow].fldcde;
+      cstrSelectRulTyp = cobjSelectData[cintSelectRow].rultyp;
+      cstrSelectRulCde = cobjSelectData[cintSelectRow].rulcde;
       doActivityStart(document.body);
-      window.setTimeout('requestSchFeldUpdate();',10);
+      window.setTimeout('requestSltFeldUpdate();',10);
    }
-   function doSchRuleDelRule(intRow) {
-      var objTable = document.getElementById('tabSchRule');
+   function doSltRuleDelRule(intRow) {
+      var objTable = document.getElementById('tabSltRule');
       objTable.deleteRow(intRow);
-      updateSchData();
+      updateSltData();
    }
-   function doSchRuleSelect() {
-      doSchSlctSelect();
+   function doSltRuleSelect() {
+      doSltSlctSelect();
    }
-   function doSchRuleCancel() {
-      cstrSearchCancel();
-   }
-
    ////////////////////////////
-   // Search Field Functions //
+   // Select Group Functions //
    ////////////////////////////
-   function doSchFeldCancel() {
-      displayScreen('dspSchRule');
+   function doSltGropCancel() {
+      displayScreen('dspSltRule');
    }
-   function doSchFeldSelect(intRow) {
-      var objTable = document.getElementById('tabSchFeld');
+   function doSltGropAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('SGR_MixPcnt').value <= 0 || document.getElementById('SGR_MixPcnt').value > 100) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection group percentage must be in the range 1 to 100';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      displayScreen('dspSltRule');
+      var objTable = document.getElementById('tabSltRule');
+      var objRow;
+      var objCell;
+      var strGroup;
+      objRow = objTable.insertRow(-1);
+      strGroup = '*GROUP'+objRow.rowIndex;
+      objRow.setAttribute('grpcde',strGroup);
+      objRow.setAttribute('tabcde','*GROUP');
+      objRow.setAttribute('mixpct',document.getElementById('SGR_MixPcnt').value);
+      objCell = objRow.insertCell(0);
+      objCell.colSpan = 1;
+      objCell.innerHTML = '';
+      objCell.className = 'clsLabelFN';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell = objRow.insertCell(1);
+      objCell.colSpan = 1;
+      objCell.innerText = '';
+      objCell.className = 'clsLabelFB';
+      objCell.style.whiteSpace = 'nowrap';
+      updateSltData();
+   }
+   ////////////////////////////
+   // Select Field Functions //
+   ////////////////////////////
+   function doSltFeldCancel() {
+      displayScreen('dspSltRule');
+   }
+   function doSltFeldSelect(intRow) {
+      var objTable = document.getElementById('tabSltFeld');
       objFieldRow = objTable.rows[intRow];
       var bolFound = false;
-      for (var i=0;i<cobjSearchData.length;i++) {
-         if (cobjSearchData[i].grpcde == cstrSearchGrpCde && 
-             cobjSearchData[i].tabcde == objFieldRow.getAttribute('tabcde') && 
-             cobjSearchData[i].fldcde == objFieldRow.getAttribute('fldcde')) {
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].grpcde == cstrSelectGrpCde && 
+             cobjSelectData[i].tabcde == objFieldRow.getAttribute('tabcde') && 
+             cobjSelectData[i].fldcde == objFieldRow.getAttribute('fldcde')) {
             bolFound = true;
             break;
          }
@@ -332,21 +330,21 @@
          alert('Field already selected in rule group');
          return;
       }
-      cintSearchRow = -1;
-      cstrSearchTabCde = objFieldRow.getAttribute('tabcde');
-      cstrSearchFldCde = objFieldRow.getAttribute('fldcde');
-      cstrSearchFldTxt = objFieldRow.getAttribute('fldtxt');
-      cstrSearchInpLen = objFieldRow.getAttribute('inplen');
-      cstrSearchRulTyp = objFieldRow.getAttribute('rultyp');
-      cstrSearchRulCde = '';
+      cintSelectRow = -1;
+      cstrSelectTabCde = objFieldRow.getAttribute('tabcde');
+      cstrSelectFldCde = objFieldRow.getAttribute('fldcde');
+      cstrSelectFldTxt = objFieldRow.getAttribute('fldtxt');
+      cstrSelectInpLen = objFieldRow.getAttribute('inplen');
+      cstrSelectRulTyp = objFieldRow.getAttribute('rultyp');
+      cstrSelectRulCde = '';
       doActivityStart(document.body);
-      window.setTimeout('requestSchFeldUpdate();',10);
+      window.setTimeout('requestSltFeldUpdate();',10);
    }
-   function requestSchFeldList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="'+cstrSearchEntity+'" TESFLG="'+cstrSearchTest+'"/>';
-      doPostRequest('<%=strBase%>pts_sys_fld_list.asp',function(strResponse) {checkSchFeldList(strResponse);},false,streamXML(strXML));
+   function requestSltFeldList() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="'+cstrSelectEntity+'" TESFLG="1"/>';
+      doPostRequest('<%=strBase%>pts_sys_fld_list.asp',function(strResponse) {checkSltFeldList(strResponse);},false,streamXML(strXML));
    }
-   function checkSchFeldList(strResponse) {
+   function checkSltFeldList(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -365,8 +363,8 @@
             alert(strMessage);
             return;
          }
-         displayScreen('dspSchFeld');
-         var objTable = document.getElementById('tabSchFeld');
+         displayScreen('dspSltFeld');
+         var objTable = document.getElementById('tabSltFeld');
          for (var i=objTable.rows.length-1;i>=0;i--) {
             objTable.deleteRow(i);
          }
@@ -391,7 +389,7 @@
                objRow.setAttribute('rultyp',objElements[i].getAttribute('RULTYP'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSchFeldSelect(\''+objRow.rowIndex+'\');">Select</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSltFeldSelect(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(1);
@@ -403,11 +401,11 @@
          }
       }
    }
-   function requestSchFeldUpdate() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="'+cstrSearchTest+'" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
-      doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSchFeldUpdate(strResponse);},false,streamXML(strXML));
+   function requestSltFeldUpdate() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="1" TABCDE="'+cstrSelectTabCde+'" FLDCDE="'+cstrSelectFldCde+'"/>';
+      doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSltFeldUpdate(strResponse);},false,streamXML(strXML));
    }
-   function checkSchFeldUpdate(strResponse) {
+   function checkSltFeldUpdate(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -426,8 +424,8 @@
             alert(strMessage);
             return;
          }
-         if (cstrSearchRulTyp != '*NUMBER' && cstrSearchRulTyp != '*TEXT') {
-            document.getElementById('subSchList').innerText = cstrSearchFldTxt;
+         if (cstrSelectRulTyp != '*NUMBER' && cstrSelectRulTyp != '*TEXT') {
+            document.getElementById('subSltList').innerText = cstrSelectFldTxt;
             var objSelRulCode = document.getElementById('SEL_RulCode');
             var objSelRulValue = document.getElementById('SEL_RulValue');
             var objSelSelValue = document.getElementById('SEL_SelValue');
@@ -440,23 +438,23 @@
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSelRulCode.options[objSelRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
-                  if (cstrSearchRulCde == objElements[i].getAttribute('RULCDE')) {
+                  if (cstrSelectRulCde == objElements[i].getAttribute('RULCDE')) {
                      objSelRulCode.options[objSelRulCode.options.length-1].selected = true;
                   }
                } else if (objElements[i].nodeName == 'VALUE') {
                   objSelRulValue.options[objSelRulValue.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
                }
             }
-            if (cintSearchRow != -1) {
-               var objValues = cobjSearchData[cintSearchRow].valary;
+            if (cintSelectRow != -1) {
+               var objValues = cobjSelectData[cintSelectRow].valary;
                for (var i=0;i<objValues.length;i++) {
                   objSelSelValue.options[i] = new Option(objValues[i].valtxt,objValues[i].valcde);
                }
             }
-            displayScreen('dspSchList');
+            displayScreen('dspSltList');
             objSelRulCode.focus();
-         } else if (cstrSearchRulTyp == '*NUMBER') {
-            document.getElementById('subSchNumb').innerText = cstrSearchFldTxt;
+         } else if (cstrSelectRulTyp == '*NUMBER') {
+            document.getElementById('subSltNumb').innerText = cstrSelectFldTxt;
             var objSenRulCode = document.getElementById('SEN_RulCode');
             var objSenSelValue = document.getElementById('SEN_SelValue');
             objSenRulCode.options.length = 0;
@@ -464,24 +462,24 @@
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSenRulCode.options[objSenRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
-                  if (cstrSearchRulCde == objElements[i].getAttribute('RULCDE')) {
+                  if (cstrSelectRulCde == objElements[i].getAttribute('RULCDE')) {
                      objSenRulCode.options[objSenRulCode.options.length-1].selected = true;
                   }
                }
             }
-            objSenSelValue.size = cstrSearchInpLen;
-            objSenSelValue.maxLength = cstrSearchInpLen;
+            objSenSelValue.size = cstrSelectInpLen;
+            objSenSelValue.maxLength = cstrSelectInpLen;
             objSenSelValue.value = '';
-            if (cintSearchRow != -1) {
-               var objValues = cobjSearchData[cintSearchRow].valary;
+            if (cintSelectRow != -1) {
+               var objValues = cobjSelectData[cintSelectRow].valary;
                if (objValues.length != 0) {
                   objSenSelValue.value = objValues[0].valtxt;
                }
             }
-            displayScreen('dspSchNumb');
+            displayScreen('dspSltNumb');
             objSenRulCode.focus();
-         } else if (cstrSearchRulTyp == '*TEXT') {
-            document.getElementById('subSchText').innerText = cstrSearchFldTxt;
+         } else if (cstrSelectRulTyp == '*TEXT') {
+            document.getElementById('subSltText').innerText = cstrSelectFldTxt;
             var objSetRulCode = document.getElementById('SET_RulCode');
             var objSetSelValue = document.getElementById('SET_SelValue');
             objSetRulCode.options.length = 0;
@@ -489,35 +487,34 @@
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'RULE') {
                   objSetRulCode.options[objSetRulCode.options.length] = new Option(objElements[i].getAttribute('RULCDE'),objElements[i].getAttribute('RULCDE'));
-                  if (cstrSearchRulCde == objElements[i].getAttribute('RULCDE')) {
+                  if (cstrSelectRulCde == objElements[i].getAttribute('RULCDE')) {
                      objSetRulCode.options[objSetRulCode.options.length-1].selected = true;
                   }
                }
             }
-            objSetSelValue.size = cstrSearchInpLen;
-            objSetSelValue.maxLength = cstrSearchInpLen;
+            objSetSelValue.size = cstrSelectInpLen;
+            objSetSelValue.maxLength = cstrSelectInpLen;
             objSetSelValue.value = '';
-            if (cintSearchRow != -1) {
-               var objValues = cobjSearchData[cintSearchRow].valary;
+            if (cintSelectRow != -1) {
+               var objValues = cobjSelectData[cintSelectRow].valary;
                if (objValues.length != 0) {
                   objSetSelValue.value = objValues[0].valtxt;
                }
             }
-            displayScreen('dspSchText');
+            displayScreen('dspSltText');
             objSetRulCode.focus();
          } else {
-            alert('Unknown Rule Type ('+cstrSearchRulTyp+')');
+            alert('Unknown Rule Type ('+cstrSelectRulTyp+')');
          }
       }
    }
-
    ///////////////////////////
-   // Search List Functions //
+   // Select List Functions //
    ///////////////////////////
-   function doSchListCancel() {
-      displayScreen('dspSchRule');
+   function doSltListCancel() {
+      displayScreen('dspSltRule');
    }
-   function doSchListAccept() {
+   function doSltListAccept() {
       if (!processForm()) {return;}
       var objSelRulCode = document.getElementById('SEL_RulCode');
       var objSelSelValue = document.getElementById('SEL_SelValue');
@@ -534,32 +531,32 @@
          alert(strMessage);
          return;
       }
-      if (cintSearchRow != -1) {
-         cobjSearchData[cintSearchRow].rulcde = objSelRulCode[objSelRulCode.selectedIndex].value;
-         var objValues = cobjSearchData[cintSearchRow].valary;
+      if (cintSelectRow != -1) {
+         cobjSelectData[cintSelectRow].rulcde = objSelRulCode[objSelRulCode.selectedIndex].value;
+         var objValues = cobjSelectData[cintSelectRow].valary;
          objValues.length = 0;
          for (var i=0;i<objSelSelValue.options.length;i++) {
-            objValues[i] = new clsSchValue(objSelSelValue[i].value,objSelSelValue[i].text);
+            objValues[i] = new clsSltValue(objSelSelValue[i].value,objSelSelValue[i].text,'');
          }
       } else {
-         var objRule = new clsSchRule();
-         objRule.grpcde = cstrSearchGrpCde;
-         objRule.tabcde = cstrSearchTabCde;
-         objRule.fldcde = cstrSearchFldCde;
-         objRule.fldtxt = cstrSearchFldTxt;
-         objRule.rultyp = cstrSearchRulTyp;
+         var objRule = new clsSltRule();
+         objRule.grpcde = cstrSelectGrpCde;
+         objRule.tabcde = cstrSelectTabCde;
+         objRule.fldcde = cstrSelectFldCde;
+         objRule.fldtxt = cstrSelectFldTxt;
+         objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSelRulCode[objSelRulCode.selectedIndex].value;
          var objValues = objRule.valary;
          objValues.length = 0;
          for (var i=0;i<objSelSelValue.options.length;i++) {
-            objValues[i] = new clsSchValue(objSelSelValue[i].value,objSelSelValue[i].text);
+            objValues[i] = new clsSltValue(objSelSelValue[i].value,objSelSelValue[i].text,'');
          }
-         addSchData(objRule);
+         addSltData(objRule);
       }
-      displayScreen('dspSchRule');
-      loadSchData();
+      displayScreen('dspSltRule');
+      loadSltData();
    }
-   function selectSchListValues() {
+   function selectSltListValues() {
       var objSelRulValue = document.getElementById('SEL_RulValue');
       var objSelSelValue = document.getElementById('SEL_SelValue');
       var bolFound;
@@ -583,14 +580,14 @@
          objWork[intIndex] = objSelSelValue[i];
          intIndex++;
       }
-      objWork.sort(sortSchListValues);
+      objWork.sort(sortSltListValues);
       objSelSelValue.options.length = 0;
       objSelSelValue.selectedIndex = -1;
       for (var i=0;i<objWork.length;i++) {
          objSelSelValue.options[i] = objWork[i];
       }
    }
-   function removeSchListValues() {
+   function removeSltListValues() {
       var objSelSelValue = document.getElementById('SEL_SelValue');
       var objWork = new Array();
       var intIndex = 0;
@@ -606,7 +603,7 @@
          objSelSelValue.options[i] = objWork[i];
       }
    }
-   function sortSchListValues(obj01, obj02) {
+   function sortSltListValues(obj01, obj02) {
       if ((obj01.value-0) < (obj02.value-0)) {
          return -1;
       } else if ((obj01.value-0) > (obj02.value-0)) {
@@ -614,14 +611,13 @@
       }
       return 0;
    }
-
    /////////////////////////////
-   // Search Number Functions //
+   // Select Number Functions //
    /////////////////////////////
-   function doSchNumbCancel() {
-      displayScreen('dspSchRule');
+   function doSltNumbCancel() {
+      displayScreen('dspSltRule');
    }
-   function doSchNumbAccept() {
+   function doSltNumbAccept() {
       if (!processForm()) {return;}
       var objSenRulCode = document.getElementById('SEN_RulCode');
       var objSenSelValue = document.getElementById('SEN_SelValue');
@@ -638,35 +634,34 @@
          alert(strMessage);
          return;
       }
-      if (cintSearchRow != -1) {
-         cobjSearchData[cintSearchRow].rulcde = objSenRulCode[objSenRulCode.selectedIndex].value;
-         var objValues = cobjSearchData[cintSearchRow].valary;
+      if (cintSelectRow != -1) {
+         cobjSelectData[cintSelectRow].rulcde = objSenRulCode[objSenRulCode.selectedIndex].value;
+         var objValues = cobjSelectData[cintSelectRow].valary;
          objValues.length = 0;
-         objValues[0] = new clsSchValue('1',objSenSelValue.value);
+         objValues[0] = new clsSltValue('1',objSenSelValue.value,'');
       } else {
-         var objRule = new clsSchRule();
-         objRule.grpcde = cstrSearchGrpCde;
-         objRule.tabcde = cstrSearchTabCde;
-         objRule.fldcde = cstrSearchFldCde;
-         objRule.fldtxt = cstrSearchFldTxt;
-         objRule.rultyp = cstrSearchRulTyp;
+         var objRule = new clsSltRule();
+         objRule.grpcde = cstrSelectGrpCde;
+         objRule.tabcde = cstrSelectTabCde;
+         objRule.fldcde = cstrSelectFldCde;
+         objRule.fldtxt = cstrSelectFldTxt;
+         objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSenRulCode[objSenRulCode.selectedIndex].value;
          var objValues = objRule.valary;
          objValues.length = 0;
-         objValues[0] = new clsSchValue('1',objSenSelValue.value);
-         addSchData(objRule);
+         objValues[0] = new clsSltValue('1',objSenSelValue.value,'');
+         addSltData(objRule);
       }
-      displayScreen('dspSchRule');
-      loadSchData();
+      displayScreen('dspSltRule');
+      loadSltData();
    }
-
    ///////////////////////////
-   // Search Text Functions //
+   // Select Text Functions //
    ///////////////////////////
-   function doSchTextCancel() {
-      displayScreen('dspSchRule');
+   function doSltTextCancel() {
+      displayScreen('dspSltRule');
    }
-   function doSchTextAccept() {
+   function doSltTextAccept() {
       if (!processForm()) {return;}
       var objSetRulCode = document.getElementById('SET_RulCode');
       var objSetSelValue = document.getElementById('SET_SelValue');
@@ -683,63 +678,62 @@
          alert(strMessage);
          return;
       }
-      if (cintSearchRow != -1) {
-         cobjSearchData[cintSearchRow].rulcde = objSetRulCode[objSetRulCode.selectedIndex].value;
-         var objValues = cobjSearchData[cintSearchRow].valary;
+      if (cintSelectRow != -1) {
+         cobjSelectData[cintSelectRow].rulcde = objSetRulCode[objSetRulCode.selectedIndex].value;
+         var objValues = cobjSelectData[cintSelectRow].valary;
          objValues.length = 0;
-         objValues[0] = new clsSchValue('1',objSetSelValue.value);
+         objValues[0] = new clsSltValue('1',objSetSelValue.value,'');
       } else {
-         var objRule = new clsSchRule();
-         objRule.grpcde = cstrSearchGrpCde;
-         objRule.tabcde = cstrSearchTabCde;
-         objRule.fldcde = cstrSearchFldCde;
-         objRule.fldtxt = cstrSearchFldTxt;
-         objRule.rultyp = cstrSearchRulTyp;
+         var objRule = new clsSltRule();
+         objRule.grpcde = cstrSelectGrpCde;
+         objRule.tabcde = cstrSelectTabCde;
+         objRule.fldcde = cstrSelectFldCde;
+         objRule.fldtxt = cstrSelectFldTxt;
+         objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSetRulCode[objSetRulCode.selectedIndex].value;
          var objValues = objRule.valary;
          objValues.length = 0;
-         objValues[0] = new clsSchValue('1',objSetSelValue.value);
-         addSchData(objRule);
+         objValues[0] = new clsSltValue('1',objSetSelValue.value,'');
+         addSltData(objRule);
       }
-      displayScreen('dspSchRule');
-      loadSchData();
+      displayScreen('dspSltRule');
+      loadSltData();
    }
-
    /////////////////////////////
-   // Search Select Functions //
+   // Select Review Functions //
    /////////////////////////////
-   function doSchSlctSelect() {
-      cstrSearchMode = '*SLT';
+   function doSltSlctSelect() {
+      cstrSelectMode = '*SLT';
       var strEndCode = '0';
       doActivityStart(document.body);
-      window.setTimeout('requestSchSlct(\''+strEndCode+'\');',10);
+      window.setTimeout('requestSltSlct(\''+strEndCode+'\');',10);
    }
-   function doSchSlctMore() {
+   function doSltSlctMore() {
       if (!processForm()) {return;}
-      cstrSearchMode = '*MOR';
+      cstrSelectMode = '*MOR';
       var strEndCode = '0';
       var objList = document.getElementById('SEL_SelList');
       if (objList.rows.length != 0) {
          strEndCode = objList.rows[objList.rows.length-1].getAttribute('selcde');
       }
       doActivityStart(document.body);
-      window.setTimeout('requestSchSlct(\''+strEndCode+'\');',10);
+      window.setTimeout('requestSltSlct(\''+strEndCode+'\');',10);
    }
-   function requestSchSlct(strEndCode) {
+   function requestSltSlct(strEndCode) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*SELDTA" ENDCDE="'+strEndCode+'">';
       var intGroup = 0;
       var objValues;
-      for (var i=0;i<cobjSearchData.length;i++) {
-         if (cobjSearchData[i].tabcde == '*GROUP') {
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].tabcde == '*GROUP') {
             if (intGroup > 0) {
                strXML = strXML+'</GROUP>';
             }
             intGroup++;
             strXML = strXML+'<GROUP GRPCDE="*GROUP'+intGroup+'">';
          } else {
-            if (cobjSearchData[i].rulcde != '' && cobjSearchData[i].valary.length != 0) {
-               strXML = strXML+'<RULE TABCDE="'+cobjSearchData[i].tabcde+'" FLDCDE="'+cobjSearchData[i].fldcde+'" RULCDE="'+cobjSearchData[i].rulcde+'">';
-               objValues = cobjSearchData[i].valary;
+            if (cobjSelectData[i].rulcde != '' && cobjSelectData[i].valary.length != 0) {
+               strXML = strXML+'<RULE TABCDE="'+cobjSelectData[i].tabcde+'" FLDCDE="'+cobjSelectData[i].fldcde+'" RULCDE="'+cobjSelectData[i].rulcde+'">';
+               objValues = cobjSelectData[i].valary;
                for (var j=0;j<objValues.length;j++) {
                   strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
                }
@@ -751,9 +745,9 @@
          strXML = strXML+'</GROUP>';
       }
       strXML = strXML+'</PTS_REQUEST>';
-      doPostRequest('<%=strBase%>'+cstrSearchScript,function(strResponse) {checkSchSlct(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>'+cstrSelectScript,function(strResponse) {checkSltSlct(strResponse);},false,streamXML(strXML));
    }
-   function checkSchSlct(strResponse) {
+   function checkSltSlct(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -772,11 +766,11 @@
             alert(strMessage);
             return;
          }
-         displayScreen('dspSchSlct');
+         displayScreen('dspSltSlct');
          var objTable = document.getElementById('SEL_SelList');
          var objRow;
          var objCell;
-         if (cstrSearchMode == '*SLT') {
+         if (cstrSelectMode == '*SLT') {
             for (var i=objTable.rows.length-1;i>=0;i--) {
                objTable.deleteRow(i);
             }
@@ -791,7 +785,7 @@
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSchSlctAccept(\''+objRow.rowIndex+'\');">Select</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSltSlctAccept(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
@@ -813,12 +807,65 @@
          }
       }
    }
-   function doSchSlctAccept(intRow) {
+   function doSltSlctAccept(intRow) {
       var objTable = document.getElementById('SEL_SelList');
-      cstrSearchAccept(objTable.rows[intRow].getAttribute('selcde'),objTable.rows[intRow].getAttribute('seltxt'));
+      cstrSelectAccept(objTable.rows[intRow].getAttribute('selcde'),objTable.rows[intRow].getAttribute('seltxt'));
    }
-   function doSchSlctCancel() {
-      cstrSearchCancel();
+   function doSltSlctCancel() {
+      cstrSelectCancel();
+   }
+   ///////////////////////////
+   // Select Data Functions //
+   ///////////////////////////
+   function putSltData(objElements) {
+      var intIndex = -1;
+      for (var i=0;i<objElements.length;i++) {
+         if (objElements[i].nodeName == 'GROUP') {
+            intIndex++;
+            cobjSelectData[intIndex] = new clsSltRule();
+            cobjSelectData[intIndex].grpcde = objElements[i].getAttribute('GRPCDE');
+            cobjSelectData[intIndex].tabcde = '*GROUP';
+         } else if (objElements[i].nodeName == 'RULE') {
+            intIndex++;
+            cobjSelectData[intIndex] = new clsSltRule();
+            cobjSelectData[intIndex].grpcde = objElements[i].getAttribute('GRPCDE');
+            cobjSelectData[intIndex].tabcde = objElements[i].getAttribute('TABCDE');
+            cobjSelectData[intIndex].fldcde = objElements[i].getAttribute('FLDCDE');
+            cobjSelectData[intIndex].fldtxt = objElements[i].getAttribute('FLDTXT');
+            cobjSelectData[intIndex].rultyp = objElements[i].getAttribute('RULTYP');
+            cobjSelectData[intIndex].rulcde = objElements[i].getAttribute('RULCDE');
+         } else if (objElements[i].nodeName == 'VALUE') {
+            cobjSelectData[intIndex].valary = new clsSltValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'));
+         }
+      }
+      loadSltData();
+   }
+   function getSltData() {
+      var strXML = '';
+      var intGroup = 0;
+      var objValues;
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].tabcde == '*GROUP') {
+            if (intGroup > 0) {
+               strXML = strXML+'</GROUP>';
+            }
+            intGroup++;
+            strXML = strXML+'<GROUP GRPCDE="*GROUP'+intGroup+'">';
+         } else {
+            if (cobjSelectData[i].rulcde != '' && cobjSelectData[i].valary.length != 0) {
+               strXML = strXML+'<RULE TABCDE="'+cobjSelectData[i].tabcde+'" FLDCDE="'+cobjSelectData[i].fldcde+'" RULCDE="'+cobjSelectData[i].rulcde+'">';
+               objValues = cobjSelectData[i].valary;
+               for (var j=0;j<objValues.length;j++) {
+                  strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'"/>';
+               }
+               strXML = strXML+'</RULE>';
+            }
+         }
+      }
+      if (intGroup > 0) {
+         strXML = strXML+'</GROUP>';
+      }
+      return strXML;
    }
 // -->
 </script>

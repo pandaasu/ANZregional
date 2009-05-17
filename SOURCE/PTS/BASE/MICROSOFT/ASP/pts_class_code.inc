@@ -21,11 +21,14 @@
       cstrClassCancel = strCancel;
       cstrClassAccept = strAccept;
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaList','hedClaList');
+      cobjScreens[cobjScreens.length] = new clsScreen('dspClaSlct','hedClaSlct');
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaNumb','hedClaNumb');
       cobjScreens[cobjScreens.length] = new clsScreen('dspClaText','hedClaText');
       for (var i=0;i<cobjScreens.length;i++) {
          if (cobjScreens[i].scrnam == 'dspClaList') {
             cobjScreens[i].hedtxt = strHeading+' List Classification';
+         } else if (cobjScreens[i].scrnam == 'dspClaSlct') {
+            cobjScreens[i].hedtxt = strHeading+' Select Classification';
          } else if (cobjScreens[i].scrnam == 'dspClaNumb') {
             cobjScreens[i].hedtxt = strHeading+' Number Classification';
          } else if (cobjScreens[i].scrnam == 'dspClaText') {
@@ -68,7 +71,7 @@
             alert(strMessage);
             return;
          }
-         if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*OPT_MULTIPLE_LIST') {
+         if (cstrClassSelTyp == '*OPT_MULTIPLE_LIST' || cstrClassSelTyp == '*MAN_MULTIPLE_LIST') {
             document.getElementById('subClaList').innerText = cstrClassFldTxt;
             var objCllLstValue = document.getElementById('CLL_LstValue');
             var objCllClaValue = document.getElementById('CLL_ClaValue');
@@ -88,6 +91,30 @@
             }
             displayScreen('dspClaList');
             objCllLstValue.focus();
+         if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*MAN_SINGLE_LIST') {
+            document.getElementById('subClaSlct').innerText = cstrClassFldTxt;
+            var objClsClaValue = document.getElementById('CLS_ClaValue');
+            objClsClaValue.options.length = 0;
+            objClsClaValue.selectedIndex = -1;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'VALUE') {
+                  objClsClaValue.options[objClsClaValue.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+               }
+            }
+            var strValue = '';
+            if (cobjClassClaVal != '') {
+               if (cobjClassClaVal.length != 0) {
+                  strvalue = cobjClassClaVal[0].valcde;
+               }
+            }
+            for (var i=0;i<objClsClaValue.length;i++) {
+               if (objClsClaValue.options[i].value == strValue) {
+                  objClsClaValue.options[i].selected = true;
+                  break;
+               }
+            }
+            displayScreen('dspClaSlct');
+            objClsClaValue.focus();
          } else if (cstrClassSelTyp == '*NUMBER') {
             document.getElementById('subClaNumb').innerText = cstrClassFldTxt;
             var objClnClaValue = document.getElementById('CLN_ClaValue');
@@ -130,9 +157,9 @@
       if (!processForm()) {return;}
       var objCllClaValue = document.getElementById('CLL_ClaValue');
       var strMessage = '';
-      if (cstrClassSelTyp == '*OPT_SINGLE_LIST' && objCllClaValue.options.length > 1) {
+      if (cstrClassSelTyp == '*MAN_MULTIPLE_LIST' && objCllClaValue.options.length == 0) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Only one selection is allowed';
+         strMessage = strMessage + 'At least one selection must be made';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -201,6 +228,32 @@
          return 1;
       }
       return 0;
+   }
+
+   ////////////////////////////
+   // Class Select Functions //
+   ////////////////////////////
+   function doClaSlctCancel() {
+      cstrClassCancel();
+   }
+   function doClaSlctAccept() {
+      if (!processForm()) {return;}
+      var objClsClaValue = document.getElementById('CLS_ClaValue');
+      var strMessage = '';
+      if (objClsClaValue.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Value must be selected';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var objValues = new Array();
+      objValues.length = 0;
+      if (objClsClaValue[objClsClaValue.selectedIndex].value != '') {
+         objValues[0] = new clsClaValue(objClsClaValue[objClsClaValue.selectedIndex].value,objClsClaValue[objClsClaValue.selectedIndex].text);
+      }
+      cstrClassAccept(cintRowIndex,objValues);
    }
 
    ////////////////////////////
