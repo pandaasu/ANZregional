@@ -84,14 +84,14 @@
                   objCllLstValue.options[objCllLstValue.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
                }
             }
-            if (cobjClassClaVal != '') {
+            if (cobjClassClaVal != null) {
                for (var i=0;i<cobjClassClaVal.length;i++) {
                   objCllClaValue.options[i] = new Option(cobjClassClaVal[i].valtxt,cobjClassClaVal[i].valcde);
                }
             }
             displayScreen('dspClaList');
             objCllLstValue.focus();
-         if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*MAN_SINGLE_LIST') {
+         } else if (cstrClassSelTyp == '*OPT_SINGLE_LIST' || cstrClassSelTyp == '*MAN_SINGLE_LIST') {
             document.getElementById('subClaSlct').innerText = cstrClassFldTxt;
             var objClsClaValue = document.getElementById('CLS_ClaValue');
             objClsClaValue.options.length = 0;
@@ -102,7 +102,7 @@
                }
             }
             var strValue = '';
-            if (cobjClassClaVal != '') {
+            if (cobjClassClaVal != null) {
                if (cobjClassClaVal.length != 0) {
                   strvalue = cobjClassClaVal[0].valcde;
                }
