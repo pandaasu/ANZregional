@@ -421,7 +421,11 @@ sub PaintFunction()%>
             if (objValAry.length != 0) {
                strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
                for (var j=0;j<objValAry.length;j++) {
-                  strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+fixXML(objValAry[j].valtxt)+'"/>';
+                  if (objRow.getAttribute('seltyp') == '*TEXT' || objRow.getAttribute('seltyp') == '*NUMBER) {
+                     strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+fixXML(objValAry[j].valtxt)+'"/>';
+                  } else {
+                     strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT=""/>';
+                  }
                }
                strXML = strXML+'</CLA_DATA>';
             }
