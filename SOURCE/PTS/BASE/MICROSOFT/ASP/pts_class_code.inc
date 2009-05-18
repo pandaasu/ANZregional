@@ -104,7 +104,7 @@
             var strValue = '';
             if (cobjClassClaVal != null) {
                if (cobjClassClaVal.length != 0) {
-                  strvalue = cobjClassClaVal[0].valcde;
+                  strValue = cobjClassClaVal[0].valcde;
                }
             }
             for (var i=0;i<objClsClaValue.length;i++) {
