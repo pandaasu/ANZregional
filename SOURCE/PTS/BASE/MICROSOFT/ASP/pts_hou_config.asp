@@ -451,7 +451,7 @@ sub PaintFunction()%>
             if (objValAry.length != 0) {
                strXML = strXML+'<CLA_DATA TABCDE="'+objRow.getAttribute('tabcde')+'" FLDCDE="'+objRow.getAttribute('fldcde')+'">';
                for (var j=0;j<objValAry.length;j++) {
-                  strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+objValAry[j].valtxt+'"/>';
+                  strXML = strXML+'<VAL_DATA VALCDE="'+objValAry[j].valcde+'" VALTXT="'+fixXML(objValAry[j].valtxt)+'"/>';
                }
                strXML = strXML+'</CLA_DATA>';
             }

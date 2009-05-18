@@ -349,7 +349,7 @@ sub PaintFunction()%>
       strXML = strXML+' RSPERAN="'+fixXML(document.getElementById('DEF_RspEran').value)+'"';
       strXML = strXML+'>';
       for (var i=0;i<objResValu.length;i++) {
-         strXML = strXML+'<QUE_RESPONSE RESCODE="'+(i+1)+'" RESTEXT="'+objResValu.options[i].value+'"/>';
+         strXML = strXML+'<QUE_RESPONSE RESCODE="'+(i+1)+'" RESTEXT="'+fixXML(objResValu.options[i].value)+'"/>';
       }
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
