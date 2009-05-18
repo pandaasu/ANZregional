@@ -1195,12 +1195,19 @@ create or replace package body pts_app.pts_gen_function as
       /* Retrieve the pet type system field
       /*-*/
       cursor csr_field is
-         select t01.*
-           from pts_pty_sys_field t01
-          where t01.psf_pet_type = var_pet_type
-            and t01.psf_tab_code = var_tab_code
-            and t01.psf_fld_code = var_fld_code;
+         select t01.sfi_fld_sel_type
+           from pts_sys_field t01
+          where t01.sfi_tab_code = var_tab_code
+            and t01.sfi_fld_code = var_fld_code;
       rcd_field csr_field%rowtype;
+
+      cursor csr_pet_field is
+         select t01.psf_val_type
+           from pts_pty_sys_field t01
+          where t01.psf_tab_code = var_tab_code
+            and t01.psf_fld_code = var_fld_code
+            and t01.psf_pet_type = var_pet_type;
+      rcd_pet_field csr_pet_field%rowtype;
 
       cursor csr_value_all is
          select t01.sva_val_code,
@@ -1258,22 +1265,39 @@ create or replace package body pts_app.pts_gen_function as
       end if;
 
       /*-*/
-      /* Retrieve the pet type firld selection type wghen required
+      /* Retrieve the field definition
       /*-*/
-      var_val_type := '*ALL';
+      open csr_field;
+      fetch csr_field into rcd_field;
+      if csr_field%notfound then
+         pts_gen_function.add_mesg_data('Field table('||var_tab_code||') field('||to_char(var_fld_code)||') does not exist');
+         return;
+      end if;
+      close csr_field;
+
+      /*-*/
+      /* Retrieve the pet type field when required
+      /*-*/
       if not(var_pet_type is null) then
-         open csr_field;
-         fetch csr_field into rcd_field;
-         if csr_field%found then
-            var_val_type := rcd_field.psf_val_type;
+         open csr_pet_field;
+         fetch csr_pet_field into rcd_pet_field;
+         if csr_pet_field%found then
+            var_val_type := rcd_pet_field.psf_val_type;
          end if;
-         close csr_field;
+         close csr_pet_field;
       end if;
 
       /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the *NONE XML when required
+      /*-*/
+      if rcd_field.sfi_fld_sel_type = '*OPT_SINGLE_LIST' then
+         pipe row(pts_xml_object('<VALUE VALCDE="" VALTXT="** NONE **"/>'));
+      end if;
 
       /*-*/
       /* Pipe the system selection value XML when required
