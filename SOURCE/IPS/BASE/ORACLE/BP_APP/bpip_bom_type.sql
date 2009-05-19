@@ -19,7 +19,7 @@ create or replace type bpip_allocation_object as object (alc_type varchar2(32 ch
                                                          cmpnt_base_uom varchar2(10 char),
                                                          cmpnt_net_wght number,
                                                          cmpnt_gross_wght number,
-                                                         proportion varchar2(32 char),
+                                                         proportion number,
                                                          bom_hierarchy_level number,
                                                          bom_hierarchy_root varchar2(1024 char),
                                                          bom_hierarchy_path varchar2(1024 char));
