@@ -267,27 +267,27 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_StmCode').value = '';
-         document.getElementById('DEF_StmText').value = '';
+         document.getElementById('DEF_StmTarg').value = '';
          var strStmStat;
-         var strEntCode;
+         var strStmTarg;
          var objStmStat = document.getElementById('DEF_StmStat');
-         var objEntCode = document.getElementById('DEF_EntCode');
+         var objStmTarg = document.getElementById('DEF_StmTarg');
          objStmStat.options.length = 0;
-         objEntCode.options.length = 0;
+         objStmTarg.options.length = 0;
          document.getElementById('DEF_StmText').focus();
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objStmStat.options[objStmStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            if (objElements[i].nodeName == 'ENT_LIST') {
-               objEntCode.options[objEntCode.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            if (objElements[i].nodeName == 'TAR_LIST') {
+               objStmTarg.options[objStmTarg.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SELECTION') {
                document.getElementById('DEF_StmCode').value = objElements[i].getAttribute('STMCODE');
                document.getElementById('DEF_StmText').value = objElements[i].getAttribute('STMTEXT');
-               document.getElementById('DEF_EntCode').value = objElements[i].getAttribute('ENTCODE');
                strStmStat = objElements[i].getAttribute('STMSTAT');
+               strStmTarg = objElements[i].getAttribute('STMTARG');
             }
          }
-         startSltInstance(strEntCode);
+         startSltInstance(strStmTarg);
          putSltData(objElements);
          objStmStat.selectedIndex = -1;
          for (var i=0;i<objStmStat.length;i++) {
@@ -296,10 +296,10 @@ sub PaintFunction()%>
                break;
             }
          }
-         objEntCode.selectedIndex = -1;
-         for (var i=0;i<objEntCode.length;i++) {
-            if (objEntCode.options[i].value == strEntCode) {
-               objEntCode.options[i].selected = true;
+         objStmTarg.selectedIndex = -1;
+         for (var i=0;i<objStmTarg.length;i++) {
+            if (objStmTarg.options[i].value == strStmTarg) {
+               objStmTarg.options[i].selected = true;
                break;
             }
          }
@@ -308,13 +308,13 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objStmStat = document.getElementById('DEF_StmStat');
-      var objEntCode = document.getElementById('DEF_EntCode');
+      var objStmTarg = document.getElementById('DEF_StmTarg');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSTM"';
       strXML = strXML+' STMCODE="'+fixXML(document.getElementById('DEF_StmCode').value)+'"';
       strXML = strXML+' STMTEXT="'+fixXML(document.getElementById('DEF_StmText').value)+'"';
       strXML = strXML+' STMSTAT="'+fixXML(objStmStat.options[objStmStat.selectedIndex].value)+'"';
-      strXML = strXML+' ENTCODE="'+fixXML(objEntCode.options[objEntCode.selectedIndex].value)+'"';
+      strXML = strXML+' STMTARG="'+fixXML(objStmTarg.options[objStmTarg.selectedIndex].value)+'"';
       strXML = strXML+'>';
       strAML = strXML + getSltData();
       strXML = strXML+'</PTS_REQUEST>';
@@ -356,7 +356,7 @@ sub PaintFunction()%>
       document.getElementById('PRO_StmCode').value = '';
       document.getElementById('PRO_StmCode').focus();
    }
-   function doDefineEntity(objSelect) {
+   function doDefineTarget(objSelect) {
       if (confirm('Please confirm the target change\r\npress OK continue (all existing selection rules will be deleted)\r\npress Cancel to return ignore') == false) {return false;}
       var strValue = objSelect.options[objSelect.selectedIndex].value;
       startSltInstance(strValue);
@@ -433,7 +433,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Template Target:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_EntCode" onChange="doDefineEntity(this);"></select>
+            <select class="clsInputBN" id="DEF_StmTarget" onChange="doDefineTarget(this);"></select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
