@@ -7,7 +7,6 @@
    var cstrSearchHeading;
    var cstrSearchScript;
    var cobjSearchData;
-   var cstrSearchTest;
    var cstrSearchCancel;
    var cstrSearchAccept;
    var cstrSearchMode;
@@ -50,8 +49,7 @@
       cintSearchInstance = -1;
       cobjSearchArray = new Array();
    }
-   function startSchInstance(strEntity,strHeading,strScript,strTest,strCancel,strAccept) {
-      cstrSearchTest = strTest;
+   function startSchInstance(strEntity,strHeading,strScript,strCancel,strAccept) {
       cstrSearchCancel = strCancel;
       cstrSearchAccept = strAccept;
       var intSearchInstance = -1;
@@ -343,7 +341,7 @@
       window.setTimeout('requestSchFeldUpdate();',10);
    }
    function requestSchFeldList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="'+cstrSearchEntity+'" TESFLG="'+cstrSearchTest+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTFLD" ENTCDE="'+cstrSearchEntity+'" TESFLG="0"/>';
       doPostRequest('<%=strBase%>pts_sys_fld_list.asp',function(strResponse) {checkSchFeldList(strResponse);},false,streamXML(strXML));
    }
    function checkSchFeldList(strResponse) {
@@ -404,7 +402,7 @@
       }
    }
    function requestSchFeldUpdate() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="'+cstrSearchTest+'" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="0" TABCDE="'+cstrSearchTabCde+'" FLDCDE="'+cstrSearchFldCde+'"/>';
       doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSchFeldUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkSchFeldUpdate(strResponse) {

@@ -69,7 +69,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><select class="clsInputBN" id="SLL_RulCode"></select></nobr></td>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><select class="clsInputBN" id="SLL_RulCode" onChange="selectSltListRule(this);"></select></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -98,7 +98,7 @@
                               </table>
                            </nobr></td>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="SLL_SelValue" name="SLL_SelValue" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="SLL_SelValue" name="SLL_SelValue" style="width:300px" multiple size=20 ondblClick="updateSltListValue();></select>
                            </nobr></td>
                         </tr>
                      </table>
@@ -118,6 +118,39 @@
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltListCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltListAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspSltPcnt" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSltPcntAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedSltPcnt" class="clsFunction" align=center colspan=2 nowrap><nobr>Selection Percent</nobr></td>
+      </tr>
+      <tr>
+         <td id="subSltPcnt" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Value Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Value Percentage:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="SLP_ValPcnt" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltPcntCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltPcntAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

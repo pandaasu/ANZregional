@@ -164,6 +164,7 @@ sub PaintFunction()%>
    // Prompt Functions //
    //////////////////////
    function doPromptEnter() {
+      if (!processForm()) {return;}
       if (document.getElementById('PRO_HouCode').value == '') {
          doPromptCreate();
       } else {
@@ -205,7 +206,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*HOUSEHOLD','Household','pts_hou_search.asp','0',function() {doPromptHouCancel();},function(strCode,strText) {doPromptHouSelect(strCode,strText);});
+      startSchInstance('*HOUSEHOLD','Household','pts_hou_search.asp',function() {doPromptHouCancel();},function(strCode,strText) {doPromptHouSelect(strCode,strText);});
    }
    function doPromptHouCancel() {
       displayScreen('dspPrompt');

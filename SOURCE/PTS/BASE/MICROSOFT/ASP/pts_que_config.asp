@@ -165,6 +165,7 @@ sub PaintFunction()%>
    // Prompt Functions //
    //////////////////////
    function doPromptEnter() {
+      if (!processForm()) {return;}
       if (document.getElementById('PRO_QueCode').value == '') {
          doPromptCreate();
       } else {
@@ -206,7 +207,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*QUESTION','Question','pts_que_search.asp','0',function() {doPromptQueCancel();},function(strCode,strText) {doPromptQueSelect(strCode,strText);});
+      startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doPromptQueCancel();},function(strCode,strText) {doPromptQueSelect(strCode,strText);});
    }
    function doPromptQueCancel() {
       displayScreen('dspPrompt');

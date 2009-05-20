@@ -164,6 +164,7 @@ sub PaintFunction()%>
    // Prompt Functions //
    //////////////////////
    function doPromptEnter() {
+      if (!processForm()) {return;}
       if (document.getElementById('PRO_PetCode').value == '') {
          doPromptCreate();
       } else {
@@ -205,7 +206,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*PET','Pet','pts_pet_search.asp','0',function() {doPromptPetCancel();},function(strCode,strText) {doPromptPetSelect(strCode,strText);});
+      startSchInstance('*PET','Pet','pts_pet_search.asp',function() {doPromptPetCancel();},function(strCode,strText) {doPromptPetSelect(strCode,strText);});
    }
    function doPromptPetCancel() {
       displayScreen('dspPrompt');
@@ -472,7 +473,7 @@ sub PaintFunction()%>
    }
    function doDefineHousehold() {
       if (!processForm()) {return;}
-      startSchInstance('*HOUSEHOLD','Household','pts_hou_search.asp','0',function() {doDefineHouseholdCancel();},function(strCode,strText) {doDefineHouseholdSelect(strCode,strText);});
+      startSchInstance('*HOUSEHOLD','Household','pts_hou_search.asp',function() {doDefineHouseholdCancel();},function(strCode,strText) {doDefineHouseholdSelect(strCode,strText);});
    }
    function doBlurHousehold() {
       var objHouCode = document.getElementById('DEF_HouCode');

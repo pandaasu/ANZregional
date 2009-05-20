@@ -163,6 +163,7 @@ sub PaintFunction()%>
    // Prompt Functions //
    //////////////////////
    function doPromptEnter() {
+      if (!processForm()) {return;}
       if (document.getElementById('PRO_SamCode').value == '') {
          doPromptCreate();
       } else {
@@ -204,7 +205,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*SAMPLE','Sample','pts_sam_search.asp','0',function() {doPromptSamCancel();},function(strCode,strText) {doPromptSamSelect(strCode,strText);});
+      startSchInstance('*SAMPLE','Sample','pts_sam_search.asp',function() {doPromptSamCancel();},function(strCode,strText) {doPromptSamSelect(strCode,strText);});
    }
    function doPromptSamCancel() {
       displayScreen('dspPrompt');
