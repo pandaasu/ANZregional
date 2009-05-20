@@ -20,22 +20,22 @@
 /**/
 create table pts.pts_sel_tem_definition
    (std_stm_code                    number                        not null,
-    std_tem_text                    varchar2(120 char)            not null,
-    std_tem_status                  varchar2(1 char)              not null,
+    std_stm_text                    varchar2(120 char)            not null,
+    std_stm_status                  number                        not null,
     std_upd_user                    varchar2(30 char)             not null,
     std_upd_date                    date                          not null,
-    std_tes_target                  number                        null);
+    std_stm_target                  number                        not null);
 
 /**/
 /* Comments
 /**/
 comment on table pts.pts_sel_tem_definition is 'Selection Template Table';
 comment on column pts.pts_sel_tem_definition.std_stm_code is 'Selection template code';
-comment on column pts.pts_sel_tem_definition.std_tem_text is 'Selection template text';
-comment on column pts.pts_sel_tem_definition.std_tem_status is 'Selection template status (0=Inactive or 1=Active)';
+comment on column pts.pts_sel_tem_definition.std_stm_text is 'Selection template text';
+comment on column pts.pts_sel_tem_definition.std_stm_status is 'Selection template status';
 comment on column pts.pts_sel_tem_definition.std_upd_user is 'Selection template update user';
 comment on column pts.pts_sel_tem_definition.std_upd_date is 'Selection template update date';
-comment on column pts.pts_sel_tem_definition.std_tes_target is 'Selection template test target code';
+comment on column pts.pts_sel_tem_definition.std_stm_target is 'Selection template target';
 
 /**/
 /* Primary Key Constraint
