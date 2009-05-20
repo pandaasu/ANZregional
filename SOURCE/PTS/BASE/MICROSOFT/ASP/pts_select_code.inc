@@ -3,7 +3,7 @@
    ///////////////////////////
    // Select Rule Functions //
    ///////////////////////////
-   var cstrSearchEntity;
+   var cstrSelectEntity;
    var cobjSelectData;
    var cstrSelectMode;
    var cstrSelectGrpCde;
@@ -56,6 +56,11 @@
    }
    function startSltInstance(strEntity) {
       cstrSelectEntity = strEntity;
+      var objTable = document.getElementById('tabSltRule');
+      for (var i=objTable.rows.length-1;i>=0;i--) {
+         objTable.deleteRow(i);
+      }
+      updateSltData();
    }
    function loadSltData() {
       var objTable = document.getElementById('tabSltRule');

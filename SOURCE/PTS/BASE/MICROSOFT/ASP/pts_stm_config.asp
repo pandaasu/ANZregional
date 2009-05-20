@@ -129,7 +129,7 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = 'Selection Template Prompt';
       cobjScreens[1].hedtxt = 'Selection Template Maintenance';
       initSearch();
-      initSelect();
+      initSelect('Selection Template');
       displayScreen('dspPrompt');
       document.getElementById('PRO_StmCode').focus();
    }
@@ -164,6 +164,7 @@ sub PaintFunction()%>
    // Prompt Functions //
    //////////////////////
    function doPromptEnter() {
+      if (!processForm()) {return;}
       if (document.getElementById('PRO_StmCode').value == '') {
          doPromptCreate();
       } else {
@@ -205,13 +206,13 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*SELECTION','Selection Template','pts_stm_search.asp','0',function() {doPromptStmCancel();},function(strCode,strText) {doPromptStmSelect(strCode,strText);});
+      startSchInstance('*SELECTION','Selection Template','pts_stm_search.asp',function() {doPromptStmCancel();},function(strCode,strText) {doPromptStmSelect(strCode,strText);});
    }
-   function doPromptTesCancel() {
+   function doPromptStmCancel() {
       displayScreen('dspPrompt');
       document.getElementById('PRO_StmCode').focus();
    }
-   function doPromptTesSelect(strCode,strText) {
+   function doPromptStmSelect(strCode,strText) {
       document.getElementById('PRO_StmCode').value = strCode;
       displayScreen('dspPrompt');
       document.getElementById('PRO_StmCode').focus();
@@ -268,40 +269,52 @@ sub PaintFunction()%>
          document.getElementById('DEF_StmCode').value = '';
          document.getElementById('DEF_StmText').value = '';
          var strStmStat;
+         var strEntCode;
          var objStmStat = document.getElementById('DEF_StmStat');
+         var objEntCode = document.getElementById('DEF_EntCode');
          objStmStat.options.length = 0;
+         objEntCode.options.length = 0;
          document.getElementById('DEF_StmText').focus();
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objStmStat.options[objStmStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            if (objElements[i].nodeName == 'ENT_LIST') {
+               objEntCode.options[objEntCode.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SELECTION') {
                document.getElementById('DEF_StmCode').value = objElements[i].getAttribute('STMCODE');
                document.getElementById('DEF_StmText').value = objElements[i].getAttribute('STMTEXT');
-               document.getElementById('DEF_TesType').value = objElements[i].getAttribute('TESTYPE');
+               document.getElementById('DEF_EntCode').value = objElements[i].getAttribute('ENTCODE');
                strStmStat = objElements[i].getAttribute('STMSTAT');
             }
          }
-////        startSltInstance('*PET or HOUSEHOLD');
-////prime the entity field
+         startSltInstance(strEntCode);
          putSltData(objElements);
-         objPetStat.selectedIndex = -1;
+         objStmStat.selectedIndex = -1;
          for (var i=0;i<objStmStat.length;i++) {
             if (objStmStat.options[i].value == strStmStat) {
                objStmStat.options[i].selected = true;
                break;
             }
          }
-
+         objEntCode.selectedIndex = -1;
+         for (var i=0;i<objEntCode.length;i++) {
+            if (objEntCode.options[i].value == strEntCode) {
+               objEntCode.options[i].selected = true;
+               break;
+            }
+         }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objStmStat = document.getElementById('DEF_StmStat');
+      var objEntCode = document.getElementById('DEF_EntCode');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSTM"';
       strXML = strXML+' STMCODE="'+fixXML(document.getElementById('DEF_StmCode').value)+'"';
       strXML = strXML+' STMTEXT="'+fixXML(document.getElementById('DEF_StmText').value)+'"';
-      strXML = strXML+' STMSTAT="'+fixXML(objPetStat.options[objStmStat.selectedIndex].value)+'"';
+      strXML = strXML+' STMSTAT="'+fixXML(objStmStat.options[objStmStat.selectedIndex].value)+'"';
+      strXML = strXML+' ENTCODE="'+fixXML(objEntCode.options[objEntCode.selectedIndex].value)+'"';
       strXML = strXML+'>';
       strAML = strXML + getSltData();
       strXML = strXML+'</PTS_REQUEST>';
@@ -342,6 +355,11 @@ sub PaintFunction()%>
       displayScreen('dspPrompt');
       document.getElementById('PRO_StmCode').value = '';
       document.getElementById('PRO_StmCode').focus();
+   }
+   function doDefineEntity(objSelect) {
+      if (confirm('Please confirm the target change\r\npress OK continue (all existing selection rules will be deleted)\r\npress Cancel to return ignore') == false) {return false;}
+      var strValue = objSelect.options[objSelect.selectedIndex].value;
+      startSltInstance(strValue);
    }
 // -->
 </script>
@@ -401,15 +419,21 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Template Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Template Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_StmText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Template Status:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Template Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="DEF_StmStat"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Template Target:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_EntCode" onChange="doDefineEntity(this);"></select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
