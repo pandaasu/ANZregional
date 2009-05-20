@@ -110,6 +110,7 @@ sub ProcessSelect()
    dim strCompany
    dim strMaterial
    dim strDate
+   dim strDetail
 
    '//
    '// Create the selection object
@@ -124,6 +125,7 @@ sub ProcessSelect()
       strCompany = objForm.Fields("DTA_Company").Value
       strMaterial = objForm.Fields("DTA_Material").Value
       strDate = objForm.Fields("DTA_Date").Value
+      strDetail = objForm.Fields("DTA_Detail").Value
       strQuery = "select"
       strQuery = strQuery & " alc_type,"
       strQuery = strQuery & " bom_plant,"
@@ -147,7 +149,7 @@ sub ProcessSelect()
       strQuery = strQuery & " bom_hierarchy_level,"
       strQuery = strQuery & " bom_hierarchy_root,"
       strQuery = strQuery & " bom_hierarchy_path"
-      strQuery = strQuery & " from table(bp_app.bpip_bom_allocation('" & strCompany & "', '" & strMaterial & "', '" & strDate & "'))"
+      strQuery = strQuery & " from table(bp_app.bpip_bom.allocation('" & strCompany & "', '" & strMaterial & "', '" & strDate & "', '" & strDetail & "'))"
       strReturn = objSelection.Execute("REPORT", strQuery, 0)
       if strReturn <> "*OK" then
          strReturn = strReturn

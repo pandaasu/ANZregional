@@ -82,6 +82,12 @@
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;BOM Detail (0=No, 1=Yes):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DTA_Detail" size="3" maxlength="1" value="<%=objForm.Fields("DTA_Detail").Value%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
