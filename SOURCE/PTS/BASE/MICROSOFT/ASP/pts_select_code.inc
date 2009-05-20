@@ -40,7 +40,7 @@
       for (var i=0;i<cobjScreens.length;i++) {
          if (cobjScreens[i].scrnam == 'dspSltGrop') {
             cobjScreens[i].hedtxt = strHeading+' Selection Group';
-         } else {if (cobjScreens[i].scrnam == 'dspSltFeld') {
+         } else if (cobjScreens[i].scrnam == 'dspSltFeld') {
             cobjScreens[i].hedtxt = strHeading+' Selection Fields';
          } else if (cobjScreens[i].scrnam == 'dspSltList') {
             cobjScreens[i].hedtxt = strHeading+' Selection List Rule';
@@ -276,9 +276,9 @@
       objTable.deleteRow(intRow);
       updateSltData();
    }
-   function doSltRuleSelect() {
-      doSltSlctSelect();
-   }
+  // function doSltRuleSelect() {
+  //    doSltSlctSelect();
+  // }
    ////////////////////////////
    // Select Group Functions //
    ////////////////////////////
@@ -292,7 +292,7 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Selection group text must be entered';
       }
-      if (document.getElementById('SGR_GrpPcnt').value <= 0 || document.getElementById('SGR_GrpPcnt').value > 100) {
+      if (document.getElementById('SGR_GrpPcnt').value < 1 || document.getElementById('SGR_GrpPcnt').value > 100) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Selection group percentage must be in the range 1 to 100';
       }
@@ -348,7 +348,7 @@
          }
       }
       if (bolFound) {
-         alert('Field already selected in rule group');
+         alert('Field already selected in selection group');
          return;
       }
       cintSelectRow = -1;
@@ -423,7 +423,7 @@
       }
    }
    function requestSltFeldUpdate() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL"'+' TESFLG="1" TABCDE="'+cstrSelectTabCde+'" FLDCDE="'+cstrSelectFldCde+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTRUL" TESFLG="1" TABCDE="'+cstrSelectTabCde+'" FLDCDE="'+cstrSelectFldCde+'"/>';
       doPostRequest('<%=strBase%>pts_sys_rul_list.asp',function(strResponse) {checkSltFeldUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkSltFeldUpdate(strResponse) {
@@ -554,7 +554,7 @@
       } else {
          if (objSllRulCode[objSllRulCode.selectedIndex].value == '*SELECT_WHEN_EQUAL_MIX') {
             var intTotal = 0;
-            for (var i=0;i<objSelSelValue.options.length;i++) {
+            for (var i=0;i<objSllSelValue.options.length;i++) {
                intTotal = intTotal + (objSllSelValue[i].getAttribute('valpct')-0);
             }
             if (intTotal != 100) {
@@ -610,9 +610,8 @@
                }
             }
             if (!bolFound) {
-               objSllSelValue.options[objSllSelValue.options.length] = new Option(objSllRulValue[i].text,objSllRulValue[i].value);
                if (cstrSelectRulCde == '*SELECT_WHEN_EQUAL_MIX') {
-                  objSllSelValue.options[objSllSelValue.options.length] = new Option(objSllRulValue[i].text+' ('0%)',objSllRulValue[i].value);
+                  objSllSelValue.options[objSllSelValue.options.length] = new Option(objSllRulValue[i].text+' (0%)',objSllRulValue[i].value);
                   objSllSelValue.options[objSllSelValue.options.length].setAttribute('valtxt',objSllRulValue[i].text);
                   objSllSelValue.options[objSllSelValue.options.length].setAttribute('valpct','0');
                } else {
@@ -682,13 +681,11 @@
       var strValue = objSelect.options[objSelect.selectedIndex].value;
       var objSllSelValue = document.getElementById('SLL_SelValue');
       if (strValue == '*SELECT_WHEN_EQUAL_MIX') {
-         document.getElementById('tabSltPcnt').style.display = 'block';
          for (var i=0;i<objSllSelValue.options.length;i++) {
             objSllSelValue.options[i].text = objSllSelValue.options[i].getAttribute('valtxt')+' (0%)';
             objSllSelValue.options[i].setAttribute('valpct','0');
          }
       } else {
-         document.getElementById('tabSltPcnt').style.display = 'none';
          for (var i=0;i<objSllSelValue.options.length;i++) {
             objSllSelValue.options[i].text = objSllSelValue.options[i].getAttribute('valtxt')';
             objSllSelValue.options[i].setAttribute('valpct','');
@@ -713,7 +710,7 @@
    function doSltPcntAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.getElementById('SLP_ValPcnt').value <= 0 || document.getElementById('SLP_ValPcnt').value > 100) {
+      if (document.getElementById('SLP_ValPcnt').value < 1 || document.getElementById('SLP_ValPcnt').value > 100) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Selection value percentage must be in the range 1 to 100';
       }
@@ -839,7 +836,7 @@
             cobjSelectData[intIndex].rultyp = objElements[i].getAttribute('RULTYP');
             cobjSelectData[intIndex].rulcde = objElements[i].getAttribute('RULCDE');
          } else if (objElements[i].nodeName == 'VALUE') {
-            cobjSelectData[intIndex].valary = new clsSltValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALPCT'));
+            cobjSelectData[intIndex].valary[cobjSelectData[intIndex].valary.length] = new clsSltValue(objElements[i].getAttribute('VALCDE'),objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALPCT'));
          }
       }
       loadSltData();

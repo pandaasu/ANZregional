@@ -267,7 +267,7 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_StmCode').value = '';
-         document.getElementById('DEF_StmTarg').value = '';
+         document.getElementById('DEF_StmText').value = '';
          var strStmStat;
          var strStmTarg;
          var objStmStat = document.getElementById('DEF_StmStat');
@@ -278,7 +278,7 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objStmStat.options[objStmStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            if (objElements[i].nodeName == 'TAR_LIST') {
+            } else if (objElements[i].nodeName == 'TAR_LIST') {
                objStmTarg.options[objStmTarg.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SELECTION') {
                document.getElementById('DEF_StmCode').value = objElements[i].getAttribute('STMCODE');
