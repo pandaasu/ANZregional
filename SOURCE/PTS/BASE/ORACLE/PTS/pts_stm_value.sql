@@ -2,7 +2,7 @@
 /* Table Definition                                                           */
 /******************************************************************************/
 /**
- Object : pts_sel_tem_value
+ Object : pts_stm_value
  Owner  : pts
 
  Description
@@ -18,7 +18,7 @@
 /**/
 /* Table creation
 /**/
-create table pts.pts_sel_tem_value
+create table pts.pts_stm_value
    (stv_stm_code                    number                        not null,
     stv_sel_group                   varchar2(32 char)             not null,
     stv_tab_code                    varchar2(32 char)             not null,
@@ -30,27 +30,27 @@ create table pts.pts_sel_tem_value
 /**/
 /* Comments
 /**/
-comment on table pts.pts_sel_tem_value is 'Selection Template Value Table';
-comment on column pts.pts_sel_tem_value.stv_stm_code is 'Selection template code';
-comment on column pts.pts_sel_tem_value.stv_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
-comment on column pts.pts_sel_tem_value.stv_tab_code is 'System table code';
-comment on column pts.pts_sel_tem_value.stv_fld_code is 'System field code';
-comment on column pts.pts_sel_tem_value.stv_val_code is 'System value code';
-comment on column pts.pts_sel_tem_value.stv_val_text is 'Value text';
-comment on column pts.pts_sel_tem_value.stv_val_pcnt is 'Value percent mix';
+comment on table pts.pts_stm_value is 'Selection Template Value Table';
+comment on column pts.pts_stm_value.stv_stm_code is 'Selection template code';
+comment on column pts.pts_stm_value.stv_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
+comment on column pts.pts_stm_value.stv_tab_code is 'System table code';
+comment on column pts.pts_stm_value.stv_fld_code is 'System field code';
+comment on column pts.pts_stm_value.stv_val_code is 'System value code';
+comment on column pts.pts_stm_value.stv_val_text is 'Value text';
+comment on column pts.pts_stm_value.stv_val_pcnt is 'Value percent';
 
 /**/
 /* Primary Key Constraint
 /**/
-alter table pts.pts_sel_tem_value
-   add constraint pts_sel_tem_value_pk primary key (stv_stm_code, stv_sel_group, stv_tab_code, stv_fld_code, stv_val_code);
+alter table pts.pts_stm_value
+   add constraint pts_stm_value_pk primary key (stv_stm_code, stv_sel_group, stv_tab_code, stv_fld_code, stv_val_code);
 
 /**/
 /* Authority
 /**/
-grant select, insert, update, delete on pts.pts_sel_tem_value to pts_app;
+grant select, insert, update, delete on pts.pts_stm_value to pts_app;
 
 /**/
 /* Synonym
 /**/
-create or replace public synonym pts_sel_tem_value for pts.pts_sel_tem_value;           
+create or replace public synonym pts_stm_value for pts.pts_stm_value;           
