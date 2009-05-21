@@ -54,8 +54,8 @@ create or replace package body mobile_data as
    /* Private constants
    /*-*/
    con_timezone varchar2(64) := 'Asia/Shanghai';
-   con_icsf_sync_group_id constant number := 46;
-   con_pcmm_sync_group_id constant number := 47;
+   con_icsf_sync_group_id constant number := 23;
+   con_pcmm_sync_group_id constant number := 24;
    con_icsf_segment_id constant number := 13;
    con_pcmm_segment_id constant number := 14;
    con_snack_business_unit_id constant number := 5;
@@ -417,6 +417,7 @@ create or replace package body mobile_data as
       else
          dbms_lob.writeappend(var_clob,length(par_buffer),par_buffer);
       end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
