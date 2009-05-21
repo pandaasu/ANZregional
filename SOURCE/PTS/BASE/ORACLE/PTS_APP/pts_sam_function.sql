@@ -443,9 +443,8 @@ create or replace package body pts_app.pts_sam_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
+      var_confirm varchar2(32);
       rcd_pts_sam_definition pts_sam_definition%rowtype;
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
 
       /*-*/
       /* Local cursors
@@ -574,6 +573,7 @@ create or replace package body pts_app.pts_sam_function as
       open csr_check;
       fetch csr_check into rcd_check;
       if csr_check%found then
+         var_confirm := 'updated';
          update pts_sam_definition
             set sde_sam_text = rcd_pts_sam_definition.sde_sam_text,
                 sde_sam_status = rcd_pts_sam_definition.sde_sam_status,
@@ -587,6 +587,7 @@ create or replace package body pts_app.pts_sam_function as
                 sde_plop_code = rcd_pts_sam_definition.sde_plop_code
           where sde_sam_code = rcd_pts_sam_definition.sde_sam_code;
       else
+         var_confirm := 'created';
          select pts_sam_sequence.nextval into rcd_pts_sam_definition.sde_sam_code from dual;
          insert into pts_sam_definition values rcd_pts_sam_definition;
       end if;
@@ -601,6 +602,11 @@ create or replace package body pts_app.pts_sam_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Sample ('||to_char(rcd_pts_sam_definition.sde_sam_code)||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */

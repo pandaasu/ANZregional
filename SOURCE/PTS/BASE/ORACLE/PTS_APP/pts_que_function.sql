@@ -362,10 +362,9 @@ create or replace package body pts_app.pts_que_function as
       obj_res_list xmlDom.domNodeList;
       obj_res_node xmlDom.domNode;
       var_action varchar2(32);
+      var_confirm varchar2(32);
       rcd_pts_que_definition pts_que_definition%rowtype;
       rcd_pts_que_response pts_que_response%rowtype;
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
 
       /*-*/
       /* Local cursors
@@ -516,6 +515,7 @@ create or replace package body pts_app.pts_que_function as
       open csr_check;
       fetch csr_check into rcd_check;
       if csr_check%found then
+         var_confirm := 'updated';
          update pts_que_definition
             set qde_que_text = rcd_pts_que_definition.qde_que_text,
                 qde_que_status = rcd_pts_que_definition.qde_que_status,
@@ -528,6 +528,7 @@ create or replace package body pts_app.pts_que_function as
           where qde_que_code = rcd_pts_que_definition.qde_que_code;
          delete from pts_que_response where qre_que_code = rcd_pts_que_definition.qde_que_code;
       else
+         var_confirm := 'created';
          select pts_que_sequence.nextval into rcd_pts_que_definition.qde_que_code from dual;
          insert into pts_que_definition values rcd_pts_que_definition;
       end if;
@@ -556,6 +557,11 @@ create or replace package body pts_app.pts_que_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Question ('||to_char(rcd_pts_que_definition.qde_que_code)||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */

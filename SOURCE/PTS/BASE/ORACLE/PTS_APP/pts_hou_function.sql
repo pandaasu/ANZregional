@@ -473,10 +473,9 @@ create or replace package body pts_app.pts_hou_function as
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
       var_action varchar2(32);
+      var_confirm varchar2(32);
       rcd_pts_hou_definition pts_hou_definition%rowtype;
       rcd_pts_hou_classification pts_hou_classification%rowtype;
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
 
       /*-*/
       /* Local cursors
@@ -612,6 +611,7 @@ create or replace package body pts_app.pts_hou_function as
       open csr_check;
       fetch csr_check into rcd_check;
       if csr_check%found then
+         var_confirm := 'updated';
          update pts_hou_definition
             set hde_hou_status = rcd_pts_hou_definition.hde_hou_status,
                 hde_upd_user = rcd_pts_hou_definition.hde_upd_user,
@@ -632,6 +632,7 @@ create or replace package body pts_app.pts_hou_function as
           where hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
          delete from pts_hou_classification where hcl_hou_code = rcd_pts_hou_definition.hde_hou_code;
       else
+         var_confirm := 'created';
          select pts_hou_sequence.nextval into rcd_pts_hou_definition.hde_hou_code from dual;
          rcd_pts_hou_definition.hde_del_notifier := null;
          rcd_pts_hou_definition.hde_dat_joined := trunc(sysdate);
@@ -667,6 +668,11 @@ create or replace package body pts_app.pts_hou_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Household ('||to_char(rcd_pts_hou_definition.hde_hou_code)||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */

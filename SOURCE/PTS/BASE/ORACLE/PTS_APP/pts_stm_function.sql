@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_sel_function as
+create or replace package pts_app.pts_stm_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : pts_sel_function
+    Package : pts_stm_function
     Owner   : pts_app
 
     Description
     -----------
-    Product Testing System - Selection Function
+    Product Testing System - Selection Template Function
 
     This package contain the selection template functions and procedures.
 
@@ -29,13 +29,13 @@ create or replace package pts_app.pts_sel_function as
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
 
-end pts_sel_function;
+end pts_stm_function;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_sel_function as
+create or replace package body pts_app.pts_stm_function as
 
    /*-*/
    /* Private exceptions
@@ -59,13 +59,13 @@ create or replace package body pts_app.pts_sel_function as
       /* Local cursors
       /*-*/
       cursor csr_list is
-         select t01.pde_pet_code,
-                t01.pde_pet_name,
-                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*PET_DEF' and sva_fld_code = 4 and sva_val_code = t01.pde_pet_status),'*UNKNOWN') as pde_pet_status
-           from pts_pet_definition t01
-          where t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SELECTION',null)))
-            and t01.pde_pet_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
-          order by t01.pde_pet_code asc;
+         select t01.std_stm_code,
+                t01.std_stm_text,
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*STM_DEF' and sva_fld_code = 9 and sva_val_code = t01.std_stm_status),'*UNKNOWN') as std_stm_status
+           from pts_stm_definition t01
+          where t01.std_stm_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*SELECTION',null)))
+            and t01.std_stm_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+          order by t01.std_stm_code asc;
       rcd_list csr_list%rowtype;
 
    /*-------------*/
@@ -89,7 +89,7 @@ create or replace package body pts_app.pts_sel_function as
       pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
 
       /*-*/
-      /* Retrieve the selection list and pipe the results
+      /* Retrieve the selection template list and pipe the results
       /*-*/
       var_pag_size := 20;
       var_row_count := 0;
@@ -101,7 +101,7 @@ create or replace package body pts_app.pts_sel_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pde_pet_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pde_pet_code)||') '||rcd_list.pde_pet_name)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pde_pet_code)||') '||rcd_list.pde_pet_name)||'" COL2="'||pts_to_xml(rcd_list.pde_pet_status)||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.std_stm_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.std_stm_code)||') '||rcd_list.std_stm_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.std_stm_code)||') '||rcd_list.std_stm_text)||'" COL2="'||pts_to_xml(rcd_list.std_stm_status)||'"/>'));
          else
             exit;
          end if;
@@ -131,7 +131,7 @@ create or replace package body pts_app.pts_sel_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SEL_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 1536));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_STM_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -150,7 +150,7 @@ create or replace package body pts_app.pts_sel_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
-      var_pet_code varchar2(32);
+      var_stm_code varchar2(32);
       var_tab_flag boolean;
       var_output varchar2(2000 char);
 
@@ -160,48 +160,49 @@ create or replace package body pts_app.pts_sel_function as
       cursor csr_retrieve is
          select t01.*
            from pts_stm_definition t01
-          where t01.sde_stm_code = pts_to_number(var_stm_code);
+          where t01.std_stm_code = pts_to_number(var_stm_code);
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_sta_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_class('*PET_DEF',4)) t01;
+           from table(pts_app.pts_gen_function.list_class('*STM_DEF',9)) t01;
       rcd_sta_code csr_sta_code%rowtype;
 
-      cursor csr_table is
-         select t01.sta_tab_code,
-                t01.sta_tab_text
-           from pts_sys_table t01
-          where t01.sta_tab_code in ('*PET_CLA','*PET_SAM')
-          order by t01.sta_tab_text asc;
-      rcd_table csr_table%rowtype;
+      cursor csr_tar_code is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_class('*STM_DEF',3)) t01;
+      rcd_tar_code csr_tar_code%rowtype;
 
-      cursor csr_field is
-         select t01.sfi_fld_code,
-                t01.sfi_fld_text,
-                t01.sfi_fld_inp_leng,
-                t01.sfi_fld_sel_type
-           from pts_sys_field t01
-          where t01.sfi_tab_code = rcd_table.sta_tab_code
-            and t01.sfi_fld_status = '1'
-          order by t01.sfi_fld_text asc;
-      rcd_field csr_field%rowtype;
+      cursor csr_group is
+         select t01.*
+           from pts_stm_group t01
+          where t01.stg_stm_code = rcd_retrieve.std_stm_code
+          order by t01.stg_sel_group asc;
+      rcd_group csr_group%rowtype;
 
-      cursor csr_classification is
-         select t01.pcl_val_code,
-                t01.pcl_val_text,
-                t02.sva_val_code,
-                t02.sva_val_text
-           from pts_pet_classification t01,
-                pts_sys_value t02
-          where t01.pcl_tab_code = t02.sva_tab_code(+)
-            and t01.pcl_fld_code = t02.sva_fld_code(+)
-            and t01.pcl_val_code = t02.sva_val_code(+)
-            and t01.pcl_pet_code = pts_to_number(var_pet_code)
-            and t01.pcl_tab_code = rcd_table.sta_tab_code
-            and t01.pcl_fld_code = rcd_field.sfi_fld_code
-          order by t01.pcl_val_code asc;
-      rcd_classification csr_classification%rowtype;
+      cursor csr_rule is
+         select t01.*,
+                t02.sfi_fld_text,
+                t02.sfi_fld_rul_type
+           from pts_stm_rule t01,
+                pts_sys_field t02
+          where t01.str_tab_code = t02.sfi_tab_code
+            and t01.str_fld_code = t02.sfi_fld_code
+            and t01.str_stm_code = rcd_retrieve.std_stm_code
+            and t01.str_sel_group = rcd_group.stg_sel_group
+          order by t01.str_tab_code asc,
+                   t01.str_fld_code asc;
+      rcd_rule csr_rule%rowtype;
+
+      cursor csr_value is
+         select t01.*
+           from pts_stm_value t01
+          where t01.stv_stm_code = rcd_retrieve.std_stm_code
+            and t01.stv_sel_group = rcd_group.stg_sel_group
+            and t01.stv_tab_code = rcd_rule.str_tab_code
+            and t01.stv_fld_code = rcd_rule.str_fld_code
+          order by t01.stv_val_code asc;
+      rcd_value csr_value%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -226,21 +227,21 @@ create or replace package body pts_app.pts_sel_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      var_pet_code := xslProcessor.valueOf(obj_pts_request,'@PETCODE');
+      var_stm_code := xslProcessor.valueOf(obj_pts_request,'@STMCODE');
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDPET' and var_action != '*CRTPET' and var_action != '*CPYPET' then
+      if var_action != '*UPDSTM' and var_action != '*CRTSTM' and var_action != '*CPYSTM' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
 
       /*-*/
-      /* Retrieve the existing pet when required
+      /* Retrieve the existing selection template when required
       /*-*/
-      if var_action = '*UPDPET' or var_action = '*CPYPET' then
+      if var_action = '*UPDSTM' or var_action = '*CPYSTM' then
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
          if csr_retrieve%notfound then
-            pts_gen_function.add_mesg_data('Pet ('||var_pet_code||') does not exist');
+            pts_gen_function.add_mesg_data('Selection template ('||var_stm_code||') does not exist');
             return;
          end if;
          close csr_retrieve;
@@ -265,114 +266,71 @@ create or replace package body pts_app.pts_sel_function as
       close csr_sta_code;
 
       /*-*/
-      /* Pipe the pet type XML
+      /* Pipe the target XML
       /*-*/
-      pipe row(pts_xml_object('<PET_TYPE VALCDE="" VALTXT="** NO PET TYPE **"/>'));
-      open csr_pet_type;
+      open csr_tar_code;
       loop
-         fetch csr_pet_type into rcd_pet_type;
-         if csr_pet_type%notfound then
+         fetch csr_tar_code into rcd_tar_code;
+         if csr_tar_code%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<PET_TYPE VALCDE="'||rcd_pet_type.pty_code||'" VALTXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"/>'));
+         pipe row(pts_xml_object('<TAR_LIST VALCDE="'||rcd_tar_code.val_code||'" VALTXT="'||pts_to_xml(rcd_tar_code.val_text)||'"/>'));
       end loop;
-      close csr_pet_type;
+      close csr_tar_code;
 
       /*-*/
-      /* Pipe the delete notifier XML
+      /* Pipe the selection template XML
       /*-*/
-      pipe row(pts_xml_object('<DEL_NOTE VALCDE="" VALTXT="** NO DELETE NOTIFIER **"/>'));
-      open csr_del_note;
-      loop
-         fetch csr_del_note into rcd_del_note;
-         if csr_del_note%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<DEL_NOTE VALCDE="'||to_char(rcd_del_note.val_code)||'" VALTXT="'||pts_to_xml(rcd_del_note.val_text)||'"/>'));
-      end loop;
-      close csr_del_note;
-
-      /*-*/
-      /* Pipe the pet XML
-      /*-*/
-      if var_action = '*UPDPET' then
-         var_output := '<PET PETCODE="'||to_char(rcd_retrieve.pde_pet_code)||'"';
-         var_output := var_output||' PETSTAT="'||to_char(rcd_retrieve.pde_pet_status)||'"';
-         var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
-         var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
-         var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
-         var_output := var_output||' HOUTEXT="'||pts_to_xml(rcd_retrieve.hou_text)||'"';
-         var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
-         var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
-         var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+      if var_action = '*UPDSTM' then
+         var_output := '<SELECTION STMCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
+         var_output := var_output||' STMTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
+         var_output := var_output||' STMSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
+         var_output := var_output||' STMTARG="'||to_char(rcd_retrieve.std_stm_target)||'"/>';
          pipe row(pts_xml_object(var_output));
-      elsif var_action = '*CPYPET' then
-         var_output := '<PET PETCODE="*NEW"';
-         var_output := var_output||' PETSTAT="'||to_char(rcd_retrieve.pde_pet_status)||'"';
-         var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
-         var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
-         var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
-         var_output := var_output||' HOUTEXT="'||pts_to_xml(rcd_retrieve.hou_text)||'"';
-         var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
-         var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
-         var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+      elsif var_action = '*CPYSTM' then
+         var_output := '<SELECTION STMCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
+         var_output := var_output||' STMTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
+         var_output := var_output||' STMSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
+         var_output := var_output||' STMTARG="'||to_char(rcd_retrieve.std_stm_target)||'"/>';
          pipe row(pts_xml_object(var_output));
-      elsif var_action = '*CRTPET' then
-         var_output := '<PET PETCODE="*NEW"';
-         var_output := var_output||' PETSTAT="1"';
-         var_output := var_output||' PETNAME=""';
-         var_output := var_output||' PETTYPE=""';
-         var_output := var_output||' HOUCODE=""';
-         var_output := var_output||' HOUTEXT="** DATA ENTRY **"';
-         var_output := var_output||' BTHYEAR=""';
-         var_output := var_output||' DELNOTE=""';
-         var_output := var_output||' FEDCMNT=""';
-         var_output := var_output||' HTHCMNT=""/>';
+      elsif var_action = '*CRTSTM' then
+         var_output := '<SELECTION STMCODE="*NEW"';
+         var_output := var_output||' STMTEXT=""';
+         var_output := var_output||' STMSTAT="1"';
+         var_output := var_output||' STMTARG="1"/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
       /*-*/
-      /* Pipe the pet classification data
+      /* Pipe the selection template rules
       /*-*/
-      open csr_table;
+      open csr_group;
       loop
-         fetch csr_table into rcd_table;
-         if csr_table%notfound then
+         fetch csr_group into rcd_group;
+         if csr_group%notfound then
             exit;
          end if;
-         var_tab_flag := false;
-         open csr_field;
+         pipe row(pts_xml_object('<GROUP GRPCDE="'||pts_to_xml(rcd_group.stg_sel_group)||'" GRPTXT="'||pts_to_xml(rcd_group.stg_sel_text)||'" GRPPCT="'||to_char(rcd_group.stg_sel_pcnt)||'"/>'));
+         open csr_rule;
          loop
-            fetch csr_field into rcd_field;
-            if csr_field%notfound then
+            fetch csr_rule into rcd_rule;
+            if csr_rule%notfound then
                exit;
             end if;
-            if var_tab_flag = false then
-               var_tab_flag := true;
-               pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
-            end if;
-            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'" INPLEN="'||to_char(rcd_field.sfi_fld_inp_leng)||'" SELTYP="'||rcd_field.sfi_fld_sel_type||'"/>'));
-            if var_action != '*CRTPET' then
-               open csr_classification;
-               loop
-                  fetch csr_classification into rcd_classification;
-                  if csr_classification%notfound then
-                     exit;
-                  end if;
-                  if rcd_classification.sva_val_code is null then
-                     pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_classification.pcl_val_code)||'" VALTXT="'||pts_to_xml(rcd_classification.pcl_val_text)||'"/>'));
-                  else
-                     pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_classification.pcl_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_classification.sva_val_code)||') '||rcd_classification.sva_val_text)||'"/>'));
-                  end if;
-               end loop;
-               close csr_classification;
-            end if;
+            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
+            open csr_value;
+            loop
+               fetch csr_value into rcd_value;
+               if csr_value%notfound then
+                  exit;
+               end if;
+               pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value.stv_val_code)||'" VALTXT="'||pts_to_xml(rcd_value.stv_val_text)||'" VALPCT="'||to_char(rcd_value.stv_val_pcnt)||'"/>'));
+            end loop;
+            close csr_value;
          end loop;
-         close csr_field;
+         close csr_rule;
       end loop;
-      close csr_table;
+      close csr_group;
 
       /*-*/
       /* Pipe the XML end
@@ -397,7 +355,7 @@ create or replace package body pts_app.pts_sel_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SEL_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_STM_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -415,30 +373,39 @@ create or replace package body pts_app.pts_sel_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
-      obj_cla_list xmlDom.domNodeList;
-      obj_cla_node xmlDom.domNode;
+      obj_grp_list xmlDom.domNodeList;
+      obj_grp_node xmlDom.domNode;
+      obj_rul_list xmlDom.domNodeList;
+      obj_rul_node xmlDom.domNode;
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
       var_action varchar2(32);
-      rcd_pts_pet_definition pts_pet_definition%rowtype;
-      rcd_pts_pet_classification pts_pet_classification%rowtype;
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
+      var_confirm varchar2(32);
+      rcd_pts_stm_definition pts_stm_definition%rowtype;
+      rcd_pts_stm_group pts_stm_group%rowtype;
+      rcd_pts_stm_rule pts_stm_rule%rowtype;
+      rcd_pts_stm_value pts_stm_value%rowtype;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_check is
          select t01.*
-           from pts_pet_definition t01
-          where t01.pde_pet_code = rcd_pts_pet_definition.pde_pet_code;
+           from pts_stm_definition t01
+          where t01.std_stm_code = rcd_pts_stm_definition.std_stm_code;
       rcd_check csr_check%rowtype;
 
       cursor csr_sta_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_class('*PET_DEF',4)) t01
-          where t01.val_code = rcd_pts_pet_definition.pde_pet_status;
+           from table(pts_app.pts_gen_function.list_class('*STM_DEF',9)) t01
+          where t01.val_code = rcd_pts_stm_definition.std_stm_status;
       rcd_sta_code csr_sta_code%rowtype;
+
+      cursor csr_tar_code is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_class('*STM_DEF',3)) t01
+          where t01.val_code = rcd_pts_stm_definition.std_stm_target;
+      rcd_tar_code csr_tar_code%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -459,38 +426,24 @@ create or replace package body pts_app.pts_sel_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*DEFPET' then
+      if var_action != '*DEFSTM' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_pet_definition.pde_pet_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETCODE'));
-      rcd_pts_pet_definition.pde_pet_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETSTAT'));
-      rcd_pts_pet_definition.pde_upd_user := upper(par_user);
-      rcd_pts_pet_definition.pde_upd_date := sysdate;
-      rcd_pts_pet_definition.pde_pet_name := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PETNAME'));
-      rcd_pts_pet_definition.pde_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETTYPE'));
-      rcd_pts_pet_definition.pde_hou_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUCODE'));
-      rcd_pts_pet_definition.pde_birth_year := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@BTHYEAR'));
-      rcd_pts_pet_definition.pde_del_notifier := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DELNOTE'));
-      rcd_pts_pet_definition.pde_feed_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@FEDCMNT'));
-      rcd_pts_pet_definition.pde_health_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@HTHCMNT'));
-      if rcd_pts_pet_definition.pde_pet_code is null and not(xslProcessor.valueOf(obj_pts_request,'@PETCODE') = '*NEW') then
-         pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
+      rcd_pts_stm_definition.std_stm_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMCODE'));
+      rcd_pts_stm_definition.std_stm_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@STMTEXT'));
+      rcd_pts_stm_definition.std_stm_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMSTAT'));
+      rcd_pts_stm_definition.std_upd_user := upper(par_user);
+      rcd_pts_stm_definition.std_upd_date := sysdate;
+      rcd_pts_stm_definition.std_stm_target := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMTARG'));
+      if rcd_pts_stm_definition.std_stm_code is null and not(xslProcessor.valueOf(obj_pts_request,'@STMCODE') = '*NEW') then
+         pts_gen_function.add_mesg_data('Selection template code ('||xslProcessor.valueOf(obj_pts_request,'@STMCODE')||') must be a number');
       end if;
-      if rcd_pts_pet_definition.pde_pet_status is null and not(xslProcessor.valueOf(obj_pts_request,'@PETSTAT') is null) then
-         pts_gen_function.add_mesg_data('Pet status ('||xslProcessor.valueOf(obj_pts_request,'@PETSTAT')||') must be a number');
+      if rcd_pts_stm_definition.std_stm_status is null and not(xslProcessor.valueOf(obj_pts_request,'@STMSTAT') is null) then
+         pts_gen_function.add_mesg_data('Selection template status ('||xslProcessor.valueOf(obj_pts_request,'@STMSTAT')||') must be a number');
       end if;
-      if rcd_pts_pet_definition.pde_pet_type is null and not(xslProcessor.valueOf(obj_pts_request,'@PETTYPE') is null) then
-         pts_gen_function.add_mesg_data('Pet type ('||xslProcessor.valueOf(obj_pts_request,'@PETTYPE')||') must be a number');
-      end if;
-      if rcd_pts_pet_definition.pde_hou_code is null and not(xslProcessor.valueOf(obj_pts_request,'@HOUCODE') is null) then
-         pts_gen_function.add_mesg_data('Household code ('||xslProcessor.valueOf(obj_pts_request,'@HOUCODE')||') must be a number');
-      end if;
-      if rcd_pts_pet_definition.pde_birth_year is null and not(xslProcessor.valueOf(obj_pts_request,'@BTHYEAR') is null) then
-         pts_gen_function.add_mesg_data('Birth year ('||xslProcessor.valueOf(obj_pts_request,'@BTHYEAR')||') must be a number');
-      end if;
-      if rcd_pts_pet_definition.pde_del_notifier is null and not(xslProcessor.valueOf(obj_pts_request,'@DELNOTE') is null) then
-         pts_gen_function.add_mesg_data('Delete notifier ('||xslProcessor.valueOf(obj_pts_request,'@DELNOTE')||') must be a number');
+      if rcd_pts_stm_definition.std_stm_target is null and not(xslProcessor.valueOf(obj_pts_request,'@STMTARG') is null) then
+         pts_gen_function.add_mesg_data('Selection template target ('||xslProcessor.valueOf(obj_pts_request,'@STMTARG')||') must be a number');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -499,68 +452,96 @@ create or replace package body pts_app.pts_sel_function as
       /*-*/
       /* Validate the input
       /*-*/
-      if rcd_pts_pet_definition.pde_pet_name is null then
-         pts_gen_function.add_mesg_data('Pet name must be supplied');
+      if rcd_pts_stm_definition.std_stm_text is null then
+         pts_gen_function.add_mesg_data('Selection template text must be supplied');
       end if;
-      if rcd_pts_pet_definition.pde_pet_status is null then
-         pts_gen_function.add_mesg_data('Pet status must be supplied');
+      if rcd_pts_stm_definition.std_stm_status is null then
+         pts_gen_function.add_mesg_data('Selection template status must be supplied');
       end if;
-      if rcd_pts_pet_definition.pde_upd_user is null then
+      if rcd_pts_stm_definition.std_stm_target is null then
+         pts_gen_function.add_mesg_data('Selection template target must be supplied');
+      end if;
+      if rcd_pts_stm_definition.std_upd_user is null then
          pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
       open csr_sta_code;
       fetch csr_sta_code into rcd_sta_code;
       if csr_sta_code%notfound then
-         pts_gen_function.add_mesg_data('Pet status ('||to_char(rcd_pts_pet_definition.pde_pet_status)||') does not exist');
+         pts_gen_function.add_mesg_data('Selection template status ('||to_char(rcd_pts_stm_definition.std_stm_status)||') does not exist');
       end if;
       close csr_sta_code;
+      open csr_tar_code;
+      fetch csr_tar_code into rcd_tar_code;
+      if csr_tar_code%notfound then
+         pts_gen_function.add_mesg_data('Selection template target ('||to_char(rcd_pts_stm_definition.std_stm_target)||') does not exist');
+      end if;
+      close csr_tar_code;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
-      /* Retrieve and process the pet definition
+      /* Retrieve and process the selection template definition
       /*-*/
       open csr_check;
       fetch csr_check into rcd_check;
       if csr_check%found then
-         update pts_pet_definition
-            set pde_pet_status = rcd_pts_pet_definition.pde_pet_status,
-                pde_upd_user = rcd_pts_pet_definition.pde_upd_user,
-                pde_upd_date = rcd_pts_pet_definition.pde_upd_date,
-                pde_pet_name = rcd_pts_pet_definition.pde_pet_name,
-                pde_pet_type = rcd_pts_pet_definition.pde_pet_type,
-                pde_hou_code = rcd_pts_pet_definition.pde_hou_code,
-                pde_birth_year = rcd_pts_pet_definition.pde_birth_year,
-                pde_del_notifier = rcd_pts_pet_definition.pde_del_notifier,
-                pde_feed_comment = rcd_pts_pet_definition.pde_feed_comment,
-                pde_health_comment = rcd_pts_pet_definition.pde_health_comment
-          where pde_pet_code = rcd_pts_pet_definition.pde_pet_code;
-         delete from pts_pet_classification where pcl_pet_code = rcd_pts_pet_definition.pde_pet_code;
+         var_confirm := 'updated';
+         update pts_stm_definition
+            set std_stm_text = rcd_pts_stm_definition.std_stm_text,
+                std_stm_status = rcd_pts_stm_definition.std_stm_status,
+                std_upd_user = rcd_pts_stm_definition.std_upd_user,
+                std_upd_date = rcd_pts_stm_definition.std_upd_date,
+                std_stm_target = rcd_pts_stm_definition.std_stm_target
+          where std_stm_code = rcd_pts_stm_definition.std_stm_code;
+         delete from pts_stm_group where stg_stm_code = rcd_pts_stm_definition.std_stm_code;
+         delete from pts_stm_rule where str_stm_code = rcd_pts_stm_definition.std_stm_code;
+         delete from pts_stm_value where stv_stm_code = rcd_pts_stm_definition.std_stm_code;
       else
-         select pts_pet_sequence.nextval into rcd_pts_pet_definition.pde_pet_code from dual;
-         rcd_pts_pet_definition.pde_del_notifier := null;
-         rcd_pts_pet_definition.pde_test_date := null;
-         insert into pts_pet_definition values rcd_pts_pet_definition;
+         var_confirm := 'created';
+         select pts_stm_sequence.nextval into rcd_pts_stm_definition.std_stm_code from dual;
+         insert into pts_stm_definition values rcd_pts_stm_definition;
       end if;
       close csr_check;
 
       /*-*/
       /* Retrieve and insert the selection rule data
       /*-*/
-      rcd_pts_pet_classification.pcl_pet_code := rcd_pts_pet_definition.pde_pet_code;
-      obj_cla_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/CLA_DATA');
-      for idx in 0..xmlDom.getLength(obj_cla_list)-1 loop
-         obj_cla_node := xmlDom.item(obj_cla_list,idx);
-         rcd_pts_pet_classification.pcl_tab_code := pts_from_xml(xslProcessor.valueOf(obj_cla_node,'@TABCDE'));
-         rcd_pts_pet_classification.pcl_fld_code := pts_to_number(xslProcessor.valueOf(obj_cla_node,'@FLDCDE'));
-         obj_val_list := xslProcessor.selectNodes(obj_cla_node,'VAL_DATA');
-         for idy in 0..xmlDom.getLength(obj_val_list)-1 loop
-            obj_val_node := xmlDom.item(obj_val_list,idy);
-            rcd_pts_pet_classification.pcl_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
-            rcd_pts_pet_classification.pcl_val_text := pts_from_xml(xslProcessor.valueOf(obj_val_node,'@VALTXT'));
-            insert into pts_pet_classification values rcd_pts_pet_classification;
-         end loop;
+      obj_grp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/GROUP');
+      for idx in 0..xmlDom.getLength(obj_grp_list)-1 loop
+         obj_grp_node := xmlDom.item(obj_grp_list,idx);
+         obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULE');
+         if xmlDom.getLength(obj_rul_list) != 0 then
+            rcd_pts_stm_group.stg_stm_code := rcd_pts_stm_definition.std_stm_code;
+            rcd_pts_stm_group.stg_sel_group := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPCDE'));
+            rcd_pts_stm_group.stg_sel_text := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPTXT'));
+            rcd_pts_stm_group.stg_sel_pcnt := pts_to_number(xslProcessor.valueOf(obj_grp_node,'@GRPPCT'));
+            insert into pts_stm_group values rcd_pts_stm_group;
+            for idy in 0..xmlDom.getLength(obj_rul_list)-1 loop
+               obj_rul_node := xmlDom.item(obj_rul_list,idy);
+               rcd_pts_stm_rule.str_stm_code := rcd_pts_stm_group.stg_stm_code;
+               rcd_pts_stm_rule.str_sel_group := rcd_pts_stm_group.stg_sel_group;
+               rcd_pts_stm_rule.str_tab_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
+               rcd_pts_stm_rule.str_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
+               rcd_pts_stm_rule.str_rul_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
+               insert into pts_stm_rule values rcd_pts_stm_rule;
+               obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
+               for idz in 0..xmlDom.getLength(obj_val_list)-1 loop
+                  obj_val_node := xmlDom.item(obj_val_list,idz);
+                  rcd_pts_stm_value.stv_stm_code := rcd_pts_stm_rule.str_stm_code;
+                  rcd_pts_stm_value.stv_sel_group := rcd_pts_stm_rule.str_sel_group;
+                  rcd_pts_stm_value.stv_tab_code := rcd_pts_stm_rule.str_tab_code;
+                  rcd_pts_stm_value.stv_fld_code := rcd_pts_stm_rule.str_fld_code;
+                  rcd_pts_stm_value.stv_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
+                  rcd_pts_stm_value.stv_val_text := pts_from_xml(xslProcessor.valueOf(obj_val_node,'@VALTXT'));
+                  rcd_pts_stm_value.stv_val_pcnt := null;
+                  if rcd_pts_stm_rule.str_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
+                     rcd_pts_stm_value.stv_val_pcnt := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALPCT'));
+                  end if;
+                  insert into pts_stm_value values rcd_pts_stm_value;
+               end loop;
+            end loop;
+         end if;
       end loop;
 
       /*-*/
@@ -572,6 +553,11 @@ create or replace package body pts_app.pts_sel_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
@@ -590,18 +576,18 @@ create or replace package body pts_app.pts_sel_function as
 
          /* Raise an exception to the calling application
          /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_SEL_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_STM_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end update_data;
 
-end pts_sel_function;
+end pts_stm_function;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym pts_sel_function for pts_app.pts_sel_function;
-grant execute on pts_app.pts_sel_function to public;
+create or replace public synonym pts_stm_function for pts_app.pts_stm_function;
+grant execute on pts_app.pts_stm_function to public;

@@ -28,9 +28,6 @@ create or replace package pts_app.pts_pet_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   function get_class_code(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined;
-   function get_class_number(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_numb_type pipelined;
-   function get_class_text(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_text_type pipelined;
 
 end pts_pet_function;
 /
@@ -437,10 +434,9 @@ create or replace package body pts_app.pts_pet_function as
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
       var_action varchar2(32);
+      var_confirm varchar2(32);
       rcd_pts_pet_definition pts_pet_definition%rowtype;
       rcd_pts_pet_classification pts_pet_classification%rowtype;
-      type typ_dynamic_cursor is ref cursor;
-      var_dynamic_cursor typ_dynamic_cursor;
 
       /*-*/
       /* Local cursors
@@ -587,6 +583,7 @@ create or replace package body pts_app.pts_pet_function as
       open csr_check;
       fetch csr_check into rcd_check;
       if csr_check%found then
+         var_confirm := 'updated';
          update pts_pet_definition
             set pde_pet_status = rcd_pts_pet_definition.pde_pet_status,
                 pde_upd_user = rcd_pts_pet_definition.pde_upd_user,
@@ -601,6 +598,7 @@ create or replace package body pts_app.pts_pet_function as
           where pde_pet_code = rcd_pts_pet_definition.pde_pet_code;
          delete from pts_pet_classification where pcl_pet_code = rcd_pts_pet_definition.pde_pet_code;
       else
+         var_confirm := 'created';
          select pts_pet_sequence.nextval into rcd_pts_pet_definition.pde_pet_code from dual;
          rcd_pts_pet_definition.pde_del_notifier := null;
          rcd_pts_pet_definition.pde_test_date := null;
@@ -636,6 +634,11 @@ create or replace package body pts_app.pts_pet_function as
       /*-*/
       commit;
 
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Pet ('||to_char(rcd_pts_pet_definition.pde_pet_code)||') successfully '||var_confirm);
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -659,198 +662,6 @@ create or replace package body pts_app.pts_pet_function as
    /* End routine */
    /*-------------*/
    end update_data;
-
-   /***************************************************************/
-   /* This procedure performs the get classification code routine */
-   /***************************************************************/
-   function get_class_code(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_code_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select nvl(t01.pcl_val_code,0) as pcl_val_code
-           from pts_pet_classification t01
-          where t01.pcl_pet_code = par_pet_code
-            and t01.pcl_tab_code = upper(par_tab_code)
-            and t01.pcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the pet classification value code
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_code_object(rcd_classification.pcl_val_code));
-         else
-            pipe row(pts_cla_code_object(0));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_PET_FUNCTION - GET_CLASS_CODE - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_code;
-
-   /*****************************************************************/
-   /* This procedure performs the get classification number routine */
-   /*****************************************************************/
-   function get_class_number(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_numb_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select nvl(t01.pcl_val_text,0) as pcl_val_text
-           from pts_pet_classification t01
-          where t01.pcl_pet_code = par_pet_code
-            and t01.pcl_tab_code = upper(par_tab_code)
-            and t01.pcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the pet classification value number
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_numb_object(rcd_classification.pcl_val_text));
-         else
-            pipe row(pts_cla_numb_object(0));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_PET_FUNCTION - GET_CLASS_NUMBER - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_number;
-
-   /***************************************************************/
-   /* This procedure performs the get classification text routine */
-   /***************************************************************/
-   function get_class_text(par_pet_code in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_text_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_classification is
-         select t01.pcl_val_text as pcl_val_text
-           from pts_pet_classification t01
-          where t01.pcl_pet_code = par_pet_code
-            and t01.pcl_tab_code = upper(par_tab_code)
-            and t01.pcl_val_code = par_fld_code;
-      rcd_classification csr_classification%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the pet classification value text
-      /*-*/
-      open csr_classification;
-      loop
-         fetch csr_classification into rcd_classification;
-         if csr_classification%found then
-            pipe row(pts_cla_text_object(rcd_classification.pcl_val_text));
-         else
-            pipe row(pts_cla_text_object('*NULL'));
-         end if;
-      end loop;
-      close csr_classification;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_PET_FUNCTION - GET_CLASS_TEXT - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_class_text;
 
 end pts_pet_function;
 /

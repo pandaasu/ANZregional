@@ -29,6 +29,7 @@ create or replace package pts_app.pts_gen_function as
    function get_mesg_count return number;
    procedure add_mesg_data(par_message in varchar2);
    function get_mesg_data return pts_xml_type pipelined;
+   procedure set_cfrm_data(par_confirm in varchar2);
    procedure set_list_data;
    function get_list_from return pts_sel_list_type pipelined;
    function get_list_data(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined;
@@ -59,6 +60,7 @@ create or replace package body pts_app.pts_gen_function as
    /* Private definitions
    /*-*/
    pvar_end_code number;
+   pvar_cfrm varchar2(2000 char);
    type ptyp_mesg is table of varchar2(2000 char) index by binary_integer;
    ptbl_mesg ptyp_mesg;
 
@@ -80,6 +82,7 @@ create or replace package body pts_app.pts_gen_function as
       /* Clear the message data
       /*-*/
       ptbl_mesg.delete;
+      pvar_cfrm := null;
 
    /*-------------------*/
    /* Exception handler */
@@ -196,14 +199,17 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Pipe the message data when required
       /*-*/
-      if ptbl_mesg.count != 0 then
-         pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_ERROR>'));
+      if ptbl_mesg.count != 0 or not(pvar_cfrm is null) then
+         pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
       end if;
       for idx in 1..ptbl_mesg.count loop
          pipe row(pts_xml_object('<ERROR ERRTXT="'||pts_to_xml(ptbl_mesg(idx))||'"/>'));
       end loop;
-      if ptbl_mesg.count != 0 then
-         pipe row(pts_xml_object('</PTS_ERROR>'));
+      if not(pvar_cfrm is null) then
+         pipe row(pts_xml_object('<CONFIRM CONTXT="'||pts_to_xml(pvar_cfrm)||'"/>'));
+      end if;
+      if ptbl_mesg.count != 0 or not(pvar_cfrm is null) then
+         pipe row(pts_xml_object('</PTS_RESPONSE>'));
       end if;
 
       /*-*/
@@ -230,6 +236,45 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end get_mesg_data;
+
+   /********************************************************/
+   /* This procedure performs the set confirm data routine */
+   /********************************************************/
+   procedure set_cfrm_data(par_confirm in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Set the confirm data
+      /*-*/
+      pvar_cfrm := par_confirm;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_GEN_FUNCTION - SE_CFRM_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end set_cfrm_data;
 
    /*****************************************************/
    /* This procedure performs the set list data routine */
