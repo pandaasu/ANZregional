@@ -865,11 +865,7 @@
                strXML = strXML+'<RULE TABCDE="'+cobjSelectData[i].tabcde+'" FLDCDE="'+cobjSelectData[i].fldcde+'" RULCDE="'+cobjSelectData[i].rulcde+'">';
                objValues = cobjSelectData[i].valary;
                for (var j=0;j<objValues.length;j++) {
-                  if (cobjSelectData[i].rultyp == '*TEXT' || cobjSelectData[i].rultyp == '*NUMBER') {
-                     strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'" VALPCT=""/>';
-                  } else {
-                     strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="" VALPCT="'+objValues[j].valpct+'"/>';
-                  }
+                  strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'" VALPCT="'+objValues[j].valpct+'"/>';
                }
                strXML = strXML+'</RULE>';
             }
