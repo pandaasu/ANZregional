@@ -141,7 +141,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBN" align=left valign=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="SLP_ValPcnt" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
