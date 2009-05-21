@@ -127,6 +127,7 @@
             objRow.setAttribute('tabcde',cobjSearchData[i].tabcde);
             objRow.setAttribute('fldcde',cobjSearchData[i].fldcde);
             objRow.setAttribute('fldtxt',cobjSearchData[i].fldtxt);
+            objRow.setAttribute('inplen',cobjSearchData[i].inplen);
             objRow.setAttribute('rultyp',cobjSearchData[i].rultyp);
             objRow.setAttribute('rulcde',cobjSearchData[i].rulcde);
             var strText = '*NONE';
@@ -200,6 +201,7 @@
             cobjSearchData[i].tabcde = objRow.getAttribute('tabcde');
             cobjSearchData[i].fldcde = objRow.getAttribute('fldcde');
             cobjSearchData[i].fldtxt = objRow.getAttribute('fldtxt');
+            cobjSearchData[i].inplen = objRow.getAttribute('inplen');
             cobjSearchData[i].rultyp = objRow.getAttribute('rultyp');
             cobjSearchData[i].rulcde = objRow.getAttribute('rulcde');
             if (cobjSearchData[i].rulcde != '') {
@@ -291,6 +293,8 @@
       cstrSearchGrpCde = cobjSearchData[cintSearchRow].grpcde;
       cstrSearchTabCde = cobjSearchData[cintSearchRow].tabcde;
       cstrSearchFldCde = cobjSearchData[cintSearchRow].fldcde;
+      cstrSearchFldTxt = cobjSearchData[cintSearchRow].fldtxt;
+      cstrSearchInpLen = cobjSearchData[cintSearchRow].inplen;
       cstrSearchRulTyp = cobjSearchData[cintSearchRow].rultyp;
       cstrSearchRulCde = cobjSearchData[cintSearchRow].rulcde;
       doActivityStart(document.body);
@@ -545,6 +549,7 @@
          objRule.tabcde = cstrSearchTabCde;
          objRule.fldcde = cstrSearchFldCde;
          objRule.fldtxt = cstrSearchFldTxt;
+         objRule.inplen = cstrSearchInpLen;
          objRule.rultyp = cstrSearchRulTyp;
          objRule.rulcde = objSelRulCode[objSelRulCode.selectedIndex].value;
          var objValues = objRule.valary;
@@ -647,6 +652,7 @@
          objRule.tabcde = cstrSearchTabCde;
          objRule.fldcde = cstrSearchFldCde;
          objRule.fldtxt = cstrSearchFldTxt;
+         objRule.inplen = cstrSearchInpLen;
          objRule.rultyp = cstrSearchRulTyp;
          objRule.rulcde = objSenRulCode[objSenRulCode.selectedIndex].value;
          var objValues = objRule.valary;
@@ -692,6 +698,7 @@
          objRule.tabcde = cstrSearchTabCde;
          objRule.fldcde = cstrSearchFldCde;
          objRule.fldtxt = cstrSearchFldTxt;
+         objRule.inplen = cstrSearchInpLen;
          objRule.rultyp = cstrSearchRulTyp;
          objRule.rulcde = objSetRulCode[objSetRulCode.selectedIndex].value;
          var objValues = objRule.valary;

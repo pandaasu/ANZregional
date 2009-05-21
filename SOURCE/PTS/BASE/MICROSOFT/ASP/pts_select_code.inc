@@ -22,6 +22,7 @@
       this.tabcde = '';
       this.fldcde = '';
       this.fldtxt = '';
+      this.inplen = '';
       this.rultyp = '';
       this.rulcde = '';
       this.valary = new Array();
@@ -102,6 +103,7 @@
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objRow.setAttribute('fldcde',cobjSelectData[i].fldcde);
             objRow.setAttribute('fldtxt',cobjSelectData[i].fldtxt);
+            objRow.setAttribute('inplen',cobjSelectData[i].inplen);
             objRow.setAttribute('rultyp',cobjSelectData[i].rultyp);
             objRow.setAttribute('rulcde',cobjSelectData[i].rulcde);
             var strText = '*NONE';
@@ -188,6 +190,7 @@
             cobjSelectData[i].tabcde = objRow.getAttribute('tabcde');
             cobjSelectData[i].fldcde = objRow.getAttribute('fldcde');
             cobjSelectData[i].fldtxt = objRow.getAttribute('fldtxt');
+            cobjSelectData[i].inplen = objRow.getAttribute('inplen');
             cobjSelectData[i].rultyp = objRow.getAttribute('rultyp');
             cobjSelectData[i].rulcde = objRow.getAttribute('rulcde');
             if (cobjSelectData[i].rulcde != '') {
@@ -273,6 +276,8 @@
       cstrSelectGrpCde = cobjSelectData[cintSelectRow].grpcde;
       cstrSelectTabCde = cobjSelectData[cintSelectRow].tabcde;
       cstrSelectFldCde = cobjSelectData[cintSelectRow].fldcde;
+      cstrSelectFldTxt = cobjSelectData[cintSelectRow].fldtxt;
+      cstrSelectInpLen = cobjSelectData[cintSelectRow].inplen;
       cstrSelectRulTyp = cobjSelectData[cintSelectRow].rultyp;
       cstrSelectRulCde = cobjSelectData[cintSelectRow].rulcde;
       doActivityStart(document.body);
@@ -283,9 +288,6 @@
       objTable.deleteRow(intRow);
       updateSltData();
    }
-  // function doSltRuleTest() {
-  //    doSltSlctSelect();
-  // }
    ////////////////////////////
    // Select Group Functions //
    ////////////////////////////
@@ -591,6 +593,7 @@
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
          objRule.fldtxt = cstrSelectFldTxt;
+         objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSllRulCode[objSllRulCode.selectedIndex].value;
          var objValues = objRule.valary;
@@ -767,6 +770,7 @@
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
          objRule.fldtxt = cstrSelectFldTxt;
+         objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSlnRulCode[objSlnRulCode.selectedIndex].value;
          var objValues = objRule.valary;
@@ -811,6 +815,7 @@
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
          objRule.fldtxt = cstrSelectFldTxt;
+         objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
          objRule.rulcde = objSltRulCode[objSltRulCode.selectedIndex].value;
          var objValues = objRule.valary;
@@ -841,6 +846,7 @@
             cobjSelectData[intIndex].tabcde = objElements[i].getAttribute('TABCDE');
             cobjSelectData[intIndex].fldcde = objElements[i].getAttribute('FLDCDE');
             cobjSelectData[intIndex].fldtxt = objElements[i].getAttribute('FLDTXT');
+            cobjSelectData[intIndex].inplen = objElements[i].getAttribute('INPLEN');
             cobjSelectData[intIndex].rultyp = objElements[i].getAttribute('RULTYP');
             cobjSelectData[intIndex].rulcde = objElements[i].getAttribute('RULCDE');
          } else if (objElements[i].nodeName == 'VALUE') {
