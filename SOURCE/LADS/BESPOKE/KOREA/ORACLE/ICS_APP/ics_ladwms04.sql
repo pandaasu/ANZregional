@@ -28,6 +28,7 @@ create or replace package ics_app.ics_ladwms04 as
  YYYY/MM   Author               Description
  -------   ------               -----------
  2009/02   Steve Gregan         Created
+ 2009/05   Trevor Keon          Added street to the address field
 
 *******************************************************************************/
 
@@ -82,7 +83,7 @@ create or replace package body ics_app.ics_ladwms04 as
                 t01.industry_type as bus_category,
                 t01.representative_name as president_name,
                 t03.city_post_code as post_code,
-                trim(t03.street_supplement_01 || ' ' || t03.street_supplement_02) as address,
+                trim(t03.street || ' ' || t03.street_supplement_01 || ' ' || t03.street_supplement_02) as address,
                 t04.phone_number as telephone,
                 t05.fax_number as fax,
                 trim(t06.name || ' ' || t06.name_02 || ' ' || t06.name_03 || ' ' || t06.name_04) as sales_person,
@@ -180,8 +181,8 @@ create or replace package body ics_app.ics_ladwms04 as
       lics_outbound_loader.append_data('<CTL>');
       lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
       lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
-      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
-      --PROD-- lics_outbound_loader.append_data('<CTL_NAME>APP002CTKR</CTL_NAME>');
+--      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
+      lics_outbound_loader.append_data('<CTL_NAME>APP002CPKR</CTL_NAME>');
       lics_outbound_loader.append_data('</CTL>');
 
       /*-*/

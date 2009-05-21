@@ -281,8 +281,8 @@ create or replace package body ics_app.ics_ladwms03 as
       lics_outbound_loader.append_data('<CTL>');
       lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
       lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
-      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
-      --PROD-- lics_outbound_loader.append_data('<CTL_NAME>APP002CTKR</CTL_NAME>');
+--      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
+      lics_outbound_loader.append_data('<CTL_NAME>APP002CPKR</CTL_NAME>');
       lics_outbound_loader.append_data('</CTL>');
 
       /*-*/
