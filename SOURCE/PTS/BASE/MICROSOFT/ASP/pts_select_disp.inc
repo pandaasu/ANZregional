@@ -1,19 +1,12 @@
    <table id="dspSltRule" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr><td align=center colspan=2 nowrap><nobr>
       <tr>
-         <td id="hedSltRule" class="clsFunction" align=center colspan=2 nowrap><nobr>Selection Rules</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      </table></nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=5 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltRuleAddGroup();">&nbsp;Add Group&nbsp;</a></nobr></td>
+                  <td id="hedSltRule" class="clsLabelWB" align=center colspan=1 nowrap><nobr>Selection Rules</nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltRuleExecute();">&nbsp;Execute&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltRuleAddGroup();">&nbsp;Add Group&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
