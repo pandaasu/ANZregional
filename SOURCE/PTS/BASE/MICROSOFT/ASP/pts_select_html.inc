@@ -6,7 +6,6 @@
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Group Description:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -19,6 +18,7 @@
             <input class="clsInputNN" type="text" name="SGR_GrpPcnt" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
@@ -104,7 +104,7 @@
                               </table>
                            </nobr></td>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="SLL_SelValue" name="SLL_SelValue" style="width:300px" multiple size=20 ondblClick="updateSltListValue();></select>
+                              <select class="clsInputBN" id="SLL_SelValue" name="SLL_SelValue" style="width:300px" multiple size=20 onDblClick="updateSltListValue();"></select>
                            </nobr></td>
                         </tr>
                      </table>
@@ -140,13 +140,12 @@
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Value Percentage:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+         <td class="clsLabelBN" align=left valign=center colspan=2 nowrap><nobr>
             <input class="clsInputNN" type="text" name="SLP_ValPcnt" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>

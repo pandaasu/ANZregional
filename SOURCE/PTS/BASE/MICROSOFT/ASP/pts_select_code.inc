@@ -3,6 +3,7 @@
    ///////////////////////////
    // Select Rule Functions //
    ///////////////////////////
+   var cstrSelectParent;
    var cstrSelectEntity;
    var cobjSelectData;
    var cstrSelectMode;
@@ -30,7 +31,8 @@
       this.valtxt = strValTxt;
       this.valpct = strValPct;
    }
-   function initSelect(strHeading) {
+   function initSelect(strParent,strHeading) {
+      cstrSelectParent = strParent;
       cobjScreens[cobjScreens.length] = new clsScreen('dspSltGrop','hedSltGrop');
       cobjScreens[cobjScreens.length] = new clsScreen('dspSltFeld','hedSltFeld');
       cobjScreens[cobjScreens.length] = new clsScreen('dspSltList','hedSltList');
@@ -80,11 +82,11 @@
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objCell = objRow.insertCell(0);
             objCell.colSpan = 1;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
-            objCell.colSpan = 2;
+            objCell.colSpan = 3;
             objCell.innerText = '';
             if (!bolFound) {
                objCell.innerText = 'SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
@@ -137,10 +139,15 @@
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
             objCell.colSpan = 1;
-            objCell.innerText = cobjSelectData[i].fldtxt+' ('+cobjSelectData[i].rulcde+')';
+            objCell.innerText = cobjSelectData[i].fldtxt;
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(2);
+            objCell.colSpan = 1;
+            objCell.innerText = cobjSelectData[i].rulcde;
+            objCell.className = 'clsLabelFN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(3);
             objCell.colSpan = 1;
             objCell.innerText = strText;
             objCell.className = 'clsLabelFN';
@@ -162,7 +169,7 @@
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (objRow.getAttribute('tabcde') == '*GROUP') {
-            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
+            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
             if (!bolFound) {
                objRow.cells[1].innerText = 'SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
             } else {
@@ -276,14 +283,14 @@
       objTable.deleteRow(intRow);
       updateSltData();
    }
-  // function doSltRuleSelect() {
+  // function doSltRuleTest() {
   //    doSltSlctSelect();
   // }
    ////////////////////////////
    // Select Group Functions //
    ////////////////////////////
    function doSltGropCancel() {
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
    }
    function doSltGropAccept() {
       if (!processForm()) {return;}
@@ -300,7 +307,7 @@
          alert(strMessage);
          return;
       }
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
       var objTable = document.getElementById('tabSltRule');
       var objRow;
       var objCell;
@@ -321,19 +328,19 @@
          objCell.className = 'clsLabelFN';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(1);
-         objCell.colSpan = 1;
+         objCell.colSpan = 3;
          objCell.innerText = '';
          objCell.className = 'clsLabelFB';
          objCell.style.whiteSpace = 'nowrap';
       }
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
       updateSltData();
    }
    ////////////////////////////
    // Select Field Functions //
    ////////////////////////////
    function doSltFeldCancel() {
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
    }
    function doSltFeldSelect(intRow) {
       var objTable = document.getElementById('tabSltFeld');
@@ -541,7 +548,7 @@
    // Select List Functions //
    ///////////////////////////
    function doSltListCancel() {
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
    }
    function doSltListAccept() {
       if (!processForm()) {return;}
@@ -575,7 +582,7 @@
          cobjSelectData[cintSelectRow].rulcde = objSllRulCode[objSllRulCode.selectedIndex].value;
          var objValues = cobjSelectData[cintSelectRow].valary;
          objValues.length = 0;
-         for (var i=0;i<objSelSelValue.options.length;i++) {
+         for (var i=0;i<objSllSelValue.options.length;i++) {
             objValues[i] = new clsSltValue(objSllSelValue[i].value,objSllSelValue[i].getAttribute('valtxt'),objSllSelValue[i].getAttribute('valpct'));
          }
       } else {
@@ -593,10 +600,11 @@
          }
          addSltData(objRule);
       }
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
       loadSltData();
    }
    function selectSltListValues() {
+      var objSllRulCode = document.getElementById('SLL_RulCode');
       var objSllRulValue = document.getElementById('SLL_RulValue');
       var objSllSelValue = document.getElementById('SLL_SelValue');
       var bolFound;
@@ -610,14 +618,14 @@
                }
             }
             if (!bolFound) {
-               if (cstrSelectRulCde == '*SELECT_WHEN_EQUAL_MIX') {
+               if (objSllRulCode[objSllRulCode.selectedIndex].value == '*SELECT_WHEN_EQUAL_MIX') {
                   objSllSelValue.options[objSllSelValue.options.length] = new Option(objSllRulValue[i].text+' (0%)',objSllRulValue[i].value);
-                  objSllSelValue.options[objSllSelValue.options.length].setAttribute('valtxt',objSllRulValue[i].text);
-                  objSllSelValue.options[objSllSelValue.options.length].setAttribute('valpct','0');
+                  objSllSelValue.options[objSllSelValue.options.length-1].setAttribute('valtxt',objSllRulValue[i].text);
+                  objSllSelValue.options[objSllSelValue.options.length-1].setAttribute('valpct','0');
                } else {
                   objSllSelValue.options[objSllSelValue.options.length] = new Option(objSllRulValue[i].text,objSllRulValue[i].value);
-                  objSllSelValue.options[objSllSelValue.options.length].setAttribute('valtxt',objSllRulValue[i].text);
-                  objSllSelValue.options[objSllSelValue.options.length].setAttribute('valpct','');
+                  objSllSelValue.options[objSllSelValue.options.length-1].setAttribute('valtxt',objSllRulValue[i].text);
+                  objSllSelValue.options[objSllSelValue.options.length-1].setAttribute('valpct','');
                }
             }
          }
@@ -687,7 +695,7 @@
          }
       } else {
          for (var i=0;i<objSllSelValue.options.length;i++) {
-            objSllSelValue.options[i].text = objSllSelValue.options[i].getAttribute('valtxt')';
+            objSllSelValue.options[i].text = objSllSelValue.options[i].getAttribute('valtxt');
             objSllSelValue.options[i].setAttribute('valpct','');
          }
       }
@@ -729,7 +737,7 @@
    // Select Number Functions //
    /////////////////////////////
    function doSltNumbCancel() {
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
    }
    function doSltNumbAccept() {
       if (!processForm()) {return;}
@@ -766,14 +774,14 @@
          objValues[0] = new clsSltValue('1',objSlnSelValue.value,'');
          addSltData(objRule);
       }
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
       loadSltData();
    }
    ///////////////////////////
    // Select Text Functions //
    ///////////////////////////
    function doSltTextCancel() {
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
    }
    function doSltTextAccept() {
       if (!processForm()) {return;}
@@ -810,7 +818,7 @@
          objValues[0] = new clsSltValue('1',objSltSelValue.value,'');
          addSltData(objRule);
       }
-      displayScreen('dspSltRule');
+      displayScreen(cstrSelectParent);
       loadSltData();
    }
    ///////////////////////////
@@ -867,6 +875,43 @@
          strXML = strXML+'</GROUP>';
       }
       return strXML;
+   }
+   function checkSltData() {
+      var strMessage = '';
+      var bolData = true;
+      var intTotal = 0;
+      var bolGroup = false;
+      var bolRule = false;
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].tabcde == '*GROUP') {
+            intTotal = intTotal + (cobjSelectData[i].grppct-0);
+            if (bolGroup && !bolRule) {
+               bolData = false;
+            }
+            bolGroup = true;
+            bolRule = false;
+         } else {
+            if (cobjSelectData[i].rulcde != '' && cobjSelectData[i].valary.length != 0) {
+               bolRule = true;
+            }
+         }
+      }
+      if (bolGroup && !bolRule) {
+         bolData = false;
+      }
+      if (!bolGroup) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'At least one group must be specified';
+      }
+      if (!bolData) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Groups must have at least one rule';
+      }
+      if (intTotal != 100) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Group percentage must sum to 100';
+      }
+      return strMessage;
    }
 // -->
 </script>
