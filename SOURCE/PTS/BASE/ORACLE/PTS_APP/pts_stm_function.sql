@@ -183,7 +183,8 @@ create or replace package body pts_app.pts_stm_function as
       cursor csr_rule is
          select t01.*,
                 t02.sfi_fld_text,
-                t02.sfi_fld_rul_type
+                t02.sfi_fld_rul_type,
+                t02.sfi_fld_inp_leng
            from pts_stm_rule t01,
                 pts_sys_field t02
           where t01.str_tab_code = t02.sfi_tab_code
@@ -317,7 +318,7 @@ create or replace package body pts_app.pts_stm_function as
             if csr_rule%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
+            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
             open csr_value;
             loop
                fetch csr_value into rcd_value;
