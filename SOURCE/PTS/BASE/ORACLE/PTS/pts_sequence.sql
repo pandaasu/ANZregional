@@ -85,6 +85,6 @@ create or replace public synonym pts_hou_sequence for pts.pts_hou_sequence;
 create or replace public synonym pts_pet_sequence for pts.pts_pet_sequence;
 create or replace public synonym pts_sam_sequence for pts.pts_sam_sequence;
 create or replace public synonym pts_que_sequence for pts.pts_que_sequence;
-create or replace public synonym pts_que_sequence for pts.pts_stm_sequence;
+create or replace public synonym pts_stm_sequence for pts.pts_stm_sequence;
 
 create or replace public synonym pts_ptest_sequence for pts.pts_ptest_sequence;
