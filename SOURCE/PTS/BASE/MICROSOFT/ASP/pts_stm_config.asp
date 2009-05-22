@@ -217,6 +217,7 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
+      cobjScreens[2].hedtxt = 'Test Selection Template ('+document.getElementById('PRO_StmCode').value+')';
       displayScreen('dspTest');
       document.getElementById('TES_StmCode').value = document.getElementById('PRO_StmCode').value;
       document.getElementById('TES_MemCount').value = '0';
