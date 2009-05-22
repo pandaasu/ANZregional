@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Set the test data
+   '// Update the panel
    '//
-   call objProcedure.Execute("pts_app.pts_stm_function.test_data")
+   call objProcedure.Execute("pts_app.pts_stm_function.update_panel")
    if strReturn <> "*OK" then
       exit sub
    end if
@@ -90,34 +90,6 @@ sub ProcessRequest()
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve any messages
-   '//
-   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
-   strReturn = objSelection.Execute("TESTDATA", strStatement, 0)
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-   if objSelection.ListCount("TESTDATA") <> 0 then
-      Response.Buffer = true
-      Response.ContentType = "text/xml"
-      Response.AddHeader "Cache-Control", "no-cache"
-      Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListCount("TESTDATA") - 1
-         call Response.Write(objSelection.ListValue01("TESTDATA",intIndex))
-      next
-      exit sub
-   end if
-
-   '//
-   '// Retrieve the selection template panel
-   '//
-   strStatement = "select xml_text from table(pts_app.pts_stm_function.retrieve_panel)"
-   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
-   if strReturn <> "*OK" then
-      exit sub
-   end if
 
    '//
    '// Retrieve any messages
@@ -139,11 +111,6 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
-      if objSelection.ListCount("MESSAGE") = 0 then
-         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
-         next
-      end if
    end if
 
 end sub%>

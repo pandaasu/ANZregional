@@ -126,8 +126,10 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[2] = new clsScreen('dspTest','hedTest');
       cobjScreens[0].hedtxt = 'Selection Template Prompt';
       cobjScreens[1].hedtxt = 'Selection Template Maintenance';
+      cobjScreens[2].hedtxt = 'Selection Template Test';
       initSearch();
       initSelect('dspDefine','Selection Template');
       displayScreen('dspPrompt');
@@ -203,6 +205,23 @@ sub PaintFunction()%>
       }
       doActivityStart(document.body);
       window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_StmCode').value+'\');',10);
+   }
+   function doPromptTest() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_StmCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Selection template code must be entered for test';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      displayScreen('dspTest');
+      document.getElementById('TES_StmCode').value = document.getElementById('PRO_StmCode').value;
+      document.getElementById('TES_MemCount').value = 0;
+      document.getElementById('TES_ResCount').value = 0;
+      document.getElementById('TES_MemCount').focus();
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
@@ -383,6 +402,59 @@ sub PaintFunction()%>
       var strValue = objSelect.options[objSelect.selectedIndex].text.substring(objSelect.options[objSelect.selectedIndex].value.length+3);
       startSltInstance(strValue);
    }
+   ////////////////////
+   // Test Functions //
+   ////////////////////
+   function doTestAccept() {
+      if (!processForm()) {return;}
+      var strMessage = checkSltData();
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var objPetMult = document.getElementById('TES_PetMult');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*TESSTM"';
+      strXML = strXML+' STMCODE="'+fixXML(document.getElementById('TES_StmCode').value)+'"';
+      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('TES_MemCount').value)+'"';
+      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('TES_RESCount').value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(objPetMult.options[objPetMult.selectedIndex].value)+'"';
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestTestAccept(\''+strXML+'\');',10);
+   }
+   function requestTestAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_stm_test.asp',function(strResponse) {checkTestAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkDefineAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         doReportOutput(eval('document.body'),'Selection Template Test Panel','*SPREADSHEET','select * from table(pts_app.pts_stm_function.report_panel(' + document.getElementById('TES_StmCode').value + '))');
+      }
+   }
+   function doTestCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_StmCode').value = '';
+      document.getElementById('PRO_StmCode').focus();
+   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -390,6 +462,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <!--#include file="pts_search_code.inc"-->
 <!--#include file="pts_select_code.inc"-->
 <head>
@@ -479,6 +552,49 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspTest" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Selection Template Test</nobr></td>
+         <input type="hidden" name="TES_StmCode" value="">
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member Count:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="TES_MemCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reserve Count:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="TES_ResCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allow Multiple Household Pets:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="TES_PetMulti" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTestCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTestAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
