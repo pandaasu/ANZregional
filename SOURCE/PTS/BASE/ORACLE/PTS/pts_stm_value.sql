@@ -25,7 +25,11 @@ create table pts.pts_stm_value
     stv_fld_code                    number                        not null,
     stv_val_code                    number                        not null,
     stv_val_text                    varchar2(256 char)            null,
-    stv_val_pcnt                    number                        null);
+    stv_val_pcnt                    number                        null,
+    stv_req_mem_count               number                        not null,
+    stv_req_res_count               number                        not null,
+    stv_sel_mem_count               number                        not null,
+    stv_sel_res_count               number                        not null);
 
 /**/
 /* Comments
@@ -38,6 +42,10 @@ comment on column pts.pts_stm_value.stv_fld_code is 'System field code';
 comment on column pts.pts_stm_value.stv_val_code is 'System value code';
 comment on column pts.pts_stm_value.stv_val_text is 'Value text';
 comment on column pts.pts_stm_value.stv_val_pcnt is 'Value percent';
+comment on column pts.pts_stm_value.stv_req_mem_count is 'Value requested member count';
+comment on column pts.pts_stm_value.stv_req_res_count is 'Value requested reserve count';
+comment on column pts.pts_stm_value.stv_sel_mem_count is 'Value selected member count';
+comment on column pts.pts_stm_value.stv_sel_res_count is 'Value selected reserve count';
 
 /**/
 /* Primary Key Constraint

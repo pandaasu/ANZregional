@@ -22,7 +22,11 @@ create table pts.pts_stm_group
    (stg_stm_code                    number                        not null,
     stg_sel_group                   varchar2(32 char)             not null,
     stg_sel_text                    varchar2(120 char)            not null,
-    stg_sel_pcnt                    number                        not null);
+    stg_sel_pcnt                    number                        not null,
+    stg_req_mem_count               number                        not null,
+    stg_req_res_count               number                        not null,
+    stg_sel_mem_count               number                        not null,
+    stg_sel_res_count               number                        not null);
 
 /**/
 /* Comments
@@ -32,6 +36,10 @@ comment on column pts.pts_stm_group.stg_stm_code is 'Selection template code';
 comment on column pts.pts_stm_group.stg_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_stm_group.stg_sel_text is 'Selection group text';
 comment on column pts.pts_stm_group.stg_sel_pcnt is 'Selection mix percentage';
+comment on column pts.pts_stm_group.stg_req_mem_count is 'Selection group requested member count';
+comment on column pts.pts_stm_group.stg_req_res_count is 'Selection group requested reserve count';
+comment on column pts.pts_stm_group.stg_sel_mem_count is 'Selection group selected member count';
+comment on column pts.pts_stm_group.stg_sel_res_count is 'Selection group selected reserve count';
 
 /**/
 /* Primary Key Constraint
