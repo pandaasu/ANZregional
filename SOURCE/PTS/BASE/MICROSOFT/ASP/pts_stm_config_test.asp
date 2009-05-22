@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_stm_test.asp                                   //
+'// Script  : pts_stm_config_test.asp                            //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
 '// Text    : This script implements the selection template      //
-'//           test                                               //
+'//           test functionality                                 //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurity()
+   strReturn = GetSecurityCheck("PTS_STM_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
