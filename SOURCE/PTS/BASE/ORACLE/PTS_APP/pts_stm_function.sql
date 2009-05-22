@@ -1342,6 +1342,7 @@ create or replace package body pts_app.pts_stm_function as
          select t01.pde_pet_code,
                 t01.pde_hou_code,
                 t01.pde_pet_type,
+                (to_number(to_char(sysdate,'yyyy'))-nvl(t01.pde_birth_year,0)) as pde_pet_age,
                 (select case when count(*)=0 then 0 when count(*)=1 then 1 else 2 end from pts_hou_pet_type where hpt_hou_code=t01.pde_hou_code) as pde_hou_status,
                 (select case when count(*)=0 then 0 when count(*)=1 then 1 else 2 end from pts_hou_pet_type where hpt_hou_code=t01.pde_hou_code and hpt_pet_type=t01.pde_pet_type) as pde_hou_count,
                 t02.hde_geo_zone
@@ -1436,6 +1437,18 @@ create or replace package body pts_app.pts_stm_function as
             tbl_sel_data(tbl_sel_data.count+1).tab_code := '*PET_DEF';
             tbl_sel_data(tbl_sel_data.count).fld_code := 10;
             tbl_sel_data(tbl_sel_data.count).val_code := rcd_panel.pde_hou_count;
+
+            tbl_sel_data(tbl_sel_data.count+1).tab_code := '*PET_DEF';
+            tbl_sel_data(tbl_sel_data.count).fld_code := 6;
+            tbl_sel_data(tbl_sel_data.count).val_code := rcd_panel.pde_pet_age;
+
+            tbl_sel_data(tbl_sel_data.count+1).tab_code := '*PET_DEF';
+            tbl_sel_data(tbl_sel_data.count).fld_code := 11;
+            tbl_sel_data(tbl_sel_data.count).val_code := rcd_panel.pde_pet_age;
+
+            tbl_sel_data(tbl_sel_data.count+1).tab_code := '*PET_DEF';
+            tbl_sel_data(tbl_sel_data.count).fld_code := 12;
+            tbl_sel_data(tbl_sel_data.count).val_code := rcd_panel.pde_pet_age;
 
             tbl_sel_data(tbl_sel_data.count+1).tab_code := '*HOU_DEF';
             tbl_sel_data(tbl_sel_data.count).fld_code := 2;
