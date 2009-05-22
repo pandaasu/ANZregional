@@ -781,7 +781,6 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       var_stm_code number;
       var_found boolean;
-      var_group boolean;
       var_output varchar2(4000 char);
       var_work varchar2(4000 char);
 
@@ -867,21 +866,17 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       /* Start the report
       /*-*/
-      pipe row('<table border=0 cellpadding="0" cellspacing="0">');
-      pipe row('<tr><td colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">'||rcd_retrieve.std_stm_text||'</td></tr>');
+      pipe row('<table border=1>');
+      pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">'||rcd_retrieve.std_stm_text||'</td></tr>');
       pipe row('<tr>');
-      pipe row('<tr><td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Type</tr>');
-      pipe row('<tr><td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Description</tr>');
-      pipe row('<tr><td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Requested Members</tr>');
-      pipe row('<tr><td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Requested Reserves</tr>');
-      pipe row('<tr><td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Selected Members</tr>');
-      pipe row('<tr><td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;"></td>Selected Reserves</tr>');
+      pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
+      pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
       pipe row('</tr>');
+      pipe row('<tr><td align=center colspan=2></td></tr>');
 
       /*-*/
       /* Retrieve the report data
       /*-*/
-      var_group := false;
       open csr_group;
       loop
          fetch csr_group into rcd_group;
@@ -890,26 +885,17 @@ create or replace package body pts_app.pts_stm_function as
          end if;
 
          /*-*/
-         /* Output the group separator
-         /*-*/
-         if var_group = true then
-            pipe row('<tr><td colspan=6></td></tr>');
-         end if;
-         var_group := true;
-
-         /*-*/
          /* Output the group data
          /*-*/
          var_work := rcd_group.stg_sel_text||' ('||to_char(rcd_group.stg_sel_pcnt)||'%)';
+         var_work := var_work||' - Requested/Selected Members ('||to_char(rcd_group.stg_req_mem_count)||'/'||to_char(rcd_group.stg_sel_mem_count)||')';
+         var_work := var_work||' - Requested/Selected Reserves ('||to_char(rcd_group.stg_req_res_count)||'/'||to_char(rcd_group.stg_sel_res_count)||')';
          var_output := '<tr>';
-         var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Group</td>';
-         var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||var_work||'</td>';
-         var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_group.stg_req_mem_count)||'</td>';
-         var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_group.stg_req_res_count)||'</td>';
-         var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_group.stg_sel_mem_count)||'</td>';
-         var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_group.stg_sel_res_count)||'</td>';
-         var_output := '</tr>';
+         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Group</td>';
+         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;" nowrap>'||var_work||'</td>';
+         var_output := var_output||'</tr>';
          pipe row(var_output);
+         pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Rules</td></tr>');
 
          /*-*/
          /* Retrieve the rule data
@@ -927,12 +913,8 @@ create or replace package body pts_app.pts_stm_function as
             var_work := rcd_rule.sfi_fld_text||' ('||rcd_rule.str_rul_code||')';
             var_output := '<tr>';
             var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Rule</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||var_work||'</td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := '</tr>';
+            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
+            var_output := var_output||'</tr>';
             pipe row(var_output);
 
             /*-*/
@@ -950,16 +932,14 @@ create or replace package body pts_app.pts_stm_function as
                   var_work := rcd_value.stv_val_text;
                   if rcd_rule.str_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                      var_work := rcd_value.stv_val_text||' ('||rcd_value.stv_val_pcnt||'%)';
+                     var_work := var_work||' - Requested/Selected Members ('||to_char(rcd_value.stv_req_mem_count)||'/'||to_char(rcd_value.stv_sel_mem_count)||')';
+                     var_work := var_work||' - Requested/Selected Reserves ('||to_char(rcd_value.stv_req_res_count)||'/'||to_char(rcd_value.stv_sel_res_count)||')';
                   end if;
                end if;
                var_output := '<tr>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Value</td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||var_work||'</td>';
-               var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_value.stv_req_mem_count)||'</td>';
-               var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_value.stv_req_res_count)||'</td>';
-               var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_value.stv_sel_mem_count)||'</td>';
-               var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_value.stv_sel_res_count)||'</td>';
-               var_output := '</tr>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
+               var_output := var_output||'</tr>';
                pipe row(var_output);
             end loop;
             close csr_value;
@@ -970,7 +950,7 @@ create or replace package body pts_app.pts_stm_function as
          /*-*/
          /* Retrieve the panel data
          /*-*/
-         pipe row('<tr><td colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Panel</td></tr>');
          open csr_panel;
          loop
             fetch csr_panel into rcd_panel;
@@ -979,17 +959,13 @@ create or replace package body pts_app.pts_stm_function as
             end if;
             if rcd_retrieve.std_stm_target = 1 then
                var_work := 'Household ('||rcd_panel.stp_hou_code||') '||rcd_panel.hde_con_fullname||', '||rcd_panel.hde_loc_street||', '||rcd_panel.hde_loc_town;
-               var_work := var_work||' Pet ('||rcd_panel.stp_pet_code||') '||rcd_panel.pde_pet_name;
+               var_work := var_work||' - Pet ('||rcd_panel.stp_pet_code||') '||rcd_panel.pde_pet_name;
             else
                var_work := 'Household ('||rcd_panel.stp_hou_code||') '||rcd_panel.hde_con_fullname||', '||rcd_panel.hde_loc_street||', '||rcd_panel.hde_loc_town;
             end if;
             var_output := '<tr>';
             var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.stp_pan_status||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||var_work||'</td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=right style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
             var_output := var_output||'</tr>';
             pipe row(var_output);
          end loop;
@@ -1061,7 +1037,7 @@ create or replace package body pts_app.pts_stm_function as
          select t01.*
            from pts_stm_rule t01
           where t01.str_stm_code = par_stm_code
-            and t01.str_sel_group = rcd_group.stg_sel_group
+            and t01.str_sel_group = var_sel_group
           order by t01.str_tab_code asc,
                    t01.str_fld_code asc;
       rcd_rule csr_rule%rowtype;
@@ -1070,7 +1046,7 @@ create or replace package body pts_app.pts_stm_function as
          select t01.*
            from pts_stm_value t01
           where t01.stv_stm_code = par_stm_code
-            and t01.stv_sel_group = rcd_group.stg_sel_group
+            and t01.stv_sel_group = var_sel_group
             and t01.stv_tab_code = rcd_rule.str_tab_code
             and t01.stv_fld_code = rcd_rule.str_fld_code
           order by t01.stv_val_code asc;
@@ -1115,8 +1091,8 @@ create or replace package body pts_app.pts_stm_function as
          tbl_sel_group(tbl_sel_group.count+1).sel_group := rcd_group.stg_sel_group;
          tbl_sel_group(tbl_sel_group.count).str_rule := 0;
          tbl_sel_group(tbl_sel_group.count).end_rule := 0;
-         tbl_sel_group(tbl_sel_group.count).req_mem_count := round(par_req_mem_count * nvl(rcd_group.stg_sel_pcnt,0), 0);
-         tbl_sel_group(tbl_sel_group.count).req_res_count := round(par_req_res_count * nvl(rcd_group.stg_sel_pcnt,0), 0);
+         tbl_sel_group(tbl_sel_group.count).req_mem_count := round(par_req_mem_count * (nvl(rcd_group.stg_sel_pcnt,0)/100), 0);
+         tbl_sel_group(tbl_sel_group.count).req_res_count := round(par_req_res_count * (nvl(rcd_group.stg_sel_pcnt,0)/100), 0);
          tbl_sel_group(tbl_sel_group.count).sel_mem_count := 0;
          tbl_sel_group(tbl_sel_group.count).sel_res_count := 0;
          var_stg_mem_count := var_stg_mem_count + tbl_sel_group(tbl_sel_group.count).req_mem_count;
@@ -1234,8 +1210,8 @@ create or replace package body pts_app.pts_stm_function as
                tbl_sel_value(tbl_sel_value.count).sel_count := 0;
                tbl_sel_value(tbl_sel_value.count).fld_count := 0;
                if tbl_sel_rule(tbl_sel_rule.count).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
-                  tbl_sel_value(tbl_sel_value.count).req_mem_count := round(tbl_sel_group(idg).req_mem_count * nvl(rcd_value.stv_val_pcnt,0), 0);
-                  tbl_sel_value(tbl_sel_value.count).req_res_count := round(tbl_sel_group(idg).req_res_count * nvl(rcd_value.stv_val_pcnt,0), 0);
+                  tbl_sel_value(tbl_sel_value.count).req_mem_count := round(tbl_sel_group(idg).req_mem_count * (nvl(rcd_value.stv_val_pcnt,0)/100), 0);
+                  tbl_sel_value(tbl_sel_value.count).req_res_count := round(tbl_sel_group(idg).req_res_count * (nvl(rcd_value.stv_val_pcnt,0)/100), 0);
                   var_stv_mem_count := var_stv_mem_count + tbl_sel_value(tbl_sel_value.count).req_mem_count;
                   var_stv_res_count := var_stv_res_count + tbl_sel_value(tbl_sel_value.count).req_res_count;
                end if;
@@ -1287,6 +1263,12 @@ create or replace package body pts_app.pts_stm_function as
          close csr_rule;
 
       end loop;
+
+      /*-*/
+      /* Delete the existing panel data
+      /*-*/
+      delete from pts_stm_panel
+       where stp_stm_code = par_stm_code;
 
       /*-*/
       /* Commit the database
