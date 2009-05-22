@@ -781,6 +781,7 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       var_stm_code number;
       var_found boolean;
+      var_group boolean;
       var_output varchar2(4000 char);
       var_work varchar2(4000 char);
 
@@ -877,12 +878,21 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       /* Retrieve the report data
       /*-*/
+      var_group := false;
       open csr_group;
       loop
          fetch csr_group into rcd_group;
          if csr_group%notfound then
             exit;
          end if;
+
+         /*-*/
+         /* Output the group separator
+         /*-*/
+         if var_group = true then
+            pipe row('<tr><td align=center colspan=2></td></tr>');
+         end if;
+         var_group := true;
 
          /*-*/
          /* Output the group data
