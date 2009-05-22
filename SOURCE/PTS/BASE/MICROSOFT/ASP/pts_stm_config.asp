@@ -219,8 +219,8 @@ sub PaintFunction()%>
       }
       displayScreen('dspTest');
       document.getElementById('TES_StmCode').value = document.getElementById('PRO_StmCode').value;
-      document.getElementById('TES_MemCount').value = 0;
-      document.getElementById('TES_ResCount').value = 0;
+      document.getElementById('TES_MemCount').value = '0';
+      document.getElementById('TES_ResCount').value = '0';
       document.getElementById('TES_MemCount').focus();
    }
    function doPromptSearch() {
@@ -407,7 +407,16 @@ sub PaintFunction()%>
    ////////////////////
    function doTestAccept() {
       if (!processForm()) {return;}
-      var strMessage = checkSltData();
+      var strMessage = '';
+      if (document.getElementById('TES_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (document.getElementById('TES_ResCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Reserve count must be entered';
+      }
+
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -418,15 +427,15 @@ sub PaintFunction()%>
       strXML = strXML+' STMCODE="'+fixXML(document.getElementById('TES_StmCode').value)+'"';
       strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('TES_MemCount').value)+'"';
       strXML = strXML+' RESCNT="'+fixXML(document.getElementById('TES_RESCount').value)+'"';
-      strXML = strXML+' PETMLT="'+fixXML(objPetMult.options[objPetMult.selectedIndex].value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('TES_PetMult').options[document.getElementById('TES_PetMult').selectedIndex].value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestTestAccept(\''+strXML+'\');',10);
    }
    function requestTestAccept(strXML) {
-      doPostRequest('<%=strBase%>pts_stm_test.asp',function(strResponse) {checkTestAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_stm_config_test.asp',function(strResponse) {checkTestAccept(strResponse);},false,streamXML(strXML));
    }
-   function checkDefineAccept(strResponse) {
+   function checkTestAccept(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -557,10 +566,10 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspTest" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspTest" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Selection Template Test</nobr></td>
+         <td id="hedTest" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Selection Template Test</nobr></td>
          <input type="hidden" name="TES_StmCode" value="">
       </tr>
       <tr>
@@ -581,7 +590,10 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allow Multiple Household Pets:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="TES_PetMulti" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <select class="clsInputBN" name="TES_PetMult">
+               <option value="0" selected>No
+               <option value="1">Yes
+            </select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
