@@ -38,7 +38,7 @@ create table pts.pts_int_definition
 /**/
 comment on table pts.pts_int_definition is 'Interviewer Definition Table';
 comment on column pts.pts_int_definition.ide_int_code is 'Interviewer code';
-comment on column pts.pts_int_definition.ide_int_status is 'Interviewer status (0=Inactive or 1=Active)';
+comment on column pts.pts_int_definition.ide_int_status is 'Interviewer status';
 comment on column pts.pts_int_definition.ide_upd_user is 'Interviewer update user';
 comment on column pts.pts_int_definition.ide_upd_date is 'Interviewer update date';
 comment on column pts.pts_int_definition.ide_geo_type is 'Interviewer geographic type';
