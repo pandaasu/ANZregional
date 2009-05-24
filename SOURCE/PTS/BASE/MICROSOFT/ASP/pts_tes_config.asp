@@ -286,57 +286,83 @@ sub PaintFunction()%>
          } else {
             cobjScreens[1].hedtxt = 'Create Test (*NEW)';
          }
-
-
-    tde_tes_text                    varchar2(120 char)            not null,
-    tde_tes_status                  number                        not null,
-    tde_upd_user                    varchar2(30 char)             not null,
-    tde_upd_date                    date                          not null,
-    tde_uni_code                    number                        null,
-    tde_Tes_code                    number                        null,
-    tde_glo_status                  number                        null,
-    tde_tes_type                    number                        null,
-    tde_tes_target                  number                        null,
-    tde_tes_requestor               varchar2(30 char)             null,
-    tde_tes_aim                     varchar2(2000 char)           null,
-    tde_tes_reason                  varchar2(2000 char)           null,
-    tde_tes_prediction              varchar2(2000 char)           null,
-    tde_tes_comment                 varchar2(2000 char)           null,
-    tde_day_count                   number                        null,
-    tde_req_mem_count               number                        null,
-    tde_req_res_count               number                        null,
-    tde_hou_pet_multiple            varchar2(1 char)              null,
-    tde_tes_error                   varchar2(2000 char)           null
-
-
-
          displayScreen('dspDefine');
          document.getElementById('DEF_TesCode').value = '';
          document.getElementById('DEF_TesText').value = '';
+         document.getElementById('DEF_TesAtxt').value = '';
+         document.getElementById('DEF_TesRtxt').value = '';
+         document.getElementById('DEF_TesPtxt').value = '';
+         document.getElementById('DEF_TesCtxt').value = '';
+         document.getElementById('DEF_TesDcnt').value = '0';
+         document.getElementById('DEF_TesMcnt').value = '0';
+         document.getElementById('DEF_TesRcnt').value = '0';
          var strTesStat;
+         var strTesType;
+         var strTesGsts;
          var strTesTarg;
+         var strTesPmlt;
          var strTesEnty;
          var objTesStat = document.getElementById('DEF_TesStat');
+         var objTesType = document.getElementById('DEF_TesType');
+         var objTesGsts = document.getElementById('DEF_TesGsts');
+         var objTesPmlt = document.getElementById('DEF_TesPmlt');
          var objTesTarg = document.getElementById('DEF_TesTarg');
          objTesStat.options.length = 0;
+         objTesType.options.length = 0;
+         objTesGsts.options.length = 0;
          objTesTarg.options.length = 0;
          document.getElementById('DEF_TesText').focus();
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objTesStat.options[objTesStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'TYP_LIST') {
+               objTesType.options[objTesType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'GLO_LIST') {
+               objTesGsts.options[objTesGsts.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'TAR_LIST') {
                objTesTarg.options[objTesTarg.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'TEST') {
-               document.getElementById('DEF_TesCode').value = objElements[i].getAttribute('TesCODE');
-               document.getElementById('DEF_TesText').value = objElements[i].getAttribute('TesTEXT');
-               strTesStat = objElements[i].getAttribute('TesSTAT');
-               strTesTarg = objElements[i].getAttribute('TesTARG');
+               document.getElementById('DEF_TesCode').value = objElements[i].getAttribute('TESCODE');
+               document.getElementById('DEF_TesText').value = objElements[i].getAttribute('TESTEXT');
+               document.getElementById('DEF_TesAtxt').value = objElements[i].getAttribute('TESATXT');
+               document.getElementById('DEF_TesRtxt').value = objElements[i].getAttribute('TESRTXT');
+               document.getElementById('DEF_TesPtxt').value = objElements[i].getAttribute('TESPTXT');
+               document.getElementById('DEF_TesCtxt').value = objElements[i].getAttribute('TESCTCT');
+               document.getElementById('DEF_TesDcnt').value = objElements[i].getAttribute('TESDCNT');
+               document.getElementById('DEF_TesMcnt').value = objElements[i].getAttribute('TESMCNT');
+               document.getElementById('DEF_TesRcnt').value = objElements[i].getAttribute('TESRCNT');
+               strTesStat = objElements[i].getAttribute('TESSTAT');
+               strTesType = objElements[i].getAttribute('TESTYPE');
+               strTesGsts = objElements[i].getAttribute('TESGSTS');
+               strTesPmlt = objElements[i].getAttribute('TESPMLT');
+               strTesTarg = objElements[i].getAttribute('TESTARG');
             }
          }
          objTesStat.selectedIndex = -1;
          for (var i=0;i<objTesStat.length;i++) {
             if (objTesStat.options[i].value == strTesStat) {
                objTesStat.options[i].selected = true;
+               break;
+            }
+         }
+         objTesType.selectedIndex = -1;
+         for (var i=0;i<objTesType.length;i++) {
+            if (objTesType.options[i].value == strTesType) {
+               objTesType.options[i].selected = true;
+               break;
+            }
+         }
+         objTesGsts.selectedIndex = -1;
+         for (var i=0;i<objTesGsts.length;i++) {
+            if (objTesGsts.options[i].value == strTesGsts) {
+               objTesGsts.options[i].selected = true;
+               break;
+            }
+         }
+         objTesPmlt.selectedIndex = -1;
+         for (var i=0;i<objTesPmlt.length;i++) {
+            if (objTesPmlt.options[i].value == strTesPmlt) {
+               objTesPmlt.options[i].selected = true;
                break;
             }
          }
@@ -368,10 +394,21 @@ sub PaintFunction()%>
       var objTesTarg = document.getElementById('DEF_TesTarg');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFTES"';
-      strXML = strXML+' TesCODE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
-      strXML = strXML+' TesTEXT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
-      strXML = strXML+' TesSTAT="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
-      strXML = strXML+' TesTARG="'+fixXML(objTesTarg.options[objTesTarg.selectedIndex].value)+'"';
+      strXML = strXML+' TESCODE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
+      strXML = strXML+' TESTEXT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
+      strXML = strXML+' TESATXT="'+fixXML(document.getElementById('DEF_TesAtxt').value)+'"';
+      strXML = strXML+' TESRTXT="'+fixXML(document.getElementById('DEF_TesRtxt').value)+'"';
+      strXML = strXML+' TESPTXT="'+fixXML(document.getElementById('DEF_TesPtxt').value)+'"';
+      strXML = strXML+' TESCTXT="'+fixXML(document.getElementById('DEF_TesCtxt').value)+'"';
+      strXML = strXML+' TESDCNT="'+fixXML(document.getElementById('DEF_TesDcnt').value)+'"';
+      strXML = strXML+' TESMCNT="'+fixXML(document.getElementById('DEF_TesMcnt').value)+'"';
+      strXML = strXML+' TESRCNT="'+fixXML(document.getElementById('DEF_TesRcnt').value)+'"';
+      strXML = strXML+' TESPMLT="'+fixXML(document.getElementById('TES_PetMult').options[document.getElementById('TES_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+' TESSTAT="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
+      strXML = strXML+' TESTYPE="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
+      strXML = strXML+' TESGSTS="'+fixXML(objTesGsts.options[objTesGsts.selectedIndex].value)+'"';
+      strXML = strXML+' TESPMLT="'+fixXML(objTesPmlt.options[objTesPmlt.selectedIndex].value)+'"';
+      strXML = strXML+' TESTARG="'+fixXML(objTesTarg.options[objTesTarg.selectedIndex].value)+'"';
       strXML = strXML+'>';
       strXML = strXML + getSltData();
       strXML = strXML+'</PTS_REQUEST>';

@@ -126,8 +126,10 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[2] = new clsScreen('dspList','hedList');
       cobjScreens[0].hedtxt = 'Pet Type Prompt';
       cobjScreens[1].hedtxt = 'Pet Type Maintenance';
+      cobjScreens[3].hedtxt = 'Pet Type List';
       initSearch();
       displayScreen('dspPrompt');
       document.getElementById('PRO_PtyCode').focus();
@@ -203,18 +205,10 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_PtyCode').value+'\');',10);
    }
-   function doPromptSearch() {
+   function doPromptList() {
       if (!processForm()) {return;}
-      startSchInstance('*PTYPLE','Pet Type','pts_pty_search.asp',function() {doPromptPtyCancel();},function(strCode,strText) {doPromptPtySelect(strCode,strText);});
-   }
-   function doPromptPtyCancel() {
-      displayScreen('dspPrompt');
-      document.getElementById('PRO_PtyCode').focus();
-   }
-   function doPromptPtySelect(strCode,strText) {
-      document.getElementById('PRO_PtyCode').value = strCode;
-      displayScreen('dspPrompt');
-      document.getElementById('PRO_PtyCode').focus();
+      doActivityStart(document.body);
+      window.setTimeout('requestList();',10);
    }
 
    //////////////////////
@@ -336,6 +330,81 @@ sub PaintFunction()%>
       document.getElementById('PRO_PtyCode').value = '';
       document.getElementById('PRO_PtyCode').focus();
    }
+
+   ////////////////////
+   // List Functions //
+   ////////////////////
+   function requestList() {
+      doPostRequest('<%=strBase%>pts_pty_list.asp',function(strResponse) {checkList(strResponse);},false,'<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTPTY"/>');
+   }
+   function checkList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspList');
+         var objTable = document.getElementById('LST_List');
+         var objRow;
+         var objCell;
+         for (var i=objTable.rows.length-1;i>=0;i--) {
+            objTable.deleteRow(i);
+         }
+         var intColCount = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTCTL') {
+               intColCount = objElements[i].getAttribute('COLCNT');
+            } else if (objElements[i].nodeName == 'LSTROW') {
+               objRow = objTable.insertRow(-1);
+               objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
+               objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               for (var j=1;j<=intColCount;j++) {
+                  objCell = objRow.insertCell(j);
+                  objCell.colSpan = 1;
+                  objCell.innerText = objElements[i].getAttribute('COL'+j);
+                  objCell.className = 'clsLabelFN';
+                  objCell.style.whiteSpace = 'nowrap';
+               }
+            }
+         }
+         if (objTable.rows.length == 0) {
+            objRow = objTable.insertRow(-1);
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = intColCount+1;
+            objCell.innerText = 'NO DATA FOUND';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+         }
+      }
+   }
+   function doListAccept(intRow) {
+      document.getElementById('PRO_PtyCode').value = document.getElementById('LST_List').rows[intRow].getAttribute('selcde');
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_PtyCode').focus();
+   }
+   function doListCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_PtyCode').focus();
+   }
+
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -343,7 +412,6 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
-<!--#include file="pts_search_code.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -377,7 +445,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptList();">&nbsp;List&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -420,7 +488,35 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-<!--#include file="pts_search_html.inc"-->
+   <table id="dspList" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedList" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Type List</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible">
+               <table id="LST_List" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
+            </div>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doListCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
 </body>
 </html>
 <%end sub%>
