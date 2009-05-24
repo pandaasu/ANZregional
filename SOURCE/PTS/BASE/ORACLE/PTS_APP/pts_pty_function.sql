@@ -89,12 +89,7 @@ create or replace package body pts_app.pts_pty_function as
          if csr_list%notfound then
             exit;
          end if;
-         var_row_count := var_row_count + 1;
-         if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pty_pet_type)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL2="'||pts_to_xml(rcd_list.pty_typ_status)||'"/>'));
-         else
-            exit;
-         end if;
+         pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pty_pet_type)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL2="'||pts_to_xml(rcd_list.pty_typ_status)||'"/>'));
       end loop;
       close csr_list;
 
@@ -173,12 +168,7 @@ create or replace package body pts_app.pts_pty_function as
          if csr_list%notfound then
             exit;
          end if;
-         var_row_count := var_row_count + 1;
-         if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pty_pet_type)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL2="'||pts_to_xml(rcd_list.pty_typ_status)||'"/>'));
-         else
-            exit;
-         end if;
+         pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pty_pet_type)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL2="'||pts_to_xml(rcd_list.pty_typ_status)||'"/>'));
       end loop;
       close csr_list;
 
@@ -273,7 +263,7 @@ create or replace package body pts_app.pts_pty_function as
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
          if csr_retrieve%notfound then
-            pts_gen_function.add_mesg_data('Pet type ('||var_pty_pet_type||') does not exist');
+            pts_gen_function.add_mesg_data('Pet type ('||var_pty_code||') does not exist');
             return;
          end if;
          close csr_retrieve;
@@ -390,8 +380,8 @@ create or replace package body pts_app.pts_pty_function as
       rcd_pts_pet_type.pty_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PTYCODE'));
       rcd_pts_pet_type.pty_typ_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PTYTEXT'));
       rcd_pts_pet_type.pty_typ_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PTYSTAT'));
-      rcd_pts_pet_type.sde_upd_user := upper(par_user);
-      rcd_pts_pet_type.sde_upd_date := sysdate;
+      rcd_pts_pet_type.pty_upd_user := upper(par_user);
+      rcd_pts_pet_type.pty_upd_date := sysdate;
 
       if rcd_pts_pet_type.pty_pet_type is null and not(xslProcessor.valueOf(obj_pts_request,'@PTYCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Pet type code ('||xslProcessor.valueOf(obj_pts_request,'@PTYCODE')||') must be a number');
@@ -412,11 +402,11 @@ create or replace package body pts_app.pts_pty_function as
       if rcd_pts_pet_type.pty_typ_status is null then
          pts_gen_function.add_mesg_data('Pet type status must be supplied');
       else
-         if (rcd_pts_pet_type.sde_upd_user != 1 and rcd_pts_pet_type.sde_upd_user != 2) then
+         if (rcd_pts_pet_type.pty_typ_status != 1 and rcd_pts_pet_type.pty_typ_status != 2) then
             pts_gen_function.add_mesg_data('Pet type status must be 1(Active) or 2(Inactive)');
         end if;
       end if;
-      if rcd_pts_pet_type.sde_upd_user is null then
+      if rcd_pts_pet_type.pty_upd_user is null then
          pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
