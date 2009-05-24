@@ -7,7 +7,7 @@ insert into pts_sys_field values('*HOU_DEF',1,'Household code','1',user,sysdate,
                                  '*LOGIC',
                                  '*NUMBER',
                                  'h1.hde_hou_code<%RULE_TEST%><%RULE_VALUE%>');
-insert into pts_sys_select values('*HOU_DEF',1,'*SELECT_WHEN_EQ');
+insert into pts_sys_select values('*HOU_DEF',1,'*SELECT_WHEN_EQUAL');
 
 insert into pts_sys_field values('*HOU_DEF',2,'Household geographic area','1',user,sysdate,'0','1',5,
                                  '*LOGIC',

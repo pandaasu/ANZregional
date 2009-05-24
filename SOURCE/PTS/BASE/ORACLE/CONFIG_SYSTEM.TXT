@@ -6,8 +6,12 @@
 insert into pts_sys_entity values('*HOUSEHOLD','Household','select h1.hde_hou_code from pts_hou_definition h1');
 insert into pts_sys_entity values('*PET','Pet','select p1.pde_pet_code from pts_pet_definition p1, pts_hou_definition h1 where p1.pde_hou_code = h1.hde_hou_code(+)');
 insert into pts_sys_entity values('*SAMPLE','Sample','select s1.sde_sam_code from pts_sam_definition s1');
-insert into pts_sys_entity values('*INTERVIEWER','Interviewer','select i1.ide_int_code from pts_int_definition i1');
+insert into pts_sys_entity values('*INTERVIEWER','Interviewer'','select i1.ide_int_code from pts_int_definition i1');
 insert into pts_sys_entity values('*QUESTION','Question','select q1.qde_que_code from pts_que_definition q1');
+insert into pts_sys_entity values('*SELECTION','Selection template','select st1.std_stm_code from pts_stm_definition st1');
+
+insert into pts_sys_entity values('*TEST','Product test','select pt1.qde_que_code from pts_tes_definition pt1');
+
 commit;
 
 ------------------
@@ -23,6 +27,10 @@ insert into pts_sys_table values('*PET_SAM','Pet sample data','*PET');
 insert into pts_sys_table values('*SAM_DEF','Sample definition data','*SAMPLE');
 insert into pts_sys_table values('*INT_DEF','Interviewer definition data','*INTERVIEWER');
 insert into pts_sys_table values('*QUE_DEF','Question definition data','*QUESTION');
+insert into pts_sys_table values('*STM_DEF','Selection template definition data','*SELECTION');
+
+insert into pts_sys_table values('*TES_DEF','Product test definition data','*TEST');
+
 commit;
 
 ------------------
@@ -40,6 +48,8 @@ insert into pts_sys_link values('*PET','*HOU_CLA');
 insert into pts_sys_link values('*SAMPLE','*SAM_DEF');
 insert into pts_sys_link values('*INTERVIEWER','*INT_DEF');
 insert into pts_sys_link values('*QUESTION','*QUE_DEF');
+insert into pts_sys_link values('*SELECTION','*STM_DEF');
+insert into pts_sys_link values('*TEST','*TES_DEF');
 commit;
 
 -----------------

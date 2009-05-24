@@ -50,7 +50,7 @@ insert into pts_sys_select values('*PET_DEF',5,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_field values('*PET_DEF',6,'Pet age','1',user,sysdate,'0','1',5,
                                  '*LOGIC',
                                  '*NUMBER',
-                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
+                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_LT');
@@ -58,14 +58,14 @@ insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_GT');
 insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_LE');
 insert into pts_sys_select values('*PET_DEF',6,'*SELECT_WHEN_GE');
 
-insert into pts_sys_field values('*PET_DEF',7,'Pet feeding comments','1',user,sysdate,'0','1',256,
+insert into pts_sys_field values('*PET_DEF',7,'Pet feeding comments','1',user,sysdate,'0','0',256,
                                  '*LOGIC',
                                  '*TEXT',
                                  'upper(nvl(p1.pde_feed_comment,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*PET_DEF',7,'*SELECT_WHEN_LIKE');
 insert into pts_sys_select values('*PET_DEF',7,'*SELECT_WHEN_NOT_LIKE');
 
-insert into pts_sys_field values('*PET_DEF',8,'Pet health comments','1',user,sysdate,'0','1',256,
+insert into pts_sys_field values('*PET_DEF',8,'Pet health comments','1',user,sysdate,'0','0',256,
                                  '*LOGIC',
                                  '*TEXT',
                                  'upper(nvl(p1.pde_health_comment,''*NULL''))<%RULE_TEST%<%RULE_VALUE%>');
@@ -95,13 +95,13 @@ insert into pts_sys_select values('*PET_DEF',10,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_field values('*PET_DEF',11,'Pet age minimum','1',user,sysdate,'0','1',5,
                                  '*LOGIC',
                                  '*NUMBER',
-                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
+                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*PET_DEF',11,'*SELECT_WHEN_GE');
 
 insert into pts_sys_field values('*PET_DEF',12,'Pet age maximum','1',user,sysdate,'0','1',5,
                                  '*LOGIC',
                                  '*NUMBER',
-                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_pet_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
+                                 '(to_number(to_char(sysdate,''yyyy''))-nvl(p1.pde_birth_year,0))<%RULE_TEST%><%RULE_VALUE%>');
 insert into pts_sys_select values('*PET_DEF',12,'*SELECT_WHEN_LE');
 
 insert into pts_sys_field values('*PET_CLA',1,'Pet breed','1',user,sysdate,'1','1',5,

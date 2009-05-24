@@ -33,7 +33,7 @@ insert into pts_sys_value values('*QUE_DEF',3,2,'Acceptance');
 insert into pts_sys_select values('*QUE_DEF',3,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*QUE_DEF',3,'*SELECT_WHEN_NOT_EQUAL');
 
-insert into pts_sys_field values('*QUE_DEF',4,'Question response type','1',user,sysdate,'1','0',5,
+insert into pts_sys_field values('*QUE_DEF',4,'Question response type','1',user,sysdate,'0','0',5,
                                  '*LOGIC',
                                  '*LIST',
                                  'nvl(q1.qde_rsp_type,0)<%RULE_TEST%><%RULE_VALUE%>');
