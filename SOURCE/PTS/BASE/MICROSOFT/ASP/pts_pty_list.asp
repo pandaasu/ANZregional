@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_pty_search.asp                                 //
+'// Script  : pts_pty_list.asp                                   //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the pet type search         //
+'// Text    : This script implements the pet type listing        //
 '//////////////////////////////////////////////////////////////////
 
    '//
