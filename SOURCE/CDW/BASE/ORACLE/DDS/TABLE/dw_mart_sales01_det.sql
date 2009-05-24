@@ -47,6 +47,7 @@ create table dw_mart_sales01_det
     cpd_brm1_value number not null,
     cpd_brm2_value number not null,
     cpd_fcst_value number not null,
+    fpd_out_value number not null,
     fpd_ord_value number not null,
     fpd_inv_value number not null,
     lyr_cpd_inv_value number not null,
@@ -240,6 +241,7 @@ comment on column dw_mart_sales01_det.cpd_br_value is 'Current period - business
 comment on column dw_mart_sales01_det.cpd_brm1_value is 'Current period - business review minus 1 value';
 comment on column dw_mart_sales01_det.cpd_brm2_value is 'Current period - business review minus 2 value';
 comment on column dw_mart_sales01_det.cpd_fcst_value is 'Current period - forecast value';
+comment on column dw_mart_sales01_det.fpd_out_value is 'Future periods - outstanding value';
 comment on column dw_mart_sales01_det.fpd_ord_value is 'Future periods - order delivered value';
 comment on column dw_mart_sales01_det.fpd_inv_value is 'Future periods - invoice delivered value';
 comment on column dw_mart_sales01_det.lyr_cpd_inv_value is 'Last year - current period - invoiced value';
