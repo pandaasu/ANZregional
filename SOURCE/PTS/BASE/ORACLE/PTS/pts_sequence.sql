@@ -58,10 +58,17 @@ create sequence pts_stm_sequence
    nocycle
    nocache;
 
-
-create sequence pts_ptest_sequence
+create sequence pts_pty_sequence
    increment by 1
-   start with 1
+   start with 9
+   maxvalue 999999999999999
+   minvalue 1
+   nocycle
+   nocache;
+
+create sequence pts_tes_sequence
+   increment by 1
+   start with 100001
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -75,8 +82,8 @@ grant select on pts_pet_sequence to pts_app;
 grant select on pts_sam_sequence to pts_app;
 grant select on pts_que_sequence to pts_app;
 grant select on pts_stm_sequence to pts_app;
-
-grant select on pts_ptest_sequence to pts_app;
+grant select on pts_pty_sequence to pts_app;
+grant select on pts_tes_sequence to pts_app;
 
 /**/
 /* Synonym
@@ -86,5 +93,5 @@ create or replace public synonym pts_pet_sequence for pts.pts_pet_sequence;
 create or replace public synonym pts_sam_sequence for pts.pts_sam_sequence;
 create or replace public synonym pts_que_sequence for pts.pts_que_sequence;
 create or replace public synonym pts_stm_sequence for pts.pts_stm_sequence;
-
-create or replace public synonym pts_ptest_sequence for pts.pts_ptest_sequence;
+create or replace public synonym pts_pty_sequence for pts.pts_pty_sequence;
+create or replace public synonym pts_tes_sequence for pts.pts_tes_sequence;
