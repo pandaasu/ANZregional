@@ -12,7 +12,7 @@
 
  YYYY/MM   Author         Description
  -------   ------         -----------
- 2008/02   Steve Gregan   Created
+ 2008/06   Steve Gregan   Created
 
 *******************************************************************************/
 
@@ -28,6 +28,7 @@ create table dw_mart_sales01_hdr
     current_yyyy number(4,0) not null,
     current_yyyypp number(6,0) not null,
     current_yyyyppw number(7,0) not null,
+    current_yyyyppdd number(8,0) not null,
     current_pp number(2,0) not null,
     current_yw number(2,0) not null,
     current_pw number(2,0) not null,
@@ -56,8 +57,7 @@ create table dw_mart_sales01_hdr
     p23_heading varchar2(50 char) not null,
     p24_heading varchar2(50 char) not null,
     p25_heading varchar2(50 char) not null,
-    p26_heading varchar2(50 char) not null,
-    p27_heading varchar2(50 char) not null);
+    p26_heading varchar2(50 char) not null);
 
 /**/
 /* Comments
@@ -100,7 +100,6 @@ comment on column dw_mart_sales01_hdr.p23_heading is 'P23 heading';
 comment on column dw_mart_sales01_hdr.p24_heading is 'P24 heading';
 comment on column dw_mart_sales01_hdr.p25_heading is 'P25 heading';
 comment on column dw_mart_sales01_hdr.p26_heading is 'P26 heading';
-comment on column dw_mart_sales01_hdr.p27_heading is 'P27 heading';
 
 /**/
 /* Primary Key Constraint
