@@ -564,9 +564,12 @@ create or replace package body dw_mart_sales01 as
                 nvl(t03.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t02.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
                 t01.mfanz_icb_flag,
-                nvl(sum(t01.base_uom_qty),0) as out_qty,
-                nvl(sum(t01.gsv_aud),0) as out_gsv,
-                nvl(sum(t01.qty_net_tonnes),0) as out_ton
+                nvl(sum(case when t01.cdw_eff_yyyyppdd <= var_end_yyyyppdd then t01.con_qty_base_uom end),0) as cur_qty,
+                nvl(sum(case when t01.cdw_eff_yyyyppdd <= var_end_yyyyppdd then t01.con_gsv_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.cdw_eff_yyyyppdd <= var_end_yyyyppdd then t01.con_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.cdw_eff_yyyyppdd > var_end_yyyyppdd then t01.con_qty_base_uom end),0) as fut_qty,
+                nvl(sum(case when t01.cdw_eff_yyyyppdd > var_end_yyyyppdd then t01.con_gsv_aud end),0) as fut_gsv,
+                nvl(sum(case when t01.cdw_eff_yyyyppdd > var_end_yyyyppdd then t01.con_qty_net_tonnes end),0) as fut_ton
            from outstanding_order_fact t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03,
@@ -582,7 +585,6 @@ create or replace package body dw_mart_sales01 as
             and t01.matl_code = t04.matl_code(+)
             and t01.company_code = par_company_code
             and t01.cdw_eff_yyyyppdd >= var_str_yyyyppdd
-            and t01.cdw_eff_yyyyppdd <= var_end_yyyyppdd
           group by t01.company_code,
                    t01.ship_to_cust_code,
                    nvl(t04.rep_item,t01.matl_code),
@@ -736,7 +738,8 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.out_qty
+            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_qty
+                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_qty
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
@@ -751,7 +754,8 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.out_gsv
+            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_gsv
+                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_gsv
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
@@ -766,7 +770,8 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.out_ton
+            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_ton
+                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_ton
           where company_code = rcd_order_extract_02.company_code
             and data_segment = par_data_segment
             and matl_group = '*ALL'
