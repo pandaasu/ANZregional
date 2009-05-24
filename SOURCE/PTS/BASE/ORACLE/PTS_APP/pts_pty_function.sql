@@ -25,7 +25,6 @@ create or replace package pts_app.pts_pty_function as
    /*-*/
    /* Public declarations
    /*-*/
-   function select_list return pts_xml_type pipelined;
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
@@ -43,85 +42,6 @@ create or replace package body pts_app.pts_pty_function as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
-
-   /***************************************************/
-   /* This procedure performs the select list routine */
-   /***************************************************/
-   function select_list return pts_xml_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_list is
-         select t01.pty_pet_type,
-                t01.pty_typ_text,
-                decode(t01.pty_typ_status,1,'Active',2,'Inactive','*UNKNOWN') as pty_typ_status
-           from pts_pet_type t01
-          order by t01.pty_pet_type asc;
-      rcd_list csr_list%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Pipe the XML start
-      /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
-
-      /*-*/
-      /* Retrieve the pet type list and pipe the results
-      /*-*/
-      open csr_list;
-      loop
-         fetch csr_list into rcd_list;
-         if csr_list%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pty_pet_type)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pty_pet_type)||') '||rcd_list.pty_typ_text)||'" COL2="'||pts_to_xml(rcd_list.pty_typ_status)||'"/>'));
-      end loop;
-      close csr_list;
-
-      /*-*/
-      /* Pipe the XML end
-      /*-*/
-      pipe row(pts_xml_object('</PTS_RESPONSE>'));
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PTY_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end select_list;
 
    /*****************************************************/
    /* This procedure performs the retrieve list routine */
@@ -296,7 +216,7 @@ create or replace package body pts_app.pts_pty_function as
       elsif var_action = '*CRTPTY' then
          var_output := '<PET_TYPE PTYCODE="*NEW"';
          var_output := var_output||' PTYTEXT=""';
-         var_output := var_output||' PTYSTAT=""/>';
+         var_output := var_output||' PTYSTAT="1"/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -382,7 +302,6 @@ create or replace package body pts_app.pts_pty_function as
       rcd_pts_pet_type.pty_typ_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PTYSTAT'));
       rcd_pts_pet_type.pty_upd_user := upper(par_user);
       rcd_pts_pet_type.pty_upd_date := sysdate;
-
       if rcd_pts_pet_type.pty_pet_type is null and not(xslProcessor.valueOf(obj_pts_request,'@PTYCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Pet type code ('||xslProcessor.valueOf(obj_pts_request,'@PTYCODE')||') must be a number');
       end if;

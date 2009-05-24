@@ -531,6 +531,7 @@ create or replace package body pts_app.pts_hou_function as
       rcd_pts_hou_definition.hde_hou_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUSTAT'));
       rcd_pts_hou_definition.hde_upd_user := upper(par_user);
       rcd_pts_hou_definition.hde_upd_date := sysdate;
+      rcd_pts_hou_definition.hde_geo_type := null;
       rcd_pts_hou_definition.hde_geo_zone := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@GEOZONE'));
       rcd_pts_hou_definition.hde_del_notifier := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DELNOTE'));
       rcd_pts_hou_definition.hde_loc_street := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@LOCSTRT'));
