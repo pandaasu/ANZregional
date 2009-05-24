@@ -459,6 +459,11 @@ sub PaintFunction()%>
                alert(strMessage);
                return;
             }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
          }
          displayScreen('dspPrompt');
          document.getElementById('PRO_PetCode').value = '';
