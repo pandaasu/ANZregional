@@ -40,7 +40,6 @@ create or replace package pts_app.pts_gen_function as
    function list_geo_zone(par_geo_type in number) return pts_geo_list_type pipelined;
    function list_pet_type return pts_pty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
-   function list_class(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
 end pts_gen_function;
 /
@@ -1560,116 +1559,6 @@ create or replace package body pts_app.pts_gen_function as
          pipe row(pts_cla_list_object(rcd_system_all.sva_val_code,'('||rcd_system_all.sva_val_code||') '||rcd_system_all.sva_val_text));
       end loop;
       close csr_system_all;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_CLASS - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end list_class;
-
-   /***********************************************************/
-   /* This procedure performs the list classification routine */
-   /***********************************************************/
-   function list_class(par_pet_type in number, par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined is
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_system_field is
-         select t01.*
-           from pts_pty_sys_field t01
-          where t01.psf_pet_type = par_pet_type
-            and t01.psf_tab_code = upper(par_tab_code)
-            and t01.psf_fld_code = par_fld_code;
-      rcd_system_field csr_system_field%rowtype;
-
-      cursor csr_system_all is
-         select t01.sva_val_code,
-                t01.sva_val_text
-           from pts_sys_value t01
-          where t01.sva_tab_code = upper(par_tab_code)
-            and t01.sva_fld_code = par_fld_code
-          order by t01.sva_val_code asc;
-      rcd_system_all csr_system_all%rowtype;
-
-      cursor csr_system_select is
-         select t01.sva_val_code,
-                t01.sva_val_text
-           from pts_sys_value t01
-          where t01.sva_tab_code = upper(par_tab_code)
-            and t01.sva_fld_code = par_fld_code
-            and t01.sva_val_code in (select psv_val_code
-                                       from pts_pty_sys_value
-                                      where psv_pet_type = par_pet_type
-                                        and psv_tab_code = upper(par_tab_code)
-                                        and psv_fld_code = par_fld_code)
-          order by t01.sva_val_code asc;
-      rcd_system_select csr_system_select%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the pet type system field
-      /*-*/
-      open csr_system_field;
-      fetch csr_system_field into rcd_system_field;
-      if csr_system_field%notfound then
-         return;
-      end if;
-      close csr_system_field;
-
-      /*-*/
-      /* Retrieve the pet type system values
-      /*-*/
-      if upper(rcd_system_field.psf_val_type) = '*ALL' then
-         open csr_system_all;
-         loop
-            fetch csr_system_all into rcd_system_all;
-            if csr_system_all%notfound then
-               exit;
-            end if;
-            pipe row(pts_cla_list_object(rcd_system_all.sva_val_code,'('||rcd_system_all.sva_val_code||') '||rcd_system_all.sva_val_text));
-         end loop;
-         close csr_system_all;
-      elsif upper(rcd_system_field.psf_val_type) = '*SELECT' then
-         open csr_system_select;
-         loop
-            fetch csr_system_select into rcd_system_select;
-            if csr_system_select%notfound then
-               exit;
-            end if;
-            pipe row(pts_cla_list_object(rcd_system_select.sva_val_code,'('||rcd_system_select.sva_val_code||') '||rcd_system_select.sva_val_text));
-         end loop;
-         close csr_system_select;
-      else
-         return;
-      end if;
 
       /*-*/
       /* Return
