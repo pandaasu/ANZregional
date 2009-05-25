@@ -254,10 +254,13 @@ sub PaintFunction()%>
          }
          if (cstrDefineMode == '*UPD') {
             cobjScreens[1].hedtxt = 'Update Country ('+cstrDefineCode+')';
+            document.getElementById('codDefine').style.display = 'none';
          } else {
             cobjScreens[1].hedtxt = 'Create Country (*NEW)';
+            document.getElementById('codDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
+         document.getElementById('DEF_GeoCode').value = '';
          document.getElementById('DEF_GeoZone').value = '';
          document.getElementById('DEF_GeoText').value = '';
          var strGeoStat;
@@ -268,7 +271,7 @@ sub PaintFunction()%>
                objGeoStat.options[objGeoStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'ZONE') {
                document.getElementById('DEF_GeoZone').value = objElements[i].getAttribute('GEOZONE');
-               document.getElementById('DEF_IntName').value = objElements[i].getAttribute('GEOTEXT');
+               document.getElementById('DEF_GeoText').value = objElements[i].getAttribute('GEOTEXT');
                strGeoStat = objElements[i].getAttribute('GEOSTAT');
             }
          }
@@ -287,7 +290,11 @@ sub PaintFunction()%>
       var objGeoStat = document.getElementById('DEF_GeoStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFGEO"';
-      strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoZone').value)+'"';
+      if (cstrDefineMode == '*UPD') {
+         strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoZone').value)+'"';
+      } else {
+         strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoCode').value)+'"';
+      }
       strXML = strXML+' GEOTEXT="'+fixXML(document.getElementById('DEF_GeoText').value)+'"';
       strXML = strXML+' GEOSTAT="'+fixXML(objGeoStat.options[objGeoStat.selectedIndex].value)+'"';
       strXML = strXML+'/>';
@@ -463,6 +470,12 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr id="codDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_GeoCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Name:&nbsp;</nobr></td>
