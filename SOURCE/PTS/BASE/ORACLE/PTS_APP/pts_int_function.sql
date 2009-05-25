@@ -148,8 +148,7 @@ create or replace package body pts_app.pts_int_function as
 
       cursor csr_geo_zone is
          select t01.*
-           from table(pts_app.pts_gen_function.list_geo_zone(30)) t01
-          where t01.geo_status = 1;
+           from table(pts_app.pts_gen_function.list_geo_zone(30)) t01;
       rcd_geo_zone csr_geo_zone%rowtype;
 
    /*-------------*/
