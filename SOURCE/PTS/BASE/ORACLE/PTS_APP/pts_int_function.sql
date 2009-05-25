@@ -351,6 +351,7 @@ create or replace package body pts_app.pts_int_function as
       rcd_pts_int_definition.ide_upd_date := sysdate;
       rcd_pts_int_definition.ide_geo_type := null;
       rcd_pts_int_definition.ide_geo_zone := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@GEOZONE'));
+      rcd_pts_int_definition.ide_int_name := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@INTNAME'));
       rcd_pts_int_definition.ide_loc_street := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@LOCSTRT'));
       rcd_pts_int_definition.ide_loc_town := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@LOCTOWN'));
       rcd_pts_int_definition.ide_loc_postcode := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@LOCPCDE'));
