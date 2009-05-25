@@ -253,9 +253,11 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Country ('+cstrDefineCode+')';
+            cobjScreens[1].hedtxt = 'Update Location ('+cstrDefineCode+')';
+            document.getElementById('codDefine').style.display = 'none';
          } else {
-            cobjScreens[1].hedtxt = 'Create Country (*NEW)';
+            cobjScreens[1].hedtxt = 'Create Location (*NEW)';
+            document.getElementById('codDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_GeoZone').value = '';
@@ -300,7 +302,11 @@ sub PaintFunction()%>
       var objParZone = document.getElementById('DEF_ParZone');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFGEO"';
-      strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoZone').value)+'"';
+      if (cstrDefineMode == '*UPD') {
+         strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoZone').value)+'"';
+      } else {
+         strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoCode').value)+'"';
+      }
       strXML = strXML+' GEOTEXT="'+fixXML(document.getElementById('DEF_GeoText').value)+'"';
       strXML = strXML+' GEOSTAT="'+fixXML(objGeoStat.options[objGeoStat.selectedIndex].value)+'"';
       strXML = strXML+' PARZONE="'+fixXML(objParZone.options[objParZone.selectedIndex].value)+'"';
@@ -477,6 +483,12 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr id="codDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_GeoCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Name:&nbsp;</nobr></td>
