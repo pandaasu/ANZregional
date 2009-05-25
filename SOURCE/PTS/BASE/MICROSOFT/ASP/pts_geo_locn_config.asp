@@ -294,6 +294,9 @@ sub PaintFunction()%>
                break;
             }
          }
+         if (objParZone.selectedIndex == -1 && objParZone.length > 0) {
+            objParZone.selectedIndex = 0;
+         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_GeoText').focus();
          } else {
@@ -314,7 +317,11 @@ sub PaintFunction()%>
       }
       strXML = strXML+' GEOTEXT="'+fixXML(document.getElementById('DEF_GeoText').value)+'"';
       strXML = strXML+' GEOSTAT="'+fixXML(objGeoStat.options[objGeoStat.selectedIndex].value)+'"';
-      strXML = strXML+' PARZONE="'+fixXML(objParZone.options[objParZone.selectedIndex].value)+'"';
+      if (objParZone.selectedIndex == -1) {
+         strXML = strXML+' PARZONE=""';
+      } else {
+         strXML = strXML+' PARZONE="'+fixXML(objParZone.options[objParZone.selectedIndex].value)+'"';
+      }
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
