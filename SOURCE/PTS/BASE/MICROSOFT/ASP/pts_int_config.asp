@@ -129,8 +129,7 @@ sub PaintFunction()%>
       cobjScreens[2] = new clsScreen('dspList','hedList');
       cobjScreens[0].hedtxt = 'Interviewer Prompt';
       cobjScreens[1].hedtxt = 'Interviewer Maintenance';
-      cobjScreens[3].hedtxt = 'Interviewer List';
-      initSearch();
+      cobjScreens[2].hedtxt = 'Interviewer List';
       displayScreen('dspPrompt');
       document.getElementById('PRO_IntCode').focus();
    }
@@ -279,7 +278,13 @@ sub PaintFunction()%>
                objGeoZone.options[objGeoZone.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'INTERVIEWER') {
                document.getElementById('DEF_IntCode').value = objElements[i].getAttribute('INTCODE');
-               document.getElementById('DEF_IntText').value = objElements[i].getAttribute('INTNAME');
+               document.getElementById('DEF_IntName').value = objElements[i].getAttribute('INTNAME');
+               document.getElementById('DEF_LocStrt').value = objElements[i].getAttribute('LOCSTRT');
+               document.getElementById('DEF_LocTown').value = objElements[i].getAttribute('LOCTOWN');
+               document.getElementById('DEF_LocPcde').value = objElements[i].getAttribute('LOCPCDE');
+               document.getElementById('DEF_LocCnty').value = objElements[i].getAttribute('LOCCNTY');
+               document.getElementById('DEF_TelAcde').value = objElements[i].getAttribute('TELACDE');
+               document.getElementById('DEF_TelNumb').value = objElements[i].getAttribute('TELNUMB');
                strIntStat = objElements[i].getAttribute('INTSTAT');
                strGeoZone = objElements[i].getAttribute('GEOZONE');
             }
@@ -304,6 +309,7 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objIntStat = document.getElementById('DEF_IntStat');
+      var objGeoZone = document.getElementById('DEF_GeoZone');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFINT"';
       strXML = strXML+' INTCODE="'+fixXML(document.getElementById('DEF_IntCode').value)+'"';
@@ -511,13 +517,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Street:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocStrt" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_LocStrt" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Town:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocTown" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_LocTown" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
