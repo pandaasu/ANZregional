@@ -129,8 +129,7 @@ sub PaintFunction()%>
       cobjScreens[2] = new clsScreen('dspList','hedList');
       cobjScreens[0].hedtxt = 'Pet Type Prompt';
       cobjScreens[1].hedtxt = 'Pet Type Maintenance';
-      cobjScreens[3].hedtxt = 'Pet Type List';
-      initSearch();
+      cobjScreens[2].hedtxt = 'Pet Type List';
       displayScreen('dspPrompt');
       document.getElementById('PRO_PtyCode').focus();
    }
