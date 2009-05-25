@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_geo_config.asp                                 //
+'// Script  : pts_geo_cnty_config.asp                            //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the geographic zone         //
+'// Text    : This script implements the geographic country      //
 '//           maintenance functionality                          //
 '//////////////////////////////////////////////////////////////////
 
@@ -30,8 +30,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "pts_geo_config.asp"
-   strHeading = "Geographic Zone Maintenance"
+   strTarget = "pts_geo_cnty_config.asp"
+   strHeading = "Country Maintenance"
 
    '//
    '// Get the base string
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_GEO_CONFIG")
+   strReturn = GetSecurityCheck("PTS_GEO_CNTY_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -127,11 +127,11 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[2] = new clsScreen('dspList','hedList');
-      cobjScreens[0].hedtxt = 'Interviewer Prompt';
-      cobjScreens[1].hedtxt = 'Interviewer Maintenance';
-      cobjScreens[2].hedtxt = 'Interviewer List';
+      cobjScreens[0].hedtxt = 'Country Prompt';
+      cobjScreens[1].hedtxt = 'Country Maintenance';
+      cobjScreens[2].hedtxt = 'Country List';
       displayScreen('dspPrompt');
-      document.getElementById('PRO_IntCode').focus();
+      document.getElementById('PRO_GeoZone').focus();
    }
 
    ///////////////////////
@@ -165,7 +165,7 @@ sub PaintFunction()%>
    //////////////////////
    function doPromptEnter() {
       if (!processForm()) {return;}
-      if (document.getElementById('PRO_IntCode').value == '') {
+      if (document.getElementById('PRO_GeoZone').value == '') {
          doPromptCreate();
       } else {
          doPromptUpdate();
@@ -174,16 +174,16 @@ sub PaintFunction()%>
    function doPromptUpdate() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.getElementById('PRO_IntCode').value == '') {
+      if (document.getElementById('PRO_GeoZone').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Interviewer code must be entered for update';
+         strMessage = strMessage + 'Country code must be entered for update';
       }
       if (strMessage != '') {
          alert(strMessage);
          return;
       }
       doActivityStart(document.body);
-      window.setTimeout('requestDefineUpdate(\''+document.getElementById('PRO_IntCode').value+'\');',10);
+      window.setTimeout('requestDefineUpdate(\''+document.getElementById('PRO_GeoZone').value+'\');',10);
    }
    function doPromptCreate() {
       if (!processForm()) {return;}
@@ -193,16 +193,16 @@ sub PaintFunction()%>
    function doPromptCopy() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.getElementById('PRO_IntCode').value == '') {
+      if (document.getElementById('PRO_GeoZone').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Interviewer code must be entered for copy';
+         strMessage = strMessage + 'Country code must be entered for copy';
       }
       if (strMessage != '') {
          alert(strMessage);
          return;
       }
       doActivityStart(document.body);
-      window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_IntCode').value+'\');',10);
+      window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_GeoZone').value+'\');',10);
    }
    function doPromptList() {
       if (!processForm()) {return;}
@@ -218,20 +218,20 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDINT" INTCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_int_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDGEO" GEOZONE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>pts_geo_cnty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTINT" INTCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_int_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTGEO" GEOZONE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>pts_geo_cnty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYINT" INTCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_int_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYGEO" GEOZONE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>pts_geo_cnty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -253,81 +253,49 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Interviewer ('+cstrDefineCode+')';
+            cobjScreens[1].hedtxt = 'Update Country ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Interviewer (*NEW)';
+            cobjScreens[1].hedtxt = 'Create Country (*NEW)';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_IntCode').value = '';
-         document.getElementById('DEF_IntName').value = '';
-         document.getElementById('DEF_LocStrt').value = '';
-         document.getElementById('DEF_LocTown').value = '';
-         document.getElementById('DEF_LocPcde').value = '';
-         document.getElementById('DEF_LocCnty').value = '';
-         document.getElementById('DEF_TelAcde').value = '';
-         document.getElementById('DEF_TelNumb').value = '';
-         var strIntStat;
-         var strGeoZone;
-         var objIntStat = document.getElementById('DEF_IntStat');
-         var objGeoZone = document.getElementById('DEF_GeoZone');
+         document.getElementById('DEF_GeoZone').value = '';
+         document.getElementById('DEF_GeoText').value = '';
+         var strGeoStat;
+         var objGeoStat = document.getElementById('DEF_GeoStat');
          objIntStat.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
-               objIntStat.options[objIntStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'GEO_ZONE') {
-               objGeoZone.options[objGeoZone.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'INTERVIEWER') {
-               document.getElementById('DEF_IntCode').value = objElements[i].getAttribute('INTCODE');
-               document.getElementById('DEF_IntName').value = objElements[i].getAttribute('INTNAME');
-               document.getElementById('DEF_LocStrt').value = objElements[i].getAttribute('LOCSTRT');
-               document.getElementById('DEF_LocTown').value = objElements[i].getAttribute('LOCTOWN');
-               document.getElementById('DEF_LocPcde').value = objElements[i].getAttribute('LOCPCDE');
-               document.getElementById('DEF_LocCnty').value = objElements[i].getAttribute('LOCCNTY');
-               document.getElementById('DEF_TelAcde').value = objElements[i].getAttribute('TELACDE');
-               document.getElementById('DEF_TelNumb').value = objElements[i].getAttribute('TELNUMB');
-               strIntStat = objElements[i].getAttribute('INTSTAT');
-               strGeoZone = objElements[i].getAttribute('GEOZONE');
+               objGeoStat.options[objGeoStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'ZONE') {
+               document.getElementById('DEF_GeoZone').value = objElements[i].getAttribute('GEOZONE');
+               document.getElementById('DEF_IntName').value = objElements[i].getAttribute('GEOTEXT');
+               strGeoStat = objElements[i].getAttribute('GEOSTAT');
             }
          }
-         objIntStat.selectedIndex = -1;
-         for (var i=0;i<objIntStat.length;i++) {
-            if (objIntStat.options[i].value == strIntStat) {
-               objIntStat.options[i].selected = true;
+         objGeoStat.selectedIndex = -1;
+         for (var i=0;i<objGeoStat.length;i++) {
+            if (objGeoStat.options[i].value == strGeoStat) {
+               objGeoStat.options[i].selected = true;
                break;
             }
          }
-         objGeoZone.selectedIndex = -1;
-         for (var i=0;i<objGeoZone.length;i++) {
-            if (objGeoZone.options[i].value == strGeoZone) {
-               objGeoZone.options[i].selected = true;
-               break;
-            }
-         }
-         document.getElementById('DEF_IntStat').focus();
+         document.getElementById('DEF_GeoText').focus();
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objIntStat = document.getElementById('DEF_IntStat');
-      var objGeoZone = document.getElementById('DEF_GeoZone');
+      var objGeoStat = document.getElementById('DEF_GeoStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION="*DEFINT"';
-      strXML = strXML+' INTCODE="'+fixXML(document.getElementById('DEF_IntCode').value)+'"';
-      strXML = strXML+' INTNAME="'+fixXML(document.getElementById('DEF_IntName').value)+'"';
-      strXML = strXML+' INTSTAT="'+fixXML(objIntStat.options[objIntStat.selectedIndex].value)+'"';
-      strXML = strXML+' GEOZONE="'+fixXML(objGeoZone.options[objGeoZone.selectedIndex].value)+'"';
-      strXML = strXML+' LOCSTRT="'+fixXML(document.getElementById('DEF_LocStrt').value)+'"';
-      strXML = strXML+' LOCTOWN="'+fixXML(document.getElementById('DEF_LocTown').value)+'"';
-      strXML = strXML+' LOCPCDE="'+fixXML(document.getElementById('DEF_LocPcde').value)+'"';
-      strXML = strXML+' LOCCNTY="'+fixXML(document.getElementById('DEF_LocCnty').value)+'"';
-      strXML = strXML+' TELACDE="'+fixXML(document.getElementById('DEF_TelAcde').value)+'"';
-      strXML = strXML+' TELNUMB="'+fixXML(document.getElementById('DEF_TelNumb').value)+'"';
+      strXML = strXML+'<PTS_REQUEST ACTION="*DEFGEO"';
+      strXML = strXML+' GEOZONE="'+fixXML(document.getElementById('DEF_GeoZone').value)+'"';
+      strXML = strXML+' GEOTEXT="'+fixXML(document.getElementById('DEF_GeoText').value)+'"';
+      strXML = strXML+' GEOSTAT="'+fixXML(objGeoStat.options[objGeoStat.selectedIndex].value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>pts_int_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_geo_cnty_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -356,22 +324,22 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_IntCode').value = '';
-         document.getElementById('PRO_IntCode').focus();
+         document.getElementById('PRO_GeoZone').value = '';
+         document.getElementById('PRO_GeoZone').focus();
       }
    }
    function doDefineCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
-      document.getElementById('PRO_IntCode').value = '';
-      document.getElementById('PRO_IntCode').focus();
+      document.getElementById('PRO_GeoZone').value = '';
+      document.getElementById('PRO_GeoZone').focus();
    }
 
    ////////////////////
    // List Functions //
    ////////////////////
    function requestList() {
-      doPostRequest('<%=strBase%>pts_int_list.asp',function(strResponse) {checkList(strResponse);},false,'<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTINT"/>');
+      doPostRequest('<%=strBase%>pts_geo_cnty_list.asp',function(strResponse) {checkList(strResponse);},false,'<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTGEO"/>');
    }
    function checkList(strResponse) {
       doActivityStop();
@@ -432,13 +400,13 @@ sub PaintFunction()%>
       }
    }
    function doListAccept(intRow) {
-      document.getElementById('PRO_IntCode').value = document.getElementById('LST_List').rows[intRow].getAttribute('selcde');
+      document.getElementById('PRO_GeoZone').value = document.getElementById('LST_List').rows[intRow].getAttribute('selcde');
       displayScreen('dspPrompt');
-      document.getElementById('PRO_IntCode').focus();
+      document.getElementById('PRO_GeoZone').focus();
    }
    function doListCancel() {
       displayScreen('dspPrompt');
-      document.getElementById('PRO_IntCode').focus();
+      document.getElementById('PRO_GeoZone').focus();
    }
 
 // -->
@@ -452,19 +420,19 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_int_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_geo_cnty_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Interviewer Prompt</nobr></td>
+         <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Country Prompt</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interviewer Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Country Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PRO_IntCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PRO_GeoZone" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -490,64 +458,22 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Interviewer Maintenance</nobr></td>
-         <input type="hidden" name="DEF_IntCode" value="">
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Country Maintenance</nobr></td>
+         <input type="hidden" name="DEF_GeoZone" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Status:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_IntStat"></select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Geographic Zone:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_GeoZone"></select>
-         </nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_IntName" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_GeoText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Street:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocStrt" size="100" maxlength="120" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Town:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocTown" size="100" maxlength="120" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Postcode:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocPcde" size="32" maxlength="32" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Country:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocCnty" size="32" maxlength="32" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Telephone Areacode:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TelAcde" size="32" maxlength="32" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Telephone Number:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TelNumb" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_GeoStat"></select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -569,7 +495,7 @@ sub PaintFunction()%>
    <table id="dspList" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedList" class="clsFunction" align=center colspan=2 nowrap><nobr>Interviewer List</nobr></td>
+         <td id="hedList" class="clsFunction" align=center colspan=2 nowrap><nobr>Country List</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

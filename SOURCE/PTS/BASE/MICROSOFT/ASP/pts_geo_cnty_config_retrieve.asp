@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_geo_config_retrieve.asp                        //
+'// Script  : pts_geo_cnty_config_retrieve.asp                   //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the geographic zone         //
+'// Text    : This script implements the geographic country      //
 '//           definition retrieve functionality                  //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_GEO_CONFIG")
+   strReturn = GetSecurityCheck("PTS_GEO_CNTY_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the geographic zone definition
+   '// Retrieve the geographic country definition
    '//
-   strStatement = "select xml_text from table(pts_app.pts_geo_function.retrieve_data)"
+   strStatement = "select xml_text from table(pts_app.pts_geo_function.retrieve_cnty_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

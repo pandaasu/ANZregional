@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_geo_config_update.asp                          //
+'// Script  : pts_geo_cnty_config_update.asp                     //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the geographic zone         //
+'// Text    : This script implements the geographic country      //
 '//           definition update functionality                    //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_GEO_CONFIG")
+   strReturn = GetSecurityCheck("PTS_GEO_CNTY_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the geographic zone update
+   '// Perform the geographic country update
    '//
-   call objProcedure.Execute("pts_app.pts_geo_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("pts_app.pts_geo_function.update_cnty_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

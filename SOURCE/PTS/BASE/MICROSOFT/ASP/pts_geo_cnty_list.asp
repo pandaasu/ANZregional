@@ -3,10 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_geo_list.asp                                   //
+'// Script  : pts_geo_cnty_list.asp                              //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the geographic zone listing //
+'// Text    : This script implements the geographic country      //
+'//           listing                                            //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -66,9 +67,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the geographic zone list
+   '// Retrieve the geographic country list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_geo_function.retrieve_list)"
+   strStatement = "select xml_text from table(pts_app.pts_geo_function.retrieve_cnty_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
