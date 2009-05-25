@@ -237,7 +237,7 @@ create or replace package body pts_app.pts_int_function as
 
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYINT' then
-         var_output := '<INTERVIEWER PTYCODE="*NEW"';
+         var_output := '<INTERVIEWER INTCODE="*NEW"';
          var_output := var_output||' INTSTAT="'||to_char(rcd_retrieve.ide_int_status)||'"';
          var_output := var_output||' GEOZONE="'||to_char(rcd_retrieve.ide_geo_zone)||'"';
          var_output := var_output||' INTNAME="'||pts_to_xml(rcd_retrieve.ide_int_name)||'"';
