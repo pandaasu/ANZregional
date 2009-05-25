@@ -294,7 +294,11 @@ sub PaintFunction()%>
                break;
             }
          }
-         document.getElementById('DEF_GeoText').focus();
+         if (cstrDefineMode == '*UPD') {
+            document.getElementById('DEF_GeoText').focus();
+         } else {
+            document.getElementById('DEF_GeoCode').focus();
+         }
       }
    }
    function doDefineAccept() {
