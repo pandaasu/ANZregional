@@ -265,7 +265,7 @@ sub PaintFunction()%>
          document.getElementById('DEF_GeoText').value = '';
          var strGeoStat;
          var objGeoStat = document.getElementById('DEF_GeoStat');
-         objIntStat.options.length = 0;
+         objGeoStat.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objGeoStat.options[objGeoStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));

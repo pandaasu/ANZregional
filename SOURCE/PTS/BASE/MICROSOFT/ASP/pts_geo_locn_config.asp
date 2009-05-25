@@ -266,7 +266,8 @@ sub PaintFunction()%>
          var strParZone;
          var objGeoStat = document.getElementById('DEF_GeoStat');
          var objParZone = document.getElementById('DEF_ParZone');
-         objIntStat.options.length = 0;
+         objGeoStat.options.length = 0;
+         objParZone.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objGeoStat.options[objGeoStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
