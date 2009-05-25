@@ -446,7 +446,7 @@ create or replace package body pts_app.pts_geo_function as
       /*-*/
       cursor csr_list is
          select '('||t01.gzo_geo_zone||') '||t01.gzo_zon_text as cnty_text,
-                t02.gzo_par_zone as locn_zone,
+                t02.gzo_geo_zone as locn_zone,
                 '('||t02.gzo_geo_zone||') '||t02.gzo_zon_text as locn_text,
                 decode(t02.gzo_zon_status,1,'Active',2,'Inactive','*UNKNOWN') as locn_status
            from pts_geo_zone t01,
@@ -872,7 +872,7 @@ create or replace package body pts_app.pts_geo_function as
       cursor csr_list is
          select '('||t01.gzo_geo_zone||') '||t01.gzo_zon_text as cnty_text,
                 '('||t02.gzo_geo_zone||') '||t02.gzo_zon_text as locn_text,
-                t03.gzo_par_zone as dist_zone,
+                t03.gzo_geo_zone as dist_zone,
                 '('||t03.gzo_geo_zone||') '||t03.gzo_zon_text as dist_text,
                 decode(t03.gzo_zon_status,1,'Active',2,'Inactive','*UNKNOWN') as dist_status
            from pts_geo_zone t01,
@@ -1304,7 +1304,7 @@ create or replace package body pts_app.pts_geo_function as
          select '('||t01.gzo_geo_zone||') '||t01.gzo_zon_text as cnty_text,
                 '('||t02.gzo_geo_zone||') '||t02.gzo_zon_text as locn_text,
                 '('||t03.gzo_geo_zone||') '||t03.gzo_zon_text as dist_text,
-                t04.gzo_par_zone as area_zone,
+                t04.gzo_geo_zone as area_zone,
                 '('||t04.gzo_geo_zone||') '||t04.gzo_zon_text as area_text,
                 decode(t04.gzo_zon_status,1,'Active',2,'Inactive','*UNKNOWN') as area_status
            from pts_geo_zone t01,
@@ -1597,13 +1597,13 @@ create or replace package body pts_app.pts_geo_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_geo_zone.gzo_geo_type := pvar_district;
+      rcd_pts_geo_zone.gzo_geo_type := pvar_area;
       rcd_pts_geo_zone.gzo_geo_zone := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@GEOZONE'));
       rcd_pts_geo_zone.gzo_zon_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@GEOTEXT'));
       rcd_pts_geo_zone.gzo_zon_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@GEOSTAT'));
       rcd_pts_geo_zone.gzo_upd_user := upper(par_user);
       rcd_pts_geo_zone.gzo_upd_date := sysdate;
-      rcd_pts_geo_zone.gzo_par_type := pvar_location;
+      rcd_pts_geo_zone.gzo_par_type := pvar_district;
       rcd_pts_geo_zone.gzo_par_zone := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PARZONE'));
       if rcd_pts_geo_zone.gzo_geo_zone is null and not(xslProcessor.valueOf(obj_pts_request,'@GEOZONE') is null) then
          pts_gen_function.add_mesg_data('Area code ('||xslProcessor.valueOf(obj_pts_request,'@GEOZONE')||') must be a number');
