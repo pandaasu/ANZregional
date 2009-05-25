@@ -1250,8 +1250,7 @@ create or replace package body pts_app.pts_gen_function as
          select t01.psf_val_type
            from pts_pty_sys_field t01
           where t01.psf_tab_code = var_tab_code
-            and t01.psf_fld_code = var_fld_code
-            and t01.psf_pet_type = var_pet_type;
+            and t01.psf_fld_code = var_fld_code;
       rcd_pet_field csr_pet_field%rowtype;
 
       cursor csr_value_all is
@@ -1323,6 +1322,7 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Retrieve the pet type field when required
       /*-*/
+      var_val_type := '*ALL';
       if not(var_pet_type is null) then
          open csr_pet_field;
          fetch csr_pet_field into rcd_pet_field;
