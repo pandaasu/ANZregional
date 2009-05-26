@@ -519,7 +519,7 @@ sub PaintFunction()%>
    ////////////////////////
    // Response Functions //
    ////////////////////////
-   var cstrResponseCode;
+   var cstrResponseMode;
    var cintResponseIndx;
    function doResponseCancel() {
       displayScreen('dspDefine');
