@@ -35,7 +35,8 @@ create table pts.pts_sys_field
     sfi_fld_inp_leng                number                        not null,
     sfi_fld_sel_type                varchar2(32 char)             not null,
     sfi_fld_rul_type                varchar2(32 char)             not null,
-    sfi_fld_rul_sql                 varchar2(4000)                null);
+    sfi_fld_rul_sql                 varchar2(4000)                null,
+    sfi_fld_dsp_seqn                number                        null);
 
 /**/
 /* Comments
@@ -53,6 +54,7 @@ comment on column pts.pts_sys_field.sfi_fld_inp_leng is 'System field input leng
 comment on column pts.pts_sys_field.sfi_fld_sel_type is 'System field selection type (*LOGIC, *OPT_SINGLE_LIST, *OPT_MULTIPLE_LIST, *MAN_SINGLE_LIST, *MAN_MULTIPLE_LIST, *TEXT, *NUMBER, *PERCENT)';
 comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*LIST, *TEXT, *NUMBER, *PERCENT)';
 comment on column pts.pts_sys_field.sfi_fld_rul_sql is 'System field rule SQL';
+comment on column pts.pts_sys_field.sfi_fld_dsp_seqn is 'System field display sequence';
 
 /**/
 /* Primary Key Constraint
