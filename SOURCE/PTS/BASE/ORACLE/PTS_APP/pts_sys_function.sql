@@ -65,7 +65,7 @@ create or replace package body pts_app.pts_sys_function as
          select t01.*
            from pts_sys_field t01
           where t01.sfi_tab_code = var_tab_code
-          order by t01.sfi_dsp_seqn asc;
+          order by t01.sfi_fld_dsp_seqn asc;
       rcd_list csr_list%rowtype;
 
    /*-------------*/
@@ -112,7 +112,7 @@ create or replace package body pts_app.pts_sys_function as
          if csr_list%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_list.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_list.sfi_fld_text)||'" FLDTYP="'||pts_to_xml(sfi_fld_rul_type)||'" FLDUPD="'||pts_to_xml(rcd_list.sfi_fld_upd_user)||'" FLDSTS="'||pts_to_xml(rcd_list.sfi_fld_status)||'"/>'));
+         pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_list.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_list.sfi_fld_text)||'" FLDTYP="'||pts_to_xml(rcd_list.sfi_fld_rul_type)||'" FLDUPD="'||pts_to_xml(rcd_list.sfi_fld_upd_user)||'" FLDSTS="'||pts_to_xml(rcd_list.sfi_fld_status)||'"/>'));
       end loop;
       close csr_list;
 
@@ -318,7 +318,7 @@ create or replace package body pts_app.pts_sys_function as
          obj_fld_node := xmlDom.item(obj_fld_list,idx);
          rcd_pts_sys_field.sfi_fld_code := pts_to_number(xslProcessor.valueOf(obj_fld_node,'@FLDCDE'));
          update pts_sys_field
-            set sfi_dsp_seqn = idx + 1
+            set sfi_fld_dsp_seqn = idx + 1
           where sfi_tab_code = rcd_pts_sys_field.sfi_tab_code
             and sfi_fld_code = rcd_pts_sys_field.sfi_fld_code;
       end loop;
