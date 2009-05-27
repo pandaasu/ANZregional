@@ -265,7 +265,18 @@ create or replace package body pts_app.pts_sys_function as
       obj_fld_list xmlDom.domNodeList;
       obj_fld_node xmlDom.domNode;
       var_action varchar2(32);
+      var_found boolean;
       rcd_pts_sys_field pts_sys_field%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_sys_table t01
+          where t01.sta_tab_code = rcd_pts_sys_field.sfi_tab_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -308,6 +319,26 @@ create or replace package body pts_app.pts_sys_function as
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the system table
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('System table ('||rcd_pts_sys_field.sfi_tab_code||') is currently locked');
+            return;
+      end;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('System table ('||rcd_pts_sys_field.sfi_tab_code||') does not exist');
       end if;
 
       /*-*/
@@ -372,11 +403,20 @@ create or replace package body pts_app.pts_sys_function as
       obj_fld_list xmlDom.domNodeList;
       obj_fld_node xmlDom.domNode;
       var_action varchar2(32);
+      var_found boolean;
       rcd_pts_sys_value pts_sys_value%rowtype;
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_sys_field t01
+          where t01.sfi_tab_code = rcd_pts_sys_value.sva_tab_code
+            and t01.sfi_fld_code = rcd_pts_sys_value.sva_fld_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
       cursor csr_check is
          select max(t01.sva_val_code) as max_code
            from pts_sys_value t01
@@ -434,6 +474,26 @@ create or replace package body pts_app.pts_sys_function as
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the system field
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('System field ('||rcd_pts_sys_value.sva_tab_code||'/'||to_char(rcd_pts_sys_value.sva_fld_code)||') is currently locked');
+            return;
+      end;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('System field ('||rcd_pts_sys_value.sva_tab_code||'/'||to_char(rcd_pts_sys_value.sva_fld_code)||') does not exist');
       end if;
 
       /*-*/
