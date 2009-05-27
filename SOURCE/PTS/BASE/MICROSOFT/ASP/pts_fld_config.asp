@@ -311,19 +311,21 @@ sub PaintFunction()%>
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
             }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
          }
          displayScreen('dspMenu');
       }
@@ -412,6 +414,7 @@ sub PaintFunction()%>
       cstrFieldFldTxt = objRow.getAttribute('fldtxt');
       document.getElementById('subFldUpd').innerText = cstrFieldTabTxt;
       document.getElementById('minFldUpd').innerText = cstrFieldFldTxt;
+      document.getElementById('FUP_FldText') = cstrFieldFldTxt;
       var objFldStat = document.getElementById('FUP_FldStat');
       objFldStat.selectedIndex = -1;
       for (var i=0;i<objFldStat.length;i++) {
@@ -421,7 +424,7 @@ sub PaintFunction()%>
          }
       }
       displayScreen('dspFldUpd');
-      objFldStat.focus();
+      objFldText.focus();
    }
    function doValueList(intRow) {
       var objTable = document.getElementById('FLD_FldList');
@@ -444,11 +447,22 @@ sub PaintFunction()%>
    }
    function doFldUpdAccept() {
       if (!processForm()) {return;}
+      var objFldText = document.getElementById('FUP_FldText');
       var objFldStat = document.getElementById('FUP_FldStat');
+      var strMessage = '';
+      if (objFldText.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Field text must be specified';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDFLD"';
       strXML = strXML+' TABCDE="'+cstrFieldTabCde+'"';
       strXML = strXML+' FLDCDE="'+cstrFieldFldCde+'"';
+      strXML = strXML+' FLDTXT="'+objFldText.value+'"';
       strXML = strXML+' FLDSTS="'+objFldStat.options[objFldStat.selectedIndex].value+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
@@ -518,9 +532,6 @@ sub PaintFunction()%>
          }
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'VALUE') {
-               objValList.options[objValList.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-               objValList.options[objValList.options.length-1].setAttribute('valcde',objElements[i].getAttribute('VALCDE'));
-               objValList.options[objValList.options.length-1].setAttribute('valtxt',objElements[i].getAttribute('VALTXT'));
                objRow = objValList.insertRow(-1);
                objRow.setAttribute('valcde',objElements[i].getAttribute('VALCDE'));
                objRow.setAttribute('valtxt',objElements[i].getAttribute('VALTXT'));
@@ -531,7 +542,7 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(1);
                objCell.colSpan = 1;
-               objCell.innerText = objElements[i].getAttribute('VALTXT');
+               objCell.innerText = '('+objElements[i].getAttribute('VALCDE')+') '+objElements[i].getAttribute('VALTXT');
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -573,7 +584,7 @@ sub PaintFunction()%>
    }
    function doValUpdAccept() {
       if (!processForm()) {return;}
-      var objValText = document.getElementById('VAL_ValText');
+      var objValText = document.getElementById('VUP_ValText');
       var strMessage = '';
       if (objValText.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -743,6 +754,12 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Field Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FUP_FldText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Field Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="FUP_FldStat">
@@ -782,6 +799,14 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doValueAdd();">&nbsp;Add Value&nbsp;</a></nobr></td>
+            </table>
+         </nobr></td>
+      </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
