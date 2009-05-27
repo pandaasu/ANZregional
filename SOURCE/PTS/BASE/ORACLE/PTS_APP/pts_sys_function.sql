@@ -301,7 +301,7 @@ create or replace package body pts_app.pts_sys_function as
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
-      var_fld_code := xslProcessor.valueOf(obj_pts_request,'@FLDCDE');
+      var_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*RTVVAL' then
          pts_gen_function.add_mesg_data('Invalid request action');
@@ -406,7 +406,7 @@ create or replace package body pts_app.pts_sys_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_sys_field.sfi_tab_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
+      rcd_pts_sys_field.sfi_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -526,9 +526,10 @@ create or replace package body pts_app.pts_sys_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_sys_field.sfi_tab_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
+      rcd_pts_sys_field.sfi_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
       rcd_pts_sys_field.sfi_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
-      rcd_pts_sys_field.sfi_fld_status := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@FLDSTS'));
+      rcd_pts_sys_field.sfi_fld_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@FLDTXT'));
+      rcd_pts_sys_field.sfi_fld_status := xslProcessor.valueOf(obj_pts_request,'@FLDSTS');
 
       /*-*/
       /* Validate the input
@@ -539,8 +540,11 @@ create or replace package body pts_app.pts_sys_function as
       if rcd_pts_sys_field.sfi_fld_code is null then
          pts_gen_function.add_mesg_data('Field code must be supplied');
       end if;
+      if rcd_pts_sys_field.sfi_fld_text is null then
+         pts_gen_function.add_mesg_data('Field text must be supplied');
+      end if;
       if rcd_pts_sys_field.sfi_fld_status is null then
-         pts_gen_function.add_mesg_data('Status must be supplied');
+         pts_gen_function.add_mesg_data('Field status must be supplied');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -550,7 +554,8 @@ create or replace package body pts_app.pts_sys_function as
       /* Update the system field
       /*-*/
       update pts_sys_field
-         set sfi_fld_status = rcd_pts_sys_field.sfi_fld_status
+         set sfi_fld_text = rcd_pts_sys_field.sfi_fld_text,
+             sfi_fld_status = rcd_pts_sys_field.sfi_fld_status
        where sfi_tab_code = rcd_pts_sys_field.sfi_tab_code
          and sfi_fld_code = rcd_pts_sys_field.sfi_fld_code;
 
@@ -645,7 +650,7 @@ create or replace package body pts_app.pts_sys_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_sys_value.sva_tab_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TABCDE'));
+      rcd_pts_sys_value.sva_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
       rcd_pts_sys_value.sva_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       rcd_pts_sys_value.sva_val_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@VALCDE'));
       rcd_pts_sys_value.sva_val_text := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@VALTXT'));
