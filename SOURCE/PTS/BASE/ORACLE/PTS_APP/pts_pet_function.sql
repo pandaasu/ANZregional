@@ -195,11 +195,10 @@ create or replace package body pts_app.pts_pet_function as
                 t01.sfi_fld_text,
                 t01.sfi_fld_inp_leng,
                 t01.sfi_fld_sel_type,
-                t02.psf_val_type
+                t01.sfi_fld_val_type
            from pts_sys_field t01,
                 (select t01.psf_tab_code,
-                        t01.psf_fld_code,
-                        t01.psf_val_type
+                        t01.psf_fld_code
                    from pts_pty_sys_field t01
                   where t01.psf_pet_type = rcd_retrieve.pde_pet_type) t02
           where t01.sfi_tab_code = t02.psf_tab_code
@@ -219,7 +218,7 @@ create or replace package body pts_app.pts_pet_function as
                    from pts_sys_value t01
                   where t01.sva_tab_code = rcd_table.sta_tab_code
                     and t01.sva_fld_code = rcd_field.sfi_fld_code
-                    and (rcd_field.psf_val_type = '*ALL' or
+                    and (rcd_field.sfi_fld_val_type = '*ALL' or
                          t01.sva_val_code in (select psv_val_code
                                                 from pts_pty_sys_value
                                                where psv_pet_type = rcd_retrieve.pde_pet_type

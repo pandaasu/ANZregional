@@ -1229,7 +1229,6 @@ create or replace package body pts_app.pts_gen_function as
       var_tab_code varchar2(32);
       var_fld_code number;
       var_pet_type number;
-      var_val_type varchar2(32);
       var_output varchar2(2000 char);
 
       /*-*/
@@ -1239,19 +1238,12 @@ create or replace package body pts_app.pts_gen_function as
       /* Retrieve the pet type system field
       /*-*/
       cursor csr_field is
-         select t01.sfi_fld_sel_type
+         select t01.sfi_fld_sel_type,
+                nvl(t01.sfi_fld_val_type,'*ALL') as sfi_fld_val_type
            from pts_sys_field t01
           where t01.sfi_tab_code = var_tab_code
             and t01.sfi_fld_code = var_fld_code;
       rcd_field csr_field%rowtype;
-
-      cursor csr_pet_field is
-         select t01.psf_val_type
-           from pts_pty_sys_field t01
-          where t01.psf_pet_type = var_pet_type
-            and t01.psf_tab_code = var_tab_code
-            and t01.psf_fld_code = var_fld_code;
-      rcd_pet_field csr_pet_field%rowtype;
 
       cursor csr_value_all is
          select t01.sva_val_code,
@@ -1320,21 +1312,6 @@ create or replace package body pts_app.pts_gen_function as
       close csr_field;
 
       /*-*/
-      /* Retrieve the pet type field when required
-      /*-*/
-      var_val_type := '*ALL';
-      if not(var_pet_type is null) then
-         open csr_pet_field;
-         fetch csr_pet_field into rcd_pet_field;
-         if csr_pet_field%notfound then
-            pts_gen_function.add_mesg_data('Field table('||var_tab_code||') field('||to_char(var_fld_code)||') not attached to pet type('||var_pet_type||')');
-            return;
-         end if;
-         close csr_pet_field;
-         var_val_type := rcd_pet_field.psf_val_type;
-      end if;
-
-      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -1349,7 +1326,7 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Pipe the system selection value XML when required
       /*-*/
-      if upper(var_val_type) = '*SELECT' then
+      if upper(rcd_field.sfi_fld_val_type) = '*SELECT' then
          open csr_value_select;
          loop
             fetch csr_value_select into rcd_value_select;
