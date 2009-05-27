@@ -1248,7 +1248,8 @@ create or replace package body pts_app.pts_gen_function as
       cursor csr_pet_field is
          select t01.psf_val_type
            from pts_pty_sys_field t01
-          where t01.psf_tab_code = var_tab_code
+          where t01.psf_pet_type = var_pet_type
+            and t01.psf_tab_code = var_tab_code
             and t01.psf_fld_code = var_fld_code;
       rcd_pet_field csr_pet_field%rowtype;
 
@@ -1325,10 +1326,12 @@ create or replace package body pts_app.pts_gen_function as
       if not(var_pet_type is null) then
          open csr_pet_field;
          fetch csr_pet_field into rcd_pet_field;
-         if csr_pet_field%found then
-            var_val_type := rcd_pet_field.psf_val_type;
+         if csr_pet_field%notfound then
+            pts_gen_function.add_mesg_data('Field table('||var_tab_code||') field('||to_char(var_fld_code)||') not attached to pet type('||var_pet_type||')');
+            return;
          end if;
          close csr_pet_field;
+         var_val_type := rcd_pet_field.psf_val_type;
       end if;
 
       /*-*/
