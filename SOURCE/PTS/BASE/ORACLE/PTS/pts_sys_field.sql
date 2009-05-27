@@ -36,7 +36,8 @@ create table pts.pts_sys_field
     sfi_fld_sel_type                varchar2(32 char)             not null,
     sfi_fld_rul_type                varchar2(32 char)             not null,
     sfi_fld_rul_sql                 varchar2(4000)                null,
-    sfi_fld_dsp_seqn                number                        null);
+    sfi_fld_dsp_seqn                number                        null,
+    sfi_fld_val_type                varchar2(32 char)             null);
 
 /**/
 /* Comments
@@ -55,6 +56,7 @@ comment on column pts.pts_sys_field.sfi_fld_sel_type is 'System field selection 
 comment on column pts.pts_sys_field.sfi_fld_rul_type is 'System field rule type (*LIST, *TEXT, *NUMBER, *PERCENT)';
 comment on column pts.pts_sys_field.sfi_fld_rul_sql is 'System field rule SQL';
 comment on column pts.pts_sys_field.sfi_fld_dsp_seqn is 'System field display sequence';
+comment on column pts.pts_sys_field.sfi_fld_val_type is 'System field value type (*ALL or *SELECT)';
 
 /**/
 /* Primary Key Constraint
