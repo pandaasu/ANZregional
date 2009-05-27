@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the system field value update
    '//
-   call objProcedure.Execute("pts_app.pts_sys_function.update_value)
+   call objProcedure.Execute("pts_app.pts_sys_function.update_value")
    if strReturn <> "*OK" then
       exit sub
    end if

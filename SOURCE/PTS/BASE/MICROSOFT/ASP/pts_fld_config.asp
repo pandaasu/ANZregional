@@ -138,7 +138,7 @@ sub PaintFunction()%>
       cobjScreens[3].hedtxt = 'System Field Update';
       cobjScreens[4].hedtxt = 'System Value Maintenance';
       cobjScreens[5].hedtxt = 'System Value Update';
-      displayScreen('dspSelect');
+      displayScreen('dspMenu');
    }
 
    ///////////////////////
@@ -226,7 +226,7 @@ sub PaintFunction()%>
          objFldList.focus();
       }
    }
-   function upSortFields() {
+   function upSortField() {
       var intIndex;
       var intSelect;
       var objFldList = document.getElementById('SRT_FldList');
@@ -256,7 +256,7 @@ sub PaintFunction()%>
          objFldList.options[intIndex].selected = false;
       }
    }
-   function downSortFields() {
+   function downSortField() {
       var intIndex;
       var intSelect;
       var objFldList = document.getElementById('SRT_FldList');
@@ -303,7 +303,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestSortUpdate(\''+strXML+'\');',10);
    }
-   function requestSortUpdate() {
+   function requestSortUpdate(strXML) {
       doPostRequest('<%=strBase%>pts_fld_config_sort_update.asp',function(strResponse) {checkSortUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkSortUpdate(strResponse) {
@@ -338,7 +338,6 @@ sub PaintFunction()%>
    var cstrFieldFldTxt;
    var cstrFieldValCde;
    var cstrFieldValTxt;
-   var cstrFieldMode;
    function requestFieldList() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVFLD" TABCDE="'+cstrFieldTabCde+'"/>';
       doPostRequest('<%=strBase%>pts_fld_config_field_retrieve.asp',function(strResponse) {checkFieldList(strResponse);},false,streamXML(strXML));
@@ -391,6 +390,15 @@ sub PaintFunction()%>
                objCell.innerText = objElements[i].getAttribute('FLDTXT');
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(2);
+               objCell.colSpan = 1;
+               if (objElements[i].getAttribute('FLDSTS') == '1') {
+                  objCell.innerText = 'Active';
+               } else {
+                  objCell.innerText = 'Inactive';
+               }
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
             }
          }
          displayScreen('dspField');
@@ -412,8 +420,8 @@ sub PaintFunction()%>
             break;
          }
       }
-      doActivityStart(document.body);
-      window.setTimeout('requestFieldUpdate();',10);
+      displayScreen('dspFldUpd');
+      objFldStat.focus();
    }
    function doValueList(intRow) {
       var objTable = document.getElementById('FLD_FldList');
@@ -436,16 +444,17 @@ sub PaintFunction()%>
    }
    function doFldUpdAccept() {
       if (!processForm()) {return;}
+      var objFldStat = document.getElementById('FUP_FldStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDFLD"';
       strXML = strXML+' TABCDE="'+cstrFieldTabCde+'"';
       strXML = strXML+' FLDCDE="'+cstrFieldFldCde+'"';
-      strXML = strXML+' FLDSTS="'+ document.getElementById('FUP_FldStat').options[objFldStat.selectedIndex].value)+'"';
+      strXML = strXML+' FLDSTS="'+objFldStat.options[objFldStat.selectedIndex].value+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestFldUpdUpdate(\''+strXML+'\');',10);
    }
-   function requestFldUpdUpdate() {
+   function requestFldUpdUpdate(strXML) {
       doPostRequest('<%=strBase%>pts_fld_config_field_update.asp',function(strResponse) {checkFldUpdUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkFldUpdUpdate(strResponse) {
@@ -453,19 +462,21 @@ sub PaintFunction()%>
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
             }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
          }
          requestFieldList();
       }
@@ -532,7 +543,6 @@ sub PaintFunction()%>
    function doValueAdd() {
       cstrFieldValCde = '';
       cstrFieldValTxt = '';
-      cstrFieldMode = '*ADD';
       document.getElementById('subValUpd').innerText = cstrFieldTabTxt;
       document.getElementById('minValUpd').innerText = cstrFieldFldTxt;
       document.getElementById('VUP_ValText').value = cstrFieldValTxt;
@@ -544,7 +554,6 @@ sub PaintFunction()%>
       objRow = objTable.rows[intRow];
       cstrFieldValCde = objRow.getAttribute('valcde');
       cstrFieldValTxt = objRow.getAttribute('valtxt');
-      cstrFieldMode = '*UPD';
       document.getElementById('subValUpd').innerText = cstrFieldTabTxt;
       document.getElementById('minValUpd').innerText = cstrFieldFldTxt;
       document.getElementById('VUP_ValText').value = cstrFieldValTxt;
@@ -584,7 +593,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestValUpdUpdate(\''+strXML+'\');',10);
    }
-   function requestValUpdUpdate() {
+   function requestValUpdUpdate(strXML) {
       doPostRequest('<%=strBase%>pts_fld_config_value_update.asp',function(strResponse) {checkValUpdUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkValUpdUpdate(strResponse) {
@@ -592,19 +601,21 @@ sub PaintFunction()%>
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
             }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
          }
          requestValueList();
       }
@@ -613,7 +624,6 @@ sub PaintFunction()%>
 </script>
 <!--#include file="ics_std_input.inc"-->
 <!--#include file="ics_std_number.inc"-->
-<!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
@@ -622,7 +632,7 @@ sub PaintFunction()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_fld_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
-   <table id="dspMenu" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspMenu" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=3 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedMenu" class="clsFunction" align=center colspan=2 nowrap><nobr>System Table Maintenance</nobr></td>
@@ -631,20 +641,20 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelFN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*HOU_CLA');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*HOU_CLA');">Update Fields</a></nobr></td>
-         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Household Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*HOU_CLA','Household Classification Data');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*HOU_CLA','Household Classification Data');">Update Fields</a></nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Household Classification Data&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelFN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*HOU_SAM');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*HOU_SAM');">Update Fields</a></nobr></td>
-         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Household Sample Data&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*HOU_SAM','Household Sample Data');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*HOU_SAM','Household Sample Data');">Update Fields</a></nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Household Sample Data&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelFN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*PET_CLA');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*PET_CLA');">Update Fields</a></nobr></td>
-         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Pet Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*PET_CLA','Pet Classification Data');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*PET_CLA','Pet Classification Data');">Update Fields</a></nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Pet Classification Data&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelFN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*PET_SAM');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*PET_SAM');">Update Fields</a></nobr></td>
-         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Pet Sample Data&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doSortField('*PET_SAM','Pet Sample Data');">Sort Fields</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFieldList('*PET_SAM','Pet Sample Data');">Update Fields</a></nobr></td>
+         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>&nbsp;Pet Sample Data&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
    </table>
@@ -667,7 +677,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
                <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upSortField();"></nobr></td></tr>
-               <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downSortFields();"></nobr></td></tr>
+               <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downSortField();"></nobr></td></tr>
             </table>
          </nobr></td>
       </tr>

@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the system field sort update
    '//
-   call objProcedure.Execute("pts_app.pts_sys_function.update_sort)
+   call objProcedure.Execute("pts_app.pts_sys_function.update_sort")
    if strReturn <> "*OK" then
       exit sub
    end if
