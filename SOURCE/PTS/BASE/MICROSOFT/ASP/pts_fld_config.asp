@@ -292,6 +292,10 @@ sub PaintFunction()%>
    function doSortAccept() {
       if (!processForm()) {return;}
       var objFldList = document.getElementById('SRT_FldList');
+      if (objFldList.length == 0) {
+         displayScreen('dspMenu');
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDSRT"';
       strXML = strXML+' TABCDE="'+fixXML(cstrSortTabCde)+'"';
@@ -414,7 +418,7 @@ sub PaintFunction()%>
       cstrFieldFldTxt = objRow.getAttribute('fldtxt');
       document.getElementById('subFldUpd').innerText = cstrFieldTabTxt;
       document.getElementById('minFldUpd').innerText = cstrFieldFldTxt;
-      document.getElementById('FUP_FldText') = cstrFieldFldTxt;
+      document.getElementById('FUP_FldText').value = cstrFieldFldTxt;
       var objFldStat = document.getElementById('FUP_FldStat');
       objFldStat.selectedIndex = -1;
       for (var i=0;i<objFldStat.length;i++) {
@@ -424,7 +428,7 @@ sub PaintFunction()%>
          }
       }
       displayScreen('dspFldUpd');
-      objFldText.focus();
+      document.getElementById('FUP_FldText').focus();
    }
    function doValueList(intRow) {
       var objTable = document.getElementById('FLD_FldList');
@@ -558,7 +562,7 @@ sub PaintFunction()%>
       document.getElementById('minValUpd').innerText = cstrFieldFldTxt;
       document.getElementById('VUP_ValText').value = cstrFieldValTxt;
       displayScreen('dspValUpd');
-      objValText.focus();
+      document.getElementById('VUP_ValText').focus();
    }
    function doValueUpdate(intRow) {
       var objTable = document.getElementById('VAL_ValList');
@@ -569,7 +573,7 @@ sub PaintFunction()%>
       document.getElementById('minValUpd').innerText = cstrFieldFldTxt;
       document.getElementById('VUP_ValText').value = cstrFieldValTxt;
       displayScreen('dspValUpd');
-      objValText.focus();
+      document.getElementById('VUP_ValText').focus();
    }
    function doValueBack() {
       displayScreen('dspField');
