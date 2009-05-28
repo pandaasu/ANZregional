@@ -205,7 +205,8 @@ create or replace package body pts_app.pts_pet_function as
             and t01.sfi_fld_code = t02.psf_fld_code
             and t01.sfi_tab_code = rcd_table.sta_tab_code
             and t01.sfi_fld_status = '1'
-          order by t01.sfi_fld_dsp_seqn asc;
+          order by t01.sfi_fld_dsp_seqn asc,
+                   t01.sfi_fld_text asc;
       rcd_field csr_field%rowtype;
 
       cursor csr_classification is
