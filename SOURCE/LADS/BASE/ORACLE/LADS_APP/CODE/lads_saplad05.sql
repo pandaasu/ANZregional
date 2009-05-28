@@ -220,6 +220,11 @@ create or replace package body lads_saplad05 as
          /* Clear the temporary table
          /*-*/
          delete from lads_bom_tmp;
+
+         /*-*/
+         /* Delete any redundant BOM headers
+         /*-*/
+         update lads_bom_hdr set lads_status = '4' where idoc_timestamp != rcd_lads_control.idoc_timestamp;
          
          /*-*/
          /* Commit the IDOC transaction
@@ -229,12 +234,9 @@ create or replace package body lads_saplad05 as
          /*-*/
          /* Rebuild the BDS factory BOM
          /* **notes**
-         /* 1. Delete any redundant LADS data
-         /* 2. Flatten the new BOM data (commit after each)
+         /* 1. Flatten the new BOM data (commit after each)
          /*-*/
          begin
-            update lads_bom_hdr set lads_status = '4' where idoc_timestamp != rcd_lads_control.idoc_timestamp;
-            commit;
             open csr_header;
             loop
                fetch csr_header into rcd_header;
