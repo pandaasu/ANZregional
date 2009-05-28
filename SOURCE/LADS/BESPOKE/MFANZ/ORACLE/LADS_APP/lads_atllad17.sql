@@ -24,6 +24,8 @@ create or replace package lads_atllad17 as
                              Changed IDOC timestamp check from < to <=
     2007/05   Steve Gregan   Changed the BDS invoke logic to cover all HDR rows
     2008/05   Trevor Keon    Added calls to monitor before and after procedure
+    2009/05   Steve Gregan   Commented out all database activity and external calls
+                             (Interface replaced by SAPLAD05 pull)
 
    *******************************************************************************/
 
@@ -265,50 +267,50 @@ create or replace package body lads_atllad17 as
          /*          - child procedure must raise an exception on failure
          /*          - savepoint is used for child procedure failure
          /*-*/
-         savepoint transaction_savepoint;
-         begin
-            for idx in 1..tbl_bds.count loop
-               lads_atllad17_monitor.execute_before(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
-            end loop;
-         exception
-            when others then
-               rollback to transaction_savepoint;
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;
+  --       savepoint transaction_savepoint;
+  --       begin
+  --          for idx in 1..tbl_bds.count loop
+  --             lads_atllad17_monitor.execute_before(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
+  --          end loop;
+  --       exception
+  --          when others then
+  --             rollback to transaction_savepoint;
+  --             lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+  --       end;
 
          /*-*/
          /* Commit the IDOC transaction and successful monitor code
          /* **note** - releases transaction lock
          /*-*/
-         commit;
+  --       commit;
          
-         begin
-            for idx in 1..tbl_bds.count loop
-               lads_atllad17_monitor.execute_after(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
-            end loop;
-         exception
-            when others then
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;         
+  --       begin
+  --          for idx in 1..tbl_bds.count loop
+  --             lads_atllad17_monitor.execute_after(tbl_bds(idx).stlal, tbl_bds(idx).matnr, tbl_bds(idx).werks);
+  --          end loop;
+  --       exception
+  --          when others then
+  --             lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+  --       end;         
 
       end if;
 
       /*-*/
       /* Add the IDOC acknowledgement
       /*-*/
-      if upper(lics_setting_configuration.retrieve_setting(con_ack_group, con_ack_code)) = 'Y' then
-         if var_accepted = false then
-            ics_cisatl16.add_document(to_char(rcd_lads_control.idoc_number,'FM0000000000000000'),
-                                      to_char(sysdate,'YYYYMMDD'),
-                                      to_char(sysdate,'HH24MISS'),
-                                      '40');
-         else
-            ics_cisatl16.add_document(to_char(rcd_lads_control.idoc_number,'FM0000000000000000'),
-                                      to_char(sysdate,'YYYYMMDD'),
-                                      to_char(sysdate,'HH24MISS'),
-                                      '41');
-         end if;
-      end if;
+  --    if upper(lics_setting_configuration.retrieve_setting(con_ack_group, con_ack_code)) = 'Y' then
+  --       if var_accepted = false then
+  --          ics_cisatl16.add_document(to_char(rcd_lads_control.idoc_number,'FM0000000000000000'),
+  --                                    to_char(sysdate,'YYYYMMDD'),
+  --                                    to_char(sysdate,'HH24MISS'),
+  --                                    '40');
+  --       else
+  --          ics_cisatl16.add_document(to_char(rcd_lads_control.idoc_number,'FM0000000000000000'),
+  --                                    to_char(sysdate,'YYYYMMDD'),
+  --                                    to_char(sysdate,'HH24MISS'),
+  --                                    '41');
+  --       end if;
+  --    end if;
 
    /*-------------*/
    /* End routine */
@@ -481,59 +483,59 @@ create or replace package body lads_atllad17 as
       /*          - validate the IDOC sequence when locking row exists
       /*          - lock and commit cycle encompasses transaction child procedure execution
       /*-*/
-      begin
-         insert into lads_bom_hdr
-            (msgfn,
-             stlnr,
-             stlal,
-             matnr,
-             werks,
-             stlan,
-             datuv,
-             datub,
-             bmeng,
-             bmein,
-             stlst,
-             idoc_name,
-             idoc_number,
-             idoc_timestamp,
-             lads_date,
-             lads_status,
-             lads_flattened)
-         values
-            (rcd_lads_bom_hdr.msgfn,
-             rcd_lads_bom_hdr.stlnr,
-             rcd_lads_bom_hdr.stlal,
-             rcd_lads_bom_hdr.matnr,
-             rcd_lads_bom_hdr.werks,
-             rcd_lads_bom_hdr.stlan,
-             rcd_lads_bom_hdr.datuv,
-             rcd_lads_bom_hdr.datub,
-             rcd_lads_bom_hdr.bmeng,
-             rcd_lads_bom_hdr.bmein,
-             rcd_lads_bom_hdr.stlst,
-             rcd_lads_bom_hdr.idoc_name,
-             rcd_lads_bom_hdr.idoc_number,
-             rcd_lads_bom_hdr.idoc_timestamp,
-             rcd_lads_bom_hdr.lads_date,
-             rcd_lads_bom_hdr.lads_status,
-             rcd_lads_bom_hdr.lads_flattened);
-      exception
-         when dup_val_on_index then
-            update lads_bom_hdr
-               set lads_status = lads_status
-             where stlal = rcd_lads_bom_hdr.stlal
-               and matnr = rcd_lads_bom_hdr.matnr
-               and werks = rcd_lads_bom_hdr.werks
-             returning idoc_timestamp into var_idoc_timestamp;
-            if sql%found and var_idoc_timestamp <= rcd_lads_bom_hdr.idoc_timestamp then
-               delete from lads_bom_det where stlal = rcd_lads_bom_hdr.stlal
-                                          and matnr = rcd_lads_bom_hdr.matnr
-                                          and werks = rcd_lads_bom_hdr.werks;
-            else
-               var_trn_ignore := true;
-            end if;
-      end;
+   --   begin
+   --      insert into lads_bom_hdr
+   --         (msgfn,
+   --          stlnr,
+   --          stlal,
+   --          matnr,
+   --          werks,
+   --          stlan,
+   --          datuv,
+   --          datub,
+   --          bmeng,
+   --          bmein,
+   --          stlst,
+   --          idoc_name,
+   --          idoc_number,
+   --          idoc_timestamp,
+   --          lads_date,
+   --          lads_status,
+   --          lads_flattened)
+   --      values
+   --         (rcd_lads_bom_hdr.msgfn,
+   --          rcd_lads_bom_hdr.stlnr,
+   --          rcd_lads_bom_hdr.stlal,
+   --          rcd_lads_bom_hdr.matnr,
+   --          rcd_lads_bom_hdr.werks,
+   --          rcd_lads_bom_hdr.stlan,
+   --          rcd_lads_bom_hdr.datuv,
+   --          rcd_lads_bom_hdr.datub,
+   --          rcd_lads_bom_hdr.bmeng,
+   --          rcd_lads_bom_hdr.bmein,
+   --          rcd_lads_bom_hdr.stlst,
+   --          rcd_lads_bom_hdr.idoc_name,
+   --          rcd_lads_bom_hdr.idoc_number,
+   --          rcd_lads_bom_hdr.idoc_timestamp,
+   --          rcd_lads_bom_hdr.lads_date,
+   --          rcd_lads_bom_hdr.lads_status,
+   --          rcd_lads_bom_hdr.lads_flattened);
+   --   exception
+   --      when dup_val_on_index then
+   --         update lads_bom_hdr
+   --            set lads_status = lads_status
+   --          where stlal = rcd_lads_bom_hdr.stlal
+   --            and matnr = rcd_lads_bom_hdr.matnr
+   --            and werks = rcd_lads_bom_hdr.werks
+   --          returning idoc_timestamp into var_idoc_timestamp;
+   --         if sql%found and var_idoc_timestamp <= rcd_lads_bom_hdr.idoc_timestamp then
+   --            delete from lads_bom_det where stlal = rcd_lads_bom_hdr.stlal
+   --                                       and matnr = rcd_lads_bom_hdr.matnr
+   --                                       and werks = rcd_lads_bom_hdr.werks;
+   --         else
+   --            var_trn_ignore := true;
+   --         end if;
+   --   end;
 
       /*--------------------------------------------*/
       /* IGNORE - Ignore the data row when required */
@@ -547,32 +549,32 @@ create or replace package body lads_atllad17 as
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      update lads_bom_hdr set
-         msgfn = rcd_lads_bom_hdr.msgfn,
-         stlnr = rcd_lads_bom_hdr.stlnr,
-         stlan = rcd_lads_bom_hdr.stlan,
-         datuv = rcd_lads_bom_hdr.datuv,
-         datub = rcd_lads_bom_hdr.datub,
-         bmeng = rcd_lads_bom_hdr.bmeng,
-         bmein = rcd_lads_bom_hdr.bmein,
-         stlst = rcd_lads_bom_hdr.stlst,
-         idoc_name = rcd_lads_bom_hdr.idoc_name,
-         idoc_number = rcd_lads_bom_hdr.idoc_number,
-         idoc_timestamp = rcd_lads_bom_hdr.idoc_timestamp,
-         lads_date = rcd_lads_bom_hdr.lads_date,
-         lads_status = rcd_lads_bom_hdr.lads_status,
-         lads_flattened = rcd_lads_bom_hdr.lads_flattened
-      where stlal = rcd_lads_bom_hdr.stlal
-        and matnr = rcd_lads_bom_hdr.matnr
-        and werks = rcd_lads_bom_hdr.werks;
+   --   update lads_bom_hdr set
+   --      msgfn = rcd_lads_bom_hdr.msgfn,
+   --      stlnr = rcd_lads_bom_hdr.stlnr,
+   --      stlan = rcd_lads_bom_hdr.stlan,
+   --      datuv = rcd_lads_bom_hdr.datuv,
+   --      datub = rcd_lads_bom_hdr.datub,
+   --      bmeng = rcd_lads_bom_hdr.bmeng,
+   --      bmein = rcd_lads_bom_hdr.bmein,
+   --      stlst = rcd_lads_bom_hdr.stlst,
+   --      idoc_name = rcd_lads_bom_hdr.idoc_name,
+   --      idoc_number = rcd_lads_bom_hdr.idoc_number,
+   --      idoc_timestamp = rcd_lads_bom_hdr.idoc_timestamp,
+   --      lads_date = rcd_lads_bom_hdr.lads_date,
+   --      lads_status = rcd_lads_bom_hdr.lads_status,
+   --      lads_flattened = rcd_lads_bom_hdr.lads_flattened
+   --   where stlal = rcd_lads_bom_hdr.stlal
+   --     and matnr = rcd_lads_bom_hdr.matnr
+   --     and werks = rcd_lads_bom_hdr.werks;
 
       /*------------------------------*/
       /* SAVE - BDS key values        */
       /*------------------------------*/
-      var_index := tbl_bds.count + 1;
-      tbl_bds(var_index).stlal := rcd_lads_bom_hdr.stlal;
-      tbl_bds(var_index).matnr := rcd_lads_bom_hdr.matnr;
-      tbl_bds(var_index).werks := rcd_lads_bom_hdr.werks;
+   --   var_index := tbl_bds.count + 1;
+   --   tbl_bds(var_index).stlal := rcd_lads_bom_hdr.stlal;
+   --   tbl_bds(var_index).matnr := rcd_lads_bom_hdr.matnr;
+   --   tbl_bds(var_index).werks := rcd_lads_bom_hdr.werks;
 
    /*-------------*/
    /* End routine */
@@ -662,32 +664,32 @@ create or replace package body lads_atllad17 as
       /* UPDATE - Update the database */
       /*------------------------------*/
 
-      insert into lads_bom_det
-         (msgfn,
-          matnr,
-          stlal,
-          werks,
-          detseq,
-          posnr,
-          postp,
-          idnrk,
-          menge,
-          meins,
-          datuv,
-          datub)
-      values
-         (rcd_lads_bom_det.msgfn,
-          rcd_lads_bom_det.matnr,
-          rcd_lads_bom_det.stlal,
-          rcd_lads_bom_det.werks,
-          rcd_lads_bom_det.detseq,
-          rcd_lads_bom_det.posnr,
-          rcd_lads_bom_det.postp,
-          rcd_lads_bom_det.idnrk,
-          rcd_lads_bom_det.menge,
-          rcd_lads_bom_det.meins,
-          rcd_lads_bom_det.datuv,
-          rcd_lads_bom_det.datub);
+   --   insert into lads_bom_det
+   --      (msgfn,
+   --       matnr,
+   --       stlal,
+   --       werks,
+   --       detseq,
+   --       posnr,
+   --       postp,
+   --       idnrk,
+   --       menge,
+   --       meins,
+   --       datuv,
+   --       datub)
+   --   values
+   --      (rcd_lads_bom_det.msgfn,
+   --       rcd_lads_bom_det.matnr,
+   --       rcd_lads_bom_det.stlal,
+   --       rcd_lads_bom_det.werks,
+   --       rcd_lads_bom_det.detseq,
+   --       rcd_lads_bom_det.posnr,
+   --       rcd_lads_bom_det.postp,
+   --       rcd_lads_bom_det.idnrk,
+   --       rcd_lads_bom_det.menge,
+   --       rcd_lads_bom_det.meins,
+   --       rcd_lads_bom_det.datuv,
+   --       rcd_lads_bom_det.datub);
 
    /*-------------*/
    /* End routine */
