@@ -501,10 +501,11 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                if (objElements[i].getAttribute('PTYSTS') == '1') {
                   objCell.innerText = 'Selected';
+                  objCell.className = 'clsLabelFB';
                } else {
-                  objCell.innerText = '';
+                  objCell.innerText = 'Not Selected';
+                  objCell.className = 'clsLabelFN';
                }
-               objCell.className = 'clsLabelFB';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(2);
                objCell.colSpan = 1;
