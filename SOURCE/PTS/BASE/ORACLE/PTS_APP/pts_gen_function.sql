@@ -1234,9 +1234,6 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       /* Local cursors
       /*-*/
-      /*-*/
-      /* Retrieve the pet type system field
-      /*-*/
       cursor csr_field is
          select t01.sfi_fld_sel_type,
                 nvl(t01.sfi_fld_val_type,'*ALL') as sfi_fld_val_type

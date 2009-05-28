@@ -503,6 +503,19 @@ create or replace package body pts_app.pts_sys_function as
       var_action varchar2(32);
       rcd_pts_sys_field pts_sys_field%rowtype;
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_child01 is
+         select t01.*
+           from pts_stm_definition t01
+          where t01.std_stm_code in (select str_stm_code
+                                       from pts_stm_rule
+                                      where str_tab_code = rcd_pts_sys_field.sfi_tab_code
+                                        and str_fld_code = rcd_pts_sys_field.sfi_fld_code)
+            and t01.std_stm_code != 2;
+      rcd_child01 csr_child01%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -545,6 +558,14 @@ create or replace package body pts_app.pts_sys_function as
       end if;
       if rcd_pts_sys_field.sfi_fld_status is null then
          pts_gen_function.add_mesg_data('Field status must be supplied');
+      end if;
+      if rcd_pts_sys_field.sfi_fld_status = '0' then
+         open csr_child01;
+         fetch csr_child01 into rcd_child01;
+         if csr_child01%found then
+            pts_gen_function.add_mesg_data('System field is attached to active selection templates - unable to inactivate');
+         end if;
+         close csr_child01;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
