@@ -28,8 +28,10 @@ create or replace package pts_app.pts_pty_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    function retrieve_field return pts_xml_type pipelined;
+   function retrieve_value return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    procedure update_field;
+   procedure update_value;
 
 end pts_pty_function;
 /
@@ -400,6 +402,125 @@ create or replace package body pts_app.pts_pty_function as
    /*-------------*/
    end retrieve_field;
 
+   /******************************************************/
+   /* This procedure performs the retrieve value routine */
+   /******************************************************/
+   function retrieve_value return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_pet_type varchar2(32);
+      var_tab_code varchar2(32);
+      var_fld_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_value is
+         select t01.sva_val_code,
+                t01.sva_val_text,
+                decode(t02.psv_tab_code,null,'0','1') as pty_selected
+           from pts_sys_value t01,
+                (select t01.psv_tab_code,
+                        t01.psv_fld_code,
+                        t01.psv_val_code
+                   from pts_pty_sys_value t01
+                  where t01.psv_pet_type = pts_to_number(var_pet_type)
+                    and t01.psv_tab_code = var_tab_code
+                    and t01.psv_fld_code = pts_to_number(var_fld_code)) t02
+          where t01.sva_tab_code = t02.psv_tab_code(+)
+            and t01.sva_fld_code = t02.psv_fld_code(+)
+            and t01.sva_val_code = t02.psv_val_code(+)
+            and t01.sva_tab_code = var_tab_code
+            and t01.sva_fld_code = pts_to_number(var_fld_code)
+          order by t01.sva_val_code asc;
+      rcd_value csr_value%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_pet_type := xslProcessor.valueOf(obj_pts_request,'@PTYCDE');
+      var_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
+      var_fld_code := xslProcessor.valueOf(obj_pts_request,'@FLDCDE');
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*RTVVAL' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the system field value XML
+      /*-*/
+      open csr_value;
+      loop
+         fetch csr_value into rcd_value;
+         if csr_value%notfound then
+            exit;
+         end if;
+         pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_value.sva_val_code)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_value.sva_val_code)||') '||rcd_value.sva_val_text)||'" PTYSTS="'||pts_to_xml(rcd_value.pty_selected)||'"/>'));
+      end loop;
+      close csr_value;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PTY_FUNCTION - RETRIEVE_VALUE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_value;
+
    /***************************************************/
    /* This procedure performs the update data routine */
    /***************************************************/
@@ -578,7 +699,7 @@ create or replace package body pts_app.pts_pty_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_pty_sys_field.psf_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETTYP'));
+      rcd_pts_pty_sys_field.psf_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PTYCDE'));
       rcd_pts_pty_sys_field.psf_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
       rcd_pts_pty_sys_field.psf_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
       var_selected := xslProcessor.valueOf(obj_pts_request,'@PTYSTS');
@@ -618,7 +739,9 @@ create or replace package body pts_app.pts_pty_function as
             and psf_tab_code = rcd_pts_pty_sys_field.psf_tab_code
             and psf_fld_code = rcd_pts_pty_sys_field.psf_fld_code;
          delete from pts_pet_classification
-          where pcl_pet_code in (select pde_pet_code from pts_pet_definition where pde_pet_type = rcd_pts_pty_sys_field.psf_pet_type)
+          where pcl_pet_code in (select pde_pet_code
+                                   from pts_pet_definition
+                                  where pde_pet_type = rcd_pts_pty_sys_field.psf_pet_type)
             and pcl_tab_code = rcd_pts_pty_sys_field.psf_tab_code
             and pcl_fld_code = rcd_pts_pty_sys_field.psf_fld_code;
       end if;
@@ -657,6 +780,126 @@ create or replace package body pts_app.pts_pty_function as
    /* End routine */
    /*-------------*/
    end update_field;
+
+   /****************************************************/
+   /* This procedure performs the update value routine */
+   /****************************************************/
+   procedure update_value is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      obj_val_list xmlDom.domNodeList;
+      obj_val_node xmlDom.domNode;
+      var_action varchar2(32);
+      rcd_pts_pty_sys_value pts_pty_sys_value%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*UPDVAL' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      rcd_pts_pty_sys_value.psv_pet_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PTYCDE'));
+      rcd_pts_pty_sys_value.psv_tab_code := xslProcessor.valueOf(obj_pts_request,'@TABCDE');
+      rcd_pts_pty_sys_value.psv_fld_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDCDE'));
+
+      /*-*/
+      /* Validate the input
+      /*-*/
+      if rcd_pts_pty_sys_value.psv_pet_type is null then
+         pts_gen_function.add_mesg_data('Pet type code must be supplied');
+      end if;
+      if rcd_pts_pty_sys_value.psv_tab_code is null then
+         pts_gen_function.add_mesg_data('Table code must be supplied');
+      end if;
+      if rcd_pts_pty_sys_value.psv_fld_code is null then
+         pts_gen_function.add_mesg_data('Field code must be supplied');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Update the pet type system values
+      /*-*/
+      delete from pts_pty_sys_value
+       where psv_pet_type = rcd_pts_pty_sys_value.psv_pet_type
+         and psv_tab_code = rcd_pts_pty_sys_value.psv_tab_code
+         and psv_fld_code = rcd_pts_pty_sys_value.psv_fld_code;
+      obj_val_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/VALUE');
+      for idx in 0..xmlDom.getLength(obj_val_list)-1 loop
+         obj_val_node := xmlDom.item(obj_val_list,idx);
+         rcd_pts_pty_sys_value.psv_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
+         insert into pts_pty_sys_value values rcd_pts_pty_sys_value;
+      end loop;
+      delete from pts_pet_classification
+       where pcl_pet_code in (select pde_pet_code
+                                from pts_pet_definition
+                               where pde_pet_type = rcd_pts_pty_sys_value.psv_pet_type)
+         and pcl_tab_code = rcd_pts_pty_sys_value.psv_tab_code
+         and pcl_fld_code = rcd_pts_pty_sys_value.psv_fld_code
+         and not(exists (select '1'
+                           from pts_pty_sys_value
+                          where psv_pet_type = rcd_pts_pty_sys_value.psv_pet_type
+                            and psv_tab_code = rcd_pts_pty_sys_value.psv_tab_code
+                            and psv_fld_code = rcd_pts_pty_sys_value.psv_fld_code
+                            and psv_val_code = pcl_val_code));
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PTY_FUNCTION - UPDATE_VALUE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_value;
 
 end pts_pty_function;
 /
