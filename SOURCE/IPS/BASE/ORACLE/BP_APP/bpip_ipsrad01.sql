@@ -12,7 +12,7 @@ create or replace package bp_app.bpip_ipsrad01 as
 
     Description
     -----------
-    Integrated Planning System - BPIP to Radar Interface 
+    Integrated Planning System - BPIP to Radar Forecast Price Interface 
 
     YYYY/MM   Author             Description
     -------   ------             -----------
