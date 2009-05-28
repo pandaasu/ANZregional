@@ -148,6 +148,9 @@ sub ProcessSubmit()
    set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
    set objProcedure.Security = objSecurity
 
+
+BUILD THE XML
+
    '//
    '// Submit the interface
    '//
