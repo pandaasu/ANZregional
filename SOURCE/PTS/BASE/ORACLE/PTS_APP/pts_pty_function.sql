@@ -617,6 +617,10 @@ create or replace package body pts_app.pts_pty_function as
           where psf_pet_type = rcd_pts_pty_sys_field.psf_pet_type
             and psf_tab_code = rcd_pts_pty_sys_field.psf_tab_code
             and psf_fld_code = rcd_pts_pty_sys_field.psf_fld_code;
+         delete from pts_pet_classification
+          where pcl_pet_code in (select pde_pet_code from pts_pet_definition where pde_pet_type = rcd_pts_pty_sys_field.psf_pet_type)
+            and pcl_tab_code = rcd_pts_pty_sys_field.psf_tab_code
+            and pcl_fld_code = rcd_pts_pty_sys_field.psf_fld_code;
       end if;
 
       /*-*/
