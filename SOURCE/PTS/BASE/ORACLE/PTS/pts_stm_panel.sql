@@ -39,7 +39,7 @@ comment on column pts.pts_stm_panel.stp_pan_status is 'Panel status (*MEMBER, *R
 /* Primary Key Constraint
 /**/
 alter table pts.pts_stm_panel
-   add constraint pts_stm_panel_pk primary key (stp_sel_group, stp_hou_code, stp_pet_code);
+   add constraint pts_stm_panel_pk primary key (stp_stm_code, stp_sel_group, stp_hou_code, stp_pet_code);
 
 /**/
 /* Authority
