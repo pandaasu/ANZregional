@@ -933,7 +933,8 @@ create or replace package body pts_app.pts_gen_function as
           where t01.sfi_tab_code = rcd_table.sta_tab_code
             and (var_tes_flag = '0' or (var_tes_flag = '1' and t01.sfi_fld_tes_rule = '1'))
             and t01.sfi_fld_status = '1'
-          order by t01.sfi_fld_text asc;
+          order by t01.sfi_fld_dsp_seqn asc,
+                   t01.sfi_fld_text asc;
       rcd_field csr_field%rowtype;
 
    /*-------------*/
