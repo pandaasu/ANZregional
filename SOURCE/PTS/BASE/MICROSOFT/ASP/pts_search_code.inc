@@ -263,7 +263,7 @@
       objCell.className = 'clsLabelFN';
       objCell.style.whiteSpace = 'nowrap';
       objCell = objRow.insertCell(1);
-      objCell.colSpan = 1;
+      objCell.colSpan = 2;
       objCell.innerText = '';
       objCell.className = 'clsLabelFB';
       objCell.style.whiteSpace = 'nowrap';
