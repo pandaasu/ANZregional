@@ -35,6 +35,8 @@ create or replace package df_forecast as
     YYYY/MM   Author             Description
     -------   ------             -----------
     2009/01   Steve Gregan       Created
+    2009/04   Steve Gregan       Included the demand SKU mapping logic
+                                 Included the MOE demand mapping switch
 
    *******************************************************************************/
 
@@ -43,7 +45,7 @@ create or replace package df_forecast as
    /*-*/
    procedure process(par_action in varchar2, par_file_id in number);
 
-end df_forecast; 
+end df_forecast;
 /
 
 /****************/
@@ -52,7 +54,7 @@ end df_forecast;
 create or replace package body df_forecast as
 
    /*-*/
-   /* Private exceptions 
+   /* Private exceptions
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
@@ -316,6 +318,15 @@ create or replace package body df_forecast as
       v_dmnd_type common.st_code;
       v_ovrd_tdu_flag common.st_status;
       v_matl_dtrmntn_offset common.st_counter;
+      v_matl_dtrmntn_type common.st_code;
+      var_tot_qty number;
+      type rcd_sku is record(tdu varchar2(32),
+                             zrep_qty number,
+                             tdu_qty number,
+                             alloc_factor number,
+                             conv_factor number);
+      type typ_sku is table of rcd_sku index by binary_integer;
+      tbl_sku typ_sku;
 
       /*-*/
       /* Local cursors
@@ -389,6 +400,19 @@ create or replace package body df_forecast as
             and dgo.bus_sgmnt_code = i_business_segment;
       rcd_demand_group_org csr_demand_group_org%rowtype;
 
+      cursor csr_sku_mapping(i_dmdunit in varchar2, i_dmdgroup in varchar2, i_loc in varchar2, i_startdate in varchar2) is
+         select t01.item,
+                t01.alloc_factor,
+                t01.conv_factor
+           from dmnd_sku_mapping t01
+          where t01.dmd_unit = i_dmdunit
+            and t01.dmd_group = i_dmdgroup
+            and t01.dfu_locn = i_loc
+            and t01.str_date <= i_startdate
+            and t01.end_date >= i_startdate
+          order by t01.item asc;
+      rcd_sku_mapping csr_sku_mapping%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -414,11 +438,13 @@ create or replace package body df_forecast as
       /* Retrieve the moe settings
       /*-*/
       v_matl_dtrmntn_offset := 0;
+      v_matl_dtrmntn_type := '*TDU';
       open csr_moe_setting;
       fetch csr_moe_setting into rcd_moe_setting;
       if csr_moe_setting%found then
          if not(rcd_moe_setting.matl_dtrmntn_offset is null) then
             v_matl_dtrmntn_offset := rcd_moe_setting.matl_dtrmntn_offset;
+            v_matl_dtrmntn_type := rcd_moe_setting.matl_dtrmntn_type;
          end if;
       else
          raise_application_error(-20000, 'Moe settings not found for MOE code (' || rcd_load_file.moe_code || ')');
@@ -537,98 +563,288 @@ create or replace package body df_forecast as
                         exit;
                      end if;
 
+                     /*-*/
+                     /* Initialise the demand group
+                     /*-*/
                      var_found := true;
                      v_calendar_day := to_char(tab_load_data(idx).startdate, 'YYYYMMDD');
                      v_tdu := null;
                      v_ovrd_tdu_flag := common.gc_no;
 
-                     if tab_load_data(idx).fcst_text is not null then
-                        if demand_forecast.get_ovrd_tdu(tab_load_data(idx).zrep_code,
-                                                        rcd_demand_group_org.distbn_chnl,
-                                                        rcd_demand_group_org.sales_org,
-                                                        tab_load_data(idx).fcst_text,
+                     /*-*/
+                     /* Process based on material determination type
+                     /* **notes** 1. *TDU uses material determination tables
+                     /*              1.1. Check for a TDU override in the demand load data
+                     /*              1.1. Retrieve the TDU from the material determination data when no override
+                     /*-*/
+                     if v_matl_dtrmntn_type = '*TDU' then
+
+                        if tab_load_data(idx).fcst_text is not null then
+                           if demand_forecast.get_ovrd_tdu(tab_load_data(idx).zrep_code,
+                                                           rcd_demand_group_org.distbn_chnl,
+                                                           rcd_demand_group_org.sales_org,
+                                                           tab_load_data(idx).fcst_text,
+                                                           v_tdu,
+                                                           v_ovrd_tdu_flag,
+                                                           v_invalid_reason,
+                                                           v_message_out) != common.gc_success then
+                              v_invalid_reason := v_invalid_reason || 'Using standard material determination. ';
+                           end if;
+                        end if;
+
+                        if v_tdu is null then
+                           if demand_forecast.get_tdu(tab_load_data(idx).zrep_code,
+                                                      rcd_demand_group_org.distbn_chnl,
+                                                      rcd_demand_group_org.sales_org,
+                                                      rcd_demand_group_org.bill_to_code,
+                                                      rcd_demand_group_org.ship_to_code,
+                                                      rcd_demand_group_org.cust_hrrchy_code,
+                                                      to_char((to_date(v_calendar_day, 'yyyymmdd') + v_matl_dtrmntn_offset),'yyyymmdd'),
+                                                      v_tdu,
+                                                      v_message_out) != common.gc_success then
+                              v_invalid_reason := v_invalid_reason || 'TDU Material Determination Lookup Failure. ';
+                           end if;
+                        end if;
+
+                        if demand_forecast.get_price(tab_load_data(idx).zrep_code,
+                                                     v_tdu,
+                                                     rcd_demand_group_org.distbn_chnl,
+                                                     rcd_demand_group_org.bill_to_code,
+                                                     rcd_demand_group_org.sales_org,
+                                                     rcd_demand_group_org.invc_prty,
+                                                     rcd_demand_group_org.sply_whse_lst,
+                                                     v_calendar_day,
+                                                     rcd_demand_group_org.pricing_formula,
+                                                     rcd_demand_group_org.currcy_code,
+                                                     v_pricing_condition,
+                                                     v_price,
+                                                     v_message_out) != common.gc_success then
+                           v_invalid_reason := v_invalid_reason || 'Price Lookup Failure. ';
+                        end if;
+
+                        v_dmnd_type := null;
+                        if tab_load_data(idx).type = 1 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_1;
+                        elsif tab_load_data(idx).type = 2 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_2;
+                        elsif tab_load_data(idx).type = 3 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_3;
+                        elsif tab_load_data(idx).type = 4 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_4;
+                        elsif tab_load_data(idx).type = 5 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_5;
+                        elsif tab_load_data(idx).type = 6 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_6;
+                        elsif tab_load_data(idx).type = 7 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_7;
+                        elsif tab_load_data(idx).type = 8 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_8;
+                        elsif tab_load_data(idx).type = 9 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                        end if;
+
+                        insert into dmnd_temp
+                           (fcst_id,
+                            dmnd_grp_org_id,
+                            zrep,
+                            qty_in_base_uom,
+                            gsv,
+                            price,
+                            mars_week,
+                            price_condition,
+                            tdu,
+                            type,
+                            tdu_ovrd_flag)
+                           values(var_fcst_id,
+                                  rcd_demand_group_org.dmnd_grp_org_id,
+                                  substr(tab_load_data(idx).zrep_code, length(tab_load_data(idx).zrep_code) - 5, 6),
+                                  tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value,
+                                  (tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value) * v_price,
+                                  v_price,
+                                  tab_load_data(idx).mars_week,
+                                  v_pricing_condition,
+                                  v_tdu,
+                                  v_dmnd_type,
+                                  v_ovrd_tdu_flag);
+
+                     /*-*/
+                     /* Process based on material determination type
+                     /* **notes** 1. *SKU uses demand SKU mapping table
+                     /*              1.1. Retrieve the TDU from the demand SKU mapping data when no override
+                     /*              1.1. Adjust the last TDU to reach the total
+                     /*-*/
+                     elsif v_matl_dtrmntn_type = '*SKU' then
+
+                        /*-*/
+                        /* Retrieve and allocate the SKU mapping data
+                        /*-*/
+                        tbl_sku.delete;
+                        var_tot_qty := 0;
+                        open csr_sku_mapping(tab_load_data(idx).dmdunit, tab_load_data(idx).dmdgroup, tab_load_data(idx).loc, tab_load_data(idx).startdate);
+                        loop
+                           fetch csr_sku_mapping into rcd_sku_mapping;
+                           if csr_sku_mapping%notfound then
+                              exit;
+                           end if;
+                           tbl_sku(tbl_sku.count+1).tdu := reference_functions.short_matl_code(rcd_sku_mapping.item);
+                           tbl_sku(tbl_sku.count).zrep_qty := round(tab_load_data(idx).qty * rcd_sku_mapping.alloc_factor, 10);
+                           tbl_sku(tbl_sku.count).tdu_qty := tbl_sku(tbl_sku.count).zrep_qty * rcd_sku_mapping.conv_factor;
+                           tbl_sku(tbl_sku.count).alloc_factor := rcd_sku_mapping.alloc_factor;
+                           tbl_sku(tbl_sku.count).conv_factor := rcd_sku_mapping.conv_factor;
+                           var_tot_qty := var_tot_qty + tbl_sku(tbl_sku.count).zrep_qty;
+                        end loop;
+                        close csr_sku_mapping;
+                        if tbl_sku.count != 0 then
+                           if var_tot_qty != tab_load_data(idx).qty then
+                              tbl_sku(tbl_sku.count).zrep_qty := tbl_sku(tbl_sku.count).zrep_qty + (tab_load_data(idx).qty - var_tot_qty);
+                              tbl_sku(tbl_sku.count).tdu_qty := tbl_sku(tbl_sku.count).zrep_qty * tbl_sku(tbl_sku.count).conv_factor;
+                           end if;
+                        end if;
+
+                        /*-*/
+                        /* SKU mapping not found
+                        /*-*/
+                        if tbl_sku.count = 0 then
+
+                           v_invalid_reason := v_invalid_reason || 'SKU Mapping Lookup Failure. ';
+
+                           if demand_forecast.get_price(tab_load_data(idx).zrep_code,
                                                         v_tdu,
-                                                        v_ovrd_tdu_flag,
-                                                        v_invalid_reason,
+                                                        rcd_demand_group_org.distbn_chnl,
+                                                        rcd_demand_group_org.bill_to_code,
+                                                        rcd_demand_group_org.sales_org,
+                                                        rcd_demand_group_org.invc_prty,
+                                                        rcd_demand_group_org.sply_whse_lst,
+                                                        v_calendar_day,
+                                                        rcd_demand_group_org.pricing_formula,
+                                                        rcd_demand_group_org.currcy_code,
+                                                        v_pricing_condition,
+                                                        v_price,
                                                         v_message_out) != common.gc_success then
-                           v_invalid_reason := v_invalid_reason || 'Using standard material determination. ';
+                              v_invalid_reason := v_invalid_reason || 'Price Lookup Failure. ';
+                           end if;
+
+                           v_dmnd_type := null;
+                           if tab_load_data(idx).type = 1 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_1;
+                           elsif tab_load_data(idx).type = 2 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_2;
+                           elsif tab_load_data(idx).type = 3 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_3;
+                           elsif tab_load_data(idx).type = 4 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_4;
+                           elsif tab_load_data(idx).type = 5 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_5;
+                           elsif tab_load_data(idx).type = 6 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_6;
+                           elsif tab_load_data(idx).type = 7 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_7;
+                           elsif tab_load_data(idx).type = 8 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_8;
+                           elsif tab_load_data(idx).type = 9 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                           end if;
+
+                           insert into dmnd_temp
+                              (fcst_id,
+                               dmnd_grp_org_id,
+                               zrep,
+                               qty_in_base_uom,
+                               gsv,
+                               price,
+                               mars_week,
+                               price_condition,
+                               tdu,
+                               type,
+                               tdu_ovrd_flag)
+                              values(var_fcst_id,
+                                     rcd_demand_group_org.dmnd_grp_org_id,
+                                     substr(tab_load_data(idx).zrep_code, length(tab_load_data(idx).zrep_code) - 5, 6),
+                                     tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value,
+                                     (tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value) * v_price,
+                                     v_price,
+                                     tab_load_data(idx).mars_week,
+                                     v_pricing_condition,
+                                     v_tdu,
+                                     v_dmnd_type,
+                                     v_ovrd_tdu_flag);
+
+                        /*-*/
+                        /* SKU mapping found
+                        /*-*/
+                        else
+
+                           /*-*/
+                           /* Process the SKU mapping data
+                           /*-*/
+                           for ids in 1..tbl_sku.count loop
+
+                              if demand_forecast.get_price(tab_load_data(idx).zrep_code,
+                                                           tbl_sku(ids).tdu,
+                                                           rcd_demand_group_org.distbn_chnl,
+                                                           rcd_demand_group_org.bill_to_code,
+                                                           rcd_demand_group_org.sales_org,
+                                                           rcd_demand_group_org.invc_prty,
+                                                           rcd_demand_group_org.sply_whse_lst,
+                                                           v_calendar_day,
+                                                           rcd_demand_group_org.pricing_formula,
+                                                           rcd_demand_group_org.currcy_code,
+                                                           v_pricing_condition,
+                                                           v_price,
+                                                           v_message_out) != common.gc_success then
+                                 v_invalid_reason := v_invalid_reason || 'Price Lookup Failure. ';
+                              end if;
+
+                              v_dmnd_type := null;
+                              if tab_load_data(idx).type = 1 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_1;
+                              elsif tab_load_data(idx).type = 2 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_2;
+                              elsif tab_load_data(idx).type = 3 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_3;
+                              elsif tab_load_data(idx).type = 4 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_4;
+                              elsif tab_load_data(idx).type = 5 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_5;
+                              elsif tab_load_data(idx).type = 6 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_6;
+                              elsif tab_load_data(idx).type = 7 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_7;
+                              elsif tab_load_data(idx).type = 8 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_8;
+                              elsif tab_load_data(idx).type = 9 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                              end if;
+
+                              insert into dmnd_temp
+                                 (fcst_id,
+                                  dmnd_grp_org_id,
+                                  zrep,
+                                  qty_in_base_uom,
+                                  gsv,
+                                  price,
+                                  mars_week,
+                                  price_condition,
+                                  tdu,
+                                  type,
+                                  tdu_ovrd_flag)
+                                 values(var_fcst_id,
+                                        rcd_demand_group_org.dmnd_grp_org_id,
+                                        substr(tab_load_data(idx).zrep_code, length(tab_load_data(idx).zrep_code) - 5, 6),
+                                        tbl_sku(ids).tdu_qty * rcd_demand_group_org.mltplr_value,
+                                        (tbl_sku(ids).tdu_qty * rcd_demand_group_org.mltplr_value) * v_price,
+                                        v_price,
+                                        tab_load_data(idx).mars_week,
+                                        v_pricing_condition,
+                                        tbl_sku(ids).tdu,
+                                        v_dmnd_type,
+                                        v_ovrd_tdu_flag);
+
+                           end loop;
+
                         end if;
-                     end if;
 
-                     if v_tdu is null then
-                        if demand_forecast.get_tdu(tab_load_data(idx).zrep_code,
-                                                   rcd_demand_group_org.distbn_chnl,
-                                                   rcd_demand_group_org.sales_org,
-                                                   rcd_demand_group_org.bill_to_code,
-                                                   rcd_demand_group_org.ship_to_code,
-                                                   rcd_demand_group_org.cust_hrrchy_code,
-                                                   to_char((to_date(v_calendar_day, 'yyyymmdd') + v_matl_dtrmntn_offset),'yyyymmdd'),
-                                                   v_tdu,
-                                                   v_message_out) != common.gc_success then
-                           v_invalid_reason := v_invalid_reason || 'TDU Material Determination Lookup Failure. ';
-                        end if;
                      end if;
-
-                     if demand_forecast.get_price(tab_load_data(idx).zrep_code,
-                                                  v_tdu,
-                                                  rcd_demand_group_org.distbn_chnl,
-                                                  rcd_demand_group_org.bill_to_code,
-                                                  rcd_demand_group_org.sales_org,
-                                                  rcd_demand_group_org.invc_prty,
-                                                  rcd_demand_group_org.sply_whse_lst,
-                                                  v_calendar_day,
-                                                  rcd_demand_group_org.pricing_formula,
-                                                  rcd_demand_group_org.currcy_code,
-                                                  v_pricing_condition,
-                                                  v_price,
-                                                  v_message_out) != common.gc_success then
-                        v_invalid_reason := v_invalid_reason || 'Price Lookup Failure. ';
-                     end if;
-
-                     v_dmnd_type := null;
-                     if tab_load_data(idx).type = 1 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_1;
-                     elsif tab_load_data(idx).type = 2 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_2;
-                     elsif tab_load_data(idx).type = 3 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_3;
-                     elsif tab_load_data(idx).type = 4 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_4;
-                     elsif tab_load_data(idx).type = 5 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_5;
-                     elsif tab_load_data(idx).type = 6 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_6;
-                     elsif tab_load_data(idx).type = 7 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_7;
-                     elsif tab_load_data(idx).type = 8 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_8;
-                     elsif tab_load_data(idx).type = 9 then
-                        v_dmnd_type := demand_forecast.gc_dmnd_type_9;
-                     end if;
-
-                     insert into dmnd_temp
-                        (fcst_id,
-                         dmnd_grp_org_id,
-                         zrep,
-                         qty_in_base_uom,
-                         gsv,
-                         price,
-                         mars_week,
-                         price_condition,
-                         tdu,
-                         type,
-                         tdu_ovrd_flag)
-                        values(var_fcst_id,
-                               rcd_demand_group_org.dmnd_grp_org_id,
-                               substr(tab_load_data(idx).zrep_code, length(tab_load_data(idx).zrep_code) - 5, 6),
-                               tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value,
-                               (tab_load_data(idx).qty * rcd_demand_group_org.mltplr_value) * v_price,
-                               v_price,
-                               tab_load_data(idx).mars_week,
-                               v_pricing_condition,
-                               v_tdu,
-                               v_dmnd_type,
-                               v_ovrd_tdu_flag);
 
                   end loop;
                   close csr_demand_group_org;
@@ -1341,7 +1557,7 @@ create or replace package body df_forecast as
 
    end process_supply_file;
 
-end df_forecast; 
+end df_forecast;
 /
 
 /**************************/
