@@ -25,6 +25,11 @@ create or replace package pts_app.pts_tes_function as
    /*-*/
    /* Public declarations
    /*-*/
+   function retrieve_list return pts_xml_type pipelined;
+   function retrieve_data return pts_xml_type pipelined;
+   function load_response return pts_xml_type pipelined;
+   function select_response return pts_xml_type pipelined;
+   procedure update_response;
    procedure load_pet_panel(par_tes_code in number);
    procedure load_hou_panel(par_tes_code in number);
 
@@ -84,6 +89,547 @@ create or replace package body pts_app.pts_tes_function as
                                 fld_count number);
    type typ_sel_value is table of rcd_sel_value index by binary_integer;
    tbl_sel_value typ_sel_value;
+
+   /*****************************************************/
+   /* This procedure performs the retrieve list routine */
+   /*****************************************************/
+   function retrieve_list return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_pag_size number;
+      var_row_count number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_LIST - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_list;
+
+   /*****************************************************/
+   /* This procedure performs the retrieve data routine */
+   /*****************************************************/
+   function retrieve_data return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code varchar2(32);
+      var_tab_flag boolean;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_stm_definition t01
+          where t01.std_stm_code = pts_to_number(var_tes_code);
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tes_code := xslProcessor.valueOf(obj_pts_request,'@TESCODE');
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*UPDTES' and var_action != '*CRTTES' and var_action != '*CPYTES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing test when required
+      /*-*/
+      if var_action = '*UPDTES' or var_action = '*CPYTES' then
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%notfound then
+            pts_gen_function.add_mesg_data('Selection template ('||var_tes_code||') does not exist');
+            return;
+         end if;
+         close csr_retrieve;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test XML
+      /*-*/
+      if var_action = '*UPDTES' then
+         var_output := '<TES TESCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
+         var_output := var_output||' TESTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
+         var_output := var_output||' TESSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
+         var_output := var_output||' TESTARG="'||to_char(rcd_retrieve.std_stm_target)||'"/>';
+         pipe row(pts_xml_object(var_output));
+      elsif var_action = '*CPYTES' then
+         var_output := '<TEST TESCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
+         var_output := var_output||' TESTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
+         var_output := var_output||' TESSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
+         var_output := var_output||' TESTARG="'||to_char(rcd_retrieve.std_stm_target)||'"/>';
+         pipe row(pts_xml_object(var_output));
+      elsif var_action = '*CRTTES' then
+         var_output := '<TEST TESCODE="*NEW"';
+         var_output := var_output||' TESTEXT=""';
+         var_output := var_output||' TESSTAT="1"';
+         var_output := var_output||' TESTARG="1"/>';
+         pipe row(pts_xml_object(var_output));
+      end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_data;
+
+   /*****************************************************/
+   /* This procedure performs the load response routine */
+   /*****************************************************/
+   function load_response return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tes_code := xslProcessor.valueOf(obj_pts_request,'@TESCDE');
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*LODRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test xml
+      /*-*/
+      pipe row(pts_xml_object('<TEST TESTEXT="'||pts_to_xml('Dummy product test')||'"/>'));
+
+      /*-*/
+      /* Retrieve the response meta data information
+      /*-*/
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(1)||'" DAYTXT="'||pts_to_xml('Day 1')||'" DAYBGN="'||pts_to_xml('1')||'" QUECDE="'||to_char(1)||'" QUETXT="'||pts_to_xml('Question #01')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(1)||'" DAYTXT="'||pts_to_xml('Day 1')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(2)||'" QUETXT="'||pts_to_xml('Question #02')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(1)||'" DAYTXT="'||pts_to_xml('Day 1')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(3)||'" QUETXT="'||pts_to_xml('Question #03')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(1)||'" DAYTXT="'||pts_to_xml('Day 1')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(4)||'" QUETXT="'||pts_to_xml('Question #04')||'"/>'));
+
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(2)||'" DAYTXT="'||pts_to_xml('Day 2')||'" DAYBGN="'||pts_to_xml('1')||'" QUECDE="'||to_char(5)||'" QUETXT="'||pts_to_xml('Question #05')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(2)||'" DAYTXT="'||pts_to_xml('Day 2')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(6)||'" QUETXT="'||pts_to_xml('Question #06')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(2)||'" DAYTXT="'||pts_to_xml('Day 2')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(7)||'" QUETXT="'||pts_to_xml('Question #07')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(2)||'" DAYTXT="'||pts_to_xml('Day 2')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(8)||'" QUETXT="'||pts_to_xml('Question #08')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(2)||'" DAYTXT="'||pts_to_xml('Day 2')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(9)||'" QUETXT="'||pts_to_xml('Question #09')||'"/>'));
+
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(3)||'" DAYTXT="'||pts_to_xml('Day 3')||'" DAYBGN="'||pts_to_xml('1')||'" QUECDE="'||to_char(1)||'" QUETXT="'||pts_to_xml('Question #01')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(3)||'" DAYTXT="'||pts_to_xml('Day 3')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(2)||'" QUETXT="'||pts_to_xml('Question #02')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(3)||'" DAYTXT="'||pts_to_xml('Day 3')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(3)||'" QUETXT="'||pts_to_xml('Question #03')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(3)||'" DAYTXT="'||pts_to_xml('Day 3')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(4)||'" QUETXT="'||pts_to_xml('Question #04')||'"/>'));
+
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(4)||'" DAYTXT="'||pts_to_xml('Day 4')||'" DAYBGN="'||pts_to_xml('1')||'" QUECDE="'||to_char(5)||'" QUETXT="'||pts_to_xml('Question #05')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(4)||'" DAYTXT="'||pts_to_xml('Day 4')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(6)||'" QUETXT="'||pts_to_xml('Question #06')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(4)||'" DAYTXT="'||pts_to_xml('Day 4')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(7)||'" QUETXT="'||pts_to_xml('Question #07')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(4)||'" DAYTXT="'||pts_to_xml('Day 4')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(8)||'" QUETXT="'||pts_to_xml('Question #08')||'"/>'));
+      pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(4)||'" DAYTXT="'||pts_to_xml('Day 4')||'" DAYBGN="'||pts_to_xml('0')||'" QUECDE="'||to_char(9)||'" QUETXT="'||pts_to_xml('Question #09')||'"/>'));
+
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2221)||'" RESTXT="'||pts_to_xml('(2221) Pet name 2221')||'" RESSTS="'||pts_to_xml('1')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2222)||'" RESTXT="'||pts_to_xml('(2222) Pet name 2222')||'" RESSTS="'||pts_to_xml('1')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2223)||'" RESTXT="'||pts_to_xml('(2223) Pet name 2223')||'" RESSTS="'||pts_to_xml('0')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2224)||'" RESTXT="'||pts_to_xml('(2224) Pet name 2224')||'" RESSTS="'||pts_to_xml('0')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2225)||'" RESTXT="'||pts_to_xml('(2225) Pet name 2225')||'" RESSTS="'||pts_to_xml('0')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2226)||'" RESTXT="'||pts_to_xml('(2226) Pet name 2226')||'" RESSTS="'||pts_to_xml('1')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2227)||'" RESTXT="'||pts_to_xml('(2227) Pet name 2227')||'" RESSTS="'||pts_to_xml('0')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2228)||'" RESTXT="'||pts_to_xml('(2228) Pet name 2228')||'" RESSTS="'||pts_to_xml('1')||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE RESCDE="'||to_char(2229)||'" RESTXT="'||pts_to_xml('(2229) Pet name 2229')||'" RESSTS="'||pts_to_xml('0')||'"/>'));
+
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - LOAD_RESPONSE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end load_response;
+
+   /*******************************************************/
+   /* This procedure performs the select response routine */
+   /*******************************************************/
+   function select_response return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code varchar2(32);
+      var_res_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tes_code := xslProcessor.valueOf(obj_pts_request,'@TESCDE');
+      var_res_code := xslProcessor.valueOf(obj_pts_request,'@RESCDE');
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*SELRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test response xml
+      /*-*/
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(1)||'" QUECDE="'||to_char(1)||'" RESVAL="'||to_char(1)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(1)||'" QUECDE="'||to_char(2)||'" RESVAL="'||to_char(2)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(1)||'" QUECDE="'||to_char(3)||'" RESVAL="'||to_char(2)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(1)||'" QUECDE="'||to_char(4)||'" RESVAL="'||to_char(1)||'"/>'));
+
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(2)||'" QUECDE="'||to_char(5)||'" RESVAL="'||to_char(5)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(2)||'" QUECDE="'||to_char(6)||'" RESVAL="'||to_char(4)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(2)||'" QUECDE="'||to_char(7)||'" RESVAL="'||to_char(3)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(2)||'" QUECDE="'||to_char(8)||'" RESVAL="'||to_char(4)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(2)||'" QUECDE="'||to_char(9)||'" RESVAL="'||to_char(5)||'"/>'));
+
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(3)||'" QUECDE="'||to_char(1)||'" RESVAL="'||to_char(6)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(3)||'" QUECDE="'||to_char(2)||'" RESVAL="'||to_char(7)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(3)||'" QUECDE="'||to_char(3)||'" RESVAL="'||to_char(8)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(3)||'" QUECDE="'||to_char(4)||'" RESVAL="'||to_char(9)||'"/>'));
+
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(4)||'" QUECDE="'||to_char(5)||'" RESVAL="'||to_char(8)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(4)||'" QUECDE="'||to_char(6)||'" RESVAL="'||to_char(7)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(4)||'" QUECDE="'||to_char(7)||'" RESVAL="'||to_char(6)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(4)||'" QUECDE="'||to_char(8)||'" RESVAL="'||to_char(7)||'"/>'));
+      pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(4)||'" QUECDE="'||to_char(9)||'" RESVAL="'||to_char(8)||'"/>'));
+
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - SELECT_RESPONSE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_response;
+
+   /*******************************************************/
+   /* This procedure performs the update response routine */
+   /*******************************************************/
+   procedure update_response is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code number;
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*UPDRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Product test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve and lock the existing selection template
+      /*-*/
+   --   var_found := false;
+   --   begin
+   --      open csr_retrieve;
+   --      fetch csr_retrieve into rcd_retrieve;
+   --      if csr_retrieve%found then
+   --         var_found := true;
+   --      end if;
+   --      close csr_retrieve;
+   --   exception
+   --      when others then
+   --         pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') is currently locked');
+   --         return;
+   --   end;
+   --   if var_found = false then
+   --      pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') does not exist');
+   --   end if;
+
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - UPDATE_RESPONSE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_response;
 
    /******************************************************/
    /* This procedure performs the load pet panel routine */
@@ -660,7 +1206,7 @@ create or replace package body pts_app.pts_tes_function as
                 t02.hde_geo_zone
            from pts_pet_definition t01,
                 pts_hou_definition t02,
-                table(pts_app.pts_gen_function.select_list('*PET',var_sel_group)) t03
+                table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)) t03
           where t01.pde_hou_code = t02.hde_hou_code
             and t01.pde_pet_code = t03.sel_code
             and t01.pde_pet_status = 1
@@ -1078,7 +1624,7 @@ create or replace package body pts_app.pts_tes_function as
          select t01.hde_hou_code,
                 t01.hde_geo_zone
            from pts_hou_definition t01,
-                table(pts_app.pts_gen_function.select_list('*HOUSEHOLD',var_sel_group)) t02
+                table(pts_app.pts_gen_function.get_list_data('*HOUSEHOLD',var_sel_group)) t02
           where t01.hde_hou_code = t02.sel_code
             and t01.hde_hou_status = 1
             and t01.hde_hou_code not in (select nvl(tsp_hou_code,-1)
