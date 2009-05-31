@@ -372,18 +372,42 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspList');
-         var objTable = document.getElementById('LST_List');
+         var objHead = document.getElementById('tabListHead');
+         var objBody = document.getElementById('tabListBody');
          var objRow;
          var objCell;
-         for (var i=objTable.rows.length-1;i>=0;i--) {
-            objTable.deleteRow(i);
+         for (var i=objHead.rows.length-1;i>=0;i--) {
+            objHead.deleteRow(i);
+         }
+         for (var i=objBody.rows.length-1;i>=0;i--) {
+            objBody.deleteRow(i);
          }
          var intColCount = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTCTL') {
                intColCount = objElements[i].getAttribute('COLCNT');
+               objRow = objHead.insertRow(-1);
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerHTML = '&nbsp;';
+               objCell.className = 'clsLabelHB';
+               objCell.style.whiteSpace = 'nowrap';
+               for (var j=1;j<=intColCount;j++) {
+                  objCell = objRow.insertCell(j);
+                  objCell.colSpan = 1;
+                  objCell.innerText = objElements[i].getAttribute('HED'+j);
+                  objCell.className = 'clsLabelHB';
+                  objCell.style.whiteSpace = 'nowrap';
+               }
+               intColCount++;
+               objCell = objRow.insertCell(intColCount);
+               intColCount--;
+               objCell.colSpan = 1;
+               objCell.innerHTML = '&nbsp;';
+               objCell.className = 'clsLabelHB';
+               objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'LSTROW') {
-               objRow = objTable.insertRow(-1);
+               objRow = objBody.insertRow(-1);
                objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
                objCell = objRow.insertCell(0);
@@ -400,18 +424,19 @@ sub PaintFunction()%>
                }
             }
          }
-         if (objTable.rows.length == 0) {
-            objRow = objTable.insertRow(-1);
+         if (objBody.rows.length == 0) {
+            objRow = objobjBody.insertRow(-1);
             objCell = objRow.insertCell(0);
             objCell.colSpan = intColCount+1;
             objCell.innerText = 'NO DATA FOUND';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
          }
+         setScrollable('ListHead','ListBody','horizontal');
       }
    }
    function doListAccept(intRow) {
-      document.getElementById('PRO_GeoZone').value = document.getElementById('LST_List').rows[intRow].getAttribute('selcde');
+      document.getElementById('PRO_GeoZone').value = document.getElementById('tabListBody').rows[intRow].getAttribute('selcde');
       displayScreen('dspPrompt');
       document.getElementById('PRO_GeoZone').focus();
    }
@@ -427,6 +452,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -520,9 +546,22 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible">
-               <table id="LST_List" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
-            </div>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conListHead">
+                     <table class="clsTableHead" id="tabListHead" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conListBody">
+                     <table class="clsTableBody" id="tabListBody" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
       <tr>
