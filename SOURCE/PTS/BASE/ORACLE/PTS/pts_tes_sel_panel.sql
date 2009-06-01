@@ -22,8 +22,8 @@ create table pts.pts_tes_sel_panel
    (tsp_tes_code                    number                        not null,
     tsp_sel_group                   varchar2(32 char)             not null,
     tsp_hou_code                    number                        not null,
-    tsp_pet_code                    number                        null,
-    tsp_status                      varchar2(20 char)             not null);
+    tsp_pet_code                    number                        not null,
+    tsp_status                      varchar2(32 char)             not null);
 
 /**/
 /* Comments
@@ -33,7 +33,7 @@ comment on column pts.pts_tes_sel_panel.tsp_tes_code is 'Test code';
 comment on column pts.pts_tes_sel_panel.tsp_sel_group is 'Selection group code (*GROUP01 - *GROUP99)';
 comment on column pts.pts_tes_sel_panel.tsp_hou_code is 'Household code';
 comment on column pts.pts_tes_sel_panel.tsp_pet_code is 'Pet code (product test type *HHOLD = zero)';
-comment on column pts.pts_tes_sel_panel.tsp_status is 'Panel status (*ACTIVE, *RESERVE, *RECRUITED)';
+comment on column pts.pts_tes_sel_panel.tsp_status is 'Panel status (*MEMBER, *RESERVE, *RECRUITED)';
 
 /**/
 /* Primary Key Constraint
