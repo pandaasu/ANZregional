@@ -95,7 +95,7 @@ create or replace package body pts_app.pts_geo_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2" HED1="'||pts_to_xml('Country')||'" HED2="'||pts_to_xml('Country Status')||'"/>'));
 
       /*-*/
       /* Retrieve the country list and pipe the results
@@ -477,7 +477,7 @@ create or replace package body pts_app.pts_geo_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="3"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="3" HED1="'||pts_to_xml('Country')||'" HED2="'||pts_to_xml('Location')||'" HED3="'||pts_to_xml('Location Status')||'"/>'));
 
       /*-*/
       /* Retrieve the location list and pipe the results
@@ -908,7 +908,7 @@ create or replace package body pts_app.pts_geo_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="4"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="4" HED1="'||pts_to_xml('Country')||'" HED2="'||pts_to_xml('Location')||'" HED3="'||pts_to_xml('District')||'" HED4="'||pts_to_xml('District Status')||'"/>'));
 
       /*-*/
       /* Retrieve the district list and pipe the results
@@ -1345,7 +1345,7 @@ create or replace package body pts_app.pts_geo_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="5"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="5" HED1="'||pts_to_xml('Country')||'" HED2="'||pts_to_xml('Location')||'" HED3="'||pts_to_xml('District')||'" HED4="'||pts_to_xml('Area')||'" HED5="'||pts_to_xml('Area Status')||'"/>'));
 
       /*-*/
       /* Retrieve the area list and pipe the results
