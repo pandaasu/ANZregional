@@ -559,15 +559,15 @@ sub PaintFunction()%>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conListHead">
-                     <table class="clsTableHead" id="tabListHead" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsFixed" id="conHeadList">
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conListBody">
-                     <table class="clsTableBody" id="tabListBody" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsScroll" id="conBodyList">
+                     <table class="clsTableBody" id="tabBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
