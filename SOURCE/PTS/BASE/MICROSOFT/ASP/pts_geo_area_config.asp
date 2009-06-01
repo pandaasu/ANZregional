@@ -393,30 +393,35 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspList');
-         var objHead = document.getElementById('tabListHead');
-         var objBody = document.getElementById('tabListBody');
+         var objTabHead = document.getElementById('tabHeadList');
+         var objTabBody = document.getElementById('tabBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
-         for (var i=objHead.rows.length-1;i>=0;i--) {
-            objHead.deleteRow(i);
+         var objNobr;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
          }
-         for (var i=objBody.rows.length-1;i>=0;i--) {
-            objBody.deleteRow(i);
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
          }
          var intColCount = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTCTL') {
                intColCount = objElements[i].getAttribute('COLCNT');
-               objRow = objHead.insertRow(-1);
+               objRow = objTabHead.insertRow(-1);
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerHTML = '&nbsp;';
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;Action&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
                   objCell = objRow.insertCell(j);
                   objCell.colSpan = 1;
-                  objCell.innerText = objElements[i].getAttribute('HED'+j);
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('HED'+j)+'&nbsp;';
                   objCell.className = 'clsLabelHB';
                   objCell.style.whiteSpace = 'nowrap';
                }
@@ -424,40 +429,45 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(intColCount);
                intColCount--;
                objCell.colSpan = 1;
+               objCell.align = 'center';
                objCell.innerHTML = '&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'LSTROW') {
-               objRow = objBody.insertRow(-1);
+               objRow = objTabBody.insertRow(-1);
                objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
+               objCell.align = 'center';
                objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
                   objCell = objRow.insertCell(j);
                   objCell.colSpan = 1;
-                  objCell.innerText = objElements[i].getAttribute('COL'+j);
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('COL'+j)+'&nbsp;';
                   objCell.className = 'clsLabelFN';
                   objCell.style.whiteSpace = 'nowrap';
                }
             }
          }
-         if (objBody.rows.length == 0) {
-            objRow = objobjBody.insertRow(-1);
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(0);
             objCell.colSpan = intColCount+1;
-            objCell.innerText = 'NO DATA FOUND';
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
          }
-         setScrollable('ListHead','ListBody','horizontal');
+         setScrollable('HeadList','BodyList','horizontal');
+         objTabHead.style.tableLayout = 'fixed';
+         objTabBody.style.tableLayout = 'fixed';
       }
    }
    function doListAccept(intRow) {
-      document.getElementById('PRO_GeoZone').value = document.getElementById('tabListBody').rows[intRow].getAttribute('selcde');
+      document.getElementById('PRO_GeoZone').value = document.getElementById('tabBodyList').rows[intRow].getAttribute('selcde');
       displayScreen('dspPrompt');
       document.getElementById('PRO_GeoZone').focus();
    }
@@ -465,7 +475,6 @@ sub PaintFunction()%>
       displayScreen('dspPrompt');
       document.getElementById('PRO_GeoZone').focus();
    }
-
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -576,15 +585,15 @@ sub PaintFunction()%>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conListHead">
-                     <table class="clsTableHead" id="tabListHead" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsFixed" id="conHeadList">
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conListBody">
-                     <table class="clsTableBody" id="tabListBody" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsScroll" id="conBodyList">
+                     <table class="clsTableBody" id="tabBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>

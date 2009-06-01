@@ -372,30 +372,35 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspList');
-         var objHead = document.getElementById('tabListHead');
-         var objBody = document.getElementById('tabListBody');
+         var objTabHead = document.getElementById('tabHeadList');
+         var objTabBody = document.getElementById('tabBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
-         for (var i=objHead.rows.length-1;i>=0;i--) {
-            objHead.deleteRow(i);
+         var objNobr;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
          }
-         for (var i=objBody.rows.length-1;i>=0;i--) {
-            objBody.deleteRow(i);
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
          }
          var intColCount = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTCTL') {
                intColCount = objElements[i].getAttribute('COLCNT');
-               objRow = objHead.insertRow(-1);
+               objRow = objTabHead.insertRow(-1);
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerHTML = '&nbsp;';
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;Action&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
                   objCell = objRow.insertCell(j);
                   objCell.colSpan = 1;
-                  objCell.innerText = objElements[i].getAttribute('HED'+j);
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('HED'+j)+'&nbsp;';
                   objCell.className = 'clsLabelHB';
                   objCell.style.whiteSpace = 'nowrap';
                }
@@ -403,36 +408,41 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(intColCount);
                intColCount--;
                objCell.colSpan = 1;
+               objCell.align = 'center';
                objCell.innerHTML = '&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'LSTROW') {
-               objRow = objBody.insertRow(-1);
+               objRow = objTabBody.insertRow(-1);
                objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
+               objCell.align = 'center';
                objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
                   objCell = objRow.insertCell(j);
                   objCell.colSpan = 1;
-                  objCell.innerText = objElements[i].getAttribute('COL'+j);
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('COL'+j)+'&nbsp;';
                   objCell.className = 'clsLabelFN';
                   objCell.style.whiteSpace = 'nowrap';
                }
             }
          }
-         if (objBody.rows.length == 0) {
-            objRow = objobjBody.insertRow(-1);
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(0);
             objCell.colSpan = intColCount+1;
-            objCell.innerText = 'NO DATA FOUND';
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
          }
-         setScrollable('ListHead','ListBody','horizontal');
+         setScrollable('HeadList','BodyList','horizontal');
+         objTabHead.style.tableLayout = 'fixed';
+         objTabBody.style.tableLayout = 'fixed';
       }
    }
    function doListAccept(intRow) {
