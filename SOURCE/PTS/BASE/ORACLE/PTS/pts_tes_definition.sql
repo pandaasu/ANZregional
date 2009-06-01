@@ -37,7 +37,7 @@ create table pts.pts_tes_definition
     tde_day_count                   number                        null,
     tde_req_mem_count               number                        null,
     tde_req_res_count               number                        null,
-    tde_hou_pet_multiple            varchar2(1 char)              null,
+    tde_hou_pet_multi               varchar2(1 char)              null,
     tde_tes_error                   varchar2(2000 char)           null);
 
 /**/

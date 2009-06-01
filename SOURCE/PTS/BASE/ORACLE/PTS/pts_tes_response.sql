@@ -33,7 +33,7 @@ comment on table pts.pts_tes_response is 'Test Response Table';
 comment on column pts.pts_tes_response.tre_tes_code is 'Test code';
 comment on column pts.pts_tes_response.tre_hou_code is 'Household code';
 comment on column pts.pts_tes_response.tre_pet_code is 'Pet code (test target *HOUSEHOLD = zero)';
-comment on column pts.pts_tes_response.tre_day_code is 'Test Day code';
+comment on column pts.pts_tes_response.tre_day_code is 'Test day code';
 comment on column pts.pts_tes_response.tre_que_code is 'Test question code';
 comment on column pts.pts_tes_response.tre_res_code is 'Test response code';
 

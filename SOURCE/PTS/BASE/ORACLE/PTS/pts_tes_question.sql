@@ -28,7 +28,7 @@ create table pts.pts_tes_question
 /**/
 comment on table pts.pts_tes_question is 'Test Question Table';
 comment on column pts.pts_tes_question.tqu_tes_code is 'Test code';
-comment on column pts.pts_tes_question.tqu_day_code is 'Test Day code';
+comment on column pts.pts_tes_question.tqu_day_code is 'Test day code';
 comment on column pts.pts_tes_question.tqu_que_code is 'Test question code';
 
 /**/
