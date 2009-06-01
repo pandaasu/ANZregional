@@ -460,10 +460,11 @@ sub PaintFunction()%>
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
+         } else {
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
          }
-         setScrollable('HeadList','BodyList','horizontal');
-         objTabHead.style.tableLayout = 'fixed';
-         objTabBody.style.tableLayout = 'fixed';
       }
    }
    function doListAccept(intRow) {
