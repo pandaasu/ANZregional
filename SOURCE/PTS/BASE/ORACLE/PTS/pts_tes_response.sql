@@ -34,7 +34,7 @@ comment on column pts.pts_tes_response.tre_tes_code is 'Test code';
 comment on column pts.pts_tes_response.tre_pan_code is 'Panel code (household or pet)';
 comment on column pts.pts_tes_response.tre_day_code is 'Day code';
 comment on column pts.pts_tes_response.tre_que_code is 'Question code';
-comment on column pts.pts_tes_response.tre_sam_code is 'Sample code';
+comment on column pts.pts_tes_response.tre_sam_code is 'Sample code (question type day = 0)';
 comment on column pts.pts_tes_response.tre_res_value is 'Response value';
 
 /**/
