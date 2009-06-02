@@ -23,7 +23,8 @@ create table pts.pts_tes_allocation
     tal_pan_code                    number                        not null,
     tal_day_code                    number                        not null,
     tal_sam_code                    number                        not null,
-    tal_seq_numb                    number                        not null);
+    tal_seq_numb                    number                        not null,
+    tal_mkt_code                    varchar2(1 char)              not null);
 
 /**/
 /* Comments
@@ -34,6 +35,7 @@ comment on column pts.pts_tes_allocation.tal_pan_code is 'Panel code (household 
 comment on column pts.pts_tes_allocation.tal_day_code is 'Day code';
 comment on column pts.pts_tes_allocation.tal_sam_code is 'Sample code';
 comment on column pts.pts_tes_allocation.tal_seq_numb is 'Sequence number';
+comment on column pts.pts_tes_allocation.tal_mkt_code is 'Market research code';
 
 /**/
 /* Primary Key Constraint
