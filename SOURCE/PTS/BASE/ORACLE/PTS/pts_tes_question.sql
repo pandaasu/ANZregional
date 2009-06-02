@@ -21,15 +21,17 @@
 create table pts.pts_tes_question
    (tqu_tes_code                    number                        not null,
     tqu_day_code                    number                        not null,
-    tqu_que_code                    number                        not null);
+    tqu_que_code                    number                        not null,
+    tqu_dsp_seqn                    number                        not null);
 
 /**/
 /* Comments
 /**/
 comment on table pts.pts_tes_question is 'Test Question Table';
 comment on column pts.pts_tes_question.tqu_tes_code is 'Test code';
-comment on column pts.pts_tes_question.tqu_day_code is 'Test day code';
-comment on column pts.pts_tes_question.tqu_que_code is 'Test question code';
+comment on column pts.pts_tes_question.tqu_day_code is 'Day code';
+comment on column pts.pts_tes_question.tqu_que_code is 'Question code';
+comment on column pts.pts_tes_question.tqu_dsp_seqn is 'Display sequence';
 
 /**/
 /* Primary Key Constraint

@@ -20,26 +20,26 @@
 /**/
 create table pts.pts_tes_allocation
    (tal_tes_code                    number                        not null,
-    tal_hou_code                    number                        not null,
-    tal_pet_code                    number                        not null,
+    tal_pan_code                    number                        not null,
     tal_day_code                    number                        not null,
-    tal_sam_code                    number                        not null);
+    tal_sam_code                    number                        not null,
+    tal_seq_numb                    number                        not null);
 
 /**/
 /* Comments
 /**/
 comment on table pts.pts_tes_allocation is 'Test Allocation Table';
 comment on column pts.pts_tes_allocation.tal_tes_code is 'Test code';
-comment on column pts.pts_tes_allocation.tal_hou_code is 'Household code';
-comment on column pts.pts_tes_allocation.tal_pet_code is 'Pet code (product test type *HHOLD = zero)';
+comment on column pts.pts_tes_allocation.tal_pan_code is 'Panel code (household or pet)';
 comment on column pts.pts_tes_allocation.tal_day_code is 'Day code';
 comment on column pts.pts_tes_allocation.tal_sam_code is 'Sample code';
+comment on column pts.pts_tes_allocation.tal_seq_numb is 'Sequence number';
 
 /**/
 /* Primary Key Constraint
 /**/
 alter table pts.pts_tes_allocation
-   add constraint pts_tes_allocation_pk primary key (tal_tes_code, tal_hou_code, tal_pet_code, tal_day_code);
+   add constraint pts_tes_allocation_pk primary key (tal_tes_code, tal_pan_code, tal_day_code, tal_sam_code);
 
 /**/
 /* Authority
