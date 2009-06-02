@@ -413,11 +413,6 @@ sub PaintFunction()%>
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Member count must be entered';
       }
-      if (document.getElementById('TES_ResCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Reserve count must be entered';
-      }
-
       if (strMessage != '') {
          alert(strMessage);
          return;
