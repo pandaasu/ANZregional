@@ -698,9 +698,6 @@ create or replace package body pts_app.pts_stm_function as
       if var_req_mem_count is null or var_req_mem_count < 1 then
          pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
       end if;
-      if var_req_res_count is null or var_req_res_count < 1 then
-         pts_gen_function.add_mesg_data('Reserve count ('||xslProcessor.valueOf(obj_pts_request,'@RESCNT')||') must be a number greater than zero');
-      end if;
       if var_hou_pet_multi is null or (var_hou_pet_multi != '0' and var_hou_pet_multi != '1') then
          pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
       end if;
@@ -736,10 +733,14 @@ create or replace package body pts_app.pts_stm_function as
       clear_panel(rcd_retrieve.std_stm_code, var_req_mem_count, var_req_res_count);
       if rcd_retrieve.std_stm_target = 1 then
          select_pet_panel(rcd_retrieve.std_stm_code, '*MEMBER', nvl(var_hou_pet_multi,'0'));
-         select_pet_panel(rcd_retrieve.std_stm_code, '*RESERVE', nvl(var_hou_pet_multi,'0'));
+         if var_req_res_count != 0 then
+            select_pet_panel(rcd_retrieve.std_stm_code, '*RESERVE', nvl(var_hou_pet_multi,'0'));
+         end if;
       else
          select_hou_panel(rcd_retrieve.std_stm_code, '*MEMBER');
-         select_hou_panel(rcd_retrieve.std_stm_code, '*RESERVE');
+         if var_req_res_count != 0 then
+            select_hou_panel(rcd_retrieve.std_stm_code, '*RESERVE');
+         end if;
       end if;
 
       /*-*/
@@ -825,7 +826,7 @@ create or replace package body pts_app.pts_stm_function as
           order by t01.stv_val_code asc;
       rcd_value csr_value%rowtype;
 
-      cursor csr_panel is
+      cursor csr_panel_pet is
          select t01.*,
                 t02.*,
                 t03.*
@@ -833,13 +834,24 @@ create or replace package body pts_app.pts_stm_function as
                 pts_hou_definition t02,
                 pts_pet_definition t03
           where t01.stp_hou_code = t02.hde_hou_code(+)
-            and t01.stp_pet_code = t03.pde_pet_code(+)
+            and t01.stp_pan_code = t03.pde_pet_code(+)
             and t01.stp_stm_code = var_stm_code
             and t01.stp_sel_group = rcd_group.stg_sel_group
           order by t01.stp_pan_status asc,
-                   t01.stp_hou_code asc,
-                   t01.stp_pet_code asc;
-      rcd_panel csr_panel%rowtype;
+                   t01.stp_pan_code asc;
+      rcd_panel_pet csr_panel_pet%rowtype;
+
+      cursor csr_panel_hou is
+         select t01.*,
+                t02.*
+           from pts_stm_panel t01,
+                pts_hou_definition t02
+          where t01.stp_pan_code = t02.hde_hou_code(+)
+            and t01.stp_stm_code = var_stm_code
+            and t01.stp_sel_group = rcd_group.stg_sel_group
+          order by t01.stp_pan_status asc,
+                   t01.stp_pan_code asc;
+      rcd_panel_hou csr_panel_hou%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -960,26 +972,40 @@ create or replace package body pts_app.pts_stm_function as
          /*-*/
          /* Retrieve the panel data
          /*-*/
-         pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Panel</td></tr>');
-         open csr_panel;
-         loop
-            fetch csr_panel into rcd_panel;
-            if csr_panel%notfound then
-               exit;
-            end if;
-            if rcd_retrieve.std_stm_target = 1 then
-               var_work := 'Household ('||rcd_panel.stp_hou_code||') '||rcd_panel.hde_con_fullname||', '||rcd_panel.hde_loc_street||', '||rcd_panel.hde_loc_town;
-               var_work := var_work||' - Pet ('||rcd_panel.stp_pet_code||') '||rcd_panel.pde_pet_name;
-            else
-               var_work := 'Household ('||rcd_panel.stp_hou_code||') '||rcd_panel.hde_con_fullname||', '||rcd_panel.hde_loc_street||', '||rcd_panel.hde_loc_town;
-            end if;
-            var_output := '<tr>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.stp_pan_status||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
-            var_output := var_output||'</tr>';
-            pipe row(var_output);
-         end loop;
-         close csr_panel;
+         if rcd_retrieve.std_stm_target = 1 then
+            pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Panel</td></tr>');
+            open csr_panel_pet;
+            loop
+               fetch csr_panel_pet into rcd_panel_pet;
+               if csr_panel_pet%notfound then
+                  exit;
+               end if;
+               var_work := 'Household ('||rcd_panel_pet.stp_hou_code||') '||rcd_panel_pet.hde_con_fullname||', '||rcd_panel_pet.hde_loc_street||', '||rcd_panel_pet.hde_loc_town;
+               var_work := var_work||' - Pet ('||rcd_panel_pet.stp_pan_code||') '||rcd_panel_pet.pde_pet_name;
+               var_output := '<tr>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel_pet.stp_pan_status||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
+               var_output := var_output||'</tr>';
+               pipe row(var_output);
+            end loop;
+            close csr_panel_pet;
+         else
+            pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Panel</td></tr>');
+            open csr_panel_hou;
+            loop
+               fetch csr_panel_hou into rcd_panel_hou;
+               if csr_panel_hou%notfound then
+                  exit;
+               end if;
+               var_work := 'Household ('||rcd_panel_hou.stp_pan_code||') '||rcd_panel_hou.hde_con_fullname||', '||rcd_panel_hou.hde_loc_street||', '||rcd_panel_hou.hde_loc_town;
+               var_output := '<tr>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel_hou.stp_pan_status||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:9pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
+               var_output := var_output||'</tr>';
+               pipe row(var_output);
+            end loop;
+            close csr_panel_hou;
+         end if;
 
       end loop;
       close csr_group;
@@ -1351,7 +1377,7 @@ create or replace package body pts_app.pts_stm_function as
           where t01.pde_hou_code = t02.hde_hou_code
             and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
             and t01.pde_pet_status = 1
-            and t01.pde_pet_code not in (select nvl(stp_pet_code,-1)
+            and t01.pde_pet_code not in (select nvl(stp_pan_code,-1)
                                            from pts_stm_panel
                                           where stp_stm_code = par_stm_code)
           order by dbms_random.value;
@@ -1384,7 +1410,7 @@ create or replace package body pts_app.pts_stm_function as
       rcd_classification csr_classification%rowtype;
 
       cursor csr_panel_check is
-         select stp_pet_code
+         select stp_pan_code
            from pts_stm_panel t01
           where t01.stp_stm_code = par_stm_code
             and t01.stp_hou_code = rcd_panel.pde_hou_code;
@@ -1593,10 +1619,10 @@ create or replace package body pts_app.pts_stm_function as
                /* Insert the new panel member
                /*-*/
                rcd_pts_stm_panel.stp_stm_code := par_stm_code;
-               rcd_pts_stm_panel.stp_sel_group := tbl_sel_group(idg).sel_group;
-               rcd_pts_stm_panel.stp_hou_code := rcd_panel.pde_hou_code;
-               rcd_pts_stm_panel.stp_pet_code := rcd_panel.pde_pet_code;
+               rcd_pts_stm_panel.stp_pan_code := rcd_panel.pde_pet_code;
                rcd_pts_stm_panel.stp_pan_status := upper(par_pan_type);
+               rcd_pts_stm_panel.stp_hou_code := rcd_panel.pde_hou_code;
+               rcd_pts_stm_panel.stp_sel_group := tbl_sel_group(idg).sel_group;
                insert into pts_stm_panel values rcd_pts_stm_panel;
 
                /*-*/
@@ -1728,7 +1754,7 @@ create or replace package body pts_app.pts_stm_function as
            from pts_hou_definition t01
           where t01.hde_hou_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*HOUSEHOLD',var_sel_group)))
             and t01.hde_hou_status = 1
-            and t01.hde_hou_code not in (select nvl(stp_hou_code,-1)
+            and t01.hde_hou_code not in (select nvl(stp_pan_code,-1)
                                            from pts_stm_panel
                                           where stp_stm_code = par_stm_code)
           order by dbms_random.value;
@@ -1917,10 +1943,10 @@ create or replace package body pts_app.pts_stm_function as
                /* Insert the new panel member
                /*-*/
                rcd_pts_stm_panel.stp_stm_code := par_stm_code;
-               rcd_pts_stm_panel.stp_sel_group := tbl_sel_group(idg).sel_group;
-               rcd_pts_stm_panel.stp_hou_code := rcd_panel.hde_hou_code;
-               rcd_pts_stm_panel.stp_pet_code := 0;
+               rcd_pts_stm_panel.stp_pan_code := rcd_panel.hde_hou_code;
                rcd_pts_stm_panel.stp_pan_status := upper(par_pan_type);
+               rcd_pts_stm_panel.stp_hou_code := rcd_panel.hde_hou_code;
+               rcd_pts_stm_panel.stp_sel_group := tbl_sel_group(idg).sel_group;
                insert into pts_stm_panel values rcd_pts_stm_panel;
 
                /*-*/
