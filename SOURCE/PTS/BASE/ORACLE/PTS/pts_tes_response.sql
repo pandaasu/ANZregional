@@ -24,7 +24,7 @@ create table pts.pts_tes_response
     tre_day_code                    number                        not null,
     tre_que_code                    number                        not null,
     tre_sam_code                    number                        not null,
-    tre_res_code                    number                        null);
+    tre_res_value                   number                        null);
 
 /**/
 /* Comments
@@ -34,8 +34,8 @@ comment on column pts.pts_tes_response.tre_tes_code is 'Test code';
 comment on column pts.pts_tes_response.tre_pan_code is 'Panel code (household or pet)';
 comment on column pts.pts_tes_response.tre_day_code is 'Day code';
 comment on column pts.pts_tes_response.tre_que_code is 'Question code';
-comment on column pts.pts_tes_response.tre_que_code is 'Sample code';
-comment on column pts.pts_tes_response.tre_res_code is 'Response code';
+comment on column pts.pts_tes_response.tre_sam_code is 'Sample code';
+comment on column pts.pts_tes_response.tre_res_value is 'Response value';
 
 /**/
 /* Primary Key Constraint
