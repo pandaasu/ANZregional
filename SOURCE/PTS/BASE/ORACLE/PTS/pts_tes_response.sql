@@ -31,7 +31,7 @@ create table pts.pts_tes_response
 /**/
 comment on table pts.pts_tes_response is 'Test Response Table';
 comment on column pts.pts_tes_response.tre_tes_code is 'Test code';
-comment on column pts.pts_tes_response.tre_hou_code is 'Panel code (household or pet)';
+comment on column pts.pts_tes_response.tre_pan_code is 'Panel code (household or pet)';
 comment on column pts.pts_tes_response.tre_day_code is 'Day code';
 comment on column pts.pts_tes_response.tre_que_code is 'Question code';
 comment on column pts.pts_tes_response.tre_que_code is 'Sample code';
