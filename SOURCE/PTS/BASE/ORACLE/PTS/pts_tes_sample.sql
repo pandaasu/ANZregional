@@ -22,8 +22,8 @@ create table pts.pts_tes_sample
    (tsa_tes_code                    number                        not null,
     tsa_sam_code                    number                        not null,
     tsa_rpt_code                    varchar2(3 char)              not null,
-    tsa_mkt_cod1                    varchar2(1 char)              not null,
-    tsa_mkt_cod2                    varchar2(1 char)              null,
+    tsa_mkt_code                    varchar2(1 char)              not null,
+    tsa_mkt_acde                    varchar2(1 char)              not null,
     tsa_sam_iden                    varchar2(20 char)             null);
 
 /**/
@@ -33,8 +33,8 @@ comment on table pts.pts_tes_sample is 'Test Sample Table';
 comment on column pts.pts_tes_sample.tsa_tes_code is 'Test code';
 comment on column pts.pts_tes_sample.tsa_sam_code is 'Sample code';
 comment on column pts.pts_tes_sample.tsa_rpt_code is 'Report code';
-comment on column pts.pts_tes_sample.tsa_mkt_cod1 is 'Market research code';
-comment on column pts.pts_tes_sample.tsa_mkt_cod2 is 'Market research alias';
+comment on column pts.pts_tes_sample.tsa_mkt_code is 'Market research code';
+comment on column pts.pts_tes_sample.tsa_mkt_acde is 'Market research alias (print only)';
 comment on column pts.pts_tes_sample.tsa_sam_iden is 'Sample identifier';
 
 /**/
