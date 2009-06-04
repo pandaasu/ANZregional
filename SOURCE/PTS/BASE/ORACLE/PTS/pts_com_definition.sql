@@ -37,9 +37,9 @@ create table pts.pts_com_definition
 /**/
 comment on table pts.pts_com_definition is 'Research Company Table';
 comment on column pts.pts_com_definition.cde_com_code is 'Company code';
-comment on column pts.pts_com_definition.cde_status is 'Product test status';
-comment on column pts.pts_com_definition.cde_upd_user is 'Product test update user';
-comment on column pts.pts_com_definition.cde_upd_date is 'Product test update date';
+comment on column pts.pts_com_definition.cde_com_status is 'Company status';
+comment on column pts.pts_com_definition.cde_upd_user is 'Company update user';
+comment on column pts.pts_com_definition.cde_upd_date is 'Company update date';
 comment on column pts.pts_com_definition.cde_com_name is 'Company name';
 comment on column pts.pts_com_definition.cde_loc_street is 'Company location street';
 comment on column pts.pts_com_definition.cde_loc_town is 'Company location town';
@@ -47,7 +47,7 @@ comment on column pts.pts_com_definition.cde_loc_postcode is 'Company location p
 comment on column pts.pts_com_definition.cde_loc_country is 'Company location country';
 comment on column pts.pts_com_definition.cde_tel_areacode is 'Company telephone areacode';
 comment on column pts.pts_com_definition.cde_tel_number is 'Company telephone number';
-comment on column pts.pts_com_definition.cde_fullname is 'Company contact full name';
+comment on column pts.pts_com_definition.cde_con_fullname is 'Company contact full name';
 
 /**/
 /* Primary Key Constraint
