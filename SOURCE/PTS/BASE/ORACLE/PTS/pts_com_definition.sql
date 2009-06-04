@@ -24,6 +24,7 @@ create table pts.pts_com_definition
     cde_upd_user                    varchar2(30 char)             not null,
     cde_upd_date                    date                          not null,
     cde_com_name                    varchar2(120 char)            null,
+    cde_com_number                  varchar2(32 char)             null,
     cde_loc_street                  varchar2(120 char)            null,
     cde_loc_town                    varchar2(120 char)            null,
     cde_loc_postcode                varchar2(32 char)             null,
@@ -41,6 +42,7 @@ comment on column pts.pts_com_definition.cde_com_status is 'Company status';
 comment on column pts.pts_com_definition.cde_upd_user is 'Company update user';
 comment on column pts.pts_com_definition.cde_upd_date is 'Company update date';
 comment on column pts.pts_com_definition.cde_com_name is 'Company name';
+comment on column pts.pts_com_definition.cde_com_number is 'Company number';
 comment on column pts.pts_com_definition.cde_loc_street is 'Company location street';
 comment on column pts.pts_com_definition.cde_loc_town is 'Company location town';
 comment on column pts.pts_com_definition.cde_loc_postcode is 'Company location postcode';
