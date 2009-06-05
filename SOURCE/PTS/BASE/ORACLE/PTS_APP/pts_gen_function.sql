@@ -39,6 +39,7 @@ create or replace package pts_app.pts_gen_function as
    function list_sel_data return pts_xml_type pipelined;
    function list_geo_zone(par_geo_type in number) return pts_geo_list_type pipelined;
    function list_pet_type return pts_pty_list_type pipelined;
+   function list_tes_type return pts_tty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
 
 end pts_gen_function;
@@ -1498,6 +1499,67 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end list_pet_type;
+
+   /******************************************************/
+   /* This procedure performs the list test type routine */
+   /******************************************************/
+   function list_tes_type return pts_tty_list_type pipelined is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_tes_type is
+         select t01.*
+           from pts_tes_type t01
+          order by t01.tty_tes_type asc;
+      rcd_tes_type csr_tes_type%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Retrieve the test type values
+      /*-*/
+      open csr_tes_type;
+      loop
+         fetch csr_tes_type into rcd_tes_type;
+         if csr_tes_type%notfound then
+            exit;
+         end if;
+         pipe row(pts_tty_list_object(rcd_tes_type.tty_tes_type,'('||to_char(rcd_tes_type.tty_tes_type)||') '||rcd_tes_type.tty_typ_text,rcd_tes_type.tty_typ_status,rcd_tes_type.tty_sam_count,rcd_tes_type.tty_alc_proc));
+      end loop;
+      close csr_tes_type;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - LIST_TES_TYPE - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end list_tes_type;
 
    /***********************************************************/
    /* This procedure performs the list classification routine */
