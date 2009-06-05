@@ -17,6 +17,7 @@ create or replace package ics_app.ics_wmsics01_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/02   Steve Gregan   Created
+    2009/06   Trevor Keon    Altered storage loc logic when creating ICSAPL01
 
    *******************************************************************************/
 
@@ -198,7 +199,7 @@ create or replace package body ics_app.ics_wmsics01_loader as
             var_output := var_output||var_sap_plant||',';
             var_output := var_output||var_avail_date||',';
             var_output := var_output||var_qty||',';
-            if trim(var_stor_loc) = '0001' and (var_stock_status is null or trim(var_stock_status) = '' or trim(var_stock_status) = 'S') then
+            if trim(var_stor_loc) = '0001' and (var_stock_status is null or trim(var_stock_status) = '' or trim(var_stock_status) = 'X') then
                var_output := var_output||'F,';
             elsif trim(var_stor_loc) = '0009' and (var_stock_status is null or trim(var_stock_status) = '') then
                var_output := var_output||'F,';
