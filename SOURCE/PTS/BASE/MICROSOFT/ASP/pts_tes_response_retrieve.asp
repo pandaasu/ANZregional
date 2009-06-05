@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_tes_config_resp_retrieve.asp                   //
+'// Script  : pts_tes_response_retrieve.asp                      //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the test response select    //
+'// Text    : This script implements the test response retrieve  //
 '//           functionality                                      //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_TES_CONFIG")
+   strReturn = GetSecurityCheck("PTS_TES_RESPONSE")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the test response select
+   '// Retrieve the test response retrieve
    '//
-   strStatement = "select xml_text from table(pts_app.pts_tes_function.select_response)"
+   strStatement = "select xml_text from table(pts_app.pts_tes_function.response_retrieve)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

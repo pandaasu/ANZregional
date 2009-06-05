@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_tes_config_update.asp                          //
+'// Script  : pts_tes_response_update.asp                        //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
 '// Text    : This script implements the test response update    //
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PTS_TES_CONFIG")
+   strReturn = GetSecurityCheck("PTS_TES_RESPONSE")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
