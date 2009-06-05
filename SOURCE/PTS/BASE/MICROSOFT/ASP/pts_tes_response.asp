@@ -679,7 +679,7 @@ sub PaintFunction()%>
       window.setTimeout('requestResponseSelect(\''+strXML+'\');',10);
    }
    function requestResponseSelect(strXML) {
-      doPostRequest('<%=strBase%>pts_tes_response_select.asp',function(strResponse) {checkResponseSelect(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>pts_tes_response_retrieve.asp',function(strResponse) {checkResponseSelect(strResponse);},false,streamXML(strXML));
    }
    function checkResponseSelect(strResponse) {
       doActivityStop();
