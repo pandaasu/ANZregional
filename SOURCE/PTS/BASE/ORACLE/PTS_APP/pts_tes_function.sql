@@ -29,6 +29,7 @@ create or replace package pts_app.pts_tes_function as
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    function response_load return pts_xml_type pipelined;
+   function response_list return pts_xml_type pipelined;
    function response_retrieve return pts_xml_type pipelined;
    procedure update_response;
    procedure update_panel;
@@ -841,10 +842,10 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
-      end if;
+    --  if rcd_retrieve.tde_tes_status != 2 and
+    --     rcd_retrieve.tde_tes_status != 3 then
+    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+    --  end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -857,9 +858,9 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      if rcd_retrieve.tde_tes_target = '1' then
+      if rcd_retrieve.tde_tes_target = 1 then
          var_target := 'Pet';
-      elsif rcd_retrieve.tde_tes_target = '2' then
+      elsif rcd_retrieve.tde_tes_target = 2 then
          var_target := 'Household';
       else
          var_target := '*UNKNOWN';
@@ -871,13 +872,14 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       for idx in 1..rcd_retrieve.tde_tes_day_count loop
          var_day_code := idx;
+         pipe row(pts_xml_object('<METD DAYCDE="'||to_char(var_day_code)||'" DAYTXT="Day '||to_char(var_day_code)||'"/>'));
          open csr_question;
          loop
             fetch csr_question into rcd_question;
             if csr_question%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<META DAYCDE="'||to_char(var_day_code)||'" DAYTXT="Day '||to_char(var_day_code)||'" QUECDE="'||to_char(rcd_question.tqu_que_code)||'" QUETXT="Que '||to_char(rcd_question.tqu_dsp_seqn)||'" QUETYP="'||pts_to_xml(rcd_question.tqu_que_type)||'" QUENAM="'||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
+            pipe row(pts_xml_object('<METQ DAYCDE="'||to_char(var_day_code)||'" QUECDE="'||to_char(rcd_question.tqu_que_code)||'" QUETXT="Que '||to_char(rcd_question.tqu_dsp_seqn)||'" QUETYP="'||pts_to_xml(rcd_question.tqu_que_type)||'" QUENAM="'||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
          end loop;
          close csr_question;
       end loop;
@@ -937,10 +939,10 @@ create or replace package body pts_app.pts_tes_function as
    /*-------------*/
    end response_load;
 
-   /*********************************************************/
-   /* This procedure performs the response retrieve routine */
-   /*********************************************************/
-   function response_retrieve return pts_xml_type pipelined is
+   /*****************************************************/
+   /* This procedure performs the response list routine */
+   /*****************************************************/
+   function response_list return pts_xml_type pipelined is
 
       /*-*/
       /* Local definitions
@@ -950,7 +952,6 @@ create or replace package body pts_app.pts_tes_function as
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
       var_tes_code number;
-      var_pan_code number;
       var_found boolean;
 
       /*-*/
@@ -962,19 +963,43 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_response is
+      cursor csr_panel_pet is
          select t01.*,
-                t02.tsa_mkt_code
-           from pts_tes_response t01,
-                pts_tes_sample t02
-          where t01.tre_tes_code = t02.tsa_tes_code
-            and t01.tre_sam_code = t02.tsa_sam_code
-            and t01.tre_tes_code = var_tes_code
-            and t01.tre_pan_code = var_pan_code
-          order by t01.tre_day_code asc,
-                   t01.tre_que_code asc,
-                   t01.tre_res_seqn asc;
-      rcd_response csr_response%rowtype;
+                t02.*,
+                t03.*,
+                decode(t04.tre_pan_code,null,'0','1') as res_status
+           from pts_tes_panel t01,
+                pts_hou_definition t02,
+                pts_pet_definition t03,
+                (select distinct(t01.tre_pan_code) as tre_pan_code
+                        from pts_tes_response t01
+                       where t01.tre_tes_code = var_tes_code) t04
+          where t01.tpa_hou_code = t02.hde_hou_code(+)
+            and t01.tpa_pan_code = t03.pde_pet_code(+)
+            and t01.tpa_pan_code = t04.tre_pan_code(+)
+            and t01.tpa_tes_code = var_tes_code
+          order by t02.hde_geo_zone asc,
+                   t01.tpa_pan_status asc,
+                   t01.tpa_pan_code asc;
+      rcd_panel_pet csr_panel_pet%rowtype;
+
+      cursor csr_panel_hou is
+         select t01.*,
+                t02.*,
+                decode(t03.tre_pan_code,null,'0','1') as res_status
+           from pts_tes_panel t01,
+                pts_hou_definition t02,
+                (select distinct(t01.tre_pan_code) as tre_pan_code
+                        from pts_tes_response t01
+                       where t01.tre_tes_code = var_tes_code) t03
+          where t01.tpa_pan_code = t02.hde_hou_code(+)
+            and t01.tpa_pan_code = t03.tre_pan_code(+)
+            and t01.tpa_tes_code = var_tes_code
+          order by t02.hde_geo_zone asc,
+                   t01.tpa_pan_status asc,
+                   t01.tpa_pan_code asc;
+      rcd_panel_hou csr_panel_hou%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -998,8 +1023,178 @@ create or replace package body pts_app.pts_tes_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      var_tes_code := xslProcessor.valueOf(obj_pts_request,'@TESCDE');
-      var_pan_code := xslProcessor.valueOf(obj_pts_request,'@PANCDE');
+      if var_action != '*LSTRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test panel data xml
+      /*-*/
+      if rcd_retrieve.tde_tes_target = 1 then
+         open csr_panel_pet;
+         loop
+            fetch csr_panel_pet into rcd_panel_pet;
+            if csr_panel_pet%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel_pet.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel_pet.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel_pet.tpa_pan_code)||') '||rcd_panel_pet.pde_pet_name||' - Household ('||rcd_panel_pet.tpa_hou_code||') '||rcd_panel_pet.hde_con_fullname||', '||rcd_panel_pet.hde_loc_street||', '||rcd_panel_pet.hde_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel_pet.res_status)||'"/>'));
+         end loop;
+         close csr_panel_pet;
+      else
+         open csr_panel_hou;
+         loop
+            fetch csr_panel_hou into rcd_panel_hou;
+            if csr_panel_hou%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel_hou.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel_pet.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel_hou.tpa_pan_code)||') '||rcd_panel_hou.hde_con_fullname||', '||rcd_panel_hou.hde_loc_street||', '||rcd_panel_hou.hde_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel_hou.res_status)||'"/>'));
+         end loop;
+         close csr_panel_hou;
+      end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RESPONSE_LIST - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end response_list;
+
+   /*********************************************************/
+   /* This procedure performs the response retrieve routine */
+   /*********************************************************/
+   function response_retrieve return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code number;
+      var_pan_code number;
+      var_day_code number;
+      var_que_code number;
+      var_seq_numb number;
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_tes_definition t01
+          where t01.tde_tes_code = var_tes_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_allocation is
+         select t01.*,
+                t02.tsa_mkt_code
+           from pts_tes_allocation t01,
+                pts_tes_sample t02
+          where t01.tal_tes_code = t02.tsa_tes_code
+            and t01.tal_sam_code = t02.tsa_sam_code
+            and t01.tal_tes_code = var_tes_code
+            and t01.tal_pan_code = var_pan_code
+            and t01.tal_day_code = var_day_code
+          order by t01.tal_seq_numb asc;
+      rcd_allocation csr_allocation%rowtype;
+
+      cursor csr_response is
+         select t01.*,
+                nvl(t02.tal_seq_numb,0) as tal_seq_numb
+           from pts_tes_response t01,
+                pts_tes_allocation t02
+          where t01.tre_tes_code = t02.tal_tes_code(+)
+            and t01.tre_pan_code = t02.tal_pan_code(+)
+            and t01.tre_day_code = t02.tal_day_code(+)
+            and t01.tre_sam_code = t02.tal_sam_code(+)
+            and t01.tre_tes_code = var_tes_code
+            and t01.tre_pan_code = var_pan_code
+            and t01.tre_day_code = var_day_code
+          order by t01.tre_que_code asc,
+                   tal_seq_numb asc;
+      rcd_response csr_response%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      var_pan_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PANCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELRES' then
          pts_gen_function.add_mesg_data('Invalid request action');
@@ -1019,10 +1214,10 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
-      end if;
+    --  if rcd_retrieve.tde_tes_status != 2 and
+    --     rcd_retrieve.tde_tes_status != 3 then
+    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+    --  end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -1035,15 +1230,36 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test panel response xml
       /*-*/
-      open csr_response;
-      loop
-         fetch csr_response into rcd_response;
-         if csr_response%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<RESPONSE DAYCDE="'||to_char(rcd_response.tre_day_code)||'" QUECDE="'||to_char(rcd_response.tre_que_code)||'" RESSEQ="'||to_char(rcd_response.tre_res_seqn)||'" MKTCDE="'||to_char(rcd_response.tsa_mkt_code)||'" RESVAL="'||to_char(rcd_response.tre_res_value)||'"/>'));
+      for idx in 1..rcd_retrieve.tde_tes_day_count loop
+         var_day_code := idx;
+         var_seq_numb := 0;
+         open csr_allocation;
+         loop
+            fetch csr_allocation into rcd_allocation;
+            if csr_allocation%notfound then
+               exit;
+            end if;
+            var_seq_numb := var_seq_numb + 1;
+            pipe row(pts_xml_object('<RESD DAYCDE="'||to_char(var_day_code)||'" RESSEQ="'||to_char(var_seq_numb)||'" MKTCDE="'||pts_to_xml(rcd_allocation.tsa_mkt_code)||'"/>'));
+         end loop;
+         close csr_allocation;
+         var_que_code := 0;
+         var_seq_numb := 0;
+         open csr_response;
+         loop
+            fetch csr_response into rcd_response;
+            if csr_response%notfound then
+               exit;
+            end if;
+            if var_que_code != rcd_response.tre_que_code then
+               var_que_code := rcd_response.tre_que_code;
+               var_seq_numb := 0;
+            end if;
+            var_seq_numb := var_seq_numb + 1;
+            pipe row(pts_xml_object('<RESQ DAYCDE="'||to_char(var_day_code)||'" QUECDE="'||to_char(rcd_response.tre_que_code)||'" RESSEQ="'||to_char(var_seq_numb)||'" RESVAL="'||to_char(rcd_response.tre_res_value)||'"/>'));
+         end loop;
+         close csr_response;
       end loop;
-      close csr_response;
 
       /*-*/
       /* Pipe the XML end
@@ -1091,9 +1307,16 @@ create or replace package body pts_app.pts_tes_function as
       var_action varchar2(32);
       var_tes_code number;
       var_pan_code number;
-      var_mkt_code varchar2(32);
+      var_day_code number;
+      var_mkt_code varchar2(10);
+      var_sam_cod1 number;
+      var_sam_cod2 number;
+      var_seq_numb number;
       var_res_value number;
+      var_typ_code varchar2(10 char);
       var_found boolean;
+      rcd_pts_tes_panel pts_tes_panel%rowtype;
+      rcd_pts_tes_allocation pts_tes_allocation%rowtype;
       rcd_pts_tes_response pts_tes_response%rowtype;
 
       /*-*/
@@ -1105,6 +1328,25 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = var_tes_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_panel is
+         select t01.*
+           from pts_tes_panel t01
+          where t01.tpa_tes_code = var_tes_code
+            and t01.tpa_pan_code = var_pan_code;
+      rcd_panel csr_panel%rowtype;
+
+      cursor csr_pet is
+         select t01.*
+           from pts_pet_definition t01
+          where t01.pde_pet_code = var_pan_code;
+      rcd_pet csr_pet%rowtype;
+
+      cursor csr_household is
+         select t01.*
+           from pts_hou_definition t01
+          where t01.hde_hou_code = var_pan_code;
+      rcd_household csr_household%rowtype;
 
       cursor csr_sample is
          select t01.*
@@ -1167,9 +1409,58 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+    --  if rcd_retrieve.tde_tes_status != 2 and
+    --     rcd_retrieve.tde_tes_status != 3 then
+    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+    --  end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing panel member
+      /* **notes** 1. Create a recruited panel when not found
+      /*-*/
+      var_found := false;
+      open csr_panel;
+      fetch csr_panel into rcd_panel;
+      if csr_panel%found then
+         var_found := true;
+      end if;
+      close csr_panel;
+      if var_found = false then
+         rcd_pts_tes_panel.tpa_tes_code := var_tes_code;
+         rcd_pts_tes_panel.tpa_pan_code := var_pan_code;
+         rcd_pts_tes_panel.tpa_pan_status := '*RECRUITED';
+         rcd_pts_tes_panel.tpa_sel_group := '*RECRUITED';
+         if rcd_retrieve.tde_tes_target = 1 then
+            open csr_pet;
+            fetch csr_pet into rcd_pet;
+            if csr_pet%notfound then
+               pts_gen_function.add_mesg_data('Pet ('||to_char(var_pan_code)||') does not exist');
+            else
+               if rcd_pet.pde_pet_status != 1 then
+                  pts_gen_function.add_mesg_data('Pet ('||to_char(var_pan_code)||') is not available');
+               end if;
+               rcd_pts_tes_panel.tpa_hou_code := rcd_pet.pde_hou_code;
+            end if;
+            close csr_pet;
+         else
+            open csr_household;
+            fetch csr_household into rcd_household;
+            if csr_household%notfound then
+               pts_gen_function.add_mesg_data('Household ('||to_char(var_pan_code)||') does not exist');
+            else
+               if rcd_household.hde_hou_status != 1 then
+                  pts_gen_function.add_mesg_data('Household ('||to_char(var_pan_code)||') is not available');
+               end if;
+               rcd_pts_tes_panel.tpa_hou_code := var_pan_code;
+            end if;
+            close csr_household;
+         end if;
+         if pts_gen_function.get_mesg_count = 0 then
+            insert into pts_tes_panel values rcd_pts_tes_panel;
+         end if;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -1178,34 +1469,100 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Clear the existing response data
       /*-*/
-      rcd_pts_tes_response.tre_tes_code := var_tes_code;
-      rcd_pts_tes_response.tre_pan_code := var_pan_code;
       delete from pts_tes_response
-       where tre_tes_code = rcd_pts_tes_response.tre_tes_code
-         and tre_pan_code = rcd_pts_tes_response.tre_pan_code;
+       where tre_tes_code = var_tes_code
+         and tre_pan_code = var_pan_code;
 
       /*-*/
       /* Retrieve and insert the response data
       /*-*/
-      obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/RESPONSE');
+      rcd_pts_tes_response.tre_tes_code := var_tes_code;
+      rcd_pts_tes_response.tre_pan_code := var_pan_code;
+      obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/RESP');
       for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
          obj_res_node := xmlDom.item(obj_res_list,idx);
-         rcd_pts_tes_response.tre_day_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@DAYCDE'));
-         rcd_pts_tes_response.tre_que_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@QUECDE'));
-         rcd_pts_tes_response.tre_res_seqn := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESSEQ'));
-         var_mkt_code := xslProcessor.valueOf(obj_res_node,'@MKTCDE');
-         var_res_value := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESVAL'));
-         open csr_sample;
-         fetch csr_sample into rcd_sample;
-         if csr_sample%notfound then
-            pts_gen_function.add_mesg_data('Market research code ('||to_char(var_mkt_code)||') does not exist in test samples');
-         else
-            rcd_pts_tes_response.tre_sam_code := rcd_sample.tsa_sam_code;
+         var_typ_code := upper(xslProcessor.valueOf(obj_res_node,'@TYPCDE'));
+         if var_typ_code = 'D' then
+            var_day_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@DAYCDE'));
+            var_sam_cod1 := null;
+            var_sam_cod2 := null;
+            var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD1'));
+            open csr_sample;
+            fetch csr_sample into rcd_sample;
+            if csr_sample%notfound then
+               pts_gen_function.add_mesg_data('Market research code ('||upper(var_mkt_code)||') does not exist for this test');
+               exit;
+            else
+               var_sam_cod1 := rcd_sample.tsa_sam_code;
+               var_seq_numb := var_day_code;
+               if rcd_retrieve.tde_tes_sam_count = 2 then
+                  var_seq_numb := 1;
+               end if;
+               update pts_tes_allocation
+                  set tal_seq_numb = var_seq_numb
+                where tal_tes_code = var_tes_code
+                  and tal_pan_code = var_pan_code
+                  and tal_day_code = var_day_code
+                  and tal_sam_code = var_sam_cod1;
+               if sql%notfound then
+                  rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
+                  rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
+                  rcd_pts_tes_allocation.tal_day_code := var_day_code;
+                  rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
+                  rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+                  insert into pts_tes_allocation values rcd_pts_tes_allocation;
+               end if;
+            end if;
+            close csr_sample;
+            if rcd_retrieve.tde_tes_sam_count = 2 then
+               var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD2'));
+               open csr_sample;
+               fetch csr_sample into rcd_sample;
+               if csr_sample%notfound then
+                  pts_gen_function.add_mesg_data('Market research code ('||upper(var_mkt_code)||') does not exist for this test');
+                  exit;
+               else
+                  var_sam_cod2 := rcd_sample.tsa_sam_code;
+                  var_seq_numb := var_day_code;
+                  if rcd_retrieve.tde_tes_sam_count = 2 then
+                     var_seq_numb := 2;
+                  end if;
+                  update pts_tes_allocation
+                     set tal_seq_numb = var_seq_numb
+                   where tal_tes_code = var_tes_code
+                     and tal_pan_code = var_pan_code
+                     and tal_day_code = var_day_code
+                     and tal_sam_code = var_sam_cod2;
+                  if sql%notfound then
+                     rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
+                     rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
+                     rcd_pts_tes_allocation.tal_day_code := var_day_code;
+                     rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
+                     rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+                     insert into pts_tes_allocation values rcd_pts_tes_allocation;
+                  end if;
+               end if;
+               close csr_sample;
+            end if;
          end if;
-         close csr_sample;
-         rcd_pts_tes_response.tre_res_value := var_res_value;
-         insert into pts_tes_response values rcd_pts_tes_response;
+         if var_typ_code = 'Q' then
+            if not(xslProcessor.valueOf(obj_res_node,'@RESVAL') is null) then
+               rcd_pts_tes_response.tre_day_code := var_day_code;
+               rcd_pts_tes_response.tre_que_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@QUECDE'));
+               rcd_pts_tes_response.tre_sam_code := 0;
+               if xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '1' then
+                  rcd_pts_tes_response.tre_sam_code := var_sam_cod1;
+               elsif xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '2' then
+                  rcd_pts_tes_response.tre_sam_code := var_sam_cod2;
+               end if;
+               rcd_pts_tes_response.tre_res_value := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESVAL'));
+               insert into pts_tes_response values rcd_pts_tes_response;
+            end if;
+         end if;
       end loop;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Free the XML document
