@@ -1,0 +1,137 @@
+
+------------------
+-- TEST EXTRACT --
+------------------
+
+insert into pts_tes_definition
+select
+  t1.test_code,
+  trim(t1.test_title),
+  t1.test_status,
+  t1.glopal_status,
+  t1.rcmpy_code,
+  user,
+  sysdate,
+  t2.method_code,
+  decode(t1.restricted_access,1,1,2,2,3,1,1),
+  trim(t1.test_requestor),
+  trim(t1.test_aim),
+  trim(t1.test_reason),
+  trim(t1.test_prediction),
+  trim(t1.test_comment),
+  t1.test_start,
+  t1.panel_selected_date,
+  t1.test_field_work_date,
+  t1.number_parameters,
+  t1.maximum_temperature,
+  t2.test_length,
+  decode(t2.method_code,2,2,11,2,1),
+  0,
+  0,
+  '0'
+  from test@wod016.ap.mars t1, test_type@wod016.ap.mars t2
+  where t1.test_type_code = t2.test_type_code
+    and t1.restricted_access != 2;
+commit;
+
+
+insert into pts_tes_sample
+select
+  t1.tde_tes_code,
+  t2.sample_code,
+  trim(t2.report_code),
+  trim(t2.market_research_code),
+  trim(t2.market_research_code),
+  trim(t2.sample_id)
+  from pts_tes_definition t1, test_sample@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+
+insert into pts_tes_question
+select
+  t1.tde_tes_code,
+  t2.param_code,
+  t2.question_code,
+  decode(t2.sample_specific,'F','1','2'),
+  decode(t2.test_quest_id,null,1,t2.test_quest_id)
+  from pts_tes_definition t1, test_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+
+insert into pts_tes_keyword
+select
+  t1.tde_tes_code,
+  trim(t2.keyword)
+  from pts_tes_definition t1, test_keyword@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  1,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code < 1800;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  1,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 1800
+    and t1.tde_tes_code < 2200;
+commit;
+
+
+insert into pts_tes_allocation
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.sample_code,
+  t2.sequence_number
+  from pts_tes_definition t1, pet_sample@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+
+insert into pts_tes_feeding
+select
+  t1.tde_tes_code,
+  t2.sample_code,
+  t2.pet_size,
+  t2.default_qty,
+  null
+  from pts_tes_definition t1, pet_sample_size@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_panel
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  decode(t2.pet_status,1,'*MEMBER',2,'*RESERVE','*RECRUITED'),
+  t2.hhold_code,
+  '*GROUP1'
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t2.hhold_code is not null
+    and t1.tde_tes_code != 2192;
+commit;
+
+
