@@ -130,7 +130,6 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = 'Test Prompt';
       cobjScreens[1].hedtxt = 'Test Response Entry';
       initSearch();
-      initSelect('dspDefine','Product Test');
       displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
    }
@@ -204,20 +203,17 @@ sub PaintFunction()%>
    var cstrRespTesTrg;
    var cstrRespTesSam;
    var cstrRespResCde;
-   var cintRespResIdx;
    var cobjTesResMeta = new Array();
    function clsTesResMeta() {
+      this.mettyp = '';
       this.daycde = '';
       this.daytxt = '';
       this.quecde = '';
       this.quetxt = '';
       this.quetyp = '';
       this.quenam = '';
-      this.samn01 = '';
-      this.samn02 = '';
-      this.resn00 = '';
-      this.resn01 = '';
-      this.resn02 = '';
+      this.name01 = '';
+      this.name02 = '';
    }
    function requestResponseLoad(strCode) {
       cstrRespTesCde = strCode;
@@ -258,33 +254,30 @@ sub PaintFunction()%>
                cstrRespTesTxt = objElements[i].getAttribute('TESTXT');
                cstrRespTesTrg = objElements[i].getAttribute('TESTRG');
                cstrRespTesSam = objElements[i].getAttribute('TESSAM');
-            } else if (objElements[i].nodeName == 'META') {
+            } else if (objElements[i].nodeName == 'METD') {
                objTesResMeta = new clsTesResMeta();
+               objTesResMeta.mettyp = 'D';
                objTesResMeta.daycde = objElements[i].getAttribute('DAYCDE');
                objTesResMeta.daytxt = objElements[i].getAttribute('DAYTXT');
+               objTesResMeta.name01 = 'D'+objTesResMeta.daycde+'S1';
+               if (cstrRespTesSam == '2') {
+                  objTesResMeta.name02 = 'D'+objTesResMeta.daycde+'S2';
+               }
+               cobjTesResMeta[cobjTesResMeta.length] = objTesResMeta;
+            } else if (objElements[i].nodeName == 'METQ') {
+               objTesResMeta = new clsTesResMeta();
+               objTesResMeta.mettyp = 'Q';
+               objTesResMeta.daycde = objElements[i].getAttribute('DAYCDE');
                objTesResMeta.quecde = objElements[i].getAttribute('QUECDE');
                objTesResMeta.quetxt = objElements[i].getAttribute('QUETXT');
                objTesResMeta.quetyp = objElements[i].getAttribute('QUETYP')
                objTesResMeta.quenam = objElements[i].getAttribute('QUENAM');
-               if (cobjTesResMeta.length == 0 || objTesResMeta.daycde != cobjTesResMeta[cobjTesResMeta.length-1].daycde) {
-                  if (cstrRespTesSam == '1') {
-                     objTesResMeta.samn01 = 'D'+objTesResMeta.daycde+'S1';
-                  }
+               if (objTesResMeta.quetyp == '1') {
+                  objTesResMeta.name01 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R1';
+               } else {
+                  objTesResMeta.name01 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R1';
                   if (cstrRespTesSam == '2') {
-                     objTesResMeta.samn01 = 'D'+objTesResMeta.daycde+'S1';
-                     objTesResMeta.samn02 = 'D'+objTesResMeta.daycde+'S2';
-                  }
-               } else
-                  if (objTesResMeta.quetyp == '1') {
-                     objTesResMeta.resn00 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R0';
-                  } else {
-                     if (cstrRespTesSam == '1') {
-                        objTesResMeta.resn01 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R1';
-                     }
-                     if (cstrRespTesSam == '2') {
-                        objTesResMeta.resn01 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R1';
-                        objTesResMeta.resn02 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R2';
-                     }
+                     objTesResMeta.name02 = 'D'+objTesResMeta.daycde+'Q'+objTesResMeta.quecde+'R2';
                   }
                }
                cobjTesResMeta[cobjTesResMeta.length] = objTesResMeta;
@@ -327,14 +320,14 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'right';
-         objCell.innerText = cstrRespTesTrg+':';
+         objCell.innerHTML = '&nbsp;'+cstrRespTesTrg+' Code:&nbsp;';
          objCell.className = 'clsLabelBB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
          if (cstrRespTesSam == '1') {
-            objCell.colSpan = 2;
+            objCell.colSpan = 1;
          } else {
-            objCell.colSpan = 3;
+            objCell.colSpan = 2;
          }
          objCell.align = 'left';
          objCell.innerText = '';
@@ -353,7 +346,7 @@ sub PaintFunction()%>
          objInput.value = '';
          objCell.appendChild(objInput);
          for (var i=0;i<cobjTesResMeta.length;i++) {
-            if (cobjTesResMeta[i].samn01 != '' || cobjTesResMeta[i].samn02 != '') {
+            if (cobjTesResMeta[i].mettyp == 'D') {
                objRow = objResData.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -361,117 +354,69 @@ sub PaintFunction()%>
                objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].daytxt+'&nbsp;';
                objCell.className = 'clsLabelBB';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
-               if (cobjTesResMeta[i].samn01 != '') {
+               if (cobjTesResMeta[i].name01 != '') {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
-                  objCell.align = 'left';
+                  objCell.align = 'center';
                   objCell.innerHTML = '';
                   objCell.className = 'clsLabelBN';
                   objCell.style.whiteSpace = 'nowrap';
                   objInput = document.createElement('input');
                   objInput.type = 'text';
-                  objInput.id = cobjTesResMeta[i].samn01;
-                  objInput.name = cobjTesResMeta[i].samn01;
+                  objInput.id = cobjTesResMeta[i].name01;
+                  objInput.name = cobjTesResMeta[i].name01;
                   objInput.className = 'clsInputNN';
+                  objInput.style.textTransform = 'uppercase';
                   objInput.onfocus = function() {setSelect(this);};
                   objInput.onkeydown = function() {if (event.keyCode == 13) {event.keyCode = 9;}};
-                  objInput.size = 1;
-                  objInput.maxLength = 10;
+                  objInput.size = 2;
+                  objInput.maxLength = 1;
                   objInput.value = '';
                   objCell.appendChild(objInput);
                }
-               if (cobjTesResMeta[i].samn02 != '') {
+               if (cobjTesResMeta[i].namen02 != '') {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
-                  objCell.align = 'left';
+                  objCell.align = 'center';
                   objCell.innerHTML = '';
                   objCell.className = 'clsLabelBN';
                   objCell.style.whiteSpace = 'nowrap';
                   objInput = document.createElement('input');
                   objInput.type = 'text';
-                  objInput.id = cobjTesResMeta[i].samn02;
-                  objInput.name = cobjTesResMeta[i].samn02;
+                  objInput.id = cobjTesResMeta[i].name02;
+                  objInput.name = cobjTesResMeta[i].name02;
                   objInput.className = 'clsInputNN';
+                  objInput.style.textTransform = 'uppercase';
                   objInput.onfocus = function() {setSelect(this);};
                   objInput.onkeydown = function() {if (event.keyCode == 13) {event.keyCode = 9;}};
-                  objInput.size = 1;
-                  objInput.maxLength = 10;
+                  objInput.size = 2;
+                  objInput.maxLength = 1;
                   objInput.value = '';
                   objCell.appendChild(objInput);
                }
-            }
-            objRow = objResData.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'left';
-            objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quetxt+'&nbsp;';
-            objCell.className = 'clsLabelBN';
-            objCell.style.whiteSpace = 'nowrap';
-            if (cobjTesResMeta[i].resn00 != '') {
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
-               objInput = document.createElement('input');
-               objInput.type = 'text';
-               objInput.id = cobjTesResMeta[i].resn00;
-               objInput.name = cobjTesResMeta[i].resn00;
-               objInput.className = 'clsInputNN';
-               objInput.onfocus = function() {setSelect(this);};
-               objInput.onblur = function() {validateNumber(this,0,false);};
-               objInput.onkeydown = function() {if (event.keyCode == 13) {event.keyCode = 9;}};
-               objInput.size = 10;
-               objInput.maxLength = 10;
-               objInput.value = '';
-               objCell.appendChild(objInput);
-               if (cobjTesResMeta[i].resn01 != '') {
-                  objCell = objRow.insertCell(-1);
-                  objCell.colSpan = 1;
-                  objCell.align = 'left';
-                  objCell.innerHTML = '&nbsp;';
-                  objCell.className = 'clsLabelBN';
-                  objCell.style.whiteSpace = 'nowrap';
-               }
-               if (cobjTesResMeta[i].resn02 != '') {
-                  objCell = objRow.insertCell(-1);
-                  objCell.colSpan = 1;
-                  objCell.align = 'left';
-                  objCell.innerHTML = '&nbsp;';
-                  objCell.className = 'clsLabelBN';
-                  objCell.style.whiteSpace = 'nowrap';
-               }
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quenam+'&nbsp;';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
             } else {
+               objRow = objResData.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;';
+               objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quetxt+'&nbsp;';
                objCell.className = 'clsLabelBN';
                objCell.style.whiteSpace = 'nowrap';
-               if (cobjTesResMeta[i].resn01 != '') {
+               if (cobjTesResMeta[i].quetyp == '1') {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
+                  if (cstrRespTesSam == '2') {
+                     objCell.colSpan = 2;
+                     objCell.align = 'center';
+                  }
                   objCell.innerHTML = '';
                   objCell.className = 'clsLabelBN';
                   objCell.style.whiteSpace = 'nowrap';
                   objInput = document.createElement('input');
                   objInput.type = 'text';
-                  objInput.id = cobjTesResMeta[i].resn01;
-                  objInput.name = cobjTesResMeta[i].resn01;
+                  objInput.id = cobjTesResMeta[i].name01;
+                  objInput.name = cobjTesResMeta[i].name01;
                   objInput.className = 'clsInputNN';
                   objInput.onfocus = function() {setSelect(this);};
                   objInput.onblur = function() {validateNumber(this,0,false);};
@@ -480,8 +425,13 @@ sub PaintFunction()%>
                   objInput.maxLength = 10;
                   objInput.value = '';
                   objCell.appendChild(objInput);
-               }
-               if (cobjTesResMeta[i].resn02 != '') {
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quenam+'&nbsp;';
+                  objCell.className = 'clsLabelBN';
+                  objCell.style.whiteSpace = 'nowrap';
+               } else {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
@@ -490,8 +440,8 @@ sub PaintFunction()%>
                   objCell.style.whiteSpace = 'nowrap';
                   objInput = document.createElement('input');
                   objInput.type = 'text';
-                  objInput.id = cobjTesResMeta[i].resn02;
-                  objInput.name = cobjTesResMeta[i].resn02;
+                  objInput.id = cobjTesResMeta[i].name01;
+                  objInput.name = cobjTesResMeta[i].name01;
                   objInput.className = 'clsInputNN';
                   objInput.onfocus = function() {setSelect(this);};
                   objInput.onblur = function() {validateNumber(this,0,false);};
@@ -500,27 +450,46 @@ sub PaintFunction()%>
                   objInput.maxLength = 10;
                   objInput.value = '';
                   objCell.appendChild(objInput);
+                  if (cobjTesResMeta[i].name02 != '') {
+                     objCell = objRow.insertCell(-1);
+                     objCell.colSpan = 1;
+                     objCell.align = 'left';
+                     objCell.innerHTML = '';
+                     objCell.className = 'clsLabelBN';
+                     objCell.style.whiteSpace = 'nowrap';
+                     objInput = document.createElement('input');
+                     objInput.type = 'text';
+                     objInput.id = cobjTesResMeta[i].name02;
+                     objInput.name = cobjTesResMeta[i].name02;
+                     objInput.className = 'clsInputNN';
+                     objInput.onfocus = function() {setSelect(this);};
+                     objInput.onblur = function() {validateNumber(this,0,false);};
+                     objInput.onkeydown = function() {if (event.keyCode == 13) {event.keyCode = 9;}};
+                     objInput.size = 10;
+                     objInput.maxLength = 10;
+                     objInput.value = '';
+                     objCell.appendChild(objInput);
+                  }
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quenam+'&nbsp;';
+                  objCell.className = 'clsLabelBN';
+                  objCell.style.whiteSpace = 'nowrap';
                }
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+cobjTesResMeta[i].quenam+'&nbsp;';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
             }
          }
          objRow = objResData.insertRow(-1);
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'left';
-         objCell.innerText = '';
+         objCell.innerHTML = '&nbsp;';
          objCell.className = 'clsLabelBN';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
-         if (cstrRespTesSam == '1') {
+         objCell.colSpan = 1;
+         if (cstrRespTesSam == '2') {
             objCell.colSpan = 2;
-         } else {
-            objCell.colSpan = 3;
          }
          objCell.align = 'center';
          objCell.innerHTML = '<a class="clsButton" onfocus="doAcceptFocus();" onblur="doAcceptBlur();" href="javascript:doResponseAccept();">Accept</a>';
@@ -542,20 +511,11 @@ sub PaintFunction()%>
    function clearResponseData() {
       document.getElementById('RES_ResCode').value = '';
       for (var i=0;i<cobjTesResMeta.length;i++) {
-         if (cobjTesResMeta[i].samn01 != '') {
-            document.getElementById(cobjTesResMeta[i].samn01).value = '';
+         if (cobjTesResMeta[i].name01 != '') {
+            document.getElementById(cobjTesResMeta[i].name01).value = '';
          }
-         if (cobjTesResMeta[i].samn02 != '') {
-            document.getElementById(cobjTesResMeta[i].samn02).value = '';
-         }
-         if (cobjTesResMeta[i].resn00 != '') {
-            document.getElementById(cobjTesResMeta[i].resn00).value = '';
-         }
-         if (cobjTesResMeta[i].resn01 != '') {
-            document.getElementById(cobjTesResMeta[i].resn01).value = '';
-         }
-         if (cobjTesResMeta[i].resn02 != '') {
-            document.getElementById(cobjTesResMeta[i].resn02).value = '';
+         if (cobjTesResMeta[i].name02 != '') {
+            document.getElementById(cobjTesResMeta[i].name02).value = '';
          }
       }
       document.getElementById('RES_ResCode').focus();
@@ -573,27 +533,19 @@ sub PaintFunction()%>
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Panel code must be specified';
       } else {
-         cstrRespResIdx = -1;
-         for (var i=0;i<objResList.rows.length;i++) {
-            if (objResList.rows[i].getAttribute('rescde') == objResCode.value) {
-               cstrRespResIdx = i;
-               break;
-            }
-         }
-         if (cstrRespResIdx == -1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Panel code does not exist in the panel list';
-         } else {
-            for (var i=0;i<cobjTesResMeta.length;i++) {
-               if (cobjTesResMeta[i].samn01 != '') {
-                  if (document.getElementById(cobjTesResMeta[i].samn01).value == '') {
+         for (var i=0;i<cobjTesResMeta.length;i++) {
+            if (cobjTesResMeta[i].mettyp == 'D') {
+               if (cobjTesResMeta[i].name01 != '') {
+                  if (document.getElementById(cobjTesResMeta[i].name01).value == '') {
                      if (strMessage != '') {strMessage = strMessage + '\r\n';}
                      strMessage = strMessage + 'Market research code 1 must be entered for '+cobjTesResMeta[i].daytxt;
                   }
                }
-               if (document.getElementById(cobjTesResMeta[i].resn01).value == '') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'Response must be entered for '+cobjTesResMeta[i].daytxt+' - '+cobjTesResMeta[i].quetxt;
+               if (cobjTesResMeta[i].name02 != '') {
+                  if (document.getElementById(cobjTesResMeta[i].name02).value == '') {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'Market research code 2 must be entered for '+cobjTesResMeta[i].daytxt;
+                  }
                }
             }
          }
@@ -607,29 +559,34 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDRES" TESCDE="'+cstrRespTesCde+'" PANCDE="'+document.getElementById('RES_ResCode').value+'">';
       for (var i=0;i<cobjTesResMeta.length;i++) {
-         if (cobjTesResMeta[i].samn01 != '' || cobjTesResMeta[i].samn02 != '') {
+         if (cobjTesResMeta[i].mettyp == 'D') {
             strMkt01 = '';
             strMkt02 = '';
-            if (cobjTesResMeta[i].samn01 != '') {
-               strMkt01 = document.getElementById(cobjTesResMeta[i].samn01).value;
+            if (cobjTesResMeta[i].name01 != '') {
+               strMkt01 = document.getElementById(cobjTesResMeta[i].name01).value;
             }
-            if (cobjTesResMeta[i].samn02 != '') {
-               strMkt02 = document.getElementById(cobjTesResMeta[i].samn02).value;
+            if (cobjTesResMeta[i].name02 != '') {
+               strMkt02 = document.getElementById(cobjTesResMeta[i].name02).value;
             }
+            strXML = strXML+'<RESP TYPCDE="D" DAYCDE="'+cobjTesResMeta[i].daycde+'"';
+            strXML = strXML+' MKTCD1="'+strMkt01+'"';
+            strXML = strXML+' MKTCD2="'+strMkt02+'"/>';
          } else {
-            if (strMkt01 != '') {
-               strXML = strXML+'<RESPONSE DAYCDE="'+cobjTesResMeta[i].daycde+'"';
-               strXML = strXML+' QUECDE="'+cobjTesResMeta[i].quecde+'"';
-               strXML = strXML+' RESSEQ="1"';
-               strXML = strXML+' MKTCDE="'+strMkt01+'"';
-               strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].resn01).value+'"/>';
-            }
-            if (strMkt02 != '') {
-               strXML = strXML+'<RESPONSE DAYCDE="'+cobjTesResMeta[i].daycde+'"';
-               strXML = strXML+' QUECDE="'+cobjTesResMeta[i].quecde+'"';
-               strXML = strXML+' RESSEQ="2"';
-               strXML = strXML+' MKTCDE="'+strMkt02+'"';
-               strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].resn02).value+'"/>';
+            if (cobjTesResMeta[i].quetyp == '1') {
+               strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
+               strXML = strXML+' RESSEQ="0"';
+               strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name01).value+'"/>';
+            } else {
+               if (strMkt01 != '') {
+                  strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
+                  strXML = strXML+' RESSEQ="1"';
+                  strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name01).value+'"/>';
+               }
+               if (strMkt02 != '') {
+                  strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
+                  strXML = strXML+' RESSEQ="2"';
+                  strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name02).value+'"/>';
+               }
             }
          }
       }
@@ -661,17 +618,13 @@ sub PaintFunction()%>
                return;
             }
          }
-         var objResList = document.getElementById('RES_ResList');
-         var objRow = objResList.rows[cstrRespResIdx];
-         objRow.cells[1].innerText = 'Entered';
-         objRow.cells[1].className = 'clsLabelFB';
          clearResponseData();
       }
    }
    function doResponseSelect(intRow) {
       var objTable = document.getElementById('RES_ResList');
       objRow = objTable.rows[intRow];
-      cstrRespResCde = objRow.getAttribute('rescde');
+      cstrRespResCde = objRow.getAttribute('pancde');
       cstrRespResIdx = intRow;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*SELRES" TESCDE="'+cstrRespTesCde+'" PANCDE="'+cstrRespResCde+'"/>';
@@ -700,22 +653,108 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         var objResData = document.getElementById('RES_ResData');
-         var strName;
          document.getElementById('RES_ResCode').value = cstrRespResCde;
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'RESPONSE') {
+            if (objElements[i].nodeName == 'RESD') {
                for (var j=0;j<cobjTesResMeta.length;j++) {
-                  if (cobjTesResMeta[j].daycde == objElements[i].getAttribute('DAYCDE') &&
-                      cobjTesResMeta[j].quecde == objElements[i].getAttribute('QUECDE') &&
-                      cobjTesResMeta[j].samcde == objElements[i].getAttribute('SAMCDE')) {
-                     document.getElementById(cobjTesResMeta[j].resnam).value = objElements[i].getAttribute('RESVAL');
+                  if (cobjTesResMeta[j].mettyp == 'D' &&
+                      cobjTesResMeta[j].daycde == objElements[i].getAttribute('DAYCDE')) {
+                     if (objElements[i].getAttribute('RESSEQ') == '1') {
+                        document.getElementById(cobjTesResMeta[j].name01).value = objElements[i].getAttribute('MKTCDE');
+                     }
+                     if (objElements[i].getAttribute('RESSEQ') == '2') {
+                        document.getElementById(cobjTesResMeta[j].name02).value = objElements[i].getAttribute('MKTCDE');
+                     }
+                     break;
+                  }
+               }
+            } else if (objElements[i].nodeName == 'RESQ') {
+               for (var j=0;j<cobjTesResMeta.length;j++) {
+                  if (cobjTesResMeta[j].mettyp == 'Q' &&
+                      cobjTesResMeta[j].daycde == objElements[i].getAttribute('DAYCDE') &&
+                      cobjTesResMeta[j].quecde == objElements[i].getAttribute('QUECDE')) {
+                     if (objElements[i].getAttribute('RESSEQ') == '1') {
+                        document.getElementById(cobjTesResMeta[j].name01).value = objElements[i].getAttribute('RESVAL');
+                     }
+                     if (objElements[i].getAttribute('RESSEQ') == '2') {
+                        document.getElementById(cobjTesResMeta[j].name02).value = objElements[i].getAttribute('RESVAL');
+                     }
                      break;
                   }
                }
             }
          }
          document.getElementById('RES_ResCode').focus();
+      }
+   }
+   function doResponseList() {
+      if (!processForm()) {return;}
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*LSTRES" TESCDE="'+cstrRespTesCde+'"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestResponseList(\''+strXML+'\');',10);
+   }
+   function requestResponseList(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_response_list.asp',function(strResponse) {checkResponseList(strResponse);},false,streamXML(strXML));
+   }
+   function checkResponseList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         var objResList = document.getElementById('RES_ResList');
+         var objRow;
+         var objCell;
+         var objInput;
+         var objResList = document.getElementById('RES_ResList');
+         for (var i=objResList.rows.length-1;i>=0;i--) {
+            objResList.deleteRow(i);
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'PANEL') {
+               objRow = objResList.insertRow(-1);
+               objRow.setAttribute('pancde',objElements[i].getAttribute('PANCDE'));
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerHTML = '<a class="clsSelect" onClick="doResponseSelect(\''+objRow.rowIndex+'\');">Select</a>';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(1);
+               objCell.colSpan = 1;
+               if (objElements[i].getAttribute('RESSTS') == '1') {
+                  objCell.innerHTML = 'Entered';
+                  objCell.className = 'clsLabelFB';
+               } else {
+                  objCell.innerHTML = 'No Data';
+                  objCell.className = 'clsLabelFN';
+               }
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(2);
+               objCell.colSpan = 1;
+               objCell.innerHTML = objElements[i].getAttribute('PANSTS');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(3);
+               objCell.colSpan = 1;
+               objCell.innerHTML = objElements[i].getAttribute('PANTXT');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
       }
    }
 
@@ -786,9 +825,18 @@ sub PaintFunction()%>
             </div>
          </nobr></td>
          <td width=25% align=left colspan=1 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible;">
-               <table id="RES_ResList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
-            </div>
+            <table class="clsPanel" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr><td><nobr>
+                  <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+                     <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseList();">&nbsp;Refresh&nbsp;</a></nobr></td></tr>
+                  </table>
+               </nobr></td></tr>
+               <tr height=100%><td><nobr>
+                  <div class="clsScroll01" style="display:block;visibility:visible;">
+                     <table id="RES_ResList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
+                  </div>
+               </nobr></td></tr>
+            </table>
          </nobr></td>
       </tr>
       <tr>
@@ -799,6 +847,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseBack();">&nbsp;Back&nbsp;</a></nobr></td>
+               </tr>
             </table>
          </nobr></td>
       </tr>
