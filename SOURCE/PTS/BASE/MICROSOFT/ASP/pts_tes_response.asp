@@ -311,6 +311,8 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
             }
          }
+         document.getElementById('RES_ResScrol').scrollTop = 0;
+         document.getElementById('RES_ResScrol').scrollLeft = 0;
          document.getElementById('subResponse').innerText = cstrRespTesTxt;
          var objResData = document.getElementById('RES_ResData');
          for (var i=objResData.rows.length-1;i>=0;i--) {
@@ -374,7 +376,7 @@ sub PaintFunction()%>
                   objInput.value = '';
                   objCell.appendChild(objInput);
                }
-               if (cobjTesResMeta[i].namen02 != '') {
+               if (cobjTesResMeta[i].name02 != '') {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'center';
@@ -755,6 +757,8 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
             }
          }
+         document.getElementById('RES_ResScrol').scrollTop = 0;
+         document.getElementById('RES_ResScrol').scrollLeft = 0;
       }
    }
 
@@ -832,7 +836,7 @@ sub PaintFunction()%>
                   </table>
                </nobr></td></tr>
                <tr height=100%><td><nobr>
-                  <div class="clsScroll01" style="display:block;visibility:visible;">
+                  <div id="RES_ResScrol" class="clsScroll01" style="display:block;visibility:visible;">
                      <table id="RES_ResList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
                   </div>
                </nobr></td></tr>
