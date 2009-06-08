@@ -769,7 +769,7 @@ create or replace package body pts_app.pts_tes_function as
                        where t01.tre_tes_code = var_tes_code) t04
           where t01.tpa_hou_code = t02.hde_hou_code(+)
             and t01.tpa_pan_code = t03.pde_pet_code(+)
-            and t01.tpa_pan_code = t04.tre_pan_code(+)
+            and t01.tpa_pan_code = t04.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
           order by t02.hde_geo_zone asc,
                    t01.tpa_pan_status asc,
@@ -786,7 +786,7 @@ create or replace package body pts_app.pts_tes_function as
                         from pts_tes_response t01
                        where t01.tre_tes_code = var_tes_code) t03
           where t01.tpa_pan_code = t02.hde_hou_code(+)
-            and t01.tpa_pan_code = t03.tre_pan_code(+)
+            and t01.tpa_pan_code = t03.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
           order by t02.hde_geo_zone asc,
                    t01.tpa_pan_status asc,
@@ -976,7 +976,7 @@ create or replace package body pts_app.pts_tes_function as
                        where t01.tre_tes_code = var_tes_code) t04
           where t01.tpa_hou_code = t02.hde_hou_code(+)
             and t01.tpa_pan_code = t03.pde_pet_code(+)
-            and t01.tpa_pan_code = t04.tre_pan_code(+)
+            and t01.tpa_pan_code = t04.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
           order by t02.hde_geo_zone asc,
                    t01.tpa_pan_status asc,
@@ -993,7 +993,7 @@ create or replace package body pts_app.pts_tes_function as
                         from pts_tes_response t01
                        where t01.tre_tes_code = var_tes_code) t03
           where t01.tpa_pan_code = t02.hde_hou_code(+)
-            and t01.tpa_pan_code = t03.tre_pan_code(+)
+            and t01.tpa_pan_code = t03.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
           order by t02.hde_geo_zone asc,
                    t01.tpa_pan_status asc,
