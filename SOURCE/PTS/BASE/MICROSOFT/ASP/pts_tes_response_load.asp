@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Load the test response data
    '//
-   strStatement = "select xml_text from table(pts_app.pts_tes_function.load_response)"
+   strStatement = "select xml_text from table(pts_app.pts_tes_function.response_load)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
