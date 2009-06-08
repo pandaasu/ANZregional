@@ -819,8 +819,7 @@ sub PaintFunction()%>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>Response Data Entry</nobr></td>
-         <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>Response Panel</nobr></td>
+         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>Response Data Entry</nobr></td>
       </tr>
       <tr height=100%>
          <td width=75% align=left colspan=1 nowrap><nobr>
