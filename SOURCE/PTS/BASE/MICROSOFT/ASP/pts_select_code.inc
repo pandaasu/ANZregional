@@ -15,6 +15,7 @@
    var cstrSelectRulTyp;
    var cstrSelectRulCde;
    var cintSelectRow;
+   var cintSelectGroup = 0;
    function clsSltRule() {
       this.grpcde = '';
       this.grptxt = '';
@@ -177,6 +178,7 @@
             } else {
                objRow.cells[1].innerText = 'SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
             }
+            objRow.cells[1].colSpan = 3;
             bolFound = true;
             cobjSelectData[i] = new clsSltRule();
             cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
@@ -215,7 +217,7 @@
       var bolInsert = false;
       var intIndex = 0
       for (var i=0;i<cobjSelectData.length;i++) {
-         if (cobjSelectData[i].grpnam != cstrSelectGrpCde) {
+         if (cobjSelectData[i].grpcde != cstrSelectGrpCde) {
             if (bolGroup && !bolInsert) {
                bolInsert = true;
                objWork[intIndex] = objRule;
@@ -319,7 +321,8 @@
          objTable.rows[cintSelectRow].setAttribute('grppct',document.getElementById('SGR_GrpPcnt').value);
       } else {
          objRow = objTable.insertRow(-1);
-         strGroup = '*GROUP'+objRow.rowIndex;
+         cintSelectGroup++;
+         strGroup = '*GROUP'+cintSelectGroup;
          objRow.setAttribute('grpcde',strGroup);
          objRow.setAttribute('grptxt',document.getElementById('SGR_GrpText').value);
          objRow.setAttribute('grppct',document.getElementById('SGR_GrpPcnt').value);

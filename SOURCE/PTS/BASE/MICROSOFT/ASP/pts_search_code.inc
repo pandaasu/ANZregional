@@ -20,6 +20,7 @@
    var cintSearchRow;
    var cobjSearchArray;
    var cintSearchInstance;
+   var cintSearchGroup = 0;
    function clsSchInstance() {
       this.entnam = '';
       this.hedtxt = '';
@@ -111,7 +112,7 @@
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
-            objCell.colSpan = 2;
+            objCell.colSpan = 3;
             objCell.innerText = '';
             if (!bolFound) {
                objCell.innerText = 'SELECTION GROUP - WHERE';
@@ -159,10 +160,15 @@
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
             objCell.colSpan = 1;
-            objCell.innerText = cobjSearchData[i].fldtxt+' ('+cobjSearchData[i].rulcde+')';
+            objCell.innerText = cobjSearchData[i].fldtxt;
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(2);
+            objCell.colSpan = 1;
+            objCell.innerText = cobjSearchData[i].rulcde;
+            objCell.className = 'clsLabelFN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(3);
             objCell.colSpan = 1;
             objCell.innerText = strText;
             objCell.className = 'clsLabelFN';
@@ -190,6 +196,7 @@
             } else {
                objRow.cells[1].innerText = 'SELECTION GROUP - OR';
             }
+            objRow.cells[1].colSpan = 3;
             bolFound = true;
             cobjSearchData[i] = new clsSchRule();
             cobjSearchData[i].grpcde = objRow.getAttribute('grpcde');
@@ -226,7 +233,7 @@
       var bolInsert = false;
       var intIndex = 0
       for (var i=0;i<cobjSearchData.length;i++) {
-         if (cobjSearchData[i].grpnam != cstrSearchGrpCde) {
+         if (cobjSearchData[i].grpcde != cstrSearchGrpCde) {
             if (bolGroup && !bolInsert) {
                bolInsert = true;
                objWork[intIndex] = objRule;
@@ -254,7 +261,8 @@
       var objCell;
       var strGroup;
       objRow = objTable.insertRow(-1);
-      strGroup = '*GROUP'+objRow.rowIndex;
+      cintSearchGroup++;
+      strGroup = '*GROUP'+cintSearchGroup;
       objRow.setAttribute('grpcde',strGroup);
       objRow.setAttribute('tabcde','*GROUP');
       objCell = objRow.insertCell(0);
@@ -263,7 +271,7 @@
       objCell.className = 'clsLabelFN';
       objCell.style.whiteSpace = 'nowrap';
       objCell = objRow.insertCell(1);
-      objCell.colSpan = 2;
+      objCell.colSpan = 3;
       objCell.innerText = '';
       objCell.className = 'clsLabelFB';
       objCell.style.whiteSpace = 'nowrap';

@@ -23,7 +23,7 @@
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <div class="clsScroll01" style="display:block;visibility:visible">
-               <table id="tabSchRule" class="clsTableBody" style="display:block;visibility:visible" cols=3 align=left cellpadding="2" cellspacing="1"></table>
+               <table id="tabSchRule" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
                <font id="fntSchRule" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>Select All Data</font>
             </div>
          </nobr></td>
