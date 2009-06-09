@@ -311,8 +311,8 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
             }
          }
-         document.getElementById('RES_ResScrol').scrollTop = 0;
-         document.getElementById('RES_ResScrol').scrollLeft = 0;
+         document.getElementById('SCR_ResList').scrollTop = 0;
+         document.getElementById('SCR_ResList').scrollLeft = 0;
          document.getElementById('subResponse').innerText = cstrRespTesTxt;
          var objResData = document.getElementById('RES_ResData');
          for (var i=objResData.rows.length-1;i>=0;i--) {
@@ -497,6 +497,8 @@ sub PaintFunction()%>
          objCell.innerHTML = '<a class="clsButton" onfocus="doAcceptFocus();" onblur="doAcceptBlur();" href="javascript:doResponseAccept();">Accept</a>';
          objCell.className = 'clsTable01';
          objCell.style.whiteSpace = 'nowrap';
+         document.getElementById('SCR_ResData').scrollTop = 0;
+         document.getElementById('SCR_ResData').scrollLeft = 0;
          displayScreen('dspResponse');
          document.getElementById('RES_ResCode').focus();
       }
@@ -520,6 +522,8 @@ sub PaintFunction()%>
             document.getElementById(cobjTesResMeta[i].name02).value = '';
          }
       }
+      document.getElementById('SCR_ResData').scrollTop = 0;
+      document.getElementById('SCR_ResData').scrollLeft = 0;
       document.getElementById('RES_ResCode').focus();
    }
    function doResponseBack() {
@@ -757,8 +761,8 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
             }
          }
-         document.getElementById('RES_ResScrol').scrollTop = 0;
-         document.getElementById('RES_ResScrol').scrollLeft = 0;
+         document.getElementById('SCR_ResList').scrollTop = 0;
+         document.getElementById('SCR_ResList').scrollLeft = 0;
       }
    }
 
@@ -823,7 +827,7 @@ sub PaintFunction()%>
       </tr>
       <tr height=100%>
          <td width=75% align=left colspan=1 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible;background-color:transparent;">
+            <div id="SCR_ResData" class="clsScroll01" style="display:block;visibility:visible;background-color:transparent;">
                <table id="RES_ResData" class="clsPanel" cols=1 align=left cellpadding="0" cellspacing="0"></table>
             </div>
          </nobr></td>
@@ -835,7 +839,7 @@ sub PaintFunction()%>
                   </table>
                </nobr></td></tr>
                <tr height=100%><td><nobr>
-                  <div id="RES_ResScrol" class="clsScroll01" style="display:block;visibility:visible;">
+                  <div id="SCR_ResList" class="clsScroll01" style="display:block;visibility:visible;">
                      <table id="RES_ResList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
                   </div>
                </nobr></td></tr>
