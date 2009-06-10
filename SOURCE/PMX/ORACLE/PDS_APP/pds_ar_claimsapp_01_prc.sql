@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE pds_ar_claimsapp_01_prc IS
+CREATE OR REPLACE PACKAGE         pds_ar_claimsapp_01_prc IS
 
 /*********************************************************************************
   NAME:      run_pds_ar_claimsapp_01_prc
@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE pds_ar_claimsapp_01_prc IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   18/10/2005 Ann-Marie Ingeme     Created this procedure.
+  1.1   03/06/2009 Anna Every           Changed call to lics_outbound_loader
   2.0   10/06/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
@@ -84,31 +85,6 @@ PROCEDURE extract_postbox_ar_claimsapp;
 ********************************************************************************/
 PROCEDURE validate_pds_ar_claimsapp;
 
-/*********************************************************************************
-  NAME:      validate_pds_ar_claimsapp_snk
-  PURPOSE:   This procedure validates the Snackfood AR Claims Approval data in the AR Claims Approval
-             table in the PDS schema. No updates of the data itself is performed in PDS.
-             This ensures the data remains "as loaded". All formatting is performed 'on the fly'
-             as part of the interface itself. This routine updates the Validation Status only.
-  .
-  REVISIONS:
-  Ver   Date       Author               Description
-  ----- ---------- -------------------- ----------------------------------------
-  1.0   18/10/2005 Ann-Marie Ingeme     Created this procedure.
-
-  PARAMETERS:
-  Pos  Type   Format   Description                          Example
-  ---- ------ -------- ------------------------------------ --------------------
-  1    IN     VARCHAR2 Promax Company Code                  01
-  2    IN     VARCHAR2 Promax Division Code                 002
-
-  RETURN VALUE:
-  ASSUMPTIONS:
-  NOTES:
-********************************************************************************/
-PROCEDURE validate_pds_ar_claimsapp_snk (
-  i_pmx_cmpny_code IN VARCHAR2,
-  i_pmx_div_code IN VARCHAR2);
 
 /*********************************************************************************
   NAME:      validate_pds_ar_claimsapp_atl
@@ -125,6 +101,7 @@ PROCEDURE validate_pds_ar_claimsapp_snk (
                                         original Claim from SAP. This is only required for TESTING and
                                         can be removed once live as PET will be converted to GRD Co & Div.
   1.2   17/07/2006 Craig Ford           Remove PET Legacy Company and Division as part of PET conversion to GRD.
+  2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -164,31 +141,6 @@ PROCEDURE validate_pds_ar_claimsapp_atl (
 PROCEDURE interface_ar_claimsapp;
 
 /*********************************************************************************
-  NAME:      interface_ar_claimsapp_snack
-  PURPOSE:   This procedure creates the MFANZ Australia Snackfood interface,
-             for use with its legacy AS/400 environment.
-      .
-  REVISIONS:
-  Ver   Date       Author               Description
-  ----- ---------- -------------------- ----------------------------------------
-  1.0   05/09/2005 Ann-Marie Ingeme     Created this procedure.
-  2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
-
-  PARAMETERS:
-  Pos  Type   Format   Description                          Example
-  ---- ------ -------- ------------------------------------ --------------------
-  1    IN     VARCHAR2 Promax Company Code                  01
-  2    IN     VARCHAR2 Promax Division Code                 002
-
-  RETURN VALUE:
-  ASSUMPTIONS:
-  NOTES:
-********************************************************************************/
-PROCEDURE interface_ar_claimsapp_snack (
-  i_pmx_cmpny_code IN VARCHAR2,
-  i_pmx_div_code IN VARCHAR2);
-
-/*********************************************************************************
   NAME:      interface_ar_claimsapp_atlas
   PURPOSE:   This procedure creates the MFANZ Australia Food and NZ interface,
              for use with Atlas.
@@ -207,6 +159,7 @@ PROCEDURE interface_ar_claimsapp_snack (
   ---- ------ -------- ------------------------------------ --------------------
   1    IN     VARCHAR2 Promax Company Code                  47
   2    IN     VARCHAR2 Promax Division Code                 02
+  2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
 
   RETURN VALUE:
   ASSUMPTIONS:
@@ -247,7 +200,7 @@ END pds_ar_claimsapp_01_prc;
 /
 
 
-CREATE OR REPLACE PACKAGE BODY pds_ar_claimsapp_01_prc IS
+CREATE OR REPLACE PACKAGE BODY         pds_ar_claimsapp_01_prc IS
 
   -- PACKAGE VARIABLE DECLARATIONS.
   pv_processing_msg constants.message_string;
@@ -258,8 +211,6 @@ CREATE OR REPLACE PACKAGE BODY pds_ar_claimsapp_01_prc IS
   -- PACKAGE CONSTANT DECLARATIONS.
   pc_pmx_cmpny_code_australia    CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('australia','PMX_CMPNY_CODE');
   pc_pmx_cmpny_code_new_zealand  CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('new_zealand','PMX_CMPNY_CODE');
-  pc_pmx_cmpny_code_aus_legacy   CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('aus_legacy','PMX_CMPNY_CODE');
-  pc_pmx_div_code_snack_legacy   CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('snack_legacy','PMX_DIV_CODE');
   pc_div_code_snack              CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('snack','DIV_CODE');
   pc_div_code_food               CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('food','DIV_CODE');
   pc_div_code_pet                CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('pet','DIV_CODE');
@@ -590,12 +541,12 @@ BEGIN
 
   -- Perform validations on all outgoing AR Claims Approval by Company/Division for all
   -- Company and Divisions.
-  validate_pds_ar_claimsapp_snk (pc_pmx_cmpny_code_aus_legacy,pc_pmx_div_code_snack_legacy); -- Australia Snackfood.
-  validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_australia,pc_div_code_pet); -- Australia Petcare.
-  validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_australia,pc_div_code_food); -- Australia Food.
-  validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_snack); -- New Zealand Snack.
-  validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_food); -- New Zealand Food.
-  validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_pet); -- New Zealand Petcare.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_australia,pc_div_code_snack); -- Australia Snackfood.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_australia,pc_div_code_pet); -- Australia Petcare.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_australia,pc_div_code_food); -- Australia Food.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_snack); -- New Zealand Snack.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_food); -- New Zealand Food.
+ validate_pds_ar_claimsapp_atl (pc_pmx_cmpny_code_new_zealand,pc_div_code_pet); -- New Zealand Petcare.
 
   -- Trigger the pds_ar_claimsapp_01_rep procedure.
   write_log(pc_data_type_ar_claimsapp, 'N/A', pv_log_level, 'Trigger the PDS_AR_CLAIMSAPP_01_REP procedure.');
@@ -609,223 +560,6 @@ BEGIN
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 1,'validate_pds_ar_claimsapp - END.');
 
 END validate_pds_ar_claimsapp;
-
-
-PROCEDURE validate_pds_ar_claimsapp_snk (
-  i_pmx_cmpny_code IN VARCHAR2,
-  i_pmx_div_code IN VARCHAR2) IS
-
-  -- VARIABLE DECLARATIONS.
-  v_valdtn_status pds_ar_claims_apprvl.valdtn_status%TYPE; -- Record status
-  v_cmpny_code    pds_ar_claims_apprvl.cmpny_code%TYPE;
-  v_div_code      pds_ar_claims_apprvl.div_code%TYPE;
-  v_glcode        products.glcode%TYPE;
-
-  -- EXCEPTION DECLARATIONS.
-  e_processing_failure EXCEPTION;
-  e_processing_error   EXCEPTION;
-
-  -- CURSOR DECLARATIONS.
-  -- Promax Postbox AR Claims Approval Cursor.
-  CURSOR csr_approval IS
-    SELECT
-      intfc_batch_code,
-      cmpny_code,
-      div_code,
-      ar_claims_apprvl_seq,
-      gl_acct_code,
-      cust_code,
-      prom_num,
-      internal_claim_num,
-      matl_code,
-      prom_year,
-      fund_code,
-      pay_mthd,
-      data_type,
-      claim_amt,
-      case_deal,
-      line_num,
-      cust_vndr_code,
-      pay_chq,
-      directn,
-      additive,
-      claim_comment,
-      tax_amt,
-      doc_type,
-      pb_date,
-      pb_time,
-      period_num,
-      tran_date,
-      claim_ref,
-      gen_vndr
-    FROM
-      pds_ar_claims_apprvl
-    WHERE
-      cmpny_code = i_pmx_cmpny_code
-      AND div_code = i_pmx_div_code
-      AND valdtn_status = pc_valdtn_status_unchecked
-    FOR UPDATE NOWAIT;
-  rv_approval csr_approval%ROWTYPE;
-
-   -- RESULT CHECKING PROCEDURE.
-  PROCEDURE check_result_status IS
-  BEGIN
-    IF pv_status = constants.success THEN
-      NULL;
-    ELSIF pv_status = constants.failure THEN
-      pv_processing_msg := utils.nest_err_msg(pv_result_msg);
-      RAISE e_processing_failure;
-    ELSIF pv_status = constants.error THEN
-      pv_processing_msg := utils.nest_err_msg(pv_result_msg);
-      RAISE e_processing_error;
-    END IF;
-  END check_result_status;
-
-BEGIN
-
-  -- Start validate_pds_ar_claimsapp_snk procedure.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'validate_pds_ar_claimsapp_snk - START.');
-
-   -- Update PDS_AR_CLAIMS_APPRVL table to set existing INVALID records to UNCHECKED.
-  write_log(pc_data_type_ar_claimsapp, 'N/A', pv_log_level + 2,'Update PDS_AR_CLAIMS_APPRVL table to set existing INVALID records to UNCHECKED.');
-  UPDATE pds_ar_claims_apprvl
-    SET valdtn_status = pc_valdtn_status_unchecked
-  WHERE cmpny_code = i_pmx_cmpny_code
-    AND div_code = i_pmx_div_code
-    AND valdtn_status = pc_valdtn_status_invalid;
-
-  -- Commit update to PDS_AR_CLAIMS_APPRVL table.
-  write_log(pc_data_type_ar_claimsapp, 'N/A', pv_log_level + 2,'Commit update to PDS_AR_CLAIMS_APPRVL table.');
-  COMMIT;
-
-  -- Clear validation table of records if they exist.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Clear validation table of AR Claims Approval records if they exist.');
-  pds_utils.clear_validation_reason(pc_valdtn_type_ar_claimsapp,NULL, i_pmx_cmpny_code, i_pmx_div_code,NULL, NULL,NULL, pv_log_level + 2);
-
-  -- Lookup the Company and Division Codes.
-  pv_status := pds_lookup.lookup_cmpny_div_code (i_pmx_cmpny_code, i_pmx_div_code, v_cmpny_code, v_div_code, pv_log_level + 2, pv_result_msg);
-  check_result_status;
-
-  -- Read through each of the AR Claims Approval records to be interfaced.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open csr_approval cursor.');
-  OPEN csr_approval;
-
-  -- Looping through csr_approval cursor.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through csr_approval cursor.');
-  LOOP
-    FETCH csr_approval INTO rv_approval;
-    EXIT WHEN csr_approval%NOTFOUND;
-
-    v_valdtn_status  := pc_valdtn_status_valid;
-
-    -- Check that the Customer is not blank.
-    IF TRIM(rv_approval.cust_code) IS NULL THEN
-      v_valdtn_status := pc_valdtn_status_invalid;
-
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: Customer Code is null.');
-
-      -- Add an entry into the validation reason tables.
-      pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef ['|| rv_approval.claim_ref || ']: Customer Code is null.',
-        pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
-        NULL,
-        NULL,
-        pv_log_level + 3);
-
-    END IF;
-
-    -- Check that the Material is not blank.
-    IF TRIM(rv_approval.matl_code) IS NULL THEN
-      v_valdtn_status := pc_valdtn_status_invalid;
-
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: Material Code is null.');
-
-      -- Add an entry into the validation reason tables.
-      pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef ['|| rv_approval.claim_ref || ']: Material Code is null.',
-        pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
-        NULL,
-        NULL,
-        pv_log_level + 3);
-
-    END IF;
-
-    -- Update the Validation Status.
-    UPDATE pds_ar_claims_apprvl
-      SET valdtn_status = v_valdtn_status ,
-      procg_status = pc_procg_status_processed
-    WHERE CURRENT OF csr_approval;
-
-  END LOOP;
-  -- End of loop.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of loop.');
-
-  -- Commit changes to PDS_AR_CLAIMS_APPRVL table.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit changes to PDS_AR_CLAIMS_APPRVL table.');
-  COMMIT;
-
-  -- Close csr_approval cursor.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Close csr_approval cursor.');
-  CLOSE csr_approval;
-
-  -- End validate_pds_ar_claimsapp_snk procedure.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'validate_pds_ar_claimsapp_snk - END.');
-
-EXCEPTION
-  WHEN e_processing_failure THEN
-    pv_result_msg :=
-      utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_SNK:',
-        pv_processing_msg) ||
-      utils.create_params_str('Promax Company Code',i_pmx_cmpny_code,'Promax Division Code',i_pmx_div_code);
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_arclaimsapp_01_prc,'MFANZ Promax AR Claims Approval Process 01',
-      pv_result_msg);
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_arclaimsapp_01_prc,'N/A');
-    END IF;
-
-  WHEN e_processing_error THEN
-    pv_result_msg :=
-      utils.create_error_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_SNK:',
-        pv_processing_msg) ||
-      utils.create_params_str('Promax Company Code',i_pmx_cmpny_code,'Promax Division Code',i_pmx_div_code);
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_arclaimsapp_01_prc,'MFANZ Promax AR Claims Approval Process 01',
-      pv_result_msg);
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_arclaimsapp_01_prc,'N/A');
-    END IF;
-
-  -- Send warning message via e-mail and pds_log.
-  WHEN OTHERS THEN
-    pv_result_msg :=
-      utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_SNK:',
-      'Unexpected Exception - validate_ar_claimsapp_snk aborted.') ||
-      utils.create_params_str('Promax Company Code',i_pmx_cmpny_code,'Promax Division Code',i_pmx_div_code) ||
-      utils.create_sql_err_msg();
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_arclaimsapp_01_prc,'MFANZ Promax AR Claims Approval Process 01',
-      pv_result_msg);
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_arclaimsapp_01_prc,'N/A');
-    END IF;
-
-END validate_pds_ar_claimsapp_snk;
-
 
 PROCEDURE validate_pds_ar_claimsapp_atl (
   i_pmx_cmpny_code IN VARCHAR2,
@@ -851,6 +585,10 @@ PROCEDURE validate_pds_ar_claimsapp_atl (
   v_taxable_code     pds_cntl.cntl_value%TYPE;
   v_notax_code       pds_cntl.cntl_value%TYPE;
 
+  -- ARRAY DECLARATIONS.
+  type typ_work is table of pds_ar_claims_apprvl%rowtype index by binary_integer;
+  tbl_work typ_work;
+
   -- EXCEPTION DECLARATIONS.
   e_processing_failure EXCEPTION;
   e_processing_error   EXCEPTION;
@@ -893,8 +631,7 @@ PROCEDURE validate_pds_ar_claimsapp_atl (
     WHERE
       cmpny_code = i_pmx_cmpny_code
       AND div_code = i_pmx_div_code
-      AND valdtn_status = pc_valdtn_status_unchecked
-    FOR UPDATE NOWAIT;
+      AND valdtn_status = pc_valdtn_status_unchecked;
   rv_approval csr_approval%ROWTYPE;
 
    -- RESULT CHECKING PROCEDURE.
@@ -935,6 +672,13 @@ BEGIN
   -- Lookup the Company and Division Codes.
   pv_status := pds_lookup.lookup_cmpny_div_code (i_pmx_cmpny_code, i_pmx_div_code, v_cmpny_code, v_div_code, pv_log_level + 2, pv_result_msg);
   check_result_status;
+
+  -- Bulk collect the AR Claims Approval records to be interfaced
+  -- **notes** 1. frees the cursor and rollback space
+  tbl_work.delete;
+  open csr_approval;
+  fetch csr_approval bulk collect into tbl_work;
+  close csr_approval;
 
   -- Read through each of the AR Claims Approval records to be interfaced.
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open csr_approval cursor.');
@@ -1016,11 +760,12 @@ BEGIN
     IF v_plant_code IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: Plant Code for Material ['||rv_approval.matl_code||'] does not exist or is invalid.');
+--19/11/2007 CF Include TDU in detail
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef['|| rv_approval.claim_ref || '] Matl['||rv_approval.matl_code||'] TDU['||v_matl_code||'] Plant Code does not exist or is invalid');
 
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef ['|| rv_approval.claim_ref || ']: Plant Code for Material ['||rv_approval.matl_code||'] does not exist or is invalid.',
+        'ClaimRef['|| rv_approval.claim_ref ||'] Matl['||rv_approval.matl_code||'] TDU['||v_matl_code||'] invalid Plant Code',
         pc_valdtn_severity_critical,
         rv_approval.intfc_batch_code,
         rv_approval.cmpny_code,
@@ -1104,9 +849,10 @@ BEGIN
     END IF;
 
     /*
-    Australia Food & PET raise claims in SAP and interface to Promax via the staging tables pds_ar_claims.
-    To allow a claim to be automatically cleared in SAP, the approved AUS Food & PET claims must
-    be sent back (to SAP) with the original SAP claim document details (ie accounting
+    Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via the
+	staging tables pds_ar_claims.
+    To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET and Snack claims
+	must be sent back (to SAP) with the original SAP claim document details (ie accounting
     document number, line number, fiscal year). These key fields were written to the staging
     table pds_ar_claims when the claim was originally interfaced to Promax. This process
     looks up these key fields in the staging table (pds_ar_claims), and stores these values
@@ -1254,7 +1000,7 @@ BEGIN
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 1,'interface_ar_claimsapp - START.');
 
   -- Generate outgoing AR Claims Approval interface for all company/divisions.
-  interface_ar_claimsapp_snack(pc_pmx_cmpny_code_aus_legacy,pc_pmx_div_code_snack_legacy); -- Australia Snackfood.
+  interface_ar_claimsapp_atlas (pc_pmx_cmpny_code_australia,pc_div_code_snack); -- Australia Snackfood.
   interface_ar_claimsapp_atlas (pc_pmx_cmpny_code_australia,pc_div_code_pet); -- Australia Petcare.
   interface_ar_claimsapp_atlas (pc_pmx_cmpny_code_australia,pc_div_code_food); -- Australia Food.
   interface_ar_claimsapp_atlas (pc_pmx_cmpny_code_new_zealand,pc_div_code_snack); -- New Zealand Snack.
@@ -1265,283 +1011,6 @@ BEGIN
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 1,'interface_ar_claimsapp - END.');
 
 END interface_ar_claimsapp;
-
-
-PROCEDURE interface_ar_claimsapp_snack (
-  i_pmx_cmpny_code VARCHAR2,
-  i_pmx_div_code VARCHAR2) IS
-
-  -- VARIABLE  DECLARATIONS.
-  v_arclaims_apprvl_count NUMBER(5) := 0;
-  v_instance              NUMBER(15,0);
-  v_data                  VARCHAR2(4000);
-  v_identifier            CHAR(4) := 'EXAC';
-  v_glcode                products.glcode%TYPE;
-
-  --CURSOR DECLARATIONS.
-  -- Valid AR Claims Approval cursor.
-  CURSOR csr_approval IS
-    SELECT
-      RPAD(cmpny_code,2) AS cmpny_code,
-      RPAD(div_code,3) AS div_code,
-      RPAD(cust_code,8) AS cust_code,
-      RPAD(prom_num,8) AS prom_num,
-      SUBSTR(TO_CHAR(internal_claim_num,'09999999999999999S'),1,17) AS internal_claim_num,
-      matl_code,
-      RPAD(NVL(prom_year,' '),4) AS prom_year,
-      RPAD(NVL(fund_code,' '),2) AS fund_code,
-      RPAD(NVL(pay_mthd,' '),2) AS pay_mthd,
-      NVL(data_type,' ') AS data_type,
-      TO_CHAR(NVL(SUM(claim_amt),0),  '0999999999999.99S') AS claim_amt,
-      TO_CHAR(NVL(SUM(case_deal),0),'0999999999999.99S') AS case_deal,
-      SUBSTR(TO_CHAR(NVL(line_num,0),'099999999999999999S'),1,17) AS line_num,
-      RPAD(NVL(cust_vndr_code,' '),10) AS cust_vndr_code,
-      NVL(pay_chq,' ') AS pay_chq,
-      NVL(directn,' ') AS directn,
-      NVL(additive,' ') AS additive,
-      RPAD(NVL(claim_comment,' '),25) AS claim_comment,
-      DECODE(pb_date, NULL,'        ',TO_CHAR(pb_date,'YYYYMMDD')) AS pb_date,
-      SUBSTR(TO_CHAR(NVL(pb_time,0),'99999S'),1,5) AS pb_time,
-      TO_CHAR(NVL(SUM(tax_amt),0), '0999999999999.99S') AS tax_amt,
-      NVL(doc_type,' ') AS doc_type,
-      SUBSTR(TO_CHAR(period_num,'099999999999999999S'),1,17) AS period_num,
-      DECODE(tran_date, NULL,'        ',TO_CHAR(tran_date,'YYYYMMDD')) AS tran_date,
-      RPAD(NVL(claim_ref,' '),15) AS claim_ref,
-      NVL(gen_vndr,' ') AS gen_vndr,
-      RPAD(NVL(chq_num,' '),10) AS chq_num,
-      DECODE(proc_date, NULL,'        ',TO_CHAR(proc_date,'YYYYMMDD')) AS proc_date
-    FROM
-      pds_ar_claims_apprvl
-    WHERE
-      cmpny_code = i_pmx_cmpny_code
-      AND div_code = i_pmx_div_code
-      AND pay_chq = pc_ar_claimsapp_not_by_chq
-      AND directn = pc_ar_claimsapp_export
-      AND data_type = pc_ar_claimsapp_claim
-      AND valdtn_status = pc_valdtn_status_valid
-      AND procg_status = pc_procg_status_processed
-    GROUP BY
-      cmpny_code,
-      div_code,
-      cust_code,
-      prom_num,
-      internal_claim_num,
-      matl_code,
-      prom_year,
-      fund_code,
-      pay_mthd,
-      data_type,
-      line_num,
-      cust_vndr_code,
-      pay_chq,
-      directn,
-      additive,
-      claim_comment,
-      pb_date,
-      pb_time,
-      doc_type,
-      period_num,
-      tran_date,
-      claim_ref,
-      gen_vndr,
-      chq_num,
-      proc_date;
-  rv_approval csr_approval%ROWTYPE;
-
-BEGIN
-
-  -- Start interface_ar_claimsapp_snack procedure.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'interface_ar_claimsapp_snack - START.');
-
-  -- Count the number of AR Claim Approval records.
-  SELECT count(*) INTO v_arclaims_apprvl_count FROM
-    (SELECT
-      RPAD(cmpny_code,2),
-      RPAD(div_code,3),
-      RPAD(cust_code,8),
-      RPAD(prom_num,8),
-      SUBSTR(TO_CHAR(internal_claim_num,'09999999999999999S'),1,17),
-      matl_code,
-      RPAD(NVL(prom_year,' '),4),
-      RPAD(NVL(fund_code,' '),2),
-      RPAD(NVL(pay_mthd,' '),2),
-      NVL(data_type,' '),
-      TO_CHAR(NVL(SUM(claim_amt),0),  '0999999999999.99S'),
-      TO_CHAR(NVL(SUM(case_deal),0),'0999999999999.99S'),
-      SUBSTR(TO_CHAR(line_num,'099999999999999999S'),1,17),
-      RPAD(NVL(cust_vndr_code,' '),10),
-      NVL(pay_chq,' '),
-      NVL(directn,' '),
-      NVL(additive,' '),
-      RPAD(NVL(claim_comment,' '),25),
-      DECODE(pb_date, null,'        ',to_char(pb_date,'YYYYMMDD')),
-      SUBSTR(TO_CHAR(NVL(pb_time,0),'99999S'),1,5),
-      TO_CHAR(NVL(SUM(tax_amt),0), '0999999999999.99S'),
-      NVL(doc_type,' '),
-      SUBSTR(TO_CHAR(period_num,'099999999999999999S'),1,17),
-      DECODE(tran_date, null,'        ',TO_CHAR(tran_date,'YYYYMMDD')),
-      RPAD(NVL(claim_ref,' '),15),
-      NVL(gen_vndr,' '),
-      RPAD(NVL(chq_num,' '),10),
-      DECODE(proc_date, NULL,'        ',TO_CHAR(PROC_DATE,'YYYYMMDD'))
-    FROM
-      pds_ar_claims_apprvl
-    WHERE
-       cmpny_code = i_pmx_cmpny_code
-      AND div_code = i_pmx_div_code
-      AND pay_chq =pc_ar_claimsapp_not_by_chq
-      AND directn = pc_ar_claimsapp_export
-      AND data_type = pc_ar_claimsapp_claim
-      AND valdtn_status = pc_valdtn_status_valid
-      AND procg_status = pc_procg_status_processed
-    GROUP BY
-      cmpny_code,
-      div_code,
-      cust_code,
-      prom_num,
-      internal_claim_num,
-      matl_code,
-      prom_year,
-      fund_code,
-      pay_mthd,
-      data_type,
-      line_num,
-      cust_vndr_code,
-      pay_chq,
-      directn,
-      additive,
-      claim_comment,
-      pb_date,
-      pb_time,
-      doc_type,
-      period_num,
-      tran_date,
-      claim_ref,
-      gen_vndr,
-      chq_num,
-      proc_date);
-
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Number of AR Claim Approval records: Promax Company:' || i_pmx_cmpny_code ||' Promax Division:' || i_pmx_div_code || ';' || 'Count:' || v_arclaims_apprvl_count || '.');
-
-  -- If there are no AR Claim Approval records to process then exit procedure (to avoid sending empty interface files).
-  IF v_arclaims_apprvl_count = 0 THEN
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'No AR Claim Approvals to process for Promax Company:' || i_pmx_cmpny_code ||' Promax Division:' || i_pmx_div_code ||'.');
-  ELSE
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Processing AR Claim Approvals.');
-
-    -- Create the AR Claims Approval file.
-    v_instance := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_02);
-
-    -- Read through each of the AR Claim Approval records to be interfaced.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open csr_approval cursor.');
-    OPEN csr_approval;
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through the csr_approval cursor.');
-    LOOP
-      FETCH csr_approval INTO rv_approval;
-      EXIT WHEN csr_approval%NOTFOUND;
-
-      -- Get the legacy Snack Product Group Code which is held in the Promax Products GL Code column.
-      pv_status := pds_lookup.lookup_matl_grp_code_snack(rv_approval.cmpny_code, rv_approval.div_code, rv_approval.matl_code, v_glcode, pv_log_level + 3, pv_result_msg);
-      IF pv_status <> constants.success THEN
-        v_glcode := ' ';
-      END IF;
-
-      -- Build AR Claim Approval data string.
-      v_data := v_identifier ||
-        rv_approval.cmpny_code ||
-        rv_approval.div_code ||
-        rv_approval.cust_code ||
-        rv_approval.prom_num ||
-        rv_approval.internal_claim_num ||
-        RPAD(v_glcode,15) ||
-        rv_approval.prom_year ||
-        rv_approval.fund_code ||
-        rv_approval.pay_mthd ||
-        rv_approval.data_type ||
-        rv_approval.claim_amt ||
-        rv_approval.case_deal ||
-        rv_approval.line_num ||
-        rv_approval.cust_vndr_code ||
-        rv_approval.pay_chq ||
-        rv_approval.directn ||
-        rv_approval.additive ||
-        rv_approval.claim_comment ||
-        rv_approval.doc_type ||
-        rv_approval.tax_amt ||
-        rv_approval.pb_date ||
-        rv_approval.pb_time ||
-        rv_approval.period_num ||
-        rv_approval.tran_date ||
-        rv_approval.claim_ref ||
-        rv_approval.gen_vndr ||
-        rv_approval.chq_num ||
-        rv_approval.proc_date;
-
-      -- Write AR Claim Approvals records to the file.
-      lics_outbound_loader.append_data(v_data);
-
-    END LOOP;
-    -- End of loop for csr_pds_ar_claimsapp_status cursor.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of loop for csr_approval cursor.');
-
-    -- Close csr_approval cursor.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Close csr_approval cursor.');
-    CLOSE csr_approval;
-
-    -- Finalise the interface.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Finalising ICS interface file.');
-    lics_outbound_loader.finalise_interface;
-
-    -- Update the PDS_AR_CLAIMS_APPRVL table.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Update the PDS_AR_CLAIMS_APPRVL table with COMPLETED status.');
-    UPDATE pds_ar_claims_apprvl
-       SET procg_status = pc_procg_status_completed
-    WHERE  cmpny_code = i_pmx_cmpny_code
-      AND div_code = i_pmx_div_code
-      AND pay_chq = pc_ar_claimsapp_not_by_chq
-      AND directn = pc_ar_claimsapp_export
-      AND data_type = pc_ar_claimsapp_claim
-      AND valdtn_status = pc_valdtn_status_valid
-      AND procg_status = pc_procg_status_processed;
-
-    -- Commit all changes into the database.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit all changes to the database.');
-    COMMIT;
-
-  END IF;
-
-  -- End interface_ar_claimsapp_snack procedure.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'interface_ar_claimsapp_snack - END.');
-
-
-EXCEPTION
-
-  -- Exception trap: when any exceptions occur the IS_CREATED method should be tested.
-  -- If IS_CREATED returns true then the exception should be added to
-  -- the interface for logging purposes and the interface finalised.
-
-  -- Send warning message via E-mail and PDS_LOG.
-  WHEN OTHERS THEN
-    pv_result_msg :=
-      utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.INTERFACE_AR_CLAIMSAPP_SNACK:',
-      'Unexpected Exception - interface_ar_claimsapp_snack aborted. ROLLBACK, check LICS and finalise if required and exit.') ||
-      utils.create_params_str('Promax Company Code',i_pmx_cmpny_code,'Promax Division Code',i_pmx_div_code) ||
-      utils.create_sql_err_msg();
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_arclaimsapp_01_prc,'MFANZ Promax AR Claims Approval Process 01',
-      pv_result_msg);
-    ROLLBACK;
-    IF lics_outbound_loader.is_created = TRUE THEN
-      lics_outbound_loader.add_exception(SUBSTR(SQLERRM,1,1024));
-      lics_outbound_loader.finalise_interface;
-    END IF;
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_arclaimsapp_01_prc,'N/A');
-    END IF;
-
-END interface_ar_claimsapp_snack;
 
 
 PROCEDURE interface_ar_claimsapp_atlas (
@@ -1585,6 +1054,10 @@ PROCEDURE interface_ar_claimsapp_atlas (
   v_cmpny_code            pds_div.cmpny_code%TYPE;
   v_div_code              pds_div.div_code%TYPE;
   v_glcode                pds_cntl.cntl_value%TYPE;
+
+  -- ARRAY DECLARATIONS.
+  type typ_work is table of pds_ar_claims_apprvl%rowtype index by binary_integer;
+  tbl_work typ_work;
 
   -- EXCEPTION DECLARATIONS.
   e_processing_failure EXCEPTION;
@@ -1689,9 +1162,6 @@ PROCEDURE interface_ar_claimsapp_atlas (
     FOR UPDATE NOWAIT;
   rv_detail csr_detail%ROWTYPE;
 
-
-SG***********WHY USE FOR UPDATE
-
   -- RESULT CHECKING PROCEDURE.
   PROCEDURE check_result_status IS
   BEGIN
@@ -1710,6 +1180,13 @@ BEGIN
 
   -- Start interface_ar_claimsapp_atlas procedure.
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'interface_ar_claimsapp_atlas - START.');
+
+  -- Bulk collect the AR Claims Approval records to be interfaced
+  -- **notes** 1. frees the cursor and rollback space
+  tbl_work.delete;
+  open csr_approval;
+  fetch csr_approval bulk collect into tbl_work;
+  close csr_approval;
 
   -- Count the number of AR Claims Approval Records.
   SELECT COUNT(*) INTO v_arclaims_apprvl_count
@@ -1781,9 +1258,10 @@ BEGIN
       check_result_status;
 
       /*
-      Australia Food & PET raise claims in SAP and interface to Promax via the PDS_AR_CLAIMS staging tables.
-      To allow a claim to be automatically cleared in SAP, the approved AUS Food & PET claims must
-      be sent back (to SAP) with the original SAP claim document details (ie accounting
+      Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via
+	  the PDS_AR_CLAIMS staging tables.
+      To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET & Snack claims
+      must be sent back (to SAP) with the original SAP claim document details (ie accounting
       document number, line number, fiscal year). These key fields were written to the staging
       table pds_ar_claims when the claim was originally interfaced to Promax. This process
       looks up these key fields in the staging table (pds_ar_claims), and stores these values
@@ -1791,6 +1269,7 @@ BEGIN
       Note: This needs to be reviewed prior to Pet and Snack go-live as it is yet to be determined
       how they will process the claims.
       */
+
       IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
 
         pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, rv_approval.claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
@@ -1800,8 +1279,8 @@ BEGIN
         v_alloc_nmbr:= RPAD(LPAD(v_acctg_doc_num,10,'0') || v_fiscal_year || LPAD(v_line_item_num,3,'0'),18);
 
         -- Now perform the output Customer Code conversion by using the original customer number.
-        -- Customer codes have leading zeroes if they are numeric, otherwise the
-        -- field is left justified with spaces padding (on the right). The width returned
+        -- Customer codes have leading zeroes if they are numeric, otherwise the field
+        -- is left justified with spaces padding (on the right). The width returned
         -- is 10 characters, req'd format for SAP (i.e. export).
         pv_status := pds_common.format_cust_code(v_claim_cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
 
@@ -1869,7 +1348,7 @@ BEGIN
         with regards to output data will be received if the start dates and end dates in
         Promax and the material determination tables are aligned. Otherwise the wrong real
         item may be returned.  The detection checking occurs  in the following order, by
-        sold to, by Customer hieracy, by distribution channel,
+        sold to, by Customer hierarchy, by distribution channel,
         */
         pv_status := pds_lookup.lookup_matl_dtrmntn(rv_approval.cmpny_code, rv_approval.div_code, rv_approval.prom_num, rv_approval.cust_code, rv_detail.matl_code, v_matl_code, pv_log_level + 4, pv_result_msg);
         check_result_status;
@@ -1888,7 +1367,7 @@ BEGIN
 
         -- Lookup Plant Code.
         pv_status := pds_lookup.lookup_matl_plant_code(rv_approval.cmpny_code, v_matl_code, v_plant_code, pv_log_level + 4, pv_result_msg);
-        check_result_status;
+		        check_result_status;
 
         -- Save the item line to the array. Array will be unloaded when all item lines have been retrieved.
         -- CF 01/08/2006 Include the IC Number as unique identifier in Promax.
@@ -1953,9 +1432,9 @@ BEGIN
       v_taxfree_found := FALSE;
 
       /*
-      Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food & PET - there
-      is no record for NZ. This is to identify that the original AR Claim has now been
-      approved. Used in AR Claim when validating the status of a claim (ie has it loaded
+      Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food, PET & Snack - there
+      is no record for NZ. This is to identify that the original AR Claim has now been approved.
+      Used in AR Claim when validating the status of a claim (ie has it loaded
       into Promax, has it been approved?).
       CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
       Note: Requires reviewing when Snack moves to ATLAS.
@@ -1987,7 +1466,9 @@ BEGIN
 
     -- Open the outbound interface.
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open the outbound interface.');
-    v_instance := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_01);
+   -- v_instance := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_01);
+    v_instance  := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_01, null, pc_interface_ar_claimsapp_01||'.DAT');
+
 
     -- Write data from table to output file.
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through table in order to write AR Claims Approval records into the output file.');
