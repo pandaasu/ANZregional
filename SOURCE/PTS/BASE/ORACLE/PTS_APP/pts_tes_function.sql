@@ -1312,9 +1312,11 @@ create or replace package body pts_app.pts_tes_function as
       var_sam_cod1 number;
       var_sam_cod2 number;
       var_seq_numb number;
+      var_que_code number;
       var_res_value number;
       var_typ_code varchar2(10 char);
       var_found boolean;
+      var_message boolean;
       rcd_pts_tes_panel pts_tes_panel%rowtype;
       rcd_pts_tes_allocation pts_tes_allocation%rowtype;
       rcd_pts_tes_response pts_tes_response%rowtype;
@@ -1354,6 +1356,19 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tsa_tes_code = var_tes_code
             and t01.tsa_mkt_code = upper(var_mkt_code);
       rcd_sample csr_sample%rowtype;
+
+      cursor csr_question is
+         select t01.*
+           from pts_que_definition t01
+          where t01.qde_que_code  = var_que_code;
+      rcd_question csr_question%rowtype;
+
+      cursor csr_response is
+         select t01.*
+           from pts_que_response t01
+          where t01.qre_que_code = var_que_code
+            and t01.qre_res_code = var_res_value;
+      rcd_response csr_response%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1483,6 +1498,7 @@ create or replace package body pts_app.pts_tes_function as
          obj_res_node := xmlDom.item(obj_res_list,idx);
          var_typ_code := upper(xslProcessor.valueOf(obj_res_node,'@TYPCDE'));
          if var_typ_code = 'D' then
+            var_message := false;
             var_day_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@DAYCDE'));
             var_sam_cod1 := null;
             var_sam_cod2 := null;
@@ -1490,8 +1506,8 @@ create or replace package body pts_app.pts_tes_function as
             open csr_sample;
             fetch csr_sample into rcd_sample;
             if csr_sample%notfound then
-               pts_gen_function.add_mesg_data('Market research code ('||upper(var_mkt_code)||') does not exist for this test');
-               exit;
+               pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||upper(var_mkt_code)||') does not exist for this test');
+               var_message := true;
             else
                var_sam_cod1 := rcd_sample.tsa_sam_code;
                var_seq_numb := var_day_code;
@@ -1519,8 +1535,8 @@ create or replace package body pts_app.pts_tes_function as
                open csr_sample;
                fetch csr_sample into rcd_sample;
                if csr_sample%notfound then
-                  pts_gen_function.add_mesg_data('Market research code ('||upper(var_mkt_code)||') does not exist for this test');
-                  exit;
+                  pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||upper(var_mkt_code)||') does not exist for this test');
+                  var_message := true;
                else
                   var_sam_cod2 := rcd_sample.tsa_sam_code;
                   var_seq_numb := var_day_code;
@@ -1547,20 +1563,50 @@ create or replace package body pts_app.pts_tes_function as
          end if;
          if var_typ_code = 'Q' then
             if not(xslProcessor.valueOf(obj_res_node,'@RESVAL') is null) then
-               rcd_pts_tes_response.tre_day_code := var_day_code;
-               rcd_pts_tes_response.tre_que_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@QUECDE'));
-               rcd_pts_tes_response.tre_sam_code := 0;
-               if xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '1' then
-                  rcd_pts_tes_response.tre_sam_code := var_sam_cod1;
-               elsif xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '2' then
-                  rcd_pts_tes_response.tre_sam_code := var_sam_cod2;
+               var_que_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@QUECDE'));
+               var_res_value := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESVAL'));
+               open csr_question;
+               fetch csr_question into rcd_question;
+               if csr_question%notfound then
+                  pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') question ('||to_char(var_que_code)||') does not exist for this test');
+                  var_message := true;
+               else
+                  if rcd_question.qde_rsp_type = 1 then
+                     open csr_response;
+                     fetch csr_response into rcd_response;
+                     if csr_response%notfound then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') question ('||to_char(var_que_code)||') response value ('||to_char(var_res_value)||') does not exist for question');
+                        var_message := true;
+                     end if;
+                     close csr_response;
+                  elsif rcd_question.qde_rsp_type = 2 then
+                     if var_res_value < rcd_question.qde_rsp_str_range or var_res_value > rcd_question.qde_rsp_end_range then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') question ('||to_char(var_que_code)||') response value ('||to_char(var_res_value)||') is not within the defined range ('||to_char(rcd_question.qde_rsp_str_range)||' to '||to_char(rcd_question.qde_rsp_end_range)||')');
+                        var_message := true;
+                     end if;
+                  else
+                     pts_gen_function.add_mesg_data('Question has invalid response type');
+                     var_message := true;
+                  end if;
                end if;
-               rcd_pts_tes_response.tre_res_value := pts_to_number(xslProcessor.valueOf(obj_res_node,'@RESVAL'));
-               insert into pts_tes_response values rcd_pts_tes_response;
+               close csr_question;
+               if var_message = false then
+                  rcd_pts_tes_response.tre_day_code := var_day_code;
+                  rcd_pts_tes_response.tre_que_code := var_que_code;
+                  rcd_pts_tes_response.tre_sam_code := 0;
+                  if xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '1' then
+                     rcd_pts_tes_response.tre_sam_code := var_sam_cod1;
+                  elsif xslProcessor.valueOf(obj_res_node,'@RESSEQ') = '2' then
+                     rcd_pts_tes_response.tre_sam_code := var_sam_cod2;
+                  end if;
+                  rcd_pts_tes_response.tre_res_value := var_res_value;
+                  insert into pts_tes_response values rcd_pts_tes_response;
+               end if;
             end if;
          end if;
       end loop;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
