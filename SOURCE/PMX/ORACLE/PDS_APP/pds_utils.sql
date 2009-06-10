@@ -2878,20 +2878,23 @@ BEGIN
     pds_utils.log(pc_job_type_utils, pc_data_type_not_applicable, 'N/A', v_log_level, 'Deleting records from pds_log TYPE:'||rv_csr_pds_job_type.job_type_code||' DATE: '||(sysdate - rv_csr_pds_job_type.job_type_hist));
 
     -- Delete records
-    Delete from pds_log
+    delete from pds_log
     where
         pds_log.job_type_code = rv_csr_pds_job_type.job_type_code and
         pds_log.LOG_LUPDT < (sysdate - rv_csr_pds_job_type.job_type_hist) and
-        pds_log.LOG_LEVEL >= decode(rv_csr_pds_job_type.job_type_keep_level,null,0,rv_csr_pds_job_type.job_type_keep_level+1)
-        ;
+        pds_log.LOG_LEVEL >= decode(rv_csr_pds_job_type.job_type_keep_level,null,0,rv_csr_pds_job_type.job_type_keep_level+1);
 
   END LOOP;
 
+  -- Commit transaction.
+  COMMIT;
 
-pds_utils.log(pc_job_type_utils, pc_data_type_not_applicable, 'N/A', v_log_level, 'clean_pds_log - End.');
+  -- Start clean_pds_log procedure.
+  pds_utils.log(pc_job_type_utils, pc_data_type_not_applicable, 'N/A', v_log_level, 'clean_pds_log - End.');
 
-  EXCEPTION
+EXCEPTION
   WHEN e_processing_failure THEN
+    ROLLBACK;
     pds_utils.log(pc_job_type_utils,
                   pc_data_type_not_applicable,
                   'FAILURE',
@@ -2900,6 +2903,7 @@ pds_utils.log(pc_job_type_utils, pc_data_type_not_applicable, 'N/A', v_log_level
                   ' ERROR MESSAGE: ' || SUBSTR(pv_processing_msg, 1, 512));
 
   WHEN OTHERS THEN
+    ROLLBACK;
     pds_utils.log(pc_job_type_utils,
                   pc_data_type_not_applicable,
                   'ERROR',
