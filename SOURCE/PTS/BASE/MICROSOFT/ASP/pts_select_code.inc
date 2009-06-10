@@ -842,6 +842,7 @@
             cobjSelectData[intIndex].grptxt = objElements[i].getAttribute('GRPTXT');
             cobjSelectData[intIndex].grppct = objElements[i].getAttribute('GRPPCT');
             cobjSelectData[intIndex].tabcde = '*GROUP';
+            cintSelectGroup++;
          } else if (objElements[i].nodeName == 'RULE') {
             intIndex++;
             cobjSelectData[intIndex] = new clsSltRule();
