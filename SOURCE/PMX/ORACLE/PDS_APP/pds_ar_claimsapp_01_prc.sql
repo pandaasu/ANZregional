@@ -153,13 +153,13 @@ PROCEDURE interface_ar_claimsapp;
                                         original Claim from SAP. This is only required for TESTING and
                                         can be removed once live as PET will be converted to GRD Co & Div.
   1.2   17/07/2006 Craig Ford           Remove PET Legacy Company and Division as part of PET conversion to GRD.
+  2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
   ---- ------ -------- ------------------------------------ --------------------
   1    IN     VARCHAR2 Promax Company Code                  47
   2    IN     VARCHAR2 Promax Division Code                 02
-  2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
 
   RETURN VALUE:
   ASSUMPTIONS:
@@ -597,42 +597,13 @@ PROCEDURE validate_pds_ar_claimsapp_atl (
   -- Promax Postbox AR Claims Approval Cursor.
   CURSOR csr_approval IS
     SELECT
-      intfc_batch_code,
-      cmpny_code,
-      div_code,
-      ar_claims_apprvl_seq,
-      gl_acct_code,
-      cust_code,
-      prom_num,
-      internal_claim_num,
-      matl_code,
-      prom_year,
-      fund_code,
-      pay_mthd,
-      data_type,
-      claim_amt,
-      case_deal,
-      line_num,
-      cust_vndr_code,
-      pay_chq,
-      directn,
-      additive,
-      claim_comment,
-      tax_amt,
-      doc_type,
-      pb_date,
-      pb_time,
-      period_num,
-      tran_date,
-      claim_ref,
-      gen_vndr
+      *
     FROM
       pds_ar_claims_apprvl
     WHERE
       cmpny_code = i_pmx_cmpny_code
       AND div_code = i_pmx_div_code
       AND valdtn_status = pc_valdtn_status_unchecked;
-  rv_approval csr_approval%ROWTYPE;
 
    -- RESULT CHECKING PROCEDURE.
   PROCEDURE check_result_status IS
@@ -675,25 +646,20 @@ BEGIN
 
   -- Bulk collect the AR Claims Approval records to be interfaced
   -- **notes** 1. frees the cursor and rollback space
+  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open and bulk collect csr_approval cursor.');
   tbl_work.delete;
   open csr_approval;
   fetch csr_approval bulk collect into tbl_work;
   close csr_approval;
 
-  -- Read through each of the AR Claims Approval records to be interfaced.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open csr_approval cursor.');
-  OPEN csr_approval;
-
-  -- Looping through csr_approval cursor.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through csr_approval cursor.');
-  LOOP
-    FETCH csr_approval INTO rv_approval;
-    EXIT WHEN csr_approval%NOTFOUND;
+  -- Looping through csr_approval cursor array.
+  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through csr_approval cursor array.');
+  for idx in 1..tbl_work.count loop
 
     v_valdtn_status  := pc_valdtn_status_valid;
 
     -- Lookup the GL Account Code.
-    pv_status := pds_lookup.lookup_cntl_code(rv_approval.cmpny_code, rv_approval.div_code,'COST_ACCOUNT_CODE', v_glcode,pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_cntl_code(tbl_work(idx).cmpny_code,tbl_work(idx).div_code,'COST_ACCOUNT_CODE', v_glcode,pv_log_level + 3, pv_result_msg);
     IF v_glcode IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
@@ -703,10 +669,10 @@ BEGIN
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Missing COST_ACCOUNT_CODE configuration setup for Company and Division.',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -714,7 +680,7 @@ BEGIN
     END IF;
 
     -- Lookup the Currency Code.
-    pv_status := pds_lookup.lookup_cntl_code(rv_approval.cmpny_code, rv_approval.div_code,'CURRENCY_CODE',v_currcy_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_cntl_code(tbl_work(idx).cmpny_code, tbl_work(idx).div_code,'CURRENCY_CODE',v_currcy_code, pv_log_level + 3, pv_result_msg);
     IF v_currcy_code IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
@@ -724,10 +690,10 @@ BEGIN
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Missing CURRENCY_CODE configuration setup for Company and Division.',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -735,20 +701,20 @@ BEGIN
     END IF;
 
     -- Check that Material Determination exists.
-    pv_status := pds_lookup.lookup_matl_dtrmntn(rv_approval.cmpny_code, rv_approval.div_code, rv_approval.prom_num, rv_approval.cust_code, rv_approval.matl_code, v_matl_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_matl_dtrmntn(tbl_work(idx).cmpny_code, tbl_work(idx).div_code, tbl_work(idx).prom_num, tbl_work(idx).cust_code, tbl_work(idx).matl_code, v_matl_code, pv_log_level + 3, pv_result_msg);
     IF pv_status <> constants.success THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'Matl Dtrmntn does not exist Prom [' || TRIM(rv_approval.prom_num) ||'], Matl ['|| rv_approval.matl_code ||'.');
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'Matl Dtrmntn does not exist Prom [' || TRIM(tbl_work(idx).prom_num) ||'], Matl ['|| tbl_work(idx).matl_code ||'.');
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'Matl Dtrmntn does not exist Prom [' || TRIM(rv_approval.prom_num) ||'], '||
-        'Cust ['|| rv_approval.cust_code ||'], and Matl ['|| rv_approval.matl_code ||'].',
+        'Matl Dtrmntn does not exist Prom [' || TRIM(tbl_work(idx).prom_num) ||'], '||
+        'Cust ['|| tbl_work(idx).cust_code ||'], and Matl ['|| tbl_work(idx).matl_code ||'].',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -756,21 +722,21 @@ BEGIN
     END IF;
 
     -- Lookup the Plant Code.
-    pv_status := pds_lookup.lookup_matl_plant_code(rv_approval.cmpny_code, v_matl_code, v_plant_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_matl_plant_code(tbl_work(idx).cmpny_code, v_matl_code, v_plant_code, pv_log_level + 3, pv_result_msg);
     IF v_plant_code IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
---19/11/2007 CF Include TDU in detail
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef['|| rv_approval.claim_ref || '] Matl['||rv_approval.matl_code||'] TDU['||v_matl_code||'] Plant Code does not exist or is invalid');
+      --19/11/2007 CF Include TDU in detail
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef['|| tbl_work(idx).claim_ref || '] Matl['||tbl_work(idx).matl_code||'] TDU['||v_matl_code||'] Plant Code does not exist or is invalid');
 
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef['|| rv_approval.claim_ref ||'] Matl['||rv_approval.matl_code||'] TDU['||v_matl_code||'] invalid Plant Code',
+        'ClaimRef['|| tbl_work(idx).claim_ref ||'] Matl['||tbl_work(idx).matl_code||'] TDU['||v_matl_code||'] invalid Plant Code',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -778,7 +744,7 @@ BEGIN
     END IF;
 
     -- Lookup the Profit Centre.
-    pv_status := pds_lookup.lookup_cntl_code(rv_approval.cmpny_code, rv_approval.div_code,'PROFIT_CENTRE_CODE',v_profit_ctr, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_cntl_code(tbl_work(idx).cmpny_code, tbl_work(idx).div_code,'PROFIT_CENTRE_CODE',v_profit_ctr, pv_log_level + 3, pv_result_msg);
     IF v_profit_ctr IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
@@ -788,10 +754,10 @@ BEGIN
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Missing PROFIT_CENTRE_CODE configuration setup for Company and Division.',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -799,25 +765,25 @@ BEGIN
     END IF;
 
     -- Lookup the Distribution Channel Code.
-    pv_status := pds_common.format_matl_code(rv_approval.matl_code,v_fmt_matl_code,pv_log_level + 3,pv_result_msg);
+    pv_status := pds_common.format_matl_code(tbl_work(idx).matl_code,v_fmt_matl_code,pv_log_level + 3,pv_result_msg);
     check_result_status;
-    pv_status := pds_common.format_cust_code(rv_approval.cust_code, v_fmt_cust_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_common.format_cust_code(tbl_work(idx).cust_code, v_fmt_cust_code, pv_log_level + 3, pv_result_msg);
     check_result_status;
     pv_status := pds_lookup.lookup_distn_chnl_code (v_fmt_matl_code, v_fmt_cust_code,v_distbn_chnl_code, pv_log_level + 3, pv_result_msg);
     IF v_distbn_chnl_code IS NULL THEN
 
       v_valdtn_status := pc_valdtn_status_invalid;
 
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: Missing Distribution Channel for Matl/Cust ['||rv_approval.matl_code||'/'||rv_approval.cust_code||'].');
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| tbl_work(idx).claim_ref || ']: Missing Distribution Channel for Matl/Cust ['||tbl_work(idx).matl_code||'/'||tbl_work(idx).cust_code||'].');
 
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef ['|| rv_approval.claim_ref || ']: Missing Distribution Channel for Matl/Cust ['||rv_approval.matl_code||'/'||rv_approval.cust_code||'].',
+        'ClaimRef ['|| tbl_work(idx).claim_ref || ']: Missing Distribution Channel for Matl/Cust ['||tbl_work(idx).matl_code||'/'||tbl_work(idx).cust_code||'].',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -828,20 +794,20 @@ BEGIN
     -- Customer Code than the Original inbound Claim. This is required to use as a key for
     -- looking up the original inbound claim in PDS_AR_CLAIMS. Function returns the
     -- v_promax_cust_code.
-    pv_status := pds_lookup.lookup_orig_claimdoc_cust_code (rv_approval.cmpny_code, rv_approval.div_code, rv_approval.claim_ref, rv_approval.internal_claim_num, v_promax_cust_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_orig_claimdoc_cust_code (tbl_work(idx).cmpny_code, tbl_work(idx).div_code, tbl_work(idx).claim_ref, tbl_work(idx).internal_claim_num, v_promax_cust_code, pv_log_level + 3, pv_result_msg);
     IF pv_status <> constants.success THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: No Claimdoc KACC for Internal Claim Number ['||rv_approval.internal_claim_num||'].');
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No Claimdoc KACC for Internal Claim Number ['||tbl_work(idx).internal_claim_num||'].');
 
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-        'ClaimRef ['|| rv_approval.claim_ref || ']: No Claimdoc KACC for Internal Claim Number ['||rv_approval.internal_claim_num||'].',
+        'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No Claimdoc KACC for Internal Claim Number ['||tbl_work(idx).internal_claim_num||'].',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -860,21 +826,21 @@ BEGIN
     Note: This needs to be reviewed prior to Snack go-live as it is yet to be determined
     how they will process the claims.
     */
-    IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
-      pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, rv_approval.claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
+    IF tbl_work(idx).cmpny_code = pc_pmx_cmpny_code_australia THEN
+      pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
       IF pv_status <> constants.success THEN
         v_valdtn_status := pc_valdtn_status_invalid;
 
-        write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| rv_approval.claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||rv_approval.cust_code||'].');
+        write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].');
 
         -- Add an entry into the validation reason tables.
         pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-          'ClaimRef ['|| rv_approval.claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||rv_approval.cust_code||'].',
+          'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].',
           pc_valdtn_severity_critical,
-          rv_approval.intfc_batch_code,
-          rv_approval.cmpny_code,
-          rv_approval.div_code,
-          rv_approval.ar_claims_apprvl_seq,
+          tbl_work(idx).intfc_batch_code,
+          tbl_work(idx).cmpny_code,
+          tbl_work(idx).div_code,
+          tbl_work(idx).ar_claims_apprvl_seq,
           NULL,
           NULL,
           pv_log_level + 3);
@@ -883,7 +849,7 @@ BEGIN
     END IF;
 
     -- Lookup the Tax Code.
-    pv_status := pds_lookup.lookup_cntl_code(rv_approval.cmpny_code, rv_approval.div_code,'TAX_CODE',v_taxable_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_cntl_code(tbl_work(idx).cmpny_code, tbl_work(idx).div_code,'TAX_CODE',v_taxable_code, pv_log_level + 3, pv_result_msg);
     IF v_taxable_code IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
@@ -893,10 +859,10 @@ BEGIN
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Missing TAX_CODE configuration setup for Company and Division.',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -904,7 +870,7 @@ BEGIN
     END IF;
 
     -- Lookup the No Tax Code.
-    pv_status := pds_lookup.lookup_cntl_code(rv_approval.cmpny_code, rv_approval.div_code,'NOTAX_CODE',v_notax_code, pv_log_level + 3, pv_result_msg);
+    pv_status := pds_lookup.lookup_cntl_code(tbl_work(idx).cmpny_code, tbl_work(idx).div_code,'NOTAX_CODE',v_notax_code, pv_log_level + 3, pv_result_msg);
     IF v_notax_code IS NULL THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
@@ -914,10 +880,10 @@ BEGIN
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Missing NOTAX_CODE configuration setup for Company and Division.',
         pc_valdtn_severity_critical,
-        rv_approval.intfc_batch_code,
-        rv_approval.cmpny_code,
-        rv_approval.div_code,
-        rv_approval.ar_claims_apprvl_seq,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
         NULL,
         NULL,
         pv_log_level + 3);
@@ -926,27 +892,33 @@ BEGIN
 
     -- Update the Validation Status.
     UPDATE pds_ar_claims_apprvl
-      SET valdtn_status = v_valdtn_status ,
+      SET valdtn_status = v_valdtn_status,
       procg_status = pc_procg_status_processed
-    WHERE CURRENT OF csr_approval;
+    WHERE intfc_batch_code = tbl_work(idx).intfc_batch_code
+      AND cmpny_code = tbl_work(idx).cmpny_code
+      AND div_code = tbl_work(idx).div_code
+      AND ar_claims_apprvl_seq = tbl_work(idx).ar_claims_apprvl_seq;
 
-  END LOOP;
-  -- End of loop.
+    -- Commit changes to PDS_AR_CLAIMS_APPRVL table when limit reached.
+    if mod(idx / 1000) = 0 then 
+       write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit 1000 changes to PDS_AR_CLAIMS_APPRVL table.');
+       COMMIT;
+    end if;
+
+  -- End of AR Claim Approval header cursor array.
+  end loop;
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of loop.');
 
   -- Commit changes to PDS_AR_CLAIMS_APPRVL table.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit changes to PDS_AR_CLAIMS_APPRVL table.');
+  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit final changes to PDS_AR_CLAIMS_APPRVL table.');
   COMMIT;
-
-  -- Close csr_approval cursor.
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Close csr_approval cursor.');
-  CLOSE csr_approval;
 
   -- End validate_pds_ar_claimsapp_atl procedure.
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'validate_pds_ar_claimsapp_atl - END.');
 
 EXCEPTION
   WHEN e_processing_failure THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_ATL:',
         pv_processing_msg) ||
@@ -961,6 +933,7 @@ EXCEPTION
     END IF;
 
   WHEN e_processing_error THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_error_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_ATL:',
         pv_processing_msg) ||
@@ -976,6 +949,7 @@ EXCEPTION
 
   -- Send warning message via e-mail and pds_log.
   WHEN OTHERS THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.VALIDATE_PDS_AR_CLAIMSAPP_ATL:',
       'Unexpected Exception - validate_ar_claimsapp_atls aborted.') ||
@@ -1024,10 +998,9 @@ PROCEDURE interface_ar_claimsapp_atlas (
   -- COLLECTION DECLARATIONS.
   rcd_approval_detail tbl_ar_claimsapp;
 
-  -- VARIABLE  DECLARATIONS.
+  -- VARIABLE DECLARATIONS.
   v_item_count            BINARY_INTEGER := 0;
   v_counter_approvals     NUMBER;
-  v_arclaims_apprvl_count NUMBER(5) := 0;
   v_instance              NUMBER(15,0);
   v_sap_cust_code         VARCHAR2(10); -- Customer code to send back to SAP.
   v_alloc_nmbr            VARCHAR2(18);
@@ -1055,6 +1028,20 @@ PROCEDURE interface_ar_claimsapp_atlas (
   v_div_code              pds_div.div_code%TYPE;
   v_glcode                pds_cntl.cntl_value%TYPE;
 
+  -- SAVE DECLARATIONS.
+  s_item_count            BINARY_INTEGER;
+  s_cmpny_code            pds_ar_claims_apprvl.cmpny_code;
+  s_div_code              pds_ar_claims_apprvl.div_code;
+  s_internal_claim_num    pds_ar_claims_apprvl.internal_claim_num;
+  s_claim_ref             pds_ar_claims_apprvl.claim_ref;
+  s_cust_code             pds_ar_claims_apprvl.cust_code;
+  s_prom_num              pds_ar_claims_apprvl.prom_num;
+  s_doc_type              pds_ar_claims_apprvl.doc_type;
+  s_pb_date               pds_ar_claims_apprvl.pb_date;
+  s_tran_date             pds_ar_claims_apprvl.tran_date;
+  s_claim_amt             pds_ar_claims_apprvl.claim_amt;
+  s_tax_amt               pds_ar_claims_apprvl.tax_amt;
+
   -- ARRAY DECLARATIONS.
   type typ_work is table of pds_ar_claims_apprvl%rowtype index by binary_integer;
   tbl_work typ_work;
@@ -1064,31 +1051,21 @@ PROCEDURE interface_ar_claimsapp_atlas (
   e_processing_error   EXCEPTION;
 
   -- CURSOR DECLARATIONS.
-  -- Valid AR Claims Approval cursor. Used as the Header, for controlling the associated detail rows.
+  -- Valid AR Claims Approval cursor
   CURSOR csr_approval IS
     SELECT
-      cmpny_code,
-      div_code,
-      internal_claim_num,
-      claim_ref,
-      cust_code,
-      prom_num,
-      doc_type,
-      pb_date,
-      tran_date,
-      SUM(claim_amt) AS sum_claim_amt,
-      SUM(tax_amt) AS sum_tax_amt
+      *
     FROM
       pds_ar_claims_apprvl
     WHERE
       cmpny_code = i_pmx_cmpny_code
       AND div_code = i_pmx_div_code
-      AND pay_chq =pc_ar_claimsapp_not_by_chq
+      AND pay_chq = pc_ar_claimsapp_not_by_chq
       AND directn = pc_ar_claimsapp_export
       AND data_type = pc_ar_claimsapp_claim
       AND valdtn_status = pc_valdtn_status_valid
       AND procg_status = pc_procg_status_processed
-    GROUP BY
+    ORDER BY
       cmpny_code,
       div_code,
       internal_claim_num,
@@ -1098,69 +1075,6 @@ PROCEDURE interface_ar_claimsapp_atlas (
       doc_type,
       pb_date,
       tran_date;
-  rv_approval csr_approval%ROWTYPE;
-
-  -- AR Claims Approval Detail cursor.
-  CURSOR csr_detail IS
-    SELECT
-      intfc_batch_code,
-      cmpny_code,
-      div_code,
-      ar_claims_apprvl_seq,
-      gl_acct_code,
-      cust_code,
-      prom_num,
-      internal_claim_num,
-      matl_code,
-      prom_year,
-      fund_code,
-      pay_mthd,
-      data_type,
-      claim_amt,
-      case_deal,
-      line_num,
-      cust_vndr_code,
-      pay_chq,
-      directn,
-      additive,
-      claim_comment,
-      tax_amt,
-      doc_type,
-      pb_date,
-      pb_time,
-      period_num,
-      tran_date,
-      claim_ref,
-      gen_vndr,
-      chq_num,
-      proc_date,
-      doc_currcy_code,
-      ref_doc_num,
-      tax_code,
-      cost_ctr,
-      order_id,
-      wbs_element,
-      plant_code,
-      profit_ctr,
-      distbn_chnl_code,
-      procg_status,
-      valdtn_status
-    FROM
-      pds_ar_claims_apprvl
-    WHERE
-      cmpny_code = rv_approval.cmpny_code
-      AND div_code = rv_approval.div_code
-      AND pay_chq =pc_ar_claimsapp_not_by_chq
-      AND directn = pc_ar_claimsapp_export
-      AND data_type = pc_ar_claimsapp_claim
-      AND internal_claim_num = rv_approval.internal_claim_num
-      AND claim_ref = rv_approval.claim_ref
-      AND cust_code = rv_approval.cust_code
-      AND prom_num = rv_approval.prom_num
-      AND procg_status = pc_procg_status_processed
-      AND valdtn_status = pc_valdtn_status_valid
-    FOR UPDATE NOWAIT;
-  rv_detail csr_detail%ROWTYPE;
 
   -- RESULT CHECKING PROCEDURE.
   PROCEDURE check_result_status IS
@@ -1183,28 +1097,15 @@ BEGIN
 
   -- Bulk collect the AR Claims Approval records to be interfaced
   -- **notes** 1. frees the cursor and rollback space
+  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open and bulk collect csr_approval cursor.');
   tbl_work.delete;
   open csr_approval;
   fetch csr_approval bulk collect into tbl_work;
   close csr_approval;
-
-  -- Count the number of AR Claims Approval Records.
-  SELECT COUNT(*) INTO v_arclaims_apprvl_count
-  FROM
-    pds_ar_claims_apprvl
-  WHERE
-    cmpny_code = i_pmx_cmpny_code
-    AND div_code = i_pmx_div_code
-    AND pay_chq =pc_ar_claimsapp_not_by_chq
-    AND directn = pc_ar_claimsapp_export
-    AND data_type = pc_ar_claimsapp_claim
-    AND valdtn_status = pc_valdtn_status_valid
-    AND procg_status = pc_procg_status_processed;
-
-  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Number of AR Claim Approval records: Promax Company:' || i_pmx_cmpny_code ||' Promax Division:' || i_pmx_div_code || ';' || 'Count:' || v_arclaims_apprvl_count || '.');
+  write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Number of AR Claim Approval records: Promax Company:' || i_pmx_cmpny_code ||' Promax Division:' || i_pmx_div_code || ';' || 'Count:' || to_char(tbl_work.count) || '.');
 
   -- If there are no AR Claim Approval records to process then exit procedure (to avoid sending empty interface files).
-  IF v_arclaims_apprvl_count = 0 THEN
+  IF tbl_work.count = 0 THEN
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'No AR Claim Approvals to process for Promax Company:' || i_pmx_cmpny_code || ' Promax Division:' || i_pmx_div_code ||'.');
   ELSE
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Processing AR Claim Approvals.');
@@ -1238,170 +1139,246 @@ BEGIN
     -- Now start processing the approvals.
     v_counter_approvals := 0;
 
-    -- Read through each of the AR Claim Approval records to be interfaced.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open csr_approval cursor.');
-    OPEN csr_approval;
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through the csr_approval cursor.');
-    LOOP
-      FETCH csr_approval INTO rv_approval;
-      EXIT WHEN csr_approval%NOTFOUND;
+    -- Looping through csr_approval cursor array.
+    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through csr_approval cursor array.');
+    s_cmpny_code := null;
+    for idx in 1..tbl_work.count loop
 
-      -- Increment the counter.
-      v_counter_approvals := v_counter_approvals + 1;
+      -- Start change in group variables
+      if s_cmpny_code is null or
+         tbl_work(idx).cmpny_code != s_cmpny_code or
+         tbl_work(idx).div_code != s_div_code or
+         tbl_work(idx).internal_claim_num != s_internal_claim_num or
+         tbl_work(idx).claim_ref != s_claim_ref or
+         tbl_work(idx).cust_code != s_cust_code or
+         tbl_work(idx).prom_num != s_prom_num or
+         tbl_work(idx).doc_type != s_doc_type or
+         tbl_work(idx).pb_date != s_pb_date or
+         tbl_work(idx).tran_date != s_tran_date then
 
-      -- Find the original Customer Code. The outbound claim approval may be for a different
-      -- Customer code than the original inbound Claim. Once retrieved, the original claim
-      -- Customer Code is stored in a variable and used as a key to lookup the original
-      -- inbound claim in the PDS_AR_CLAIMS table. Lookup only performed for Company '47' and '49'.
+        -- Finalise the previous header when required
+        if not(s_cmpny_code is null) then
 
-      pv_status := pds_lookup.lookup_orig_claimdoc_cust_code (rv_approval.cmpny_code, rv_approval.div_code, rv_approval.claim_ref, rv_approval.internal_claim_num, v_promax_cust_code, pv_log_level + 3, pv_result_msg);
-      check_result_status;
+          -- Update the previous header "R" claim amd tax totals
+          rcd_approval_detail(s_item_count) := substr(rcd_approval_detail(s_item_count),1,11)||
+                                               TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99'||
+                                               substr(rcd_approval_detail(s_item_count),35);
 
-      /*
-      Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via
-	  the PDS_AR_CLAIMS staging tables.
-      To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET & Snack claims
-      must be sent back (to SAP) with the original SAP claim document details (ie accounting
-      document number, line number, fiscal year). These key fields were written to the staging
-      table pds_ar_claims when the claim was originally interfaced to Promax. This process
-      looks up these key fields in the staging table (pds_ar_claims), and stores these values
-      in variables for use in creating the interface data.
-      Note: This needs to be reviewed prior to Pet and Snack go-live as it is yet to be determined
-      how they will process the claims.
-      */
+          -- Build the AR Claims Approval Tax output record.
+          IF v_taxfree_found THEN
+            v_item_count := v_item_count + 1;
+            rcd_approval_detail(v_item_count) := 'T' || -- Indicator.
+              v_tax_code ||
+              RPAD( ' ',20) ||
+              '000' ||
+              TO_CHAR(v_taxfree_base,'9999999999999999999.99')||
+              RPAD( ' ',8);
+          END IF;
+          IF v_tax_found THEN
+            v_item_count := v_item_count + 1;
+            rcd_approval_detail(v_item_count) := 'T' || -- Indicator.
+              v_tax_code ||
+              TO_CHAR(v_tax,'9999999999999999999.99')||
+              TO_CHAR(v_tax_base,'9999999999999999999.99')||
+              RPAD( ' ',4) ||
+              RPAD( ' ',3);
+          END IF;
 
-      IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
+          /*
+          Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food, PET & Snack - there
+          is no record for NZ. This is to identify that the original AR Claim has now been approved.
+          Used in AR Claim when validating the status of a claim (ie has it loaded
+          into Promax, has it been approved?).
+          CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
+          Note: Requires reviewing when Snack moves to ATLAS.
+          */
+          IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
+            UPDATE pds_ar_claims
+              SET promax_ar_apprvl_date = sysdate
+            WHERE acctg_doc_num = v_acctg_doc_num
+              AND fiscl_year = v_fiscal_year
+              AND line_item_num = v_line_item_num
+              AND valdtn_status = pc_valdtn_status_valid;
+          END IF;
 
-        pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, rv_approval.claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
+        end if;
+
+        -- Save the group variables
+        write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Start csr_approval array header.');
+        s_cmpny_code := tbl_work(idx).cmpny_code;
+        s_div_code := tbl_work(idx).div_code;
+        s_internal_claim_num := tbl_work(idx).internal_claim_num;
+        s_claim_ref := tbl_work(idx).claim_ref;
+        s_cust_code := tbl_work(idx).cust_code;
+        s_prom_num := tbl_work(idx).prom_num;
+        s_doc_type := tbl_work(idx).doc_type;
+        s_pb_date := tbl_work(idx).pb_date;
+        s_tran_date := tbl_work(idx).tran_date;
+        s_claim_amt := 0;
+        s_tax_amt := 0;
+
+        -- Initialise tax values.
+        v_tax_base := 0;
+        v_tax := 0;
+        v_taxfree_base := 0;
+        v_tax_found := FALSE;
+        v_taxfree_found := FALSE;
+
+        -- Increment the counter.
+        v_counter_approvals := v_counter_approvals + 1;
+
+        -- Find the original Customer Code. The outbound claim approval may be for a different
+        -- Customer code than the original inbound Claim. Once retrieved, the original claim
+        -- Customer Code is stored in a variable and used as a key to lookup the original
+        -- inbound claim in the PDS_AR_CLAIMS table. Lookup only performed for Company '47' and '49'.
+        pv_status := pds_lookup.lookup_orig_claimdoc_cust_code (tbl_work(idx).cmpny_code, tbl_work(idx).div_code, tbl_work(idx).claim_ref, tbl_work(idx).internal_claim_num, v_promax_cust_code, pv_log_level + 3, pv_result_msg);
         check_result_status;
-
-        -- Build the variable for storing the SAP required accounting document fields.
-        v_alloc_nmbr:= RPAD(LPAD(v_acctg_doc_num,10,'0') || v_fiscal_year || LPAD(v_line_item_num,3,'0'),18);
-
-        -- Now perform the output Customer Code conversion by using the original customer number.
-        -- Customer codes have leading zeroes if they are numeric, otherwise the field
-        -- is left justified with spaces padding (on the right). The width returned
-        -- is 10 characters, req'd format for SAP (i.e. export).
-        pv_status := pds_common.format_cust_code(v_claim_cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
-
-      ELSE
-        -- NZ claims are manually created (ie do not exist in SAP) so accounting document details are blank.
-        pv_status := pds_common.format_cust_code(rv_approval.cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
-        v_alloc_nmbr:= RPAD(' ',18,' ');
-
-      END IF;
-
-      -- Build the AR Claims Approval Header output record.
-      v_item_count := v_item_count + 1;
-      rcd_approval_detail(v_item_count) := 'H' || -- Indicator.
-        'IDOC ' || -- Obj Type.
-        'PX' || -- Obj Key.
-        TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') || -- Part of Obj Key.
-        LPAD(TO_CHAR(v_counter_approvals),4,'0') ||	-- Obj Key Counter.
-        'RFBU'|| -- Bus Act.
-        'BATCHSCHE   '|| -- Username.
-        RPAD('Pmx Claim '|| v_sap_cmpny_code || rv_approval.div_code || -- Header Text.
-        ' ' || -- Header Text con't.
-        TO_CHAR(SYSDATE,'YYYYMMDD'),25) || -- Header Text con't.
-        v_sap_cmpny_code || -- Company Code.
-        RPAD(v_currcy_code,5,' ') || -- Currency.
-        TO_CHAR(rv_approval.tran_date,'YYYYMMDD') || -- Doc Date.
-        TO_CHAR(rv_approval.pb_date,'YYYYMMDD') || -- Posting Date.
-        TO_CHAR(rv_approval.pb_date,'YYYYMMDD') || -- Trans Date.
-        'UE' ||
-        RPAD(rv_approval.claim_ref,16) || -- Ref Doc No.
-        RPAD('PROMAX',10); -- Log Sys (req'd for SAP reporting).
-
-      -- Build the AR Claims Approval Customer output record.
-      v_item_count := v_item_count + 1;
-      rcd_approval_detail(v_item_count) := 'R' || -- Indicator.
-        LPAD(v_sap_cust_code,10,'0') || -- Customer.
-        TO_CHAR(-1*(rv_approval.sum_claim_amt + rv_approval.sum_tax_amt),'9999999999999999999.99') || -- Amount.
-        RPAD(' ',4) || -- Pmnttrms.
-        RPAD(' ',8) || -- Bline Date.
-        RPAD(' ',1) || -- Payment Block.
-        v_alloc_nmbr || -- Alloc Number.
-        RPAD('Claim#' || trim(rv_approval.claim_ref) || ' against Promo#' || trim(rv_approval.prom_num),50); -- Item Text.
-
-      -- Read through each of the AR Claim Approval detail records.
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3,'Open csr_detail cursor.');
-      OPEN csr_detail;
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3,'Looping through the csr_detail cursor.');
-      LOOP
-        FETCH csr_detail INTO rv_detail;
-        EXIT WHEN csr_detail%NOTFOUND;
-
-        -- Increment the item (and array) counter.
-        v_item_count := v_item_count + 1;
-
-        -- Perform Distribution Channel lookup.
-        pv_status := pds_common.format_matl_code(rv_detail.matl_code,v_fmt_matl_code,pv_log_level + 3,pv_result_msg);
-        check_result_status;
-        pv_status := pds_lookup.lookup_distn_chnl_code (v_fmt_matl_code, v_sap_cust_code,v_distbn_chnl_code, pv_log_level + 3, pv_result_msg);
 
         /*
-        Perform Material Determination lookups/conversions.
-        Performs a material determination lookup to the lads database,  based on the
-        selection criteria provided which is the promotion number, customer code, and
-        the product code.  Ths promotion number is used to find  the start buy and end
-        buy dates.  Using these dates overlap detection is applied. The greatest accuracy
-        with regards to output data will be received if the start dates and end dates in
-        Promax and the material determination tables are aligned. Otherwise the wrong real
-        item may be returned.  The detection checking occurs  in the following order, by
-        sold to, by Customer hierarchy, by distribution channel,
+        Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via
+	    the PDS_AR_CLAIMS staging tables.
+        To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET & Snack claims
+        must be sent back (to SAP) with the original SAP claim document details (ie accounting
+        document number, line number, fiscal year). These key fields were written to the staging
+        table pds_ar_claims when the claim was originally interfaced to Promax. This process
+        looks up these key fields in the staging table (pds_ar_claims), and stores these values
+        in variables for use in creating the interface data.
+        Note: This needs to be reviewed prior to Pet and Snack go-live as it is yet to be determined
+        how they will process the claims.
         */
-        pv_status := pds_lookup.lookup_matl_dtrmntn(rv_approval.cmpny_code, rv_approval.div_code, rv_approval.prom_num, rv_approval.cust_code, rv_detail.matl_code, v_matl_code, pv_log_level + 4, pv_result_msg);
-        check_result_status;
-
-        -- Now check if the product is taxable.
-        IF pds_exist.exist_taxable(rv_detail.cmpny_code, rv_detail.div_code, rv_detail.doc_type,pv_log_level + 4, pv_result_msg) = constants.success THEN
-          v_tax_base := v_tax_base + rv_detail.claim_amt;
-          v_tax := v_tax + rv_detail.tax_amt;
-          v_tax_found := TRUE;
-          v_tax_code := v_taxable_code;
+        IF tbl_work(idx).cmpny_code = pc_pmx_cmpny_code_australia THEN
+          pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
+          check_result_status;
+          -- Build the variable for storing the SAP required accounting document fields.
+          v_alloc_nmbr:= RPAD(LPAD(v_acctg_doc_num,10,'0') || v_fiscal_year || LPAD(v_line_item_num,3,'0'),18);
+          -- Now perform the output Customer Code conversion by using the original customer number.
+          -- Customer codes have leading zeroes if they are numeric, otherwise the field
+          -- is left justified with spaces padding (on the right). The width returned
+          -- is 10 characters, req'd format for SAP (i.e. export).
+          pv_status := pds_common.format_cust_code(v_claim_cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
         ELSE
-          v_taxfree_base := v_taxfree_base + rv_detail.claim_amt;
-          v_taxfree_found := TRUE;
-          v_tax_code := v_notax_code;
+          -- NZ claims are manually created (ie do not exist in SAP) so accounting document details are blank.
+          pv_status := pds_common.format_cust_code(tbl_work(idx).cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
+          v_alloc_nmbr:= RPAD(' ',18,' ');
         END IF;
 
-        -- Lookup Plant Code.
-        pv_status := pds_lookup.lookup_matl_plant_code(rv_approval.cmpny_code, v_matl_code, v_plant_code, pv_log_level + 4, pv_result_msg);
-		        check_result_status;
+        -- Build the AR Claims Approval Header output record.
+        v_item_count := v_item_count + 1;
+        rcd_approval_detail(v_item_count) := 'H' || -- Indicator.
+          'IDOC ' || -- Obj Type.
+          'PX' || -- Obj Key.
+          TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') || -- Part of Obj Key.
+          LPAD(TO_CHAR(v_counter_approvals),4,'0') ||	-- Obj Key Counter.
+          'RFBU'|| -- Bus Act.
+          'BATCHSCHE   '|| -- Username.
+          RPAD('Pmx Claim '|| v_sap_cmpny_code || tbl_work(idx).div_code || -- Header Text.
+          ' ' || -- Header Text con't.
+          TO_CHAR(SYSDATE,'YYYYMMDD'),25) || -- Header Text con't.
+          v_sap_cmpny_code || -- Company Code.
+          RPAD(v_currcy_code,5,' ') || -- Currency.
+          TO_CHAR(tbl_work(idx).tran_date,'YYYYMMDD') || -- Doc Date.
+          TO_CHAR(tbl_work(idx).pb_date,'YYYYMMDD') || -- Posting Date.
+          TO_CHAR(tbl_work(idx).pb_date,'YYYYMMDD') || -- Trans Date.
+          'UE' ||
+          RPAD(tbl_work(idx).claim_ref,16) || -- Ref Doc No.
+          RPAD('PROMAX',10); -- Log Sys (req'd for SAP reporting).
 
-        -- Save the item line to the array. Array will be unloaded when all item lines have been retrieved.
-        -- CF 01/08/2006 Include the IC Number as unique identifier in Promax.
-        rcd_approval_detail(v_item_count) := 'G' || -- Indicator.
-          v_glcode ||
-          TO_CHAR((rv_detail.claim_amt),'9999999999999999999.99') ||
-          RPAD('IC#' || RTRIM(rv_detail.internal_claim_num)||' Mat' || RTRIM(rv_detail.matl_code)||' Promo' || trim(rv_detail.prom_num) ||' Cus'||RTRIM(rv_detail.cust_code),50) ||
-          v_alloc_nmbr ||
-          v_tax_code ||
-          RPAD(' ',10,' ') || -- Cost Centre always blank.
-          RPAD(' ',12,' ') || -- Order Id always blank.
-          RPAD(' ',24,' ') || -- WBS element.
-          RPAD(' ',13,' ') || -- Quantity.
-          RPAD(' ', 3,' ') || -- Base Unit of Measure.
-          RPAD(NVL(v_matl_code,' '),18) ||
-          v_plant_code || -- plant
-          v_sap_cust_code ||
-          LPAD(v_profit_ctr,10,'0') || -- Profit Centre.
-          RPAD(v_sap_cmpny_code,4) || -- Sales Org.
-          RPAD(v_distbn_chnl_code,2); -- Distribution Channel.
+        -- Build the AR Claims Approval Customer output record.
+        v_item_count := v_item_count + 1;
+        s_item_count := v_item_count;
+        rcd_approval_detail(v_item_count) := 'R' || -- Indicator.
+          LPAD(v_sap_cust_code,10,'0') || -- Customer.
+          TO_CHAR(0,'9999999999999999999.99') || -- Amount.
+          RPAD(' ',4) || -- Pmnttrms.
+          RPAD(' ',8) || -- Bline Date.
+          RPAD(' ',1) || -- Payment Block.
+          v_alloc_nmbr || -- Alloc Number.
+          RPAD('Claim#' || trim(tbl_work(idx).claim_ref) || ' against Promo#' || trim(tbl_work(idx).prom_num),50); -- Item Text.
 
+      -- End change in group variables
+      end if;
 
-        -- Update the status of the current record.
-        UPDATE pds_ar_claims_apprvl
-          SET procg_status = pc_procg_status_completed
-        WHERE CURRENT OF csr_detail;
+      -- Increment the item (and array) counter.
+      v_item_count := v_item_count + 1;
 
-      END LOOP;
-      -- End of loop for csr_detail cursor.
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3,'End of loop for csr_detail cursor.');
+      -- Sum the claim and tax amounts.
+      s_claim_amt := s_claim_amt + tbl_work(idx).claim_amt;
+      s_tax_amt := s_tax_amt + tbl_work(idx).tax_amt;
 
-      -- Close csr_detail cursor.
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3,'Close csr_detail cursor.');
-      CLOSE csr_detail;
+      -- Perform Distribution Channel lookup.
+      pv_status := pds_common.format_matl_code(tbl_work(idx).matl_code,v_fmt_matl_code,pv_log_level + 3,pv_result_msg);
+      check_result_status;
+      pv_status := pds_lookup.lookup_distn_chnl_code (v_fmt_matl_code, v_sap_cust_code,v_distbn_chnl_code, pv_log_level + 3, pv_result_msg);
+
+      /*
+      Perform Material Determination lookups/conversions.
+      Performs a material determination lookup to the lads database,  based on the
+      selection criteria provided which is the promotion number, customer code, and
+      the product code.  Ths promotion number is used to find  the start buy and end
+      buy dates.  Using these dates overlap detection is applied. The greatest accuracy
+      with regards to output data will be received if the start dates and end dates in
+      Promax and the material determination tables are aligned. Otherwise the wrong real
+      item may be returned.  The detection checking occurs  in the following order, by
+      sold to, by Customer hierarchy, by distribution channel,
+      */
+      pv_status := pds_lookup.lookup_matl_dtrmntn(tbl_work(idx).cmpny_code, tbl_work(idx).div_code, tbl_work(idx).prom_num, tbl_work(idx).cust_code, tbl_work(idx).matl_code, v_matl_code, pv_log_level + 4, pv_result_msg);
+      check_result_status;
+
+      -- Now check if the product is taxable.
+      IF pds_exist.exist_taxable(tbl_work(idx).cmpny_code, tbl_work(idx).div_code, tbl_work(idx).doc_type,pv_log_level + 4, pv_result_msg) = constants.success THEN
+        v_tax_base := v_tax_base + tbl_work(idx).claim_amt;
+        v_tax := v_tax + tbl_work(idx).tax_amt;
+        v_tax_found := TRUE;
+        v_tax_code := v_taxable_code;
+      ELSE
+        v_taxfree_base := v_taxfree_base + tbl_work(idx).claim_amt;
+        v_taxfree_found := TRUE;
+        v_tax_code := v_notax_code;
+      END IF;
+
+      -- Lookup Plant Code.
+      pv_status := pds_lookup.lookup_matl_plant_code(tbl_work(idx).cmpny_code, v_matl_code, v_plant_code, pv_log_level + 4, pv_result_msg);
+      check_result_status;
+
+      -- Save the item line to the array. Array will be unloaded when all item lines have been retrieved.
+      -- CF 01/08/2006 Include the IC Number as unique identifier in Promax.
+      rcd_approval_detail(v_item_count) := 'G' || -- Indicator.
+        v_glcode ||
+        TO_CHAR((tbl_work(idx).claim_amt),'9999999999999999999.99') ||
+        RPAD('IC#' || RTRIM(tbl_work(idx).internal_claim_num)||' Mat' || RTRIM(tbl_work(idx).matl_code)||' Promo' || trim(tbl_work(idx).prom_num) ||' Cus'||RTRIM(tbl_work(idx).cust_code),50) ||
+        v_alloc_nmbr ||
+        v_tax_code ||
+        RPAD(' ',10,' ') || -- Cost Centre always blank.
+        RPAD(' ',12,' ') || -- Order Id always blank.
+        RPAD(' ',24,' ') || -- WBS element.
+        RPAD(' ',13,' ') || -- Quantity.
+        RPAD(' ', 3,' ') || -- Base Unit of Measure.
+        RPAD(NVL(v_matl_code,' '),18) ||
+        v_plant_code || -- plant
+        v_sap_cust_code ||
+        LPAD(v_profit_ctr,10,'0') || -- Profit Centre.
+        RPAD(v_sap_cmpny_code,4) || -- Sales Org.
+        RPAD(v_distbn_chnl_code,2); -- Distribution Channel.
+
+      -- Update the processing Status.
+      UPDATE pds_ar_claims_apprvl
+        SET procg_status = pc_procg_status_completed
+      WHERE intfc_batch_code = tbl_work(idx).intfc_batch_code
+        AND cmpny_code = tbl_work(idx).cmpny_code
+        AND div_code = tbl_work(idx).div_code
+        AND ar_claims_apprvl_seq = tbl_work(idx).ar_claims_apprvl_seq;
+
+    -- End of AR Claim Approval header cursor array.
+    end loop;
+    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of csr_approval cursor array loop.');
+
+    -- Finalise the final header when required
+    if not(s_cmpny_code is null) then
+
+      -- Update the previous header "R" claim amd tax totals
+      rcd_approval_detail(s_item_count) := substr(rcd_approval_detail(s_item_count),1,11)||
+                                           TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99'||
+                                           substr(rcd_approval_detail(s_item_count),35);
 
       -- Build the AR Claims Approval Tax output record.
       IF v_taxfree_found THEN
@@ -1413,7 +1390,6 @@ BEGIN
           TO_CHAR(v_taxfree_base,'9999999999999999999.99')||
           RPAD( ' ',8);
       END IF;
-
       IF v_tax_found THEN
         v_item_count := v_item_count + 1;
         rcd_approval_detail(v_item_count) := 'T' || -- Indicator.
@@ -1424,13 +1400,6 @@ BEGIN
           RPAD( ' ',3);
       END IF;
 
-      -- Initialise values now that they have been used.
-      v_tax_base := 0;
-      v_tax := 0;
-      v_taxfree_base := 0;
-      v_tax_found := FALSE;
-      v_taxfree_found := FALSE;
-
       /*
       Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food, PET & Snack - there
       is no record for NZ. This is to identify that the original AR Claim has now been approved.
@@ -1440,7 +1409,6 @@ BEGIN
       Note: Requires reviewing when Snack moves to ATLAS.
       */
       IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
-
         UPDATE pds_ar_claims
           SET promax_ar_apprvl_date = sysdate
         WHERE acctg_doc_num = v_acctg_doc_num
@@ -1449,13 +1417,7 @@ BEGIN
           AND valdtn_status = pc_valdtn_status_valid;
       END IF;
 
-    -- End of AR Claim Approval header cursor.
-    END LOOP;
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of loop for csr_approvals cursor.');
-
-    -- Close csr_approvals cursor.
-    write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Close csr_promodetails cursor.');
-    CLOSE csr_approval;
+    end if;
 
     -- Write the number of records processed to the Log.
     IF v_item_count = 0 THEN
@@ -1466,9 +1428,7 @@ BEGIN
 
     -- Open the outbound interface.
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Open the outbound interface.');
-   -- v_instance := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_01);
     v_instance  := lics_outbound_loader.create_interface(pc_interface_ar_claimsapp_01, null, pc_interface_ar_claimsapp_01||'.DAT');
-
 
     -- Write data from table to output file.
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Looping through table in order to write AR Claims Approval records into the output file.');
@@ -1497,6 +1457,7 @@ EXCEPTION
   -- the interface for logging purposes and the interface finalised.
 
   WHEN e_processing_failure THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.INTERFACE_AR_CLAIMSAPP_ATLAS:',
         pv_processing_msg) ||
@@ -1511,6 +1472,7 @@ EXCEPTION
     END IF;
 
   WHEN e_processing_error THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.INTERFACE_AR_CLAIMSAPP_ATLAS:',
         pv_processing_msg) ||
@@ -1526,6 +1488,7 @@ EXCEPTION
 
   -- Send warning message via E-mail and PDS_LOG.
   WHEN OTHERS THEN
+    ROLLBACK;
     pv_result_msg :=
       utils.create_failure_msg('PDS_AR_CLAIMSAPP_01_PRC.INTERFACE_AR_CLAIMSAPP_ATLAS:',
       'Unexpected Exception - interface_ar_claimsapp_atlas aborted. ROLLBACK, check LICS and finalise if required and exit.') ||
