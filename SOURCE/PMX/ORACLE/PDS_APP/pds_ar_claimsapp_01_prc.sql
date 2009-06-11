@@ -705,7 +705,7 @@ BEGIN
     IF pv_status <> constants.success THEN
       v_valdtn_status := pc_valdtn_status_invalid;
 
-      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'Matl Dtrmntn does not exist Prom [' || TRIM(tbl_work(idx).prom_num) ||'], Matl ['|| tbl_work(idx).matl_code ||'.');
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'Matl Dtrmntn does not exist Prom [' || TRIM(tbl_work(idx).prom_num) ||'], Matl ['|| tbl_work(idx).matl_code ||'].');
       -- Add an entry into the validation reason tables.
       pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
         'Matl Dtrmntn does not exist Prom [' || TRIM(tbl_work(idx).prom_num) ||'], '||
