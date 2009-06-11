@@ -538,23 +538,6 @@ sub PaintFunction()%>
       if (objResCode.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Panel code must be specified';
-      } else {
-         for (var i=0;i<cobjTesResMeta.length;i++) {
-            if (cobjTesResMeta[i].mettyp == 'D') {
-               if (cobjTesResMeta[i].name01 != '') {
-                  if (document.getElementById(cobjTesResMeta[i].name01).value == '') {
-                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                     strMessage = strMessage + 'Market research code 1 must be entered for '+cobjTesResMeta[i].daytxt;
-                  }
-               }
-               if (cobjTesResMeta[i].name02 != '') {
-                  if (document.getElementById(cobjTesResMeta[i].name02).value == '') {
-                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                     strMessage = strMessage + 'Market research code 2 must be entered for '+cobjTesResMeta[i].daytxt;
-                  }
-               }
-            }
-         }
       }
       if (strMessage != '') {
          alert(strMessage);
