@@ -1316,6 +1316,8 @@ create or replace package body pts_app.pts_tes_function as
       var_res_value number;
       var_typ_code varchar2(10 char);
       var_found boolean;
+      var_mkton boolean;
+      var_mktof boolean;
       var_message boolean;
       rcd_pts_tes_panel pts_tes_panel%rowtype;
       rcd_pts_tes_allocation pts_tes_allocation%rowtype;
@@ -1499,7 +1501,11 @@ create or replace package body pts_app.pts_tes_function as
 
       /*-*/
       /* Retrieve and insert the response data
+      /* **notes** 1. Update the allocation when supplied
+      /*           2. Use current allocation when not supplied
       /*-*/
+      var_mkton := false;
+      var_mktof := false;
       rcd_pts_tes_response.tre_tes_code := var_tes_code;
       rcd_pts_tes_response.tre_pan_code := var_pan_code;
       obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/RESP');
@@ -1513,64 +1519,34 @@ create or replace package body pts_app.pts_tes_function as
             var_sam_cod2 := null;
             var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD1'));
             if var_mkt_code is null then
-               var_seq_numb := var_day_code;
-               if rcd_retrieve.tde_tes_sam_count = 2 then
-                  var_seq_numb := 1;
-               end if;
-               open csr_allocation;
-               fetch csr_allocation into rcd_allocation;
-               if csr_allocation%notfound then
-                  pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one allocation does not exist for this test - must be specified');
-                  var_message := true;
+               var_mktof := true;
+               if var_mkton = true then
+                  if var_message = false then
+                     pts_gen_function.add_mesg_data('At least one market research code specified - all market research codes must be specified');
+                     var_message := true;
+                  end if;
                else
-                  var_sam_cod1 := rcd_allocation.tal_sam_code;
-               end if;
-               close csr_allocation;
-            else
-               open csr_sample;
-               fetch csr_sample into rcd_sample;
-               if csr_sample%notfound then
-                  pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
-                  var_message := true;
-               else
-                  var_sam_cod1 := rcd_sample.tsa_sam_code;
                   var_seq_numb := var_day_code;
                   if rcd_retrieve.tde_tes_sam_count = 2 then
                      var_seq_numb := 1;
                   end if;
-                  update pts_tes_allocation
-                     set tal_seq_numb = var_seq_numb
-                   where tal_tes_code = var_tes_code
-                     and tal_pan_code = var_pan_code
-                     and tal_day_code = var_day_code
-                     and tal_sam_code = var_sam_cod1;
-                  if sql%notfound then
-                     rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
-                     rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
-                     rcd_pts_tes_allocation.tal_day_code := var_day_code;
-                     rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
-                     rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
-                     insert into pts_tes_allocation values rcd_pts_tes_allocation;
-                  end if;
-               end if;
-               close csr_sample;
-            end if;
-            if rcd_retrieve.tde_tes_sam_count = 2 then
-               var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD2'));
-               if var_mkt_code is null then
-                  var_seq_numb := var_day_code;
-                  if rcd_retrieve.tde_tes_sam_count = 2 then
-                     var_seq_numb := 2;
-                  end if;
                   open csr_allocation;
                   fetch csr_allocation into rcd_allocation;
                   if csr_allocation%notfound then
-                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two allocation does not exist for this test - must be specified');
+                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one allocation does not exist for this test - must be specified');
                      var_message := true;
                   else
-                     var_sam_cod2 := rcd_allocation.tal_sam_code;
+                     var_sam_cod1 := rcd_allocation.tal_sam_code;
                   end if;
                   close csr_allocation;
+               end if;
+            else
+               var_mkton := true;
+               if var_mktof = true then
+                  if var_message = false then
+                     pts_gen_function.add_mesg_data('At least one market research code specified - all market research codes must be specified');
+                     var_message := true;
+                  end if;
                else
                   open csr_sample;
                   fetch csr_sample into rcd_sample;
@@ -1578,17 +1554,17 @@ create or replace package body pts_app.pts_tes_function as
                      pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
                      var_message := true;
                   else
-                     var_sam_cod2 := rcd_sample.tsa_sam_code;
+                     var_sam_cod1 := rcd_sample.tsa_sam_code;
                      var_seq_numb := var_day_code;
                      if rcd_retrieve.tde_tes_sam_count = 2 then
-                        var_seq_numb := 2;
+                        var_seq_numb := 1;
                      end if;
                      update pts_tes_allocation
                         set tal_seq_numb = var_seq_numb
                       where tal_tes_code = var_tes_code
                         and tal_pan_code = var_pan_code
                         and tal_day_code = var_day_code
-                        and tal_sam_code = var_sam_cod2;
+                        and tal_sam_code = var_sam_cod1;
                      if sql%notfound then
                         rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
                         rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
@@ -1599,6 +1575,68 @@ create or replace package body pts_app.pts_tes_function as
                      end if;
                   end if;
                   close csr_sample;
+               end if;
+            end if;
+            if rcd_retrieve.tde_tes_sam_count = 2 then
+               var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD2'));
+               if var_mkt_code is null then
+                  var_mktof := true;
+                  if var_mkton = true then
+                     if var_message = false then
+                        pts_gen_function.add_mesg_data('At least one market research code specified - all market research codes must be specified');
+                        var_message := true;
+                     end if;
+                  else
+                     var_seq_numb := var_day_code;
+                     if rcd_retrieve.tde_tes_sam_count = 2 then
+                        var_seq_numb := 2;
+                     end if;
+                     open csr_allocation;
+                     fetch csr_allocation into rcd_allocation;
+                     if csr_allocation%notfound then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two allocation does not exist for this test - must be specified');
+                        var_message := true;
+                     else
+                        var_sam_cod2 := rcd_allocation.tal_sam_code;
+                     end if;
+                     close csr_allocation;
+                  end if;
+               else
+                  var_mkton := true;
+                  if var_mktof = true then
+                     if var_message = false then
+                        pts_gen_function.add_mesg_data('At least one market research code specified - all market research codes must be specified');
+                        var_message := true;
+                     end if;
+                  else
+                     open csr_sample;
+                     fetch csr_sample into rcd_sample;
+                     if csr_sample%notfound then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
+                        var_message := true;
+                     else
+                        var_sam_cod2 := rcd_sample.tsa_sam_code;
+                        var_seq_numb := var_day_code;
+                        if rcd_retrieve.tde_tes_sam_count = 2 then
+                           var_seq_numb := 2;
+                        end if;
+                        update pts_tes_allocation
+                           set tal_seq_numb = var_seq_numb
+                         where tal_tes_code = var_tes_code
+                           and tal_pan_code = var_pan_code
+                           and tal_day_code = var_day_code
+                           and tal_sam_code = var_sam_cod2;
+                        if sql%notfound then
+                           rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
+                           rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
+                           rcd_pts_tes_allocation.tal_day_code := var_day_code;
+                           rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
+                           rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+                           insert into pts_tes_allocation values rcd_pts_tes_allocation;
+                        end if;
+                     end if;
+                     close csr_sample;
+                  end if;
                end if;
             end if;
          end if;
