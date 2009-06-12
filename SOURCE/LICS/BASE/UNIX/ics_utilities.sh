@@ -11,6 +11,7 @@
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
 # 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
+# 12-JUN-2009   T. Keon     Added USE_AMI variable
 #
 # ---------------------------------------------------------------------------
 
@@ -59,6 +60,9 @@ LINUX_OS="Linux"
 
 LOG_TO_MAIN=0
 LOG_TO_TEMP=1
+
+USE_AMI_YES="yes"
+USE_AMI_NO="no"
 
 IGNORE_LOG=0
 LOG_TYPE=$LOG_TO_MAIN
@@ -262,6 +266,7 @@ initialise_utilities()
     read_variable "TARG_QMGR"
     read_variable "HK_TARG_PATH"
     read_variable "HK_TARG_QMGR"
+    read_variable "USE_AMI"
     
     set_date "NOW" $DATE_FORMAT_FILE_SHORT     # Current date & time for filenames
     load_current_os
@@ -282,6 +287,9 @@ initialise_utilities()
     # set the compression option if it has not been specified already
     CMP_PARAM=${CMP_PARAM:-$NOCOMPRESS}
     
+    # set the ami tier option if it has not been specified already
+    USE_AMI=${USE_AMI:-$USE_AMI_YES}
+    
     # set global is compressed value so we dont need to check if CMP_PARAM matches
     # any of the compress options.  ***NOTE: Use single [ to get correct result.
     if [ $NOCOMPRESS = $CMP_PARAM ] ; then
@@ -290,8 +298,13 @@ initialise_utilities()
         
     echo "INFO: Creating working log file [${TMP_OUT}]" >> $TMP_OUT
     
-    set_permissions $TMP_OUT   
-    initialise_ami_tier
+    set_permissions $TMP_OUT
+    
+    log_file "INFO: [initialise_utilities] Use AMI environment [${USE_AMI}]" "HARMLESS"
+    # only set the AMI environment if we are using their functionality.
+    if [ $USE_AMI_YES = $USE_AMI ] ; then
+        initialise_ami_tier
+    fi
 }
 
 # --------------------------------------------------------------------------

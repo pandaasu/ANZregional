@@ -11,6 +11,7 @@
 # ------------  -------     -------------------------
 # 29-OCT-2007   T. Keon     Creation
 # 03-MAR-2008   L. Glen     Modified function call for ROUTER_MQFT
+# 05-JUN-2009   T. Keon     Added retry to check_DB
 #
 # ---------------------------------------------------------------------------
 
@@ -52,8 +53,15 @@ check_DB()
     log_file "INFO: [check_DB] Checking database : [${DATABASE}]" "HARMLESS"
     
     orawait "${DATABASE}" 1 60
-    if [[ $? -ne 0 ]] ; then
-        error_exit "ERROR: [check_DB] Database [${DATABASE}] is unavailable for 60 mins"
+    if [[ $? -ne 0 ]] ; then   
+        # Retry database check before giving up
+        if [[ -z $DB_RETRY ]] ; then
+            DB_RETRY="YES"
+            sleep 5
+            check_DB
+        else        
+            error_exit "ERROR: [check_DB] Database [${DATABASE}] is unavailable for 60 mins"
+        fi
     fi
 }
 
