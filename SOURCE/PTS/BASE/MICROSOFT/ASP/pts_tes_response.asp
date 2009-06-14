@@ -561,21 +561,15 @@ sub PaintFunction()%>
             strXML = strXML+' MKTCD1="'+strMkt01+'"';
             strXML = strXML+' MKTCD2="'+strMkt02+'"/>';
          } else {
-            if (cobjTesResMeta[i].quetyp == '1') {
+            if (cobjTesResMeta[i].name01 != '') {
                strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
-               strXML = strXML+' RESSEQ="0"';
+               strXML = strXML+' RESSEQ="1"';
                strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name01).value+'"/>';
-            } else {
-               if (strMkt01 != '') {
-                  strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
-                  strXML = strXML+' RESSEQ="1"';
-                  strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name01).value+'"/>';
-               }
-               if (strMkt02 != '') {
-                  strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
-                  strXML = strXML+' RESSEQ="2"';
-                  strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name02).value+'"/>';
-               }
+            }
+            if (cobjTesResMeta[i].name02 != '') {
+               strXML = strXML+'<RESP TYPCDE="Q" QUECDE="'+cobjTesResMeta[i].quecde+'"';
+               strXML = strXML+' RESSEQ="2"';
+               strXML = strXML+' RESVAL="'+document.getElementById(cobjTesResMeta[i].name02).value+'"/>';
             }
          }
       }
