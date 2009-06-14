@@ -1548,7 +1548,7 @@ create or replace package body pts_app.pts_tes_function as
             if rcd_retrieve.tde_tes_sam_count = 2 then
                tbl_mktcde.delete;
             end if;
-            var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD1'));
+            var_mkt_code := upper(trim(xslProcessor.valueOf(obj_res_node,'@MKTCD1')));
             if var_mkt_code is null then
                var_seq_numb := var_day_code;
                if rcd_retrieve.tde_tes_sam_count = 2 then
@@ -1559,7 +1559,7 @@ create or replace package body pts_app.pts_tes_function as
                   if tbl_alcdat(idx).day_code = var_day_code and
                      tbl_alcdat(idx).seq_numb = var_seq_numb then
                      var_sam_cod1 := tbl_alcdat(idx).sam_code;
-                     var_mkt_code := tbl_alcdat(idx).sam_code;
+                     var_mkt_code := tbl_alcdat(idx).mkt_code;
                      var_exists := true;
                      exit;
                   end if;
@@ -1610,14 +1610,16 @@ create or replace package body pts_app.pts_tes_function as
                   close csr_sample;
                end if;
             end if;
-            rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
-            rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
-            rcd_pts_tes_allocation.tal_day_code := var_day_code;
-            rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
-            rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
-            insert into pts_tes_allocation values rcd_pts_tes_allocation;
+            if var_message = false then
+               rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
+               rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
+               rcd_pts_tes_allocation.tal_day_code := var_day_code;
+               rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
+               rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+               insert into pts_tes_allocation values rcd_pts_tes_allocation;
+            end if;
             if rcd_retrieve.tde_tes_sam_count = 2 then
-               var_mkt_code := upper(xslProcessor.valueOf(obj_res_node,'@MKTCD2'));
+               var_mkt_code := upper(trim(xslProcessor.valueOf(obj_res_node,'@MKTCD2')));
                if var_mkt_code is null then
                   var_seq_numb := var_day_code;
                   if rcd_retrieve.tde_tes_sam_count = 2 then
@@ -1628,7 +1630,7 @@ create or replace package body pts_app.pts_tes_function as
                      if tbl_alcdat(idx).day_code = var_day_code and
                         tbl_alcdat(idx).seq_numb = var_seq_numb then
                         var_sam_cod2 := tbl_alcdat(idx).sam_code;
-                        var_mkt_code := tbl_alcdat(idx).sam_code;
+                        var_mkt_code := tbl_alcdat(idx).mkt_code;
                         var_exists := true;
                         exit;
                      end if;
@@ -1679,12 +1681,14 @@ create or replace package body pts_app.pts_tes_function as
                      close csr_sample;
                   end if;
                end if;
-               rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
-               rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
-               rcd_pts_tes_allocation.tal_day_code := var_day_code;
-               rcd_pts_tes_allocation.tal_sam_code := var_sam_cod2;
-               rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
-               insert into pts_tes_allocation values rcd_pts_tes_allocation;
+               if var_message = false then
+                  rcd_pts_tes_allocation.tal_tes_code := var_tes_code;
+                  rcd_pts_tes_allocation.tal_pan_code := var_pan_code;
+                  rcd_pts_tes_allocation.tal_day_code := var_day_code;
+                  rcd_pts_tes_allocation.tal_sam_code := var_sam_cod2;
+                  rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+                  insert into pts_tes_allocation values rcd_pts_tes_allocation;
+               end if;
             end if;
          end if;
          if var_typ_code = 'Q' then
