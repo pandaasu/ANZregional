@@ -44,12 +44,6 @@ alter table pts.pts_tes_classification
    add constraint pts_tes_classification_pk primary key (tcl_tes_code, tcl_pan_code, tcl_tab_code, tcl_fld_code, tcl_val_code);
 
 /**/
-/* Indexes
-/**/
-create index pts_tes_classification_ix01 on pts.pts_tes_classification
-   (tcl_tab_code, tcl_fld_code, tcl_val_code, tcl_pet_code);
-
-/**/
 /* Authority
 /**/
 grant select, insert, update, delete on pts.pts_tes_classification to pts_app;
