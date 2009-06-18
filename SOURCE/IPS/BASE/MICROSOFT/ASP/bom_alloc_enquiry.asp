@@ -110,7 +110,6 @@ sub ProcessSelect()
    dim strCompany
    dim strMaterial
    dim strDate
-   dim strDetail
 
    '//
    '// Create the selection object
@@ -125,31 +124,13 @@ sub ProcessSelect()
       strCompany = objForm.Fields("DTA_Company").Value
       strMaterial = objForm.Fields("DTA_Material").Value
       strDate = objForm.Fields("DTA_Date").Value
-      strDetail = objForm.Fields("DTA_Detail").Value
       strQuery = "select"
       strQuery = strQuery & " alc_type,"
       strQuery = strQuery & " bom_plant,"
       strQuery = strQuery & " bom_matl_code,"
-      strQuery = strQuery & " bom_altv,"
-      strQuery = strQuery & " bom_qty,"
-      strQuery = strQuery & " bom_uom,"
-      strQuery = strQuery & " bom_matl_type,"
-      strQuery = strQuery & " bom_trdd_unit,"
-      strQuery = strQuery & " bom_base_uom,"
-      strQuery = strQuery & " bom_net_wght,"
-      strQuery = strQuery & " bom_gross_wght,"
-      strQuery = strQuery & " cmpnt_matl_code,"
-      strQuery = strQuery & " cmpnt_qty,"
-      strQuery = strQuery & " cmpnt_uom,"
-      strQuery = strQuery & " cmpnt_matl_type,"
-      strQuery = strQuery & " cmpnt_base_uom,"
-      strQuery = strQuery & " cmpnt_net_wght,"
-      strQuery = strQuery & " cmpnt_gross_wght,"
       strQuery = strQuery & " proportion,"
-      strQuery = strQuery & " bom_hierarchy_level,"
-      strQuery = strQuery & " bom_hierarchy_root,"
       strQuery = strQuery & " bom_hierarchy_path"
-      strQuery = strQuery & " from table(bp_app.bpip_bom.allocation('" & strCompany & "', '" & strMaterial & "', '" & strDate & "', '" & strDetail & "'))"
+      strQuery = strQuery & " from table(bp_app.bpip_bom.allocation('" & strCompany & "', '" & strMaterial & "', '" & strDate & "'))"
       strReturn = objSelection.Execute("REPORT", strQuery, 0)
       if strReturn <> "*OK" then
          strReturn = strReturn

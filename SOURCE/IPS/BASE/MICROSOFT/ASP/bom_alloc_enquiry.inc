@@ -82,12 +82,6 @@
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;BOM Detail (0=No, 1=Yes):&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DTA_Detail" size="3" maxlength="1" value="<%=objForm.Fields("DTA_Detail").Value%>" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
@@ -109,29 +103,12 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=23 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=6 cellpadding="0" cellspacing="1">
                         <tr>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Type&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Plant&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Material&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Allocation %&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Alternative&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Qty&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM UOM&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Type&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM TDU&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Base UOM&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Net Weight&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Gross Weight&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Material&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Qty&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child UOM&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Type&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Base UOM&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Net Weight&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Child Gross Weight&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Path Level&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Path Root&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;BOM Path&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
@@ -142,31 +119,14 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=22 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("REPORT") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=1 nowrap><nobr>&nbsp;NO BOM DATA FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=5 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("REPORT") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=5 nowrap><nobr>&nbsp;NO BOM DATA FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")%>
                         <tr>
                            <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue01("REPORT",i)%></nobr></td>
                            <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("REPORT",i)%></nobr></td>
                            <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue03("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue19("REPORT",i)%></nobr></td>
                            <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue04("REPORT",i)%></nobr></td>
                            <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue05("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue06("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue07("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue08("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue09("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue10("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue11("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue12("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue13("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue14("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue15("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue16("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue17("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue18("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue20("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue21("REPORT",i)%></nobr></td>
-                           <td class="clsList" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue22("REPORT",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>
