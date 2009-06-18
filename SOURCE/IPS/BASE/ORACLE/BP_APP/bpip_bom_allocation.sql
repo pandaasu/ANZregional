@@ -6,7 +6,7 @@ create or replace package bpip_bom as
    /*-*/
    /* Public declarations
    /*-*/
-   function allocation(par_company in varchar2, par_material in varchar2, par_date in varchar2, par_detail in varchar2 default '0') return bpip_allocation_table pipelined;
+   function allocation(par_company in varchar2, par_material in varchar2, par_date in varchar2) return bpip_allocation_table pipelined;
 
 end bpip_bom;
 /
@@ -25,7 +25,7 @@ create or replace package body bpip_bom as
    /***************************************************************/
    /* This procedure performs the performs the allocation routine */
    /***************************************************************/
-   function allocation(par_company in varchar2, par_material in varchar2, par_date in varchar2, par_detail in varchar2 default '0') return bpip_allocation_table pipelined is
+   function allocation(par_company in varchar2, par_material in varchar2, par_date in varchar2) return bpip_allocation_table pipelined is
 
       /*-*/
       /* Local definitions
