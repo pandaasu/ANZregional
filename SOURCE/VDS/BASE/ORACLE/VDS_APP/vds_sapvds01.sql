@@ -50,7 +50,6 @@ create or replace package body vds_sapvds01 as
    procedure process_record_ctl(par_record in varchar2);
    procedure process_record_tab(par_record in varchar2);
    procedure process_record_fld(par_record in varchar2);
-   procedure process_record_nod(par_record in varchar2);
    procedure process_record_dat(par_record in varchar2);
 
    /*-*/
@@ -103,9 +102,6 @@ create or replace package body vds_sapvds01 as
       lics_inbound_utility.set_definition('FLD','VDS_OFFSET',9);
       lics_inbound_utility.set_definition('FLD','VDS_LENGTH',9);
       /*-*/
-      lics_inbound_utility.set_definition('NOD','VDS_NOD',3);
-      lics_inbound_utility.set_definition('NOD','VDS_QUERY',30);
-      /*-*/
       lics_inbound_utility.set_definition('DAT','VDS_DAT',3);
       lics_inbound_utility.set_definition('DAT','VDS_TABLE',30);
       lics_inbound_utility.set_definition('DAT','VDS_DATA',2048);
@@ -138,7 +134,6 @@ create or replace package body vds_sapvds01 as
          when 'CTL' then process_record_ctl(par_record);
          when 'TAB' then process_record_tab(par_record);
          when 'FLD' then process_record_fld(par_record);
-         when 'NOD' then process_record_nod(par_record);
          when 'DAT' then process_record_dat(par_record);
          else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
       end case;
@@ -327,9 +322,9 @@ create or replace package body vds_sapvds01 as
       rcd_vds_query.vqu_meta_ifac := var_interface;
       rcd_vds_query.vqu_meta_time := var_timestamp;
       rcd_vds_query.vqu_meta_date := sysdate;
-      rcd_vds_query.vqu_data_ifac := null;
-      rcd_vds_query.vqu_data_time := null;
-      rcd_vds_query.vqu_data_date := null;
+      rcd_vds_query.vqu_data_ifac := var_interface;
+      rcd_vds_query.vqu_data_time := var_timestamp;
+      rcd_vds_query.vqu_data_date := sysdate;
 
       /*-*/
       /* Retrieve exceptions raised
@@ -342,6 +337,7 @@ create or replace package body vds_sapvds01 as
       /* Reset child sequences
       /*-*/
       rcd_vds_meta.vme_row := 0;
+      rcd_vds_data.vda_row := 0;
 
       /*----------------------------------------*/
       /* VALIDATION - Validate the field values */
@@ -417,8 +413,17 @@ create or replace package body vds_sapvds01 as
       update vds_query set
          vqu_meta_ifac = rcd_vds_query.vqu_meta_ifac,
          vqu_meta_time = rcd_vds_query.vqu_meta_time,
-         vqu_meta_date = rcd_vds_query.vqu_meta_date
+         vqu_meta_date = rcd_vds_query.vqu_meta_date,
+         vqu_data_ifac = rcd_vds_query.vqu_data_ifac,
+         vqu_data_time = rcd_vds_query.vqu_data_time,
+         vqu_data_date = rcd_vds_query.vqu_data_date
       where vqu_query = rcd_vds_query.vqu_query;
+
+      delete from vds_meta
+       where vme_query = rcd_vds_query.vqu_query;
+
+      delete from vds_data
+       where vda_query = rcd_vds_query.vqu_query;
 
    /*-------------*/
    /* End routine */
@@ -463,11 +468,6 @@ create or replace package body vds_sapvds01 as
       rcd_vds_meta.vme_type := lics_inbound_utility.get_variable('VDS_TYPE');
       rcd_vds_meta.vme_offset := lics_inbound_utility.get_number('VDS_OFFSET',null);
       rcd_vds_meta.vme_length := lics_inbound_utility.get_number('VDS_LENGTH',null);
-      if rcd_vds_meta.vme_row := 1 then
-         delete from vds_meta
-          where vme_query = rcd_vds_meta.vme_query
-            and vme_table = rcd_vds_meta.vme_table;
-      end if;
 
       /*-*/
       /* Retrieve exceptions raised
@@ -521,139 +521,6 @@ create or replace package body vds_sapvds01 as
    /* End routine */
    /*-------------*/
    end process_record_fld;
-
-   /**************************************************/
-   /* This procedure performs the record NOD routine */
-   /**************************************************/
-   procedure process_record_nod(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_data_time vds_query.vqu_data_time%type;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-------------------------------*/
-      /* PARSE - Parse the data record */
-      /*-------------------------------*/
-
-      lics_inbound_utility.parse_record('NOD', par_record);
-
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
-
-      /*-*/
-      /* Retrieve field values
-      /*-*/
-      rcd_vds_query.vqu_query := upper(lics_inbound_utility.get_variable('VDS_QUERY'));
-      rcd_vds_query.vqu_meta_ifac := null;
-      rcd_vds_query.vqu_meta_time := null;
-      rcd_vds_query.vqu_meta_date := null;
-      rcd_vds_query.vqu_data_ifac := var_interface;
-      rcd_vds_query.vqu_data_time := var_timestamp;
-      rcd_vds_query.vqu_data_date := sysdate;
-
-      /*-*/
-      /* Retrieve exceptions raised
-      /*-*/
-      if lics_inbound_utility.has_errors = true then
-         var_trn_error := true;
-      end if;
-
-      /*-*/
-      /* Reset child sequences
-      /*-*/
-      rcd_vds_data.vda_row := 0;
-
-      /*----------------------------------------*/
-      /* VALIDATION - Validate the field values */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Validate the primary keys
-      /*-*/
-      if rcd_vds_query.vqu_query is null then
-         lics_inbound_utility.add_exception('Missing Primary Key - NOD.QUERY');
-         var_trn_error := true;
-      end if;
-
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-
-      if var_trn_error = true then
-         return;
-      end if;
-
-      /*----------------------------------------*/
-      /* LOCK- Lock the interface transaction   */
-      /*----------------------------------------*/
-
-      /*-*/
-      /* Lock the transaction
-      /* **note** - attempt to lock the transaction header row (oracle default wait behaviour)
-      /*              - insert/insert (not exists) - first holds lock and second fails on first commit with duplicate index
-      /*              - update/update (exists) - logic goes to update and default wait behaviour
-      /*          - validate the transaction sequence when locking row exists
-      /*          - lock and commit cycle encompasses transaction child procedure execution
-      /*-*/
-      begin
-         insert into vds_query
-            (vqu_query,
-             vqu_meta_ifac,
-             vqu_meta_time,
-             vqu_meta_date,
-             vqu_data_ifac,
-             vqu_data_time,
-             vqu_data_date)
-         values
-            (rcd_vds_query.vqu_query,
-             rcd_vds_query.vqu_meta_ifac,
-             rcd_vds_query.vqu_meta_time,
-             rcd_vds_query.vqu_meta_date,
-             rcd_vds_query.vqu_data_ifac,
-             rcd_vds_query.vqu_data_time,
-             rcd_vds_query.vqu_data_date);
-      exception
-         when dup_val_on_index then
-            update vds_query
-               set vqu_data_ifac = vqu_data_ifac
-             where vqu_query = rcd_vds_query.vqu_query
-             returning vqu_data_time into var_data_time;
-            if sql%found and (var_data_time is null or var_data_time <= rcd_vds_query.vqu_data_time) then
-               delete from vds_data where vda_query = rcd_vds_query.vqu_query;
-            else
-               var_trn_ignore := true;
-            end if;
-      end;
-
-      /*--------------------------------------------*/
-      /* IGNORE - Ignore the data row when required */
-      /*--------------------------------------------*/
-
-      if var_trn_ignore = true then
-         return;
-      end if;
-
-      /*------------------------------*/
-      /* UPDATE - Update the database */
-      /*------------------------------*/
-
-      update vds_query set
-         vqu_data_ifac = rcd_vds_query.vqu_data_ifac,
-         vqu_data_time = rcd_vds_query.vqu_data_time,
-         vqu_data_date = rcd_vds_query.vqu_data_date
-      where vqu_query = rcd_vds_query.vqu_query;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end process_record_nod;
 
    /**************************************************/
    /* This procedure performs the record DAT routine */
