@@ -396,11 +396,8 @@ create or replace package body vds_sapvds01 as
          when dup_val_on_index then
             update vds_query
                set vqu_meta_ifac = vqu_meta_ifac
-             where vqu_query = rcd_vds_query.vqu_query
-             returning vqu_meta_time into var_meta_time;
-            if sql%found and (var_meta_time is null or var_meta_time <= rcd_vds_query.vqu_meta_time) then
-               delete from vds_meta where vme_query = rcd_vds_query.vqu_query;
-            else
+             where vqu_query = rcd_vds_query.vqu_query;
+            if sql%notfound then
                var_trn_ignore := true;
             end if;
       end;
@@ -466,6 +463,11 @@ create or replace package body vds_sapvds01 as
       rcd_vds_meta.vme_type := lics_inbound_utility.get_variable('VDS_TYPE');
       rcd_vds_meta.vme_offset := lics_inbound_utility.get_number('VDS_OFFSET',null);
       rcd_vds_meta.vme_length := lics_inbound_utility.get_number('VDS_LENGTH',null);
+      if rcd_vds_meta.vme_row := 1 then
+         delete from vds_meta
+          where vme_query = rcd_vds_meta.vme_query
+            and vme_table = rcd_vds_meta.vme_table;
+      end if;
 
       /*-*/
       /* Retrieve exceptions raised
