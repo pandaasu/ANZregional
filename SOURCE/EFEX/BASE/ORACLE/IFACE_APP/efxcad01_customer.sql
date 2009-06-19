@@ -28,6 +28,7 @@ create or replace package efxcad01_customer as
     2008/08   Steve Gregan   Created
     2008/10   Steve Gregan   Added secondary sales person to interface
     2009/03   Steve Gregan   Modified to check the customer sales territory modified date
+    2009/06   Steve Gregan   China sales dedication - included business unit id for hierarchies
 
    *******************************************************************************/
 
@@ -198,11 +199,13 @@ create or replace package body efxcad01_customer as
             and t01.std_level2_code = t13.std_level2_code(+)
             and t01.std_level3_code = t13.std_level3_code(+)
             and t01.std_level4_code = t13.std_level4_code(+)
+            and t01.business_unit_id = t13.business_unit_id(+)
             and t01.geo_level1_code = t14.geo_level1_code(+)
             and t01.geo_level2_code = t14.geo_level2_code(+)
             and t01.geo_level3_code = t14.geo_level3_code(+)
             and t01.geo_level4_code = t14.geo_level4_code(+)
             and t01.geo_level5_code = t14.geo_level5_code(+)
+            and t01.business_unit_id = t14.business_unit_id(+)
             and t01.affiliation_id = t15.affiliation_id(+)
             and t01.customer_id = t16.customer_id(+)
             and t01.distributor_id = t17.customer_id(+)

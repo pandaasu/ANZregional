@@ -32,6 +32,7 @@ create or replace package efxsbw01_cust_extract as
     2008/11   Steve Gregan   Modified to distributer customer id
     2008/12   Steve Gregan   Modified to include modified date
     2009/01   Steve Gregan   Modified to check the customer sales territory modified date
+    2009/06   Steve Gregan   China sales dedication - included business unit id to division
 
    *******************************************************************************/
 
@@ -60,8 +61,9 @@ create or replace package body efxsbw01_cust_extract as
    con_market_id constant number := 4;
    con_sales_org_code constant varchar2(10) := '135';
    con_dstbn_chnl_code constant varchar2(10) := '10';
-   con_division_code constant varchar2(10) := '51';
    con_company_code constant varchar2(10) := '135';
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -89,6 +91,7 @@ create or replace package body efxsbw01_cust_extract as
                 t01.active_flg as active_flg,
                 to_char(t01.range_id) as range_id,
                 to_char(t01.modified_date,'yyyymmdd') as modified_date,
+                decode(t01.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code,
                 t02.cust_type_name as cust_type_name,
                 t03.cust_trade_channel_name as cust_trade_channel_name,
                 t04.cust_channel_name as cust_channel_name,
@@ -161,11 +164,13 @@ create or replace package body efxsbw01_cust_extract as
             and t01.std_level2_code = t13.std_level2_code(+)
             and t01.std_level3_code = t13.std_level3_code(+)
             and t01.std_level4_code = t13.std_level4_code(+)
+            and t01.business_unit_id = t13.business_unit_id(+)
             and t01.geo_level1_code = t14.geo_level1_code(+)
             and t01.geo_level2_code = t14.geo_level2_code(+)
             and t01.geo_level3_code = t14.geo_level3_code(+)
             and t01.geo_level4_code = t14.geo_level4_code(+)
             and t01.geo_level5_code = t14.geo_level5_code(+)
+            and t01.business_unit_id = t14.business_unit_id(+)
             and t01.business_unit_id = t16.business_unit_id(+)
             and t01.outlet_location = t16.list_value_name(+)
             and t01.affiliation_id = t17.affiliation_id(+)
@@ -218,7 +223,7 @@ create or replace package body efxsbw01_cust_extract as
          /*-*/
          lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
                                           '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.division_code,'"','""')||'";'||
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_code,'"','""')||'";'||

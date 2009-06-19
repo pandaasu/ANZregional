@@ -665,7 +665,8 @@ END REFRESH_CHINA_ITEM;
 *  REVISIONS:
 *  Ver    Date        Author           Description
 *  -----  ----------  ---------------  ------------------------------------
-*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_CUSTOMER                               
+*  1.0    17-08-2008  Steve Gregan     Created from REFRESH_CUSTOMER
+*  2.0    17-06-2009  Steve Gregan     China sales dedication - included business unit id
 ******************************************************************************/
 PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
 
@@ -692,7 +693,8 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
              a.std_level1_name,
              a.std_level2_name,
              a.std_level3_name,
-             a.std_level4_name
+             a.std_level4_name,
+             a.business_unit_id
         from iface.iface_customer a
        where a.market_id = p_MarketID;
    rcd_iface_customer csr_iface_customer%rowtype;
@@ -752,6 +754,7 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
         from customer a,
              iface.iface_customer b
        where a.customer_code = b.customer_code
+         and a.business_unit_id = b.business_unit_id
          and a.market_id = b.market_id
          and a.market_id = p_MarketID;
    rcd_customer csr_customer%rowtype;
@@ -808,7 +811,8 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
          and t01.geo_level2_code = rcd_iface_customer.geo_level2_code
          and t01.geo_level3_code = rcd_iface_customer.geo_level3_code
          and t01.geo_level4_code = rcd_iface_customer.geo_level4_code
-         and t01.geo_level5_code = rcd_iface_customer.geo_level5_code;
+         and t01.geo_level5_code = rcd_iface_customer.geo_level5_code
+         and t01.business_unit_id = rcd_iface_customer.business_unit_id;
    rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
    cursor csr_standard_hierarchy is
@@ -817,7 +821,8 @@ PROCEDURE REFRESH_CHINA_CUSTOMER(p_MarketID IN NUMBER) IS
        where t01.std_level1_code = rcd_iface_customer.std_level1_code
          and t01.std_level2_code = rcd_iface_customer.std_level2_code
          and t01.std_level3_code = rcd_iface_customer.std_level3_code
-         and t01.std_level4_code = rcd_iface_customer.std_level4_code;
+         and t01.std_level4_code = rcd_iface_customer.std_level4_code
+         and t01.business_unit_id = rcd_iface_customer.business_unit_id;
    rcd_standard_hierarchy csr_standard_hierarchy%rowtype;
 
 BEGIN
@@ -862,7 +867,8 @@ BEGIN
                       rcd_iface_customer.geo_level2_name,
                       rcd_iface_customer.geo_level3_name,
                       rcd_iface_customer.geo_level4_name,
-                      rcd_iface_customer.geo_level5_name);
+                      rcd_iface_customer.geo_level5_name,
+                      rcd_iface_customer.business_unit_id);
             commit;
          else
             if (rcd_geo_hierarchy.geo_level1_name != rcd_iface_customer.geo_level1_name or
@@ -880,7 +886,8 @@ BEGIN
                   and geo_level2_code = rcd_iface_customer.geo_level2_code
                   and geo_level3_code = rcd_iface_customer.geo_level3_code
                   and geo_level4_code = rcd_iface_customer.geo_level4_code
-                  and geo_level5_code = rcd_iface_customer.geo_level5_code;
+                  and geo_level5_code = rcd_iface_customer.geo_level5_code
+                  and business_unit_id = rcd_iface_customer.business_unit_id;
                commit;
             end if;
          end if;
@@ -906,7 +913,8 @@ BEGIN
                       rcd_iface_customer.std_level1_name,
                       rcd_iface_customer.std_level2_name,
                       rcd_iface_customer.std_level3_name,
-                      rcd_iface_customer.std_level4_name);
+                      rcd_iface_customer.std_level4_name,
+                      rcd_iface_customer.business_unit_id);
             commit;
          else
             if (rcd_standard_hierarchy.std_level1_name != rcd_iface_customer.std_level1_name or
@@ -921,7 +929,8 @@ BEGIN
                 where std_level1_code = rcd_iface_customer.std_level1_code
                   and std_level2_code = rcd_iface_customer.std_level2_code
                   and std_level3_code = rcd_iface_customer.std_level3_code
-                  and std_level4_code = rcd_iface_customer.std_level4_code;
+                  and std_level4_code = rcd_iface_customer.std_level4_code
+                  and business_unit_id = rcd_iface_customer.business_unit_id;
                commit;
             end if;
          end if;

@@ -29,6 +29,7 @@ create or replace package efxsbw08_display_extract as
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
     2008/11   Steve Gregan   Modified to extract by period grouping
+    2009/06   Steve Gregan   China sales dedication - included business unit id to division
 
    *******************************************************************************/
 
@@ -57,8 +58,9 @@ create or replace package body efxsbw08_display_extract as
    con_market_id constant number := 4;
    con_sales_org_code constant varchar2(10) := '135';
    con_dstbn_chnl_code constant varchar2(10) := '10';
-   con_division_code constant varchar2(10) := '51';
    con_company_code constant varchar2(10) := '135';
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */

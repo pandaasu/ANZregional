@@ -17,6 +17,7 @@ create or replace package ladefx02_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/08   Steve Gregan   Created
+    2009/06   Steve Gregan   China sales dedication - included business unit id
 
    *******************************************************************************/
 
@@ -120,6 +121,7 @@ create or replace package body ladefx02_loader as
       lics_inbound_utility.set_definition('HDR','STD_LEVEL2_NAME',50);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL3_NAME',50);
       lics_inbound_utility.set_definition('HDR','STD_LEVEL4_NAME',50);
+      lics_inbound_utility.set_definition('HDR','BUSINESS_UNIT_ID',10);
 
       /*-*/
       /* Clear the IFACE customer table for the China market
@@ -315,6 +317,7 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.std_level2_name := lics_inbound_utility.get_variable('STD_LEVEL2_NAME');
       rcd_iface_customer.std_level3_name := lics_inbound_utility.get_variable('STD_LEVEL3_NAME');
       rcd_iface_customer.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
+      rcd_iface_customer.business_unit_id := lics_inbound_utility.get_number('BUSINESS_UNIT_ID',null);
       rcd_iface_customer.distributor_flg := 'N';
       if upper(rcd_iface_customer.affiliation) = 'WHOLESALER' then
          rcd_iface_customer.distributor_flg := 'Y';
@@ -385,6 +388,7 @@ create or replace package body ladefx02_loader as
           std_level2_name,
           std_level3_name,
           std_level4_name,
+          business_unit_id,
           distributor_flg)
       values
          (rcd_iface_customer.market_id,
@@ -421,6 +425,7 @@ create or replace package body ladefx02_loader as
           rcd_iface_customer.std_level2_name,
           rcd_iface_customer.std_level3_name,
           rcd_iface_customer.std_level4_name,
+          rcd_iface_customer.business_unit_id,
           rcd_iface_customer.distributor_flg);
 
    /*-------------*/
