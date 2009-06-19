@@ -21,6 +21,9 @@ create or replace package mobile_data as
     2008/07   Steve Gregan   Created
     2008/10   Steve Gregan   Added the customer code to the customer list and data
     2009/05   Toui Lepkhammany Fix the xslProcessor.valueOf() issue by including /text() to the namespace.
+    2009/06   Steve Gregan   China sales dedication - included business unit id in geographic hierarchy retrieval
+                             Included existing distribution total in the call download
+                             Included range update for customer update with customer type change
 
    *******************************************************************************/
 
@@ -37,7 +40,7 @@ create or replace package mobile_data as
    procedure put_mobile_data;
    function mobile_to_timezone(par_date in date) return date;
 
-end mobile_data; 
+end mobile_data;
 /
 
 /****************/
@@ -127,13 +130,13 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_users is 
+      cursor csr_users is
          select t01.*
            from users t01
           where t01.username = upper(par_username);
       rcd_users csr_users%rowtype;
 
-      cursor csr_sync_user is 
+      cursor csr_sync_user is
          select t01.*
            from sync_user t01
           where t01.user_id = rcd_users.user_id;
@@ -313,12 +316,12 @@ create or replace package body mobile_data as
 
       /*-*/
       /* Commit the database
-      /*-*/  
+      /*-*/
       commit;
 
       /*-*/
       /* Return the result
-      /*-*/  
+      /*-*/
       return var_result;
 
    /*-------------------*/
@@ -500,7 +503,7 @@ create or replace package body mobile_data as
           order by t01.customer_name;
       rcd_customer csr_customer%rowtype;
 
-      cursor csr_comm is 
+      cursor csr_comm is
          select t01.comm_id,
                 t01.comm_title,
                 t01.comm_text,
@@ -512,7 +515,7 @@ create or replace package body mobile_data as
                    t01.comm_id asc;
       rcd_comm csr_comm%rowtype;
 
-      cursor csr_uom is 
+      cursor csr_uom is
          select t01.list_value_name,
                 t01.list_value_text
            from list_values t01
@@ -523,7 +526,7 @@ create or replace package body mobile_data as
           order by t01.list_value_order asc;
       rcd_uom csr_uom%rowtype;
 
-      cursor csr_cust_location is 
+      cursor csr_cust_location is
          select t01.list_value_name,
                 t01.list_value_text
            from list_values t01
@@ -534,7 +537,7 @@ create or replace package body mobile_data as
           order by t01.list_value_order asc;
       rcd_cust_location csr_cust_location%rowtype;
 
-      cursor csr_cust_type is 
+      cursor csr_cust_type is
          select t01.*
            from cust_type t01,
                 cust_trade_channel t02,
@@ -549,7 +552,7 @@ create or replace package body mobile_data as
           order by t01.cust_type_name asc;
       rcd_cust_type csr_cust_type%rowtype;
 
-      cursor csr_cust_trade_channel is 
+      cursor csr_cust_trade_channel is
          select t01.*
            from cust_trade_channel t01,
                 cust_channel t02
@@ -561,7 +564,7 @@ create or replace package body mobile_data as
           order by t01.cust_trade_channel_name asc;
       rcd_cust_trade_channel csr_cust_trade_channel%rowtype;
 
-      cursor csr_distributor is 
+      cursor csr_distributor is
          select t01.customer_id,
                 t01.customer_name
            from customer t01,
@@ -804,7 +807,7 @@ create or replace package body mobile_data as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -920,7 +923,7 @@ create or replace package body mobile_data as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -973,7 +976,7 @@ create or replace package body mobile_data as
           where t01.customer_id = to_number(par_customer_id);
       rcd_customer csr_customer%rowtype;
 
-      cursor csr_cust_contact is 
+      cursor csr_cust_contact is
          select t01.*
            from cust_contact t01
           where t01.customer_id = to_number(par_customer_id)
@@ -1074,7 +1077,7 @@ create or replace package body mobile_data as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -1123,7 +1126,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_sales_territory is 
+      cursor csr_sales_territory is
          select t01.sales_territory_id,
                 t02.sales_area_id,
                 t03.sales_region_id,
@@ -1182,7 +1185,7 @@ create or replace package body mobile_data as
             and t01.business_unit_id = var_auth_business_unit_id;
       rcd_customer csr_customer%rowtype;
 
-      cursor csr_user_comm is 
+      cursor csr_user_comm is
          select t01.comm_id
            from comm_assignment t01,
                 comm t02
@@ -1203,7 +1206,7 @@ create or replace package body mobile_data as
                  t01.selection_string not like '%<SALES_TERRITORY>%');
       rcd_user_comm csr_user_comm%rowtype;
 
-      cursor csr_customer_comm is 
+      cursor csr_customer_comm is
          select t01.comm_id
            from comm_assignment t01,
                 comm t02
@@ -1212,7 +1215,7 @@ create or replace package body mobile_data as
             and trunc(t02.active_date) <= trunc(mobile_to_timezone(sysdate))
             and trunc(t02.inactive_date) >= trunc(mobile_to_timezone(sysdate))
             and t02.status = 'A'
-            and t02.comm_type_id = con_customer_comm_type_id 
+            and t02.comm_type_id = con_customer_comm_type_id
             and (t01.selection_string like var_cust_segment or
                  t01.selection_string like '%<SEGMENT></SEGMENT>%' or
                  t01.selection_string not like '%<SEGMENT>%')
@@ -1298,7 +1301,7 @@ create or replace package body mobile_data as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -1337,6 +1340,7 @@ create or replace package body mobile_data as
       var_output varchar2(2000 char);
       var_called boolean;
       var_ordered boolean;
+      var_total_qty distribution_total.total_qty%type;
       var_display_qty distribution.display_qty%type;
       var_facing_qty distribution.facing_qty%type;
       var_inventory_qty distribution.inventory_qty%type;
@@ -1388,7 +1392,7 @@ create or replace package body mobile_data as
             and t01.status = 'A';
       rcd_call csr_call%rowtype;
 
-      cursor csr_last_call is 
+      cursor csr_last_call is
          select t01.call_date
            from call t01
           where t01.customer_id = rcd_call.customer_id
@@ -1397,7 +1401,7 @@ create or replace package body mobile_data as
           order by t01.call_date desc;
       rcd_last_call csr_last_call%rowtype;
 
-      cursor csr_last_order is 
+      cursor csr_last_order is
          select t01.order_id
            from orders t01
           where t01.customer_id = rcd_call.customer_id
@@ -1406,7 +1410,7 @@ create or replace package body mobile_data as
           order by t01.order_id desc;
       rcd_last_order csr_last_order%rowtype;
 
-      cursor csr_range_item is 
+      cursor csr_range_item is
          select t02.item_id,
                 t02.item_name,
                 t02.tdu_price,
@@ -1424,7 +1428,7 @@ create or replace package body mobile_data as
             and t02.status = 'A';
       rcd_range_item csr_range_item%rowtype;
 
-      cursor csr_last_order_item is 
+      cursor csr_last_order_item is
          select nvl(t01.order_qty,0) as order_qty,
                 nvl(t01.uom,con_uom_default) as uom
            from order_item t01
@@ -1433,7 +1437,15 @@ create or replace package body mobile_data as
             and t01.status = 'A';
       rcd_last_order_item csr_last_order_item%rowtype;
 
-      cursor csr_distribution is 
+      cursor csr_distribution_total is
+         select nvl(t01.total_qty,0) as total_qty
+           from distribution_total t01
+          where t01.customer_id = rcd_call.customer_id
+            and t01.item_group_id = 0
+            and t01.status = 'A';
+      rcd_distribution_total csr_distribution_total%rowtype;
+
+      cursor csr_distribution is
          select nvl(t01.inventory_qty,0) as inventory_qty
            from distribution t01
           where t01.customer_id = rcd_call.customer_id
@@ -1441,7 +1453,7 @@ create or replace package body mobile_data as
             and t01.status = 'A';
       rcd_distribution csr_distribution%rowtype;
 
-      cursor csr_display_item is 
+      cursor csr_display_item is
          select t01.display_item_id,
                 t01.display_item_name
            from display_item t01
@@ -1454,7 +1466,7 @@ create or replace package body mobile_data as
           order by t01.display_item_id asc;
       rcd_display_item csr_display_item%rowtype;
 
-      cursor csr_display_distribution is 
+      cursor csr_display_distribution is
          select nvl(t01.display_in_store,0) as display_in_store
            from display_distribution t01
           where t01.display_item_id = rcd_display_item.display_item_id
@@ -1463,7 +1475,7 @@ create or replace package body mobile_data as
             and trunc(t01.call_date) = trunc(rcd_last_call.call_date);
       rcd_display_distribution csr_display_distribution%rowtype;
 
-      cursor csr_activity_item is 
+      cursor csr_activity_item is
          select t01.activity_item_id,
                 t01.activity_item_name
            from activity_item t01
@@ -1476,7 +1488,7 @@ create or replace package body mobile_data as
           order by t01.activity_item_id asc;
       rcd_activity_item csr_activity_item%rowtype;
 
-      cursor csr_activity_distribution is 
+      cursor csr_activity_distribution is
          select nvl(t01.activity_in_store,0) as activity_in_store
            from activity_distribution t01
           where t01.activity_item_id = rcd_activity_item.activity_item_id
@@ -1526,6 +1538,17 @@ create or replace package body mobile_data as
          close csr_last_order;
 
          /*-*/
+         /* Retrieve the stock distribution total
+         /*-*/
+         var_total_qty := 0;
+         open csr_distribution_total;
+         fetch csr_distribution_total into rcd_distribution_total;
+         if csr_distribution_total%found then
+            var_total_qty := rcd_distribution_total.total_qty;
+         end if;
+         close csr_distribution_total;
+
+         /*-*/
          /* Open the call
          /*-*/
          var_output := '<RTE_CALL>';
@@ -1540,7 +1563,7 @@ create or replace package body mobile_data as
          var_output := var_output||'<RTE_CALL_STR_TIME><![CDATA[' || '*NONE' || ']]></RTE_CALL_STR_TIME>';
          var_output := var_output||'<RTE_CALL_END_TIME><![CDATA[' || '*NONE' || ']]></RTE_CALL_END_TIME>';
          var_output := var_output||'<RTE_CALL_ORDER_SEND><![CDATA[' || '0' || ']]></RTE_CALL_ORDER_SEND>';
-         var_output := var_output||'<RTE_CALL_STOCK_DIST_COUNT><![CDATA[' || '0' || ']]></RTE_CALL_STOCK_DIST_COUNT>';
+         var_output := var_output||'<RTE_CALL_STOCK_DIST_COUNT><![CDATA[' || to_char(var_total_qty) || ']]></RTE_CALL_STOCK_DIST_COUNT>';
          dbms_lob.writeappend(var_clob,length(var_output),var_output);
 
          /*-*/
@@ -1940,7 +1963,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_customer is 
+      cursor csr_customer is
          select t01.*
            from customer t01
           where t01.customer_id = upd_call.customer_id;
@@ -2058,7 +2081,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_distribution is 
+      cursor csr_distribution is
          select t01.*
            from distribution t01
           where t01.customer_id = upd_distribution.customer_id
@@ -2122,13 +2145,13 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_customer is 
+      cursor csr_customer is
          select t01.*
            from customer t01
           where t01.customer_id = upd_call.customer_id;
       rcd_customer csr_customer%rowtype;
 
-      cursor csr_orders is 
+      cursor csr_orders is
          select t01.*
            from orders t01
           where t01.user_id = upd_orders.user_id
@@ -2234,7 +2257,7 @@ create or replace package body mobile_data as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_order_item is 
+      cursor csr_order_item is
          select t01.*
            from order_item t01
           where t01.order_id = upd_order_item.order_id
@@ -2342,15 +2365,42 @@ create or replace package body mobile_data as
    procedure update_customer_data is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_range_id number;
+
+      /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_customer is 
-         select t01.customer_id
+      cursor csr_customer is
+         select t01.*
            from customer t01
           where t01.customer_id = upd_customer.customer_id;
       rcd_customer csr_customer%rowtype;
 
-      cursor csr_cust_contact is 
+      cursor csr_sales_territory is
+         select t01.sales_territory_id,
+                t03.segment_id
+           from sales_territory t01,
+                sales_area t02,
+                sales_region t03
+          where t01.sales_area_id = t02.sales_area_id(+)
+            and t02.sales_region_id = t03.sales_region_id(+)
+            and t01.user_id = var_auth_user_id
+            and t01.status = 'A'
+          order by t01.sales_territory_id asc;
+      rcd_sales_territory csr_sales_territory%rowtype;
+
+      cursor csr_range is
+         select t01.range_id
+           from range t01
+          where t01.segment_id = rcd_sales_territory.segment_id
+            and t01.cust_type_id = upd_customer.cust_type_id
+            and t01.status = 'A'
+          order by t01.range_id asc;
+      rcd_range csr_range%rowtype;
+
+      cursor csr_cust_contact is
          select t01.*
            from cust_contact t01
           where t01.customer_id = upd_customer.customer_id
@@ -2372,6 +2422,38 @@ create or replace package body mobile_data as
          raise_application_error(-20000, 'update_customer_data - Customer (' || to_char(upd_customer.customer_id) || ') not found');
       end if;
       close csr_customer;
+      var_range_id := rcd_customer.range_id;
+
+      /*-*/
+      /* Retrieve the range when sales territory segment found
+      /* **notes** 1. The first active range is retrieved
+      /*-*/
+      if rcd_customer.cust_type_id != upd_customer.cust_type_id then
+
+         /*-*/
+         /* Retrieve the sales territory
+         /* **notes** 1. The first active authenticated user sales territory is retrieved
+         /*-*/
+         open csr_sales_territory;
+         fetch csr_sales_territory into rcd_sales_territory;
+         if csr_sales_territory%notfound then
+            raise_application_error(-20000, 'update_customer_data - User (' || to_char(var_auth_user_id) || ') has no active sales territory');
+         end if;
+         close csr_sales_territory;
+
+         /*-*/
+         /* Retrieve the range when sales territory segment found
+         /* **notes** 1. The first active range is retrieved
+         /*-*/
+         var_range_id := null;
+         open csr_range;
+         fetch csr_range into rcd_range;
+         if csr_range%found then
+            var_range_id := rcd_range.range_id;
+         end if;
+         close csr_range;
+
+      end if;
 
       /*-*/
       /* Update the customer data
@@ -2388,6 +2470,7 @@ create or replace package body mobile_data as
              phone_number = upd_customer.phone_number,
              fax_number = upd_customer.fax_number,
              email_address = upd_customer.email_address,
+             range_id = var_range_id,
              cust_type_id = upd_customer.cust_type_id,
              distributor_id = upd_customer.distributor_id,
              active_flg = upd_customer.active_flg,
@@ -2465,10 +2548,11 @@ create or replace package body mobile_data as
       cursor csr_geo_hierarchy is
          select t01.*
            from geo_hierarchy t01
-          where upper(t01.geo_level5_name) like var_level5_name;
+          where t01.business_unit_id = var_auth_business_unit_id
+            and upper(t01.geo_level5_name) like var_level5_name;
       rcd_geo_hierarchy csr_geo_hierarchy%rowtype;
 
-      cursor csr_sales_territory is 
+      cursor csr_sales_territory is
          select t01.sales_territory_id,
                 t03.segment_id
            from sales_territory t01,
@@ -2481,7 +2565,7 @@ create or replace package body mobile_data as
           order by t01.sales_territory_id asc;
       rcd_sales_territory csr_sales_territory%rowtype;
 
-      cursor csr_range is 
+      cursor csr_range is
          select t01.range_id
            from range t01
           where t01.segment_id = var_segment_id
@@ -2504,7 +2588,7 @@ create or replace package body mobile_data as
       open csr_sales_territory;
       fetch csr_sales_territory into rcd_sales_territory;
       if csr_sales_territory%notfound then
-         raise_application_error(-20000, 'update_customer_data - User (' || to_char(var_auth_user_id) || ') has no active sales territory');
+         raise_application_error(-20000, 'create_customer_data - User (' || to_char(var_auth_user_id) || ') has no active sales territory');
       else
          var_sales_territory_id := rcd_sales_territory.sales_territory_id;
          var_segment_id := rcd_sales_territory.segment_id;
@@ -2827,7 +2911,7 @@ begin
    var_auth_city := null;
    var_auth_sync_log_id := null;
 
-end mobile_data; 
+end mobile_data;
 /
 
 /**************************/
