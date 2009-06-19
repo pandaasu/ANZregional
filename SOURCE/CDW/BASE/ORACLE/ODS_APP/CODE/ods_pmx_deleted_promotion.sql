@@ -38,6 +38,8 @@ CREATE OR REPLACE PACKAGE         ODS_PMX_DELETED_PROMOTION IS
   1.0   10/07/2008 Paul Berude          Created this function.
   1.1   14/11/2008 Steve Gregan         Modified to run by company and use the job_cntl
                                         table to control the date range.
+  1.2   16/06/2009 Steve Gregan         Modified to process same day deletions that are currently
+                                        bypassed.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -367,9 +369,14 @@ BEGIN
 
       -- If the deleted promotion record already exists in the ODS table then do nothing, else insert new promotion record.
       IF v_rec_count > 0 THEN
-        -- Promotion record already exists in ODS table, therefore do not insert new promotion record.
-        write_log(ods_constants.data_type_prom, 'N/A', i_log_level + 3, 'Promotion already exists: Company [' || v_deleted_prom_cmpny_code ||
+        -- Promotion record already exists in ODS table, therefore update to status 'X'.
+        write_log(ods_constants.data_type_prom, 'N/A', i_log_level + 3, 'Promotion update to status ''X'' (DELETED): Company [' || v_deleted_prom_cmpny_code ||
                   '] / Division [' || v_deleted_prom_div_code || '] / Promotion [' || v_deleted_prom_num || '].');
+        UPDATE pmx_prom_hdr SET prom_stat_code = 'X', valdtn_status= 'UNCHECKED'
+         WHERE company_code = v_deleted_prom_cmpny_code
+           AND division_code = v_deleted_prom_div_code
+           AND prom_num = v_deleted_prom_num
+           AND prom_chng_date = v_deleted_prom_date;
       ELSE
         -- Retrieve the latest version of the promotion.
         write_log(ods_constants.data_type_prom, 'N/A', i_log_level + 3, 'Opening csr_promotion_header.');
