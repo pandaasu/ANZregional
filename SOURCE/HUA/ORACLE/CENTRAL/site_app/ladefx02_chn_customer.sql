@@ -17,6 +17,7 @@ create or replace package ladefx02_chn_customer as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/08   Steve Gregan   Created
+    2009/06   Steve Gregan   China sales dedication - included business unit id
 
    *******************************************************************************/
 
@@ -43,6 +44,8 @@ create or replace package body ladefx02_chn_customer as
    /* Private constants
    /*-*/
    con_market_id constant number := 4;
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -93,7 +96,8 @@ create or replace package body ladefx02_chn_customer as
                 t08.cust_name_en_level_1 as std_level1_name,
                 t08.cust_name_en_level_2 as std_level2_name,
                 t08.cust_name_en_level_3 as std_level3_name,
-                t08.cust_name_en_level_4 as std_level4_name
+                t08.cust_name_en_level_4 as std_level4_name,
+                decode(t06.division_code,'51',con_snack_id,'56',con_pet_id,con_snack_id) as business_unit_id
            from bds_cust_header t01,
                 (select t01.customer_code,
                         max(ltrim(t01.name ||' '|| t01.name_02)) as customer_name,
@@ -140,7 +144,6 @@ create or replace package body ladefx02_chn_customer as
                    from bds_cust_sales_area t01
                   where t01.sales_org_code = '135'
                     and t01.distbn_chnl_code = '10'
-                    and t01.division_code = '51'
                   group by t01.customer_code) t06,
                 sales_force_geo_hier t07,
                 std_hier t08,
@@ -158,6 +161,9 @@ create or replace package body ladefx02_chn_customer as
             and t01.customer_code = t05.customer_code(+)
             and t01.customer_code = t06.customer_code
             and ltrim(t04.city_code,'0') = t07.sap_hier_cust_code(+)
+            and t06.sales_org_code = t07.sap_sales_org_code(+)
+            and t06.distbn_chnl_code = t07.sap_distbn_chnl_code(+)
+            and t06.division_code = t07.sap_division_code(+)
             and ltrim(t06.customer_code,'0') = t08.sap_hier_cust_code(+)
             and t06.sales_org_code = t08.sap_sales_org_code(+)
             and t06.distbn_chnl_code = t08.sap_distbn_chnl_code(+)
@@ -232,7 +238,8 @@ create or replace package body ladefx02_chn_customer as
                                           nvl(rcd_cust_master.std_level1_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.std_level1_name,' ')),' ') ||
                                           nvl(rcd_cust_master.std_level2_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.std_level2_name,' ')),' ') ||
                                           nvl(rcd_cust_master.std_level3_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.std_level3_name,' ')),' ') ||
-                                          nvl(rcd_cust_master.std_level4_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.std_level4_name,' ')),' '));
+                                          nvl(rcd_cust_master.std_level4_name,' ')||rpad(' ',50-length(nvl(rcd_cust_master.std_level4_name,' ')),' ') ||
+                                          to_char(nvl(rcd_cust_master.business_unit_id,0))||rpad(' ',10-length(to_char(nvl(rcd_cust_master.business_unit_id,0))),' '));
 
       end loop;
       close csr_cust_master;
