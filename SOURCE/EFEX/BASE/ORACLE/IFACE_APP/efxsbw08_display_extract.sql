@@ -84,11 +84,14 @@ create or replace package body efxsbw08_display_extract as
                 to_char(t01.user_id) as user_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 t01.display_in_store as display_in_store,
+                decode(t02.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code,
                 rank() over (partition by t01.customer_id,
                                           t01.display_item_id
                                  order by t01.call_date desc) as rnkseq
-           from display_distribution t01
-          where (t01.customer_id,
+           from display_distribution t01,
+                customer t02
+          where t01.customer_id = t02.customer_id
+            and (t01.customer_id,
                  t01.display_item_id,
                  t01.user_id,
                  t01.call_date) in (select t01.customer_id,
@@ -154,7 +157,7 @@ create or replace package body efxsbw08_display_extract as
          /*-*/
          lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
                                           '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.division_code,'"','""')||'";'||
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_item_id,'"','""')||'";'||

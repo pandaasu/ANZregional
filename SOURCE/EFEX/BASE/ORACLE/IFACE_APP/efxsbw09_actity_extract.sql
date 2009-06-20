@@ -29,6 +29,7 @@ create or replace package efxsbw09_actity_extract as
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
     2008/11   Steve Gregan   Modified to extract by period grouping
+    2009/06   Steve Gregan   China sales dedication - included business unit id to division
 
    *******************************************************************************/
 
@@ -57,8 +58,9 @@ create or replace package body efxsbw09_actity_extract as
    con_market_id constant number := 4;
    con_sales_org_code constant varchar2(10) := '135';
    con_dstbn_chnl_code constant varchar2(10) := '10';
-   con_division_code constant varchar2(10) := '51';
    con_company_code constant varchar2(10) := '135';
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -82,11 +84,14 @@ create or replace package body efxsbw09_actity_extract as
                 to_char(t01.user_id) as user_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 t01.activity_in_store as activity_in_store,
+                decode(t02.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code,
                 rank() over (partition by t01.customer_id,
                                           t01.activity_item_id
                                  order by t01.call_date desc) as rnkseq
-           from activity_distribution t01
-          where (t01.customer_id,
+           from activity_distribution t01,
+                customer t02
+          where t01.customer_id = t02.customer_id
+            and (t01.customer_id,
                  t01.activity_item_id,
                  t01.user_id,
                  t01.call_date) in (select t01.customer_id,
@@ -152,7 +157,7 @@ create or replace package body efxsbw09_actity_extract as
          /*-*/
          lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
                                           '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.division_code,'"','""')||'";'||
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.activity_item_id,'"','""')||'";'||

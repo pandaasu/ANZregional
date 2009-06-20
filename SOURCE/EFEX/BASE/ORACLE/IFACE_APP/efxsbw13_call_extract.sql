@@ -28,6 +28,7 @@ create or replace package efxsbw13_call_extract as
     2008/10   Steve Gregan   Created
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
+    2009/06   Steve Gregan   China sales dedication - included business unit id to division
 
    *******************************************************************************/
 
@@ -56,8 +57,9 @@ create or replace package body efxsbw13_call_extract as
    con_market_id constant number := 4;
    con_sales_org_code constant varchar2(10) := '135';
    con_dstbn_chnl_code constant varchar2(10) := '10';
-   con_division_code constant varchar2(10) := '51';
    con_company_code constant varchar2(10) := '135';
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -78,9 +80,12 @@ create or replace package body efxsbw13_call_extract as
          select to_char(t01.customer_id) as customer_id,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 to_char(t01.end_date,'hh24miss') as end_time,
-                to_char(t01.user_id) as user_id
-           from call t01
-          where (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history)
+                to_char(t01.user_id) as user_id,
+                decode(t02.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code
+           from call t01,
+                customer t02
+          where t01.customer_id = t02.customer_id
+            and (t01.user_id, t01.call_date) in (select user_id, call_date from call where trunc(modified_date) >= trunc(sysdate) - var_history)
             and t01.customer_id in (select t01.customer_id
                                       from customer t01,
                                            cust_type t02,
@@ -129,7 +134,7 @@ create or replace package body efxsbw13_call_extract as
          /*-*/
          lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
                                           '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.division_code,'"','""')||'";'||
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.customer_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.call_date,'"','""')||'";'||

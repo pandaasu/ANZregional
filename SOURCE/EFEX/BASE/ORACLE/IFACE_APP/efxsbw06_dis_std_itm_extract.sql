@@ -23,6 +23,7 @@ create or replace package efxsbw06_dis_std_itm_extract as
     2008/10   Steve Gregan   Created
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
+    2009/06   Steve Gregan   China sales dedication - included business unit id to division
 
    *******************************************************************************/
 
@@ -51,8 +52,9 @@ create or replace package body efxsbw06_dis_std_itm_extract as
    con_market_id constant number := 4;
    con_sales_org_code constant varchar2(10) := '135';
    con_dstbn_chnl_code constant varchar2(10) := '10';
-   con_division_code constant varchar2(10) := '51';
    con_company_code constant varchar2(10) := '135';
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -70,8 +72,13 @@ create or replace package body efxsbw06_dis_std_itm_extract as
       /*-*/
       cursor csr_extract is
          select to_char(t01.display_standard_id) as display_standard_id,
-                to_char(t01.display_item_id) as display_item_id
-           from display_standard_items t01;
+                to_char(t01.display_item_id) as display_item_id,
+                decode(t03.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code
+           from display_standard_items t01
+                display_item t02,
+                segment t03
+          where t01.display_item_id = t02.display_item_id(+)
+            and t02.segment_id = t03.segment_id(+);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -100,7 +107,7 @@ create or replace package body efxsbw06_dis_std_itm_extract as
          /*-*/
          lics_outbound_loader.append_data('"'||replace(con_sales_org_code,'"','""')||'";'||
                                           '"'||replace(con_dstbn_chnl_code,'"','""')||'";'||
-                                          '"'||replace(con_division_code,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.division_code,'"','""')||'";'||
                                           '"'||replace(con_company_code,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_standard_id,'"','""')||'";'||
                                           '"'||replace(rcd_extract.display_item_id,'"','""')||'"');
