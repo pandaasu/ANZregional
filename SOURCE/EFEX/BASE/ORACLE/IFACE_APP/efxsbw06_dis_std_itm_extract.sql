@@ -74,7 +74,7 @@ create or replace package body efxsbw06_dis_std_itm_extract as
          select to_char(t01.display_standard_id) as display_standard_id,
                 to_char(t01.display_item_id) as display_item_id,
                 decode(t03.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code
-           from display_standard_items t01
+           from display_standard_items t01,
                 display_item t02,
                 segment t03
           where t01.display_item_id = t02.display_item_id(+)
