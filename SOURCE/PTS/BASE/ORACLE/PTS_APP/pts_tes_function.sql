@@ -28,8 +28,6 @@ create or replace package pts_app.pts_tes_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   function retrieve_keyword return pts_xml_type pipelined;
-   procedure update_keyword(par_user in varchar2);
    function retrieve_question return pts_xml_type pipelined;
    procedure update_question(par_user in varchar2);
    function retrieve_sample return pts_xml_type pipelined;
@@ -205,9 +203,8 @@ create or replace package body pts_app.pts_tes_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
-      var_tes_code varchar2(32);
-      var_tab_flag boolean;
-      var_output varchar2(2000 char);
+      var_tes_code number;
+      var_found boolean;
 
       /*-*/
       /* Local cursors
@@ -215,8 +212,15 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = pts_to_number(var_tes_code);
+          where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_company is
+         select to_char(t01.cde_com_code) as val_code,
+                '('||to_char(t01.cde_com_code)||') '||t01.cde_com_name as val_text
+           from pts_com_definition t01
+          order by val_code asc;
+      rcd_company csr_company%rowtype;
 
       cursor csr_sta_code is
          select t01.*
@@ -242,7 +246,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_keyword is
          select t01.*
            from pts_tes_keyword t01
-          where t01.tke_tes_code = pts_to_number(var_tes_code)
+          where t01.tke_tes_code = var_tes_code
           order by t01.tke_key_word;
       rcd_keyword csr_keyword%rowtype;
 
@@ -269,25 +273,54 @@ create or replace package body pts_app.pts_tes_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      var_tes_code := xslProcessor.valueOf(obj_pts_request,'@TESCODE');
-      xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDTES' and var_action != '*CRTTES' and var_action != '*CPYTES' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
       /* Retrieve the existing test when required
       /*-*/
       if var_action = '*UPDTES' or var_action = '*CPYTES' then
+         var_found := false;
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%notfound then
-            pts_gen_function.add_mesg_data('Test ('||var_tes_code||') does not exist');
-            return;
+         if csr_retrieve%found then
+            var_found := true;
          end if;
          close csr_retrieve;
+         if var_found = false then
+            pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+         end if;
+       --  if rcd_retrieve.tde_tes_status != 2 and
+       --     rcd_retrieve.tde_tes_status != 3 then
+       --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - question update not allowed');
+       --  end if;
+         if pts_gen_function.get_mesg_count != 0 then
+            return;
+         end if;
       end if;
+
+      /*-*/
+      /* Pipe the company XML
+      /*-*/
+      open csr_company;
+      loop
+         fetch csr_company into rcd_company;
+         if csr_company%notfound then
+            exit;
+         end if;
+         pipe row(pts_xml_object('<COM_LIST VALCDE="'||rcd_company.val_code||'" VALTXT="'||pts_to_xml(rcd_company.val_text)||'"/>'));
+      end loop;
+      close csr_company;
 
       /*-*/
       /* Pipe the status XML
@@ -352,57 +385,60 @@ create or replace package body pts_app.pts_tes_function as
       if var_action = '*UPDTES' then
          pipe row(pts_xml_object('<TEST TESCDE="'||to_char(rcd_retrieve.tde_tes_code)||'"'));
          pipe row(pts_xml_object(' TESTIT="'||pts_to_xml(rcd_retrieve.tde_tes_title)||'"'));
+         pipe row(pts_xml_object(' TESCOM="'||to_char(rcd_retrieve.tde_com_code)||'"'));
          pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
-         pipe row(pts_xml_object(' GLOSTA="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
+         pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
-         pipe row(pts_xml_object(' TESTRG="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
-         pipe row(pts_xml_object(' TESREQ="'||pts_to_xml(rcd_retrieve.tde_tes_requestor)||'"'));
-         pipe row(pts_xml_object(' TESAIM="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
-         pipe row(pts_xml_object(' TESREA="'||pts_to_xml(rcd_retrieve.tde_tes_reason)||'"'));
-         pipe row(pts_xml_object(' TESPRE="'||pts_to_xml(rcd_retrieve.tde_tes_prediction)||'"'));
-         pipe row(pts_xml_object(' TESCOM="'||pts_to_xml(rcd_retrieve.tde_tes_comment)||'"'));
-         pipe row(pts_xml_object(' TESSDT="'||to_char(rcd_retrieve.tde_tes_str_date,'dd/mm/yyyy')||'"'));
-         pipe row(pts_xml_object(' TESPDT="'||to_char(rcd_retrieve.tde_tes_pan_date,'dd/mm/yyyy')||'"'));
-         pipe row(pts_xml_object(' TESFWK="'||to_char(rcd_retrieve.tde_tes_fld_week)||'"'));
-         pipe row(pts_xml_object(' TESMML="'||to_char(rcd_retrieve.tde_tes_min_meal)||'"'));
-         pipe row(pts_xml_object(' TESMTM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
-         pipe row(pts_xml_object(' TESDAY="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
+         pipe row(pts_xml_object(' TESTAR="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
+         pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
+         pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
+         pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
+         pipe row(pts_xml_object(' REATXT="'||pts_to_xml(rcd_retrieve.tde_tes_reason)||'"'));
+         pipe row(pts_xml_object(' PRETXT="'||pts_to_xml(rcd_retrieve.tde_tes_prediction)||'"'));
+         pipe row(pts_xml_object(' COMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_comment)||'"'));
+         pipe row(pts_xml_object(' STRDAT="'||to_char(rcd_retrieve.tde_tes_str_date,'dd/mm/yyyy')||'"'));
+         pipe row(pts_xml_object(' FLDWEK="'||to_char(rcd_retrieve.tde_tes_fld_week)||'"'));
+         pipe row(pts_xml_object(' MEALEN="'||to_char(rcd_retrieve.tde_tes_len_meal)||'"'));
+         pipe row(pts_xml_object(' MAXTEM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
+         pipe row(pts_xml_object(' DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
       elsif var_action = '*CPYTES' then
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT="'||pts_to_xml(rcd_retrieve.tde_tes_title)||'"'));
+         pipe row(pts_xml_object(' TESCOM="'||to_char(rcd_retrieve.tde_com_code)||'"'));
          pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
-         pipe row(pts_xml_object(' GLOSTA="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
+         pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
-         pipe row(pts_xml_object(' TESTRG="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
-         pipe row(pts_xml_object(' TESREQ="'||pts_to_xml(rcd_retrieve.tde_tes_requestor)||'"'));
-         pipe row(pts_xml_object(' TESAIM="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
-         pipe row(pts_xml_object(' TESREA="'||pts_to_xml(rcd_retrieve.tde_tes_reason)||'"'));
-         pipe row(pts_xml_object(' TESPRE="'||pts_to_xml(rcd_retrieve.tde_tes_prediction)||'"'));
-         pipe row(pts_xml_object(' TESCOM="'||pts_to_xml(rcd_retrieve.tde_tes_comment)||'"'));
-         pipe row(pts_xml_object(' TESSDT="'||to_char(rcd_retrieve.tde_tes_str_date,'dd/mm/yyyy')||'"'));
-         pipe row(pts_xml_object(' TESPDT="'||to_char(rcd_retrieve.tde_tes_pan_date,'dd/mm/yyyy')||'"'));
-         pipe row(pts_xml_object(' TESFWK="'||to_char(rcd_retrieve.tde_tes_fld_week)||'"'));
-         pipe row(pts_xml_object(' TESMML="'||to_char(rcd_retrieve.tde_tes_min_meal)||'"'));
-         pipe row(pts_xml_object(' TESMTM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
-         pipe row(pts_xml_object(' TESDAY="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
+         pipe row(pts_xml_object(' TESTAR="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
+         pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
+         pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
+         pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
+         pipe row(pts_xml_object(' REATXT="'||pts_to_xml(rcd_retrieve.tde_tes_reason)||'"'));
+         pipe row(pts_xml_object(' PRETXT="'||pts_to_xml(rcd_retrieve.tde_tes_prediction)||'"'));
+         pipe row(pts_xml_object(' COMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_comment)||'"'));
+         pipe row(pts_xml_object(' STRDAT="'||to_char(rcd_retrieve.tde_tes_str_date,'dd/mm/yyyy')||'"'));
+         pipe row(pts_xml_object(' FLDWEK="'||to_char(rcd_retrieve.tde_tes_fld_week)||'"'));
+         pipe row(pts_xml_object(' MEALEN="'||to_char(rcd_retrieve.tde_tes_len_meal)||'"'));
+         pipe row(pts_xml_object(' MAXTEM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
+         pipe row(pts_xml_object(' DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
       elsif var_action = '*CRTTES' then
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT=""'));
+         pipe row(pts_xml_object(' TESCOM="1"'));
          pipe row(pts_xml_object(' TESSTA="1"'));
-         pipe row(pts_xml_object(' GLOSTA="2"'));
+         pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="1"'));
-         pipe row(pts_xml_object(' TESTRG="1"'));
-         pipe row(pts_xml_object(' TESREQ=""'));
-         pipe row(pts_xml_object(' TESAIM=""'));
-         pipe row(pts_xml_object(' TESREA=""'));
-         pipe row(pts_xml_object(' TESPRE=""'));
-         pipe row(pts_xml_object(' TESCOM=""'));
-         pipe row(pts_xml_object(' TESSDT=""'));
-         pipe row(pts_xml_object(' TESPDT=""'));
-         pipe row(pts_xml_object(' TESFWK=""'));
-         pipe row(pts_xml_object(' TESMML=""'));
-         pipe row(pts_xml_object(' TESMTM=""'));
-         pipe row(pts_xml_object(' TESDAY=""/>'));
+         pipe row(pts_xml_object(' TESTAR="1"'));
+         pipe row(pts_xml_object(' REQNAM=""'));
+         pipe row(pts_xml_object(' REQMID=""'));
+         pipe row(pts_xml_object(' AIMTXT=""'));
+         pipe row(pts_xml_object(' REATXT=""'));
+         pipe row(pts_xml_object(' PRETXT=""'));
+         pipe row(pts_xml_object(' COMTXT=""'));
+         pipe row(pts_xml_object(' STRDAT=""'));
+         pipe row(pts_xml_object(' FLDWEK=""'));
+         pipe row(pts_xml_object(' MEALEN=""'));
+         pipe row(pts_xml_object(' MAXTEM=""'));
+         pipe row(pts_xml_object(' DATCNT=""/>'));
       end if;
 
       /*-*/
@@ -415,7 +451,7 @@ create or replace package body pts_app.pts_tes_function as
             if csr_keyword%notfound then
                exit;
              end if;
-            pipe row(pts_xml_object('<KEYWORD KEYWRD "'||pts_to_xml(rcd_keyword.tke_key_word)||'"/>'));
+            pipe row(pts_xml_object('<KEYWORD KEYWRD ="'||pts_to_xml(rcd_keyword.tke_key_word)||'"/>'));
          end loop;
          close csr_keyword;
       end if;
@@ -477,6 +513,12 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
       rcd_check csr_check%rowtype;
 
+      cursor csr_company is
+         select t01.*
+           from pts_com_definition t01
+          where t01.cde_com_code = rcd_pts_tes_definition.tde_com_code;
+      rcd_company csr_company%rowtype;
+
       cursor csr_sta_code is
          select t01.*
            from table(pts_app.pts_gen_function.list_class('*TES_DEF',9)) t01
@@ -526,51 +568,55 @@ create or replace package body pts_app.pts_tes_function as
       end if;
       rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
       rcd_pts_tes_definition.tde_tes_title := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESTIT'));
+      rcd_pts_tes_definition.tde_com_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@COMCDE'));
       rcd_pts_tes_definition.tde_tes_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESSTA'));
       rcd_pts_tes_definition.tde_glo_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESGLO'));
-      rcd_pts_tes_definition.tde_com_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@COMCDE'));
+      rcd_pts_tes_definition.tde_tes_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTYP'));
+      rcd_pts_tes_definition.tde_tes_target := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTAR'));
       rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
-      rcd_pts_tes_definition.tde_tes_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTYP'));
-      rcd_pts_tes_definition.tde_tes_target := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTRG'));
-      rcd_pts_tes_definition.tde_tes_requestor := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESREQ'));
-      rcd_pts_tes_definition.tde_tes_aim := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESAIM'));
-      rcd_pts_tes_definition.tde_tes_reason := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESREA'));
-      rcd_pts_tes_definition.tde_tes_prediction := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESPRE'));
-      rcd_pts_tes_definition.tde_tes_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESCOM'));
+      rcd_pts_tes_definition.tde_tes_req_name := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@REQNAM'));
+      rcd_pts_tes_definition.tde_tes_req_miden := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@REQMID'));
+      rcd_pts_tes_definition.tde_tes_aim := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@AIMTXT'));
+      rcd_pts_tes_definition.tde_tes_reason := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@REATXT'));
+      rcd_pts_tes_definition.tde_tes_prediction := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PRETXT'));
+      rcd_pts_tes_definition.tde_tes_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@COMTXT'));
       rcd_pts_tes_definition.tde_tes_str_date := pts_to_date(xslProcessor.valueOf(obj_pts_request,'@STRDAT'),'dd/mm/yyyy');
-      rcd_pts_tes_definition.tde_tes_pan_date := pts_to_date(xslProcessor.valueOf(obj_pts_request,'@PANDAT'),'dd/mm/yyyy');
-      rcd_pts_tes_definition.tde_tes_fld_week := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCOM'));
-      rcd_pts_tes_definition.tde_tes_min_meal := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCOM'));
-      rcd_pts_tes_definition.tde_tes_max_temp := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCOM'));
-      rcd_pts_tes_definition.tde_tes_day_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCOM'));
+      rcd_pts_tes_definition.tde_tes_fld_week := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@FLDWEK'));
+      rcd_pts_tes_definition.tde_tes_len_meal := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEALEN'));
+      rcd_pts_tes_definition.tde_tes_max_temp := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MAXTEM'));
+      rcd_pts_tes_definition.tde_tes_day_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DAYCNT'));
       rcd_pts_tes_definition.tde_tes_sam_count := 0;
+      rcd_pts_tes_definition.tde_tes_pan_date := null;
       rcd_pts_tes_definition.tde_req_mem_count := 0;
       rcd_pts_tes_definition.tde_req_res_count := 0;
       rcd_pts_tes_definition.tde_hou_pet_multi := '0';
       if rcd_pts_tes_definition.tde_tes_code is null and not(xslProcessor.valueOf(obj_pts_request,'@TESCDE') = '*NEW') then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
+      if rcd_pts_tes_definition.tde_com_code is null and not(xslProcessor.valueOf(obj_pts_request,'@TESCOM') is null) then
+         pts_gen_function.add_mesg_data('Test status ('||xslProcessor.valueOf(obj_pts_request,'@TESCOM')||') must be a number');
+      end if;
       if rcd_pts_tes_definition.tde_tes_status is null and not(xslProcessor.valueOf(obj_pts_request,'@TESSTA') is null) then
          pts_gen_function.add_mesg_data('Test status ('||xslProcessor.valueOf(obj_pts_request,'@TESSTA')||') must be a number');
       end if;
-      if rcd_pts_tes_definition.tde_glo_status is null and not(xslProcessor.valueOf(obj_pts_request,'@GLOSTA') is null) then
-         pts_gen_function.add_mesg_data('Test GloPal status ('||xslProcessor.valueOf(obj_pts_request,'@GLOSTA')||') must be a number');
+      if rcd_pts_tes_definition.tde_glo_status is null and not(xslProcessor.valueOf(obj_pts_request,'@TESGLO') is null) then
+         pts_gen_function.add_mesg_data('Test GloPal status ('||xslProcessor.valueOf(obj_pts_request,'@TESGLO')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_tes_type is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTYP') is null) then
          pts_gen_function.add_mesg_data('Test type ('||xslProcessor.valueOf(obj_pts_request,'@TESTYP')||') must be a number');
       end if;
-      if rcd_pts_tes_definition.tde_tes_target is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTRG') is null) then
-         pts_gen_function.add_mesg_data('Test target ('||xslProcessor.valueOf(obj_pts_request,'@TESTRG')||') must be a number');
+      if rcd_pts_tes_definition.tde_tes_target is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTAR') is null) then
+         pts_gen_function.add_mesg_data('Test target ('||xslProcessor.valueOf(obj_pts_request,'@TESTAR')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_tes_str_date is null and not(xslProcessor.valueOf(obj_pts_request,'@STRDAT') is null) then
          pts_gen_function.add_mesg_data('Test start date ('||xslProcessor.valueOf(obj_pts_request,'@STRDAT')||') must be a date in format DD/MM/YYYY');
       end if;
       if rcd_pts_tes_definition.tde_tes_fld_week is null and not(xslProcessor.valueOf(obj_pts_request,'@FLDWEK') is null) then
-         pts_gen_function.add_mesg_data('Test in field week ('||xslProcessor.valueOf(obj_pts_request,'@FLDWEK')||') must be a number in format YYYYWW');
+         pts_gen_function.add_mesg_data('Test field week ('||xslProcessor.valueOf(obj_pts_request,'@FLDWEK')||') must be a number in format YYYYWW');
       end if;
-      if rcd_pts_tes_definition.tde_tes_min_meal is null and not(xslProcessor.valueOf(obj_pts_request,'@MINMEL') is null) then
-         pts_gen_function.add_mesg_data('Test meal minutes ('||xslProcessor.valueOf(obj_pts_request,'@MINMEL')||') must be a number');
+      if rcd_pts_tes_definition.tde_tes_len_meal is null and not(xslProcessor.valueOf(obj_pts_request,'@MEALEN') is null) then
+         pts_gen_function.add_mesg_data('Test meal length ('||xslProcessor.valueOf(obj_pts_request,'@MEALEN')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_tes_max_temp is null and not(xslProcessor.valueOf(obj_pts_request,'@MAXTEM') is null) then
          pts_gen_function.add_mesg_data('Test maximum temperature ('||xslProcessor.valueOf(obj_pts_request,'@MAXTEM')||') must be a number');
@@ -588,6 +634,9 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_pts_tes_definition.tde_tes_title is null then
          pts_gen_function.add_mesg_data('Test title must be supplied');
       end if;
+      if rcd_pts_tes_definition.tde_com_code is null then
+         pts_gen_function.add_mesg_data('Test company code must be supplied');
+      end if;
       if rcd_pts_tes_definition.tde_tes_status is null then
          pts_gen_function.add_mesg_data('Test status must be supplied');
       end if;
@@ -603,6 +652,15 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_pts_tes_definition.tde_upd_user is null then
          pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
+      if rcd_pts_tes_definition.tde_tes_day_count is null or rcd_pts_tes_definition.tde_tes_day_count <= 0 then
+         pts_gen_function.add_mesg_data('Day count must be supplied and greater than zero');
+      end if;
+      open csr_company;
+      fetch csr_company into rcd_company;
+      if csr_company%notfound then
+         pts_gen_function.add_mesg_data('Company ('||to_char(rcd_pts_tes_definition.tde_com_code)||') does not exist');
+      end if;
+      close csr_company;
       open csr_sta_code;
       fetch csr_sta_code into rcd_sta_code;
       if csr_sta_code%notfound then
@@ -645,30 +703,39 @@ create or replace package body pts_app.pts_tes_function as
          var_confirm := 'updated';
          update pts_tes_definition
             set tde_tes_title = rcd_pts_tes_definition.tde_tes_title,
+                tde_com_code = rcd_pts_tes_definition.tde_com_code,
                 tde_tes_status = rcd_pts_tes_definition.tde_tes_status,
                 tde_glo_status = rcd_pts_tes_definition.tde_glo_status,
-                tde_com_code = rcd_pts_tes_definition.tde_com_code,
-                tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
-                tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
                 tde_tes_type = rcd_pts_tes_definition.tde_tes_type,
                 tde_tes_target = rcd_pts_tes_definition.tde_tes_target,
-                tde_tes_requestor = rcd_pts_tes_definition.tde_tes_requestor,
+                tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
+                tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
+                tde_tes_req_name = rcd_pts_tes_definition.tde_tes_req_name,
+                tde_tes_req_miden = rcd_pts_tes_definition.tde_tes_req_miden,
                 tde_tes_aim = rcd_pts_tes_definition.tde_tes_aim,
                 tde_tes_reason = rcd_pts_tes_definition.tde_tes_reason,
                 tde_tes_prediction = rcd_pts_tes_definition.tde_tes_prediction,
                 tde_tes_comment = rcd_pts_tes_definition.tde_tes_comment,
                 tde_tes_str_date = rcd_pts_tes_definition.tde_tes_str_date,
-                tde_tes_pan_date = rcd_pts_tes_definition.tde_tes_pan_date,
                 tde_tes_fld_week = rcd_pts_tes_definition.tde_tes_fld_week,
-                tde_tes_min_meal = rcd_pts_tes_definition.tde_tes_min_meal,
+                tde_tes_len_meal = rcd_pts_tes_definition.tde_tes_len_meal,
                 tde_tes_max_temp = rcd_pts_tes_definition.tde_tes_max_temp,
                 tde_tes_day_count = rcd_pts_tes_definition.tde_tes_day_count,
-                tde_tes_sam_count = rcd_pts_tes_definition.tde_tes_sam_count,
-                tde_req_mem_count = rcd_pts_tes_definition.tde_req_mem_count,
-                tde_req_res_count = rcd_pts_tes_definition.tde_req_res_count,
-                tde_hou_pet_multi = rcd_pts_tes_definition.tde_hou_pet_multi
+                tde_tes_sam_count = rcd_pts_tes_definition.tde_tes_sam_count
           where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
          delete from pts_tes_keyword where tke_tes_code = rcd_pts_tes_definition.tde_tes_code;
+         if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
+            delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
+         end if;
+         if rcd_check.tde_tes_target != rcd_pts_tes_definition.tde_tes_target then
+            delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_classification where tcl_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_statistic where tst_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_panel where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_value where tva_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_rule where tru_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            delete from pts_tes_group where tgr_tes_code = rcd_pts_tes_definition.tde_tes_code;
+         end if;
       else
          var_confirm := 'created';
          select pts_tes_sequence.nextval into rcd_pts_tes_definition.tde_tes_code from dual;
@@ -725,283 +792,6 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end update_data;
-
-   /*********************************************************/
-   /* This procedure performs the retrieve keyword routine */
-   /*********************************************************/
-   function retrieve_keyword return pts_xml_type pipelined is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_tes_code number;
-      var_found boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_retrieve is
-         select t01.*
-           from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code;
-      rcd_retrieve csr_retrieve%rowtype;
-
-      cursor csr_keyword is
-         select t01.*
-           from pts_tes_keyword t01
-          where t01.tke_tes_code = var_tes_code
-          order by t01.tke_key_word asc;
-      rcd_keyword csr_keyword%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*RTVKEY' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      if var_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Retrieve the test
-      /*-*/
-      var_found := false;
-      open csr_retrieve;
-      fetch csr_retrieve into rcd_retrieve;
-      if csr_retrieve%found then
-         var_found := true;
-      end if;
-      close csr_retrieve;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
-      end if;
-    --  if rcd_retrieve.tde_tes_status != 2 and
-    --     rcd_retrieve.tde_tes_status != 3 then
-    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - keyword update not allowed');
-    --  end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Pipe the XML start
-      /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-
-      /*-*/
-      /* Pipe the test xml
-      /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'"/>'));
-
-      /*-*/
-      /* Pipe the test keyword xml
-      /*-*/
-      open csr_keyword;
-      loop
-         fetch csr_keyword into rcd_keyword;
-         if csr_keyword%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<KEYWORD KEYWRD="'||pts_to_xml(rcd_keyword.tke_key_word)||'"/>'));
-      end loop;
-      close csr_keyword;
-
-      /*-*/
-      /* Pipe the XML end
-      /*-*/
-      pipe row(pts_xml_object('</PTS_RESPONSE>'));
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_KEYWORD - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end retrieve_keyword;
-
-   /******************************************************/
-   /* This procedure performs the update keyword routine */
-   /******************************************************/
-   procedure update_keyword(par_user in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      obj_key_list xmlDom.domNodeList;
-      obj_key_node xmlDom.domNode;
-      var_action varchar2(32);
-      var_tes_code number;
-      var_found boolean;
-      rcd_pts_tes_keyword pts_tes_keyword%rowtype;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_retrieve is
-         select t01.*
-           from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code
-            for update nowait;
-      rcd_retrieve csr_retrieve%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*UPDKEY' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      if var_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Retrieve and lock the existing test
-      /*-*/
-      var_found := false;
-      begin
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-      exception
-         when others then
-            pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') is currently locked');
-            return;
-      end;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
-      end if;
-    --  if rcd_retrieve.tde_tes_status != 2 and
-    --     rcd_retrieve.tde_tes_status != 3 then
-    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - keyword update not allowed');
-    --  end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Delete the existing keyword data
-      /*-*/
-      delete from pts_tes_keyword where tke_tes_code = var_tes_code;
-
-      /*-*/
-      /* Retrieve and insert the keyword data
-      /*-*/
-      obj_key_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/KEYWORD');
-      for idx in 0..xmlDom.getLength(obj_key_list)-1 loop
-         obj_key_node := xmlDom.item(obj_key_list,idx);
-         rcd_pts_tes_keyword.tke_tes_code := var_tes_code;
-         rcd_pts_tes_keyword.tke_key_word := pts_from_xml(xslProcessor.valueOf(obj_key_node,'@KEYWRD'));
-         insert into pts_tes_keyword values rcd_pts_tes_keyword;
-      end loop;
-
-      /*-*/
-      /* Free the XML document
-      /*-*/
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /* Raise an exception to the calling application
-         /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - UPDATE_KEYWORD - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end update_keyword;
 
    /*********************************************************/
    /* This procedure performs the retrieve question routine */
@@ -1933,6 +1723,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
       delete from pts_tes_classification where tcl_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      delete from pts_tes_statistic where tst_tes_code = rcd_pts_tes_definition.tde_tes_code;
       delete from pts_tes_panel where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
       delete from pts_tes_value where tva_tes_code = rcd_pts_tes_definition.tde_tes_code;
       delete from pts_tes_rule where tru_tes_code = rcd_pts_tes_definition.tde_tes_code;
