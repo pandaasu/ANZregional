@@ -882,6 +882,7 @@ create or replace package body pts_app.pts_tes_function as
       obj_key_node xmlDom.domNode;
       var_action varchar2(32);
       var_tes_code number;
+      var_found boolean;
       rcd_pts_tes_keyword pts_tes_keyword%rowtype;
 
       /*-*/
@@ -1169,6 +1170,8 @@ create or replace package body pts_app.pts_tes_function as
       var_action varchar2(32);
       var_tes_code number;
       var_day_code number;
+      var_dsp_seqn number;
+      var_found boolean;
       rcd_pts_tes_question pts_tes_question%rowtype;
 
       /*-*/
@@ -1327,21 +1330,21 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_sample is
          select t01.*,
                 t02.sde_sam_text,
-                t02.sde_uom_code,
-                t02.sde_uom_size
+                t02.sde_uom_size,
+                t03.val_text as uom_text
            from pts_tes_sample t01,
-                pts_sam_definition t02
+                pts_sam_definition t02,
+                table(pts_app.pts_gen_function.list_class('*SAM_DEF',4)) t03
           where t01.tsa_sam_code = t02.sde_sam_code
+            and t02.sde_uom_code = t03.val_code
             and t01.tsa_tes_code = var_tes_code
-          order by t01.tqu_dsp_seqn asc;
+          order by t01.tsa_sam_code asc;
       rcd_sample csr_sample%rowtype;
 
       cursor csr_size is
          select t01.*
-           from pts_sys_value t01
-          where t01.sva_tab_code = '*PET_CLA'
-            and t01.sva_fld_code = 8
-          order by t01.sva_val_code asc;
+           from table(pts_app.pts_gen_function.list_class('*PET_CLA',8)) t01
+          order by t01.val_code asc;
       rcd_size csr_size%rowtype;
 
       cursor csr_feeding is
@@ -1349,7 +1352,7 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_feeding t01
           where t01.tfe_tes_code = var_tes_code
             and t01.tfe_sam_code = rcd_sample.tsa_sam_code
-            and t01.tfe_pet_size = rcd_size.sva_tab_code;
+            and t01.tfe_pet_size = rcd_size.val_code;
       rcd_feeding csr_feeding%rowtype;
 
    /*-------------*/
@@ -1428,7 +1431,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_sample%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<SAMPLE SAMCDE="'||to_char(rcd_sample.tsa_sam_code)||'" SAMTXT="('||to_char(rcd_sample.tsa_sam_code)||') '||pts_to_xml(rcd_sample.sde_sam_text)||'" RPTCDE="'||pts_to_xml(rcd_sample.tsa_rpt_code)||'" MKTCDE="'||pts_to_xml(rcd_sample.tsa_mkt_code)||'" ALSCDE="'||pts_to_xml(rcd_sample.tsa_mkt_acde)||'" SAMIDE="'||pts_to_xml(rcd_sample.tsa_sam_iden)||'" QUENAM="'||pts_to_xml(rcd_sample.qde_que_text)||'"/>'));
+         pipe row(pts_xml_object('<SAMPLE SAMCDE="'||to_char(rcd_sample.tsa_sam_code)||'" SAMTXT="('||to_char(rcd_sample.tsa_sam_code)||') '||pts_to_xml(rcd_sample.sde_sam_text)||'" RPTCDE="'||pts_to_xml(rcd_sample.tsa_rpt_code)||'" MKTCDE="'||pts_to_xml(rcd_sample.tsa_mkt_code)||'" ALSCDE="'||pts_to_xml(rcd_sample.tsa_mkt_acde)||'" SAMIDE="'||pts_to_xml(rcd_sample.tsa_sam_iden)||'" UOMTXT="'||pts_to_xml(rcd_sample.uom_text)||'" SAMIDE="'||to_char(rcd_sample.sde_uom_size)||'"/>'));
          open csr_size;
          loop
             fetch csr_size into rcd_size;
@@ -1442,7 +1445,7 @@ create or replace package body pts_app.pts_tes_function as
                rcd_feeding.tfe_fed_text := null;
             end if;
             close csr_feeding;
-            pipe row(pts_xml_object('<FEEDING PETSIZ="'||to_char(rcd_size.sva_val_code)||'" SIZTXT="('||to_char(rcd_size.sva_val_code)||') '||pts_to_xml(rcd_size.sva_val_text)||'" FEDQTY="'||to_char(rcd_feeding.tfe_fed_qnty)||'" FEDTXT="'||pts_to_xml(rcd_feeding.tfe_fed_text)||'"/>'));
+            pipe row(pts_xml_object('<FEEDING PETSIZ="'||to_char(rcd_size.val_code)||'" SIZTXT="'||pts_to_xml(rcd_size.val_text)||'" FEDQTY="'||to_char(rcd_feeding.tfe_fed_qnty)||'" FEDTXT="'||pts_to_xml(rcd_feeding.tfe_fed_text)||'"/>'));
          end loop;
          close csr_size;
       end loop;
@@ -1495,6 +1498,7 @@ create or replace package body pts_app.pts_tes_function as
       obj_fed_node xmlDom.domNode;
       var_action varchar2(32);
       var_tes_code number;
+      var_found boolean;
       rcd_pts_tes_sample pts_tes_sample%rowtype;
       rcd_pts_tes_feeding pts_tes_feeding%rowtype;
 
@@ -1679,7 +1683,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_value is
          select t01.*
            from pts_tes_value t01
-          where t01.tva_stm_code = rcd_retrieve.tde_tes_code
+          where t01.tva_tes_code = rcd_retrieve.tde_tes_code
             and t01.tva_sel_group = rcd_group.tgr_sel_group
             and t01.tva_tab_code = rcd_rule.tru_tab_code
             and t01.tva_fld_code = rcd_rule.tru_fld_code
@@ -1825,7 +1829,14 @@ create or replace package body pts_app.pts_tes_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
+      obj_grp_list xmlDom.domNodeList;
+      obj_grp_node xmlDom.domNode;
+      obj_rul_list xmlDom.domNodeList;
+      obj_rul_node xmlDom.domNode;
+      obj_val_list xmlDom.domNodeList;
+      obj_val_node xmlDom.domNode;
       var_action varchar2(32);
+      var_tes_code number;
       var_found boolean;
       rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_group pts_tes_group%rowtype;
@@ -1838,7 +1849,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
+          where t01.tde_tes_code = var_tes_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -1865,14 +1876,16 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCODE'));
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+
+
       rcd_pts_tes_definition.tde_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
       rcd_pts_tes_definition.tde_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
       rcd_pts_tes_definition.tde_hou_pet_multi := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PETMLT'));
    --   rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
-      if rcd_pts_tes_definition.tde_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCODE')||') must be a number');
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_req_mem_count is null or rcd_pts_tes_definition.tde_req_mem_count < 1 then
          pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
@@ -1933,7 +1946,7 @@ create or replace package body pts_app.pts_tes_function as
          obj_grp_node := xmlDom.item(obj_grp_list,idx);
          obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULE');
          if xmlDom.getLength(obj_rul_list) != 0 then
-            rcd_pts_tes_group.tgr_tes_code := rcd_pts_tes_definition.tde_tes_code;
+            rcd_pts_tes_group.tgr_tes_code := var_tes_code;
             rcd_pts_tes_group.tgr_sel_group := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPCDE'));
             rcd_pts_tes_group.tgr_sel_text := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPTXT'));
             rcd_pts_tes_group.tgr_sel_pcnt := pts_to_number(xslProcessor.valueOf(obj_grp_node,'@GRPPCT'));
@@ -1953,14 +1966,14 @@ create or replace package body pts_app.pts_tes_function as
                obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
                for idz in 0..xmlDom.getLength(obj_val_list)-1 loop
                   obj_val_node := xmlDom.item(obj_val_list,idz);
-                  rcd_pts_tes_value.tva_tes_code := rcd_pts_stm_rule.str_stm_code;
-                  rcd_pts_tes_value.tva_sel_group := rcd_pts_stm_rule.str_sel_group;
-                  rcd_pts_tes_value.tva_tab_code := rcd_pts_stm_rule.str_tab_code;
-                  rcd_pts_tes_value.tva_fld_code := rcd_pts_stm_rule.str_fld_code;
+                  rcd_pts_tes_value.tva_tes_code := rcd_pts_tes_rule.tru_tes_code;
+                  rcd_pts_tes_value.tva_sel_group := rcd_pts_tes_rule.tru_sel_group;
+                  rcd_pts_tes_value.tva_tab_code := rcd_pts_tes_rule.tru_tab_code;
+                  rcd_pts_tes_value.tva_fld_code := rcd_pts_tes_rule.tru_fld_code;
                   rcd_pts_tes_value.tva_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
                   rcd_pts_tes_value.tva_val_text := pts_from_xml(xslProcessor.valueOf(obj_val_node,'@VALTXT'));
                   rcd_pts_tes_value.tva_val_pcnt := null;
-                  if rcd_pts_stm_rule.str_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
+                  if rcd_pts_tes_rule.tru_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
                      rcd_pts_tes_value.tva_val_pcnt := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALPCT'));
                   end if;
                   rcd_pts_tes_value.tva_req_mem_count := 0;
@@ -2005,7 +2018,7 @@ create or replace package body pts_app.pts_tes_function as
              tde_req_mem_count = rcd_pts_tes_definition.tde_req_mem_count,
              tde_req_res_count = rcd_pts_tes_definition.tde_req_res_count,
              tde_hou_pet_multi = rcd_pts_tes_definition.tde_hou_pet_multi
-       where tde_tes_code =  rcd_pts_tes_definition.tde_tes_code;
+       where tde_tes_code =  var_tes_code;
 
       /*-*/
       /* Commit the database
@@ -2219,7 +2232,7 @@ create or replace package body pts_app.pts_tes_function as
          /* Retrieve the panel data
          /*-*/
          pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Panel</td></tr>');
-         open csr_panel_pet;
+         open csr_panel;
          loop
             fetch csr_panel into rcd_panel;
             if csr_panel%notfound then
@@ -2310,11 +2323,11 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_panel is
          select t01.*,
                 decode(t02.tre_pan_code,null,'0','1') as res_status
-           from pts_tes_panel t01
+           from pts_tes_panel t01,
                 (select distinct(t01.tre_pan_code) as tre_pan_code
                         from pts_tes_response t01
                        where t01.tre_tes_code = var_tes_code) t02
-          where 01.tpa_pan_code = t02.tre_pan_code
+          where t01.tpa_pan_code = t02.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
           order by t01.tpa_geo_zone asc,
                    t01.tpa_pan_status asc,
@@ -2483,7 +2496,7 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_panel_pet is
+      cursor csr_panel is
          select t01.*,
                 decode(t02.tre_pan_code,null,'0','1') as res_status
            from pts_tes_panel t01,
@@ -2495,7 +2508,7 @@ create or replace package body pts_app.pts_tes_function as
           order by t01.tpa_geo_zone asc,
                    t01.tpa_pan_status asc,
                    t01.tpa_pan_code asc;
-      rcd_panel_pet csr_panel_pet%rowtype;
+      rcd_panel csr_panel%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -3619,7 +3632,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Delete the existing panel data
       /*-*/
-      delete from pts_tes_allocation where tcl_tes_code = par_tes_code;
+      delete from pts_tes_allocation where tal_tes_code = par_tes_code;
       delete from pts_tes_classification where tcl_tes_code = par_tes_code;
       delete from pts_tes_statistic where tst_tes_code = par_tes_code;
       delete from pts_tes_panel where tpa_tes_code = par_tes_code;
