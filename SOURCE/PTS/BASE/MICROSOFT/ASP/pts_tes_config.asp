@@ -127,12 +127,20 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[2] = new clsScreen('dspResponse','hedResponse');
+      cobjScreens[2] = new clsScreen('dspKeyword','hedKeyword');
+      cobjScreens[3] = new clsScreen('dspSample','hedSample');
+      cobjScreens[4] = new clsScreen('dspQuestion','hedQuestion');
+      cobjScreens[5] = new clsScreen('dspPanel','hedPanel');
+      cobjScreens[6] = new clsScreen('dspAllocation','hedAllocation');
       cobjScreens[0].hedtxt = 'Test Prompt';
       cobjScreens[1].hedtxt = 'Test Maintenance';
-      cobjScreens[2].hedtxt = 'Test Response Entry';
+      cobjScreens[2].hedtxt = 'Test Keyword';
+      cobjScreens[3].hedtxt = 'Test Samples';
+      cobjScreens[4].hedtxt = 'Test Questions';
+      cobjScreens[5].hedtxt = 'Test Panel';
+      cobjScreens[6].hedtxt = 'Test Allocation';
       initSearch();
-      initSelect('dspDefine','Product Test');
+      initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
    }
@@ -207,19 +215,19 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
-   function doPromptResponse() {
+   function doPromptPanel() {
       if (!processForm()) {return;}
       var strMessage = '';
       if (document.getElementById('PRO_TesCode').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Test code must be entered for response';
+         strMessage = strMessage + 'Test code must be entered for panel selection';
       }
       if (strMessage != '') {
          alert(strMessage);
          return;
       }
       doActivityStart(document.body);
-      window.setTimeout('requestResponseLoad(\''+document.getElementById('PRO_TesCode').value+'\');',10);
+      window.setTimeout('requestPanelUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
@@ -244,19 +252,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDTES" TESCODE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDTES" TESCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_tes_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTTES" TESCODE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTTES" TESCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_tes_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYTES" TESCODE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYTES" TESCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_tes_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -286,59 +294,87 @@ sub PaintFunction()%>
          displayScreen('dspDefine');
          document.getElementById('DEF_TesCode').value = '';
          document.getElementById('DEF_TesText').value = '';
+         document.getElementById('DEF_TesRnam').value = '';
+         document.getElementById('DEF_TesRmid').value = '';
          document.getElementById('DEF_TesAtxt').value = '';
          document.getElementById('DEF_TesRtxt').value = '';
          document.getElementById('DEF_TesPtxt').value = '';
          document.getElementById('DEF_TesCtxt').value = '';
-         document.getElementById('DEF_TesDcnt').value = '0';
-         document.getElementById('DEF_TesMcnt').value = '0';
-         document.getElementById('DEF_TesRcnt').value = '0';
+         document.getElementById('DEF_TesSdat').value = '';
+         document.getElementById('DEF_TesFwek').value = '';
+         document.getElementById('DEF_TesMlen').value = '';
+         document.getElementById('DEF_TesMtem').value = '';
+         document.getElementById('DEF_TesDcnt').value = '';
+         var strTesComp;
          var strTesStat;
+         var strTesGlop;
          var strTesType;
-         var strTesGsts;
          var strTesTarg;
-         var strTesPmlt;
-         var strTesEnty;
+         var objTesComp = document.getElementById('DEF_TesComp');
          var objTesStat = document.getElementById('DEF_TesStat');
+         var objTesGlop = document.getElementById('DEF_TesGlop');
          var objTesType = document.getElementById('DEF_TesType');
-         var objTesGsts = document.getElementById('DEF_TesGsts');
-         var objTesPmlt = document.getElementById('DEF_TesPmlt');
          var objTesTarg = document.getElementById('DEF_TesTarg');
+         var objTesKwrd = document.getElementById('DEF_TesKwrd');
+         objTesComp.options.length = 0;
          objTesStat.options.length = 0;
+         objTesGlop.options.length = 0;
          objTesType.options.length = 0;
-         objTesGsts.options.length = 0;
          objTesTarg.options.length = 0;
+         objTesKwrd.options.length = 0;
          document.getElementById('DEF_TesText').focus();
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'STA_LIST') {
+            if (objElements[i].nodeName == 'COM_LIST') {
+               objTesComp.options[objTesComp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'STA_LIST') {
                objTesStat.options[objTesStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'TYP_LIST') {
                objTesType.options[objTesType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'GLO_LIST') {
-               objTesGsts.options[objTesGsts.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+               objTesGlop.options[objTesGlop.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'TAR_LIST') {
                objTesTarg.options[objTesTarg.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'KEYWORD') {
+               objTesKwrd.options[objTesKwrd.options.length] = new Option(objElements[i].getAttribute('KEYWRD'),objElements[i].getAttribute('KEYWRD'));
             } else if (objElements[i].nodeName == 'TEST') {
-               document.getElementById('DEF_TesCode').value = objElements[i].getAttribute('TESCODE');
-               document.getElementById('DEF_TesText').value = objElements[i].getAttribute('TESTEXT');
-               document.getElementById('DEF_TesAtxt').value = objElements[i].getAttribute('TESATXT');
-               document.getElementById('DEF_TesRtxt').value = objElements[i].getAttribute('TESRTXT');
-               document.getElementById('DEF_TesPtxt').value = objElements[i].getAttribute('TESPTXT');
-               document.getElementById('DEF_TesCtxt').value = objElements[i].getAttribute('TESCTCT');
-               document.getElementById('DEF_TesDcnt').value = objElements[i].getAttribute('TESDCNT');
-               document.getElementById('DEF_TesMcnt').value = objElements[i].getAttribute('TESMCNT');
-               document.getElementById('DEF_TesRcnt').value = objElements[i].getAttribute('TESRCNT');
-               strTesStat = objElements[i].getAttribute('TESSTAT');
-               strTesType = objElements[i].getAttribute('TESTYPE');
-               strTesGsts = objElements[i].getAttribute('TESGSTS');
-               strTesPmlt = objElements[i].getAttribute('TESPMLT');
-               strTesTarg = objElements[i].getAttribute('TESTARG');
+               document.getElementById('DEF_TesCode').value = objElements[i].getAttribute('TESCDE');
+               document.getElementById('DEF_TesText').value = objElements[i].getAttribute('TESTIT');
+               document.getElementById('DEF_TesRnam').value = objElements[i].getAttribute('REQNAM');
+               document.getElementById('DEF_TesRmid').value = objElements[i].getAttribute('REQMID');
+               document.getElementById('DEF_TesAtxt').value = objElements[i].getAttribute('AIMTXT');
+               document.getElementById('DEF_TesRtxt').value = objElements[i].getAttribute('RESTXT');
+               document.getElementById('DEF_TesPtxt').value = objElements[i].getAttribute('PRETXT');
+               document.getElementById('DEF_TesCtxt').value = objElements[i].getAttribute('COMTXT');
+               document.getElementById('DEF_TesSdat').value = objElements[i].getAttribute('STRDAT');
+               document.getElementById('DEF_TesFwek').value = objElements[i].getAttribute('FLDWEK');
+               document.getElementById('DEF_TesMlen').value = objElements[i].getAttribute('MEALEN');
+               document.getElementById('DEF_TesMtem').value = objElements[i].getAttribute('MAXTEM');
+               document.getElementById('DEF_TesDcnt').value = objElements[i].getAttribute('DAYCNT');
+               strTesComp = objElements[i].getAttribute('TESCOM');
+               strTesStat = objElements[i].getAttribute('TESSTA');
+               strTesGlop = objElements[i].getAttribute('TESGLO');
+               strTesType = objElements[i].getAttribute('TESTYP');
+               strTesTarg = objElements[i].getAttribute('TESTAR');
+            }
+         }
+         objTesComp.selectedIndex = -1;
+         for (var i=0;i<objTesComp.length;i++) {
+            if (objTesComp.options[i].value == strTesComp) {
+               objTesComp.options[i].selected = true;
+               break;
             }
          }
          objTesStat.selectedIndex = -1;
          for (var i=0;i<objTesStat.length;i++) {
             if (objTesStat.options[i].value == strTesStat) {
                objTesStat.options[i].selected = true;
+               break;
+            }
+         }
+         objTesGlop.selectedIndex = -1;
+         for (var i=0;i<objTesGlop.length;i++) {
+            if (objTesGlop.options[i].value == strTesGlop) {
+               objTesGlop.options[i].selected = true;
                break;
             }
          }
@@ -349,65 +385,59 @@ sub PaintFunction()%>
                break;
             }
          }
-         objTesGsts.selectedIndex = -1;
-         for (var i=0;i<objTesGsts.length;i++) {
-            if (objTesGsts.options[i].value == strTesGsts) {
-               objTesGsts.options[i].selected = true;
-               break;
-            }
-         }
-         objTesPmlt.selectedIndex = -1;
-         for (var i=0;i<objTesPmlt.length;i++) {
-            if (objTesPmlt.options[i].value == strTesPmlt) {
-               objTesPmlt.options[i].selected = true;
-               break;
-            }
-         }
-         strTesEnty = '';
          cintDefineTarget = -1;
          objTesTarg.selectedIndex = -1;
          for (var i=0;i<objTesTarg.length;i++) {
             if (objTesTarg.options[i].value == strTesTarg) {
                objTesTarg.options[i].selected = true;
                cintDefineTarget = i;
-               strTesEnty = objTesTarg.options[i].text.substring(objTesTarg.options[i].value.length+3);
                break;
             }
-         }
-         if (strTesEnty != '') {
-            startSltInstance(strTesEnty);
-            putSltData(objElements);
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var strMessage = checkSltData();
+      var objTesComp = document.getElementById('DEF_TesComp');
+      var objTesStat = document.getElementById('DEF_TesStat');
+      var objTesGlop = document.getElementById('DEF_TesGlop');
+      var objTesType = document.getElementById('DEF_TesType');
+      var objTesTarg = document.getElementById('DEF_TesTarg');
+      var objTesKwrd = document.getElementById('DEF_TesKwrd');
+      if (cstrDefineMode == '*UPD' && objTesTarg.selectedIndex != cintDefineTarget) {
+         if (confirm('The test target has been changed - Please confirm\r\npress OK continue (the existing panel and allocation will be deleted)\r\npress Cancel to cancel update and return') == false) {
+            return;
+         }
+      }
+      var strMessage = '';
       if (strMessage != '') {
          alert(strMessage);
          return;
       }
-      var objTesStat = document.getElementById('DEF_TesStat');
-      var objTesTarg = document.getElementById('DEF_TesTarg');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFTES"';
-      strXML = strXML+' TESCODE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
-      strXML = strXML+' TESTEXT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
-      strXML = strXML+' TESATXT="'+fixXML(document.getElementById('DEF_TesAtxt').value)+'"';
-      strXML = strXML+' TESRTXT="'+fixXML(document.getElementById('DEF_TesRtxt').value)+'"';
-      strXML = strXML+' TESPTXT="'+fixXML(document.getElementById('DEF_TesPtxt').value)+'"';
-      strXML = strXML+' TESCTXT="'+fixXML(document.getElementById('DEF_TesCtxt').value)+'"';
-      strXML = strXML+' TESDCNT="'+fixXML(document.getElementById('DEF_TesDcnt').value)+'"';
-      strXML = strXML+' TESMCNT="'+fixXML(document.getElementById('DEF_TesMcnt').value)+'"';
-      strXML = strXML+' TESRCNT="'+fixXML(document.getElementById('DEF_TesRcnt').value)+'"';
-      strXML = strXML+' TESPMLT="'+fixXML(document.getElementById('TES_PetMult').options[document.getElementById('TES_PetMult').selectedIndex].value)+'"';
-      strXML = strXML+' TESSTAT="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
-      strXML = strXML+' TESTYPE="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
-      strXML = strXML+' TESGSTS="'+fixXML(objTesGsts.options[objTesGsts.selectedIndex].value)+'"';
-      strXML = strXML+' TESPMLT="'+fixXML(objTesPmlt.options[objTesPmlt.selectedIndex].value)+'"';
-      strXML = strXML+' TESTARG="'+fixXML(objTesTarg.options[objTesTarg.selectedIndex].value)+'"';
+      strXML = strXML+' TESCDE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
+      strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
+      strXML = strXML+' TESCOM="'+fixXML(objTesComp.options[objTesComp.selectedIndex].value)+'"';
+      strXML = strXML+' TESSTA="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
+      strXML = strXML+' TESGLO="'+fixXML(objTesGsts.options[objTesGlop.selectedIndex].value)+'"';
+      strXML = strXML+' TESTYP="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
+      strXML = strXML+' TESTAR="'+fixXML(objTesTarg.options[objTesTarg.selectedIndex].value)+'"';
+      strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_TesRnam').value)+'"';
+      strXML = strXML+' REQMID="'+fixXML(document.getElementById('DEF_TesRmid').value)+'"';
+      strXML = strXML+' AIMTXT="'+fixXML(document.getElementById('DEF_TesAtxt').value)+'"';
+      strXML = strXML+' REATXT="'+fixXML(document.getElementById('DEF_TesRtxt').value)+'"';
+      strXML = strXML+' PRETXT="'+fixXML(document.getElementById('DEF_TesPtxt').value)+'"';
+      strXML = strXML+' COMTXT="'+fixXML(document.getElementById('DEF_TesCtxt').value)+'"';
+      strXML = strXML+' STRDAT="'+fixXML(document.getElementById('DEF_TesSdat').value)+'"';
+      strXML = strXML+' FLDWEK="'+fixXML(document.getElementById('DEF_TesFwek').value)+'"';
+      strXML = strXML+' MEALEN="'+fixXML(document.getElementById('DEF_TesMlen').value)+'"';
+      strXML = strXML+' MAXTEM="'+fixXML(document.getElementById('DEF_TesMtem').value)+'"';
+      strXML = strXML+' DAYCNT="'+fixXML(document.getElementById('DEF_TesDcnt').value)+'"';
       strXML = strXML+'>';
-      strXML = strXML + getSltData();
+      for (var i=0;i<objTesKwrd.length;i++) {
+         strXML = strXML+'<KEYWORD KEYWRD="+fixXML(objTesKwrd.options[i].value)+'"/>';
+      }
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -452,14 +482,369 @@ sub PaintFunction()%>
       document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
-   function doDefineTarget(objSelect) {
-      if (confirm('Please confirm the target change\r\npress OK continue (all existing selection rules will be deleted)\r\npress Cancel to return ignore') == false) {
-         objSelect.selectedIndex = cintDefineTarget;
+   function doKeywordAdd() {
+      cstrKeywordMode = '*ADD';
+      var objKeyText = document.getElementById('KEY_KeyText');
+      var strValue = '';
+      objKeyText.value = strValue;
+      displayScreen('dspKeyword');
+      objKeyText.focus();
+   }
+   function doKeywordUpdate() {
+      if (document.getElementById('DEF_TesKwrd').selectedIndex == -1) {
+         alert('Keyword must be selected for update');
          return;
       }
-      cintDefineTarget = objSelect.selectedIndex;
-      var strValue = objSelect.options[objSelect.selectedIndex].text.substring(objSelect.options[objSelect.selectedIndex].value.length+3);
-      startSltInstance(strValue);
+      cstrKeywordMode = '*UPD';
+      var objTesKwrd = document.getElementById('DEF_TesKwrd');
+      var objKeyText = document.getElementById('KEY_KeyText');
+      cintKeywordIndx = objTesKwrd.selectedIndex;
+      var strValue = objTesKwrd.options[cintKeywordIndx].value;
+      objKeyText.value = strValue;
+      displayScreen('dspKeyword');
+      objKeyText.focus();
+   }
+   function doKeywordDelete() {
+      if (document.getElementById('DEF_TesKwrd').selectedIndex == -1) {
+         alert('Keyword must be selected for delete');
+         return;
+      }
+      var objTesKwrd = document.getElementById('DEF_TesKwrd');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objTesKwrd.options.length;i++) {
+         if (objTesKwrd.options[i].selected == false) {
+            objWork[intIndex] = objTesKwrd[i];
+            intIndex++;
+         }
+      }
+      objTesKwrd.options.length = 0;
+      objTesKwrd.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objTesKwrd.options[i] = objWork[i];
+      }
+   }
+   ///////////////////////
+   // Keyword Functions //
+   ///////////////////////
+   var cstrKeywordMode;
+   var cintKeywordIndx;
+   function doKeywordCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_KeyWord').focus();
+   }
+   function doKeywordAccept() {
+      if (!processForm()) {return;}
+      var objTesKwrd = document.getElementById('DEF_TesKwrd');
+      var objKeyText = document.getElementById('KEY_KeyText');
+      var strMessage = '';
+      if (objKeyText.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Keyword must be entered';
+      }
+      var bolFound = false;
+      for (var i=0;i<objTesKwrd.options.length;i++) {
+         if (objTesKwrd.options[i].value.toUpperCase() == objKeyText.toUpperCase()) {
+            bolFound = true;
+            break;
+         }
+      }
+      if (bolFound) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Keyword already exists';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      if (cstrKeywordMode == '*ADD') {
+         objTesKwrd.options[objTesKwrd.options.length] = new Option(objKeyText.value.toUpperCase(),objKeyText.value.toUpperCase());
+      } else if (cstrKeywordMode == '*UPD') {
+         objTesKwrd.options[cintKeywordIndx].value = objKeyText.value.toUpperCase();
+         objTesKwrd.options[cintKeywordIndx].text = objKeyText.value.toUpperCase();
+      }
+      displayScreen('dspDefine');
+   }
+
+   /////////////////////
+   // Panel Functions //
+   /////////////////////
+   function requestPanelUpdate(strCode) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETPAN" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_panel.asp',function(strResponse) {checkPanelUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkPanelUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'PANEL') {
+               document.getElementById('PAN_MemCount').value = objElements[i].getAttribute('MEMCNT');
+               document.getElementById('PAN_ResCount').value = objElements[i].getAttribute('RESCNT');
+               document.getElementById('PAN_PetMult').value = objElements[i].getAttribute('PETMLT');
+            }
+         }
+         startSltInstance(strStmEnty);
+         putSltData(objElements);
+         displayScreen('dspPanel');
+         document.getElementById('PAN_MemCount').focus();
+      }
+   }
+   function doPanelAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PAN_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDPAN"';
+      strXML = strXML+' TESCDE="'+fixXML(document.getElementById('PAN_TesCode').value)+'"';
+      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
+      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+'>';
+      strXML = strXML + getSltData();
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestPanelAccept(\''+strXML+'\');',10);
+   }
+   function requestPanelAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_panel.asp',function(strResponse) {checkPanelAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkPanelAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspDefine');
+         document.getElementById('DEF_TesText').focus();
+      }
+   }
+   function doPanelCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_TesText').focus();
+   }
+
+   ////////////////////////
+   // Question Functions //
+   ////////////////////////
+   function requestQuestionUpdate(strCode) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETQUE" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_question.asp',function(strResponse) {checkQuestionUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkQuestionUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'DAY') {
+
+            } else if (objElements[i].nodeName == 'QUESTION') {
+
+            }
+         }
+         displayScreen('dspQuestion');
+         document.getElementById('tabQuestion').focus();
+      }
+   }
+   function doQuestionAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PAN_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDQUE"';
+      strXML = strXML+' TESCDE="'+fixXML(document.getElementById('PAN_TesCode').value)+'"';
+      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
+      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+'>';
+
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestQuestionAccept(\''+strXML+'\');',10);
+   }
+   function requestQuestionAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_question.asp',function(strResponse) {checkQuestionAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkQuestionAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspDefine');
+         document.getElementById('DEF_TesText').focus();
+      }
+   }
+   function doQuestionCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_TesText').focus();
+   }
+
+   //////////////////////
+   // Sample Functions //
+   //////////////////////
+   function requestSampleUpdate(strCode) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETSAM" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_sample.asp',function(strResponse) {checkSampleUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkSampleUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'SAMPLE') {
+
+            } else if (objElements[i].nodeName == 'SIZE') {
+
+            }
+         }
+         displayScreen('dspSample');
+         document.getElementById('tabSample').focus();
+      }
+   }
+   function doSampleAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PAN_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDSAM"';
+      strXML = strXML+' TESCDE="'+fixXML(document.getElementById('PAN_TesCode').value)+'"';
+      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
+      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+'>';
+
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestSampleAccept(\''+strXML+'\');',10);
+   }
+   function requestSampleAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_sample.asp',function(strResponse) {checkSampleAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkSampleAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspDefine');
+         document.getElementById('DEF_TesText').focus();
+      }
+   }
+   function doSampleCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_TesText').focus();
    }
 // -->
 </script>
@@ -496,7 +881,7 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=9 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -504,14 +889,43 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptTest();">&nbsp;Panel&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestion();">&nbsp;Questions&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSample();">&nbsp;Samples&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestionnaire();">&nbsp;Questionnaire&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptClose();">&nbsp;Close Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCancel();">&nbsp;Cancel Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptDownload();">&nbsp;Download Results&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
    </table>
+
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
@@ -522,9 +936,15 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Description:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Title:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_TesText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Company:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_TesComp"></select>
          </nobr></td>
       </tr>
       <tr>
@@ -534,9 +954,272 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;GloPal:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_TesGlop"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_TesType"></select>
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Target:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_TesTarg" onChange="doDefineTarget(this);"></select>
+            <select class="clsInputBN" id="DEF_TesTarg"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Name:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesRnam" size="60" maxlength="60" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Mars Id:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesRmid" size="30" maxlength="30" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Aim:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <textArea class="clsInputNN" name="DEF_TesAtxt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reason:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <textArea class="clsInputNN" name="DEF_TesRtxt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Prediction:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <textArea class="clsInputNN" name="DEF_TesPtxt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Comment:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <textArea class="clsInputNN" name="DEF_TesCtxt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Date (DD/MM/YYYY):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesSdat" size="10" maxlength="10" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Field Work Week (YYYYWW):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesFwek" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Meal Length (minutes):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesMlen" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Maximum Temperature:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesMtem" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Number of Days:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TesDcnt" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelHB" align=center colspan=2 nowrap><nobr>Test Keywords</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <table align=left border=0 cellpadding=0 cellspacing=2 cols=2>
+               <tr>
+                  <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
+                     <table class="clsTable01" align=left cols=5 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordAdd();">&nbsp;Add&nbsp;</a></nobr></td>
+                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td> 
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_TesKwrd" name="DEF_TesKwrd" style="width:200px" multiple size=5></select>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+
+   <table id="dspKeyword" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doKeywordAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedKeyword" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Keyword Maintenance</nobr></td>
+      </tr>
+      <tr>
+         <td id="subKeyword" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Keyword:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="KEY_KeyText" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+
+   <table id="dspQuestion" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doQuestionAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedQuestion" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Questions</nobr></td>
+      </tr>
+      <tr>
+         <td id="subQuestion" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible">
+               <table id="tabQuestion" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
+            </div>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQuestionCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQuestionAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+
+   <table id="dspSample" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSampleAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedSample" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Samples</nobr></td>
+      </tr>
+      <tr>
+         <td id="subSample" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSampleAdd();">&nbsp;Add Sample&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible">
+               <table id="tabSample" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
+            </div>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSampleCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSampleAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+
+   <table id="dspPanel" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPanelAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedPanel" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Test Panel</nobr></td>
+      </tr>
+      <tr>
+         <td id="subPanel" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member Count:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAN_MemCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reserve Count:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAN_ResCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allow Multiple Household Pets:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="PAN_PetMult">
+               <option value="0" selected>No
+               <option value="1">Yes
+            </select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -555,57 +1238,14 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
    </table>
-
-   <table id="dspResponse" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
-      <tr>
-         <td id="hedResponse" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Response Entry</nobr></td>
-      </tr>
-      <tr>
-         <td id="subResponse" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Text</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      </table></nobr></td></tr>
-      <tr>
-         <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>Response Data Entry</nobr></td>
-         <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>Response Panel</nobr></td>
-      </tr>
-      <tr height=100%>
-         <td width=75% align=left colspan=1 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible;background-color:transparent;">
-               <table id="RES_ResData" class="clsPanel" cols=1 align=left cellpadding="0" cellspacing="0"></table>
-            </div>
-         </nobr></td>
-         <td width=25% align=left colspan=1 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible;">
-               <table id="RES_ResList" class="clsTableBody" cols=1 align=left cellpadding="2" cellspacing="1"></table>
-            </div>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
-               <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseBack();">&nbsp;Back&nbsp;</a></nobr></td>
-            </table>
-         </nobr></td>
-      </tr>
-   </table>
-
-
 
 <!--#include file="pts_search_html.inc"-->
 <!--#include file="pts_select_html.inc"-->
