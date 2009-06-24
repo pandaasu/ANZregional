@@ -131,14 +131,14 @@ sub PaintFunction()%>
       cobjScreens[3] = new clsScreen('dspSample','hedSample');
       cobjScreens[4] = new clsScreen('dspQuestion','hedQuestion');
       cobjScreens[5] = new clsScreen('dspPanel','hedPanel');
-      cobjScreens[6] = new clsScreen('dspAllocation','hedAllocation');
+    //  cobjScreens[6] = new clsScreen('dspAllocation','hedAllocation');
       cobjScreens[0].hedtxt = 'Test Prompt';
       cobjScreens[1].hedtxt = 'Test Maintenance';
       cobjScreens[2].hedtxt = 'Test Keyword';
       cobjScreens[3].hedtxt = 'Test Samples';
       cobjScreens[4].hedtxt = 'Test Questions';
       cobjScreens[5].hedtxt = 'Test Panel';
-      cobjScreens[6].hedtxt = 'Test Allocation';
+    //  cobjScreens[6].hedtxt = 'Test Allocation';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -342,7 +342,7 @@ sub PaintFunction()%>
                document.getElementById('DEF_TesRnam').value = objElements[i].getAttribute('REQNAM');
                document.getElementById('DEF_TesRmid').value = objElements[i].getAttribute('REQMID');
                document.getElementById('DEF_TesAtxt').value = objElements[i].getAttribute('AIMTXT');
-               document.getElementById('DEF_TesRtxt').value = objElements[i].getAttribute('RESTXT');
+               document.getElementById('DEF_TesRtxt').value = objElements[i].getAttribute('REATXT');
                document.getElementById('DEF_TesPtxt').value = objElements[i].getAttribute('PRETXT');
                document.getElementById('DEF_TesCtxt').value = objElements[i].getAttribute('COMTXT');
                document.getElementById('DEF_TesSdat').value = objElements[i].getAttribute('STRDAT');
@@ -420,7 +420,7 @@ sub PaintFunction()%>
       strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
       strXML = strXML+' TESCOM="'+fixXML(objTesComp.options[objTesComp.selectedIndex].value)+'"';
       strXML = strXML+' TESSTA="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
-      strXML = strXML+' TESGLO="'+fixXML(objTesGsts.options[objTesGlop.selectedIndex].value)+'"';
+      strXML = strXML+' TESGLO="'+fixXML(objTesGlop.options[objTesGlop.selectedIndex].value)+'"';
       strXML = strXML+' TESTYP="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
       strXML = strXML+' TESTAR="'+fixXML(objTesTarg.options[objTesTarg.selectedIndex].value)+'"';
       strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_TesRnam').value)+'"';
@@ -436,7 +436,7 @@ sub PaintFunction()%>
       strXML = strXML+' DAYCNT="'+fixXML(document.getElementById('DEF_TesDcnt').value)+'"';
       strXML = strXML+'>';
       for (var i=0;i<objTesKwrd.length;i++) {
-         strXML = strXML+'<KEYWORD KEYWRD="+fixXML(objTesKwrd.options[i].value)+'"/>';
+         strXML = strXML+'<KEYWORD KEYWRD="'+fixXML(objTesKwrd.options[i].value)+'"/>';
       }
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
@@ -531,7 +531,7 @@ sub PaintFunction()%>
    var cintKeywordIndx;
    function doKeywordCancel() {
       displayScreen('dspDefine');
-      document.getElementById('DEF_KeyWord').focus();
+      document.getElementById('DEF_TesKwrd').focus();
    }
    function doKeywordAccept() {
       if (!processForm()) {return;}
@@ -544,7 +544,7 @@ sub PaintFunction()%>
       }
       var bolFound = false;
       for (var i=0;i<objTesKwrd.options.length;i++) {
-         if (objTesKwrd.options[i].value.toUpperCase() == objKeyText.toUpperCase()) {
+         if (objTesKwrd.options[i].value.toUpperCase() == objKeyText.value.toUpperCase()) {
             bolFound = true;
             break;
          }
@@ -687,13 +687,13 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'DAY') {
-
-            } else if (objElements[i].nodeName == 'QUESTION') {
-
-            }
-         }
+       //  for (var i=0;i<objElements.length;i++) {
+       //     if (objElements[i].nodeName == 'DAY') {
+       //
+       //     } else if (objElements[i].nodeName == 'QUESTION') {
+       //
+       //     }
+       //  }
          displayScreen('dspQuestion');
          document.getElementById('tabQuestion').focus();
       }
@@ -716,7 +716,6 @@ sub PaintFunction()%>
       strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
       strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
       strXML = strXML+'>';
-
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestQuestionAccept(\''+strXML+'\');',10);
@@ -780,13 +779,13 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'SAMPLE') {
-
-            } else if (objElements[i].nodeName == 'SIZE') {
-
-            }
-         }
+        // for (var i=0;i<objElements.length;i++) {
+        //    if (objElements[i].nodeName == 'SAMPLE') {
+        //
+        //    } else if (objElements[i].nodeName == 'SIZE') {
+        //
+        //    }
+        // }
          displayScreen('dspSample');
          document.getElementById('tabSample').focus();
       }
@@ -809,7 +808,6 @@ sub PaintFunction()%>
       strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
       strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
       strXML = strXML+'>';
-
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestSampleAccept(\''+strXML+'\');',10);
