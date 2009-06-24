@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE         pds_ap_claims_01_prc IS
   ----- ---------- -------------------- ----------------------------------------
   1.0   12/09/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   03/06/2009 Anna Every           Changed call to lics_outbound_loader
+  2.0   20/06/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -228,6 +229,7 @@ PROCEDURE run_pds_ap_claims_01_prc IS
 BEGIN
 
   -- Start run_pds_ap_claims_01_prc procedure.
+  pds_utils.create_log;
   write_log(pc_data_type_ap_claims, 'N/A', pv_log_level, 'run_pds_ap_claims_01_prc - START.');
 
   -- The 3 key tasks: extract, validate, interface.
@@ -237,6 +239,7 @@ BEGIN
 
   -- End run_pds_ap_claims_01_prc procedure.
   write_log(pc_data_type_ap_claims, 'N/A', pv_log_level, 'run_pds_ap_claims_01_prc - END.');
+  pds_utils.end_log;
 
 EXCEPTION
   -- Send warning message via e-mail and PDS_LOG.
@@ -254,6 +257,7 @@ EXCEPTION
       pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
         pc_job_type_ap_claims_01_prc,'N/A');
     END IF;
+    pds_utils.end_log;
 
 END run_pds_ap_claims_01_prc;
 
@@ -272,42 +276,55 @@ PROCEDURE extract_postbox_ap_claims IS
   -- CURSOR DECLARATIONS.
   CURSOR csr_ap_claims IS
     SELECT
-      cocode,
-      divcode,
-      kacc,
-      pmnum,
-      icnumber,
-      prodcode,
-      promyear,
-      fdcustcode,
-      paymethod,
-      datatype,
-      aamount,
-      acasedeal,
-      linenum,
-      acccode,
-      paybychq,
-      direction,
-      additive,
-      text25,
-      taxamount,
-      pbdoctype,
-      pbdate,
-      pbtime,
-      periodno,
-      trandate,
-      claimref,
-      genvendor,
-      chequenum,
-      procesdate
+      t01.cocode,
+      t01.divcode,
+      t01.kacc,
+      t01.pmnum,
+      t01.icnumber,
+      t01.prodcode,
+      t01.promyear,
+      t01.fdcustcode,
+      t01.paymethod,
+      t01.datatype,
+      t01.aamount,
+      t01.acasedeal,
+      t01.linenum,
+      t01.acccode,
+      t01.paybychq,
+      t01.direction,
+      t01.additive,
+      t01.text25,
+      t01.taxamount,
+      t01.pbdoctype,
+      t01.pbdate,
+      t01.pbtime,
+      t01.periodno,
+      decode(t02.dateenterd,null,t01.trandate,t02.dateenterd) as trandate,
+      t01.claimref,
+      t01.genvendor,
+      t01.chequenum,
+      t01.procesdate,
+      t02.dateenterd
     FROM
-      exaccruals
+      exaccruals t01,
+      (select t01.*
+         from (select cocode,
+                      divcode,
+                      claimref,
+                      kacc,
+                      dateenterd,
+                      rank() over (partition by cocode, divcode, claimref, kacc order by dateenterd desc) as rnkseq
+                 from claimdoc) t01
+        where t01.rnkseq = 1) t02
     WHERE
-      paybychq = pc_ap_claims_affirmative_chq
-      AND datatype = pc_ap_claims_datatype_claim
-      AND paymethod = pc_ap_claims_pay_method_claim
-      AND direction = pc_ap_claims_export
-    FOR UPDATE NOWAIT;
+      t01.cocode = t02.cocode(+)
+      AND t01.divcode = t02.divcode(+)
+      AND t01.claimref = t02.claimref(+)
+      AND t01.kacc = t02.kacc(+)
+      AND t01.paybychq = pc_ap_claims_affirmative_chq
+      AND t01.datatype = pc_ap_claims_datatype_claim
+      AND t01.paymethod = pc_ap_claims_pay_method_claim
+      AND t01.direction = pc_ap_claims_export;
   rv_ap_claims csr_ap_claims%ROWTYPE;
 
 BEGIN
@@ -405,17 +422,20 @@ BEGIN
         pc_valdtn_status_unchecked
         );
 
-      -- Delete current exaccruals record from table.
-      DELETE
-      FROM exaccruals
-      WHERE CURRENT OF csr_ap_claims;
-
     END LOOP;
     write_log(pc_data_type_ap_claims, 'N/A', pv_log_level + 1,'End of loop.');
 
     -- Close csr_ap_claims cursor.
     write_log(pc_data_type_ap_claims, 'N/A', pv_log_level + 1, 'Close csr_ap_claims cursor.');
     CLOSE csr_ap_claims;
+
+    -- Delete the AP Claims from Postbox EXACCRUALS table.
+    write_log(pc_data_type_ap_claims,'N/A',pv_log_level + 1,'Delete postbox EXACCRUALS records.');
+    DELETE exaccruals
+    WHERE paybychq = pc_ap_claims_affirmative_chq
+      AND datatype = pc_ap_claims_datatype_claim
+      AND paymethod = pc_ap_claims_pay_method_claim
+      AND direction = pc_ap_claims_export;
 
     -- Commit changes to database.
     write_log(pc_data_type_ap_claims, 'N/A', pv_log_level + 1,'Commit changes to database.');

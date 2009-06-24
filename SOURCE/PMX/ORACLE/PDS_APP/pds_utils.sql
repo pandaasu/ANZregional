@@ -581,7 +581,7 @@ PROCEDURE clean_pds_log (
 
 /*******************************************************************************
   NAME:      create_log
-  PURPOSE:   This procedure create a new log (session id).
+  PURPOSE:   This procedure creates a new log (session id).
 
   REVISIONS:
   Ver   Date       Author               Description
@@ -593,6 +593,21 @@ PROCEDURE clean_pds_log (
   NOTES:
 ********************************************************************************/
 PROCEDURE create_log;
+
+/*******************************************************************************
+  NAME:      end_log
+  PURPOSE:   This procedure ends the current log (session id).
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   10/06/2009 Steve Gregan         Created this procedure.
+
+  RETURN VALUE:
+  ASSUMPTIONS:
+  NOTES:
+********************************************************************************/
+PROCEDURE end_log;
 
 END pds_utils;
 /
@@ -2917,6 +2932,12 @@ BEGIN
   pv_session := NULL;
   pv_sequence := 0;
 END create_log;
+
+PROCEDURE end_log  IS
+BEGIN
+  pv_session := NULL;
+  pv_sequence := 0;
+END end_log;
 
 BEGIN
 

@@ -121,6 +121,7 @@ BEGIN
   END IF;
 
   write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level,'run_pds_ar_claimsapp_01_int - END.');
+  pds_utils.end_log;
 
 END run_pds_ar_claimsapp_01_int;
 

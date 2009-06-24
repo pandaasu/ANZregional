@@ -681,6 +681,7 @@ BEGIN
 
   -- End Process Control procedure.
   write_log(pc_data_type_not_applicable, 'N/A', pv_log_level, 'Process Control - End');
+  pds_utils.end_log;
 
 EXCEPTION
   -- Send warning message via e-mail and pds_log.
@@ -697,6 +698,7 @@ EXCEPTION
       pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
         pc_job_type_pds_controller,'N/A');
     END IF;
+    pds_utils.end_log;
 
 END process_control;
 

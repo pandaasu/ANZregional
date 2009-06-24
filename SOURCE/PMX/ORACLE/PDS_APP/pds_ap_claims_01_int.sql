@@ -108,6 +108,7 @@ BEGIN
 
   -- End run_pds_ap_claims_01_int procedure.
   write_log(pc_data_type_ap_claims,'N/A',pv_log_level,'run_pds_ap_claims_01_int - END.');
+  pds_utils.end_log;
 
 EXCEPTION
   WHEN OTHERS THEN
@@ -124,6 +125,7 @@ EXCEPTION
       pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
         pc_job_type_ap_claims_01_int,'N/A');
     END IF;
+    pds_utils.end_log;
 END run_pds_ap_claims_01_int;
 
 

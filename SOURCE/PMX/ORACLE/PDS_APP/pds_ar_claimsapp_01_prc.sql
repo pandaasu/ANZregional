@@ -252,6 +252,7 @@ BEGIN
 
   -- End run_pds_ar_claimsapp_01_prc procedure.
   write_log(pc_data_type_ar_claimsapp, 'N/A', pv_log_level, 'run_pds_ar_claimsapp_01_prc - END.');
+  pds_utils.end_log;
 
 EXCEPTION
   -- Send warning message via e-mail and PDS_LOG.
@@ -269,6 +270,7 @@ EXCEPTION
       pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
         pc_job_type_arclaimsapp_01_prc,'N/A');
     END IF;
+    pds_utils.end_log;
 
 END run_pds_ar_claimsapp_01_prc;
 
@@ -900,7 +902,7 @@ BEGIN
       AND ar_claims_apprvl_seq = tbl_work(idx).ar_claims_apprvl_seq;
 
     -- Commit changes to PDS_AR_CLAIMS_APPRVL table when limit reached.
-    if mod(idx / 1000) = 0 then 
+    if mod(idx,1000) = 0 then
        write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Commit 1000 changes to PDS_AR_CLAIMS_APPRVL table.');
        COMMIT;
     end if;
@@ -1030,17 +1032,17 @@ PROCEDURE interface_ar_claimsapp_atlas (
 
   -- SAVE DECLARATIONS.
   s_item_count            BINARY_INTEGER;
-  s_cmpny_code            pds_ar_claims_apprvl.cmpny_code;
-  s_div_code              pds_ar_claims_apprvl.div_code;
-  s_internal_claim_num    pds_ar_claims_apprvl.internal_claim_num;
-  s_claim_ref             pds_ar_claims_apprvl.claim_ref;
-  s_cust_code             pds_ar_claims_apprvl.cust_code;
-  s_prom_num              pds_ar_claims_apprvl.prom_num;
-  s_doc_type              pds_ar_claims_apprvl.doc_type;
-  s_pb_date               pds_ar_claims_apprvl.pb_date;
-  s_tran_date             pds_ar_claims_apprvl.tran_date;
-  s_claim_amt             pds_ar_claims_apprvl.claim_amt;
-  s_tax_amt               pds_ar_claims_apprvl.tax_amt;
+  s_cmpny_code            pds_ar_claims_apprvl.cmpny_code%type;
+  s_div_code              pds_ar_claims_apprvl.div_code%type;
+  s_internal_claim_num    pds_ar_claims_apprvl.internal_claim_num%type;
+  s_claim_ref             pds_ar_claims_apprvl.claim_ref%type;
+  s_cust_code             pds_ar_claims_apprvl.cust_code%type;
+  s_prom_num              pds_ar_claims_apprvl.prom_num%type;
+  s_doc_type              pds_ar_claims_apprvl.doc_type%type;
+  s_pb_date               pds_ar_claims_apprvl.pb_date%type;
+  s_tran_date             pds_ar_claims_apprvl.tran_date%type;
+  s_claim_amt             pds_ar_claims_apprvl.claim_amt%type;
+  s_tax_amt               pds_ar_claims_apprvl.tax_amt%type;
 
   -- ARRAY DECLARATIONS.
   type typ_work is table of pds_ar_claims_apprvl%rowtype index by binary_integer;
@@ -1161,7 +1163,7 @@ BEGIN
 
           -- Update the previous header "R" claim amd tax totals
           rcd_approval_detail(s_item_count) := substr(rcd_approval_detail(s_item_count),1,11)||
-                                               TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99'||
+                                               TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99')||
                                                substr(rcd_approval_detail(s_item_count),35);
 
           -- Build the AR Claims Approval Tax output record.
@@ -1192,7 +1194,7 @@ BEGIN
           CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
           Note: Requires reviewing when Snack moves to ATLAS.
           */
-          IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
+          IF s_cmpny_code = pc_pmx_cmpny_code_australia THEN
             UPDATE pds_ar_claims
               SET promax_ar_apprvl_date = sysdate
             WHERE acctg_doc_num = v_acctg_doc_num
@@ -1377,7 +1379,7 @@ BEGIN
 
       -- Update the previous header "R" claim amd tax totals
       rcd_approval_detail(s_item_count) := substr(rcd_approval_detail(s_item_count),1,11)||
-                                           TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99'||
+                                           TO_CHAR(-1*(s_claim_amt + s_tax_amt),'9999999999999999999.99')||
                                            substr(rcd_approval_detail(s_item_count),35);
 
       -- Build the AR Claims Approval Tax output record.
@@ -1408,7 +1410,7 @@ BEGIN
       CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
       Note: Requires reviewing when Snack moves to ATLAS.
       */
-      IF rv_approval.cmpny_code = pc_pmx_cmpny_code_australia THEN
+      IF s_cmpny_code = pc_pmx_cmpny_code_australia THEN
         UPDATE pds_ar_claims
           SET promax_ar_apprvl_date = sysdate
         WHERE acctg_doc_num = v_acctg_doc_num

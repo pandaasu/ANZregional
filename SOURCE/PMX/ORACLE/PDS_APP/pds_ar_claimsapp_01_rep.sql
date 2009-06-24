@@ -155,6 +155,7 @@ BEGIN
 
   -- End run_pds_ar_claimsapp_01_rep procedure.
   write_log(pc_job_type_arclaimsapp_01_rep,'N/A',pv_log_level,'run_pds_ar_claimsapp_01_rep - END.');
+  pds_utils.end_log;
 
 END;
 
