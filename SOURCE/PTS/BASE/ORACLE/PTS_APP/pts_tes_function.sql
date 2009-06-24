@@ -278,9 +278,6 @@ create or replace package body pts_app.pts_tes_function as
          return;
       end if;
       var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      if var_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
-      end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -308,6 +305,11 @@ create or replace package body pts_app.pts_tes_function as
             return;
          end if;
       end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
 
       /*-*/
       /* Pipe the company XML
@@ -375,11 +377,6 @@ create or replace package body pts_app.pts_tes_function as
       close csr_tar_code;
 
       /*-*/
-      /* Pipe the XML start
-      /*-*/
-      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-
-      /*-*/
       /* Pipe the test XML
       /*-*/
       if var_action = '*UPDTES' then
@@ -438,7 +435,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' FLDWEK=""'));
          pipe row(pts_xml_object(' MEALEN=""'));
          pipe row(pts_xml_object(' MAXTEM=""'));
-         pipe row(pts_xml_object(' DATCNT=""/>'));
+         pipe row(pts_xml_object(' DAYCNT=""/>'));
       end if;
 
       /*-*/
