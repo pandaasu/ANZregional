@@ -47,6 +47,7 @@ setup_config()
     initialise_utilities $1
     
     DATA_FLOW_TYPE=$OUTBOUND
+    export FTP_LOG=$TMP_OUT
 }
 
 # --------------------------------------------------------------------------
@@ -137,4 +138,5 @@ exit 0
 # 3.1     30-OCT-2007 T. Keon       Added calls to utility script files for
 #                                   common functions and standardised the
 #                                   script code
+# 3.2     24-JUN-2009 T. Keon       Fixed bug with FTP_LOG not being set
 # ---------------------------------------------------------------------------

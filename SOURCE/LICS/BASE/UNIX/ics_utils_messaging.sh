@@ -14,6 +14,7 @@
 # 13-MAY-2008   S. Gregan   Added pipe to TMP_OUT for java calls within get_file_from_sap
 # 13-MAY-2008   S. Gregan   Added oracle classes12.jar to java calls within get_file_from_sap
 # 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
+# 18-JUN-2009   T. Keon     Added Linux support to inbound SAP processing
 #
 # ---------------------------------------------------------------------------
 
@@ -151,7 +152,13 @@ get_file_from_sap()
     TYPE_INT=$1    
     log_file "INFO: [get_file_from_sap] Getting file from SAP : [${INTERFACE_ID}]" "HARMLESS"
 
-    export SHLIB_PATH=${SHLIB_PATH} 
+    if [ $CURRENT_OS = $HP_UNIX_OS ] ; then    
+        export SHLIB_PATH=${SHLIB_PATH} 
+    elif [ $CURRENT_OS = $LINUX_OS ] ; then
+        export LD_LIBRARY_PATH=${SHLIB_PATH} 
+    else
+        error_exit "ERROR: [get_file_from_sap] Specified O/S [${CURRENT_OS}] is not supported"
+    fi
 
     if [[ $TYPE_INT -eq 0 ]] ; then
         log_file "INFO: [get_file_from_sap] Executing command [${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.sap.cSapInterface -identifier ${CFG_ID} -configuration ${SAP_CFG} -output ${OUT_FILE} -user ${SAP_USER} -password xxx >> ${TMP_OUT} 2>&1]" "HARMLESS"

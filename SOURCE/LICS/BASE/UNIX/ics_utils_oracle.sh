@@ -57,6 +57,7 @@ check_DB()
         # Retry database check before giving up
         if [[ -z $DB_RETRY ]] ; then
             DB_RETRY="YES"
+            log_file "INFO: [check_DB] Retrying database check in 5 seconds [${DATABASE}]" "HARMLESS"
             sleep 5
             check_DB
         else        
