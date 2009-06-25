@@ -1,8 +1,42 @@
-SELECT
+CREATE VIEW LADS.TEST_PROMAX_MATL AS SELECT
+--*******************************************************************************
+--  NAME:      lads.TEST_PROMAX_MATL
+--  PURPOSE:   This view is used by the Material interfaces within Promax.
+--             .
+--  REVISIONS:
+--  Ver   Date       Author               Description
+--  ----- ---------- -------------------- ----------------------------------------
+--  1.0   01/01/2005 Unknown              Created this view.
+--  2.0   21/10/2005 Paul Berude          Added the following changes to this view
+--                                        in order to remove duplicate records:
+--                                        1) DISTINCT clause added to mfanz_matl_moe
+--                                           sub-query.
+--                                        2) Added the t.sales_org = j.sales_org join.
+--                                        3) Added sub-query for t.start_date.
+--  3.0   10/11/2005 Paul Berude          Changed Consumer Pack Format to Local Consumer
+--                                        Pack Format and Pack Type to Local Pack Type.
+--  3.1   21/11/2005 Paul Berude          Performed a SUBSTR on Packsize and Brand Flag
+--                                        concatenations for Snackfood Division.
+--  3.2   20/06/2006 Craig Ford           Add MOE Code '0196' to filter.
+--  3.3   24/08/2006 Craig Ford           Change Packsize setup for Petcare materials to
+--                                         include Multipack Qty.
+--  3.4   15/09/2006 Craig Ford           Add filter (trdd_unit = 'X') to exclude zreps
+--                                         that are exclusively based on the RSU.
+--  3.5   01/08/2007 Craig Ford           Include AUS Snack as part of ATLAS implementation.
+--                                         Add MOE Code '0196' to filter.
+--                                         Remove Snack legacy Co/Div conversions.
+--  3.6   20/09/2007 Paul Berude          Changed the logic for populating Packsize, Category
+--                                        and Brand Flag fields for AUS Snack.
+--  3.7   29/12/2008 Anna Every           Added filter on material determination to eliminate duplicates
+--                                         and 101 days to Material Determination
+--  4.0   25/06/2009 Steve Gregan         Modified for packsize changes
+--  NOTES:
+--********************************************************************************
           j.sales_org AS cocode,
           a.dvsn AS divcode,
           RTRIM (LTRIM (t.matl_code, 0)) AS matnr,
           SUBSTR (a.matl_desc, 1, 30) AS tdu_desc,
+          ' ' AS promoted,
           CASE
              WHEN j.sales_org = '147' AND a.dvsn = '01'
                 THEN DECODE (x.mkt_sub_cat_code,
@@ -10,15 +44,14 @@ SELECT
                              RTRIM(x.mkt_sub_cat_desc))
              WHEN j.sales_org = '147' AND a.dvsn = '02'
                 THEN DECODE (d.trade_sctr_code,
+                             NULL, NULL,
                              '00', NULL,
-                             RTRIM (d.trade_sctr_short_desc))
-                     || DECODE (x.mkt_sub_cat_code,
-                                '00', NULL,
-                                ' ' || RTRIM(x.mkt_sub_cat_desc))
+                             RTRIM (substr(d.trade_sctr_short_desc,1,5)))
                      || DECODE (y.mkt_sub_cat_grp_code,
+                                NULL, NULL,
                                 '00', NULL,
-                                ' ' || RTRIM(y.mkt_sub_cat_grp_desc))
-                     || ' ' || RTRIM(i.size_short_desc)
+                                ' ' || RTRIM(substr(y.mkt_sub_cat_grp_desc,1,20)))
+                     || ' ' || RTRIM(substr(i.size_short_desc,1,4))
              WHEN j.sales_org = '147' AND a.dvsn = '05'
                 THEN DECODE (y.mkt_sub_cat_grp_code,
                              '00', NULL,
@@ -27,136 +60,6 @@ SELECT
                 THEN DECODE (z.nz_promotional_grp_code,
                              '000', NULL,
                              RTRIM(nz_promotional_grp_desc))
-          END AS new_packsize,
-          CASE
-             WHEN j.sales_org = '147' AND a.dvsn = '01'
-                THEN DECODE (x.mkt_sub_cat_code,
-                             '00', NULL,
-                             RTRIM (x.mkt_sub_cat_desc)
-                            )
-             ELSE DECODE
-                    (a.dvsn,
-                     '01', DECODE
-                                 (v.local_pack_type_code,
-                                  'G00', NULL,
-                                  RTRIM (SUBSTR (v.local_pack_type_short_desc,
-                                                 1,
-                                                 13
-                                                )
-                                        )
-                                 )
-                      || DECODE (m.size_group_code,
-                                 '00', NULL,
-                                    ' '
-                                 || RTRIM (SUBSTR (m.size_group_short_desc,
-                                                   1,
-                                                   4
-                                                  )
-                                          )
-                                )
-                      || DECODE
-                             (u.local_cnsmr_pack_frmt_code,
-                              'G00', NULL,
-                                 ' '
-                              || RTRIM
-                                    (SUBSTR (u.lcl_cnsmr_pack_frmt_short_desc,
-                                             1,
-                                             13
-                                            )
-                                    )
-                             ),
-                     '02', DECODE (d.trade_sctr_code,
-                                   '00', NULL,
-                                   RTRIM (d.trade_sctr_short_desc)
-                                  )
-                      || DECODE (e.brand_flag_code,
-                                 '000', NULL,
-                                    ' '
-                                 || RTRIM (SUBSTR (e.brand_flag_short_desc,
-                                                   1,
-                                                   3
-                                                  )
-                                          )
-                                )
-                      || DECODE
-                               (g.local_prdct_ctgry_code,
-                                'G00', NULL,
-                                   ' '
-                                || RTRIM
-                                      (SUBSTR (g.local_prdct_ctgry_short_desc,
-                                               1,
-                                               13
-                                              )
-                                      )
-                               )
-                      || ' '
-                      || RTRIM (i.size_short_desc),
-                     '05', DECODE (p.mkt_sgmnt_code,
-                                   '00', NULL,
-                                   RTRIM (SUBSTR (p.mkt_sgmnt_short_desc, 1,
-                                                  3)
-                                         )
-                                  )
-                      || DECODE (q.dsply_strg_cndtn_code,
-                                 '00', NULL,
-                                 '03', NULL,
-                                    ' '
-                                 || RTRIM
-                                       (SUBSTR (q.dsply_strg_cndtn_short_desc,
-                                                1,
-                                                3
-                                               )
-                                       )
-                                )
-                      || DECODE
-                             (q.dsply_strg_cndtn_code,
-                              '01', NULL,
-                              '02', NULL,
-                              DECODE (r.spply_sgmnt_code,
-                                      '000', NULL,
-                                         ' '
-                                      || RTRIM
-                                            (SUBSTR (r.spply_sgmnt_short_desc,
-                                                     1,
-                                                     3
-                                                    )
-                                            )
-                                     )
-                             )
-                      || DECODE (e.brand_flag_code,
-                                 '000', NULL,
-                                    ' '
-                                 || RTRIM (SUBSTR (e.brand_flag_short_desc,
-                                                   1,
-                                                   3
-                                                  )
-                                          )
-                                )
-                      || DECODE (s.brand_sub_flag_code,
-                                 '000', NULL,
-                                    ' '
-                                 || RTRIM
-                                         (SUBSTR (s.brand_sub_flag_short_desc,
-                                                  1,
-                                                  4
-                                                 )
-                                         )
-                                )
-                      || DECODE (i.size_code,
-                                 '000', NULL,
-                                    ' '
-                                 || RTRIM (SUBSTR (i.size_short_desc, 1, 9))
-                                )
-                      || DECODE (w.mltpck_qty_code,
-                                 '00', NULL,
-                                    ' '
-                                 || RTRIM (SUBSTR (w.mltpck_qty_short_desc,
-                                                   1,
-                                                   4
-                                                  )
-                                          )
-                                )
-                    )
           END AS packsize,
           RTRIM (g.local_prdct_ctgry_code) AS CATEGORY,
           CASE
@@ -312,6 +215,16 @@ SELECT
           mltpck_qty w,
           mkt_sub_cat x,
           mkt_sub_cat_grp y,
+          (select t21.objek as matl_code,
+                  t22.atwrt as nz_promotional_grp_code
+             from lads_cla_hdr t21,
+                  lads_cla_chr t22
+            where t21.obtab = 'MARA'
+              and t21.klart = '001'
+              and t22.atnam = 'Z_APCHAR11'
+              and t21.obtab = t22.obtab(+)
+              and t21.klart = t22.klart(+)
+              and t21.objek = t22.objek(+)) zz,
           (select sap_charistic_value_code nz_promotional_grp_code, sap_charistic_value_desc nz_promotional_grp_desc
              FROM bds_charistic_value_en
             WHERE sap_charistic_code = 'Z_APCHAR11') z
@@ -352,6 +265,6 @@ SELECT
       AND v.local_pack_type_code(+) = k.local_pack_type_code
       AND b.mkt_sub_cat_code = x.mkt_sub_cat_code(+)
       AND b.mkt_sub_cat_grp_code = y.mkt_sub_cat_grp_code(+)
-      and b.nz_promotional_grp_code = z.nz_promotional_grp_code(+)
-    ORDER BY cocode, divcode, matnr;
+      AND t.matl_code = zz.matl_code(+)
+      and zz.nz_promotional_grp_code = z.nz_promotional_grp_code(+);
 

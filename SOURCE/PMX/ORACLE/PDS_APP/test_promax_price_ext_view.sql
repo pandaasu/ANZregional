@@ -1,6 +1,6 @@
-CREATE VIEW LADS.PROMAX_PRICE_EXT_VIEW AS
+CREATE VIEW LADS.TEST_PROMAX_PRICE_EXT_VIEW AS
 --*******************************************************************************
---  NAME:      lads.promax_price_ext_view
+--  NAME:      lads.test_promax_price_ext_view
 --  PURPOSE:   This view is used by the Price List interfaces within Promax.
 --             .
 --  REVISIONS:
@@ -16,6 +16,7 @@ CREATE VIEW LADS.PROMAX_PRICE_EXT_VIEW AS
 --						and end after sysdate.
 --  5.0   20/06/2009 Steve Gregan         Modified to bring the price for sysdate or the future.
 --                                        **note** only the first price start date for each product is returned
+--  6.0   25/06/2009 Steve Gregan         Modified for future pricing
 --
 --  NOTES:
 --********************************************************************************
