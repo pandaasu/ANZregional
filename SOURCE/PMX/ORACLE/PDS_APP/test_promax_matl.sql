@@ -34,9 +34,15 @@ CREATE VIEW LADS.TEST_PROMAX_MATL AS SELECT
 --********************************************************************************
           j.sales_org AS cocode,
           a.dvsn AS divcode,
+          j.dstrbtn_chnl dist_channel,
           RTRIM (LTRIM (t.matl_code, 0)) AS matnr,
           SUBSTR (a.matl_desc, 1, 30) AS tdu_desc,
           ' ' AS promoted,
+          DECODE (d.trade_sctr_code,
+                  NULL, '0',
+                  '00', '0',
+                  LTRIM (d.trade_sctr_code, 0)
+                 ) all_products,
           CASE
              WHEN j.sales_org = '147' AND a.dvsn = '01'
                 THEN DECODE (x.mkt_sub_cat_code,
