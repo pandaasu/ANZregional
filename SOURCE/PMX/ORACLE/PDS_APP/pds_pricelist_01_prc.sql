@@ -513,15 +513,15 @@ PROCEDURE transfer_pricelist_postbox(
       AND t1.cmpny_code = t2.cocode(+)
       AND t1.div_code = t2.divcode(+)
       AND LTRIM(t1.matl_code,'0') = t2.prodcode(+)
-      AND t1.eff_date = (SELECT MAX(t3.eff_date)
-                         FROM pds_price_list t3
-                         WHERE t1.cmpny_code = t3.cmpny_code
-                           AND t1.div_code = t3.div_code
-                           AND t1.distbn_chnl_code = t3.distbn_chnl_code
-                           AND t1.matl_code = t3.matl_code
-                           AND t3.eff_date <= (SELECT yyyymmdd_date
-                                               FROM mars_date
-                                               WHERE calendar_date = TRUNC(SYSDATE,'DD')))
+  --    AND t1.eff_date = (SELECT MAX(t3.eff_date)
+  --                       FROM pds_price_list t3
+  --                       WHERE t1.cmpny_code = t3.cmpny_code
+  --                         AND t1.div_code = t3.div_code
+  --                         AND t1.distbn_chnl_code = t3.distbn_chnl_code
+  --                         AND t1.matl_code = t3.matl_code
+  --                         AND t3.eff_date <= (SELECT yyyymmdd_date
+  --                                             FROM mars_date
+  --                                             WHERE calendar_date = TRUNC(SYSDATE,'DD')))
       AND t1.valdtn_status = pc_valdtn_status_valid
       AND t1.procg_status = pc_procg_status_processed;
   rv_pricelist csr_pricelist%ROWTYPE;
