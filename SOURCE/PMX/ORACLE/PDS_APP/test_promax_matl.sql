@@ -43,7 +43,7 @@ CREATE VIEW LADS.TEST_PROMAX_MATL AS SELECT
                   '00', '0',
                   LTRIM (d.trade_sctr_code, 0)
                  ) all_products,
-          CASE
+          NVL(CASE
              WHEN j.sales_org = '147' AND a.dvsn = '01'
                 THEN DECODE (x.mkt_sub_cat_code,
                              '00', NULL,
@@ -66,7 +66,7 @@ CREATE VIEW LADS.TEST_PROMAX_MATL AS SELECT
                 THEN DECODE (z.nz_promotional_grp_code,
                              '000', NULL,
                              RTRIM(nz_promotional_grp_desc))
-          END AS packsize,
+          END,'{unavailable}') AS packsize,
           RTRIM (g.local_prdct_ctgry_code) AS CATEGORY,
           CASE
              WHEN j.sales_org = '147' AND a.dvsn = '01'
