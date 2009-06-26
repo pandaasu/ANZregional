@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE pds_pricelist_01_int IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   19/08/2005 Ann-Marie Ingeme     Created this procedure.
+  2.0   20/06/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -93,6 +94,7 @@ PROCEDURE run_pds_pricelist_01_int IS
 BEGIN
 
   -- Start run_pds_pricelist_01_int procedure.
+  pds_utils.create_log;
   write_log(pc_data_type_pricelist,'N/A',pv_log_level,'run_pds_pricelist_01_int - START.');
 
   -- Open csr_cmpny_div_list cursor.
@@ -168,6 +170,7 @@ BEGIN
 
   -- End run_pds_pricelist_01_int procedure.
   write_log(pc_data_type_pricelist,'N/A',pv_log_level,'run_pds_pricelist_01_int - END.');
+  pds_utils.end_log;
 
 EXCEPTION
 
@@ -182,6 +185,7 @@ EXCEPTION
     write_log(pc_data_type_pricelist,'N/A',pv_log_level,pv_result_msg);
     pds_utils.send_email_to_group(pc_job_type_pricelist_01_int,'MFANZ Promax Pricelist 01 Interface',
       pv_result_msg);
+    pds_utils.end_log;
 
 END run_pds_pricelist_01_int;
 

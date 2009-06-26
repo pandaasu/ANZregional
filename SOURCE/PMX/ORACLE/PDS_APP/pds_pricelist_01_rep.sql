@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE pds_pricelist_01_rep IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   26/10/2005 Ann-Marie Ingeme     Created this procedure.
+  2.0   20/06/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -130,6 +131,7 @@ PROCEDURE run_pds_pricelist_01_rep IS
 BEGIN
 
   -- Start run_pds_pricelist_01_rep procedure.
+  pds_utils.create_log;
   write_log(pc_job_type_pricelist_01_rep,'N/A',pv_log_level,'run_pds_pricelist_01_rep - START.');
 
   -- Read through each of the Company/Division records to be reported.
@@ -152,6 +154,7 @@ BEGIN
 
   -- End run_pds_pricelist_01_rep procedure.
   write_log(pc_job_type_pricelist_01_rep,'N/A',pv_log_level,'run_pds_pricelist_01_rep - END.');
+  pds_utils.end_log;
 
 END;
 

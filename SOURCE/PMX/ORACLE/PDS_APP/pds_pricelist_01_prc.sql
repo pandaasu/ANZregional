@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE pds_pricelist_01_prc IS
   ----- ---------- -------------------- ----------------------------------------
   1.0   19/08/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   4/7/2007    Anna Every     WASTEPERC,CONTRCOMM Added by Anna Every 04/07/2007 for new release.
+  2.0   20/06/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -65,6 +66,7 @@ PROCEDURE validate_pds_pricelist;
   ----- ---------- -------------------- ----------------------------------------
   1.0   19/08/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   02/02/2006 Craig Ford           Updated to include Aus PETCARE.
+  2.0   20/06/2009 Steve Gregan         Commented out future price exclusion
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -220,6 +222,7 @@ PROCEDURE run_pds_pricelist_01_prc IS
 BEGIN
 
   -- Start run_pds_pricelist_01_prc procedure.
+  pds_utils.create_log;
   write_log(pc_data_type_pricelist, 'N/A', pv_log_level, 'run_pds_pricelist_01_prc - START.');
 
   -- The 3 key tasks: validate, transfer and initiate postbox job.
@@ -229,6 +232,7 @@ BEGIN
 
   -- End run_pds_pricelist_01_prc procedure.
   write_log(pc_data_type_pricelist, 'N/A', pv_log_level, 'run_pds_pricelist_01_prc - END.');
+  pds_utils.end_log;
 
 EXCEPTION
   -- Send warning message via e-mail and pds_log.
@@ -246,6 +250,7 @@ EXCEPTION
       pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
         pc_job_type_pricelist_01_prc,'N/A');
     END IF;
+    pds_utils.end_log;
 
 END run_pds_pricelist_01_prc;
 
@@ -386,12 +391,11 @@ BEGIN
           pv_log_level + 3);
     END;
 
-    -- Check whether Price List Effective Date is a future date.
-    IF v_eff_date > v_current_date THEN
-      v_valdtn_status := pc_valdtn_status_excluded;
-
-      write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'Price List Effective Date ['||rv_pricelist.eff_date||'] is a future date and is therefore excluded.');
-    END IF;
+  -- Check whether Price List Effective Date is a future date.
+  --  IF v_eff_date > v_current_date THEN
+  --    v_valdtn_status := pc_valdtn_status_excluded;
+  --    write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'Price List Effective Date ['||rv_pricelist.eff_date||'] is a future date and is therefore excluded.');
+  --  END IF;
 
     -- Check whether List Price is null or zero.
     IF rv_pricelist.list_price IS NULL OR rv_pricelist.list_price = 0 THEN
