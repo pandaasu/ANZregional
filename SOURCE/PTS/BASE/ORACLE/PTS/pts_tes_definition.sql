@@ -25,7 +25,6 @@ create table pts.pts_tes_definition
     tde_tes_status                  number                        not null,
     tde_glo_status                  number                        not null,
     tde_tes_type                    number                        not null,
-    tde_tes_target                  number                        not null,
     tde_upd_user                    varchar2(30 char)             not null,
     tde_upd_date                    date                          not null,
     tde_tes_req_name                varchar2(60 char)             null,
@@ -56,7 +55,6 @@ comment on column pts.pts_tes_definition.tde_com_code is 'Company code';
 comment on column pts.pts_tes_definition.tde_tes_status is 'Test status';
 comment on column pts.pts_tes_definition.tde_glo_status is 'GloPal status';
 comment on column pts.pts_tes_definition.tde_tes_type is 'Test type';
-comment on column pts.pts_tes_definition.tde_tes_target is 'Test target';
 comment on column pts.pts_tes_definition.tde_upd_user is 'Test update user';
 comment on column pts.pts_tes_definition.tde_upd_date is 'Test update date';
 comment on column pts.pts_tes_definition.tde_tes_req_name is 'Test requestor name';
