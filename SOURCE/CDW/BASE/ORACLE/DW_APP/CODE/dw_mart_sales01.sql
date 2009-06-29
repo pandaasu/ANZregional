@@ -4336,6 +4336,7 @@ create or replace package body dw_mart_sales01 as
          rcd_detail.cpd_brm1_value := 0;
          rcd_detail.cpd_brm2_value := 0;
          rcd_detail.cpd_fcst_value := 0;
+         rcd_detail.fpd_out_value := 0;
          rcd_detail.fpd_ord_value := 0;
          rcd_detail.fpd_inv_value := 0;
          rcd_detail.lyr_cpd_inv_value := 0;
