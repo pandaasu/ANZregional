@@ -177,7 +177,7 @@ sub PaintFunction()%>
    function doPromptEnter() {
       if (!processForm()) {return;}
       if (document.getElementById('PRO_TesCode').value == '') {
-         doPromptCreate('*PET'');
+         doPromptCreate('*PET');
       } else {
          doPromptUpdate();
       }
@@ -676,6 +676,9 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
+      if (confirm('Please confirm the template selection\r\npress OK continue (all existing selection rules will be replaced by the selection template rules)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*RTVTEM"';
       strXML = strXML+' STMCDE="'+fixXML(objSelTemp.options[objSelTemp.selectedIndex].value)+'"';
@@ -687,9 +690,6 @@ sub PaintFunction()%>
       doPostRequest('<%=strBase%>pts_tes_config_panel_template.asp',function(strResponse) {checkPanelTemplate(strResponse);},false,streamXML(strXML));
    }
    function checkPanelTemplate(strResponse) {
-      if (confirm('Please confirm the template selection\r\npress OK continue (all existing selection rules will be replaced by the selection template rules)\r\npress Cancel to cancel the request') == false) {
-         return;
-      }
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);

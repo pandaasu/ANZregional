@@ -809,7 +809,7 @@ sub PaintFunction()%>
             </div>
          </nobr></td>
          <td width=25% align=left colspan=1 nowrap><nobr>
-            <table class="clsPanel" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+            <table class="clsPanel" align=center cols=1 height=100% width=100% cellpadding="0" cellspacing="0">
                <tr><td><nobr>
                   <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                      <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResponseList();">&nbsp;Refresh&nbsp;</a></nobr></td></tr>
