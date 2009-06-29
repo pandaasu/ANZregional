@@ -487,6 +487,7 @@ PROCEDURE transfer_pricelist_postbox(
   v_matl_code    pds_matl.matl_code%TYPE;
   v_mfg_cost     pds_price_list.mfg_cost%TYPE := 0;
   v_eff_date     pbprices.price1date%TYPE;
+  v_eff_flag     varchar2(1);
 
   -- EXCEPTION DECLARATIONS
   e_processing_failure EXCEPTION;
@@ -560,10 +561,14 @@ BEGIN
     -- If Price List Effective Date is null then use the default date, otherwise convert Price List Effective
     -- Date to date format.
     IF rv_pricelist.eff_date IS NULL THEN
-      v_eff_date := pc_pricelist_default_date;
+      v_eff_date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
     ELSE
       v_eff_date := TO_DATE(rv_pricelist.eff_date,'YYYYMMDD');
     END IF;
+    v_eff_flag := 'C';
+    if trunc(v_eff_date) > trunc(sysdate) then
+       v_eff_flag := 'F';
+    end if;
 
     --Calculate the Manufacturing Cost.
     IF rv_pricelist.mfg_cost IS NULL OR rv_pricelist.mfg_cost = 0 THEN
@@ -573,46 +578,89 @@ BEGIN
     END IF;
 
     -- Insert into Postbox PBPRICES table.
-    INSERT INTO pbprices
-      (
-      cocode,
-      divcode,
-      prodcode,
-      price1,
-      price1date,
-      price2,
-      price2date,
-      price3,
-      price3date,
-      stdcost,
-      list,
-      rrprice,
-      pbdate,
-      pbtime,
-      mcperc,
-      WASTEPERC,
-      CONTRCOMM
-      )
-    VALUES
-      (
-      i_pmx_cmpny_code,
-      i_pmx_div_code,
-      v_matl_code,
-      rv_pricelist.list_price,
-      v_eff_date,
-      0, -- price2
-      TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-      0, -- price3
-      TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-      v_mfg_cost,
-      NVL(rv_pricelist.distbn_chnl_code,0),
-      rv_pricelist.rrp,
-      SYSDATE, -- pbdate
-      TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
-      0, -- mcperc
-      0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
-      0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
-      );
+    IF v_eff_flag = 'C' then
+      INSERT INTO pbprices
+        (
+        cocode,
+        divcode,
+        prodcode,
+        price1,
+        price1date,
+        price2,
+        price2date,
+        price3,
+        price3date,
+        stdcost,
+        list,
+        rrprice,
+        pbdate,
+        pbtime,
+        mcperc,
+        WASTEPERC,
+        CONTRCOMM
+        )
+      VALUES
+        (
+        i_pmx_cmpny_code,
+        i_pmx_div_code,
+        v_matl_code,
+        rv_pricelist.list_price,
+        v_eff_date,
+        0, -- price2
+        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
+        0, -- price3
+        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
+        v_mfg_cost,
+        NVL(rv_pricelist.distbn_chnl_code,0),
+        rv_pricelist.rrp,
+        SYSDATE, -- pbdate
+        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
+        0, -- mcperc
+        0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
+        0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
+        );
+    ELSE
+      INSERT INTO pbprices
+        (
+        cocode,
+        divcode,
+        prodcode,
+        price1,
+        price1date,
+        price2,
+        price2date,
+        price3,
+        price3date,
+        stdcost,
+        list,
+        rrprice,
+        pbdate,
+        pbtime,
+        mcperc,
+        WASTEPERC,
+        CONTRCOMM
+        )
+      VALUES
+        (
+        i_pmx_cmpny_code,
+        i_pmx_div_code,
+        v_matl_code,
+        0,
+        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
+        rv_pricelist.list_price, -- price2
+        v_eff_date,
+        0, -- price3
+        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
+        v_mfg_cost,
+        NVL(rv_pricelist.distbn_chnl_code,0),
+        rv_pricelist.rrp,
+        SYSDATE, -- pbdate
+        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
+        0, -- mcperc
+        0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
+        0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
+        );
+    END IF;
 
     -- Update PDS_PRICE_LIST to set procg_status = COMPLETED.
     UPDATE PDS_PRICE_LIST
