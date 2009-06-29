@@ -24,6 +24,7 @@ create table pts.pts_tes_type
     tty_typ_status                  number                        not null,
     tty_upd_user                    varchar2(30 char)             not null,
     tty_upd_date                    date                          not null,
+    tty_typ_target                  number                        not null,
     tty_sam_count                   number                        not null,
     tty_alc_proc                    varchar2(120 char)            not null);
 
@@ -36,6 +37,7 @@ comment on column pts.pts_tes_type.tty_typ_text is 'Test type text';
 comment on column pts.pts_tes_type.tty_typ_status is 'Test type status';
 comment on column pts.pts_tes_type.tty_upd_user is 'Test type update user';
 comment on column pts.pts_tes_type.tty_upd_date is 'Test type update date';
+comment on column pts.pts_tes_type.tty_typ_target is 'Test type target (1=*PET or 2=*HOUSEHOLD)';
 comment on column pts.pts_tes_type.tty_sam_count is 'Sample count per day';
 comment on column pts.pts_tes_type.tty_alc_proc is 'Allocation procedure';
 
