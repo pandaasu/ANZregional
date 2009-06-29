@@ -238,11 +238,6 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tty_status = 1;
       rcd_tes_type csr_tes_type%rowtype;
 
-      cursor csr_tar_code is
-         select t01.*
-           from table(pts_app.pts_gen_function.list_class('*TES_DEF',3)) t01;
-      rcd_tar_code csr_tar_code%rowtype;
-
       cursor csr_keyword is
          select t01.*
            from pts_tes_keyword t01
@@ -359,22 +354,9 @@ create or replace package body pts_app.pts_tes_function as
          if csr_tes_type%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<TYP_LIST VALCDE="'||rcd_tes_type.tty_code||'" VALTXT="'||pts_to_xml(rcd_tes_type.tty_text)||'"/>'));
+         pipe row(pts_xml_object('<TYP_LIST TYPCDE="'||rcd_tes_type.tty_code||'" TYPTXT="'||pts_to_xml(rcd_tes_type.tty_text)||'" TYPTAR="'||to_char(rcd_tes_type.tty_target)||'"/>'));
       end loop;
       close csr_tes_type;
-
-      /*-*/
-      /* Pipe the target XML
-      /*-*/
-      open csr_tar_code;
-      loop
-         fetch csr_tar_code into rcd_tar_code;
-         if csr_tar_code%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<TAR_LIST VALCDE="'||rcd_tar_code.val_code||'" VALTXT="'||pts_to_xml(rcd_tar_code.val_text)||'"/>'));
-      end loop;
-      close csr_tar_code;
 
       /*-*/
       /* Pipe the test XML
@@ -386,7 +368,6 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
          pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
-         pipe row(pts_xml_object(' TESTAR="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
          pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
          pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
          pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
@@ -405,7 +386,6 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
          pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
-         pipe row(pts_xml_object(' TESTAR="'||to_char(rcd_retrieve.tde_tes_target)||'"'));
          pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
          pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
          pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
@@ -424,7 +404,6 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="1"'));
          pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="1"'));
-         pipe row(pts_xml_object(' TESTAR="1"'));
          pipe row(pts_xml_object(' REQNAM=""'));
          pipe row(pts_xml_object(' REQMID=""'));
          pipe row(pts_xml_object(' AIMTXT=""'));
@@ -534,12 +513,6 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tty_code = rcd_pts_tes_definition.tde_tes_type;
       rcd_tes_type csr_tes_type%rowtype;
 
-      cursor csr_tar_code is
-         select t01.*
-           from table(pts_app.pts_gen_function.list_class('*TES_DEF',3)) t01
-          where t01.val_code = rcd_pts_tes_definition.tde_tes_target;
-      rcd_tar_code csr_tar_code%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -569,7 +542,6 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pts_tes_definition.tde_tes_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESSTA'));
       rcd_pts_tes_definition.tde_glo_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESGLO'));
       rcd_pts_tes_definition.tde_tes_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTYP'));
-      rcd_pts_tes_definition.tde_tes_target := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTAR'));
       rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
       rcd_pts_tes_definition.tde_tes_req_name := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@REQNAM'));
@@ -602,9 +574,6 @@ create or replace package body pts_app.pts_tes_function as
       end if;
       if rcd_pts_tes_definition.tde_tes_type is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTYP') is null) then
          pts_gen_function.add_mesg_data('Test type ('||xslProcessor.valueOf(obj_pts_request,'@TESTYP')||') must be a number');
-      end if;
-      if rcd_pts_tes_definition.tde_tes_target is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTAR') is null) then
-         pts_gen_function.add_mesg_data('Test target ('||xslProcessor.valueOf(obj_pts_request,'@TESTAR')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_tes_str_date is null and not(xslProcessor.valueOf(obj_pts_request,'@STRDAT') is null) then
          pts_gen_function.add_mesg_data('Test start date ('||xslProcessor.valueOf(obj_pts_request,'@STRDAT')||') must be a date in format DD/MM/YYYY');
@@ -643,9 +612,6 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_pts_tes_definition.tde_tes_type is null then
          pts_gen_function.add_mesg_data('Test type must be supplied');
       end if;
-      if rcd_pts_tes_definition.tde_tes_target is null then
-         pts_gen_function.add_mesg_data('Test target must be supplied');
-      end if;
       if rcd_pts_tes_definition.tde_upd_user is null then
          pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
@@ -681,12 +647,6 @@ create or replace package body pts_app.pts_tes_function as
          rcd_pts_tes_definition.tde_tes_sam_count := rcd_tes_type.tty_sam_count;
       end if;
       close csr_tes_type;
-      open csr_tar_code;
-      fetch csr_tar_code into rcd_tar_code;
-      if csr_tar_code%notfound then
-         pts_gen_function.add_mesg_data('Test target ('||to_char(rcd_pts_tes_definition.tde_tes_target)||') does not exist');
-      end if;
-      close csr_tar_code;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -704,7 +664,6 @@ create or replace package body pts_app.pts_tes_function as
                 tde_tes_status = rcd_pts_tes_definition.tde_tes_status,
                 tde_glo_status = rcd_pts_tes_definition.tde_glo_status,
                 tde_tes_type = rcd_pts_tes_definition.tde_tes_type,
-                tde_tes_target = rcd_pts_tes_definition.tde_tes_target,
                 tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
                 tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
                 tde_tes_req_name = rcd_pts_tes_definition.tde_tes_req_name,
@@ -724,7 +683,7 @@ create or replace package body pts_app.pts_tes_function as
          if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
             delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
          end if;
-         if rcd_check.tde_tes_target != rcd_pts_tes_definition.tde_tes_target then
+         if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
             delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
             delete from pts_tes_classification where tcl_tes_code = rcd_pts_tes_definition.tde_tes_code;
             delete from pts_tes_statistic where tst_tes_code = rcd_pts_tes_definition.tde_tes_code;
@@ -1640,6 +1599,12 @@ create or replace package body pts_app.pts_tes_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1716,6 +1681,23 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test target
+      /*-*/
+      var_found := false;
+      open csr_target;
+      fetch csr_target into rcd_target;
+      if csr_target%found then
+         var_found := true;
+      end if;
+      close csr_target;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Delete the existing test rule and panel data
       /*-*/
       delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
@@ -1784,7 +1766,7 @@ create or replace package body pts_app.pts_tes_function as
       /* **note** 1. Autonomous transactions that not impact the test lock
       /*-*/
       clear_panel( rcd_pts_tes_definition.tde_tes_code, rcd_pts_tes_definition.tde_req_mem_count, rcd_pts_tes_definition.tde_req_res_count);
-      if rcd_retrieve.tde_tes_target = 1 then
+      if rcd_target.tty_typ_target = 1 then
          select_pet_panel(rcd_retrieve.tde_tes_code, '*MEMBER', rcd_pts_tes_definition.tde_hou_pet_multi);
          if rcd_pts_tes_definition.tde_req_res_count != 0 then
             select_pet_panel(rcd_retrieve.tde_tes_code, '*RESERVE', rcd_pts_tes_definition.tde_hou_pet_multi);
@@ -1860,6 +1842,12 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
+
       cursor csr_group is
          select t01.*
            from pts_tes_group t01
@@ -1913,6 +1901,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Retrieve the existing test
       /*-*/
+      var_found := false;
       open csr_retrieve;
       fetch csr_retrieve into rcd_retrieve;
       if csr_retrieve%found then
@@ -1921,6 +1910,20 @@ create or replace package body pts_app.pts_tes_function as
       close csr_retrieve;
       if var_found = false then
          raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
+      end if;
+
+      /*-*/
+      /* Retrieve the test target
+      /*-*/
+      var_found := false;
+      open csr_target;
+      fetch csr_target into rcd_target;
+      if csr_target%found then
+         var_found := true;
+      end if;
+      close csr_target;
+      if var_found = false then
+         raise_application_error(-20000, 'Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
       end if;
 
       /*-*/
@@ -2027,7 +2030,7 @@ create or replace package body pts_app.pts_tes_function as
                exit;
             end if;
             var_work := 'Household ('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town;
-            if rcd_retrieve.tde_tes_target = 1 then
+            if rcd_target.tty_typ_target = 1 then
                var_work := var_work||' - Pet ('||rcd_panel.tpa_pan_code||') '||rcd_panel.tpa_pet_name;
             end if;
             var_output := '<tr>';
@@ -2096,6 +2099,12 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_definition t01
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
 
       cursor csr_question is
          select t01.*,
@@ -2180,6 +2189,23 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test target
+      /*-*/
+      var_found := false;
+      open csr_target;
+      fetch csr_target into rcd_target;
+      if csr_target%found then
+         var_found := true;
+      end if;
+      close csr_target;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -2187,9 +2213,9 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      if rcd_retrieve.tde_tes_target = 1 then
+      if rcd_target.tty_typ_target = 1 then
          var_target := 'Pet';
-      elsif rcd_retrieve.tde_tes_target = 2 then
+      elsif rcd_target.tty_typ_target = 2 then
          var_target := 'Household';
       else
          var_target := '*UNKNOWN';
@@ -2222,7 +2248,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_panel%notfound then
             exit;
          end if;
-         if rcd_retrieve.tde_tes_target = 1 then
+         if rcd_target.tty_typ_target = 1 then
             pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel.tpa_pan_code)||') '||rcd_panel.tpa_pet_name||' - Household ('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel.res_status)||'"/>'));
          else
             pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel.tpa_pan_code)||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel.res_status)||'"/>'));
@@ -2283,6 +2309,12 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_definition t01
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
 
       cursor csr_panel is
          select t01.*,
@@ -2352,6 +2384,23 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test target
+      /*-*/
+      var_found := false;
+      open csr_target;
+      fetch csr_target into rcd_target;
+      if csr_target%found then
+         var_found := true;
+      end if;
+      close csr_target;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -2365,7 +2414,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_panel%notfound then
             exit;
          end if;
-         if rcd_retrieve.tde_tes_target = 1 then
+         if rcd_target.tty_typ_target = 1 then
             pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel.tpa_pan_code)||') '||rcd_panel.tpa_pet_name||' - Household ('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel.res_status)||'"/>'));
          else
             pipe row(pts_xml_object('<PANEL PANCDE="'||to_char(rcd_panel.tpa_pan_code)||'" PANSTS="'||pts_to_xml(rcd_panel.tpa_pan_status)||'" PANTXT="'||pts_to_xml('('||to_char(rcd_panel.tpa_pan_code)||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town)||'" RESSTS="'||pts_to_xml(rcd_panel.res_status)||'"/>'));
@@ -2631,6 +2680,12 @@ create or replace package body pts_app.pts_tes_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
+
       cursor csr_panel is
          select t01.*
            from pts_tes_panel t01
@@ -2761,6 +2816,23 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test target
+      /*-*/
+      var_found := false;
+      open csr_target;
+      fetch csr_target into rcd_target;
+      if csr_target%found then
+         var_found := true;
+      end if;
+      close csr_target;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Retrieve the existing panel member
       /* **notes** 1. Create a recruited panel when not found
       /*-*/
@@ -2772,7 +2844,7 @@ create or replace package body pts_app.pts_tes_function as
       end if;
       close csr_panel;
       if var_found = false then
-         if rcd_retrieve.tde_tes_target = 1 then
+         if rcd_target.tty_typ_target = 1 then
             open csr_pet;
             fetch csr_pet into rcd_pet;
             if csr_pet%notfound then
