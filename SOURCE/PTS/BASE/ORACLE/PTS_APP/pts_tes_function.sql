@@ -215,6 +215,12 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_target is
+         select t01.*
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
+      rcd_target csr_target%rowtype;
+
       cursor csr_company is
          select to_char(t01.cde_com_code) as val_code,
                 '('||to_char(t01.cde_com_code)||') '||t01.cde_com_name as val_text
@@ -235,7 +241,8 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_tes_type is
          select t01.*
            from table(pts_app.pts_gen_function.list_tes_type) t01
-          where t01.tty_status = 1;
+          where t01.tty_status = 1
+            and t01.tty_target = rcd_target.tty_typ_target;
       rcd_tes_type csr_tes_type%rowtype;
 
       cursor csr_keyword is
@@ -268,7 +275,7 @@ create or replace package body pts_app.pts_tes_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*UPDTES' and var_action != '*CRTTES' and var_action != '*CPYTES' then
+      if var_action != '*UPDTES' and var_action != '*CRTPET' and var_action != '*CRTHHD' and var_action != '*CPYTES' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
@@ -299,6 +306,23 @@ create or replace package body pts_app.pts_tes_function as
          if pts_gen_function.get_mesg_count != 0 then
             return;
          end if;
+         var_found := false;
+         open csr_target;
+         fetch csr_target into rcd_target;
+         if csr_target%found then
+            var_found := true;
+         end if;
+         close csr_target;
+         if var_found = false then
+            pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
+         end if;
+         if pts_gen_function.get_mesg_count != 0 then
+            return;
+         end if;
+      elsif var_action = '*CRTPET' then
+         rcd_target.tty_typ_target := 1;
+      elsif var_action = '*CRTHHD' then
+         rcd_target.tty_typ_target := 2;
       end if;
 
       /*-*/
@@ -354,7 +378,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_tes_type%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<TYP_LIST TYPCDE="'||rcd_tes_type.tty_code||'" TYPTXT="'||pts_to_xml(rcd_tes_type.tty_text)||'" TYPTAR="'||to_char(rcd_tes_type.tty_target)||'"/>'));
+         pipe row(pts_xml_object('<TYP_LIST TYPCDE="'||rcd_tes_type.tty_code||'" TYPTXT="'||pts_to_xml(rcd_tes_type.tty_text)||'"/>'));
       end loop;
       close csr_tes_type;
 
@@ -397,7 +421,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' MEALEN="'||to_char(rcd_retrieve.tde_tes_len_meal)||'"'));
          pipe row(pts_xml_object(' MAXTEM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
          pipe row(pts_xml_object(' DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
-      elsif var_action = '*CRTTES' then
+      elsif var_action = '*CRTPET' then
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT=""'));
          pipe row(pts_xml_object(' TESCOM="1"'));
@@ -415,12 +439,30 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' MEALEN=""'));
          pipe row(pts_xml_object(' MAXTEM=""'));
          pipe row(pts_xml_object(' DAYCNT=""/>'));
+      elsif var_action = '*CRTHHD' then
+         pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
+         pipe row(pts_xml_object(' TESTIT=""'));
+         pipe row(pts_xml_object(' TESCOM="1"'));
+         pipe row(pts_xml_object(' TESSTA="1"'));
+         pipe row(pts_xml_object(' TESGLO="2"'));
+         pipe row(pts_xml_object(' TESTYP=""'));
+         pipe row(pts_xml_object(' REQNAM=""'));
+         pipe row(pts_xml_object(' REQMID=""'));
+         pipe row(pts_xml_object(' AIMTXT=""'));
+         pipe row(pts_xml_object(' REATXT=""'));
+         pipe row(pts_xml_object(' PRETXT=""'));
+         pipe row(pts_xml_object(' COMTXT=""'));
+         pipe row(pts_xml_object(' STRDAT=""'));
+         pipe row(pts_xml_object(' FLDWEK=""'));
+         pipe row(pts_xml_object(' MEALEN=""'));
+         pipe row(pts_xml_object(' MAXTEM=""'));
+         pipe row(pts_xml_object(' DAYCNT=""/>'));
       end if;
 
       /*-*/
       /* Pipe the keyword XML when required
       /*-*/
-      if var_action != '*CRTTES' then
+      if var_action != '*CRTPET' and var_action != '*CRTHHD' then
          open csr_keyword;
          loop
             fetch csr_keyword into rcd_keyword;
@@ -682,15 +724,6 @@ create or replace package body pts_app.pts_tes_function as
          delete from pts_tes_keyword where tke_tes_code = rcd_pts_tes_definition.tde_tes_code;
          if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
             delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
-         end if;
-         if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
-            delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_classification where tcl_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_statistic where tst_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_panel where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_value where tva_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_rule where tru_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_group where tgr_tes_code = rcd_pts_tes_definition.tde_tes_code;
          end if;
       else
          var_confirm := 'created';
