@@ -235,10 +235,6 @@ sub ProcessDeleteAccept()
    strQuery = strQuery & " and t01.valdtn_status = 'INVALID'"
    strReturn = objModify.Execute(strQuery)
 
-
-, ar_claims_lupdp = ‘IWAM_APV’, Ar_claims_lupdt = current date and time
-
-
    if strReturn <> "*OK" then
       strMode = "DELETE"
       strReturn = FormatError(strReturn)
