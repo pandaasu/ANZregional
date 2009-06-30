@@ -604,7 +604,6 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pts_tes_definition.tde_tes_max_temp := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MAXTEM'));
       rcd_pts_tes_definition.tde_tes_day_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DAYCNT'));
       rcd_pts_tes_definition.tde_tes_sam_count := 0;
-      rcd_pts_tes_definition.tde_tes_pan_date := null;
       rcd_pts_tes_definition.tde_req_mem_count := 0;
       rcd_pts_tes_definition.tde_req_res_count := 0;
       rcd_pts_tes_definition.tde_hou_pet_multi := '0';
@@ -2018,8 +2017,7 @@ create or replace package body pts_app.pts_tes_function as
       /* Update the test definition
       /*-*/
       update pts_tes_definition
-         set tde_tes_pan_date = sysdate,
-             tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
+         set tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
              tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
              tde_req_mem_count = rcd_pts_tes_definition.tde_req_mem_count,
              tde_req_res_count = rcd_pts_tes_definition.tde_req_res_count,
