@@ -33,6 +33,7 @@ create or replace package efxsbw01_cust_extract as
     2008/12   Steve Gregan   Modified to include modified date
     2009/01   Steve Gregan   Modified to check the customer sales territory modified date
     2009/06   Steve Gregan   China sales dedication - included business unit id to division
+    2009/07   Steve Gregan   Modified to remove modified date
 
    *******************************************************************************/
 
@@ -90,7 +91,7 @@ create or replace package body efxsbw01_cust_extract as
                 t01.outlet_flg as outlet_flg,
                 t01.active_flg as active_flg,
                 to_char(t01.range_id) as range_id,
-                to_char(t01.modified_date,'yyyymmdd') as modified_date,
+               -- to_char(t01.modified_date,'yyyymmdd') as modified_date,
                 decode(t01.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code,
                 t02.cust_type_name as cust_type_name,
                 t03.cust_trade_channel_name as cust_trade_channel_name,
@@ -255,8 +256,8 @@ create or replace package body efxsbw01_cust_extract as
                                           '"'||replace(rcd_extract.active_flg,'"','""')||'";'||
                                           '"'||replace(rcd_extract.cust_grade_name,'"','""')||'";'||
                                           '"'||replace(rcd_extract.distributor_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.range_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.modified_date,'"','""')||'"');
+                                          '"'||replace(rcd_extract.range_id,'"','""')||'"');
+                                      --    '"'||replace(rcd_extract.modified_date,'"','""')||'"');
 
       end loop;
       close csr_extract;
