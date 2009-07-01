@@ -24,6 +24,7 @@ create or replace package mobile_data as
     2009/06   Steve Gregan   China sales dedication - included business unit id in geographic hierarchy retrieval
                              Included existing distribution total in the call download
                              Included range update for customer update with customer type change
+                             Fix oracle 10G cdata issue
 
    *******************************************************************************/
 
@@ -1812,22 +1813,22 @@ create or replace package body mobile_data as
       obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/EFEX/CUS_LIST/CUS');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         var_data_type := xslProcessor.valueOf(obj_xml_node,'CUS_DATA_TYPE/text()');
-         upd_customer.customer_name := xslProcessor.valueOf(obj_xml_node,'CUS_NAME/text()');
-         upd_customer.address_1 := xslProcessor.valueOf(obj_xml_node,'CUS_ADDRESS/text()');
-         upd_customer.postcode := xslProcessor.valueOf(obj_xml_node,'CUS_POSTCODE/text()');
-         upd_customer.phone_number := xslProcessor.valueOf(obj_xml_node,'CUS_PHONE_NUMBER/text()');
-         upd_customer.fax_number := xslProcessor.valueOf(obj_xml_node,'CUS_FAX_NUMBER/text()');
-         upd_customer.email_address := xslProcessor.valueOf(obj_xml_node,'CUS_EMAIL_ADDRESS/text()');
-         upd_customer.cust_type_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_CUS_TYPE_ID/text()'));
-         upd_customer.distributor_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_DISTRIBUTOR_ID/text()'));
-         upd_customer.active_flg := xslProcessor.valueOf(obj_xml_node,'CUS_STATUS/text()');
-         upd_customer.outlet_location := xslProcessor.valueOf(obj_xml_node,'CUS_OUTLET_LOCATION/text()');
-         upd_cust_contact.last_name := xslProcessor.valueOf(obj_xml_node,'CUS_CONTACT_NAME/text()');
+         var_data_type := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_DATA_TYPE/text()'),'['),']');
+         upd_customer.customer_name := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_NAME/text()'),'['),']');
+         upd_customer.address_1 := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_ADDRESS/text()'),'['),']');
+         upd_customer.postcode := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_POSTCODE/text()'),'['),']');
+         upd_customer.phone_number := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_PHONE_NUMBER/text()'),'['),']');
+         upd_customer.fax_number := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_FAX_NUMBER/text()'),'['),']');
+         upd_customer.email_address := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_EMAIL_ADDRESS/text()'),'['),']');
+         upd_customer.cust_type_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_CUS_TYPE_ID/text()'),'['),']'));
+         upd_customer.distributor_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_DISTRIBUTOR_ID/text()'),'['),']'));
+         upd_customer.active_flg := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_STATUS/text()'),'['),']');
+         upd_customer.outlet_location := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_OUTLET_LOCATION/text()'),'['),']');
+         upd_cust_contact.last_name := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_CONTACT_NAME/text()'),'['),']');
          if var_data_type = '*NEW' then
-            create_customer_data(xslProcessor.valueOf(obj_xml_node,'CUS_CUSTOMER_ID/text()'));
+            create_customer_data(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_CUSTOMER_ID/text()'),'['),']'));
          else
-            upd_customer.customer_id := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'CUS_CUSTOMER_ID/text()'));
+            upd_customer.customer_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'CUS_CUSTOMER_ID/text()'),'['),']'));
             update_customer_data;
          end if;
       end loop;
@@ -1842,10 +1843,10 @@ create or replace package body mobile_data as
          /* Update the call data
          /*-*/
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         upd_call.customer_id := mobile_get_customer_id(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_CUSTOMER_ID/text()'));
-         upd_call.call_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STR_TIME/text()'),'yyyy/mm/dd hh24:mi:ss');
-         upd_call.end_date := mobile_to_date(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_END_TIME/text()'),'yyyy/mm/dd hh24:mi:ss');
-         upd_distribution_total.total_qty := mobile_to_number(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STOCK_DIST_COUNT/text()'));
+         upd_call.customer_id := mobile_get_customer_id(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_CUSTOMER_ID/text()'),'['),']'));
+         upd_call.call_date := mobile_to_date(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STR_TIME/text()'),'['),']'),'yyyy/mm/dd hh24:mi:ss');
+         upd_call.end_date := mobile_to_date(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_END_TIME/text()'),'['),']'),'yyyy/mm/dd hh24:mi:ss');
+         upd_distribution_total.total_qty := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'RTE_CALL_STOCK_DIST_COUNT/text()'),'['),']'));
          obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
          if xmlDom.getLength(obj_rte_ordr_list) = 0 then
             update_call_data('0');
@@ -1859,8 +1860,8 @@ create or replace package body mobile_data as
          obj_rte_stck_list := xslProcessor.selectNodes(obj_xml_node,'RTE_STCK_ITEMS/RTE_STCK_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_stck_list)-1 loop
             obj_rte_stck_node := xmlDom.item(obj_rte_stck_list,idy);
-            upd_distribution.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_stck_node,'RTE_STCK_ITEM_ID/text()'));
-            upd_distribution.inventory_qty := mobile_to_number(xslProcessor.valueOf(obj_rte_stck_node,'RTE_STCK_ITEM_QTY/text()'));
+            upd_distribution.item_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_stck_node,'RTE_STCK_ITEM_ID/text()'),'['),']'));
+            upd_distribution.inventory_qty := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_stck_node,'RTE_STCK_ITEM_QTY/text()'),'['),']'));
             update_distribution_data;
          end loop;
 
@@ -1870,8 +1871,8 @@ create or replace package body mobile_data as
          obj_rte_disp_list := xslProcessor.selectNodes(obj_xml_node,'RTE_DISP_ITEMS/RTE_DISP_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_disp_list)-1 loop
             obj_rte_disp_node := xmlDom.item(obj_rte_disp_list,idy);
-            upd_display_distribution.display_item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_disp_node,'RTE_DISP_ITEM_ID/text()'));
-            upd_display_distribution.display_in_store := xslProcessor.valueOf(obj_rte_disp_node,'RTE_DISP_ITEM_FLAG/text()');
+            upd_display_distribution.display_item_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_disp_node,'RTE_DISP_ITEM_ID/text()'),'['),']'));
+            upd_display_distribution.display_in_store := rtrim(ltrim(xslProcessor.valueOf(obj_rte_disp_node,'RTE_DISP_ITEM_FLAG/text()'),'['),']');
             update_display_data;
          end loop;
 
@@ -1881,8 +1882,8 @@ create or replace package body mobile_data as
          obj_rte_actv_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ACTV_ITEMS/RTE_ACTV_ITEM');
          for idy in 0..xmlDom.getLength(obj_rte_actv_list)-1 loop
             obj_rte_actv_node := xmlDom.item(obj_rte_actv_list,idy);
-            upd_activity_distribution.activity_item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_actv_node,'RTE_ACTV_ITEM_ID/text()'));
-            upd_activity_distribution.activity_in_store := xslProcessor.valueOf(obj_rte_actv_node,'RTE_ACTV_ITEM_FLAG/text()');
+            upd_activity_distribution.activity_item_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_actv_node,'RTE_ACTV_ITEM_ID/text()'),'['),']'));
+            upd_activity_distribution.activity_in_store := rtrim(ltrim(xslProcessor.valueOf(obj_rte_actv_node,'RTE_ACTV_ITEM_FLAG/text()'),'['),']');
             update_activity_data;
          end loop;
 
@@ -1892,7 +1893,7 @@ create or replace package body mobile_data as
          obj_rte_ordr_list := xslProcessor.selectNodes(obj_xml_node,'RTE_ORDR');
          for idy in 0..xmlDom.getLength(obj_rte_ordr_list)-1 loop
             obj_rte_ordr_node := xmlDom.item(obj_rte_ordr_list,idy);
-            var_send_order := xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_SEND_WHSLR/text()');
+            var_send_order := rtrim(ltrim(xslProcessor.valueOf(obj_rte_ordr_node,'RTE_ORDR_SEND_WHSLR/text()'),'['),']');
             upd_orders.order_status := 'CLOSED';
             if var_send_order = '1' then
                upd_orders.order_status := 'SUBMITTED';
@@ -1902,17 +1903,17 @@ create or replace package body mobile_data as
             obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
             for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
                obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
-               upd_orders.total_items := upd_orders.total_items + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY/text()'));
-               upd_orders.total_price := upd_orders.total_price + mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_VALUE/text()'));
+               upd_orders.total_items := upd_orders.total_items + mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY/text()'),'['),']'));
+               upd_orders.total_price := upd_orders.total_price + mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_VALUE/text()'),'['),']'));
             end loop;
             update_orders_data;
             if upper(upd_orders.order_status) != 'IGNORE' then
                obj_rte_item_list := xslProcessor.selectNodes(obj_rte_ordr_node,'RTE_ORDR_ITEM');
                for idz in 0..xmlDom.getLength(obj_rte_item_list)-1 loop
                   obj_rte_item_node := xmlDom.item(obj_rte_item_list,idz);
-                  upd_order_item.item_id := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_ID/text()'));
-                  upd_order_item.order_qty := mobile_to_number(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY/text()'));
-                  upd_order_item.uom := xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_UOM/text()');
+                  upd_order_item.item_id := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_ID/text()'),'['),']'));
+                  upd_order_item.order_qty := mobile_to_number(rtrim(ltrim(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_QTY/text()'),'['),']'));
+                  upd_order_item.uom := rtrim(ltrim(xslProcessor.valueOf(obj_rte_item_node,'RTE_ORDR_ITEM_UOM/text()'),'['),']');
                   update_order_item_data;
                end loop;
             end if;
