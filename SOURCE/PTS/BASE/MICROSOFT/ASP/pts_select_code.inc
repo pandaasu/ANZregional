@@ -338,7 +338,6 @@
          objCell.className = 'clsLabelFB';
          objCell.style.whiteSpace = 'nowrap';
       }
-      displayScreen(cstrSelectParent);
       updateSltData();
    }
    ////////////////////////////
