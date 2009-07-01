@@ -889,21 +889,21 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'" WEICAL="'||pts_to_xml(nvl(rcd_retrieve.tde_wgt_que_calc,'0'))||'" WEIBOL="'||to_char(rcd_retrieve.tde_wgt_que_bowl)||'" WEIOFF="'||to_char(rcd_retrieve.tde_wgt_que_offer)||'" WEIREM="'||to_char(rcd_retrieve.tde_wgt_que_remain)||'"/>'));
 
       /*-*/
       /* Pipe the test question xml
       /*-*/
       for idx in 1..rcd_retrieve.tde_tes_day_count loop
          var_day_code := idx;
-         pipe row(pts_xml_object('<DAY DAYCDE="'||to_char(var_day_code)||'" DAYTXT="Day '||to_char(var_day_code)||'"/>'));
+         pipe row(pts_xml_object('<DAY DAYCDE="'||to_char(var_day_code)||'"/>'));
          open csr_question;
          loop
             fetch csr_question into rcd_question;
             if csr_question%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<QUESTION DAYCDE="'||to_char(var_day_code)||'" QUECDE="'||to_char(rcd_question.tqu_que_code)||'" QUETXT="Que '||to_char(rcd_question.tqu_dsp_seqn)||'" QUETYP="'||pts_to_xml(rcd_question.tqu_que_type)||'" QUENAM="'||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
+            pipe row(pts_xml_object('<QUESTION QUECDE="'||to_char(rcd_question.tqu_que_code)||'" QUETYP="'||pts_to_xml(rcd_question.tqu_que_type)||'" QUETXT="('||to_char(rcd_question.tqu_que_code)||') '||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
          end loop;
          close csr_question;
       end loop;
@@ -949,13 +949,13 @@ create or replace package body pts_app.pts_tes_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
+      obj_day_list xmlDom.domNodeList;
+      obj_day_node xmlDom.domNode;
       obj_que_list xmlDom.domNodeList;
       obj_que_node xmlDom.domNode;
       var_action varchar2(32);
-      var_tes_code number;
-      var_day_code number;
-      var_dsp_seqn number;
       var_found boolean;
+      rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_question pts_tes_question%rowtype;
 
       /*-*/
@@ -964,7 +964,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code
+          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -991,9 +991,39 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      if var_tes_code is null then
+      rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      rcd_pts_tes_definition.tde_wgt_que_calc := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@WEICAL'));
+      rcd_pts_tes_definition.tde_wgt_que_bowl := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@WEIBOL'));
+      rcd_pts_tes_definition.tde_wgt_que_offer := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@WEIOFF'));
+      rcd_pts_tes_definition.tde_wgt_que_remain := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@WEIREM'));
+      rcd_pts_tes_definition.tde_upd_user := upper(par_user);
+      rcd_pts_tes_definition.tde_upd_date := sysdate;
+      if rcd_pts_tes_definition.tde_tes_code is null then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if rcd_pts_tes_definition.tde_wgt_que_calc is null or (rcd_pts_tes_definition.tde_wgt_que_calc != '0' and rcd_pts_tes_definition.tde_wgt_que_calc != '1') then
+         pts_gen_function.add_mesg_data('Perform weight calculations ('||xslProcessor.valueOf(obj_pts_request,'@WEICAL')||') must be ''0'' or ''1''');
+      end if;
+      if rcd_pts_tes_definition.tde_wgt_que_calc = '1' then
+         if rcd_pts_tes_definition.tde_wgt_que_bowl is null then
+            pts_gen_function.add_mesg_data('Weight bowl question ('||xslProcessor.valueOf(obj_pts_request,'@WEIBOL')||') must be a number greater than zero when weight calculation required');
+         end if;
+         if rcd_pts_tes_definition.tde_wgt_que_offer is null then
+            pts_gen_function.add_mesg_data('Weight offered question ('||xslProcessor.valueOf(obj_pts_request,'@WEIOFF')||') must be a number greater than zero when weight calculation required');
+         end if;
+         if rcd_pts_tes_definition.tde_wgt_que_remain is null then
+            pts_gen_function.add_mesg_data('Weight remaining question ('||xslProcessor.valueOf(obj_pts_request,'@WEIREM')||') must be a number greater than zero when weight calculation required');
+         end if;
+      else
+         if not(rcd_pts_tes_definition.tde_wgt_que_bowl is null) then
+            pts_gen_function.add_mesg_data('Weight bowl question ('||xslProcessor.valueOf(obj_pts_request,'@WEIBOL')||') must not be supplied when weight calculation not required');
+         end if;
+         if not(rcd_pts_tes_definition.tde_wgt_que_offer is null) then
+            pts_gen_function.add_mesg_data('Weight offered question ('||xslProcessor.valueOf(obj_pts_request,'@WEIOFF')||') must not be supplied when weight calculation not required');
+         end if;
+         if not(rcd_pts_tes_definition.tde_wgt_que_remain is null) then
+            pts_gen_function.add_mesg_data('Weight remaining question ('||xslProcessor.valueOf(obj_pts_request,'@WEIREM')||') must not be supplied when weight calculation not required');
+         end if;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -1012,43 +1042,54 @@ create or replace package body pts_app.pts_tes_function as
          close csr_retrieve;
       exception
          when others then
-            pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') is currently locked');
+            pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') is currently locked');
             return;
       end;
       if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+         pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
       end if;
     --  if rcd_retrieve.tde_tes_status != 2 and
     --     rcd_retrieve.tde_tes_status != 3 then
-    --     pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - question update not allowed');
+    --     pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - question update not allowed');
     --  end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
+      /* Update the test definition
+      /*-*/
+      update pts_tes_definition
+         set tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
+             tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
+             tde_wgt_que_calc = rcd_pts_tes_definition.tde_wgt_que_calc,
+             tde_wgt_que_bowl = rcd_pts_tes_definition.tde_wgt_que_bowl,
+             tde_wgt_que_offer = rcd_pts_tes_definition.tde_wgt_que_offer,
+             tde_wgt_que_remain = rcd_pts_tes_definition.tde_wgt_que_remain
+       where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+
+      /*-*/
       /* Delete the existing question data
       /*-*/
-      delete from pts_tes_question where tqu_tes_code = var_tes_code;
+      delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code;
 
       /*-*/
       /* Retrieve and insert the question data
       /*-*/
-      var_day_code := 0;
-      obj_que_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/QUESTION');
-      for idx in 0..xmlDom.getLength(obj_que_list)-1 loop
-         obj_que_node := xmlDom.item(obj_que_list,idx);
-         rcd_pts_tes_question.tqu_tes_code := var_tes_code;
-         rcd_pts_tes_question.tqu_day_code := pts_to_number(xslProcessor.valueOf(obj_que_node,'@DAYCDE'));
-         rcd_pts_tes_question.tqu_que_code := pts_to_number(xslProcessor.valueOf(obj_que_node,'@QUECDE'));
-         rcd_pts_tes_question.tqu_que_type := pts_from_xml(xslProcessor.valueOf(obj_que_node,'@QUETYP'));
-         if rcd_pts_tes_question.tqu_day_code != var_day_code then
-            var_day_code := rcd_pts_tes_question.tqu_day_code;
-            var_dsp_seqn := 0;
-         end if;
-         var_dsp_seqn := var_dsp_seqn + 1;
-         rcd_pts_tes_question.tqu_dsp_seqn := var_dsp_seqn;
-         insert into pts_tes_question values rcd_pts_tes_question;
+      obj_day_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/DAY');
+      for idx in 0..xmlDom.getLength(obj_day_list)-1 loop
+         obj_day_node := xmlDom.item(obj_day_list,idx);
+         rcd_pts_tes_question.tqu_dsp_seqn := 0;
+         obj_que_list := xslProcessor.selectNodes(obj_day_node,'QUESTION');
+         for idy in 0..xmlDom.getLength(obj_que_list)-1 loop
+            obj_que_node := xmlDom.item(obj_que_list,idy);
+            rcd_pts_tes_question.tqu_tes_code := rcd_pts_tes_definition.tde_tes_code;
+            rcd_pts_tes_question.tqu_day_code := pts_to_number(xslProcessor.valueOf(obj_day_node,'@DAYCDE'));
+            rcd_pts_tes_question.tqu_que_code := pts_to_number(xslProcessor.valueOf(obj_que_node,'@QUECDE'));
+            rcd_pts_tes_question.tqu_que_type := pts_from_xml(xslProcessor.valueOf(obj_que_node,'@QUETYP'));
+            rcd_pts_tes_question.tqu_dsp_seqn := rcd_pts_tes_question.tqu_dsp_seqn + 1;
+            insert into pts_tes_question values rcd_pts_tes_question;
+         end loop;
       end loop;
 
       /*-*/
@@ -1871,7 +1912,7 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pts_tes_definition.tde_hou_pet_multi := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PETMLT'));
       rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
-      if rcd_pts_tes_definition.tde_tes_code is null and not(xslProcessor.valueOf(obj_pts_request,'@TESCDE') = '*NEW') then
+      if rcd_pts_tes_definition.tde_tes_code is null then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
       if rcd_pts_tes_definition.tde_req_mem_count is null or rcd_pts_tes_definition.tde_req_mem_count < 1 then
