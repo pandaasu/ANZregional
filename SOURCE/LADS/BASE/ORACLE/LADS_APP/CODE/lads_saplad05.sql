@@ -552,7 +552,7 @@ create or replace package body lads_saplad05 as
             rcd_lads_bom_hdr.stlan := trim(rcd_bom_data.stlan);
             rcd_lads_bom_hdr.datuv := trim(rcd_bom_data.hdruv);
             rcd_lads_bom_hdr.datub := '99991231';
-            rcd_lads_bom_hdr.bmeng := lads_to_number(replace(trim(rcd_bom_data.bmeng),'.',null))/1000;
+            rcd_lads_bom_hdr.bmeng := lads_to_number(replace(replace(trim(rcd_bom_data.bmeng),'.',null),',',null))/1000;
             rcd_lads_bom_hdr.bmein := trim(rcd_bom_data.bmein);
             rcd_lads_bom_hdr.stlst := trim(rcd_bom_data.stlst);
             rcd_lads_bom_hdr.idoc_name := rcd_lads_control.idoc_name;
@@ -576,7 +576,7 @@ create or replace package body lads_saplad05 as
          rcd_lads_bom_det.posnr := trim(rcd_bom_data.posnr);
          rcd_lads_bom_det.postp := trim(rcd_bom_data.postp);
          rcd_lads_bom_det.idnrk := lads_trim_code(trim(rcd_bom_data.idnrk));
-         rcd_lads_bom_det.menge := lads_to_number(replace(trim(rcd_bom_data.menge),'.',null))/1000;
+         rcd_lads_bom_det.menge := lads_to_number(replace(replace(trim(rcd_bom_data.menge),'.',null),',',null))/1000;
          rcd_lads_bom_det.meins := trim(rcd_bom_data.meins);
          rcd_lads_bom_det.datuv := trim(rcd_bom_data.datuv);
          rcd_lads_bom_det.datub := '99991231';
