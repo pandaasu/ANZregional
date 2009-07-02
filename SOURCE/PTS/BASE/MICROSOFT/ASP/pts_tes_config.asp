@@ -137,10 +137,10 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = 'Test Prompt';
       cobjScreens[1].hedtxt = 'Test Maintenance';
       cobjScreens[2].hedtxt = 'Test Keyword Maintenance';
-      cobjScreens[3].hedtxt = 'Test Question Maintenance';
-      cobjScreens[4].hedtxt = 'Test Question Detail';
-      cobjScreens[5].hedtxt = 'Test Sample Maintenance';
-      cobjScreens[6].hedtxt = 'Test Sample Detail';
+      cobjScreens[3].hedtxt = 'Test Question Review';
+      cobjScreens[4].hedtxt = 'Test Question Maintenance';
+      cobjScreens[5].hedtxt = 'Test Sample Review';
+      cobjScreens[6].hedtxt = 'Test Sample Maintenance';
       cobjScreens[7].hedtxt = 'Test Panel Selection';
     //  cobjScreens[8].hedtxt = 'Test Allocation';
       initSearch();
@@ -569,6 +569,481 @@ sub PaintFunction()%>
       displayScreen('dspDefine');
    }
 
+   ////////////////////////
+   // Question Functions //
+   ////////////////////////
+   var cstrQuestionTestCode;
+   var cstrQuestionTestText;
+   var cstrQuestionTarget;
+   var cintQuestionRow;
+   var cobjQuestionDay;
+   function clsQueDay() {
+      this.daycde = '';
+      this.queary = new Array();
+   }
+   function clsQueData(strQueCde,strQueTyp,strQueTxt) {
+      this.quecde = strQueCde;
+      this.quetyp = strQueTyp;
+      this.quetxt = strQueTxt;
+   }
+   function requestQuestionUpdate(strCode) {
+      cstrQuestionTestCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVQUE" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_question_retrieve.asp',function(strResponse) {checkQuestionUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkQuestionUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         cobjQuestionDay = new Array();
+         var intIndex = -1;
+         var strWeiCalc;
+         var objWeiCalc = document.getElementById('QUE_WeiCalc');
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               cstrQuestionTestText = objElements[i].getAttribute('TESTXT');
+               strWeiCalc = objElements[i].getAttribute('WEICAL');
+               document.getElementById('QUE_WeiBowl').value = objElements[i].getAttribute('WEIBOL');
+               document.getElementById('QUE_WeiOffr').value = objElements[i].getAttribute('WEIOFF');
+               document.getElementById('QUE_WeiRemn').value = objElements[i].getAttribute('WEIREM');
+            } else if (objElements[i].nodeName == 'DAY') {
+               intIndex++;
+               cobjQuestionDay[intIndex] = new clsQueDay();
+               cobjQuestionDay[intIndex].daycde = objElements[i].getAttribute('DAYCDE');
+            } else if (objElements[i].nodeName == 'QUESTION') {
+               cobjQuestionDay[intIndex].queary[cobjQuestionDay[intIndex].queary.length] = new clsQueData(objElements[i].getAttribute('QUECDE'),objElements[i].getAttribute('QUETYP'),objElements[i].getAttribute('QUETXT'));
+            }
+         }
+         objWeiCalc.selectedIndex = -1;
+         for (var i=0;i<objWeiCalc.length;i++) {
+            if (objWeiCalc.options[i].value == strWeiCalc) {
+               objWeiCalc.options[i].selected = true;
+               break;
+            }
+         }
+         loadQuestionData();
+         document.getElementById('subQuestion').innerText = cstrQuestionTestText;
+         displayScreen('dspQuestion');
+         document.getElementById('QUE_WeiCalc').focus();
+      }
+   }
+   function loadQuestionData() {
+      var objTable = document.getElementById('tabQuestion');
+      var objRow;
+      var objCell;
+      for (var i=objTable.rows.length-1;i>=0;i--) {
+         objTable.deleteRow(i);
+      }
+      for (var i=0;i<cobjQuestionDay.length;i++) {
+         objRow = objTable.insertRow(-1);
+         objRow.setAttribute('daycde',cobjQuestionDay[i].daycde);
+         objCell = objRow.insertCell(0);
+         objCell.colSpan = 2;
+         if (i == 0 && cobjQuestionDay.length > 1) {
+            objCell.innerHTML = '<a class="clsSelect" onClick="doQuestionUpdate(\''+i+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doQuestionCopy();">Copy</a>&nbsp;-&nbsp;DAY '+cobjQuestionDay[i].daycde;
+         } else {
+            objCell.innerHTML = '<a class="clsSelect" onClick="doQuestionUpdate(\''+i+'\');">Update</a>&nbsp;-&nbsp;DAY '+cobjQuestionDay[i].daycde;
+         }
+         objCell.className = 'clsLabelFB';
+         objCell.style.whiteSpace = 'nowrap';
+         for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
+            objRow = objTable.insertRow(-1);
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = 1;
+            if (cobjQuestionDay[i].queary[j].quetyp == '1') {
+               objCell.innerText = 'General Question';
+            } else {
+               objCell.innerText = 'Sample Question';
+            }
+            objCell.className = 'clsLabelFN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(1);
+            objCell.colSpan = 1;
+            objCell.innerText = cobjQuestionDay[i].queary[j].quetxt;
+            objCell.className = 'clsLabelFN';
+         }
+      }
+   }
+   function doQuestionAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+         //check for C1,C2.C3 duplicates
+         //check c1,c2,c3 exist
+      if (document.getElementById('PAN_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDQUE"';
+      strXML = strXML+' TESCDE="'+fixXML(cstrQuestionTestCode)+'"';
+      strXML = strXML+' WEICAL="'+fixXML(document.getElementById('QUE_WeiCalc').options[document.getElementById('QUE_WeiCalc').selectedIndex].value)+'"';
+      strXML = strXML+' WEIBOL="'+fixXML(document.getElementById('QUE_WeiBowl').value)+'"';
+      strXML = strXML+' WEIOFF="'+fixXML(document.getElementById('QUE_WeiOffr').value)+'"';
+      strXML = strXML+' WEIREM="'+fixXML(document.getElementById('QUE_WeiRemn').value)+'"';
+      strXML = strXML+'>';
+      for (var i=0;i<cobjQuestionDay.length;i++) {
+         strXML = strXML+'<DAY DAYCDE="'+cobjQuestionDay[i].daycde+'">';
+         for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
+            strXML = strXML+'<QUESTION QUECDE="'+cobjQuestionDay[i].queary[j].quecde+'" QUETYP="'+cobjQuestionDay[i].queary[j].quetyp+'"/>';
+         }
+         strXML = strXML+'</DAY>';
+      }
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestQuestionAccept(\''+strXML+'\');',10);
+   }
+   function requestQuestionAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_question_update.asp',function(strResponse) {checkQuestionAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkQuestionAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+   function doQuestionCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
+   }
+   function doQuestionSelect(strTarget) {
+      if (!processForm()) {return;}
+      cstrQuestionTarget = strTarget;
+      startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doQuestionSelectCancel();},function(strCode,strText) {doQuestionSelectAccept(strCode,strText);});
+   }
+   function doQuestionSelectCancel() {
+      displayScreen('dspQuestion');
+      if (cstrQuestionTarget == 'W01') {
+         document.getElementById('QUE_WeiBowl').focus();
+      } else if (cstrQuestionTarget == 'W02') {
+         document.getElementById('QUE_WeiOffr').focus();
+      } else if (cstrQuestionTarget == 'W03') {
+         document.getElementById('QUE_WeiRemn').focus();
+      } else {
+         document.getElementById('tabQuestion').focus();
+      }
+   }
+   function doQuestionSelectAccept(strCode,strText) {
+      displayScreen('dspQuestion');
+      if (cstrQuestionTarget == 'W01') {
+         document.getElementById('QUE_WeiBowl').value = strCode;
+         document.getElementById('QUE_WeiBowl').focus();
+      } else if (cstrQuestionTarget == 'W02') {
+         document.getElementById('QUE_WeiOffr').value = strCode;
+         document.getElementById('QUE_WeiOffr').focus();
+      } else if (cstrQuestionTarget == 'W03') {
+         document.getElementById('WeiRemn').value = strCode;
+         document.getElementById('WeiRemn').focus();
+      } else {
+         //find the row and insert
+         //check for duplicates
+         document.getElementById('tabQuestion').focus();
+      }
+   }
+   function doQuestionUpdate(intRow) {
+      cintQuestionRow = intRow;
+      document.getElementById('subQueDetail').innerText = cstrQuestionTestText+' - Day '+cobjQuestionDay[cintQuestionRow].daycde;
+      displayScreen('dspQueDetail');
+    //  document.getElementById('QDT_GrpText').value = cobjSelectData[cintQuestionRow].grptxt;
+    //  document.getElementById('QDT_GrpPcnt').value = cobjSelectData[cintQuestionRow].grppct;
+    //  document.getElementById('QDT_GrpText').focus();
+   }
+   function doQuestionCopy() {
+      if (confirm('Please confirm the question copy\r\npress OK continue (all Day 1 questions will be copied to all other days and replace existing questions for these days)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
+      var objSrcAry = cobjQuestionDay[0].queary;
+      var objTarAry;
+      for (var i=1;i<cobjQuestionDay.length;i++) {
+         objTarAry = cobjQuestionDay[i].queary;
+         objTarAry.length = 0;
+         for (var j=0;j<objSrcAry.length;j++) {
+            objTarAry[j] = new clsQueData(objSrcAry[j].quecde,objSrcAry[j].quetyp,objSrcAry[j].quetxt);
+         }
+      }
+      loadQuestionData();
+   }
+   ///////////////////////////////
+   // Question Detail Functions //
+   ///////////////////////////////
+
+   function doQueDetailAdd() {
+      cstrResponseMode = '*ADD';
+      var objResText = document.getElementById('RES_ResText');
+      var strValue = '';
+      objResText.value = strValue;
+      displayScreen('dspResponse');
+      objResText.focus();
+   }
+   function doQueDetailUpdate() {
+      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
+         alert('Value must be selected for update');
+         return;
+      }
+      cstrResponseMode = '*UPD';
+      var objResValu = document.getElementById('DEF_ResValu');
+      var objResText = document.getElementById('RES_ResText');
+      cintResponseIndx = objResValu.selectedIndex;
+      var strValue = objResValu.options[cintResponseIndx].value;
+      objResText.value = strValue;
+      displayScreen('dspResponse');
+      objResText.focus();
+   }
+   function doQueDetailDelete() {
+      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
+         alert('Value must be selected for delete');
+         return;
+      }
+      var objResValu = document.getElementById('DEF_ResValu');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == false) {
+            objWork[intIndex] = objResValu[i];
+            intIndex++;
+         }
+      }
+      objResValu.options.length = 0;
+      objResValu.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objResValu.options[i] = objWork[i];
+         objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+      }
+   }
+   function doQueDetailSortUp() {
+      var intIndex;
+      var intSelect;
+      var objResValu = document.getElementById('DEF_ResValu');
+      intSelect = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one value can be selected to move up');
+         return;
+      }
+      if (intSelect == 1 && intIndex > 0) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objResValu.options[intIndex-1].value;
+         aryA[1] = objResValu.options[intIndex-1].text;
+         aryB[0] = objResValu.options[intIndex].value;
+         aryB[1] = objResValu.options[intIndex].text;
+         objResValu.options[intIndex-1].value = aryB[0];
+         objResValu.options[intIndex-1].text = aryB[1];
+         objResValu.options[intIndex-1].selected = true;
+         objResValu.options[intIndex].value = aryA[0];
+         objResValu.options[intIndex].text = aryA[1];
+         objResValu.options[intIndex].selected = false;
+         for (var i=0;i<objResValu.length;i++) {
+            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+         }
+      }
+   }
+   function doQueDetailSortDown() {
+      var intIndex;
+      var intSelect;
+      var objResValu = document.getElementById('DEF_ResValu');
+      intSelect = 0;
+      for (var i=0;i<objResValu.options.length;i++) {
+         if (objResValu.options[i].selected == true) {
+            intSelect++;
+            intIndex = i;
+         }
+      }
+      if (intSelect > 1) {
+         alert('Only one item can be selected to move down');
+         return;
+      }
+      if (intSelect == 1 && intIndex < objResValu.options.length-1) {
+         var aryA = new Array();
+         var aryB = new Array();
+         aryA[0] = objResValu.options[intIndex+1].value;
+         aryA[1] = objResValu.options[intIndex+1].text;
+         aryB[0] = objResValu.options[intIndex].value;
+         aryB[1] = objResValu.options[intIndex].text;
+         objResValu.options[intIndex+1].value = aryB[0];
+         objResValu.options[intIndex+1].text = aryB[1];
+         objResValu.options[intIndex+1].selected = true;
+         objResValu.options[intIndex].value = aryA[0];
+         objResValu.options[intIndex].text = aryA[1];
+         objResValu.options[intIndex].selected = false;
+         for (var i=0;i<objResValu.length;i++) {
+            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+         }
+      }
+   }
+
+   function doQueDetailCancel() {
+      displayScreen('dspQuestion');
+   }
+   function doQueDetailAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+     // if (document.getElementById('SGR_GrpText').value == '') {
+     //    if (strMessage != '') {strMessage = strMessage + '\r\n';}
+     //    strMessage = strMessage + 'Selection group text must be entered';
+     // }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      displayScreen('dspQuestion');
+   }
+
+   //////////////////////
+   // Sample Functions //
+   //////////////////////
+   var cstrSampleTestCode;
+   var cstrSampleTestText;
+   function requestSampleUpdate(strCode) {
+      cstrSampleTestCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETSAM" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_sample_retrieve.asp',function(strResponse) {checkSampleUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkSampleUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               cstrSampleTestText = objElements[i].getAttribute('TESTXT');
+            } else if (objElements[i].nodeName == 'SAMPLE') {
+               document.getElementById('SAM_MemCount').value = objElements[i].getAttribute('MEMCNT');
+               document.getElementById('SAM_ResCount').value = objElements[i].getAttribute('RESCNT');
+            }
+         }
+         displayScreen('dspSample');
+         document.getElementById('subQuestion').innerText = cstrSampleTestText;
+         document.getElementById('tabSample').focus();
+      }
+   }
+   function doSampleAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PAN_MemCount').value < 1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Member count must be entered';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDSAM"';
+      strXML = strXML+' TESCDE="'+fixXML(cstrSampleTestCode)+'"';
+      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
+      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
+      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+'>';
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestSampleAccept(\''+strXML+'\');',10);
+   }
+   function requestSampleAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_sample_update.asp',function(strResponse) {checkSampleAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkSampleAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspDefine');
+         document.getElementById('DEF_TesText').focus();
+      }
+   }
+   function doSampleCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('DEF_TesText').focus();
+   }
+   function doQuestionSelect(strTarget) {
+      if (!processForm()) {return;}
+      cstrQuestionTarget = strTarget;
+      startSchInstance('*QUESTION','Question','pts_sam_search.asp',function() {doQuestionSelectCancel();},function(strCode,strText) {doQuestionSelectAccept(strCode,strText);});
+   }
+   function doSampleSelectCancel() {
+      displayScreen('dspDefine');
+      document.getElementById('tabSample').focus();
+   }
+   function doSampleSelectAccept(strCode,strText) {
+      //find the row and insert
+      //check for duplicates
+      document.getElementById('tabSample').focus();
+      displayScreen('dspSample');
+   }
+
    /////////////////////
    // Panel Functions //
    /////////////////////
@@ -732,357 +1207,6 @@ sub PaintFunction()%>
          putSltData(objElements);
          document.getElementById('tabSltRule').focus();
       }
-   }
-
-   ////////////////////////
-   // Question Functions //
-   ////////////////////////
-   var cstrQuestionTest;
-   var cstrQuestionTarget;
-   var cintQuestionRow;
-   var cobjQuestionDay;
-   function clsQueDay() {
-      this.daycde = '';
-      this.queary = new Array();
-   }
-   function clsQueData(strQueCde,strQueTyp,strQueTxt) {
-      this.quecde = strQueCde;
-      this.quetyp = strQueTyp;
-      this.quetxt = strQueTxt;
-   }
-   function requestQuestionUpdate(strCode) {
-      cstrQuestionTest = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVQUE" TESCDE="'+strCode+'"/>';
-      doPostRequest('<%=strBase%>pts_tes_config_question.asp',function(strResponse) {checkQuestionUpdate(strResponse);},false,streamXML(strXML));
-   }
-   function checkQuestionUpdate(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-            }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
-         }
-         cobjQuestionDay = new Array();
-         var intIndex = -1;
-         var strWeiCalc;
-         var objWeiCalc = document.getElementById('QUE_WeiCalc');
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'TEST') {
-               document.getElementById('subQuestion').innerText = objElements[i].getAttribute('TESTXT');
-               strWeiCalc = objElements[i].getAttribute('WEICAL');
-               document.getElementById('QUE_WeiBowl').value = objElements[i].getAttribute('WEIBOL');
-               document.getElementById('QUE_WeiOffr').value = objElements[i].getAttribute('WEIOFF');
-               document.getElementById('QUE_WeiRemn').value = objElements[i].getAttribute('WEIREM');
-            } else if (objElements[i].nodeName == 'DAY') {
-               intIndex++;
-               cobjQuestionDay[intIndex] = new clsQueDay();
-               cobjQuestionDay[intIndex].daycde = objElements[i].getAttribute('DAYCDE');
-            } else if (objElements[i].nodeName == 'QUESTION') {
-               cobjQuestionDay[intIndex].queary[cobjQuestionDay[intIndex].queary.length] = new clsQueData(objElements[i].getAttribute('QUECDE'),objElements[i].getAttribute('QUETYP'),objElements[i].getAttribute('QUETXT'));
-            }
-         }
-         objWeiCalc.selectedIndex = -1;
-         for (var i=0;i<objWeiCalc.length;i++) {
-            if (objWeiCalc.options[i].value == strWeiCalc) {
-               objWeiCalc.options[i].selected = true;
-               break;
-            }
-         }
-         var objTable = document.getElementById('tabQuestion');
-         var objRow;
-         var objCell;
-         for (var i=objTable.rows.length-1;i>=0;i--) {
-            objTable.deleteRow(i);
-         }
-         for (var i=0;i<cobjQuestionDay.length;i++) {
-            objRow = objTable.insertRow(-1);
-            objRow.setAttribute('daycde',cobjQuestionDay[i].daycde);
-            objCell = objRow.insertCell(0);
-            objCell.colSpan = 1;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doQuestionUpdate(\''+objRow.rowIndex+'\');">Update</a>';
-            objCell.className = 'clsLabelFN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell = objRow.insertCell(1);
-            objCell.colSpan = 2;
-            objCell.innerText = 'DAY '+cobjQuestionDay[i].daycde;
-            objCell.className = 'clsLabelFB';
-            objCell.style.whiteSpace = 'nowrap';
-            for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
-               objRow = objTable.insertRow(-1);
-               objCell = objRow.insertCell(0);
-               objCell.colSpan = 1;
-               objCell.innerHTML = '';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(1);
-               objCell.colSpan = 1;
-               if (cobjQuestionDay[i].queary[j].quetyp == '1') {
-                  objCell.innerText = 'General Question';
-               } else {
-                  objCell.innerText = 'Sample Question';
-               }
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(2);
-               objCell.colSpan = 1;
-               objCell.innerText = cobjQuestionDay[i].queary[j].quetxt;
-               objCell.className = 'clsLabelFN';
-            }
-         }
-         displayScreen('dspQuestion');
-         document.getElementById('QUE_WeiCalc').focus();
-      }
-   }
-   function doQuestionAccept() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-         //check for C1,C2.C3 duplicates
-         //check c1,c2,c3 exist
-      if (document.getElementById('PAN_MemCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Member count must be entered';
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION="*UPDQUE"';
-      strXML = strXML+' TESCDE="'+fixXML(cstrQuestionTest)+'"';
-      strXML = strXML+' WEICAL="'+fixXML(document.getElementById('QUE_WeiCalc').options[document.getElementById('QUE_WeiCalc').selectedIndex].value)+'"';
-      strXML = strXML+' WEIBOL="'+fixXML(document.getElementById('QUE_WeiBowl').value)+'"';
-      strXML = strXML+' WEIOFF="'+fixXML(document.getElementById('QUE_WeiOffr').value)+'"';
-      strXML = strXML+' WEIREM="'+fixXML(document.getElementById('QUE_WeiRemn').value)+'"';
-      strXML = strXML+'>';
-      for (var i=0;i<cobjQuestionDay.length;i++) {
-         strXML = strXML+'<DAY DAYCDE="'+cobjQuestionDay[i].daycde+'">';
-         for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
-            strXML = strXML+'<QUESTION QUECDE="'+cobjQuestionDay[i].queary[j].quecde+'" QUETYP="'+cobjQuestionDay[i].queary[j].quetyp+'"/>';
-         }
-         strXML = strXML+'</DAY>';
-      }
-      strXML = strXML+'</PTS_REQUEST>';
-      doActivityStart(document.body);
-      window.setTimeout('requestQuestionAccept(\''+strXML+'\');',10);
-   }
-   function requestQuestionAccept(strXML) {
-      doPostRequest('<%=strBase%>pts_tes_config_question.asp',function(strResponse) {checkQuestionAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkQuestionAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-         }
-         displayScreen('dspDefine');
-         document.getElementById('DEF_TesText').focus();
-      }
-   }
-   function doQuestionCancel() {
-      displayScreen('dspDefine');
-      document.getElementById('DEF_TesText').focus();
-   }
-   function doQuestionSelect(strTarget) {
-      if (!processForm()) {return;}
-      cstrQuestionTarget = strTarget;
-      startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doQuestionSelectCancel();},function(strCode,strText) {doQuestionSelectAccept(strCode,strText);});
-   }
-   function doQuestionSelectCancel() {
-      displayScreen('dspQuestion');
-      if (cstrQuestionTarget == 'W01') {
-         document.getElementById('QUE_WeiBowl').focus();
-      } else if (cstrQuestionTarget == 'W02') {
-         document.getElementById('QUE_WeiOffr').focus();
-      } else if (cstrQuestionTarget == 'W03') {
-         document.getElementById('QUE_WeiRemn').focus();
-      } else {
-         document.getElementById('tabQuestion').focus();
-      }
-   }
-   function doQuestionSelectAccept(strCode,strText) {
-      if (cstrQuestionTarget == 'W01') {
-         document.getElementById('QUE_WeiBowl').value = strCode;
-         document.getElementById('QUE_WeiBowl').focus();
-      } else if (cstrQuestionTarget == 'W02') {
-         document.getElementById('QUE_WeiOffr').value = strCode;
-         document.getElementById('QUE_WeiOffr').focus();
-      } else if (cstrQuestionTarget == 'W03') {
-         document.getElementById('WeiRemn').value = strCode;
-         document.getElementById('WeiRemn').focus();
-      } else {
-         //find the row and insert
-         //check for duplicates
-         document.getElementById('tabQuestion').focus();
-      }
-      displayScreen('dspQuestion');
-   }
-   function doQuestionCopy() {
-      //copy the questions to all other days
-   }
-   function doQuestionUpdate(intRow) {
-      var objTable = document.getElementById('tabQuestion');
-      cintQuestionRow = intRow;
-      displayScreen('dspQueDetail');
-    //  document.getElementById('QDT_GrpText').value = cobjSelectData[cintSelectRow].grptxt;
-    //  document.getElementById('QDT_GrpPcnt').value = cobjSelectData[cintSelectRow].grppct;
-    //  document.getElementById('QDT_GrpText').focus();
-   }
-   ///////////////////////////////
-   // Question Detail Functions //
-   ///////////////////////////////
-   function doQueDetailCancel() {
-      displayScreen('dspQuestion');
-   }
-   function doQueDetailAccept() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-     // if (document.getElementById('SGR_GrpText').value == '') {
-     //    if (strMessage != '') {strMessage = strMessage + '\r\n';}
-     //    strMessage = strMessage + 'Selection group text must be entered';
-     // }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      displayScreen('dspQuestion');
-   }
-
-
-   //////////////////////
-   // Sample Functions //
-   //////////////////////
-   var cstrSampleTest;
-   function requestSampleUpdate(strCode) {
-      cstrSampleTest = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETSAM" TESCDE="'+strCode+'"/>';
-      doPostRequest('<%=strBase%>pts_tes_config_sample.asp',function(strResponse) {checkSampleUpdate(strResponse);},false,streamXML(strXML));
-   }
-   function checkSampleUpdate(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-            }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
-         }
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'TEST') {
-               document.getElementById('subQuestion').innerText = objElements[i].getAttribute('TESTXT');
-            } else if (objElements[i].nodeName == 'SAMPLE') {
-               document.getElementById('SAM_MemCount').value = objElements[i].getAttribute('MEMCNT');
-               document.getElementById('SAM_ResCount').value = objElements[i].getAttribute('RESCNT');
-            }
-         }
-         displayScreen('dspSample');
-         document.getElementById('tabSample').focus();
-      }
-   }
-   function doSampleAccept() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-      if (document.getElementById('PAN_MemCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Member count must be entered';
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION="*UPDSAM"';
-      strXML = strXML+' TESCDE="'+fixXML(cstrSampleTest)+'"';
-      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
-      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
-      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
-      strXML = strXML+'>';
-      strXML = strXML+'</PTS_REQUEST>';
-      doActivityStart(document.body);
-      window.setTimeout('requestSampleAccept(\''+strXML+'\');',10);
-   }
-   function requestSampleAccept(strXML) {
-      doPostRequest('<%=strBase%>pts_tes_config_sample.asp',function(strResponse) {checkSampleAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkSampleAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-         }
-         displayScreen('dspDefine');
-         document.getElementById('DEF_TesText').focus();
-      }
-   }
-   function doSampleCancel() {
-      displayScreen('dspDefine');
-      document.getElementById('DEF_TesText').focus();
-   }
-   function doQuestionSelect(strTarget) {
-      if (!processForm()) {return;}
-      cstrQuestionTarget = strTarget;
-      startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doQuestionSelectCancel();},function(strCode,strText) {doQuestionSelectAccept(strCode,strText);});
-   }
-   function doSampleSelectCancel() {
-      displayScreen('dspDefine');
-      document.getElementById('tabSample').focus();
-   }
-   function doSampleSelectAccept(strCode,strText) {
-      //find the row and insert
-      //check for duplicates
-      document.getElementById('tabSample').focus();
-      displayScreen('dspSample');
    }
 // -->
 </script>
@@ -1288,7 +1412,7 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="DEF_TesKwrd" name="DEF_TesKwrd" style="width:200px" multiple size=5></select>
+                     <select class="clsInputBN" id="DEF_TesKwrd" name="DEF_TesKwrd" style="width:200px" size=5></select>
                   </nobr></td>
                </tr>
             </table>
@@ -1314,9 +1438,6 @@ sub PaintFunction()%>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedKeyword" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Keyword Maintenance</nobr></td>
-      </tr>
-      <tr>
-         <td id="subKeyword" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -1369,7 +1490,7 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiBowl" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);doBlurQuestion('W01');"></nobr></td>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiBowl" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
@@ -1385,7 +1506,7 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiOffr" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);doBlurQuestion('W02');"></nobr></td>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiOffr" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
@@ -1401,7 +1522,7 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiRemn" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);doBlurQuestion('W03');"></select></nobr></td>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiRemn" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></select></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
@@ -1435,7 +1556,7 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspQueDetail" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSampleAccept();}">
+   <table id="dspQueDetail" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doQueDetailAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedQueDetail" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Question Detail</nobr></td>
@@ -1446,7 +1567,63 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_QueCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=left colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
+                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQuestionSelect('ADD');">&nbsp;Select&nbsp;</a></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="QUE_QueType">
+               <option value="1" selected>General
+               <option value="2">Sample
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=left cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQueDetailAdd();">&nbsp;Add&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQueDetailDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
+            <table align=left cols=2 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="QUE_QueList" name="QUE_QueList" style="width:600px" multiple size=20></select>
+                  </nobr></td>
+                  <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
+                        <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="doQueDetailSortUp();"></nobr></td></tr>
+                        <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="doQueDetailSortDown();"></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
@@ -1500,7 +1677,7 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspSamDetail" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSampleAccept();}">
+   <table id="dspSamDetail" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSamDetailAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedSamDetail" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Sample Detail</nobr></td>
