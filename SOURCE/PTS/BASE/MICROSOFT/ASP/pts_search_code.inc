@@ -90,6 +90,8 @@
          }
          loadSchData();
       }
+      document.getElementById('tabSchRule').scrollTop = 0;
+      document.getElementById('tabSchRule').scrollLeft = 0;
       displayScreen('dspSchRule');
    }
    function loadSchData() {
