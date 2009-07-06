@@ -29,8 +29,10 @@ create or replace package pts_app.pts_tes_function as
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    function retrieve_question return pts_xml_type pipelined;
+   function select_question return pts_xml_type pipelined;
    procedure update_question(par_user in varchar2);
    function retrieve_sample return pts_xml_type pipelined;
+   function select_sample return pts_xml_type pipelined;
    procedure update_sample(par_user in varchar2);
    function retrieve_panel return pts_xml_type pipelined;
    function retrieve_template return pts_xml_type pipelined;
@@ -525,6 +527,7 @@ create or replace package body pts_app.pts_tes_function as
       obj_key_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
+      var_cpy_code number;
       rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_keyword pts_tes_keyword%rowtype;
 
@@ -584,6 +587,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
+      var_cpy_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@CPYCDE'));
       rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
       rcd_pts_tes_definition.tde_tes_title := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESTIT'));
       rcd_pts_tes_definition.tde_com_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@COMCDE'));
@@ -607,6 +611,10 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pts_tes_definition.tde_req_mem_count := 0;
       rcd_pts_tes_definition.tde_req_res_count := 0;
       rcd_pts_tes_definition.tde_hou_pet_multi := '0';
+      rcd_pts_tes_definition.tde_wgt_que_calc := '0';
+      rcd_pts_tes_definition.tde_wgt_que_bowl := null;
+      rcd_pts_tes_definition.tde_wgt_que_offer := null;
+      rcd_pts_tes_definition.tde_wgt_que_remain := null;
       if rcd_pts_tes_definition.tde_tes_code is null and not(xslProcessor.valueOf(obj_pts_request,'@TESCDE') = '*NEW') then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
@@ -729,6 +737,11 @@ create or replace package body pts_app.pts_tes_function as
          delete from pts_tes_keyword where tke_tes_code = rcd_pts_tes_definition.tde_tes_code;
          if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
             delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            if rcd_pts_tes_definition.tde_tes_sam_count > 1 then
+         --      delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code and tqu_day_code > rcd_pts_tes_definition.tde_tes_sam_count;
+         --      delete from pts_tes_sample where tsa_tes_code = rcd_pts_tes_definition.tde_tes_code and tqu_day_code
+            end if;
+
          end if;
       else
          var_confirm := 'created';
@@ -747,6 +760,71 @@ create or replace package body pts_app.pts_tes_function as
          rcd_pts_tes_keyword.tke_key_word := pts_from_xml(xslProcessor.valueOf(obj_key_node,'@KEYWRD'));
          insert into pts_tes_keyword values rcd_pts_tes_keyword;
       end loop;
+
+      /*-*/
+      /* Copy the test data when required
+      /*-*/
+      if not(var_cpy_code is null) and var_confirm = 'created' then
+         insert into pts_tes_question
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tqu_day_code,
+                   tqu_que_code,
+                   tqu_que_type,
+                   tqu_dsp_seqn
+              from pts_tes_question
+             where tqu_tes_code = var_cpy_code
+               and tqu_day_code <= rcd_pts_tes_definition.tde_tes_day_count;
+         insert into pts_tes_sample
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tsa_sam_code,
+                   tsa_rpt_code,
+                   tsa_mkt_code,
+                   tsa_mkt_acde,
+                   tsa_sam_iden 
+              from pts_tes_sample
+             where tsa_tes_code = var_cpy_code;
+         insert into pts_tes_feeding
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tfe_sam_code,
+                   tfe_pet_size,
+                   tfe_fed_qnty,
+                   tfe_fed_text
+              from pts_tes_feeding
+             where tfe_tes_code = var_cpy_code;
+         insert into pts_tes_group
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tgr_sel_group,
+                   tgr_sel_text,
+                   tgr_sel_pcnt,
+                   0,
+                   0,
+                   0,
+                   0
+              from pts_tes_group
+             where tgr_tes_code = var_cpy_code;
+         insert into pts_tes_rule
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tru_sel_group,
+                   tru_tab_code,
+                   tru_fld_code,
+                   tru_rul_code
+              from pts_tes_rule
+             where tru_tes_code = var_cpy_code;
+         insert into pts_tes_value
+            select rcd_pts_tes_definition.tde_tes_code,
+                   tva_sel_group,
+                   tva_tab_code,
+                   tva_fld_code,
+                   tva_val_code,
+                   tva_val_text,
+                   tva_val_pcnt,
+                   0,
+                   0,
+                   0,
+                   0
+              from pts_tes_rule
+             where tva_tes_code = var_cpy_code;
+      end if;
 
       /*-*/
       /* Free the XML document
@@ -801,7 +879,6 @@ create or replace package body pts_app.pts_tes_function as
       var_action varchar2(32);
       var_tes_code number;
       var_day_code number;
-      var_target varchar2(64);
       var_found boolean;
 
       /*-*/
@@ -937,6 +1014,131 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end retrieve_question;
+
+   /*******************************************************/
+   /* This procedure performs the select question routine */
+   /*******************************************************/
+   function select_question return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_que_code number;
+      var_que_type varchar2(1);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_question is
+         select t01.*
+           from pts_que_definition t01
+          where t01.qde_que_code = var_que_code;
+      rcd_question csr_question%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*SELQUE' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_que_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@QUECDE'));
+      var_que_type := pts_to_xml(xslProcessor.valueOf(obj_pts_request,'@QUETYP'));
+      if var_que_code is null then
+         pts_gen_function.add_mesg_data('Question code ('||xslProcessor.valueOf(obj_pts_request,'@QUECDE')||') must be a number');
+      end if;
+      if var_que_type is null then
+         pts_gen_function.add_mesg_data('Question type ('||xslProcessor.valueOf(obj_pts_request,'@QUETYP')||') must be a specified');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the question
+      /*-*/
+      var_found := false;
+      open csr_question;
+      fetch csr_question into rcd_question;
+      if csr_question%found then
+         var_found := true;
+      end if;
+      close csr_question;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Question ('||to_char(var_que_code)||') does not exist');
+      end if;
+      if rcd_question.qde_que_status != 1 then
+         pts_gen_function.add_mesg_data('Question code (' || to_char(var_que_code) || ') must be active');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the question xml
+      /*-*/
+      pipe row(pts_xml_object('<QUESTION QUECDE="'||to_char(rcd_question.qde_que_code)||'" QUETYP="'||pts_to_xml(var_que_type)||'" QUETXT="('||to_char(rcd_question.qde_que_code)||') '||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - SELECT_QUESTION - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_question;
 
    /*******************************************************/
    /* This procedure performs the update question routine */
@@ -1156,13 +1358,15 @@ create or replace package body pts_app.pts_tes_function as
          select t01.*,
                 t02.sde_sam_text,
                 t02.sde_uom_size,
-                t03.val_text as uom_text
+                t03.sva_val_text as uom_text
            from pts_tes_sample t01,
                 pts_sam_definition t02,
-                table(pts_app.pts_gen_function.list_class('*SAM_DEF',4)) t03
+                pts_sys_value t03
           where t01.tsa_sam_code = t02.sde_sam_code
-            and t02.sde_uom_code = t03.val_code
+            and t02.sde_uom_code = t03.sva_val_code
             and t01.tsa_tes_code = var_tes_code
+            and t03.sva_tab_code = upper('*SAM_DEF')
+            and t03.sva_fld_code = 4
           order by t01.tsa_sam_code asc;
       rcd_sample csr_sample%rowtype;
 
@@ -1256,7 +1460,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_sample%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<SAMPLE SAMCDE="'||to_char(rcd_sample.tsa_sam_code)||'" SAMTXT="('||to_char(rcd_sample.tsa_sam_code)||') '||pts_to_xml(rcd_sample.sde_sam_text)||'" RPTCDE="'||pts_to_xml(rcd_sample.tsa_rpt_code)||'" MKTCDE="'||pts_to_xml(rcd_sample.tsa_mkt_code)||'" ALSCDE="'||pts_to_xml(rcd_sample.tsa_mkt_acde)||'" SAMIDE="'||pts_to_xml(rcd_sample.tsa_sam_iden)||'" UOMTXT="'||pts_to_xml(rcd_sample.uom_text)||'" SAMIDE="'||to_char(rcd_sample.sde_uom_size)||'"/>'));
+         pipe row(pts_xml_object('<SAMPLE SAMCDE="'||to_char(rcd_sample.tsa_sam_code)||'" SAMTXT="('||to_char(rcd_sample.tsa_sam_code)||') '||pts_to_xml(rcd_sample.sde_sam_text||' - '||to_char(rcd_sample.sde_uom_size)||' '||rcd_sample.uom_text)||'" RPTCDE="'||pts_to_xml(rcd_sample.tsa_rpt_code)||'" MKTCDE="'||pts_to_xml(rcd_sample.tsa_mkt_code)||'" ALSCDE="'||pts_to_xml(rcd_sample.tsa_mkt_acde)||'" SAMIDE="'||pts_to_xml(rcd_sample.tsa_sam_iden)||'"/>'));
          open csr_size;
          loop
             fetch csr_size into rcd_size;
@@ -1270,7 +1474,7 @@ create or replace package body pts_app.pts_tes_function as
                rcd_feeding.tfe_fed_text := null;
             end if;
             close csr_feeding;
-            pipe row(pts_xml_object('<FEEDING PETSIZ="'||to_char(rcd_size.val_code)||'" SIZTXT="'||pts_to_xml(rcd_size.val_text)||'" FEDQTY="'||to_char(rcd_feeding.tfe_fed_qnty)||'" FEDTXT="'||pts_to_xml(rcd_feeding.tfe_fed_text)||'"/>'));
+            pipe row(pts_xml_object('<FEEDING SIZCDE="'||to_char(rcd_size.val_code)||'" SIZTXT="'||pts_to_xml(rcd_size.val_text)||'" FEDQTY="'||to_char(rcd_feeding.tfe_fed_qnty)||'" FEDTXT="'||pts_to_xml(rcd_feeding.tfe_fed_text)||'"/>'));
          end loop;
          close csr_size;
       end loop;
@@ -1305,6 +1509,160 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end retrieve_sample;
+
+   /*****************************************************/
+   /* This procedure performs the select sample routine */
+   /*****************************************************/
+   function select_sample return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_sam_code number;
+      var_rpt_code varchar2(32);
+      var_mkt_code varchar2(32);
+      var_als_code varchar2(32);
+      var_sam_iden varchar2(32);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_sample is
+         select t01.*,
+                t02.sva_val_text as uom_text
+           from pts_sam_definition t01,
+                pts_sys_value t02
+          where t01.sde_uom_code = t02.sva_val_code(+)
+            and t01.sde_sam_code = var_sam_code
+            and t02.sva_tab_code = upper('*SAM_DEF')
+            and t02.sva_fld_code = 4;
+      rcd_sample csr_sample%rowtype;
+
+      cursor csr_size is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_class('*PET_CLA',8)) t01
+          order by t01.val_code asc;
+      rcd_size csr_size%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*SELSAM' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_sam_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@SAMCDE'));
+      var_rpt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@RPTCDE'))));
+      var_mkt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@MKTCDE'))));
+      var_als_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@ALSCDE'))));
+      var_sam_iden := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@SAMIDE'))));
+      if var_sam_code is null then
+         pts_gen_function.add_mesg_data('Sample code ('||xslProcessor.valueOf(obj_pts_request,'@SAMCDE')||') must be a number');
+      end if;
+      if var_rpt_code is null then
+         pts_gen_function.add_mesg_data('Report code must be a entered');
+      end if;
+      if var_mkt_code is null then
+         pts_gen_function.add_mesg_data('Market research code must be a entered');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the sample
+      /*-*/
+      var_found := false;
+      open csr_sample;
+      fetch csr_sample into rcd_sample;
+      if csr_sample%found then
+         var_found := true;
+      end if;
+      close csr_sample;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Sample ('||to_char(var_sam_code)||') does not exist');
+      end if;
+      if rcd_sample.sde_sam_status != 1 then
+         pts_gen_function.add_mesg_data('Question code (' || to_char(var_sam_code) || ') must be active');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the sample xml
+      /*-*/
+      pipe row(pts_xml_object('<SAMPLE SAMCDE="'||to_char(rcd_sample.sde_sam_code)||'" SAMTXT="('||to_char(rcd_sample.sde_sam_code)||') '||pts_to_xml(rcd_sample.sde_sam_text||' - '||to_char(rcd_sample.sde_uom_size)||' '||rcd_sample.uom_text)||'" RPTCDE="'||pts_to_xml(var_rpt_code)||'" MKTCDE="'||pts_to_xml(var_mkt_code)||'" ALSCDE="'||pts_to_xml(var_als_code)||'" SAMIDE="'||pts_to_xml(var_sam_iden)||'"/>'));
+      open csr_size;
+      loop
+         fetch csr_size into rcd_size;
+         if csr_size%notfound then
+            exit;
+         end if;
+         pipe row(pts_xml_object('<FEEDING SIZCDE="'||to_char(rcd_size.val_code)||'" SIZTXT="'||pts_to_xml(rcd_size.val_text)||'" FEDQTY="" FEDTXT=""/>'));
+      end loop;      
+      close csr_size;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - SELECT_SAMPLE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_sample;
 
    /*****************************************************/
    /* This procedure performs the update sample routine */
@@ -1409,17 +1767,20 @@ create or replace package body pts_app.pts_tes_function as
          obj_sam_node := xmlDom.item(obj_sam_list,idx);
          rcd_pts_tes_sample.tsa_tes_code := var_tes_code;
          rcd_pts_tes_sample.tsa_sam_code := pts_to_number(xslProcessor.valueOf(obj_sam_node,'@SAMCDE'));
-         rcd_pts_tes_sample.tsa_rpt_code := pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@RPTCDE'));
-         rcd_pts_tes_sample.tsa_mkt_code := pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@MKTCDE'));
-         rcd_pts_tes_sample.tsa_mkt_acde := pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@ALSCDE'));
-         rcd_pts_tes_sample.tsa_sam_iden := pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@SAMIDE'));
+         rcd_pts_tes_sample.tsa_rpt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@RPTCDE'))));
+         rcd_pts_tes_sample.tsa_mkt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@MKTCDE'))));
+         rcd_pts_tes_sample.tsa_mkt_acde := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@ALSCDE'))));
+         rcd_pts_tes_sample.tsa_sam_iden := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@SAMIDE'))));
+         if rcd_pts_tes_sample.tsa_mkt_acde is null then
+            rcd_pts_tes_sample.tsa_mkt_acde := rcd_pts_tes_sample.tsa_mkt_code;
+         end if;
          insert into pts_tes_sample values rcd_pts_tes_sample;
          obj_fed_list := xslProcessor.selectNodes(obj_sam_node,'FEEDING');
          for idz in 0..xmlDom.getLength(obj_fed_list)-1 loop
             obj_fed_node := xmlDom.item(obj_fed_list,idz);
             rcd_pts_tes_feeding.tfe_tes_code := rcd_pts_tes_sample.tsa_tes_code;
             rcd_pts_tes_feeding.tfe_sam_code := rcd_pts_tes_sample.tsa_sam_code;
-            rcd_pts_tes_feeding.tfe_pet_size := pts_to_number(xslProcessor.valueOf(obj_fed_node,'@PETSIZ'));
+            rcd_pts_tes_feeding.tfe_pet_size := pts_to_number(xslProcessor.valueOf(obj_fed_node,'@SIZCDE'));
             rcd_pts_tes_feeding.tfe_fed_qnty := pts_to_number(xslProcessor.valueOf(obj_fed_node,'@FEDQTY'));
             rcd_pts_tes_feeding.tfe_fed_text := pts_from_xml(xslProcessor.valueOf(obj_fed_node,'@FEDTXT'));
          end loop;
