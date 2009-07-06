@@ -1147,7 +1147,7 @@ sub PaintFunction()%>
                objCell.innerHTML = objCell.innerHTML+' - Feed Quantity ('+cobjSampleData[i].sizary[j].fedqty+')';
             }
             if (cobjSampleData[i].sizary[j].fedtxt != '') {
-               objCell.innerHTML = objCell.innerHTML+' - Feed Comment ('+cobjSampleData[i].sizary[j].fedtxt+')';
+               objCell.innerHTML = objCell.innerHTML+' - '+cobjSampleData[i].sizary[j].fedtxt;
             }
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
