@@ -132,8 +132,9 @@ sub PaintFunction()%>
       cobjScreens[4] = new clsScreen('dspQueDetail','hedQueDetail');
       cobjScreens[5] = new clsScreen('dspSample','hedSample');
       cobjScreens[6] = new clsScreen('dspSamDetail','hedSamDetail');
-      cobjScreens[7] = new clsScreen('dspPanel','hedPanel');
-    //  cobjScreens[8] = new clsScreen('dspAllocation','hedAllocation');
+      cobjScreens[7] = new clsScreen('dspSamSize','hedSamSize');
+      cobjScreens[8] = new clsScreen('dspPanel','hedPanel');
+    //  cobjScreens[9] = new clsScreen('dspAllocation','hedAllocation');
       cobjScreens[0].hedtxt = 'Test Prompt';
       cobjScreens[1].hedtxt = 'Test Maintenance';
       cobjScreens[2].hedtxt = 'Test Keyword Maintenance';
@@ -141,8 +142,9 @@ sub PaintFunction()%>
       cobjScreens[4].hedtxt = 'Test Question Maintenance';
       cobjScreens[5].hedtxt = 'Test Sample Review';
       cobjScreens[6].hedtxt = 'Test Sample Maintenance';
-      cobjScreens[7].hedtxt = 'Test Panel Selection';
-    //  cobjScreens[8].hedtxt = 'Test Allocation';
+      cobjScreens[7].hedtxt = 'Test Sample Size';
+      cobjScreens[8].hedtxt = 'Test Panel Selection';
+    //  cobjScreens[9].hedtxt = 'Test Allocation';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -224,7 +226,7 @@ sub PaintFunction()%>
       var strMessage = '';
       if (document.getElementById('PRO_TesCode').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Test code must be entered for question selection';
+         strMessage = strMessage + 'Test code must be entered for question maintenancec';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -232,6 +234,20 @@ sub PaintFunction()%>
       }
       doActivityStart(document.body);
       window.setTimeout('requestQuestionUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
+   }
+   function doPromptSample() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for sample maintenance';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestSampleUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
    function doPromptPanel() {
       if (!processForm()) {return;}
@@ -420,6 +436,9 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFTES"';
+      if (cstrDefineMode == '*CPY') {
+         strXML = strXML+' CPYCDE="'+fixXML(cstrDefineCode)+'"';
+      }
       strXML = strXML+' TESCDE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
       strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
       strXML = strXML+' TESCOM="'+fixXML(objTesComp.options[objTesComp.selectedIndex].value)+'"';
@@ -640,6 +659,8 @@ sub PaintFunction()%>
          document.getElementById('subQuestion').innerText = cstrQuestionTestText;
          displayScreen('dspQuestion');
          document.getElementById('QUE_WeiCalc').focus();
+         document.getElementById('divQuestion').scrollTop = 0;
+         document.getElementById('divQuestion').scrollLeft = 0;
       }
    }
    function loadQuestionData() {
@@ -663,7 +684,6 @@ sub PaintFunction()%>
          objCell.style.whiteSpace = 'nowrap';
          for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
             objRow = objTable.insertRow(-1);
-            objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(0);
             objCell.colSpan = 1;
             if (cobjQuestionDay[i].queary[j].quetyp == '1') {
@@ -677,18 +697,13 @@ sub PaintFunction()%>
             objCell.colSpan = 1;
             objCell.innerText = cobjQuestionDay[i].queary[j].quetxt;
             objCell.className = 'clsLabelFN';
+            objCell.style.whiteSpace = 'nowrap';
          }
       }
    }
    function doQuestionAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
-         //check for C1,C2.C3 duplicates
-         //check c1,c2,c3 exist
-      if (document.getElementById('PAN_MemCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Member count must be entered';
-      }
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -704,7 +719,7 @@ sub PaintFunction()%>
       for (var i=0;i<cobjQuestionDay.length;i++) {
          strXML = strXML+'<DAY DAYCDE="'+cobjQuestionDay[i].daycde+'">';
          for (var j=0;j<cobjQuestionDay[i].queary.length;j++) {
-            strXML = strXML+'<QUESTION QUECDE="'+cobjQuestionDay[i].queary[j].quecde+'" QUETYP="'+cobjQuestionDay[i].queary[j].quetyp+'"/>';
+            strXML = strXML+'<QUESTION QUECDE="'+fixXML(cobjQuestionDay[i].queary[j].quecde)+'" QUETYP="'+fixXML(cobjQuestionDay[i].queary[j].quetyp)+'"/>';
          }
          strXML = strXML+'</DAY>';
       }
@@ -737,11 +752,14 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
    function doQuestionCancel() {
+      if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doQuestionSelect(strTarget) {
@@ -772,19 +790,31 @@ sub PaintFunction()%>
       } else if (cstrQuestionTarget == 'W03') {
          document.getElementById('WeiRemn').value = strCode;
          document.getElementById('WeiRemn').focus();
-      } else {
-         //find the row and insert
-         //check for duplicates
-         document.getElementById('tabQuestion').focus();
       }
    }
    function doQuestionUpdate(intRow) {
       cintQuestionRow = intRow;
       document.getElementById('subQueDetail').innerText = cstrQuestionTestText+' - Day '+cobjQuestionDay[cintQuestionRow].daycde;
       displayScreen('dspQueDetail');
-    //  document.getElementById('QDT_GrpText').value = cobjSelectData[cintQuestionRow].grptxt;
-    //  document.getElementById('QDT_GrpPcnt').value = cobjSelectData[cintQuestionRow].grppct;
-    //  document.getElementById('QDT_GrpText').focus();
+      document.getElementById('QUE_QueCode').value = '';
+      document.getElementById('QUE_QueType').selectedIndex = 0;
+      var objQueList = document.getElementById('QUE_QueList');
+      objQueList.options.length = 0;
+      objQueList.selectedIndex = -1;
+      var strText;
+      var objQueAry = cobjQuestionDay[cintQuestionRow].queary;
+      for (var i=0;i<objQueAry.length;i++) {
+         if (objQueAry[i].quetyp == '1') {
+            strText = 'General - '+objQueAry[i].quetxt;
+         } else {
+            strText = 'Sample - '+objQueAry[i].quetxt;
+         }
+         objQueList.options[objQueList.options.length] = new Option(strText,objQueAry[i].quecde);
+         objQueList.options[objQueList.options.length-1].setAttribute('quecde',objQueAry[i].quecde);
+         objQueList.options[objQueList.options.length-1].setAttribute('quetyp',objQueAry[i].quetyp);
+         objQueList.options[objQueList.options.length-1].setAttribute('quetxt',objQueAry[i].quetxt);
+      }
+      objQueList.focus();
    }
    function doQuestionCopy() {
       if (confirm('Please confirm the question copy\r\npress OK continue (all Day 1 questions will be copied to all other days and replace existing questions for these days)\r\npress Cancel to cancel the request') == false) {
@@ -804,131 +834,218 @@ sub PaintFunction()%>
    ///////////////////////////////
    // Question Detail Functions //
    ///////////////////////////////
-
    function doQueDetailAdd() {
-      cstrResponseMode = '*ADD';
-      var objResText = document.getElementById('RES_ResText');
-      var strValue = '';
-      objResText.value = strValue;
-      displayScreen('dspResponse');
-      objResText.focus();
-   }
-   function doQueDetailUpdate() {
-      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
-         alert('Value must be selected for update');
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('QUE_QueCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Question code must be entered';
+      }
+      if (document.getElementById('QUE_QueType').selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Question type must be selected';
+      }
+      var objQueList = document.getElementById('QUE_QueList');
+      for (var i=0;i<objQueList.options.length;i++) {
+         if (objQueList.options[i].getAttribute('quecde') == document.getElementById('QUE_QueCode').value) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Question code already exists in the day';
+            break;
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
          return;
       }
-      cstrResponseMode = '*UPD';
-      var objResValu = document.getElementById('DEF_ResValu');
-      var objResText = document.getElementById('RES_ResText');
-      cintResponseIndx = objResValu.selectedIndex;
-      var strValue = objResValu.options[cintResponseIndx].value;
-      objResText.value = strValue;
-      displayScreen('dspResponse');
-      objResText.focus();
+      var objQueCode = document.getElementById('QUE_QueCode');
+      var objQueType = document.getElementById('QUE_QueType');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*SELQUE"';
+      strXML = strXML+' QUECDE="'+fixXML(objQueCode.value)+'"';
+      strXML = strXML+' QUETYP="'+fixXML(objQueType[objQueType.selectedIndex].value)+'"';
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestQueDetailSelect(\''+strXML+'\');',10);
+   }
+   function requestQueDetailSelect(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_question_select.asp',function(strResponse) {checkQueDetailSelect(strResponse);},false,streamXML(strXML));
+   }
+   function checkQueDetailSelect(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         var strQueCode;
+         var strQueType;
+         var strQueText;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'QUESTION') {
+               strQueCode = objElements[i].getAttribute('QUECDE');
+               strQueType = objElements[i].getAttribute('QUETYP');
+               strQueText = objElements[i].getAttribute('QUETXT');
+            }
+         }
+         var strText
+         if (strQueType == '1') {
+            strText = 'General - '+strQueText;
+         } else {
+            strText = 'Sample - '+strQueText;
+         }
+         var objQueList = document.getElementById('QUE_QueList');
+         objQueList.options[objQueList.options.length] = new Option(strText,strQueCode);
+         objQueList.options[objQueList.options.length-1].setAttribute('quecde',strQueCode);
+         objQueList.options[objQueList.options.length-1].setAttribute('quetyp',strQueType);
+         objQueList.options[objQueList.options.length-1].setAttribute('quetxt',strQueText);
+         objQueList.focus();
+         document.getElementById('QUE_QueCode').value = '';
+         document.getElementById('QUE_QueType').selectedIndex = 0;
+      }
    }
    function doQueDetailDelete() {
-      if (document.getElementById('DEF_ResValu').selectedIndex == -1) {
-         alert('Value must be selected for delete');
+      if (document.getElementById('QUE_QueList').selectedIndex == -1) {
+         alert('Question must be selected for delete');
          return;
       }
-      var objResValu = document.getElementById('DEF_ResValu');
+      var objQueList = document.getElementById('QUE_QueList');
       var objWork = new Array();
       var intIndex = 0;
-      for (var i=0;i<objResValu.options.length;i++) {
-         if (objResValu.options[i].selected == false) {
-            objWork[intIndex] = objResValu[i];
+      for (var i=0;i<objQueList.options.length;i++) {
+         if (objQueList.options[i].selected == false) {
+            objWork[intIndex] = objQueList[i];
             intIndex++;
          }
       }
-      objResValu.options.length = 0;
-      objResValu.selectedIndex = -1;
+      objQueList.options.length = 0;
+      objQueList.selectedIndex = -1;
       for (var i=0;i<objWork.length;i++) {
-         objResValu.options[i] = objWork[i];
-         objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
+         objQueList.options[i] = objWork[i];
       }
    }
    function doQueDetailSortUp() {
       var intIndex;
       var intSelect;
-      var objResValu = document.getElementById('DEF_ResValu');
+      var objQueList = document.getElementById('QUE_QueList');
       intSelect = 0;
-      for (var i=0;i<objResValu.options.length;i++) {
-         if (objResValu.options[i].selected == true) {
+      for (var i=0;i<objQueList.options.length;i++) {
+         if (objQueList.options[i].selected == true) {
             intSelect++;
             intIndex = i;
          }
       }
       if (intSelect > 1) {
-         alert('Only one value can be selected to move up');
+         alert('Only one question can be selected to move up');
          return;
       }
       if (intSelect == 1 && intIndex > 0) {
          var aryA = new Array();
          var aryB = new Array();
-         aryA[0] = objResValu.options[intIndex-1].value;
-         aryA[1] = objResValu.options[intIndex-1].text;
-         aryB[0] = objResValu.options[intIndex].value;
-         aryB[1] = objResValu.options[intIndex].text;
-         objResValu.options[intIndex-1].value = aryB[0];
-         objResValu.options[intIndex-1].text = aryB[1];
-         objResValu.options[intIndex-1].selected = true;
-         objResValu.options[intIndex].value = aryA[0];
-         objResValu.options[intIndex].text = aryA[1];
-         objResValu.options[intIndex].selected = false;
-         for (var i=0;i<objResValu.length;i++) {
-            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
-         }
+         aryA[0] = objQueList.options[intIndex-1].value;
+         aryA[1] = objQueList.options[intIndex-1].text;
+         aryA[2] = objQueList.options[intIndex-1].getAttribute('quecde');
+         aryA[3] = objQueList.options[intIndex-1].getAttribute('quetyp');
+         aryA[4] = objQueList.options[intIndex-1].getAttribute('quetxt');
+         aryB[0] = objQueList.options[intIndex].value;
+         aryB[1] = objQueList.options[intIndex].text;
+         aryB[2] = objQueList.options[intIndex].getAttribute('quecde');
+         aryB[3] = objQueList.options[intIndex].getAttribute('quetyp');
+         aryB[4] = objQueList.options[intIndex].getAttribute('quetxt');
+         objQueList.options[intIndex-1].value = aryB[0];
+         objQueList.options[intIndex-1].text = aryB[1];
+         objQueList.options[intIndex-1].setAttribute('quecde',aryB[2]);
+         objQueList.options[intIndex-1].setAttribute('quetyp',aryB[3]);
+         objQueList.options[intIndex-1].setAttribute('quetxt',aryB[4]);
+         objQueList.options[intIndex-1].selected = true;
+         objQueList.options[intIndex].value = aryA[0];
+         objQueList.options[intIndex].text = aryA[1];
+         objQueList.options[intIndex].setAttribute('quecde',aryA[2]);
+         objQueList.options[intIndex].setAttribute('quetyp',aryA[3]);
+         objQueList.options[intIndex].setAttribute('quetxt',aryA[4]);
+         objQueList.options[intIndex].selected = false;
       }
    }
    function doQueDetailSortDown() {
       var intIndex;
       var intSelect;
-      var objResValu = document.getElementById('DEF_ResValu');
+      var objQueList = document.getElementById('QUE_QueList');
       intSelect = 0;
-      for (var i=0;i<objResValu.options.length;i++) {
-         if (objResValu.options[i].selected == true) {
+      for (var i=0;i<objQueList.options.length;i++) {
+         if (objQueList.options[i].selected == true) {
             intSelect++;
             intIndex = i;
          }
       }
       if (intSelect > 1) {
-         alert('Only one item can be selected to move down');
+         alert('Only one question can be selected to move down');
          return;
       }
-      if (intSelect == 1 && intIndex < objResValu.options.length-1) {
+      if (intSelect == 1 && intIndex < objQueList.options.length-1) {
          var aryA = new Array();
          var aryB = new Array();
-         aryA[0] = objResValu.options[intIndex+1].value;
-         aryA[1] = objResValu.options[intIndex+1].text;
-         aryB[0] = objResValu.options[intIndex].value;
-         aryB[1] = objResValu.options[intIndex].text;
-         objResValu.options[intIndex+1].value = aryB[0];
-         objResValu.options[intIndex+1].text = aryB[1];
-         objResValu.options[intIndex+1].selected = true;
-         objResValu.options[intIndex].value = aryA[0];
-         objResValu.options[intIndex].text = aryA[1];
-         objResValu.options[intIndex].selected = false;
-         for (var i=0;i<objResValu.length;i++) {
-            objResValu.options[i].text = '('+(i+1)+') '+objResValu.options[i].value;
-         }
+         aryA[0] = objQueList.options[intIndex+1].value;
+         aryA[1] = objQueList.options[intIndex+1].text;
+         aryA[2] = objQueList.options[intIndex+1].getAttribute('quecde');
+         aryA[3] = objQueList.options[intIndex+1].getAttribute('quetyp');
+         aryA[4] = objQueList.options[intIndex+1].getAttribute('quetxt');
+         aryB[0] = objQueList.options[intIndex].value;
+         aryB[1] = objQueList.options[intIndex].text;
+         aryB[2] = objQueList.options[intIndex].getAttribute('quecde');
+         aryB[3] = objQueList.options[intIndex].getAttribute('quetyp');
+         aryB[4] = objQueList.options[intIndex].getAttribute('quetxt');
+         objQueList.options[intIndex+1].value = aryB[0];
+         objQueList.options[intIndex+1].text = aryB[1];
+         objQueList.options[intIndex+1].setAttribute('quecde',aryB[2]);
+         objQueList.options[intIndex+1].setAttribute('quetyp',aryB[3]);
+         objQueList.options[intIndex+1].setAttribute('quetxt',aryB[4]);
+         objQueList.options[intIndex+1].selected = true;
+         objQueList.options[intIndex].value = aryA[0];
+         objQueList.options[intIndex].text = aryA[1];
+         objQueList.options[intIndex].setAttribute('quecde',aryA[2]);
+         objQueList.options[intIndex].setAttribute('quetyp',aryA[3]);
+         objQueList.options[intIndex].setAttribute('quetxt',aryA[4]);
+         objQueList.options[intIndex].selected = false;
       }
    }
-
+   function doQueDetailSelect() {
+      if (!processForm()) {return;}
+      startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doQueDetailSelectCancel();},function(strCode,strText) {doQueDetailSelectAccept(strCode,strText);});
+   }
+   function doQueDetailSelectCancel() {
+      displayScreen('dspQueDetail');
+      document.getElementById('QUE_QueCode').focus();
+   }
+   function doQueDetailSelectAccept(strCode,strText) {
+      displayScreen('dspQueDetail');
+      document.getElementById('QUE_QueCode').value = strCode;
+      document.getElementById('QUE_QueCode').focus();
+   }
    function doQueDetailCancel() {
       displayScreen('dspQuestion');
    }
    function doQueDetailAccept() {
       if (!processForm()) {return;}
-      var strMessage = '';
-     // if (document.getElementById('SGR_GrpText').value == '') {
-     //    if (strMessage != '') {strMessage = strMessage + '\r\n';}
-     //    strMessage = strMessage + 'Selection group text must be entered';
-     // }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
+      var objQueList = document.getElementById('QUE_QueList');
+      var objQueAry = cobjQuestionDay[cintQuestionRow].queary;
+      objQueAry.length = 0;
+      var intIndex = 0;
+      for (var i=0;i<objQueList.options.length;i++) {
+         objQueAry[intIndex] = new clsQueData(objQueList.options[i].getAttribute('quecde'),objQueList.options[i].getAttribute('quetyp'),objQueList.options[i].getAttribute('quetxt'));
+         intIndex++;
       }
+      loadQuestionData();
       displayScreen('dspQuestion');
    }
 
@@ -937,9 +1054,28 @@ sub PaintFunction()%>
    //////////////////////
    var cstrSampleTestCode;
    var cstrSampleTestText;
+   var cintSampleRow;
+   var cintSampleSize;
+   var cstrSampleCode;
+   var cobjSampleData;
+   function clsSamData() {
+      this.samcde = '';
+      this.samtxt = '';
+      this.rptcde = '';
+      this.mktcde = '';
+      this.alscde = '';
+      this.samide = '';
+      this.sizary = new Array();
+   }
+   function clsSamSize(strSizCde,strSizTxt,strFedQty,strFedTxt) {
+      this.sizcde = strSizCde;
+      this.siztxt = strSizTxt;
+      this.fedqty = strFedQty;
+      this.fedtxt = strFedTxt;
+   }
    function requestSampleUpdate(strCode) {
       cstrSampleTestCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETSAM" TESCDE="'+strCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVSAM" TESCDE="'+strCode+'"/>';
       doPostRequest('<%=strBase%>pts_tes_config_sample_retrieve.asp',function(strResponse) {checkSampleUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkSampleUpdate(strResponse) {
@@ -961,26 +1097,66 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         cobjSampleData = new Array();
+         var intIndex = -1;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
                cstrSampleTestText = objElements[i].getAttribute('TESTXT');
             } else if (objElements[i].nodeName == 'SAMPLE') {
-               document.getElementById('SAM_MemCount').value = objElements[i].getAttribute('MEMCNT');
-               document.getElementById('SAM_ResCount').value = objElements[i].getAttribute('RESCNT');
+               intIndex++;
+               cobjSampleData[intIndex] = new clsSamData();
+               cobjSampleData[intIndex].samcde = objElements[i].getAttribute('SAMCDE');
+               cobjSampleData[intIndex].samtxt = objElements[i].getAttribute('SAMTXT');
+               cobjSampleData[intIndex].rptcde = objElements[i].getAttribute('RPTCDE');
+               cobjSampleData[intIndex].mktcde = objElements[i].getAttribute('MKTCDE');
+               cobjSampleData[intIndex].alscde = objElements[i].getAttribute('ALSCDE');
+               cobjSampleData[intIndex].samide = objElements[i].getAttribute('SAMIDE');
+            } else if (objElements[i].nodeName == 'FEEDING') {
+               cobjSampleData[intIndex].sizary[cobjSampleData[intIndex].sizary.length] = new clsSamSize(objElements[i].getAttribute('SIZCDE'),objElements[i].getAttribute('SIZTXT'),objElements[i].getAttribute('FEDQTY'),objElements[i].getAttribute('FEDTXT'));
             }
          }
+         loadSampleData();
+         document.getElementById('subSample').innerText = cstrSampleTestText;
          displayScreen('dspSample');
-         document.getElementById('subQuestion').innerText = cstrSampleTestText;
          document.getElementById('tabSample').focus();
+         document.getElementById('divSample').scrollTop = 0;
+         document.getElementById('divSample').scrollLeft = 0;
+      }
+   }
+   function loadSampleData() {
+      var objTable = document.getElementById('tabSample');
+      var objRow;
+      var objCell;
+      for (var i=objTable.rows.length-1;i>=0;i--) {
+         objTable.deleteRow(i);
+      }
+      for (var i=0;i<cobjSampleData.length;i++) {
+         objRow = objTable.insertRow(-1);
+         objRow.setAttribute('samcde',cobjSampleData[i].samcde);
+         objCell = objRow.insertCell(0);
+         objCell.colSpan = 1;
+         objCell.innerHTML = '<a class="clsSelect" onClick="doSampleUpdate(\''+i+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSampleDelete(\''+i+'\');">Delete</a>&nbsp;-&nbsp;'+cobjSampleData[i].samtxt;
+         objCell.className = 'clsLabelFB';
+         objCell.style.whiteSpace = 'nowrap';
+         for (var j=0;j<cobjSampleData[i].sizary.length;j++) {
+            objRow = objTable.insertRow(-1);
+            objCell = objRow.insertCell(0);
+            objCell.colSpan = 1;
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSampleSizeUpdate(\''+i+'\',\''+j+'\');">Update</a>&nbsp;-&nbsp;'+cobjSampleData[i].sizary[j].siztxt;
+            if (cobjSampleData[i].sizary[j].fedqty != '') {
+               objCell.innerHTML = objCell.innerHTML+' - Feed Quantity ('+cobjSampleData[i].sizary[j].fedqty+')';
+            }
+            if (cobjSampleData[i].sizary[j].fedtxt != '') {
+               objCell.innerHTML = objCell.innerHTML+' - Feed Comment ('+cobjSampleData[i].sizary[j].fedtxt+')';
+            }
+            objCell.className = 'clsLabelFN';
+            objCell.style.whiteSpace = 'nowrap';
+         }
       }
    }
    function doSampleAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
-      if (document.getElementById('PAN_MemCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Member count must be entered';
-      }
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -988,10 +1164,18 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDSAM"';
       strXML = strXML+' TESCDE="'+fixXML(cstrSampleTestCode)+'"';
-      strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
-      strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
-      strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
       strXML = strXML+'>';
+      for (var i=0;i<cobjSampleData.length;i++) {
+         strXML = strXML+'<SAMPLE SAMCDE="'+fixXML(cobjSampleData[i].samcde)+'"';
+         strXML = strXML+' RPTCDE="'+fixXML(cobjSampleData[i].rptcde)+'"';
+         strXML = strXML+' MKTCDE="'+fixXML(cobjSampleData[i].mktcde)+'"';
+         strXML = strXML+' ALSCDE="'+fixXML(cobjSampleData[i].alscde)+'"';
+         strXML = strXML+' SAMIDE="'+fixXML(cobjSampleData[i].samide)+'">';
+         for (var j=0;j<cobjSampleData[i].sizary.length;j++) {
+            strXML = strXML+'<FEEDING SIZCDE="'+fixXML(cobjSampleData[i].sizary[j].sizcde)+'" FEDQTY="'+fixXML(cobjSampleData[i].sizary[j].fedqty)+'" FEDTXT="'+fixXML(cobjSampleData[i].sizary[j].fedtxt)+'"/>';
+         }
+         strXML = strXML+'</SAMPLE>';
+      }
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestSampleAccept(\''+strXML+'\');',10);
@@ -1020,27 +1204,232 @@ sub PaintFunction()%>
                return;
             }
          }
-         displayScreen('dspDefine');
-         document.getElementById('DEF_TesText').focus();
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
+         document.getElementById('PRO_TesCode').focus();
       }
    }
    function doSampleCancel() {
-      displayScreen('dspDefine');
-      document.getElementById('DEF_TesText').focus();
+      if (checkChange() == false) {return;}
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').value = '';
+      document.getElementById('PRO_TesCode').focus();
    }
-   function doQuestionSelect(strTarget) {
+   function doSampleAdd() {
+      cintSampleRow = -1;
+      cstrSampleCode = '';
+      document.getElementById('subSamDetail').innerText = cstrSampleTestText;
+      document.getElementById('addSamDetail').style.display = 'block';
+      displayScreen('dspSamDetail');
+      document.getElementById('SAM_SamCode').value = '';
+      document.getElementById('SAM_RptCode').value = '';
+      document.getElementById('SAM_MktCode').value = '';
+      document.getElementById('SAM_AlsCode').value = '';
+      document.getElementById('SAM_SamIden').value = '';
+      document.getElementById('SAM_SamCode').focus();
+   }
+   function doSampleUpdate(intRow) {
+      cintSampleRow = intRow;
+      cstrSampleCode = cobjSampleData[cintSampleRow].samcde;
+      document.getElementById('addSamDetail').style.display = 'none';
+      document.getElementById('subSamDetail').innerText = cstrSampleTestText+' - Sample '+cobjSampleData[cintSampleRow].samcde;
+      displayScreen('dspSamDetail');
+      document.getElementById('SAM_RptCode').value = cobjSampleData[cintSampleRow].rptcde;
+      document.getElementById('SAM_MktCode').value = cobjSampleData[cintSampleRow].mktcde;
+      document.getElementById('SAM_AlsCode').value = cobjSampleData[cintSampleRow].alscde;
+      document.getElementById('SAM_SamIden').value = cobjSampleData[cintSampleRow].samide;
+      document.getElementById('SAM_RptCode').focus();
+   }
+   function doSampleDelete(intRow) {
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<cobjSampleData.length;i++) {
+         if (i != intRow) {
+            objWork[intIndex] = cobjSampleData[i];
+            intIndex++;
+         }
+      }
+      cobjSampleData.length = 0;
+      for (var i=0;i<objWork.length;i++) {
+         cobjSampleData[i] = objWork[i];
+      }
+      loadSampleData();
+   }
+   function doSampleSizeUpdate(intRow,intSize) {
+      cintSampleRow = intRow;
+      cintSampleSize = intSize;
+      document.getElementById('subSamSize').innerText = cstrSampleTestText+' - Sample '+cobjSampleData[cintSampleRow].samcde+' - Size '+cobjSampleData[cintSampleRow].sizary[cintSampleSize].siztxt;
+      displayScreen('dspSamSize');
+      document.getElementById('SAM_FedQnty').value = cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedqty;
+      document.getElementById('SAM_FedText').value = cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedtxt;
+      document.getElementById('SAM_FedQnty').focus();
+   }
+   /////////////////////////////
+   // Sample Detail Functions //
+   /////////////////////////////
+   function doSamDetailSelect() {
       if (!processForm()) {return;}
-      cstrQuestionTarget = strTarget;
-      startSchInstance('*QUESTION','Question','pts_sam_search.asp',function() {doQuestionSelectCancel();},function(strCode,strText) {doQuestionSelectAccept(strCode,strText);});
+      startSchInstance('*SAMPLE','Sample','pts_sam_search.asp',function() {doSamDetailSelectCancel();},function(strCode,strText) {doSamDetailSelectAccept(strCode,strText);});
    }
-   function doSampleSelectCancel() {
-      displayScreen('dspDefine');
-      document.getElementById('tabSample').focus();
+   function doSamDetailSelectCancel() {
+      displayScreen('dspSamDetail');
+      document.getElementById('SAM_SamCode').focus();
    }
-   function doSampleSelectAccept(strCode,strText) {
-      //find the row and insert
-      //check for duplicates
-      document.getElementById('tabSample').focus();
+   function doSamDetailSelectAccept(strCode,strText) {
+      displayScreen('dspSamDetail');
+      document.getElementById('SAM_SamCode').value = strCode;
+      document.getElementById('SAM_SamCode').focus();
+   }
+   function doSamDetailCancel() {
+      displayScreen('dspSample');
+   }
+   function doSamDetailAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (cintSampleRow == -1) {
+         if (document.getElementById('SAM_SamCode').value == '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Sample code must be specified';
+         }
+         for (var i=0;i<cobjSampleData.length;i++) {
+            if (cobjSampleData[i].samcde == document.getElementById('SAM_SamCode').value) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Sample code already exists in the test';
+               break;
+            }
+         }
+      }
+      if (document.getElementById('SAM_RptCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Report code must be specified';
+      }
+      if (document.getElementById('SAM_MktCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Market research code must be specified';
+      }
+      if (strMessage != '') {
+         for (var i=0;i<cobjSampleData.length;i++) {
+            if (cintSampleRow != i && cobjSampleData[i].rptcde.toUpperCase() == document.getElementById('SAM_RptCode').value.toUpperCase()) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Report code already exists in the test';
+            }
+            if (cintSampleRow != i && cobjSampleData[i].mktcde.toUpperCase() == document.getElementById('SAM_MktCode').value.toUpperCase()) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Market research already exists in the test';
+            }
+            if (document.getElementById('SAM_AlsCode').value != '') {
+               if (cintSampleRow != i && cobjSampleData[i].alscde.toUpperCase() == document.getElementById('SAM_AlsCode').value.toUpperCase()) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Market research alias already exists in the test';
+               }
+            }
+            if (document.getElementById('SAM_SamIden').value != '') {
+               if (cintSampleRow != i && cobjSampleData[i].samide.toUpperCase() == document.getElementById('SAM_SamIden').value.toUpperCase()) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Sample identifier already exists in the test';
+               }
+            }
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strSamCode = cstrSampleCode;
+      if (cintSampleRow == -1) {
+         strSamCode = document.getElementById('SAM_SamCode').value;
+      }
+      var objRptCode = document.getElementById('SAM_RptCode');
+      var objMktCode = document.getElementById('SAM_MktCode');
+      var objAlsCode = document.getElementById('SAM_AlsCode');
+      var objSamIden = document.getElementById('SAM_SamIden');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*SELSAM"';
+      strXML = strXML+' SAMCDE="'+fixXML(strSamCode)+'"';
+      strXML = strXML+' RPTCDE="'+fixXML(objRptCode.value)+'"';
+      strXML = strXML+' MKTCDE="'+fixXML(objMktCode.value)+'"';
+      strXML = strXML+' ALSCDE="'+fixXML(objAlsCode.value)+'"';
+      strXML = strXML+' SAMIDE="'+fixXML(objSamIden.value)+'"';
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestSamDetailAccept(\''+strXML+'\');',10);
+   }
+   function requestSamDetailAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_sample_select.asp',function(strResponse) {checkSamDetailAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkSamDetailAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         var intIndex = cintSampleRow;
+         if (cintSampleRow == -1) {
+            intIndex = cobjSampleData.length;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'SAMPLE') {
+               if (cintSampleRow == -1) {
+                  cobjSampleData[intIndex] = new clsSamData();
+               }
+               cobjSampleData[intIndex].samcde = objElements[i].getAttribute('SAMCDE');
+               cobjSampleData[intIndex].samtxt = objElements[i].getAttribute('SAMTXT');
+               cobjSampleData[intIndex].rptcde = objElements[i].getAttribute('RPTCDE');
+               cobjSampleData[intIndex].mktcde = objElements[i].getAttribute('MKTCDE');
+               cobjSampleData[intIndex].alscde = objElements[i].getAttribute('ALSCDE');
+               cobjSampleData[intIndex].samide = objElements[i].getAttribute('SAMIDE');
+            } else if (objElements[i].nodeName == 'FEEDING') {
+               if (cintSampleRow == -1) {
+                  cobjSampleData[intIndex].sizary[cobjSampleData[intIndex].sizary.length] = new clsSamSize(objElements[i].getAttribute('SIZCDE'),objElements[i].getAttribute('SIZTXT'),objElements[i].getAttribute('FEDQTY'),objElements[i].getAttribute('FEDTXT'));
+               }
+            }
+         }
+         cobjSampleData.sort(sortSamDetailData);
+         loadSampleData();
+         displayScreen('dspSample');
+      }
+   }
+   function sortSamDetailData(obj01, obj02) {
+      if ((obj01.samcde-0) < (obj02.samcde-0)) {
+         return -1;
+      } else if ((obj01.samcde-0) > (obj02.samcde-0)) {
+         return 1;
+      }
+      return 0;
+   }
+   ///////////////////////////
+   // Sample Size Functions //
+   ///////////////////////////
+   function doSamSizeCancel() {
+      displayScreen('dspSample');
+   }
+   function doSamSizeAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('SAM_FedQnty').value == '' && document.getElementById('SAM_FedText').value != '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Feed comment must not be entered when no feed quantity';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedqty = document.getElementById('SAM_FedQnty').value;
+      cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedtxt = document.getElementById('SAM_FedText').value;
+      loadSampleData();
       displayScreen('dspSample');
    }
 
@@ -1156,6 +1545,7 @@ sub PaintFunction()%>
       }
    }
    function doPanelCancel() {
+      if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
    }
@@ -1287,7 +1677,6 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
@@ -1464,7 +1853,6 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-
    <table id="dspQuestion" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doQuestionAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
@@ -1536,7 +1924,7 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible">
+            <div id="divQuestion" class="clsScroll01" style="display:block;visibility:visible">
                <table id="tabQuestion" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
             </div>
          </nobr></td>
@@ -1576,7 +1964,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
-                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQuestionSelect('ADD');">&nbsp;Select&nbsp;</a></nobr></td></tr>
+                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doQueDetailSelect();">&nbsp;Select&nbsp;</a></nobr></td></tr>
                      </table>
                   </nobr></td>
                </tr>
@@ -1636,7 +2024,6 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-
    <table id="dspSample" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSampleAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
@@ -1660,7 +2047,7 @@ sub PaintFunction()%>
       </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible">
+            <div id="divSample" class="clsScroll01" style="display:block;visibility:visible">
                <table id="tabSample" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
             </div>
          </nobr></td>
@@ -1688,7 +2075,50 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
+      <tr id="addSamDetail" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SAM_SamCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=left colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
+                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSamDetailSelect();">&nbsp;Select&nbsp;</a></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_RptCode" size="3" maxlength="3" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Market Research Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_MktCode" size="1" maxlength="1" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Market Research Alias:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_AlsCode" size="1" maxlength="1" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Identifier:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_SamIden" size="20" maxlength="20" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
@@ -1701,7 +2131,45 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-
+   <table id="dspSamSize" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSamSizeAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedSamSize" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Sample Detail</nobr></td>
+      </tr>
+      <tr>
+         <td id="subSamSize" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feed Quantity:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="SAM_FedQnty" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feed Comment:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="SAM_FedText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSamSizeCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSamSizeAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
    <table id="dspPanel" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPanelAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
