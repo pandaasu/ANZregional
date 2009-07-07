@@ -310,6 +310,11 @@ create or replace package body sms_app.sms_sbwsms01 as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
+      /* Update the abbreviation table with missing dimension data
+      /*-*/
+      sms_gen_function.update_abbreviation(rcd_sms_rpt_header.rhe_qry_code, rcd_sms_rpt_header.rhe_rpt_date);
+
+      /*-*/
       /* Commit the database
       /*-*/
       commit;
