@@ -1,20 +1,20 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package sms_app.sms_qry_function as
+create or replace package sms_app.sms_sbwsms01 as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : sms_gen_function
+    Package : sms_sbwsms01
     Owner   : sms_app
 
     Description
     -----------
-    SMS Reporting System - Query functions
+    SMS Reporting System - SBWSMS01 - SAP BW SMS Report Loader
 
-    This package contain the query functions and procedures.
+    This package contain the interface loader procedures.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -25,22 +25,17 @@ create or replace package sms_app.sms_qry_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure clear_mesg_data;
-   function get_mesg_count return number;
-   procedure add_mesg_data(par_message in varchar2);
-   function get_mesg_data return sms_xml_type pipelined;
-   function retrieve_meta_data return sms_xml_type pipelined;
-   procedure update_meta_data(par_user in varchar2);
-   function retrieve_query_data return sms_xml_type pipelined;
-   procedure update_query_data(par_user in varchar2);
+   procedure on_start;
+   procedure on_data(par_record in varchar2);
+   procedure on_end;
 
-end sms_gen_function;
+end sms_sbwsms01;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body sms_app.sms_qry_function as
+create or replace package body sms_app.sms_sbwsms01 as
 
    /*-*/
    /* Private exceptions
@@ -49,191 +44,85 @@ create or replace package body sms_app.sms_qry_function as
    pragma exception_init(application_exception, -20000);
 
    /*-*/
+   /* Private declarations
+   /*-*/
+   procedure process_report_data(par_xml_node in xmlDom.domNode);
+
+   /*-*/
    /* Private definitions
    /*-*/
+   var_trn_error boolean;
+   pvar_clob clob;
    pvar_dat_seqn number;
    pvar_dim_indx number;
    pvar_value boolean;
    rcd_sms_rpt_header sms_rpt_header%rowtype;
    rcd_sms_rpt_data sms_rpt_data%rowtype;
 
-   /**********************************************************/
-   /* This procedure performs the clear message data routine */
-   /**********************************************************/
-   procedure clear_mesg_data is
+   /************************************************/
+   /* This procedure performs the on start routine */
+   /************************************************/
+   procedure on_start is
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
+      /*-*/
+      /* Set the transaction variables
+      /*-*/
+      var_trn_error := false;
 
       /*-*/
-      /* Clear the message data
+      /* Initialise the CLOB
       /*-*/
-      ptbl_mesg.delete;
-      pvar_cfrm := null;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - CLEAR_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end clear_mesg_data;
-
-   /*********************************************************/
-   /* This procedure performs the get message count routine */
-   /*********************************************************/
-   function get_mesg_count return number is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Return the message data count
-      /*-*/
-      return ptbl_mesg.count;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - GET_MESG_COUNT - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end get_mesg_count;
-
-   /********************************************************/
-   /* This procedure performs the add message data routine */
-   /********************************************************/
-   procedure add_mesg_data(par_message in varchar2) is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Add the message data
-      /*-*/
-      ptbl_mesg(ptbl_mesg.count+1) := par_message;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - ADD_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end add_mesg_data;
-
-   /********************************************************/
-   /* This procedure performs the get message data routine */
-   /********************************************************/
-   function get_mesg_data return sms_xml_type pipelined is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Pipe the message data when required
-      /*-*/
-      if ptbl_mesg.count != 0 or not(pvar_cfrm is null) then
-         pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+      if pvar_clob is null then
+         dbms_lob.createtemporary(pvar_clob,true,dbms_lob.session);
       end if;
-      for idx in 1..ptbl_mesg.count loop
-         pipe row(sms_xml_object('<ERROR ERRTXT="'||sms_to_xml(ptbl_mesg(idx))||'"/>'));
-      end loop;
-      if not(pvar_cfrm is null) then
-         pipe row(sms_xml_object('<CONFIRM CONTXT="'||sms_to_xml(pvar_cfrm)||'"/>'));
-      end if;
-      if ptbl_mesg.count != 0 or not(pvar_cfrm is null) then
-         pipe row(sms_xml_object('</SMS_RESPONSE>'));
-      end if;
+      dbms_lob.trim(pvar_clob,0);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_start;
+
+   /***********************************************/
+   /* This procedure performs the on data routine */
+   /***********************************************/
+   procedure on_data(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*-*/
-      /* Return
+      /* Append the record to the CLOB
       /*-*/
-      return;
+      dbms_lob.writeappend(pvar_clob,length(par_record),par_record);
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - GET_MESG_DATA - ' || substr(SQLERRM, 1, 2048));
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         var_trn_error := true;
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end get_mesg_data;
+   end on_data;
 
-   /*******************************************************/
-   /* This procedure performs the read xml stream routine */
-   /*******************************************************/
-   procedure read_xml_stream(par_stream in clob) is
+   /**********************************************/
+   /* This procedure performs the on end routine */
+   /**********************************************/
+   procedure on_end is
 
       /*-*/
       /* Local definitions
@@ -271,6 +160,14 @@ create or replace package body sms_app.sms_qry_function as
    begin
 
       /*-*/
+      /* Exit when required
+      /*-*/
+      if var_trn_error = true then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Retrieve the current period information based on today
       /*-*/
       var_date := trunc(sysdate);
@@ -284,7 +181,6 @@ create or replace package body sms_app.sms_qry_function as
       /*-*/
       /* Initialise the report
       /*-*/
-      pvar_report := false;
       rcd_sms_rpt_header.rhe_qry_code := null;
       rcd_sms_rpt_header.rhe_rpt_date := null;
       rcd_sms_rpt_header.rhe_rpt_yyyypp := null;
@@ -300,7 +196,7 @@ create or replace package body sms_app.sms_qry_function as
       /* Parse the XML input
       /*-*/
       obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,par_stream);
+      xmlParser.parseClob(obj_xml_parser,pvar_clob);
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
       xmlParser.freeParser(obj_xml_parser);
 
@@ -404,7 +300,7 @@ create or replace package body sms_app.sms_qry_function as
       pvar_value := false;
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         read_xml_child(obj_xml_node);
+         process_report_data(obj_xml_node);
       end loop;
 
       /*-*/
@@ -417,15 +313,27 @@ create or replace package body sms_app.sms_qry_function as
       /*-*/
       commit;
 
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         rollback;
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end read_xml_stream;
+   end on_end;
 
-   /******************************************************/
-   /* This procedure performs the read xml child routine */
-   /******************************************************/
-   procedure read_xml_child(par_xml_node in xmlDom.domNode) is
+   /***********************************************************/
+   /* This procedure performs the process report data routine */
+   /***********************************************************/
+   procedure process_report_data(par_xml_node in xmlDom.domNode) is
 
       /*-*/
       /* Local definitions
@@ -451,10 +359,9 @@ create or replace package body sms_app.sms_qry_function as
             pvar_dat_seqn := pvar_dat_seqn + 1;
             pvar_dim_indx := 0;
             pvar_value := false;
-            rcd_sms_rpt_data.rda_qry_code := rcd_sms_rpt_header.rhe_qry_name;
+            rcd_sms_rpt_data.rda_qry_code := rcd_sms_rpt_header.rhe_qry_code;
             rcd_sms_rpt_data.rda_rpt_date := rcd_sms_rpt_header.rhe_rpt_date;
             rcd_sms_rpt_data.rda_dat_seqn := pvar_dat_seqn;
-            rcd_sms_rpt_data.rda_dim_seqn := null;
             rcd_sms_rpt_data.rda_dim_cod01 := null;
             rcd_sms_rpt_data.rda_dim_cod02 := null;
             rcd_sms_rpt_data.rda_dim_cod03 := null;
@@ -581,24 +488,13 @@ create or replace package body sms_app.sms_qry_function as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end read_xml_child;
+   end process_report_data;
 
-/*----------------------*/
-/* Initialisation block */
-/*----------------------*/
-begin
-
-   /*-*/
-   /* Initialise the package variables
-   /*-*/
-   ptbl_mesg.delete;
-   pvar_end_code := 0;
-
-end sms_gen_function;
+end sms_sbwsms01;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym sms_qry_function for sms_app.sms_gen_function;
-grant execute on sms_app.sms_qry_function to public;
+create or replace public synonym sms_sbwsms01 for sms_app.sms_sbwsms01;
+grant execute on sms_app.sms_sbwsms01 to public;
