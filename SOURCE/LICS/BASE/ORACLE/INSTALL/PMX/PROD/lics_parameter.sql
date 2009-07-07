@@ -25,11 +25,11 @@ create or replace package lics_parameter as
    /*-*/
    /* Public system parameters
    /*-*/
-   system_code constant varchar2(10) := 'ICS';
+   system_code constant varchar2(10) := 'PMX';
    system_unit constant varchar2(10) := 'MFANZ';
-   system_environment constant varchar2(20) := 'CUC_PROD';
-   system_url constant varchar2(128) := 'http://care.ap.mars/cuc/';
-   system_startup constant varchar2(128) := '/ics/cuc/prod/bin/restart_jobs.sh';
+   system_environment constant varchar2(20) := 'PMX_PRODUCTION';
+   system_url constant varchar2(128) := 'http://www.pmx.ap.mars/';
+   system_startup constant varchar2(128) := '/ics/pmx/prod/bin/restart_jobs.sh';
 
    /*-*/
    /* Public environment parameters
@@ -40,12 +40,12 @@ create or replace package lics_parameter as
    /* Public fatal parameters
    /*-*/
    fatal_opr_alert constant varchar2(256) := null;
-   fatal_ema_group constant varchar2(64) := '"Global ISI ICS-LADS Application Support"@esosn1';
+   fatal_ema_group constant varchar2(64) := 'mfanz.promax.support@esosn1';
 
    /*-*/
    /* Public operator parameters
    /*-*/
-   operator_alert_script constant varchar2(64) := '/ics/cuc/prod/bin/ics_tivoli_alert.sh';
+   operator_alert_script constant varchar2(64) := '/ics/pmx/prod/bin/ics_tivoli_alert.sh';
 
    /*-*/
    /* Public email parameters
@@ -64,14 +64,14 @@ create or replace package lics_parameter as
    /*-*/
    purge_event_history_days constant number(5,0) := 14;
    purge_log_history_days constant number(5,0) := 14;
-   purge_file_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_cleanup.sh';
+   purge_file_script constant varchar2(128) := '/ics/pmx/prod/bin/ics_cleanup.sh';
 
    /*-*/
    /* Public script parameters
    /*-*/
-   script_directory constant varchar2(128) := '/ics/cuc/prod/bin/';
-   restore_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_restore.sh';
-   inbound_sap_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_inbound_sap.sh';
+   script_directory constant varchar2(128) := '/ics/pmx/prod/bin/';
+   restore_script constant varchar2(128) := '/ics/pmx/prod/bin/ics_restore.sh';
+   inbound_sap_script constant varchar2(128) := '/ics/pmx/prod/bin/ics_inbound_sap.sh';
 
 end lics_parameter;
 /  

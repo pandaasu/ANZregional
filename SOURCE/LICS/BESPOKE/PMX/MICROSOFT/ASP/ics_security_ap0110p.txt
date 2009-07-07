@@ -2,4 +2,4 @@
 <!-- -->
 <!-- MFANZ Interface Control System Security -->
 <!-- -->
-<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=..PWD..;Data Source=db0845p.ap.mars;" encryptedPassword="YZZYZYYY549V339W"/> 
+<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=..PWD..;Data Source=ap0110p.ap.mars;" encryptedPassword="ZZYYZZYZYYY3413001339W"/> 

@@ -20,7 +20,7 @@ function GetInstallation()
    '//
    '// Returns the installation string
    '//
-   GetInstallation = "CUC" 
+   GetInstallation = "Promax" 
 
 end function
 
@@ -113,7 +113,7 @@ function GetSecurity()
    '//
    dim strReturn
    set objSecurity = Server.CreateObject("ICS_SECURITY.Object")
-   strReturn = objSecurity.Initialise("D:\Inetpub\IISWebs\care.ap.mars\cuc\ics_security.txt")
+   strReturn = objSecurity.Initialise("D:\Inetpub\IISWebs\pmx.ap.mars\ics_security.txt")
    GetSecurity = strReturn 
 
 end function
@@ -130,7 +130,7 @@ function GetSecurityCheck(strOption)
    '//
    dim strReturn
    set objSecurity = Server.CreateObject("ICS_SECURITY.Object")
-   strReturn = objSecurity.InitialiseCheck("D:\Inetpub\IISWebs\care.ap.mars\cuc\ics_security.txt",GetUser(),strOption)
+   strReturn = objSecurity.InitialiseCheck("D:\Inetpub\IISWebs\pmx.ap.mars\ics_security.txt",GetUser(),strOption)
    GetSecurityCheck = strReturn 
 
 end function

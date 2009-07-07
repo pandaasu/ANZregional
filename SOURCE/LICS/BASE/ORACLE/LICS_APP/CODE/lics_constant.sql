@@ -78,6 +78,7 @@ create or replace package lics_constant as
    job_shutdown constant varchar2(10) := '*SHUTDOWN';
    job_loader constant varchar2(10) := '*LOADER';
    job_trigger constant varchar2(10) := '*TRIGGER';
+   job_reschedule constant varchar2(10) := '*RESCHED';
    job_working constant varchar2(1) := '1';
    job_idle constant varchar2(1) := '2';
    job_suspended constant varchar2(1) := '3';
