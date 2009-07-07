@@ -131,6 +131,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       obj_xml_document xmlDom.domDocument;
       obj_xml_node_list xmlDom.domNodeList;
       obj_xml_node xmlDom.domNode;
+      obj_xml_text xmlDom.domNode;
       obj_map_node_list xmlDom.domNamedNodeMap;
       obj_map_node xmlDom.domNode;
       var_found boolean;
@@ -212,7 +213,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          if upper(xmlDom.getNodeName(obj_xml_node)) = 'PROCESSINGDATE' then
-            var_rpt_date := sms_to_date(trim(xmlDom.getNodeValue(obj_xml_node)),'yyyy-mm-dd');
+            var_rpt_date := sms_to_date(trim(xmlDom.getNodeValue(xmlDom.getFirstChild(obj_xml_node))),'yyyy-mm-dd');
             exit;
          end if;
       end loop;
@@ -385,88 +386,96 @@ create or replace package body sms_app.sms_sbwsms01 as
 
          when 'CHARACTERISTICDIMENSION' then
 
-            pvar_dim_indx := pvar_dim_indx + 1;
+            if pvar_value = false then
+               pvar_dim_indx := pvar_dim_indx + 1;
+            end if;
 
          when 'CHARACTERISTIC' then
 
-            var_dim_code := null;
-            obj_map_node_list := xmlDom.getAttributes(par_xml_node);
-            if not(xmlDom.isNull(obj_map_node_list)) then
-               for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
-                  obj_map_node := xmlDom.item(obj_map_node_list,idx);
-                  if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
-                     var_dim_code := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
-                     exit;
-                  end if;
-               end loop;
-            end if;
-            if pvar_dim_indx = 1 then
-               rcd_sms_rpt_data.rda_dim_cod01 := var_dim_code;
-            elsif pvar_dim_indx = 2 then
-               rcd_sms_rpt_data.rda_dim_cod02 := var_dim_code;
-            elsif pvar_dim_indx = 3 then
-               rcd_sms_rpt_data.rda_dim_cod03 := var_dim_code;
-            elsif pvar_dim_indx = 4 then
-               rcd_sms_rpt_data.rda_dim_cod04 := var_dim_code;
-            elsif pvar_dim_indx = 5 then
-               rcd_sms_rpt_data.rda_dim_cod05 := var_dim_code;
-            elsif pvar_dim_indx = 6 then
-               rcd_sms_rpt_data.rda_dim_cod06 := var_dim_code;
-            elsif pvar_dim_indx = 7 then
-               rcd_sms_rpt_data.rda_dim_cod07 := var_dim_code;
-            elsif pvar_dim_indx = 8 then
-               rcd_sms_rpt_data.rda_dim_cod08 := var_dim_code;
-            elsif pvar_dim_indx = 9 then
-               rcd_sms_rpt_data.rda_dim_cod09 := var_dim_code;
+            if pvar_value = false then
+               var_dim_code := null;
+               obj_map_node_list := xmlDom.getAttributes(par_xml_node);
+               if not(xmlDom.isNull(obj_map_node_list)) then
+                  for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
+                     obj_map_node := xmlDom.item(obj_map_node_list,idx);
+                     if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
+                        var_dim_code := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+               if pvar_dim_indx = 1 then
+                  rcd_sms_rpt_data.rda_dim_cod01 := var_dim_code;
+               elsif pvar_dim_indx = 2 then
+                  rcd_sms_rpt_data.rda_dim_cod02 := var_dim_code;
+               elsif pvar_dim_indx = 3 then
+                  rcd_sms_rpt_data.rda_dim_cod03 := var_dim_code;
+               elsif pvar_dim_indx = 4 then
+                  rcd_sms_rpt_data.rda_dim_cod04 := var_dim_code;
+               elsif pvar_dim_indx = 5 then
+                  rcd_sms_rpt_data.rda_dim_cod05 := var_dim_code;
+               elsif pvar_dim_indx = 6 then
+                  rcd_sms_rpt_data.rda_dim_cod06 := var_dim_code;
+               elsif pvar_dim_indx = 7 then
+                  rcd_sms_rpt_data.rda_dim_cod07 := var_dim_code;
+               elsif pvar_dim_indx = 8 then
+                  rcd_sms_rpt_data.rda_dim_cod08 := var_dim_code;
+               elsif pvar_dim_indx = 9 then
+                  rcd_sms_rpt_data.rda_dim_cod09 := var_dim_code;
+               end if;
             end if;
 
          when 'CHARACTERISTICMEMBER' then
 
-            var_dim_valu := null;
-            obj_map_node_list := xmlDom.getAttributes(par_xml_node);
-            if not(xmlDom.isNull(obj_map_node_list)) then
-               for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
-                  obj_map_node := xmlDom.item(obj_map_node_list,idx);
-                  if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
-                     var_dim_valu := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
-                     exit;
-                  end if;
-               end loop;
-            end if;
-            if pvar_dim_indx = 1 then
-               rcd_sms_rpt_data.rda_dim_val01 := var_dim_valu;
-            elsif pvar_dim_indx = 2 then
-               rcd_sms_rpt_data.rda_dim_val02 := var_dim_valu;
-            elsif pvar_dim_indx = 3 then
-               rcd_sms_rpt_data.rda_dim_val03 := var_dim_valu;
-            elsif pvar_dim_indx = 4 then
-               rcd_sms_rpt_data.rda_dim_val04 := var_dim_valu;
-            elsif pvar_dim_indx = 5 then
-               rcd_sms_rpt_data.rda_dim_val05 := var_dim_valu;
-            elsif pvar_dim_indx = 6 then
-               rcd_sms_rpt_data.rda_dim_val06 := var_dim_valu;
-            elsif pvar_dim_indx = 7 then
-               rcd_sms_rpt_data.rda_dim_val07 := var_dim_valu;
-            elsif pvar_dim_indx = 8 then
-               rcd_sms_rpt_data.rda_dim_val08 := var_dim_valu;
-            elsif pvar_dim_indx = 9 then
-               rcd_sms_rpt_data.rda_dim_val09 := var_dim_valu;
+            if pvar_value = false then
+               var_dim_valu := null;
+               obj_map_node_list := xmlDom.getAttributes(par_xml_node);
+               if not(xmlDom.isNull(obj_map_node_list)) then
+                  for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
+                     obj_map_node := xmlDom.item(obj_map_node_list,idx);
+                     if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
+                        var_dim_valu := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+               if pvar_dim_indx = 1 then
+                  rcd_sms_rpt_data.rda_dim_val01 := var_dim_valu;
+               elsif pvar_dim_indx = 2 then
+                  rcd_sms_rpt_data.rda_dim_val02 := var_dim_valu;
+               elsif pvar_dim_indx = 3 then
+                  rcd_sms_rpt_data.rda_dim_val03 := var_dim_valu;
+               elsif pvar_dim_indx = 4 then
+                  rcd_sms_rpt_data.rda_dim_val04 := var_dim_valu;
+               elsif pvar_dim_indx = 5 then
+                  rcd_sms_rpt_data.rda_dim_val05 := var_dim_valu;
+               elsif pvar_dim_indx = 6 then
+                  rcd_sms_rpt_data.rda_dim_val06 := var_dim_valu;
+               elsif pvar_dim_indx = 7 then
+                  rcd_sms_rpt_data.rda_dim_val07 := var_dim_valu;
+               elsif pvar_dim_indx = 8 then
+                  rcd_sms_rpt_data.rda_dim_val08 := var_dim_valu;
+               elsif pvar_dim_indx = 9 then
+                  rcd_sms_rpt_data.rda_dim_val09 := var_dim_valu;
+               end if;
             end if;
 
          when 'KEYFIGURE' then
 
-            var_val_code := null;
-            obj_map_node_list := xmlDom.getAttributes(par_xml_node);
-            if not(xmlDom.isNull(obj_map_node_list)) then
-               for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
-                  obj_map_node := xmlDom.item(obj_map_node_list,idx);
-                  if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
-                     var_val_code := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
-                     exit;
-                  end if;
-               end loop;
+            if pvar_value = false then
+               var_val_code := null;
+               obj_map_node_list := xmlDom.getAttributes(par_xml_node);
+               if not(xmlDom.isNull(obj_map_node_list)) then
+                  for idx in 0..xmlDom.getLength(obj_map_node_list)-1 loop
+                     obj_map_node := xmlDom.item(obj_map_node_list,idx);
+                     if upper(xmlDom.getNodeName(obj_map_node)) = 'TEXT' then
+                        var_val_code := sms_from_xml(xmlDom.getNodeValue(obj_map_node));
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+               rcd_sms_rpt_data.rda_val_code := var_val_code;
             end if;
-            rcd_sms_rpt_data.rda_val_code := var_val_code;
 
          when 'DISPLAYDATACELL' then
 
@@ -475,7 +484,7 @@ create or replace package body sms_app.sms_sbwsms01 as
          when 'VALUE' then
 
             if pvar_value = true then
-               rcd_sms_rpt_data.rda_val_data := sms_from_xml(trim(xmlDom.getNodeValue(par_xml_node)));
+               rcd_sms_rpt_data.rda_val_data := sms_from_xml(trim(xmlDom.getNodeValue(xmlDom.getFirstChild(par_xml_node))));
                insert into sms_rpt_data values rcd_sms_rpt_data;
             end if;
 
