@@ -30,7 +30,7 @@ create table sms.sms_query
 /**/
 comment on table sms.sms_query is 'Query Table';
 comment on column sms.sms_query.que_qry_code is 'Query code';
-comment on column sms.sms_query.que_qry_text is 'Query name';
+comment on column sms.sms_query.que_qry_name is 'Query name';
 comment on column sms.sms_query.que_qry_status is 'Query status (0=inactive or 1=active)';
 comment on column sms.sms_query.que_upd_user is 'Query last updated user';
 comment on column sms.sms_query.que_upd_date is 'Query last updated date';
