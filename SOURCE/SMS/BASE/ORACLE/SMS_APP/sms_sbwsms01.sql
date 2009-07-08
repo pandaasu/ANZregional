@@ -18,7 +18,7 @@ create or replace package sms_app.sms_sbwsms01 as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/04   Steve Gregan   Created
+    2009/07   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -47,6 +47,16 @@ create or replace package body sms_app.sms_sbwsms01 as
    /* Private declarations
    /*-*/
    procedure process_report_data(par_xml_node in xmlDom.domNode);
+
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_sms_alt_group constant varchar2(32) := 'SMS_ALERT';
+   con_sms_alt_code constant varchar2(32) := 'REPORT_GENERATION';
+   con_sms_ema_group constant varchar2(32) := 'SMS_EMAIL_GROUP';
+   con_sms_ema_code constant varchar2(32) := 'REPORT_GENERATION';
+   con_sms_tri_group constant varchar2(32) := 'SMS_JOB_GROUP';
+   con_sms_tri_code constant varchar2(32) := 'REPORT_GENERATION';
 
    /*-*/
    /* Private definitions
@@ -192,6 +202,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       rcd_sms_rpt_header.rhe_crt_yyyypp := rcd_date.mars_period;
       rcd_sms_rpt_header.rhe_crt_yyyyppw := rcd_date.mars_week;
       rcd_sms_rpt_header.rhe_crt_yyyyppdd := rcd_date.mars_yyyyppdd;
+      rcd_sms_rpt_header.rhe_status := '1';
 
       /*-*/
       /* Parse the XML input
@@ -281,6 +292,12 @@ create or replace package body sms_app.sms_sbwsms01 as
       /*-*/
       /* Delete the existing report information
       /*-*/
+      delete from sms_rpt_recipient
+       where rre_qry_code = rcd_sms_rpt_header.rhe_qry_code
+         and rdre_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+      delete from sms_rpt_message
+       where rme_qry_code = rcd_sms_rpt_header.rhe_qry_code
+         and rme_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
       delete from sms_rpt_data
        where rda_qry_code = rcd_sms_rpt_header.rhe_qry_code
          and rda_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
@@ -318,6 +335,18 @@ create or replace package body sms_app.sms_sbwsms01 as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Trigger the report generation
+      /*-*/
+      lics_trigger_loader.execute('SMS Report Message Generation',
+                                  'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
+                                                                            rcd_sms_rpt_header.rhe_rpt_date || ''',''' ||
+                                                                            lics_setting_configuration.retrieve_setting(con_sms_alt_group, con_sms_alt_code) || ''',''' ||
+                                                                            lics_setting_configuration.retrieve_setting(con_sms_ema_group, con_sms_ema_code) || ''')',
+                                  lics_setting_configuration.retrieve_setting(con_sms_alt_group, con_sms_alt_code),
+                                  lics_setting_configuration.retrieve_setting(con_sms_ema_group, con_sms_ema_code),
+                                  lics_setting_configuration.retrieve_setting(con_sms_tri_group, con_sms_tri_code));
 
    /*-------------------*/
    /* Exception handler */

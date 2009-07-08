@@ -13,7 +13,7 @@ create or replace function sms_app.sms_to_xml(par_text in varchar2) return varch
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/04   Steve Gregan   Created
+    2009/07   Steve Gregan   Created
 
    *******************************************************************************/
 

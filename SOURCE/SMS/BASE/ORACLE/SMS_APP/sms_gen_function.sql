@@ -18,7 +18,7 @@ create or replace package sms_app.sms_gen_function as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/04   Steve Gregan   Created
+    2009/07   Steve Gregan   Created
 
    *******************************************************************************/
 

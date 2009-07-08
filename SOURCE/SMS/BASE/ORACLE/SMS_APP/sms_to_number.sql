@@ -13,7 +13,7 @@ create or replace function sms_app.sms_to_number(par_number in varchar2) return 
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/04   Steve Gregan   Created
+    2009/07   Steve Gregan   Created
 
    *******************************************************************************/
 
