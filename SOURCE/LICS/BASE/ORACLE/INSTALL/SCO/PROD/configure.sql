@@ -74,11 +74,13 @@ insert into lics_sec_menu values('ICS_CONFIG','Configuration');
 insert into lics_sec_link values('ICS_CONFIG',1,'*OPT','ICS_JOB_CONTROL');
 insert into lics_sec_link values('ICS_CONFIG',2,'*OPT','ICS_JOB_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',3,'*OPT','ICS_INT_CONFIG');
-insert into lics_sec_link values('ICS_CONFIG',4,'*OPT','ICS_GRP_CONFIG');
-insert into lics_sec_link values('ICS_CONFIG',5,'*OPT','ICS_ROU_CONFIG');
-insert into lics_sec_link values('ICS_CONFIG',6,'*OPT','ICS_SET_CONFIG');
-insert into lics_sec_link values('ICS_CONFIG',7,'*OPT','ICS_INT_PROCESS');
-insert into lics_sec_link values('ICS_CONFIG',8,'*OPT','ICS_LCK_MONITOR');
+insert into lics_sec_link values('ICS_CONFIG',4,'*OPT','ICS_STR_CONFIG');
+insert into lics_sec_link values('ICS_CONFIG',5,'*OPT','ICS_GRP_CONFIG');
+insert into lics_sec_link values('ICS_CONFIG',6,'*OPT','ICS_ROU_CONFIG');
+insert into lics_sec_link values('ICS_CONFIG',7,'*OPT','ICS_SET_CONFIG');
+insert into lics_sec_link values('ICS_CONFIG',8,'*OPT','ICS_INT_LOADER');
+insert into lics_sec_link values('ICS_CONFIG',9,'*OPT','ICS_INT_PROCESS');
+insert into lics_sec_link values('ICS_CONFIG',10,'*OPT','ICS_LCK_MONITOR');
 
 insert into lics_sec_menu values('GUEST','Guest');
 insert into lics_sec_link values('GUEST',1,'*MNU','ICS_MONITOR');
@@ -107,6 +109,8 @@ insert into lics_sec_option values('ICS_ROU_CONFIG','Routing Configuration','ics
 insert into lics_sec_option values('ICS_SET_CONFIG','Setting Configuration','ics_set_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_INT_PROCESS','Interface Processing','ics_int_process.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_LCK_MONITOR','Lock Monitoring','ics_loc_monitor.asp?Mode=SELECT','1');
+insert into lics_sec_option values('ICS_STR_CONFIG','Stream Configuration','ics_stream_configuration.asp?Mode=SELECT',1);
+insert into lics_sec_option values('ICS_INT_LOADER','Interface Loader','ics_int_loader.asp?Mode=SELECT',1);
 
 commit;
 
