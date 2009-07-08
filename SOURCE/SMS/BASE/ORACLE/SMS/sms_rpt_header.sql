@@ -19,7 +19,7 @@
 /* Table creation
 /**/
 create table sms.sms_rpt_header
-   (rhe_qry_code                    varchar2(32 char)             not null,
+   (rhe_qry_code                    varchar2(64 char)             not null,
     rhe_rpt_date                    varchar2(8 char)              not null,
     rhe_rpt_yyyypp                  number(6,0)                   not null,
     rhe_rpt_yyyyppw                 number(7,0)                   not null,

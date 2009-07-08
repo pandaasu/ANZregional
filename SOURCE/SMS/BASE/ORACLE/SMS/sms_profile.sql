@@ -20,7 +20,7 @@
 /**/
 create table sms.sms_profile
    (pro_prf_code                    varchar2(64 char)              not null,
-    pro_prf_text                    varchar2(120 char)             not null,
+    pro_prf_name                    varchar2(120 char)             not null,
     pro_status                      varchar2(1 char)               not null,
     pro_upd_user                    varchar2(30 char)              not null,
     pro_upd_date                    date                           not null,
@@ -38,7 +38,7 @@ create table sms.sms_profile
 /**/
 comment on table sms.sms_profile is 'Profile Table';
 comment on column sms.sms_profile.pro_prf_code is 'Profile code';
-comment on column sms.sms_profile.pro_prf_text is 'Profile text';
+comment on column sms.sms_profile.pro_prf_name is 'Profile name';
 comment on column sms.sms_profile.pro_status is 'Profile status (0=inactive or 1=active)';
 comment on column sms.sms_profile.pro_upd_user is 'Profile last updated user';
 comment on column sms.sms_profile.pro_upd_date is 'Profile last updated date';
