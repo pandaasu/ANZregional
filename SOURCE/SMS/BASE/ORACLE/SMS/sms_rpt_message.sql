@@ -23,7 +23,7 @@ create table sms.sms_rpt_message
     rme_rpt_date                    varchar2(8 char)              not null,
     rme_msg_seqn                    number                        not null,
     rme_msg_data                    varchar2(2048 char)           not null,
-    rme_msg_crt_time                date                          not null);  
+    rme_msg_time                    date                          not null);  
 
 /**/
 /* Comments
@@ -33,7 +33,7 @@ comment on column sms.sms_rpt_message.rme_qry_code is 'Query code';
 comment on column sms.sms_rpt_message.rme_rpt_date is 'Report date';
 comment on column sms.sms_rpt_message.rme_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_message.rme_msg_data is 'Message data';
-comment on column sms.sms_rpt_message.rme_msg_crt_time is 'Message create time';
+comment on column sms.sms_rpt_message.rme_msg_time is 'Message create time';
 
 /**/
 /* Primary Key Constraint

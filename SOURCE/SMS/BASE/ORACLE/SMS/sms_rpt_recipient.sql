@@ -24,8 +24,7 @@ create table sms.sms_rpt_recipient
     rre_msg_seqn                    number                        not null,
     rre_rcp_code                    varchar2(64 char)             not null,
     rre_rcp_mobile                  varchar2(64 char)             not null,
-    rre_rcp_email                   varchar2(128 char)            not null,
-    rre_rcp_snd_time                date                          not null);  
+    rre_rcp_email                   varchar2(128 char)            not null);  
 
 /**/
 /* Comments
@@ -37,7 +36,6 @@ comment on column sms.sms_rpt_recipient.rre_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_recipient.rre_rcp_code is 'Recipient code';
 comment on column sms.sms_rpt_recipient.rre_rcp_mobile is 'Recipient mobile phone number';
 comment on column sms.sms_rpt_recipient.rre_rcp_email is 'Recipient email address (*NONE)';
-comment on column sms.sms_rpt_recipient.rre_rcp_snd_time is 'Recipient message send time';
 
 /**/
 /* Primary Key Constraint

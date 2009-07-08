@@ -28,7 +28,8 @@ create table sms.sms_rpt_header
     rhe_crt_date                    date                          not null,
     rhe_crt_yyyypp                  number(6,0)                   not null,
     rhe_crt_yyyyppw                 number(7,0)                   not null,
-    rhe_crt_yyyyppdd                number(8,0)                   not null);
+    rhe_crt_yyyyppdd                number(8,0)                   not null,
+    rhe_status                      varchar2(1 char)              not null);
 
 /**/
 /* Comments
@@ -44,6 +45,7 @@ comment on column sms.sms_rpt_header.rhe_crt_date is 'creation timestamp';
 comment on column sms.sms_rpt_header.rhe_crt_yyyypp is 'creation Mars period';
 comment on column sms.sms_rpt_header.rhe_crt_yyyyppw is 'creation Mars week';
 comment on column sms.sms_rpt_header.rhe_crt_yyyyppdd is 'creation Mars day';
+comment on column sms.sms_rpt_header.rhe_status is 'Report status (1=loaded or 2=processed)';
 
 /**/
 /* Primary Key Constraint
