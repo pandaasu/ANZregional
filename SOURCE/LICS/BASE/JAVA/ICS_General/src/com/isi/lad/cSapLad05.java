@@ -39,8 +39,8 @@ public final class cSapLad05 implements iSapInterface {
       cSapSingleResultSet objSTASResultSet = null;
       cSapSingleQuery objSTPOQuery = null;
       cSapSingleResultSet objSTPOResultSet = null;
-      int intGroup = 1000;
-      ArrayList objSTLNR = null;
+      int intGroup = 500;
+      ArrayList objSTLNR = new ArrayList();
       String strLogging = null;
       String strIdoc = "SAPLAD05";
       cobjSapConnection = objSapConnection;
@@ -76,17 +76,33 @@ public final class cSapLad05 implements iSapInterface {
          System.out.println("Start MAST retrieval: " + Calendar.getInstance().getTime());
       }
       try {
-         objMASTQuery = new cSapSingleQuery(cobjSapConnection);
-         objMASTQuery.execute("MAST", "MAST", "STLNR,STLAL,MATNR,WERKS,STLAN", new String[]{strMASTFilters}, 0, 0);
-         objMASTResultSet = objMASTQuery.getResultSet();
-         objMASTResultSet.toInterface(strOutputFile, strIdoc, "MAST", false);
-         if (strLogging.equals("1")) {
+         boolean bolData = false;
+         int intRowSkips = 0;
+         int intRowCount = 10000;
+         boolean bolRead = true;
+         while (bolRead) {
+            objMASTQuery = new cSapSingleQuery(cobjSapConnection);
+            objMASTQuery.execute("MAST", "MAST", "STLNR,STLAL,MATNR,WERKS,STLAN", new String[]{strMASTFilters}, intRowSkips, intRowCount);
+            objMASTResultSet = objMASTQuery.getResultSet();
+            if (!bolData) {
+               objMASTResultSet.toInterface(strOutputFile, strIdoc, "MAST", false);
+               bolData = true;
+            } else {
+               objMASTResultSet.appendToInterface(strOutputFile);
+            }
+            if (strLogging.equals("1")) {
                System.out.println("MAST rows (" + objMASTResultSet.getRowCount() + ") retrieved and output: " + Calendar.getInstance().getTime());
             }
-         objSTLNR = getMASTConditions(objMASTResultSet,intGroup);
-         if (strLogging.equals("1")) {
-            System.out.println("MAST rows (" + objMASTResultSet.getRowCount() + ") filtered: " + Calendar.getInstance().getTime());
-         }
+            appendMASTConditions(objMASTResultSet,objSTLNR,intGroup);
+            if (strLogging.equals("1")) {
+               System.out.println("MAST rows (" + objMASTResultSet.getRowCount() + ") appended to filters: " + Calendar.getInstance().getTime());
+            }
+            if (objMASTResultSet.getRowCount() < intRowCount) {
+               bolRead = false;
+            } else {
+               intRowSkips = intRowSkips + intRowCount;
+            }
+         }     
       } catch(Exception objException) {
          throw new Exception("SAPLAD05 - MAST retrieval failed - " + objException.getMessage());
       } finally {
@@ -203,11 +219,11 @@ public final class cSapLad05 implements iSapInterface {
    /**
     * Retrieves the MAST condition statements
     * @param objMASTResultSet the MAST table result set
+    * @param objSTLNR the MAST condtion array list
     * @param intGroup the result grouping
-    * @return ArrayList the condition array
     * @throws Exception the exception message
     */
-   public ArrayList getMASTConditions(cSapSingleResultSet objMASTResultSet, int intGroup) throws Exception {
+   public void appendMASTConditions(cSapSingleResultSet objMASTResultSet, ArrayList objSTLNR, int intGroup) throws Exception {
       
       //
       // Remove duplicates from the source
@@ -227,9 +243,8 @@ public final class cSapLad05 implements iSapInterface {
       }
 
       //
-      // Load the keys array
+      // Load the MAST keys array
       //
-      ArrayList objKeys = new ArrayList();
       String[] strKeys = null;
       int intTotal = objMAST.size();
       int intCount = intGroup - 1;
@@ -240,7 +255,7 @@ public final class cSapLad05 implements iSapInterface {
             } else {
                strKeys = new String[(intTotal-i)];
             }
-            objKeys.add(strKeys);
+            objSTLNR.add(strKeys);
             intCount = 0;
          } else {
             intCount++;
@@ -255,11 +270,6 @@ public final class cSapLad05 implements iSapInterface {
          }
       }
       strKeys = null;
-      
-      //
-      // Return the condition array
-      //
-      return objKeys;
       
    }
    
