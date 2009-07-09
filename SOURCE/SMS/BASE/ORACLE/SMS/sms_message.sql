@@ -24,8 +24,7 @@ create table sms.sms_message
     mes_status                      varchar2(1 char)               not null,
     mes_upd_user                    varchar2(30 char)              not null,
     mes_upd_date                    date                           not null,
-    mes_qry_code                    varchar2(64 char)              not null,
-    mes_sms_text                    varchar2(4000 char)            not null);  
+    mes_qry_code                    varchar2(64 char)              not null);  
 
 /**/
 /* Comments
@@ -37,7 +36,6 @@ comment on column sms.sms_message.mes_status is 'Message status (0=inactive or 1
 comment on column sms.sms_message.mes_upd_user is 'Message last updated user';
 comment on column sms.sms_message.mes_upd_date is 'Message last updated date';
 comment on column sms.sms_message.mes_qry_code is 'Query code';
-comment on column sms.sms_message.mes_sms_text is 'Message SMS text';
 
 /**/
 /* Primary Key Constraint
