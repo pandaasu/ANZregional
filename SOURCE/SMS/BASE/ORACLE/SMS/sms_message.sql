@@ -25,7 +25,7 @@ create table sms.sms_message
     mes_upd_user                    varchar2(30 char)              not null,
     mes_upd_date                    date                           not null,
     mes_qry_code                    varchar2(64 char)              not null,
-    mes_sms_text                    varchar2(2048 char)            not null);  
+    mes_sms_text                    varchar2(4000 char)            not null);  
 
 /**/
 /* Comments
