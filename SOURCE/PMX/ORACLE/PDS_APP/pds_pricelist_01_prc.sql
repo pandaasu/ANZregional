@@ -645,7 +645,7 @@ BEGIN
         i_pmx_cmpny_code,
         i_pmx_div_code,
         v_matl_code,
-        0.10,
+        0.01,
         TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
         rv_pricelist.list_price, -- price2
         v_eff_date,
