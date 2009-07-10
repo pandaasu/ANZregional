@@ -33,7 +33,7 @@ comment on column sms.sms_pro_recipient.pre_rcp_code is 'Recipient code';
 /* Primary Key Constraint
 /**/
 alter table sms.sms_pro_recipient
-   add constraint sms_pro_recipient_pk primary key (pre_prf_code, pre_rcpt_code);
+   add constraint sms_pro_recipient_pk primary key (pre_prf_code, pre_rcp_code);
 
 /**/
 /* Authority

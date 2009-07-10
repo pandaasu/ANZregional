@@ -41,7 +41,7 @@ comment on column sms.sms_rpt_recipient.rre_rcp_email is 'Recipient email addres
 /* Primary Key Constraint
 /**/
 alter table sms.sms_rpt_recipient
-   add constraint sms_rpt_recipient_pk primary key (rre_qry_code, rre_rpt_date, rre_mes_seqn, rre_rcp_name);
+   add constraint sms_rpt_recipient_pk primary key (rre_qry_code, rre_rpt_date, rre_msg_seqn, rre_rcp_code);
 
 /**/
 /* Authority
