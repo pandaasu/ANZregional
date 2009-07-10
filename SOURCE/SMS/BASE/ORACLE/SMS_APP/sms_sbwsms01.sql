@@ -284,7 +284,7 @@ create or replace package body sms_app.sms_sbwsms01 as
          if var_found = false then
             raise_application_error(-20000, 'Query code ('||rcd_sms_rpt_header.rhe_qry_code||') is not defined');
          end if;
-         if rcd_query.que_qry_status != '1' then
+         if rcd_query.que_status != '1' then
             raise_application_error(-20000, 'Query code ('||rcd_sms_rpt_header.rhe_qry_code||') is not active');
          end if;
       end if;
@@ -294,7 +294,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       /*-*/
       delete from sms_rpt_recipient
        where rre_qry_code = rcd_sms_rpt_header.rhe_qry_code
-         and rdre_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+         and rre_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
       delete from sms_rpt_message
        where rme_qry_code = rcd_sms_rpt_header.rhe_qry_code
          and rme_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
@@ -472,6 +472,9 @@ create or replace package body sms_app.sms_sbwsms01 as
                         exit;
                      end if;
                   end loop;
+               end if;
+               if upper(var_dim_valu) = 'RESULT' or upper(var_dim_valu) = 'OVERALL RESULT' then
+                  var_dim_valu := '*TOTAL';
                end if;
                if pvar_dim_indx = 1 then
                   rcd_sms_rpt_data.rda_dim_val01 := var_dim_valu;
