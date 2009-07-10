@@ -23,7 +23,8 @@ create table sms.sms_query
     que_qry_name                    varchar2(120 char)            not null,
     que_status                      varchar2(1 char)              not null,
     que_upd_user                    varchar2(30 char)             not null,
-    que_upd_date                    date                          not null);
+    que_upd_date                    date                          not null,
+    que_rpt_level                   number                        not null);
 
 /**/
 /* Comments
@@ -34,6 +35,7 @@ comment on column sms.sms_query.que_qry_name is 'Query name';
 comment on column sms.sms_query.que_status is 'Query status (0=inactive or 1=active)';
 comment on column sms.sms_query.que_upd_user is 'Query last updated user';
 comment on column sms.sms_query.que_upd_date is 'Query last updated date';
+comment on column sms.sms_query.que_rpt_level is 'Query report levels';
 
 /**/
 /* Primary Key Constraint
