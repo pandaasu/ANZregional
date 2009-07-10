@@ -129,7 +129,11 @@ create or replace package body sms_app.sms_rep_function as
       rcd_pro_message csr_pro_message%rowtype;
 
       cursor csr_mes_line is
-         select t01.*
+         select t01.mli_msg_code,
+                t01.mli_msg_line,
+                nvl(t01.mli_det_text,'*NONE') as mli_det_text,
+                nvl(t01.mli_tot_text,'*NONE') as mli_tot_text,
+                t01.mli_tot_child
            from sms_mes_line t01
           where t01.mli_msg_code = rcd_pro_message.mes_msg_code
           order by t01.mli_msg_line asc;
@@ -156,7 +160,29 @@ create or replace package body sms_app.sms_rep_function as
       rcd_pro_recipient csr_pro_recipient%rowtype;
 
       cursor csr_rpt_data is
-         select t01.*
+         select t01.rda_qry_code,
+                t01.rda_rpt_date,
+                t01.rda_dat_seqn,
+                nvl(t01.rda_dim_cod01,'*NONE') as rda_dim_cod01,
+                nvl(t01.rda_dim_cod02,'*NONE') as rda_dim_cod02,
+                nvl(t01.rda_dim_cod03,'*NONE') as rda_dim_cod03,
+                nvl(t01.rda_dim_cod04,'*NONE') as rda_dim_cod04,
+                nvl(t01.rda_dim_cod05,'*NONE') as rda_dim_cod05,
+                nvl(t01.rda_dim_cod06,'*NONE') as rda_dim_cod06,
+                nvl(t01.rda_dim_cod07,'*NONE') as rda_dim_cod07,
+                nvl(t01.rda_dim_cod08,'*NONE') as rda_dim_cod08,
+                nvl(t01.rda_dim_cod09,'*NONE') as rda_dim_cod09,
+                nvl(t01.rda_dim_val01,'*NONE') as rda_dim_val01,
+                nvl(t01.rda_dim_val02,'*NONE') as rda_dim_val02,
+                nvl(t01.rda_dim_val03,'*NONE') as rda_dim_val03,
+                nvl(t01.rda_dim_val04,'*NONE') as rda_dim_val04,
+                nvl(t01.rda_dim_val05,'*NONE') as rda_dim_val05,
+                nvl(t01.rda_dim_val06,'*NONE') as rda_dim_val06,
+                nvl(t01.rda_dim_val07,'*NONE') as rda_dim_val07,
+                nvl(t01.rda_dim_val08,'*NONE') as rda_dim_val08,
+                nvl(t01.rda_dim_val09,'*NONE') as rda_dim_val09,
+                nvl(t01.rda_val_code,'*NONE') as rda_val_code,
+                nvl(t01.rda_val_data,'*NONE') as rda_val_data
            from sms_rpt_data t01
           where t01.rda_qry_code = par_qry_code
             and t01.rda_rpt_date = par_rpt_date
@@ -326,8 +352,8 @@ create or replace package body sms_app.sms_rep_function as
                var_sav_val07 := '*START';
                var_sav_val08 := '*START';
                var_sav_val09 := '*START';
-               for idc in 1..9 loop
-                  tbl_dcnt(idc) := 0;
+               for idy in 1..tbl_mlin.count loop
+                  tbl_dcnt(idy) := 0;
                end loop;
 
                /*-*/
@@ -338,15 +364,15 @@ create or replace package body sms_app.sms_rep_function as
                   /*-*/
                   /* Change in repprt data dimensions
                   /*-*/
-                  if nvl(tbl_data(idx).rda_dim_val01,'*NONE') != var_sav_val01 or
-                     nvl(tbl_data(idx).rda_dim_val02,'*NONE') != var_sav_val02 or
-                     nvl(tbl_data(idx).rda_dim_val03,'*NONE') != var_sav_val03 or
-                     nvl(tbl_data(idx).rda_dim_val04,'*NONE') != var_sav_val04 or
-                     nvl(tbl_data(idx).rda_dim_val05,'*NONE') != var_sav_val05 or
-                     nvl(tbl_data(idx).rda_dim_val06,'*NONE') != var_sav_val06 or
-                     nvl(tbl_data(idx).rda_dim_val07,'*NONE') != var_sav_val07 or
-                     nvl(tbl_data(idx).rda_dim_val08,'*NONE') != var_sav_val08 or
-                     nvl(tbl_data(idx).rda_dim_val09,'*NONE') != var_sav_val09 then
+                  if tbl_data(idx).rda_dim_val01 != var_sav_val01 or
+                     tbl_data(idx).rda_dim_val02 != var_sav_val02 or
+                     tbl_data(idx).rda_dim_val03 != var_sav_val03 or
+                     tbl_data(idx).rda_dim_val04 != var_sav_val04 or
+                     tbl_data(idx).rda_dim_val05 != var_sav_val05 or
+                     tbl_data(idx).rda_dim_val06 != var_sav_val06 or
+                     tbl_data(idx).rda_dim_val07 != var_sav_val07 or
+                     tbl_data(idx).rda_dim_val08 != var_sav_val08 or
+                     tbl_data(idx).rda_dim_val09 != var_sav_val09 then
 
                      /*-*/
                      /* Determine the highest change level
@@ -421,15 +447,15 @@ create or replace package body sms_app.sms_rep_function as
                      /*-*/
                      /* Save the current dimension values
                      /*-*/
-                     var_sav_val01 := nvl(tbl_data(idx).rda_dim_val01,'*NONE');
-                     var_sav_val02 := nvl(tbl_data(idx).rda_dim_val02,'*NONE');
-                     var_sav_val03 := nvl(tbl_data(idx).rda_dim_val03,'*NONE');
-                     var_sav_val04 := nvl(tbl_data(idx).rda_dim_val04,'*NONE');
-                     var_sav_val05 := nvl(tbl_data(idx).rda_dim_val05,'*NONE');
-                     var_sav_val06 := nvl(tbl_data(idx).rda_dim_val06,'*NONE');
-                     var_sav_val07 := nvl(tbl_data(idx).rda_dim_val07,'*NONE');
-                     var_sav_val08 := nvl(tbl_data(idx).rda_dim_val08,'*NONE');
-                     var_sav_val09 := nvl(tbl_data(idx).rda_dim_val09,'*NONE');
+                     var_sav_val01 := tbl_data(idx).rda_dim_val01;
+                     var_sav_val02 := tbl_data(idx).rda_dim_val02;
+                     var_sav_val03 := tbl_data(idx).rda_dim_val03;
+                     var_sav_val04 := tbl_data(idx).rda_dim_val04;
+                     var_sav_val05 := tbl_data(idx).rda_dim_val05;
+                     var_sav_val06 := tbl_data(idx).rda_dim_val06;
+                     var_sav_val07 := tbl_data(idx).rda_dim_val07;
+                     var_sav_val08 := tbl_data(idx).rda_dim_val08;
+                     var_sav_val09 := tbl_data(idx).rda_dim_val09;
 
                      /*-*/
                      /* Update the heading lines as required
@@ -450,27 +476,27 @@ create or replace package body sms_app.sms_rep_function as
                         for idy in 1..tbl_mlin.count loop
                            if (upper(tbl_mlin(idy).mli_msg_line) >= var_level and
                                upper(tbl_mlin(idy).mli_msg_line) <= var_detail and
-                               upper(nvl(tbl_mlin(idy).mli_det_text,'*NONE')) != '*NONE') then
+                               upper(tbl_mlin(idy).mli_det_text) != '*NONE') then
                               var_sms_work := tbl_dtxt(idy);
                               var_sms_work := replace(var_sms_work,'PROCESSED_DATE',to_char(rcd_report.rhe_rpt_yyyyppdd,'fm00000000'));
                               if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val01);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod01,rcd_rpt_data.rda_dim_val01));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val02);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod02,rcd_rpt_data.rda_dim_val02));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val03);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod03,rcd_rpt_data.rda_dim_val03));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val04);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod04,rcd_rpt_data.rda_dim_val04));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val05);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod05,rcd_rpt_data.rda_dim_val05));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val06);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod06,rcd_rpt_data.rda_dim_val06));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val07);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod07,rcd_rpt_data.rda_dim_val07));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val08);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod08,rcd_rpt_data.rda_dim_val08));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',rcd_rpt_data.rda_dim_val09);
+                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(rcd_rpt_data.rda_dim_cod09,rcd_rpt_data.rda_dim_val09));
                               end if;
                               tbl_dtxt(idy) := var_sms_work;
                            end if;
@@ -485,7 +511,7 @@ create or replace package body sms_app.sms_rep_function as
                   if var_total = '*NONE' then
                      for idy in 1..tbl_mlin.count loop
                         if (upper(tbl_mlin(idy).mli_msg_line) = var_detail and
-                            upper(nvl(tbl_mlin(idy).mli_det_text,'*NONE')) != '*NONE') then
+                            upper(tbl_mlin(idy).mli_det_text) != '*NONE') then
                            var_sms_work := tbl_dtxt(idy);
                            if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
                               var_sms_work := replace(var_sms_work,'<'||rcd_rpt_data.rda_val_code||'>',tbl_data(idx).rda_val_data);
@@ -512,7 +538,7 @@ create or replace package body sms_app.sms_rep_function as
                   else
                      for idy in 1..tbl_mlin.count loop
                         if (upper(tbl_mlin(idy).mli_msg_line) = var_total and
-                            upper(nvl(tbl_mlin(idy).mli_tot_text,'*NONE')) != '*NONE' and
+                            upper(tbl_mlin(idy).mli_tot_text) != '*NONE' and
                             (tbl_mlin(idy).mli_tot_child = '1' or (tbl_mlin(idy).mli_tot_child = '2' and tbl_dcnt(idy) > 1))) then
                            var_sms_work := tbl_ttxt(idy);
                            if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
@@ -546,7 +572,7 @@ create or replace package body sms_app.sms_rep_function as
                /*-*/
                var_sms_text := null;
                for idy in 1..tbl_mlin.count loop
-                  if upper(nvl(tbl_mlin(idy).mli_det_text,'*NONE')) != '*NONE' then
+                  if upper(tbl_mlin(idy).mli_det_text) != '*NONE' then
                      if not(var_sms_text is null) then
                         var_sms_text := var_sms_text || utl_tcp.CRLF;
                      end if;
@@ -554,7 +580,7 @@ create or replace package body sms_app.sms_rep_function as
                   end if;
                end loop;
                for idy in reverse 1..tbl_mlin.count loop
-                  if upper(nvl(tbl_mlin(idy).mli_tot_text,'*NONE')) != '*NONE' then
+                  if upper(tbl_mlin(idy).mli_tot_text) != '*NONE' then
                      if not(var_sms_text is null) then
                         var_sms_text := var_sms_text || utl_tcp.CRLF;
                      end if;

@@ -30,6 +30,7 @@ create or replace package sms_app.sms_gen_function as
    procedure add_mesg_data(par_message in varchar2);
    function get_mesg_data return sms_xml_type pipelined;
    procedure update_abbreviation(par_qry_code in varchar2, par_rpt_date in varchar2);
+   function retrieve_abbreviation(par_dim_code in varchar2, par_dim_data in varchar2) return varchar2;
 
 end sms_gen_function;
 /
@@ -406,6 +407,52 @@ create or replace package body sms_app.sms_gen_function as
    /* End routine */
    /*-------------*/
    end update_abbreviation;
+
+   /*************************************************************/
+   /* This procedure performs the retrieve abbreviation routine */
+   /*************************************************************/
+   function retrieve_abbreviation(par_dim_code in varchar2, par_dim_data in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_abbreviation is
+         select t01.*
+           from sms_abbreviation t01
+          where t01.abb_dim_code = par_dim_code
+            and t01.abb_dim_data = par_dim_data;
+      rcd_abbreviation csr_abbreviation%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the abbreviation
+      /*-*/
+      var_return := par_dim_data;
+      open csr_abbreviation;
+      fetch csr_abbreviation into rcd_abbreviation;
+      if csr_abbreviation%found then
+         var_return := rcd_abbreviation.abb_dim_abbr;
+      end if;
+      close csr_abbreviation;
+
+      /*-*/
+      /* Return the value
+      /*-*/
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_abbreviation;
 
 /*----------------------*/
 /* Initialisation block */
