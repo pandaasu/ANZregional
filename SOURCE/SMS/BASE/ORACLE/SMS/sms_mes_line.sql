@@ -20,42 +20,27 @@
 /**/
 create table sms.sms_mes_line
    (mli_msg_code                    varchar2(64 char)              not null,
-    mli_msg_lnum                    number                         not null,
-    mli_msg_pnum                    number                         not null,
-    mli_dim_val01                   varchar2(256 char)             null,
-    mli_dim_val02                   varchar2(256 char)             null,
-    mli_dim_val03                   varchar2(256 char)             null,
-    mli_dim_val04                   varchar2(256 char)             null,
-    mli_dim_val05                   varchar2(256 char)             null,
-    mli_dim_val06                   varchar2(256 char)             null,
-    mli_dim_val07                   varchar2(256 char)             null,
-    mli_dim_val08                   varchar2(256 char)             null,
-    mli_dim_val09                   varchar2(256 char)             null
-    mli_sms_text                    varchar2(1024 char)            not null);  
+    mli_msg_line                    varchar2(64 char)              not null,
+    mli_det_text                    varchar2(2000 char)            not null,
+    mli_tot_text                    varchar2(2000 char)            not null,
+    mli_tot_child                   varchar2(1 char)               not null);  
+
 
 /**/
 /* Comments
 /**/
 comment on table sms.sms_mes_line is 'Message Line Table';
 comment on column sms.sms_mes_line.mli_msg_code is 'Message code';
-comment on column sms.sms_mes_line.mli_msg_lnum is 'Message line number';
-comment on column sms.sms_mes_line.mli_msg_pnum is 'Message line parent';
-comment on column sms.sms_mes_line.mli_dim_val01 is 'Dimension 01 value';
-comment on column sms.sms_mes_line.mli_dim_val02 is 'Dimension 02 value';
-comment on column sms.sms_mes_line.mli_dim_val03 is 'Dimension 03 value';
-comment on column sms.sms_mes_line.mli_dim_val04 is 'Dimension 04 value';
-comment on column sms.sms_mes_line.mli_dim_val05 is 'Dimension 05 value';
-comment on column sms.sms_mes_line.mli_dim_val06 is 'Dimension 06 value';
-comment on column sms.sms_mes_line.mli_dim_val07 is 'Dimension 07 value';
-comment on column sms.sms_mes_line.mli_dim_val08 is 'Dimension 08 value';
-comment on column sms.sms_mes_line.mli_dim_val09 is 'Dimension 09 value';
-comment on column sms.sms_mes_line.mli_sms_text is 'Message SMS text';
+comment on column sms.sms_mes_line.mli_msg_line is 'Message line';
+comment on column sms.sms_mes_line.mli_det_text is 'Message detail SMS text';
+comment on column sms.sms_mes_line.mli_tot_text is 'Message total SMS text';
+comment on column sms.sms_mes_line.mli_tot_child is 'Message total children (1=All totals, 2=Multiple children totals only)';
 
 /**/
 /* Primary Key Constraint
 /**/
 alter table sms.sms_mes_line
-   add constraint sms_mes_line_pk primary key (mli_msg_code, mli_msg_lnum);
+   add constraint sms_mes_line_pk primary key (mli_msg_code, mli_msg_line);
 
 /**/
 /* Authority
