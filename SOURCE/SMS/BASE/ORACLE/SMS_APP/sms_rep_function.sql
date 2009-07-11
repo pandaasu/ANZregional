@@ -73,6 +73,8 @@ create or replace package body sms_app.sms_rep_function as
       var_log_search varchar2(256);
       var_errors boolean;
       var_found boolean;
+      var_mes_count number;
+      var_rec_count number;
       var_out_day varchar2(64);
       var_level varchar2(64);
       var_detail varchar2(64);
@@ -275,6 +277,11 @@ create or replace package body sms_app.sms_rep_function as
       lics_logging.write_log('Begin - SMS Report Generation - Parameters(' || par_qry_code || ' + ' || par_rpt_date || ')');
 
       /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('--> Processing SMS query - '||par_qry_code);
+
+      /*-*/
       /* Initialise the output day
       /*-*/
       if (to_number(substr(to_char(rcd_report.rhe_rpt_yyyyppw,'fm0000000'),7,1)) = 1 and
@@ -311,6 +318,11 @@ create or replace package body sms_app.sms_rep_function as
          end if;
 
          /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('----> Processing SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name);
+
+         /*-*/
          /* Retrieve the report query profile messages
          /*-*/
          open csr_pro_message;
@@ -319,6 +331,11 @@ create or replace package body sms_app.sms_rep_function as
             if csr_pro_message%notfound then
                exit;
             end if;
+
+            /*-*/
+            /* Log the event
+            /*-*/
+            lics_logging.write_log('------> Processing SMS message - ('||rcd_pro_message.mes_msg_code||') '||rcd_pro_message.mes_msg_name);
 
             /*-*/
             /* Retrieve and load the related message line data
@@ -338,6 +355,11 @@ create or replace package body sms_app.sms_rep_function as
                if csr_pro_filter%notfound then
                   exit;
                end if;
+
+               /*-*/
+               /* Log the event
+               /*-*/
+               lics_logging.write_log('--------> Processing SMS filter - ('||rcd_pro_filter.fil_flt_code||') '||rcd_pro_filter.fil_flt_name);
 
                /*-*/
                /* Initialise the message instance
@@ -622,6 +644,11 @@ create or replace package body sms_app.sms_rep_function as
                if tbl_data.count != 0 then
 
                   /*-*/
+                  /* Increment the message count
+                  /*-*/
+                  var_mes_count := var_mes_count +1;
+
+                  /*-*/
                   /* Build and insert the report message
                   /*-*/
                   var_sms_text := null;
@@ -639,12 +666,14 @@ create or replace package body sms_app.sms_rep_function as
                   /*-*/
                   /* Retrieve and attached all profile recipients
                   /*-*/
+                  var_rec_count := 0;
                   open csr_pro_recipient;
                   loop
                      fetch csr_pro_recipient into rcd_pro_recipient;
                      if csr_pro_recipient%notfound then
                         exit;
                      end if;
+                     var_rec_count := var_rec_count + 1;
                      rcd_sms_rpt_recipient.rre_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn;
                      rcd_sms_rpt_recipient.rre_rcp_code := rcd_pro_recipient.rec_rcp_code;
                      rcd_sms_rpt_recipient.rre_rcp_mobile := rcd_pro_recipient.rec_rcp_mobile;
@@ -652,6 +681,18 @@ create or replace package body sms_app.sms_rep_function as
                      insert into sms_rpt_recipient values rcd_sms_rpt_recipient;
                   end loop;
                   close csr_pro_recipient;
+
+                  /*-*/
+                  /* Log the event
+                  /*-*/
+                  lics_logging.write_log('........... Message constructed and attached to '||to_char(var_rec_count)||' recipient(s)');
+
+               else
+
+                  /*-*/
+                  /* Log the event
+                  /*-*/
+                  lics_logging.write_log('........... No report data found for the filter dimensions');
 
                end if;
 
@@ -663,6 +704,11 @@ create or replace package body sms_app.sms_rep_function as
 
       end loop;
       close csr_profile;
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('--> Start sending SMS messages to recipients');
 
       /*-*/
       /* Send the report messages
@@ -691,6 +737,11 @@ create or replace package body sms_app.sms_rep_function as
 
       end loop;
       close csr_rpt_message;
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('--> End sending SMS messages to recipients');
 
       /*-*/
       /* Update the report header to processed
