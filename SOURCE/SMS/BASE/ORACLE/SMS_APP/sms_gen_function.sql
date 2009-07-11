@@ -422,7 +422,7 @@ create or replace package body sms_app.sms_gen_function as
       /* Local cursors
       /*-*/
       cursor csr_abbreviation is
-         select t01.*
+         select nvl(t01.abb_dim_abbr,t01.abb_dim_data) as abb_dim_abbr
            from sms_abbreviation t01
           where t01.abb_dim_code = par_dim_code
             and t01.abb_dim_data = par_dim_data;
