@@ -48,28 +48,33 @@ create or replace package body pts_app.pts_alc_function as
    /*-*/
    con_key_map constant varchar2(36) := '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+   /*-*/
+   /* Private definitions
+   /*-*/
+   type ptyp_skey is table of varchar2(32) index by binary_integer;
+   ptbl_skey ptyp_skey;
+
    /*********************************************************/
    /* This procedure performs the normal allocation routine */
    /*********************************************************/
    procedure normal is
 
       /*-*/
+      /* Autonomous transaction
+      /*-*/
+      pragma autonomous_transaction;
+
+      /*-*/
       /* Local definitions
       /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      var_action varchar2(32);
       var_found boolean;
-
-      var_key_code varchar2(36);
       var_key_work varchar2(36);
       var_key_index number;
       var_sam_index number;
       type typ_scod is table of pts_tes_sample%rowtype index by binary_integer;
       tbl_scod typ_scod;
-      type typ_skey is table of varchar2(36) index by binary_integer;
-      tbl_skey typ_skey;
+      type typ_akey is table of varchar2(32) index by binary_integer;
+      tbl_akey typ_akey;
 
       /*-*/
       /* Local cursors
@@ -77,8 +82,7 @@ create or replace package body pts_app.pts_alc_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code
-            for update nowait;
+          where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_sample is
@@ -87,25 +91,23 @@ create or replace package body pts_app.pts_alc_function as
           where t01.tpa_tes_code = var_tes_code;
       rcd_sample csr_sample%rowtype;
 
-      cursor csr_combination is
-         select combo
-           from (select combo
-                   from (select replace(sys_connect_by_path(slot,'/'),'/') combo
-                           from (select level lvlnum,
-                                        substr(var_key_code, level, 1) slot
-                                   from dual
-                                connect by level <= length(var_key_code))
-                          where level = length(var_key_code)
-                        connect by nocycle lvlnum != prior lvlnum)
-                  order by dbms_random.value)
-          where rownum <= (select count(*) from pts_tes_panel where t01.tpa_tes_code = var_tes_code);
-      rcd_combination csr_combination%rowtype;
+      cursor csr_allocation is
+         select t01.*
+           from pts_gen_function.randomize_allocation(tbl_scod.count, (select count(*) from pts_tes_panel where tpa_tes_code = rcd_retrieve.tde_tes_code)) t01;
+      rcd_allocation csr_allocation%rowtype;
 
       cursor csr_panel is
          select t01.*
-           from pts_tes_panel t01
-          where t01.tpa_tes_code = var_tes_code
-          order by t01.tpa_pan_code;
+           from pts_tes_panel t01,
+                (select t01.pcl_pet_code,
+                        t01.pcl_val_code
+                   from pts_pet_classification t01
+                  where t01.pcl_tab_code = '*PET_CLA'
+                    and t01.pcl_fld_code = 8) t02
+          where t01.tpa_pan_code = t01.pcl_pet_code(+)
+            and t01.tpa_tes_code = var_tes_code
+          order by nvl(t02.pcl_val_code,1),
+                   t01.tpa_pan_code;
       rcd_panel csr_panel%rowtype;
 
    /*-------------*/
@@ -113,58 +115,20 @@ create or replace package body pts_app.pts_alc_function as
    /*-------------*/
    begin
 
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*TESSTM' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      var_stm_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMCODE'));
-      var_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
-      var_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
-      var_hou_pet_multi := xslProcessor.valueOf(obj_pts_request,'@PETMLT');
-      if var_stm_code is null then
-         pts_gen_function.add_mesg_data('Selection template code ('||xslProcessor.valueOf(obj_pts_request,'@STMCODE')||') must be a number');
-      end if;
-      if var_req_mem_count is null or var_req_mem_count < 1 then
-         pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
-      end if;
-      if var_hou_pet_multi is null or (var_hou_pet_multi != '0' and var_hou_pet_multi != '1') then
-         pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      xmlDom.freeDocument(obj_xml_document);
+      /*---------------------------------------------------------------*/
+      /* NOTE - This procedure is under autonomous transaction control */
+      /*---------------------------------------------------------------*/
 
       /*-*/
       /* Retrieve and lock the existing selection template
       /*-*/
       var_found := false;
-      begin
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-      exception
-         when others then
-            pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') is currently locked');
-            return;
-      end;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
       if var_found = false then
          pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') does not exist');
       end if;
@@ -185,18 +149,14 @@ create or replace package body pts_app.pts_alc_function as
       open csr_sample;
       fetch csr_sample bulk collect into tbl_scod;
       close csr_sample;
-      var_key_code := null;
-      for idx 1..tbl_scod loop
-         var_key_code := var_key_code||substr(con_key_map,idx,1);
-      end loop;
 
       /*-*/
-      /* Retrieve and load the sample key array
+      /* Retrieve and load the allocation key array
       /*-*/
-      tbl_skey.delete;
-      open csr_combination;
-      fetch csr_combination bulk collect into tbl_skey;
-      close csr_combination;
+      tbl_akey.delete;
+      open csr_allocation;
+      fetch csr_allocation bulk collect into tbl_akey;
+      close csr_allocation;
 
       /*-*/
       /* Retrieve the test panel
@@ -268,6 +228,11 @@ create or replace package body pts_app.pts_alc_function as
    procedure difference is
 
       /*-*/
+      /* Autonomous transaction
+      /*-*/
+      pragma autonomous_transaction;
+
+      /*-*/
       /* Local definitions
       /*-*/
       obj_xml_parser xmlParser.parser;
@@ -282,8 +247,6 @@ create or replace package body pts_app.pts_alc_function as
       var_sam_index number;
       type typ_scod is table of pts_tes_sample%rowtype index by binary_integer;
       tbl_scod typ_scod;
-      type typ_skey is table of varchar2(36) index by binary_integer;
-      tbl_skey typ_skey;
 
       /*-*/
       /* Local cursors
@@ -291,8 +254,7 @@ create or replace package body pts_app.pts_alc_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code
-            for update nowait;
+          where t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_sample is
@@ -301,25 +263,18 @@ create or replace package body pts_app.pts_alc_function as
           where t01.tpa_tes_code = var_tes_code;
       rcd_sample csr_sample%rowtype;
 
-      cursor csr_combination is
-         select combo
-           from (select combo
-                   from (select replace(sys_connect_by_path(slot,'/'),'/') combo
-                           from (select level lvlnum,
-                                        substr(var_key_code, level, 1) slot
-                                   from dual
-                                connect by level <= length(var_key_code))
-                          where level = length(var_key_code)
-                        connect by nocycle lvlnum != prior lvlnum)
-                  order by dbms_random.value)
-          where rownum <= (select count(*) from pts_tes_panel where t01.tpa_tes_code = var_tes_code);
-      rcd_combination csr_combination%rowtype;
-
       cursor csr_panel is
          select t01.*
-           from pts_tes_panel t01
-          where t01.tpa_tes_code = var_tes_code
-          order by t01.tpa_pan_code;
+           from pts_tes_panel t01,
+                (select t01.pcl_pet_code,
+                        t01.pcl_val_code
+                   from pts_pet_classification t01
+                  where t01.pcl_tab_code = '*PET_CLA'
+                    and t01.pcl_fld_code = 8) t02
+          where t01.tpa_pan_code = t01.pcl_pet_code(+)
+            and t01.tpa_tes_code = var_tes_code
+          order by nvl(t02.pcl_val_code,1),
+                   t01.tpa_pan_code;
       rcd_panel csr_panel%rowtype;
 
    /*-------------*/
@@ -327,58 +282,20 @@ create or replace package body pts_app.pts_alc_function as
    /*-------------*/
    begin
 
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
+      /*---------------------------------------------------------------*/
+      /* NOTE - This procedure is under autonomous transaction control */
+      /*---------------------------------------------------------------*/
 
       /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*TESSTM' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      var_stm_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMCODE'));
-      var_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
-      var_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
-      var_hou_pet_multi := xslProcessor.valueOf(obj_pts_request,'@PETMLT');
-      if var_stm_code is null then
-         pts_gen_function.add_mesg_data('Selection template code ('||xslProcessor.valueOf(obj_pts_request,'@STMCODE')||') must be a number');
-      end if;
-      if var_req_mem_count is null or var_req_mem_count < 1 then
-         pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
-      end if;
-      if var_hou_pet_multi is null or (var_hou_pet_multi != '0' and var_hou_pet_multi != '1') then
-         pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Retrieve and lock the existing selection template
+      /* Retrieve the test
       /*-*/
       var_found := false;
-      begin
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-      exception
-         when others then
-            pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') is currently locked');
-            return;
-      end;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
       if var_found = false then
          pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') does not exist');
       end if;
@@ -410,10 +327,7 @@ create or replace package body pts_app.pts_alc_function as
       /*-*/
       /* Retrieve and load the sample key array
       /*-*/
-      tbl_skey.delete;
-      open csr_combination;
-      fetch csr_combination bulk collect into tbl_skey;
-      close csr_combination;
+      pts_gen_function.randomize_allocation(sam_count,pan_count);
 
       /*-*/
       /* Retrieve the test panel
