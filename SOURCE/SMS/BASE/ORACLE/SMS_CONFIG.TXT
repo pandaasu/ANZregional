@@ -4,33 +4,31 @@
 insert into sms_system values ('SYSTEM_PROCESS','*ACTIVE',user,sysdate);
 insert into sms_system values ('REPORT_GENERATION_ALERT','*NONE',user,sysdate);
 insert into sms_system values ('REPORT_GENERATION_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
-insert into sms_system values ('REPORT_GENERATION_JOB_GROUP','SMS',user,sysdate);
+insert into sms_system values ('REPORT_GENERATION_JOB_GROUP','DWP',user,sysdate);
 commit;
 
 --
 -- Query definitions
 --
-insert into sms_query values ('Y135_DAILY_SMS_FCST_CP_LP','Daily SMS - Total China - Fcast CP LP','1',user,sysdate,'0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
-insert into sms_query values ('Y135_DAILY_SMS_ALL_CP_LP','Daily SMS - Total China - CP LP','1',user,sysdate,'0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
-insert into sms_query values ('Y135_DAILY_SMS_GBA_CP_LP','Daily SMS - Total China - GBA - CP LP','1',user,sysdate,'0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
-insert into sms_query values ('Y135_DAILY_SMS_IC_CP_LP','Daily SMS - Impulse Channel - CP LP','1',user,sysdate,'0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
-insert into sms_query values ('Y135_DAILY_SMS_MT_CP_LP','Daily SMS - Modern Trade - CP LP','1',user,sysdate,'0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
+insert into sms_query values ('Y135_DAILY_SMS_FCST_CP_LP','Daily SMS - Total China - Fcast CP LP','1',user,sysdate,'BW ChinaSalesForecast','0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
+insert into sms_query values ('Y135_DAILY_SMS_ALL_CP_LP','Daily SMS - Total China - CP LP','1',user,sysdate,'BW ChinaSalesSBG','0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
+insert into sms_query values ('Y135_DAILY_SMS_GBA_CP_LP','Daily SMS - Total China - GBA - CP LP','1',user,sysdate,'BW ChinaSalesGBAllTeams','0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
+insert into sms_query values ('Y135_DAILY_SMS_IC_CP_LP','Daily SMS - Impulse Channel - CP LP','1',user,sysdate,'BW ChinaSalesImpulseChannel','0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
+insert into sms_query values ('Y135_DAILY_SMS_MT_CP_LP','Daily SMS - Modern Trade - CP LP','1',user,sysdate,'BW ChinaSalesModernTrade','0','1','1','1','1','1','0',4,'CN - Sold-to SlsTeam','Business Segment','SFH Geo Sold','CN - BDT',null,null,null,null,null);
 commit;
 
 --
 -- Abbreviation definitions
 --
-update sms_abbreviation set abb_dim_abbr = 'IC' where abb_dim_code = 'CN - Sold-to SlsTeam' and abb_dim_data = 'Impulse';
-update sms_abbreviation set abb_dim_abbr = 'MT' where abb_dim_code = 'CN - Sold-to SlsTeam' and abb_dim_data = 'Modern Trade';
-update sms_abbreviation set abb_dim_abbr = 'CN' where abb_dim_code = 'CN - Sold-to SlsTeam' and abb_dim_data = 'Total China';
-update sms_abbreviation set abb_dim_abbr = 'P' where abb_dim_code = 'Business Segment' and abb_dim_data = 'Petcare';
-update sms_abbreviation set abb_dim_abbr = 'SF' where abb_dim_code = 'Business Segment' and abb_dim_data = 'Snackfood';
-update sms_abbreviation set abb_dim_abbr = 'TOT' where abb_dim_code = 'Business Segment' and abb_dim_data = 'Result';
-update sms_abbreviation set abb_dim_abbr = 'C' where abb_dim_code = 'CN - BDT' and abb_dim_data = 'Chocolate Regular';
-update sms_abbreviation set abb_dim_abbr = 'G' where abb_dim_code = 'CN - BDT' and abb_dim_data = 'Gifting';
-update sms_abbreviation set abb_dim_abbr = 'P' where abb_dim_code = 'CN - BDT' and abb_dim_data = 'Petcare';
-update sms_abbreviation set abb_dim_abbr = 'S' where abb_dim_code = 'CN - BDT' and abb_dim_data = 'Sugar Regular';
-update sms_abbreviation set abb_dim_abbr = 'TOT' where abb_dim_code = 'CN - BDT' and abb_dim_data = 'Result';
+update sms_abbreviation set abb_dim_abbr = 'IC' where abb_dim_data = 'Impulse';
+update sms_abbreviation set abb_dim_abbr = 'MT' where abb_dim_data = 'Modern Trade';
+update sms_abbreviation set abb_dim_abbr = 'CN' where abb_dim_data = 'Total China';
+update sms_abbreviation set abb_dim_abbr = 'P' where abb_dim_data = 'Petcare';
+update sms_abbreviation set abb_dim_abbr = 'SF' where abb_dim_data = 'Snackfood';
+update sms_abbreviation set abb_dim_abbr = 'C' where abb_dim_data = 'Chocolate Regular';
+update sms_abbreviation set abb_dim_abbr = 'G' where abb_dim_data = 'Gifting';
+update sms_abbreviation set abb_dim_abbr = 'P' where abb_dim_data = 'Petcare';
+update sms_abbreviation set abb_dim_abbr = 'S' where abb_dim_data = 'Sugar Regular';
 update sms_abbreviation set abb_dim_abbr = 'ANH-P' where abb_dim_code = 'SFH Geo Sold' and abb_dim_data = 'Anhui-Province';
 update sms_abbreviation set abb_dim_abbr = 'BJ' where abb_dim_code = 'SFH Geo Sold' and abb_dim_data = 'Beijing';
 update sms_abbreviation set abb_dim_abbr = 'CC' where abb_dim_code = 'SFH Geo Sold' and abb_dim_data = 'Changchun';
@@ -280,52 +278,52 @@ insert into sms_mes_line values ('MP-CS#ModernTrade','*LVL04','<DIM_NAME> ( <ACT
 
 
 
-insert into sms_profile values ('CS#MT-All-Changchun','CS#MT-All-Changchun','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');		
-insert into sms_profile values ('CS#MT-All-Changsha','CS#MT-All-Changsha','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Chengdu','CS#MT-All-Chengdu','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Chongqing','CS#MT-All-Chongqing','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Dalian','CS#MT-All-Dalian','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Fuzhou','CS#MT-All-Fuzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Guangdong-West','CS#MT-All-Guangdong-West','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Guangzhou','CS#MT-All-Guangzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Guiyang','CS#MT-All-Guiyang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Hainan-Province','CS#MT-All-Hainan-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Hangzhou','CS#MT-All-Hangzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Harbin','CS#MT-All-Harbin','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Hebei-Province','CS#MT-All-Hebei-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Hefei','CS#MT-All-Hefei','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Hubei-Province','CS#MT-All-Hubei-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Jiangsu-North','CS#MT-All-Jiangsu-North','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Jiangsu-South','CS#MT-All-Jiangsu-South','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Jinan','CS#MT-All-Jinan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Kunming','CS#MT-All-Kunming','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Liaoning-Province','CS#MT-All-Liaoning-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Nanchang','CS#MT-All-Nanchang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Nanjing','CS#MT-All-Nanjing','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');					
-insert into sms_profile values ('CS#MT-All-Nanning','CS#MT-All-Nanning','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Ningbo','CS#MT-All-Ningbo','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-North-East-2','CS#MT-All-North-East-2','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');			
-insert into sms_profile values ('CS#MT-All-North-East-3','CS#MT-All-North-East-3','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-North-East-1','CS#MT-All-North-East-1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Qingdao','CS#MT-All-Qingdao','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Shandong-Province','CS#MT-All-Shandong-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Shenyang','CS#MT-All-Shenyang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Shenzhen','CS#MT-All-Shenzhen','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Shijiazhuang','CS#MT-All-Shijiazhuang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Sichuan-Province','CS#MT-All-Sichuan-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-South-East-2','CS#MT-All-South-East-2','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-South-East-3','CS#MT-All-South-East-3','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-South-East1','CS#MT-All-South-East1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-South-West1','CS#MT-All-South-West1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Suzhou','CS#MT-All-Suzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Taiyuan','CS#MT-All-Taiyuan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Tianjin','CS#MT-All-Tianjin','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-TotalChina','CS#MT-All-TotalChina','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Wuhan','CS#MT-All-Wuhan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Xian','CS#MT-All-Xian','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Xizang-Province','CS#MT-All-Xizang-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Zhejiang-South','CS#MT-All-Zhejiang-South','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
-insert into sms_profile values ('CS#MT-All-Zhengzhou','CS#MT-All-Zhengzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','1','1','1','1','1','0','0');
+insert into sms_profile values ('CS#MT-All-Changchun','CS#MT-All-Changchun','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');		
+insert into sms_profile values ('CS#MT-All-Changsha','CS#MT-All-Changsha','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Chengdu','CS#MT-All-Chengdu','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Chongqing','CS#MT-All-Chongqing','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Dalian','CS#MT-All-Dalian','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Fuzhou','CS#MT-All-Fuzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Guangdong-West','CS#MT-All-Guangdong-West','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Guangzhou','CS#MT-All-Guangzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Guiyang','CS#MT-All-Guiyang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Hainan-Province','CS#MT-All-Hainan-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Hangzhou','CS#MT-All-Hangzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Harbin','CS#MT-All-Harbin','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Hebei-Province','CS#MT-All-Hebei-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Hefei','CS#MT-All-Hefei','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Hubei-Province','CS#MT-All-Hubei-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Jiangsu-North','CS#MT-All-Jiangsu-North','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Jiangsu-South','CS#MT-All-Jiangsu-South','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Jinan','CS#MT-All-Jinan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Kunming','CS#MT-All-Kunming','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Liaoning-Province','CS#MT-All-Liaoning-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Nanchang','CS#MT-All-Nanchang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Nanjing','CS#MT-All-Nanjing','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');					
+insert into sms_profile values ('CS#MT-All-Nanning','CS#MT-All-Nanning','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Ningbo','CS#MT-All-Ningbo','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-North-East-2','CS#MT-All-North-East-2','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');			
+insert into sms_profile values ('CS#MT-All-North-East-3','CS#MT-All-North-East-3','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-North-East-1','CS#MT-All-North-East-1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Qingdao','CS#MT-All-Qingdao','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Shandong-Province','CS#MT-All-Shandong-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Shenyang','CS#MT-All-Shenyang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Shenzhen','CS#MT-All-Shenzhen','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Shijiazhuang','CS#MT-All-Shijiazhuang','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Sichuan-Province','CS#MT-All-Sichuan-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-South-East-2','CS#MT-All-South-East-2','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-South-East-3','CS#MT-All-South-East-3','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-South-East1','CS#MT-All-South-East1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-South-West1','CS#MT-All-South-West1','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Suzhou','CS#MT-All-Suzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Taiyuan','CS#MT-All-Taiyuan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Tianjin','CS#MT-All-Tianjin','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-TotalChina','CS#MT-All-TotalChina','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Wuhan','CS#MT-All-Wuhan','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Xian','CS#MT-All-Xian','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Xizang-Province','CS#MT-All-Xizang-Province','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Zhejiang-South','CS#MT-All-Zhejiang-South','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
+insert into sms_profile values ('CS#MT-All-Zhengzhou','CS#MT-All-Zhengzhou','1',user,sysdate,'Y135_DAILY_SMS_MT_CP_LP','0','1','1','1','1','1','0');
 						
 					
 
