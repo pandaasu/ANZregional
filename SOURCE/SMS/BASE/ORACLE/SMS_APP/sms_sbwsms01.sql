@@ -49,16 +49,6 @@ create or replace package body sms_app.sms_sbwsms01 as
    procedure process_report_data(par_xml_node in xmlDom.domNode);
 
    /*-*/
-   /* Private constants
-   /*-*/
-   con_sms_alt_group constant varchar2(32) := 'SMS_ALERT';
-   con_sms_alt_code constant varchar2(32) := 'REPORT_GENERATION';
-   con_sms_ema_group constant varchar2(32) := 'SMS_EMAIL_GROUP';
-   con_sms_ema_code constant varchar2(32) := 'REPORT_GENERATION';
-   con_sms_tri_group constant varchar2(32) := 'SMS_JOB_GROUP';
-   con_sms_tri_code constant varchar2(32) := 'REPORT_GENERATION';
-
-   /*-*/
    /* Private definitions
    /*-*/
    var_trn_error boolean;
@@ -151,19 +141,26 @@ create or replace package body sms_app.sms_sbwsms01 as
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_date is
+         select t01.mars_period,
+                t01.mars_week,
+                t01.mars_yyyyppdd
+           from mars_date t01
+          where trunc(t01.calendar_date) = trunc(var_date);
+      rcd_date csr_date%rowtype;
+
       cursor csr_query is
          select t01.*
            from sms_query t01
           where t01.que_qry_code = rcd_sms_rpt_header.rhe_qry_code;
       rcd_query csr_query%rowtype;
 
-      cursor csr_date is
-         select t01.mars_period,
-                t01.mars_week,
-                t01.mars_yyyyppdd
-           from mars_date t01
-          where trunc(t01.calendar_date) = var_date;
-      rcd_date csr_date%rowtype;
+      cursor csr_report is
+         select t01.*
+           from sms_rpt_header t01
+          where t01.rhe_qry_code = rcd_sms_rpt_header.rhe_qry_code
+            and t01.rhe_crt_date = rcd_sms_rpt_header.rhe_crt_date;
+      rcd_report csr_report%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -179,9 +176,9 @@ create or replace package body sms_app.sms_sbwsms01 as
       end if;
 
       /*-*/
-      /* Retrieve the current period information based on today
+      /* Retrieve the system date information
       /*-*/
-      var_date := trunc(sysdate);
+      var_date := sysdate;
       open csr_date;
       fetch csr_date into rcd_date;
       if csr_date%notfound then
@@ -193,16 +190,21 @@ create or replace package body sms_app.sms_sbwsms01 as
       /* Initialise the report
       /*-*/
       rcd_sms_rpt_header.rhe_qry_code := null;
+      rcd_sms_rpt_header.rhe_qry_date := to_char(var_date,'yyyymmddhh24miss');
       rcd_sms_rpt_header.rhe_rpt_date := null;
       rcd_sms_rpt_header.rhe_rpt_yyyypp := null;
       rcd_sms_rpt_header.rhe_rpt_yyyyppw := null;
       rcd_sms_rpt_header.rhe_rpt_yyyyppdd := null;
       rcd_sms_rpt_header.rhe_crt_user := user;
-      rcd_sms_rpt_header.rhe_crt_date := sysdate;
+      rcd_sms_rpt_header.rhe_crt_date := to_char(var_date,'yyyymmdd');
+      rcd_sms_rpt_header.rhe_crt_time := to_char(var_date,'hh24miss');
       rcd_sms_rpt_header.rhe_crt_yyyypp := rcd_date.mars_period;
       rcd_sms_rpt_header.rhe_crt_yyyyppw := rcd_date.mars_week;
       rcd_sms_rpt_header.rhe_crt_yyyyppdd := rcd_date.mars_yyyyppdd;
       rcd_sms_rpt_header.rhe_status := '1';
+      if sms_gen_function.retrieve_system_value('SYSTEM_PROCESS') != '*ACTIVE' then
+          rcd_sms_rpt_header.rhe_status := '4';
+      end if;
 
       /*-*/
       /* Parse the XML input
@@ -234,7 +236,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       rcd_sms_rpt_header.rhe_rpt_date := to_char(var_rpt_date,'yyyymmdd');
 
       /*-*/
-      /* Retrieve the current period information based on report date
+      /* Retrieve the report date information
       /*-*/
       var_date := trunc(var_rpt_date);
       open csr_date;
@@ -290,20 +292,32 @@ create or replace package body sms_app.sms_sbwsms01 as
       end if;
 
       /*-*/
+      /* Check for report resend on same date
+      /*-*/
+      open csr_report;
+      fetch csr_report into rcd_report;
+      if csr_report%found then
+         rcd_sms_rpt_header.rhe_status := '3';
+      end if;
+      close csr_report;
+
+      /*-*/
       /* Delete the existing report information
+      /* **notes** 1. Report instance is uniquely stored by timestamp therefore these
+      /*              deletes are just a safety measure but should never occur
       /*-*/
       delete from sms_rpt_recipient
        where rre_qry_code = rcd_sms_rpt_header.rhe_qry_code
-         and rre_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+         and rre_qry_date =  rcd_sms_rpt_header.rhe_qry_date;
       delete from sms_rpt_message
        where rme_qry_code = rcd_sms_rpt_header.rhe_qry_code
-         and rme_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+         and rme_qry_date =  rcd_sms_rpt_header.rhe_qry_date;
       delete from sms_rpt_data
        where rda_qry_code = rcd_sms_rpt_header.rhe_qry_code
-         and rda_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+         and rda_qry_date =  rcd_sms_rpt_header.rhe_qry_date;
       delete from sms_rpt_header
        where rhe_qry_code = rcd_sms_rpt_header.rhe_qry_code
-         and rhe_rpt_date =  rcd_sms_rpt_header.rhe_rpt_date;
+         and rhe_qry_date =  rcd_sms_rpt_header.rhe_qry_date;
 
       /*-*/
       /* Create the report header
@@ -329,7 +343,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       /*-*/
       /* Update the abbreviation table with missing dimension data
       /*-*/
-      sms_gen_function.update_abbreviation(rcd_sms_rpt_header.rhe_qry_code, rcd_sms_rpt_header.rhe_rpt_date);
+      sms_gen_function.update_abbreviation(rcd_sms_rpt_header.rhe_qry_code, rcd_sms_rpt_header.rhe_qry_date);
 
       /*-*/
       /* Commit the database
@@ -337,16 +351,20 @@ create or replace package body sms_app.sms_sbwsms01 as
       commit;
 
       /*-*/
-      /* Trigger the report generation
+      /* Trigger the report generation when required
+      /* **notes** 1. Only the first report instance for query date combination is processed
+      /*              therefore only report status 1(loaded) is processed
       /*-*/
-      lics_trigger_loader.execute('SMS Report Message Generation',
-                                  'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
-                                                                            rcd_sms_rpt_header.rhe_rpt_date || ''',''' ||
-                                                                            lics_setting_configuration.retrieve_setting(con_sms_alt_group, con_sms_alt_code) || ''',''' ||
-                                                                            lics_setting_configuration.retrieve_setting(con_sms_ema_group, con_sms_ema_code) || ''')',
-                                  lics_setting_configuration.retrieve_setting(con_sms_alt_group, con_sms_alt_code),
-                                  lics_setting_configuration.retrieve_setting(con_sms_ema_group, con_sms_ema_code),
-                                  lics_setting_configuration.retrieve_setting(con_sms_tri_group, con_sms_tri_code));
+      if rcd_sms_rpt_header.rhe_status = '1' then
+         lics_trigger_loader.execute('SMS Report Message Generation',
+                                     'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
+                                                                               rcd_sms_rpt_header.rhe_qry_date || ''',''' ||
+                                                                               sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT') || ''',''' ||
+                                                                               sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP') || ''')',
+                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT'),
+                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP'),
+                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_JOB_GROUP'));
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -395,7 +413,7 @@ create or replace package body sms_app.sms_sbwsms01 as
             pvar_dim_indx := 0;
             pvar_value := false;
             rcd_sms_rpt_data.rda_qry_code := rcd_sms_rpt_header.rhe_qry_code;
-            rcd_sms_rpt_data.rda_rpt_date := rcd_sms_rpt_header.rhe_rpt_date;
+            rcd_sms_rpt_data.rda_qry_date := rcd_sms_rpt_header.rhe_qry_date;
             rcd_sms_rpt_data.rda_dat_seqn := pvar_dat_seqn;
             rcd_sms_rpt_data.rda_dim_cod01 := null;
             rcd_sms_rpt_data.rda_dim_cod02 := null;
