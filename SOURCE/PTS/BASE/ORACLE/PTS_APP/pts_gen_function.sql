@@ -41,6 +41,7 @@ create or replace package pts_app.pts_gen_function as
    function list_pet_type return pts_pty_list_type pipelined;
    function list_tes_type return pts_tty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
+   function randomize_allocation(par_sam_count in number, par_pan_count in number) return pts_ran_type pipelined;
 
 end pts_gen_function;
 /
@@ -595,7 +596,7 @@ create or replace package body pts_app.pts_gen_function as
                   end if;
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*NUMBER' then
                   var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
-               else 
+               else
                   var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
                end if;
             end loop;
@@ -823,7 +824,7 @@ create or replace package body pts_app.pts_gen_function as
                   end if;
                elsif upper(rcd_rule.sfi_fld_rul_type) = '*NUMBER' then
                   var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_text);
-               else 
+               else
                   var_query := var_query||replace(replace(rcd_rule.sfi_fld_rul_sql,'<%RULE_TEST%>',rcd_rule.sru_rul_test),'<%RULE_VALUE%>',rcd_value.wsv_val_code);
                end if;
             end loop;
@@ -1416,7 +1417,7 @@ create or replace package body pts_app.pts_gen_function as
 
       /*-*/
       /* Return
-      /*-*/  
+      /*-*/
       return;
 
    /*-------------------*/
@@ -1624,6 +1625,145 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end list_class;
+
+   /************************************************************/
+   /* This procedure performs the randomize allocation routine */
+   /************************************************************/
+   function randomize_allocation(par_sam_count in number, par_pan_count in number) return pts_ran_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_key_code varchar2(36);
+      var_key_work varchar2(36);
+      var_found boolean;
+      var_key_table pts_ran_type := pts_ran_type();
+      type typ_ckey is table of varchar2(1) index by binary_integer;
+      tbl_ckey typ_ckey;
+      type typ_skey is table of varchar2(36) index by binary_integer;
+      tbl_skey typ_skey;
+
+      /*-*/
+      /* Local constants
+      /*-*/
+      con_split constant integer := 8;
+      con_key_map constant varchar2(36) := '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_key_list is
+         select combo
+           from (select combo
+                   from (select replace(sys_connect_by_path(slot,'/'),'/') combo
+                           from (select level lvlnum,
+                                        substr(var_key_code, level, 1) slot
+                                   from dual
+                                connect by level <= length(var_key_code))
+                          where level = length(var_key_code)
+                        connect by nocycle lvlnum != prior lvlnum)
+                  order by dbms_random.value)
+          where rownum <= par_pan_count;
+
+      cursor csr_key_test is
+         select column_value as key_code
+           from table(cast(var_key_table as pts_ran_type))
+          order by dbms_random.value;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Validate the function parameters
+      /*-*/
+      if par_sam_count <= 0 then
+         raise_application_error(-20000, 'Minimum sample count must be 1');
+      end if;
+      if par_sam_count > 36 then
+         raise_application_error(-20000, 'Maximum sample count must be 36');
+      end if;
+      if par_pan_count <= 0 then
+         raise_application_error(-20000, 'Minimum panel count must be 1');
+      end if;
+      if par_pan_count > 9999 then
+         raise_application_error(-20000, 'Maximum panel count must be 9999');
+      end if;
+
+      /*-*/
+      /* Load the sample key array
+      /*-*/
+      tbl_skey.delete;
+      if par_sam_count <= con_split then
+         var_key_code := null;
+         for idx in 1..par_sam_count loop
+            var_key_code := var_key_code||substr(con_key_map,idx,1);
+         end loop;
+         open csr_key_list;
+         fetch csr_key_list bulk collect into tbl_skey;
+         close csr_key_list;
+      else
+         var_key_table := pts_ran_type();
+         for idx in 1..par_sam_count loop
+            var_key_table.extend;
+            var_key_table(var_key_table.last) := substr(con_key_map,idx,1);
+         end loop;
+         for idxpan in 1..par_pan_count loop
+            loop
+               open csr_key_test;
+               fetch csr_key_test bulk collect into tbl_ckey;
+               close csr_key_test;
+               var_key_code := null;
+               for idx in 1..par_sam_count loop
+                  var_key_code := var_key_code||tbl_ckey(idx);
+               end loop;
+               var_found := false;
+               for idx in 1..tbl_skey.count loop
+                  if tbl_skey(idx) = var_key_code then
+                     var_found := true;
+                     exit;
+                  end if;
+               end loop;
+               if var_found = false then
+                  tbl_skey(idxpan) := var_key_code;
+                  exit;
+               end if;
+            end loop;
+         end loop;
+      end if;
+
+      /*-*/
+      /* Pipe the key permutations to the consumer
+      /*-*/
+      for idx in 1..tbl_skey.count loop
+         pipe row(tbl_skey(idx));
+      end loop;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - RANDOMIZE_ALLOCATION - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end randomize_allocation;
 
 /*----------------------*/
 /* Initialisation block */
