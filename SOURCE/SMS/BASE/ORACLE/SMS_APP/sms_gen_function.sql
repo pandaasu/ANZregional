@@ -29,8 +29,9 @@ create or replace package sms_app.sms_gen_function as
    function get_mesg_count return number;
    procedure add_mesg_data(par_message in varchar2);
    function get_mesg_data return sms_xml_type pipelined;
-   procedure update_abbreviation(par_qry_code in varchar2, par_rpt_date in varchar2);
-   function retrieve_abbreviation(par_dim_code in varchar2, par_dim_data in varchar2) return varchar2;
+   function retrieve_system_value(par_code in varchar2) return varchar2;
+   procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2);
+   function retrieve_abbreviation(par_dim_data in varchar2) return varchar2;
 
 end sms_gen_function;
 /
@@ -227,10 +228,55 @@ create or replace package body sms_app.sms_gen_function as
    /*-------------*/
    end get_mesg_data;
 
+   /*************************************************************/
+   /* This procedure performs the retrieve system value routine */
+   /*************************************************************/
+   function retrieve_system_value(par_code in varchar2) return varchar2 is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(256);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_system is
+         select t01.sys_value
+           from sms_system t01
+          where t01.sys_code = par_code;
+      rcd_system csr_system%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the abbreviation
+      /*-*/
+      var_return := '*NONE';
+      open csr_system;
+      fetch csr_system into rcd_system;
+      if csr_system%found then
+         var_return := rcd_system.sys_value;
+      end if;
+      close csr_system;
+
+      /*-*/
+      /* Return the value
+      /*-*/
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_system_value;
+
    /***********************************************************/
    /* This procedure performs the update abbreviation routine */
    /***********************************************************/
-   procedure update_abbreviation(par_qry_code in varchar2, par_rpt_date in varchar2) is
+   procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -245,163 +291,136 @@ create or replace package body sms_app.sms_gen_function as
       /* Update the abbreviation table with missing dimension 01 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod01,
-                rda_dim_val01,
+         select rda_dim_val01,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod01 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod01
-                               and abb_dim_data = rda_dim_val01)
-          group by rda_dim_cod01,
-                   rda_dim_val01;
+                             where abb_dim_data = rda_dim_val01)
+          group by rda_dim_val01;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 02 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod02,
-                rda_dim_val02,
+         select rda_dim_val02,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod02 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod02
-                               and abb_dim_data = rda_dim_val02)
-          group by rda_dim_cod02,
-                   rda_dim_val02;
+                             where abb_dim_data = rda_dim_val02)
+          group by rda_dim_val02;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 03 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod03,
-                rda_dim_val03,
+         select rda_dim_val03,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod03 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod03
-                               and abb_dim_data = rda_dim_val03)
-          group by rda_dim_cod03,
-                   rda_dim_val03;
+                             where abb_dim_data = rda_dim_val03)
+          group by rda_dim_val03;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 04 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod04,
-                rda_dim_val04,
+         select rda_dim_val04,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod04 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod04
-                               and abb_dim_data = rda_dim_val04)
-          group by rda_dim_cod04,
-                   rda_dim_val04;
+                             where abb_dim_data = rda_dim_val04)
+          group by rda_dim_val04;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 05 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod05,
-                rda_dim_val05,
+         select rda_dim_val05,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod05 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod05
-                               and abb_dim_data = rda_dim_val05)
-          group by rda_dim_cod05,
-                   rda_dim_val05;
+                             where abb_dim_data = rda_dim_val05)
+          group by rda_dim_val05;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 06 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod06,
-                rda_dim_val06,
+         select rda_dim_val06,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod06 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod06
-                               and abb_dim_data = rda_dim_val06)
-          group by rda_dim_cod06,
-                   rda_dim_val06;
+                             where abb_dim_data = rda_dim_val06)
+          group by rda_dim_val06;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 07 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod07,
-                rda_dim_val07,
+         select rda_dim_val07,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod07 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod07
-                               and abb_dim_data = rda_dim_val07)
-          group by rda_dim_cod07,
-                   rda_dim_val07;
+                             where abb_dim_data = rda_dim_val07)
+          group by rda_dim_val07;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 08 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod08,
-                rda_dim_val08,
+         select rda_dim_val08,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod08 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod08
-                               and abb_dim_data = rda_dim_val08)
-          group by rda_dim_cod08,
-                   rda_dim_val08;
+                             where abb_dim_data = rda_dim_val08)
+          group by rda_dim_val08;
 
       /*-*/
       /* Update the abbreviation table with missing dimension 09 data
       /*-*/
       insert into sms_abbreviation
-         select rda_dim_cod09,
-                rda_dim_val09,
+         select rda_dim_val09,
                 null
            from sms_rpt_data
           where rda_qry_code = par_qry_code
-            and rda_rpt_date =  par_rpt_date
+            and rda_qry_date =  par_qry_date
             and not(rda_dim_cod09 is null)
             and not exists (select 'x'
                               from sms_abbreviation
-                             where abb_dim_code = rda_dim_cod09
-                               and abb_dim_data = rda_dim_val09)
-          group by rda_dim_cod09,
-                   rda_dim_val09;
+                             where abb_dim_data = rda_dim_val09)
+          group by rda_dim_val09;
 
    /*-------------*/
    /* End routine */
@@ -411,7 +430,7 @@ create or replace package body sms_app.sms_gen_function as
    /*************************************************************/
    /* This procedure performs the retrieve abbreviation routine */
    /*************************************************************/
-   function retrieve_abbreviation(par_dim_code in varchar2, par_dim_data in varchar2) return varchar2 is
+   function retrieve_abbreviation(par_dim_data in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -424,8 +443,7 @@ create or replace package body sms_app.sms_gen_function as
       cursor csr_abbreviation is
          select nvl(t01.abb_dim_abbr,t01.abb_dim_data) as abb_dim_abbr
            from sms_abbreviation t01
-          where t01.abb_dim_code = par_dim_code
-            and t01.abb_dim_data = par_dim_data;
+          where t01.abb_dim_data = par_dim_data;
       rcd_abbreviation csr_abbreviation%rowtype;
 
    /*-------------*/
