@@ -20,7 +20,7 @@
 /**/
 create table sms.sms_rpt_recipient
    (rre_qry_code                    varchar2(64 char)             not null,
-    rre_rpt_date                    varchar2(8 char)              not null,
+    rre_qry_date                    varchar2(14 char)             not null,
     rre_msg_seqn                    number                        not null,
     rre_rcp_code                    varchar2(64 char)             not null,
     rre_rcp_mobile                  varchar2(64 char)             not null,
@@ -31,7 +31,7 @@ create table sms.sms_rpt_recipient
 /**/
 comment on table sms.sms_rpt_recipient is 'Report Recipient Table';
 comment on column sms.sms_rpt_recipient.rre_qry_code is 'Query code';
-comment on column sms.sms_rpt_recipient.rre_rpt_date is 'Report date';
+comment on column sms.sms_rpt_recipient.rre_qry_date is 'Query timestamp';
 comment on column sms.sms_rpt_recipient.rre_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_recipient.rre_rcp_code is 'Recipient code';
 comment on column sms.sms_rpt_recipient.rre_rcp_mobile is 'Recipient mobile phone number';
@@ -41,7 +41,7 @@ comment on column sms.sms_rpt_recipient.rre_rcp_email is 'Recipient email addres
 /* Primary Key Constraint
 /**/
 alter table sms.sms_rpt_recipient
-   add constraint sms_rpt_recipient_pk primary key (rre_qry_code, rre_rpt_date, rre_msg_seqn, rre_rcp_code);
+   add constraint sms_rpt_recipient_pk primary key (rre_qry_code, rre_qry_date, rre_msg_seqn, rre_rcp_code);
 
 /**/
 /* Authority

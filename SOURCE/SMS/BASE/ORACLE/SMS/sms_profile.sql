@@ -43,15 +43,13 @@ comment on column sms.sms_profile.pro_status is 'Profile status (0=inactive or 1
 comment on column sms.sms_profile.pro_upd_user is 'Profile last updated user';
 comment on column sms.sms_profile.pro_upd_date is 'Profile last updated date';
 comment on column sms.sms_profile.pro_qry_code is 'Query code';
-comment on column sms.sms_profile.pro_dim_val01 is 'Dimension 01 value';
-comment on column sms.sms_profile.pro_dim_val02 is 'Dimension 02 value';
-comment on column sms.sms_profile.pro_dim_val03 is 'Dimension 03 value';
-comment on column sms.sms_profile.pro_dim_val04 is 'Dimension 04 value';
-comment on column sms.sms_profile.pro_dim_val05 is 'Dimension 05 value';
-comment on column sms.sms_profile.pro_dim_val06 is 'Dimension 06 value';
-comment on column sms.sms_profile.pro_dim_val07 is 'Dimension 07 value';
-comment on column sms.sms_profile.pro_dim_val08 is 'Dimension 08 value';
-comment on column sms.sms_profile.pro_dim_val09 is 'Dimension 09 value';
+comment on column sms.sms_profile.pro_snd_day01 is 'Send SMS sunday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day02 is 'Send SMS monday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day03 is 'Send SMS tuesday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day04 is 'Send SMS wednesday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day05 is 'Send SMS thursday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day06 is 'Send SMS friday (0=no or 1=yes)';
+comment on column sms.sms_profile.pro_snd_day07 is 'Send SMS saturday (0=no or 1=yes)';
 
 /**/
 /* Primary Key Constraint

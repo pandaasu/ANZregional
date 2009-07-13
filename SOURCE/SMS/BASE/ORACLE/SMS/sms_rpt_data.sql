@@ -20,7 +20,7 @@
 /**/
 create table sms.sms_rpt_data
    (rda_qry_code                    varchar2(64 char)             not null,
-    rda_rpt_date                    varchar2(8 char)              not null,
+    rda_qry_date                    varchar2(14 char)             not null,
     rda_dat_seqn                    number                        not null,
     rda_dim_cod01                   varchar2(256 char)            null,
     rda_dim_cod02                   varchar2(256 char)            null,
@@ -48,7 +48,7 @@ create table sms.sms_rpt_data
 /**/
 comment on table sms.sms_rpt_data is 'Report Data Table';
 comment on column sms.sms_rpt_data.rda_qry_code is 'Query code';
-comment on column sms.sms_rpt_data.rda_rpt_date is 'Report date';
+comment on column sms.sms_rpt_data.rda_qry_date is 'Query timestamp';
 comment on column sms.sms_rpt_data.rda_dat_seqn is 'Data sequence';
 comment on column sms.sms_rpt_data.rda_dim_cod01 is 'Dimension 01 code';
 comment on column sms.sms_rpt_data.rda_dim_cod02 is 'Dimension 02 code';
@@ -75,7 +75,7 @@ comment on column sms.sms_rpt_data.rda_val_data is 'Value data';
 /* Primary Key Constraint
 /**/
 alter table sms.sms_rpt_data
-   add constraint sms_rpt_data_pk primary key (rda_qry_code, rda_rpt_date, rda_dat_seqn);
+   add constraint sms_rpt_data_pk primary key (rda_qry_code, rda_qry_date, rda_dat_seqn);
 
 /**/
 /* Authority

@@ -20,7 +20,7 @@
 /**/
 create table sms.sms_rpt_message
    (rme_qry_code                    varchar2(64 char)             not null,
-    rme_rpt_date                    varchar2(8 char)              not null,
+    rme_qry_date                    varchar2(14 char)             not null,
     rme_msg_seqn                    number                        not null,
     rme_msg_text                    varchar2(2000 char)           not null,
     rme_msg_time                    date                          not null);  
@@ -30,7 +30,7 @@ create table sms.sms_rpt_message
 /**/
 comment on table sms.sms_rpt_message is 'Report Message Table';
 comment on column sms.sms_rpt_message.rme_qry_code is 'Query code';
-comment on column sms.sms_rpt_message.rme_rpt_date is 'Report date';
+comment on column sms.sms_rpt_message.rme_qry_date is 'Query timestamp';
 comment on column sms.sms_rpt_message.rme_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_message.rme_msg_text is 'Message text';
 comment on column sms.sms_rpt_message.rme_msg_time is 'Message create time';
@@ -39,7 +39,7 @@ comment on column sms.sms_rpt_message.rme_msg_time is 'Message create time';
 /* Primary Key Constraint
 /**/
 alter table sms.sms_rpt_message
-   add constraint sms_rpt_message_pk primary key (rme_qry_code, rme_rpt_date, rme_msg_seqn);
+   add constraint sms_rpt_message_pk primary key (rme_qry_code, rme_qry_date, rme_msg_seqn);
 
 /**/
 /* Authority

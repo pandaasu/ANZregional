@@ -19,15 +19,13 @@
 /* Table creation
 /**/
 create table sms.sms_abbreviation
-   (abb_dim_code                    varchar2(256 char)             not null,
-    abb_dim_data                    varchar2(256 char)             not null,
+   (abb_dim_data                    varchar2(256 char)             not null,
     abb_dim_abbr                    varchar2(32 char)              null);  
 
 /**/
 /* Comments
 /**/
 comment on table sms.sms_abbreviation is 'Abbreviation Table';
-comment on column sms.sms_abbreviation.abb_dim_code is 'Dimension code';
 comment on column sms.sms_abbreviation.abb_dim_data is 'Dimension data';
 comment on column sms.sms_abbreviation.abb_dim_abbr is 'Dimemsion abbreviation';
 
@@ -35,7 +33,7 @@ comment on column sms.sms_abbreviation.abb_dim_abbr is 'Dimemsion abbreviation';
 /* Primary Key Constraint
 /**/
 alter table sms.sms_abbreviation
-   add constraint sms_abbreviation_pk primary key (abb_dim_code, abb_dim_data);
+   add constraint sms_abbreviation_pk primary key (abb_dim_data);
 
 /**/
 /* Authority
