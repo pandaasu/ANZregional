@@ -358,7 +358,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       if rcd_sms_rpt_header.rhe_status = '1' then
          lics_trigger_loader.execute('SMS Report Message Generation',
                                      'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
-                                                                               rcd_sms_rpt_header.rhe_qry_date || ''',''' ||
+                                                                               rcd_sms_rpt_header.rhe_qry_date || ''',''*AUTO'',''' ||
                                                                                sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT') || ''',''' ||
                                                                                sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP') || ''')',
                                      sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT'),
