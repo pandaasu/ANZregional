@@ -23,7 +23,8 @@ create table sms.sms_rpt_message
     rme_qry_date                    varchar2(14 char)             not null,
     rme_msg_seqn                    number                        not null,
     rme_msg_text                    varchar2(2000 char)           not null,
-    rme_msg_time                    date                          not null);  
+    rme_msg_time                    date                          not null,
+    rme_msg_status                  varchar2(1 char)              not null);  
 
 /**/
 /* Comments
@@ -34,6 +35,7 @@ comment on column sms.sms_rpt_message.rme_qry_date is 'Query timestamp';
 comment on column sms.sms_rpt_message.rme_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_message.rme_msg_text is 'Message text';
 comment on column sms.sms_rpt_message.rme_msg_time is 'Message create time';
+comment on column sms.sms_rpt_message.rme_msg_status is 'Message status (1=created or 2=sent or 3=error)';
 
 /**/
 /* Primary Key Constraint
