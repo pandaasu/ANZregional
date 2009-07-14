@@ -109,7 +109,13 @@ create or replace package body pts_app.pts_pet_allocation as
       /*-*/
       /* Execute the allocation procedure
       /*-*/
-      execute immediate 'begin '||rcd_retrieve.tty_alc_proc||'(' ||to_char(rcd_retrieve.tde_tes_code)||','||to_char(rcd_retrieve.tde_tes_day_count)||'); end;';
+      if upper(rcd_retrieve.tty_alc_proc) = 'STANDARD' then
+         standard(rcd_retrieve.tde_tes_code,rcd_retrieve.tde_tes_day_count);
+      elsif upper(rcd_retrieve.tty_alc_proc) = 'DIFFERENCE' then
+         difference(rcd_retrieve.tde_tes_code,rcd_retrieve.tde_tes_day_count);
+      else
+         raise_application_error(-20000, 'Pet allocation (' || upper(rcd_retrieve.tty_alc_proc) || ') is not supported');
+      end if;
 
       /*-*/
       /* Commit the database
@@ -242,7 +248,7 @@ create or replace package body pts_app.pts_pet_allocation as
          end if;
          var_key_work := tbl_akey(var_key_index);
          for idx in 1..length(var_key_work) loop
-            var_sam_index := instr(con_key_map,substr(var_key_work,idx));
+            var_sam_index := instr(con_key_map,substr(var_key_work,idx,1));
             if var_sam_index != 0 then
                rcd_pts_tes_allocation.tal_tes_code := rcd_panel.tpa_tes_code;
                rcd_pts_tes_allocation.tal_pan_code := rcd_panel.tpa_pan_code;
@@ -389,7 +395,7 @@ create or replace package body pts_app.pts_pet_allocation as
             end if;
             var_key_work := tbl_akey(var_key_index);
             for idy in 1..length(var_key_work) loop
-               var_sam_index := instr(con_key_map,substr(var_key_work,idy));
+               var_sam_index := instr(con_key_map,substr(var_key_work,idy,1));
                if var_sam_index != 0 then
                   rcd_pts_tes_allocation.tal_tes_code := rcd_panel.tpa_tes_code;
                   rcd_pts_tes_allocation.tal_pan_code := rcd_panel.tpa_pan_code;
