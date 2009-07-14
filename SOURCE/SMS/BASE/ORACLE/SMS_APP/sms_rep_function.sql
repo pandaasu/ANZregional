@@ -83,6 +83,7 @@ create or replace package body sms_app.sms_rep_function as
       var_errors boolean;
       var_warnings boolean;
       var_found boolean;
+      var_process boolean;
       var_sent boolean;
       var_smtp_host varchar2(256);
       var_smtp_port varchar2(256);
@@ -90,6 +91,7 @@ create or replace package body sms_app.sms_rep_function as
       var_mes_count number;
       var_rec_count number;
       var_out_day varchar2(64);
+      var_day_number number;
       var_level varchar2(64);
       var_detail varchar2(64);
       var_total varchar2(64);
@@ -346,13 +348,14 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       if (to_number(substr(to_char(rcd_report.rhe_crt_yyyyppw,'fm0000000'),7,1)) = 1 and
           to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')))-2 = 0) then
-         var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.crt_rpt_yyyypp,'fm000000'),5,2)),'fm90')||
+         var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)),'fm90')||
                         'W4D5';
       else
          var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)),'fm90')||
                         'W'||substr(to_char(rcd_report.rhe_crt_yyyyppw,'fm0000000'),7,1)||
                         'D'||to_char(to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')))-2);
       end if;
+      var_day_number := to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')));
 
       /*-*/
       /* Initialise the report message data
@@ -378,229 +381,320 @@ create or replace package body sms_app.sms_rep_function as
          end if;
 
          /*-*/
-         /* Log the event
+         /* Check the profile processing status
          /*-*/
-         lics_logging.write_log('#---> Processing SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name);
-
-         /*-*/
-         /* Retrieve the report query profile messages
-         /*-*/
-         open csr_pro_message;
-         loop
-            fetch csr_pro_message into rcd_pro_message;
-            if csr_pro_message%notfound then
-               exit;
-            end if;
+         var_process := false;
+         if var_day_number = 1 and rcd_profile.pro_snd_day01 = '1' then
+            var_process := true;
+         elsif var_day_number = 2 and rcd_profile.pro_snd_day02 = '1' then
+            var_process := true;
+         elsif var_day_number = 3 and rcd_profile.pro_snd_day03 = '1' then
+            var_process := true;
+         elsif var_day_number = 4 and rcd_profile.pro_snd_day04 = '1' then
+            var_process := true;
+         elsif var_day_number = 5 and rcd_profile.pro_snd_day05 = '1' then
+            var_process := true;
+         elsif var_day_number = 6 and rcd_profile.pro_snd_day06 = '1' then
+            var_process := true;
+         elsif var_day_number = 7 and rcd_profile.pro_snd_day07 = '1' then
+            var_process := true;
+         end if;
+         if var_process = false then
 
             /*-*/
             /* Log the event
             /*-*/
-            lics_logging.write_log('#-----> Processing SMS message - ('||rcd_pro_message.mes_msg_code||') '||rcd_pro_message.mes_msg_name);
+            lics_logging.write_log('#---> SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name||' - not not processesed on '||to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'yyyy/mm/dd'));
+
+         else
 
             /*-*/
-            /* Retrieve and load the related message line data
+            /* Log the event
             /*-*/
-            tbl_mlin.delete;
-            tbl_text.delete;
-            open csr_mes_line;
-            fetch csr_mes_line bulk collect into tbl_mlin;
-            close csr_mes_line;
+            lics_logging.write_log('#---> Processing SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name);
 
             /*-*/
-            /* Retrieve the report query profile filters
+            /* Retrieve the report query profile messages
             /*-*/
-            open csr_pro_filter;
+            open csr_pro_message;
             loop
-               fetch csr_pro_filter into rcd_pro_filter;
-               if csr_pro_filter%notfound then
+               fetch csr_pro_message into rcd_pro_message;
+               if csr_pro_message%notfound then
                   exit;
                end if;
 
                /*-*/
                /* Log the event
                /*-*/
-               lics_logging.write_log('#-------> Processing SMS filter - ('||rcd_pro_filter.fil_flt_code||') '||rcd_pro_filter.fil_flt_name);
+               lics_logging.write_log('#-----> Processing SMS message - ('||rcd_pro_message.mes_msg_code||') '||rcd_pro_message.mes_msg_name);
 
                /*-*/
-               /* Initialise the message instance
+               /* Retrieve and load the related message line data
                /*-*/
+               tbl_mlin.delete;
                tbl_text.delete;
+               open csr_mes_line;
+               fetch csr_mes_line bulk collect into tbl_mlin;
+               close csr_mes_line;
 
                /*-*/
-               /* Retrieve and load the report data based on the related filter
+               /* Retrieve the report query profile filters
                /*-*/
-               tbl_data.delete;
-               open csr_rpt_data;
-               fetch csr_rpt_data bulk collect into tbl_data;
-               close csr_rpt_data;
-
-               /*-*/
-               /* Initialise the data control variables
-               /*-*/
-               var_sav_val01 := '*START';
-               var_sav_val02 := '*START';
-               var_sav_val03 := '*START';
-               var_sav_val04 := '*START';
-               var_sav_val05 := '*START';
-               var_sav_val06 := '*START';
-               var_sav_val07 := '*START';
-               var_sav_val08 := '*START';
-               var_sav_val09 := '*START';
-               for idy in 1..tbl_mlin.count loop
-                  tbl_dcnt(idy) := 0;
-               end loop;
-
-               /*-*/
-               /* Process the repprt data
-               /*-*/
-               for idx in 1..tbl_data.count loop
+               open csr_pro_filter;
+               loop
+                  fetch csr_pro_filter into rcd_pro_filter;
+                  if csr_pro_filter%notfound then
+                     exit;
+                  end if;
 
                   /*-*/
-                  /* Change in repprt data dimensions
+                  /* Log the event
                   /*-*/
-                  if tbl_data(idx).rda_dim_val01 != var_sav_val01 or
-                     tbl_data(idx).rda_dim_val02 != var_sav_val02 or
-                     tbl_data(idx).rda_dim_val03 != var_sav_val03 or
-                     tbl_data(idx).rda_dim_val04 != var_sav_val04 or
-                     tbl_data(idx).rda_dim_val05 != var_sav_val05 or
-                     tbl_data(idx).rda_dim_val06 != var_sav_val06 or
-                     tbl_data(idx).rda_dim_val07 != var_sav_val07 or
-                     tbl_data(idx).rda_dim_val08 != var_sav_val08 or
-                     tbl_data(idx).rda_dim_val09 != var_sav_val09 then
+                  lics_logging.write_log('#-------> Processing SMS filter - ('||rcd_pro_filter.fil_flt_code||') '||rcd_pro_filter.fil_flt_name);
+
+                  /*-*/
+                  /* Initialise the message instance
+                  /*-*/
+                  tbl_text.delete;
+
+                  /*-*/
+                  /* Retrieve and load the report data based on the related filter
+                  /*-*/
+                  tbl_data.delete;
+                  open csr_rpt_data;
+                  fetch csr_rpt_data bulk collect into tbl_data;
+                  close csr_rpt_data;
+
+                  /*-*/
+                  /* Initialise the data control variables
+                  /*-*/
+                  var_sav_val01 := '*START';
+                  var_sav_val02 := '*START';
+                  var_sav_val03 := '*START';
+                  var_sav_val04 := '*START';
+                  var_sav_val05 := '*START';
+                  var_sav_val06 := '*START';
+                  var_sav_val07 := '*START';
+                  var_sav_val08 := '*START';
+                  var_sav_val09 := '*START';
+                  for idy in 1..tbl_mlin.count loop
+                     tbl_dcnt(idy) := 0;
+                  end loop;
+
+                  /*-*/
+                  /* Process the repprt data
+                  /*-*/
+                  for idx in 1..tbl_data.count loop
 
                      /*-*/
-                     /* Determine the highest change level
+                     /* Change in repprt data dimensions
                      /*-*/
-                     var_level := '*NONE';
-                     if tbl_data(idx).rda_dim_val01 != var_sav_val01 then
-                        var_level := '*LVL01';
-                     elsif tbl_data(idx).rda_dim_val02 != var_sav_val02 then
-                        var_level := '*LVL02';
-                     elsif tbl_data(idx).rda_dim_val03 != var_sav_val03 then
-                        var_level := '*LVL03';
-                     elsif tbl_data(idx).rda_dim_val04 != var_sav_val04 then
-                        var_level := '*LVL04';
-                     elsif tbl_data(idx).rda_dim_val05 != var_sav_val05 then
-                        var_level := '*LVL05';
-                     elsif tbl_data(idx).rda_dim_val06 != var_sav_val06 then
-                        var_level := '*LVL06';
-                     elsif tbl_data(idx).rda_dim_val07 != var_sav_val07 then
-                        var_level := '*LVL07';
-                     elsif tbl_data(idx).rda_dim_val08 != var_sav_val08 then
-                        var_level := '*LVL08';
-                     elsif tbl_data(idx).rda_dim_val09 != var_sav_val09 then
-                        var_level := '*LVL09';
-                     end if;
+                     if tbl_data(idx).rda_dim_val01 != var_sav_val01 or
+                        tbl_data(idx).rda_dim_val02 != var_sav_val02 or
+                        tbl_data(idx).rda_dim_val03 != var_sav_val03 or
+                        tbl_data(idx).rda_dim_val04 != var_sav_val04 or
+                        tbl_data(idx).rda_dim_val05 != var_sav_val05 or
+                        tbl_data(idx).rda_dim_val06 != var_sav_val06 or
+                        tbl_data(idx).rda_dim_val07 != var_sav_val07 or
+                        tbl_data(idx).rda_dim_val08 != var_sav_val08 or
+                        tbl_data(idx).rda_dim_val09 != var_sav_val09 then
 
-                     /*-*/
-                     /* Determine the detail level
-                     /*-*/
-                     var_detail := '*NONE';
-                     if tbl_data(idx).rda_dim_val01 != '*NONE' then
-                        var_detail := '*LVL01';
-                     end if;
-                     if tbl_data(idx).rda_dim_val02 != '*NONE' then
-                        var_detail := '*LVL02';
-                     end if;
-                     if tbl_data(idx).rda_dim_val03 != '*NONE' then
-                        var_detail := '*LVL03';
-                     end if;
-                     if tbl_data(idx).rda_dim_val04 != '*NONE' then
-                        var_detail := '*LVL04';
-                     end if;
-                     if tbl_data(idx).rda_dim_val05 != '*NONE' then
-                        var_detail := '*LVL05';
-                     end if;
-                     if tbl_data(idx).rda_dim_val06 != '*NONE' then
-                        var_detail := '*LVL06';
-                     end if;
-                     if tbl_data(idx).rda_dim_val07 != '*NONE' then
-                        var_detail := '*LVL07';
-                     end if;
-                     if tbl_data(idx).rda_dim_val08 != '*NONE' then
-                        var_detail := '*LVL08';
-                     end if;
-                     if tbl_data(idx).rda_dim_val09 != '*NONE' then
-                        var_detail := '*LVL09';
-                     end if;
+                        /*-*/
+                        /* Determine the highest change level
+                        /*-*/
+                        var_level := '*NONE';
+                        if tbl_data(idx).rda_dim_val01 != var_sav_val01 then
+                           var_level := '*LVL01';
+                        elsif tbl_data(idx).rda_dim_val02 != var_sav_val02 then
+                           var_level := '*LVL02';
+                        elsif tbl_data(idx).rda_dim_val03 != var_sav_val03 then
+                           var_level := '*LVL03';
+                        elsif tbl_data(idx).rda_dim_val04 != var_sav_val04 then
+                           var_level := '*LVL04';
+                        elsif tbl_data(idx).rda_dim_val05 != var_sav_val05 then
+                           var_level := '*LVL05';
+                        elsif tbl_data(idx).rda_dim_val06 != var_sav_val06 then
+                           var_level := '*LVL06';
+                        elsif tbl_data(idx).rda_dim_val07 != var_sav_val07 then
+                           var_level := '*LVL07';
+                        elsif tbl_data(idx).rda_dim_val08 != var_sav_val08 then
+                           var_level := '*LVL08';
+                        elsif tbl_data(idx).rda_dim_val09 != var_sav_val09 then
+                           var_level := '*LVL09';
+                        end if;
 
-                     /*-*/
-                     /* Determine the total level
-                     /*-*/
-                     var_total := '*NONE';
-                     if tbl_data(idx).rda_dim_val02 = '*TOTAL' then
-                        var_total := '*LVL01';
-                     elsif tbl_data(idx).rda_dim_val03 = '*TOTAL' then
-                        var_total := '*LVL02';
-                     elsif tbl_data(idx).rda_dim_val04 = '*TOTAL' then
-                        var_total := '*LVL03';
-                     elsif tbl_data(idx).rda_dim_val05 = '*TOTAL' then
-                        var_total := '*LVL04';
-                     elsif tbl_data(idx).rda_dim_val06 = '*TOTAL' then
-                        var_total := '*LVL05';
-                     elsif tbl_data(idx).rda_dim_val07 = '*TOTAL' then
-                        var_total := '*LVL06';
-                     elsif tbl_data(idx).rda_dim_val08 = '*TOTAL' then
-                        var_total := '*LVL07';
-                     elsif tbl_data(idx).rda_dim_val09 = '*TOTAL' then
-                        var_total := '*LVL08';
-                     end if;
+                        /*-*/
+                        /* Determine the detail level
+                        /*-*/
+                        var_detail := '*NONE';
+                        if tbl_data(idx).rda_dim_val01 != '*NONE' then
+                           var_detail := '*LVL01';
+                        end if;
+                        if tbl_data(idx).rda_dim_val02 != '*NONE' then
+                           var_detail := '*LVL02';
+                        end if;
+                        if tbl_data(idx).rda_dim_val03 != '*NONE' then
+                           var_detail := '*LVL03';
+                        end if;
+                        if tbl_data(idx).rda_dim_val04 != '*NONE' then
+                           var_detail := '*LVL04';
+                        end if;
+                        if tbl_data(idx).rda_dim_val05 != '*NONE' then
+                           var_detail := '*LVL05';
+                        end if;
+                        if tbl_data(idx).rda_dim_val06 != '*NONE' then
+                           var_detail := '*LVL06';
+                        end if;
+                        if tbl_data(idx).rda_dim_val07 != '*NONE' then
+                           var_detail := '*LVL07';
+                        end if;
+                        if tbl_data(idx).rda_dim_val08 != '*NONE' then
+                           var_detail := '*LVL08';
+                        end if;
+                        if tbl_data(idx).rda_dim_val09 != '*NONE' then
+                           var_detail := '*LVL09';
+                        end if;
 
-                     /*-*/
-                     /* Save the current dimension values
-                     /*-*/
-                     var_sav_val01 := tbl_data(idx).rda_dim_val01;
-                     var_sav_val02 := tbl_data(idx).rda_dim_val02;
-                     var_sav_val03 := tbl_data(idx).rda_dim_val03;
-                     var_sav_val04 := tbl_data(idx).rda_dim_val04;
-                     var_sav_val05 := tbl_data(idx).rda_dim_val05;
-                     var_sav_val06 := tbl_data(idx).rda_dim_val06;
-                     var_sav_val07 := tbl_data(idx).rda_dim_val07;
-                     var_sav_val08 := tbl_data(idx).rda_dim_val08;
-                     var_sav_val09 := tbl_data(idx).rda_dim_val09;
+                        /*-*/
+                        /* Determine the total level
+                        /*-*/
+                        var_total := '*NONE';
+                        if tbl_data(idx).rda_dim_val02 = '*TOTAL' then
+                           var_total := '*LVL01';
+                        elsif tbl_data(idx).rda_dim_val03 = '*TOTAL' then
+                           var_total := '*LVL02';
+                        elsif tbl_data(idx).rda_dim_val04 = '*TOTAL' then
+                           var_total := '*LVL03';
+                        elsif tbl_data(idx).rda_dim_val05 = '*TOTAL' then
+                           var_total := '*LVL04';
+                        elsif tbl_data(idx).rda_dim_val06 = '*TOTAL' then
+                           var_total := '*LVL05';
+                        elsif tbl_data(idx).rda_dim_val07 = '*TOTAL' then
+                           var_total := '*LVL06';
+                        elsif tbl_data(idx).rda_dim_val08 = '*TOTAL' then
+                           var_total := '*LVL07';
+                        elsif tbl_data(idx).rda_dim_val09 = '*TOTAL' then
+                           var_total := '*LVL08';
+                        end if;
 
-                     /*-*/
-                     /* Update the heading data as required
-                     /*-*/
-                     if var_total = '*NONE' then
-                        for idy in 1..tbl_mlin.count loop
-                           if upper(tbl_mlin(idy).mli_msg_line) >= var_level then
-                              tbl_dcnt(idy) := 0;
-                           end if;
-                        end loop;
-                        if var_level = var_detail then
+                        /*-*/
+                        /* Save the current dimension values
+                        /*-*/
+                        var_sav_val01 := tbl_data(idx).rda_dim_val01;
+                        var_sav_val02 := tbl_data(idx).rda_dim_val02;
+                        var_sav_val03 := tbl_data(idx).rda_dim_val03;
+                        var_sav_val04 := tbl_data(idx).rda_dim_val04;
+                        var_sav_val05 := tbl_data(idx).rda_dim_val05;
+                        var_sav_val06 := tbl_data(idx).rda_dim_val06;
+                        var_sav_val07 := tbl_data(idx).rda_dim_val07;
+                        var_sav_val08 := tbl_data(idx).rda_dim_val08;
+                        var_sav_val09 := tbl_data(idx).rda_dim_val09;
+
+                        /*-*/
+                        /* Update the heading data as required
+                        /*-*/
+                        if var_total = '*NONE' then
                            for idy in 1..tbl_mlin.count loop
-                              if upper(tbl_mlin(idy).mli_msg_line) < var_detail then
-                                 tbl_dcnt(idy) := tbl_dcnt(idy) + 1;
+                              if upper(tbl_mlin(idy).mli_msg_line) >= var_level then
+                                 tbl_dcnt(idy) := 0;
+                              end if;
+                           end loop;
+                           if var_level = var_detail then
+                              for idy in 1..tbl_mlin.count loop
+                                 if upper(tbl_mlin(idy).mli_msg_line) < var_detail then
+                                    tbl_dcnt(idy) := tbl_dcnt(idy) + 1;
+                                 end if;
+                              end loop;
+                           end if;
+                           for idy in 1..tbl_mlin.count loop
+                              if (upper(tbl_mlin(idy).mli_msg_line) >= var_level and
+                                  upper(tbl_mlin(idy).mli_msg_line) <= var_detail and
+                                  upper(tbl_mlin(idy).mli_det_text) != '*NONE') then
+                                 var_sms_work := tbl_mlin(idy).mli_det_text;
+                                 var_sms_work := replace(var_sms_work,'<MARS_DAY>',var_out_day);
+                                 if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val01));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val02));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val03));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val04));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val05));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val06));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val07));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val08));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val09));
+                                 end if;
+                                 tbl_text(tbl_text.count+1) := var_sms_work;
+                              end if;
+                           end loop;
+                        else
+                           for idy in 1..tbl_mlin.count loop
+                              if (upper(tbl_mlin(idy).mli_msg_line) = var_total and
+                                  upper(tbl_mlin(idy).mli_tot_text) != '*NONE' and
+                                  (tbl_mlin(idy).mli_tot_child = '1' or (tbl_mlin(idy).mli_tot_child = '2' and tbl_dcnt(idy) > 1))) then
+                                 var_sms_work := tbl_mlin(idy).mli_tot_text;
+                                 var_sms_work := replace(var_sms_work,'<MARS_DAY>',var_out_day);
+                                 if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val01));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val02));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val03));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val04));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val05));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val06));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val07));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val08));
+                                 elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
+                                    var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val09));
+                                 end if;
+                                 tbl_text(tbl_text.count+1) := var_sms_work;
                               end if;
                            end loop;
                         end if;
+
+                     end if;
+
+                     /*-*/
+                     /* Update the detail and total lines as required
+                     /*-*/
+                     if var_total = '*NONE' then
                         for idy in 1..tbl_mlin.count loop
-                           if (upper(tbl_mlin(idy).mli_msg_line) >= var_level and
-                               upper(tbl_mlin(idy).mli_msg_line) <= var_detail and
+                           if (upper(tbl_mlin(idy).mli_msg_line) = var_detail and
                                upper(tbl_mlin(idy).mli_det_text) != '*NONE') then
-                              var_sms_work := tbl_mlin(idy).mli_det_text;
-                              var_sms_work := replace(var_sms_work,'<MARS_DAY>',var_out_day);
+                              var_sms_work := tbl_text(tbl_text.count);
                               if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val01));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val02));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val03));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val04));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val05));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val06));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val07));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val08));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val09));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               end if;
-                              tbl_text(tbl_text.count+1) := var_sms_work;
+                              tbl_text(tbl_text.count) := var_sms_work;
                            end if;
                         end loop;
                      else
@@ -608,161 +702,100 @@ create or replace package body sms_app.sms_rep_function as
                            if (upper(tbl_mlin(idy).mli_msg_line) = var_total and
                                upper(tbl_mlin(idy).mli_tot_text) != '*NONE' and
                                (tbl_mlin(idy).mli_tot_child = '1' or (tbl_mlin(idy).mli_tot_child = '2' and tbl_dcnt(idy) > 1))) then
-                              var_sms_work := tbl_mlin(idy).mli_tot_text;
-                              var_sms_work := replace(var_sms_work,'<MARS_DAY>',var_out_day);
+                              var_sms_work := tbl_text(tbl_text.count);
                               if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val01));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val02));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val03));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val04));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val05));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val06));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val07));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val08));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
-                                 var_sms_work := replace(var_sms_work,'<DIM_NAME>',sms_gen_function.retrieve_abbreviation(tbl_data(idx).rda_dim_val09));
+                                 var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
                               end if;
-                              tbl_text(tbl_text.count+1) := var_sms_work;
+                              tbl_text(tbl_text.count) := var_sms_work;
                            end if;
                         end loop;
                      end if;
 
-                  end if;
+                  end loop;
 
                   /*-*/
-                  /* Update the detail and total lines as required
+                  /* Process the message when report data found
                   /*-*/
-                  if var_total = '*NONE' then
-                     for idy in 1..tbl_mlin.count loop
-                        if (upper(tbl_mlin(idy).mli_msg_line) = var_detail and
-                            upper(tbl_mlin(idy).mli_det_text) != '*NONE') then
-                           var_sms_work := tbl_text(tbl_text.count);
-                           if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           end if;
-                           tbl_text(tbl_text.count) := var_sms_work;
+                  if tbl_data.count != 0 then
+
+                     /*-*/
+                     /* Increment the message count
+                     /*-*/
+                     var_mes_count := var_mes_count +1;
+
+                     /*-*/
+                     /* Build and insert the report message
+                     /*-*/
+                     var_sms_text := null;
+                     for idt in 1..tbl_text.count loop
+                        if not(var_sms_text is null) then
+                           var_sms_text := var_sms_text || utl_tcp.CRLF;
                         end if;
+                        var_sms_text := var_sms_text || tbl_text(idt);
                      end loop;
+                     rcd_sms_rpt_message.rme_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn + 1;
+                     rcd_sms_rpt_message.rme_msg_text := substr(var_sms_text,1,2000);
+                     rcd_sms_rpt_message.rme_msg_time := sysdate;
+                     rcd_sms_rpt_message.rme_msg_status := '1';
+                     insert into sms_rpt_message values rcd_sms_rpt_message;
+
+                     /*-*/
+                     /* Retrieve and attached all profile recipients
+                     /*-*/
+                     var_rec_count := 0;
+                     open csr_pro_recipient;
+                     loop
+                        fetch csr_pro_recipient into rcd_pro_recipient;
+                        if csr_pro_recipient%notfound then
+                           exit;
+                        end if;
+                        var_rec_count := var_rec_count + 1;
+                        rcd_sms_rpt_recipient.rre_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn;
+                        rcd_sms_rpt_recipient.rre_rcp_code := rcd_pro_recipient.rec_rcp_code;
+                        rcd_sms_rpt_recipient.rre_rcp_name := rcd_pro_recipient.rec_rcp_name;
+                        rcd_sms_rpt_recipient.rre_rcp_mobile := rcd_pro_recipient.rec_rcp_mobile;
+                        rcd_sms_rpt_recipient.rre_rcp_email := rcd_pro_recipient.rec_rcp_email;
+                        insert into sms_rpt_recipient values rcd_sms_rpt_recipient;
+                     end loop;
+                     close csr_pro_recipient;
+
+                     /*-*/
+                     /* Log the event
+                     /*-*/
+                     lics_logging.write_log('#---------> Message constructed and attached to '||to_char(var_rec_count)||' recipient(s)');
+
                   else
-                     for idy in 1..tbl_mlin.count loop
-                        if (upper(tbl_mlin(idy).mli_msg_line) = var_total and
-                            upper(tbl_mlin(idy).mli_tot_text) != '*NONE' and
-                            (tbl_mlin(idy).mli_tot_child = '1' or (tbl_mlin(idy).mli_tot_child = '2' and tbl_dcnt(idy) > 1))) then
-                           var_sms_work := tbl_text(tbl_text.count);
-                           if upper(tbl_mlin(idy).mli_msg_line) = '*LVL01' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL02' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL03' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL04' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL05' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL06' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL07' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL08' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           elsif upper(tbl_mlin(idy).mli_msg_line) = '*LVL09' then
-                              var_sms_work := replace(var_sms_work,'<'||tbl_data(idx).rda_val_code||'>',convert_value(tbl_data(idx).rda_val_data,0));
-                           end if;
-                           tbl_text(tbl_text.count) := var_sms_work;
-                        end if;
-                     end loop;
+
+                     /*-*/
+                     /* Log the event
+                     /*-*/
+                     lics_logging.write_log('#---------> No report data found for the filter dimensions');
+
                   end if;
 
                end loop;
-
-               /*-*/
-               /* Process the message when report data found
-               /*-*/
-               if tbl_data.count != 0 then
-
-                  /*-*/
-                  /* Increment the message count
-                  /*-*/
-                  var_mes_count := var_mes_count +1;
-
-                  /*-*/
-                  /* Build and insert the report message
-                  /*-*/
-                  var_sms_text := null;
-                  for idt in 1..tbl_text.count loop
-                     if not(var_sms_text is null) then
-                        var_sms_text := var_sms_text || utl_tcp.CRLF;
-                     end if;
-                     var_sms_text := var_sms_text || tbl_text(idt);
-                  end loop;
-                  rcd_sms_rpt_message.rme_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn + 1;
-                  rcd_sms_rpt_message.rme_msg_text := substr(var_sms_text,1,2000);
-                  rcd_sms_rpt_message.rme_msg_time := sysdate;
-                  rcd_sms_rpt_message.rme_msg_status := '1';
-                  insert into sms_rpt_message values rcd_sms_rpt_message;
-
-                  /*-*/
-                  /* Retrieve and attached all profile recipients
-                  /*-*/
-                  var_rec_count := 0;
-                  open csr_pro_recipient;
-                  loop
-                     fetch csr_pro_recipient into rcd_pro_recipient;
-                     if csr_pro_recipient%notfound then
-                        exit;
-                     end if;
-                     var_rec_count := var_rec_count + 1;
-                     rcd_sms_rpt_recipient.rre_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn;
-                     rcd_sms_rpt_recipient.rre_rcp_code := rcd_pro_recipient.rec_rcp_code;
-                     rcd_sms_rpt_recipient.rre_rcp_name := rcd_pro_recipient.rec_rcp_name;
-                     rcd_sms_rpt_recipient.rre_rcp_mobile := rcd_pro_recipient.rec_rcp_mobile;
-                     rcd_sms_rpt_recipient.rre_rcp_email := rcd_pro_recipient.rec_rcp_email;
-                     insert into sms_rpt_recipient values rcd_sms_rpt_recipient;
-                  end loop;
-                  close csr_pro_recipient;
-
-                  /*-*/
-                  /* Log the event
-                  /*-*/
-                  lics_logging.write_log('#---------> Message constructed and attached to '||to_char(var_rec_count)||' recipient(s)');
-
-               else
-
-                  /*-*/
-                  /* Log the event
-                  /*-*/
-                  lics_logging.write_log('#---------> No report data found for the filter dimensions');
-
-               end if;
+               close csr_pro_filter;
 
             end loop;
-            close csr_pro_filter;
+            close csr_pro_message;
 
-         end loop;
-         close csr_pro_message;
+         end if;
 
       end loop;
       close csr_profile;
@@ -790,8 +823,8 @@ create or replace package body sms_app.sms_rep_function as
          close csr_rcp_count;
          if rcd_rcp_count.rec_count != 0 then
             begin
-               send_sms(par_smtp_host,
-                        par_smtp_port,
+               send_sms(var_smtp_host,
+                        var_smtp_port,
                         rcd_rpt_message.rme_qry_code,
                         rcd_rpt_message.rme_qry_date,
                         rcd_rpt_message.rme_msg_seqn,
@@ -802,7 +835,7 @@ create or replace package body sms_app.sms_rep_function as
                   var_warnings := true;
                   var_sent := false;
                   lics_logging.write_log('#---> **WARNING** - SMS message ('||to_char(rcd_rpt_message.rme_msg_seqn)||') send failed - '||substr(sqlerrm, 1, 2000));
-            end if;
+            end;
          else
             var_warnings := true;
             var_sent := false;
@@ -835,7 +868,7 @@ create or replace package body sms_app.sms_rep_function as
       update sms_rpt_header
          set rhe_status = '2'
        where rhe_qry_code = par_qry_code
-         and rhe_rpt_date = par_rpt_date;
+         and rhe_rpt_date = par_qry_date;
 
       /*-*/
       /* Commit the database
@@ -993,7 +1026,7 @@ create or replace package body sms_app.sms_rep_function as
          if csr_rpt_recipient%notfound then
             exit;
          end if;
-         utl_smtp.rcpt(var_connection, '"'||trim(rcd_rpt_recipient.rre_rcp_name)||'"<'||rcd_rpt_recipient.rre_rcp_mobile||'@'||var_smtp_host||'>');
+         utl_smtp.rcpt(var_connection, '"'||trim(rcd_rpt_recipient.rre_rcp_name)||'"<'||rcd_rpt_recipient.rre_rcp_mobile||'@'||par_smtp_host||'>');
       end loop;
       close csr_rpt_recipient;
 
@@ -1002,11 +1035,11 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       utl_smtp.open_data(var_connection);
       utl_smtp.write_data(var_connection, 'Subject: ' || par_subject || utl_tcp.CRLF);
-      utl_smtp.write_data(var_connection, utl_tcp.CRLF || var_content);
+      utl_smtp.write_data(var_connection, utl_tcp.CRLF || par_content);
 
       /*-*/
       /* Close the data stream and quit the connection
-      /*-*/   
+      /*-*/
       utl_smtp.close_data(var_connection);
       utl_smtp.quit(var_connection);
 
