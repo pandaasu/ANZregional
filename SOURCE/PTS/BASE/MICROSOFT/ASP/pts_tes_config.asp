@@ -134,17 +134,15 @@ sub PaintFunction()%>
       cobjScreens[6] = new clsScreen('dspSamDetail','hedSamDetail');
       cobjScreens[7] = new clsScreen('dspSamSize','hedSamSize');
       cobjScreens[8] = new clsScreen('dspPanel','hedPanel');
-    //  cobjScreens[9] = new clsScreen('dspAllocation','hedAllocation');
-      cobjScreens[0].hedtxt = 'Test Prompt';
-      cobjScreens[1].hedtxt = 'Test Maintenance';
-      cobjScreens[2].hedtxt = 'Test Keyword Maintenance';
-      cobjScreens[3].hedtxt = 'Test Question Review';
-      cobjScreens[4].hedtxt = 'Test Question Maintenance';
-      cobjScreens[5].hedtxt = 'Test Sample Review';
-      cobjScreens[6].hedtxt = 'Test Sample Maintenance';
-      cobjScreens[7].hedtxt = 'Test Sample Size';
-      cobjScreens[8].hedtxt = 'Test Panel Selection';
-    //  cobjScreens[9].hedtxt = 'Test Allocation';
+      cobjScreens[0].hedtxt = 'Pet Test Prompt';
+      cobjScreens[1].hedtxt = 'Pet Test Maintenance';
+      cobjScreens[2].hedtxt = 'Pet Test Keyword Maintenance';
+      cobjScreens[3].hedtxt = 'Pet Test Question Review';
+      cobjScreens[4].hedtxt = 'Pet Test Question Maintenance';
+      cobjScreens[5].hedtxt = 'Pet Test Sample Review';
+      cobjScreens[6].hedtxt = 'Pet Test Sample Maintenance';
+      cobjScreens[7].hedtxt = 'Pet Test Sample Size';
+      cobjScreens[8].hedtxt = 'Pet Test Panel Selection';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -262,6 +260,20 @@ sub PaintFunction()%>
       }
       doActivityStart(document.body);
       window.setTimeout('requestPanelUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
+   }
+   function doPromptAllocation() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for allocation';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestAllocationUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
@@ -1540,7 +1552,9 @@ sub PaintFunction()%>
                return;
             }
          }
+         doReportOutput(eval('document.body'),'Test Panel Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_panel(' + cstrPanelTest + '))');
          displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
@@ -1598,6 +1612,44 @@ sub PaintFunction()%>
          document.getElementById('tabSltRule').focus();
       }
    }
+
+   //////////////////////////
+   // Allocation Functions //
+   //////////////////////////
+   var cstrAllocationTest;
+   function requestAllocationUpdate(strCode) {
+      cstrAllocationTest = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDALC" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_allocation_update.asp',function(strResponse) {checkAllocationUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkAllocationUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         doReportOutput(eval('document.body'),'Test Allocation Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_allocation(' + cstrAllocationTest + '))');
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -1616,7 +1668,7 @@ sub PaintFunction()%>
    <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Prompt</nobr></td>
+         <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Test Prompt</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -1635,7 +1687,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate('*PET');">&nbsp;Create Pet Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate('*PET');">&nbsp;Createt&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
