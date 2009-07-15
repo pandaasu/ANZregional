@@ -4767,8 +4767,14 @@ create or replace package body pts_app.pts_tes_function as
                   if ((var_wgt_bowl1 + var_wgt_offer1) - var_wgt_remain1) > var_wgt_offer1 then
                      pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one weight eaten is greater than offered');
                   end if;
+                  if var_wgt_remain1 > (var_wgt_bowl1 + var_wgt_offer1) then
+                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one weight remaining is greater than offered');
+                  end if;
                   if ((var_wgt_bowl2 + var_wgt_offer2) - var_wgt_remain2) > var_wgt_offer2 then
                      pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two weight eaten is greater than offered');
+                  end if;
+                  if var_wgt_remain2 > (var_wgt_bowl2 + var_wgt_offer2) then
+                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two weight remaining is greater than offered');
                   end if;
                end if;
                var_wgt_bowl1 := 0;
@@ -4998,8 +5004,14 @@ create or replace package body pts_app.pts_tes_function as
             if ((var_wgt_bowl1 + var_wgt_offer1) - var_wgt_remain1) > var_wgt_offer1 then
                pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one weight eaten is greater than offered');
             end if;
+            if var_wgt_remain1 > (var_wgt_bowl1 + var_wgt_offer1) then
+               pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code one weight remaining is greater than offered');
+            end if;
             if ((var_wgt_bowl2 + var_wgt_offer2) - var_wgt_remain2) > var_wgt_offer2 then
                pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two weight eaten is greater than offered');
+            end if;
+            if var_wgt_remain2 > (var_wgt_bowl2 + var_wgt_offer2) then
+               pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code two weight remaining is greater than offered');
             end if;
          end if;
       end if;
