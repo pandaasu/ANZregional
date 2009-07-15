@@ -31,7 +31,7 @@
    '// Initialise the script
    '//
    strTarget = "pts_tes_config.asp"
-   strHeading = "Test Maintenance"
+   strHeading = "Pet Test Maintenance"
 
    '//
    '// Get the base string
@@ -219,6 +219,19 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
+   function doPromptSearch() {
+      if (!processForm()) {return;}
+      startSchInstance('*TEST','Test','pts_tes_search.asp',function() {doPromptTesCancel();},function(strCode,strText) {doPromptTesSelect(strCode,strText);});
+   }
+   function doPromptTesCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
+   }
+   function doPromptTesSelect(strCode,strText) {
+      document.getElementById('PRO_TesCode').value = strCode;
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
+   }
    function doPromptQuestion() {
       if (!processForm()) {return;}
       var strMessage = '';
@@ -275,18 +288,85 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestAllocationUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
-   function doPromptSearch() {
+   function doPromptClose() {
       if (!processForm()) {return;}
-      startSchInstance('*TEST','Test','pts_tes_search.asp',function() {doPromptTesCancel();},function(strCode,strText) {doPromptTesSelect(strCode,strText);});
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for close';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestCloseUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
-   function doPromptTesCancel() {
-      displayScreen('dspPrompt');
-      document.getElementById('PRO_TesCode').focus();
+   function doPromptCancel() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for cancel';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestCancelUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
-   function doPromptTesSelect(strCode,strText) {
-      document.getElementById('PRO_TesCode').value = strCode;
-      displayScreen('dspPrompt');
-      document.getElementById('PRO_TesCode').focus();
+   function doReportPanel() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for panel reporting';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestPanelReport(document.getElementById('PRO_TesCode').value);
+   }
+   function doReportAllocation() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for allocation reporting';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestAllocationReport(document.getElementById('PRO_TesCode').value);
+   }
+   function doReportQuestionnaire() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for questionnaire reporting';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestQuestionnaireReport(document.getElementById('PRO_TesCode').value);
+   }
+   function doReportResults() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for results reporting';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestResultsReport(document.getElementById('PRO_TesCode').value);
    }
 
    //////////////////////
@@ -1483,13 +1563,12 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
                document.getElementById('subPanel').innerText = objElements[i].getAttribute('TESTXT');
-               cstrPanelTarget = objElements[i].getAttribute('TESTAR');
-            } else if (objElements[i].nodeName == 'TEM_LIST') {
-               objSelTemp.options[objSelTemp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'PANEL') {
                document.getElementById('PAN_MemCount').value = objElements[i].getAttribute('MEMCNT');
                document.getElementById('PAN_ResCount').value = objElements[i].getAttribute('RESCNT');
                strPetMult = objElements[i].getAttribute('PETMLT');
+               cstrPanelTarget = objElements[i].getAttribute('TESTAR');
+            } else if (objElements[i].nodeName == 'TEM_LIST') {
+               objSelTemp.options[objSelTemp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             }
          }
          startSltInstance(cstrPanelTarget);
@@ -1552,7 +1631,6 @@ sub PaintFunction()%>
                return;
             }
          }
-         doReportOutput(eval('document.body'),'Test Panel Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_panel(' + cstrPanelTest + '))');
          displayScreen('dspPrompt');
          document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
@@ -1643,11 +1721,106 @@ sub PaintFunction()%>
                return;
             }
          }
-         doReportOutput(eval('document.body'),'Test Allocation Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_allocation(' + cstrAllocationTest + '))');
          displayScreen('dspPrompt');
          document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
+   }
+
+   /////////////////////
+   // Close Functions //
+   /////////////////////
+   var cstrCloseTest;
+   function requestCloseUpdate(strCode) {
+      cstrCloseTest = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDCLO" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_close_update.asp',function(strResponse) {checkCloseUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkCloseUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+
+   //////////////////////
+   // Cancel Functions //
+   //////////////////////
+   var cstrCancelTest;
+   function requestCancelUpdate(strCode) {
+      cstrCancelTest = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDCAN" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_cancel_update.asp',function(strResponse) {checkCancelUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkCancelUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').value = '';
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+
+   //////////////////////
+   // Report Functions //
+   //////////////////////
+   function requestPanelReport(strCode) {
+      doReportOutput(eval('document.body'),'Pet Test Panel Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_panel(' + strCode + '))');
+      document.getElementById('PRO_TesCode').value = '';
+      document.getElementById('PRO_TesCode').focus();
+   }
+   function requestAllocationReport(strCode) {
+      doReportOutput(eval('document.body'),'Pet Test Allocation Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_allocation(' + strCode + '))');
+      document.getElementById('PRO_TesCode').value = '';
+      document.getElementById('PRO_TesCode').focus();
+   }
+   function doReportQuestionnaire(strCode) {
+      doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_report_questionnaire(' + strCode + '))');
+      document.getElementById('PRO_TesCode').value = '';
+      document.getElementById('PRO_TesCode').focus();
+   }
+   function doReportResults(strCode) {
+      doReportOutput(eval('document.body'),'Pet Test Results Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_results(' + strCode + '))');
+      document.getElementById('PRO_TesCode').value = '';
+      document.getElementById('PRO_TesCode').focus();
    }
 
 // -->
@@ -1658,6 +1831,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
 <!--#include file="ics_std_report.inc"-->
+<!--#include file="ics_std_export.inc"-->
 <!--#include file="pts_search_code.inc"-->
 <!--#include file="pts_select_code.inc"-->
 <head>
@@ -1687,7 +1861,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate('*PET');">&nbsp;Createt&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate('*PET');">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -1699,8 +1873,14 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Maintenance&nbsp;</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=11 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestion();">&nbsp;Questions&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -1709,21 +1889,31 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptClose();">&nbsp;Close&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestionnaire();">&nbsp;Questionnaire&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptClose();">&nbsp;Close Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCancel();">&nbsp;Cancel Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportQuestionnaire();">&nbsp;Questionnaire&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptDownload();">&nbsp;Download Results&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportResults();">&nbsp;Results&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
