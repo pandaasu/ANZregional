@@ -58,11 +58,6 @@ create or replace package body pts_app.pts_pet_allocation as
    procedure perform_allocation(par_tes_code in number) is
 
       /*-*/
-      /* Autonomous transaction
-      /*-*/
-      pragma autonomous_transaction;
-
-      /*-*/
       /* Local definitions
       /*-*/
       var_found boolean;
@@ -85,9 +80,9 @@ create or replace package body pts_app.pts_pet_allocation as
    /*-------------*/
    begin
 
-      /*---------------------------------------------------------------*/
-      /* NOTE - This procedure is under autonomous transaction control */
-      /*---------------------------------------------------------------*/
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
 
       /*-*/
       /* Retrieve the existing test
@@ -117,11 +112,6 @@ create or replace package body pts_app.pts_pet_allocation as
          raise_application_error(-20000, 'Pet allocation (' || upper(rcd_retrieve.tty_alc_proc) || ') is not supported');
       end if;
 
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -131,11 +121,6 @@ create or replace package body pts_app.pts_pet_allocation as
       /* Exception trap
       /*-*/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
 
          /* Raise an exception to the calling application
          /*-*/
@@ -273,11 +258,6 @@ create or replace package body pts_app.pts_pet_allocation as
    procedure difference(par_tes_code in number, par_day_count in number) is
 
       /*-*/
-      /* Autonomous transaction
-      /*-*/
-      pragma autonomous_transaction;
-
-      /*-*/
       /* Local definitions
       /*-*/
       var_key_work varchar2(36);
@@ -323,9 +303,9 @@ create or replace package body pts_app.pts_pet_allocation as
    /*-------------*/
    begin
 
-      /*---------------------------------------------------------------*/
-      /* NOTE - This procedure is under autonomous transaction control */
-      /*---------------------------------------------------------------*/
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
 
       /*-*/
       /* Test validation
