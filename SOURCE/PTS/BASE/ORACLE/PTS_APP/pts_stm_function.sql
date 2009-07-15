@@ -879,8 +879,8 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       /* Start the report
       /*-*/
-      pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">('||rcd_retrieve.std_stm_code||') '||rcd_retrieve.std_stm_text||'</td></tr>');
+      pipe row('<table border=1 width=100%>');
+      pipe row('<tr><td align=center colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selection Template - ('||rcd_retrieve.std_stm_code||') '||rcd_retrieve.std_stm_text||'</td></tr>');
       pipe row('<tr>');
       pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
       pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
@@ -1376,7 +1376,7 @@ create or replace package body pts_app.pts_stm_function as
                 pts_hou_definition t02
           where t01.pde_hou_code = t02.hde_hou_code
             and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
-            and t01.pde_pet_status = 1
+            and t01.pde_pet_status in (1,2,3)
             and t01.pde_pet_code not in (select nvl(stp_pan_code,-1)
                                            from pts_stm_panel
                                           where stp_stm_code = par_stm_code)
@@ -1753,7 +1753,7 @@ create or replace package body pts_app.pts_stm_function as
                 t01.hde_geo_zone
            from pts_hou_definition t01
           where t01.hde_hou_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*HOUSEHOLD',var_sel_group)))
-            and t01.hde_hou_status = 1
+            and t01.hde_hou_status in(1,2,3)
             and t01.hde_hou_code not in (select nvl(stp_pan_code,-1)
                                            from pts_stm_panel
                                           where stp_stm_code = par_stm_code)
