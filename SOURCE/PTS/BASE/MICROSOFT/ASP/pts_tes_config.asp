@@ -178,14 +178,6 @@ sub PaintFunction()%>
    //////////////////////
    // Prompt Functions //
    //////////////////////
-   function doPromptEnter() {
-      if (!processForm()) {return;}
-      if (document.getElementById('PRO_TesCode').value == '') {
-         doPromptCreate('*PET');
-      } else {
-         doPromptUpdate();
-      }
-   }
    function doPromptUpdate() {
       if (!processForm()) {return;}
       var strMessage = '';
@@ -532,17 +524,17 @@ sub PaintFunction()%>
          strXML = strXML+' CPYCDE="'+fixXML(cstrDefineCode)+'"';
       }
       strXML = strXML+' TESCDE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
-      strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value)+'"';
+      strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value.toUpperCase())+'"';
       strXML = strXML+' TESCOM="'+fixXML(objTesComp.options[objTesComp.selectedIndex].value)+'"';
       strXML = strXML+' TESSTA="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
       strXML = strXML+' TESGLO="'+fixXML(objTesGlop.options[objTesGlop.selectedIndex].value)+'"';
       strXML = strXML+' TESTYP="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
-      strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_TesRnam').value)+'"';
-      strXML = strXML+' REQMID="'+fixXML(document.getElementById('DEF_TesRmid').value)+'"';
-      strXML = strXML+' AIMTXT="'+fixXML(document.getElementById('DEF_TesAtxt').value)+'"';
-      strXML = strXML+' REATXT="'+fixXML(document.getElementById('DEF_TesRtxt').value)+'"';
-      strXML = strXML+' PRETXT="'+fixXML(document.getElementById('DEF_TesPtxt').value)+'"';
-      strXML = strXML+' COMTXT="'+fixXML(document.getElementById('DEF_TesCtxt').value)+'"';
+      strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_TesRnam').value.toUpperCase())+'"';
+      strXML = strXML+' REQMID="'+fixXML(document.getElementById('DEF_TesRmid').value.toUpperCase())+'"';
+      strXML = strXML+' AIMTXT="'+fixXML(document.getElementById('DEF_TesAtxt').value.toUpperCase())+'"';
+      strXML = strXML+' REATXT="'+fixXML(document.getElementById('DEF_TesRtxt').value.toUpperCase())+'"';
+      strXML = strXML+' PRETXT="'+fixXML(document.getElementById('DEF_TesPtxt').value.toUpperCase())+'"';
+      strXML = strXML+' COMTXT="'+fixXML(document.getElementById('DEF_TesCtxt').value.toUpperCase())+'"';
       strXML = strXML+' STRDAT="'+fixXML(document.getElementById('DEF_TesSdat').value)+'"';
       strXML = strXML+' FLDWEK="'+fixXML(document.getElementById('DEF_TesFwek').value)+'"';
       strXML = strXML+' MEALEN="'+fixXML(document.getElementById('DEF_TesMlen').value)+'"';
@@ -586,14 +578,12 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
    function doDefineCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doKeywordAdd() {
@@ -844,14 +834,12 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
    function doQuestionCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doQuestionSelect(strTarget) {
@@ -1156,7 +1144,6 @@ sub PaintFunction()%>
       this.rptcde = '';
       this.mktcde = '';
       this.alscde = '';
-      this.samide = '';
       this.sizary = new Array();
    }
    function clsSamSize(strSizCde,strSizTxt,strFedQty,strFedTxt) {
@@ -1202,7 +1189,6 @@ sub PaintFunction()%>
                cobjSampleData[intIndex].rptcde = objElements[i].getAttribute('RPTCDE');
                cobjSampleData[intIndex].mktcde = objElements[i].getAttribute('MKTCDE');
                cobjSampleData[intIndex].alscde = objElements[i].getAttribute('ALSCDE');
-               cobjSampleData[intIndex].samide = objElements[i].getAttribute('SAMIDE');
             } else if (objElements[i].nodeName == 'FEEDING') {
                cobjSampleData[intIndex].sizary[cobjSampleData[intIndex].sizary.length] = new clsSamSize(objElements[i].getAttribute('SIZCDE'),objElements[i].getAttribute('SIZTXT'),objElements[i].getAttribute('FEDQTY'),objElements[i].getAttribute('FEDTXT'));
             }
@@ -1261,8 +1247,7 @@ sub PaintFunction()%>
          strXML = strXML+'<SAMPLE SAMCDE="'+fixXML(cobjSampleData[i].samcde)+'"';
          strXML = strXML+' RPTCDE="'+fixXML(cobjSampleData[i].rptcde)+'"';
          strXML = strXML+' MKTCDE="'+fixXML(cobjSampleData[i].mktcde)+'"';
-         strXML = strXML+' ALSCDE="'+fixXML(cobjSampleData[i].alscde)+'"';
-         strXML = strXML+' SAMIDE="'+fixXML(cobjSampleData[i].samide)+'">';
+         strXML = strXML+' ALSCDE="'+fixXML(cobjSampleData[i].alscde)+'">';
          for (var j=0;j<cobjSampleData[i].sizary.length;j++) {
             strXML = strXML+'<FEEDING SIZCDE="'+fixXML(cobjSampleData[i].sizary[j].sizcde)+'" FEDQTY="'+fixXML(cobjSampleData[i].sizary[j].fedqty)+'" FEDTXT="'+fixXML(cobjSampleData[i].sizary[j].fedtxt)+'"/>';
          }
@@ -1297,14 +1282,12 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
    function doSampleCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspPrompt');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doSampleAdd() {
@@ -1317,7 +1300,6 @@ sub PaintFunction()%>
       document.getElementById('SAM_RptCode').value = '';
       document.getElementById('SAM_MktCode').value = '';
       document.getElementById('SAM_AlsCode').value = '';
-      document.getElementById('SAM_SamIden').value = '';
       document.getElementById('SAM_SamCode').focus();
    }
    function doSampleUpdate(intRow) {
@@ -1329,7 +1311,6 @@ sub PaintFunction()%>
       document.getElementById('SAM_RptCode').value = cobjSampleData[cintSampleRow].rptcde;
       document.getElementById('SAM_MktCode').value = cobjSampleData[cintSampleRow].mktcde;
       document.getElementById('SAM_AlsCode').value = cobjSampleData[cintSampleRow].alscde;
-      document.getElementById('SAM_SamIden').value = cobjSampleData[cintSampleRow].samide;
       document.getElementById('SAM_RptCode').focus();
    }
    function doSampleDelete(intRow) {
@@ -1415,12 +1396,6 @@ sub PaintFunction()%>
                   strMessage = strMessage + 'Market research alias already exists in the test';
                }
             }
-            if (document.getElementById('SAM_SamIden').value != '') {
-               if (cintSampleRow != i && cobjSampleData[i].samide.toUpperCase() == document.getElementById('SAM_SamIden').value.toUpperCase()) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'Sample identifier already exists in the test';
-               }
-            }
          }
       }
       if (strMessage != '') {
@@ -1434,14 +1409,12 @@ sub PaintFunction()%>
       var objRptCode = document.getElementById('SAM_RptCode');
       var objMktCode = document.getElementById('SAM_MktCode');
       var objAlsCode = document.getElementById('SAM_AlsCode');
-      var objSamIden = document.getElementById('SAM_SamIden');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*SELSAM"';
       strXML = strXML+' SAMCDE="'+fixXML(strSamCode)+'"';
-      strXML = strXML+' RPTCDE="'+fixXML(objRptCode.value)+'"';
-      strXML = strXML+' MKTCDE="'+fixXML(objMktCode.value)+'"';
-      strXML = strXML+' ALSCDE="'+fixXML(objAlsCode.value)+'"';
-      strXML = strXML+' SAMIDE="'+fixXML(objSamIden.value)+'"';
+      strXML = strXML+' RPTCDE="'+fixXML(objRptCode.value.toUpperCase())+'"';
+      strXML = strXML+' MKTCDE="'+fixXML(objMktCode.value.toUpperCase())+'"';
+      strXML = strXML+' ALSCDE="'+fixXML(objAlsCode.value.toUpperCase())+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestSamDetailAccept(\''+strXML+'\');',10);
@@ -1482,7 +1455,6 @@ sub PaintFunction()%>
                cobjSampleData[intIndex].rptcde = objElements[i].getAttribute('RPTCDE');
                cobjSampleData[intIndex].mktcde = objElements[i].getAttribute('MKTCDE');
                cobjSampleData[intIndex].alscde = objElements[i].getAttribute('ALSCDE');
-               cobjSampleData[intIndex].samide = objElements[i].getAttribute('SAMIDE');
             } else if (objElements[i].nodeName == 'FEEDING') {
                if (cintSampleRow == -1) {
                   cobjSampleData[intIndex].sizary[cobjSampleData[intIndex].sizary.length] = new clsSamSize(objElements[i].getAttribute('SIZCDE'),objElements[i].getAttribute('SIZTXT'),objElements[i].getAttribute('FEDQTY'),objElements[i].getAttribute('FEDTXT'));
@@ -1632,7 +1604,6 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
@@ -1722,7 +1693,6 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
@@ -1758,7 +1728,6 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
@@ -1794,7 +1763,6 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').value = '';
          document.getElementById('PRO_TesCode').focus();
       }
    }
@@ -1804,22 +1772,18 @@ sub PaintFunction()%>
    //////////////////////
    function requestPanelReport(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Panel Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_panel(' + strCode + '))');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function requestAllocationReport(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Allocation Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_allocation(' + strCode + '))');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doReportQuestionnaire(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_report_questionnaire(' + strCode + '))');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
    function doReportResults(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Results Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_results(' + strCode + '))');
-      document.getElementById('PRO_TesCode').value = '';
       document.getElementById('PRO_TesCode').focus();
    }
 
@@ -1839,7 +1803,7 @@ sub PaintFunction()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_tes_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
-   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
+   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Test Prompt</nobr></td>
@@ -1876,7 +1840,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Maintenance&nbsp;</nobr></td>
+         <td class="clsHeader" align=center colspan=2 nowrap><nobr>&nbsp;Maintenance&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
@@ -1901,7 +1865,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
+         <td class="clsHeader" align=center colspan=2 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
@@ -1931,7 +1895,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Title:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -1961,37 +1925,37 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesRnam" size="60" maxlength="60" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRnam" size="60" maxlength="60" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Mars Id:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesRmid" size="30" maxlength="30" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRmid" size="30" maxlength="30" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Aim:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesAtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesAtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reason:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesRtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Prediction:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesPtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesPtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Comment:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_TesCtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesCtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -2349,12 +2313,6 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Market Research Alias:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_AlsCode" size="1" maxlength="1" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Identifier:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_SamIden" size="20" maxlength="20" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
