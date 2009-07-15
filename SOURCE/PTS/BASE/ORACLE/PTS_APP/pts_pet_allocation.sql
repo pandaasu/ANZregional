@@ -205,11 +205,6 @@ create or replace package body pts_app.pts_pet_allocation as
       close csr_allocation;
 
       /*-*/
-      /* Clear the existing allocation
-      /*-*/
-      delete from pts_tes_allocation where tal_tes_code = par_tes_code;
-
-      /*-*/
       /* Retrieve the test panel
       /* **notes** 1. The sample retrieval has been randomized so panel
       /*              does not need to be randomized
@@ -332,11 +327,6 @@ create or replace package body pts_app.pts_pet_allocation as
       open csr_allocation;
       fetch csr_allocation bulk collect into tbl_akey;
       close csr_allocation;
-
-      /*-*/
-      /* Clear the existing allocation
-      /*-*/
-      delete from pts_tes_allocation where tal_tes_code = par_tes_code;
 
       /*-*/
       /* Retrieve the test panel
