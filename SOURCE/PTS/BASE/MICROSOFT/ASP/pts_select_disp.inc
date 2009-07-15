@@ -4,7 +4,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td id="hedSltRule" class="clsLabelWB" align=center colspan=1 nowrap><nobr>Selection Rules</nobr></td>
+                  <td id="hedSltRule" class="clsHeader" align=center colspan=1 nowrap><nobr>Selection Rules</nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSltRuleAddGroup();">&nbsp;Add Group&nbsp;</a></nobr></td>
                </tr>

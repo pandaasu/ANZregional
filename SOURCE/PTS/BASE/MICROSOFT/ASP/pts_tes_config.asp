@@ -229,7 +229,7 @@ sub PaintFunction()%>
       var strMessage = '';
       if (document.getElementById('PRO_TesCode').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Test code must be entered for question maintenancec';
+         strMessage = strMessage + 'Test code must be entered for question maintenance';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -277,6 +277,9 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
+      if (confirm('Please confirm the allocation request\r\npress OK continue (any existing allocation will be replaced)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       doActivityStart(document.body);
       window.setTimeout('requestAllocationUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
@@ -291,6 +294,9 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
+      if (confirm('Please confirm the close request\r\npress OK continue (the selected test will be closed)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       doActivityStart(document.body);
       window.setTimeout('requestCloseUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
@@ -303,6 +309,9 @@ sub PaintFunction()%>
       }
       if (strMessage != '') {
          alert(strMessage);
+         return;
+      }
+      if (confirm('Please confirm the cancel request\r\npress OK continue (the selected test will be cancelled)\r\npress Cancel to cancel the request') == false) {
          return;
       }
       doActivityStart(document.body);
@@ -1778,11 +1787,11 @@ sub PaintFunction()%>
       doReportOutput(eval('document.body'),'Pet Test Allocation Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_allocation(' + strCode + '))');
       document.getElementById('PRO_TesCode').focus();
    }
-   function doReportQuestionnaire(strCode) {
+   function requestQuestionnaireReport(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_report_questionnaire(' + strCode + '))');
       document.getElementById('PRO_TesCode').focus();
    }
-   function doReportResults(strCode) {
+   function requestResultsReport(strCode) {
       doReportOutput(eval('document.body'),'Pet Test Results Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_results(' + strCode + '))');
       document.getElementById('PRO_TesCode').focus();
    }
@@ -1840,12 +1849,11 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsHeader" align=center colspan=2 nowrap><nobr>&nbsp;Maintenance&nbsp;</nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=11 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=13 cellpadding="0" cellspacing="0">
                <tr>
+                  <td class="clsHeader" align=center colspan=1 nowrap><nobr>Maintenance</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestion();">&nbsp;Questions&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSample();">&nbsp;Samples&nbsp;</a></nobr></td>
@@ -1865,12 +1873,11 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsHeader" align=center colspan=2 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=9 cellpadding="0" cellspacing="0">
                <tr>
+                  <td class="clsHeader" align=center colspan=1 nowrap><nobr>Reporting</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
