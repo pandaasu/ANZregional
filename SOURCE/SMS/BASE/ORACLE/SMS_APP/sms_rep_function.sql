@@ -1005,6 +1005,21 @@ create or replace package body sms_app.sms_rep_function as
    begin
 
 ----------------MULTIPART MESSAGE
+   --   tbl_line.delete;
+   --   if length(par_content) <= 160 then
+   --      tbl_line(1) := par_content;
+   --   else
+   --      var_indx := 0;
+   --      for idx in 1..length(par_content) loop
+--
+   --         if var_indx = 160 then
+   --            var_indx := 0;
+   --         end if;
+   --         var_indx := var_indx + 1;
+   --         tbl_line(var_indx) := tbl_line(var_indx)||substr(par_content,idx,1);
+--
+   --      end loop;
+   --   end if;
 
       /*-*/
       /* Initialise the email environment
