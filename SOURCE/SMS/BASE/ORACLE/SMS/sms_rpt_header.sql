@@ -31,6 +31,8 @@ create table sms.sms_rpt_header
     rhe_crt_yyyypp                  number(6,0)                   not null,
     rhe_crt_yyyyppw                 number(7,0)                   not null,
     rhe_crt_yyyyppdd                number(8,0)                   not null,
+    rhe_upd_user                    varchar2(30 char)             not null,
+    rhe_upd_date                    date                          not null,
     rhe_status                      varchar2(1 char)              not null);
 
 /**/
@@ -49,6 +51,8 @@ comment on column sms.sms_rpt_header.rhe_crt_time is 'creation time';
 comment on column sms.sms_rpt_header.rhe_crt_yyyypp is 'creation Mars period';
 comment on column sms.sms_rpt_header.rhe_crt_yyyyppw is 'creation Mars week';
 comment on column sms.sms_rpt_header.rhe_crt_yyyyppdd is 'creation Mars day';
+comment on column sms.sms_rpt_header.rhe_upd_user is 'Updated user';
+comment on column sms.sms_rpt_header.rhe_upd_date is 'Updated date';
 comment on column sms.sms_rpt_header.rhe_status is 'Report status (1=loaded or 2=processed or 3=resend or 4=stopped)';
 
 /**/
