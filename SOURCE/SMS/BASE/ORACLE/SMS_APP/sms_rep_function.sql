@@ -28,8 +28,7 @@ create or replace package sms_app.sms_rep_function as
    procedure generate(par_qry_code in varchar2,
                       par_qry_date in varchar2,
                       par_action in varchar2,
-                      par_alert in varchar2,
-                      par_email in varchar2);
+                      par_user in varchar2);
 
 end sms_rep_function;
 /
@@ -71,8 +70,7 @@ create or replace package body sms_app.sms_rep_function as
    procedure generate(par_qry_code in varchar2,
                       par_qry_date in varchar2,
                       par_action in varchar2,
-                      par_alert in varchar2,
-                      par_email in varchar2) is
+                      par_user in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -80,6 +78,8 @@ create or replace package body sms_app.sms_rep_function as
       var_exception varchar2(4000);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
+      var_alert varchar2(256);
+      var_email varchar2(256);
       var_errors boolean;
       var_warnings boolean;
       var_found boolean;
@@ -253,6 +253,8 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       var_log_prefix := 'SMS - REPORT_GENERATION';
       var_log_search := 'SMS_REPORT_GENERATION';
+      var_alert := sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT');
+      var_email := sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP');
       var_errors := false;
       var_warnings := false;
 
@@ -336,7 +338,7 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SMS Report Generation - Parameters(' || par_qry_code || ' + ' || par_qry_date || ' + ' || par_action || ')');
+      lics_logging.write_log('Begin - SMS Report Generation - Parameters(' || par_qry_code || ' + ' || par_qry_date || ' + ' || par_action || ' + ' || par_user || ')');
 
       /*-*/
       /* Log the event
@@ -404,7 +406,7 @@ create or replace package body sms_app.sms_rep_function as
             /*-*/
             /* Log the event
             /*-*/
-            lics_logging.write_log('#---> SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name||' - not not processesed on '||to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'yyyy/mm/dd'));
+            lics_logging.write_log('#---> SMS profile - ('||rcd_profile.pro_prf_code||') '||rcd_profile.pro_prf_name||' - not processesed on '||to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'yyyy/mm/dd'));
 
          else
 
@@ -482,7 +484,7 @@ create or replace package body sms_app.sms_rep_function as
                   end loop;
 
                   /*-*/
-                  /* Process the repprt data
+                  /* Process the report data
                   /*-*/
                   for idx in 1..tbl_data.count loop
 
@@ -866,7 +868,9 @@ create or replace package body sms_app.sms_rep_function as
       /* Update the report header to processed
       /*-*/
       update sms_rpt_header
-         set rhe_status = '2'
+         set rhe_upd_user = par_user,
+             rhe_upd_date = sysdate,
+             rhe_status = '2'
        where rhe_qry_code = par_qry_code
          and rhe_rpt_date = par_qry_date;
 
@@ -893,13 +897,13 @@ create or replace package body sms_app.sms_rep_function as
          /*-*/
          /* Email
          /*-*/
-         if not(trim(par_email) is null) and trim(upper(par_email)) != '*NONE' then
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(sms_parameter.system_code,
                                          sms_parameter.system_unit,
                                          sms_parameter.system_environment,
                                          con_function,
                                          'SMS_REPORT_GENERATION',
-                                         par_email,
+                                         var_email,
                                          'SMS message warnings occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
 
@@ -913,16 +917,16 @@ create or replace package body sms_app.sms_rep_function as
          /*-*/
          /* Alert and email
          /*-*/
-         if not(trim(par_alert) is null) and trim(upper(par_alert)) != '*NONE' then
-            lics_notification.send_alert(par_alert);
+         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+            lics_notification.send_alert(var_alert);
          end if;
-         if not(trim(par_email) is null) and trim(upper(par_email)) != '*NONE' then
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
             lics_notification.send_email(sms_parameter.system_code,
                                          sms_parameter.system_unit,
                                          sms_parameter.system_environment,
                                          con_function,
                                          'SMS_REPORT_GENERATION',
-                                         par_email,
+                                         var_email,
                                          'One or more errors occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
 

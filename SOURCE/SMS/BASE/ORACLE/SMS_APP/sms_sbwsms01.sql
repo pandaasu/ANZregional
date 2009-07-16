@@ -201,6 +201,8 @@ create or replace package body sms_app.sms_sbwsms01 as
       rcd_sms_rpt_header.rhe_crt_yyyypp := rcd_date.mars_period;
       rcd_sms_rpt_header.rhe_crt_yyyyppw := rcd_date.mars_week;
       rcd_sms_rpt_header.rhe_crt_yyyyppdd := rcd_date.mars_yyyyppdd;
+      rcd_sms_rpt_header.rhe_upd_user := user;
+      rcd_sms_rpt_header.rhe_upd_date := sysdate;
       rcd_sms_rpt_header.rhe_status := '1';
       if sms_gen_function.retrieve_system_value('SYSTEM_PROCESS') != '*ACTIVE' then
           rcd_sms_rpt_header.rhe_status := '4';
@@ -252,7 +254,7 @@ create or replace package body sms_app.sms_sbwsms01 as
       /*-*/
       /* Retrieve the query name
       /*-*/
-      var_found := false; 
+      var_found := false;
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          if upper(xmlDom.getNodeName(obj_xml_node)) = 'QUERY' then
@@ -359,8 +361,7 @@ create or replace package body sms_app.sms_sbwsms01 as
          lics_trigger_loader.execute('SMS Report Message Generation',
                                      'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
                                                                                rcd_sms_rpt_header.rhe_qry_date || ''',''*AUTO'',''' ||
-                                                                               sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT') || ''',''' ||
-                                                                               sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP') || ''')',
+                                                                               rcd_sms_rpt_header.rhe_crt_user || ''')',
                                      sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT'),
                                      sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP'),
                                      sms_gen_function.retrieve_system_value('REPORT_GENERATION_JOB_GROUP'));

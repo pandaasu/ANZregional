@@ -59,7 +59,7 @@ create or replace package body sms_app.sms_qry_function as
       var_end_code varchar2(64);
       var_output varchar2(2000 char);
       var_pag_size number;
-      var_pag_more_boolean;
+      var_pag_more boolean;
       var_str_list varchar2(1);
       var_end_list varchar2(1);
 
@@ -72,7 +72,7 @@ create or replace package body sms_app.sms_qry_function as
                         t01.que_qry_name,
                         decode(t01.que_status,'0','Inactive','1','Active','*UNKNOWN') as que_status
                    from sms_query t01
-                  where var_str_code is null or t01.que_qry_code >= var_str_code)
+                  where (var_str_code is null or t01.que_qry_code >= var_str_code)
                   order by t01.que_qry_code asc) t01
           where rownum <= var_pag_size + 1;
 
@@ -82,7 +82,7 @@ create or replace package body sms_app.sms_qry_function as
                         t01.que_qry_name,
                         decode(t01.que_status,'0','Inactive','1','Active','*UNKNOWN') as que_status
                    from sms_query t01
-                  where var_end_code is null or t01.que_qry_code > var_end_code)
+                  where (var_end_code is null or t01.que_qry_code > var_end_code)
                   order by t01.que_qry_code asc) t01
           where rownum <= var_pag_size + 1;
 
@@ -172,7 +172,7 @@ create or replace package body sms_app.sms_qry_function as
          open csr_prev;
          fetch csr_prev bulk collect into tbl_list;
          close csr_prev;
-         for idx in reverse 1..tbl_back.count loop
+         for idx in reverse 1..tbl_list.count loop
             pipe row(sms_xml_object('<SELROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
          end loop;
          if tbl_list.count > var_pag_size then
@@ -199,12 +199,12 @@ create or replace package body sms_app.sms_qry_function as
          end if;
       elsif var_action = '*PRVQRY' then
          var_str_list := '1';
-         var_end_list := '0'; 
+         var_end_list := '0';
          if var_pag_more = true then
             var_str_list := '0';
          end if;
       end if;
-      pipe row(sms_xml_object('<LSTCTL STRLST="'|var_str_list||'" ENDLST="'||var_end_list||'"/>'));
+      pipe row(sms_xml_object('<LSTCTL STRLST="'||var_str_list||'" ENDLST="'||var_end_list||'"/>'));
 
       /*-*/
       /* Pipe the XML end
@@ -443,7 +443,7 @@ create or replace package body sms_app.sms_qry_function as
       cursor csr_retrieve is
          select t01.*
            from sms_query t01
-          where t01.que_qry_code = var_qry_code
+          where t01.que_qry_code = rcd_sms_query.que_qry_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -624,8 +624,24 @@ create or replace package body sms_app.sms_qry_function as
                    que_status = rcd_sms_query.que_status,
                    que_upd_user = rcd_sms_query.que_upd_user,
                    que_upd_date = rcd_sms_query.que_upd_date,
-
-                   que_xxxx = rcd_sms_query.que_xxxx
+                   que_ema_subject = rcd_sms_query.que_ema_subject,
+                   que_rcv_day01 = rcd_sms_query.que_rcv_day01,
+                   que_rcv_day02 = rcd_sms_query.que_rcv_day02,
+                   que_rcv_day03 = rcd_sms_query.que_rcv_day03,
+                   que_rcv_day04 = rcd_sms_query.que_rcv_day04,
+                   que_rcv_day05 = rcd_sms_query.que_rcv_day05,
+                   que_rcv_day06 = rcd_sms_query.que_rcv_day06,
+                   que_rcv_day07 = rcd_sms_query.que_rcv_day07,
+                   que_dim_depth = rcd_sms_query.que_dim_depth,
+                   que_dim_cod01 = rcd_sms_query.que_dim_cod01,
+                   que_dim_cod02 = rcd_sms_query.que_dim_cod02,
+                   que_dim_cod03 = rcd_sms_query.que_dim_cod03,
+                   que_dim_cod04 = rcd_sms_query.que_dim_cod04,
+                   que_dim_cod05 = rcd_sms_query.que_dim_cod05,
+                   que_dim_cod06 = rcd_sms_query.que_dim_cod06,
+                   que_dim_cod07 = rcd_sms_query.que_dim_cod07,
+                   que_dim_cod08 = rcd_sms_query.que_dim_cod08,
+                   que_dim_cod09 = rcd_sms_query.que_dim_cod09
              where que_qry_code = rcd_sms_query.que_qry_code;
          end if;
       elsif var_action = '*CRTQRY' then

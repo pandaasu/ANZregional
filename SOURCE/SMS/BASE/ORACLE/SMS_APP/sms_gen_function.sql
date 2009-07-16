@@ -29,6 +29,7 @@ create or replace package sms_app.sms_gen_function as
    function get_mesg_count return number;
    procedure add_mesg_data(par_message in varchar2);
    function get_mesg_data return sms_xml_type pipelined;
+   procedure set_cfrm_data(par_confirm in varchar2);
    function retrieve_system_value(par_code in varchar2) return varchar2;
    procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2);
    function retrieve_abbreviation(par_dim_data in varchar2) return varchar2;
@@ -227,6 +228,45 @@ create or replace package body sms_app.sms_gen_function as
    /* End routine */
    /*-------------*/
    end get_mesg_data;
+
+   /********************************************************/
+   /* This procedure performs the set confirm data routine */
+   /********************************************************/
+   procedure set_cfrm_data(par_confirm in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Set the confirm data
+      /*-*/
+      pvar_cfrm := par_confirm;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - SET_CFRM_DATA - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end set_cfrm_data;
 
    /*************************************************************/
    /* This procedure performs the retrieve system value routine */
