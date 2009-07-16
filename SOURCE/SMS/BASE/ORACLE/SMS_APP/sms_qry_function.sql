@@ -151,7 +151,7 @@ create or replace package body sms_app.sms_qry_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(sms_xml_object('<SELROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
          end loop;
          if tbl_list.count > var_pag_size then
             var_pag_more := true;
@@ -162,7 +162,7 @@ create or replace package body sms_app.sms_qry_function as
          fetch csr_next bulk collect into tbl_list;
          close csr_next;
          for idx in 1..tbl_list.count loop
-            pipe row(sms_xml_object('<SELROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
          end loop;
          if tbl_list.count > var_pag_size then
             var_pag_more := true;
@@ -173,7 +173,7 @@ create or replace package body sms_app.sms_qry_function as
          fetch csr_prev bulk collect into tbl_list;
          close csr_prev;
          for idx in reverse 1..tbl_list.count loop
-            pipe row(sms_xml_object('<SELROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
          end loop;
          if tbl_list.count > var_pag_size then
             var_pag_more := true;
