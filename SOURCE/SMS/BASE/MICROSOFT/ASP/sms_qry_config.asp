@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : SMS (SMS Reporting System)                         //
-'// Script  : sms_qry_config.asp                                 //
+'// Script  : pts_sam_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : July 2009                                          //
-'// Text    : This script implements the query configuration     //
+'// Text    : This script implements the query configuration    //
 '//           functionality                                      //
 '//////////////////////////////////////////////////////////////////
 
@@ -128,8 +128,8 @@ sub PaintFunction()%>
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = 'Query Selection';
       cobjScreens[1].hedtxt = 'Query Maintenance';
-      initSearch();
       displayScreen('dspSelect');
+      doSelectRefresh();
    }
 
    ///////////////////////
@@ -307,19 +307,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*UPDQRY" QRYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDQRY" QRYCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>sms_qry_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CRTQRY" QRYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTQRY" QRYCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>sms_qry_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CPYQRY" QRYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYQRY" QRYCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>sms_qry_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -425,10 +425,10 @@ sub PaintFunction()%>
       var objQryStat = document.getElementById('DEF_QryStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<SMS_REQUEST ACTION="*UPDQRY"';
+         strXML = strXML+'<PTS_REQUEST ACTION="*UPDQRY"';
          strXML = strXML+' QRYCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
-         strXML = strXML+'<SMS_REQUEST ACTION="*CRTQRY"';
+         strXML = strXML+'<PTS_REQUEST ACTION="*CRTQRY"';
          strXML = strXML+' QRYCDE="'+fixXML(document.getElementById('DEF_QryCode').value.toUpperCase())+'"';
       }
       strXML = strXML+' QRYNAM="'+fixXML(document.getElementById('DEF_QryName').value)+'"';
