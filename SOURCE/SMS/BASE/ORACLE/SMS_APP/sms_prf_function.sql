@@ -332,7 +332,7 @@ create or replace package body sms_app.sms_prf_function as
          if csr_query%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<QRY_LIST QRYCDE="'||sms_to_xml(rcd_query.que_qry_code)||'" QRYNAM="'||sms_to_xml(rcd_query.que_qry_name)||'"/>'));
+         pipe row(sms_xml_object('<QRY_LIST QRYCDE="'||sms_to_xml(rcd_query.que_qry_code)||'" QRYNAM="'||sms_to_xml(rcd_query.que_qry_name)||'"/>'));
       end loop;
       close csr_query;
 

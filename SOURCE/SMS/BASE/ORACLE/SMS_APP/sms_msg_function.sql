@@ -332,7 +332,7 @@ create or replace package body sms_app.sms_msg_function as
          if csr_query%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<QRY_LIST QRYCDE="'||sms_to_xml(rcd_query.que_qry_code)||'" QRYNAM="'||sms_to_xml(rcd_query.que_qry_name)||'"/>'));
+         pipe row(sms_xml_object('<QRY_LIST QRYCDE="'||sms_to_xml(rcd_query.que_qry_code)||'" QRYNAM="'||sms_to_xml(rcd_query.que_qry_name)||'"/>'));
       end loop;
       close csr_query;
 
@@ -518,7 +518,7 @@ create or replace package body sms_app.sms_msg_function as
                    mes_status = rcd_sms_message.mes_status,
                    mes_upd_user = rcd_sms_message.mes_upd_user,
                    mes_upd_date = rcd_sms_message.mes_upd_date,
-                   mes_qry_code = rcd_sms_message.mes_qry_code,
+                   mes_qry_code = rcd_sms_message.mes_qry_code
              where mes_msg_code = rcd_sms_message.mes_msg_code;
          end if;
       elsif var_action = '*CRTMSG' then
