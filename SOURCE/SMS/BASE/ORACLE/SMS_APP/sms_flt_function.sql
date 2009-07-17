@@ -485,12 +485,12 @@ create or replace package body sms_app.sms_flt_function as
       if rcd_sms_filter.fil_qry_code is null then
          sms_gen_function.add_mesg_data('Query code must be supplied');
       end if;
-      if nvl(rcd_sms_filter.fil_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 1 name must be supplied');
-      end if;
-      if nvl(rcd_sms_filter.fil_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
-         sms_gen_function.add_mesg_data('Filter dimension value 1 name must be empty');
-      end if;
+    --  if nvl(rcd_sms_filter.fil_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
+    --     sms_gen_function.add_mesg_data('Filter dimension value 1 name must be supplied');
+    --  end if;
+    --  if nvl(rcd_sms_filter.fil_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
+    --     sms_gen_function.add_mesg_data('Filter dimension value 1 name must be empty');
+    --  end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
