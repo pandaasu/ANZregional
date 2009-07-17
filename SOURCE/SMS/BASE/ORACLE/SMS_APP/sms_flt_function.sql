@@ -510,12 +510,6 @@ create or replace package body sms_app.sms_flt_function as
       if rcd_sms_filter.fil_qry_code is null then
          sms_gen_function.add_mesg_data('Query code must be supplied');
       end if;
-    --  if nvl(rcd_sms_filter.fil_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
-    --     sms_gen_function.add_mesg_data('Filter dimension value 1 name must be supplied');
-    --  end if;
-    --  if nvl(rcd_sms_filter.fil_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
-    --     sms_gen_function.add_mesg_data('Filter dimension value 1 name must be empty');
-    --  end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -529,6 +523,60 @@ create or replace package body sms_app.sms_flt_function as
          sms_gen_function.add_mesg_data('Query code ('||rcd_sms_filter.fil_qry_code||') does not exist');
       end if;
       close csr_query;
+      if nvl(rcd_query.que_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 1 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 2 and rcd_sms_filter.fil_dim_val02 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 2 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 3 and rcd_sms_filter.fil_dim_val03 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 3 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 4 and rcd_sms_filter.fil_dim_val04 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 4 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 5 and rcd_sms_filter.fil_dim_val05 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 5 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 6 and rcd_sms_filter.fil_dim_val06 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 6 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 7 and rcd_sms_filter.fil_dim_val07 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 7 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 8 and rcd_sms_filter.fil_dim_val08 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 8 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) >= 9 and rcd_sms_filter.fil_dim_val09 is null then
+         sms_gen_function.add_mesg_data('Filter dimension value 9 must be supplied');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 1 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 2 and not(rcd_sms_filter.fil_dim_val02 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 2 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 3 and not(rcd_sms_filter.fil_dim_val03 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 3 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 4 and not(rcd_sms_filter.fil_dim_val04 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 4 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 5 and not(rcd_sms_filter.fil_dim_val05 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 5 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 6 and not(rcd_sms_filter.fil_dim_val06 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 6 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 7 and not(rcd_sms_filter.fil_dim_val07 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 7 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 8 and not(rcd_sms_filter.fil_dim_val08 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 8 must be empty');
+      end if;
+      if nvl(rcd_query.que_dim_depth,0) < 9 and not(rcd_sms_filter.fil_dim_val09 is null) then
+         sms_gen_function.add_mesg_data('Filter dimension value 9 must be empty');
+      end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;

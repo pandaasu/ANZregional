@@ -645,6 +645,51 @@ create or replace package body sms_app.sms_qry_function as
                    que_dim_cod08 = rcd_sms_query.que_dim_cod08,
                    que_dim_cod09 = rcd_sms_query.que_dim_cod09
              where que_qry_code = rcd_sms_query.que_qry_code;
+             if rcd_sms_query.que_dim_depth < 1 then
+                update sms_filter
+                   set fil_dim_val01 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 2 then
+                update sms_filter
+                   set fil_dim_val02 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 3 then
+                update sms_filter
+                   set fil_dim_val03 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 4 then
+                update sms_filter
+                   set fil_dim_val04 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 5 then
+                update sms_filter
+                   set fil_dim_val05 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 6 then
+                update sms_filter
+                   set fil_dim_val06 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 7 then
+                update sms_filter
+                   set fil_dim_val07 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 8 then
+                update sms_filter
+                   set fil_dim_val08 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
+             if rcd_sms_query.que_dim_depth < 9 then
+                update sms_filter
+                   set fil_dim_val09 = null
+                 where fil_qry_code = rcd_sms_query.que_qry_code;
+             end if;
          end if;
       elsif var_action = '*CRTQRY' then
          var_confirm := 'created';
