@@ -568,6 +568,33 @@ create or replace package body sms_app.sms_qry_function as
       if nvl(rcd_sms_query.que_dim_depth,0) >= 9 and rcd_sms_query.que_dim_cod09 is null then
          sms_gen_function.add_mesg_data('Query dimension level 9 name must be supplied');
       end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 1 and not(rcd_sms_query.que_dim_cod01 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 1 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 2 and not(rcd_sms_query.que_dim_cod02 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 2 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 3 and not(rcd_sms_query.que_dim_cod03 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 3 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 4 and not(rcd_sms_query.que_dim_cod04 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 4 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 5 and not(rcd_sms_query.que_dim_cod05 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 5 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 6 and not(rcd_sms_query.que_dim_cod06 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 6 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 7 and not(rcd_sms_query.que_dim_cod07 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 7 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 8 and not(rcd_sms_query.que_dim_cod08 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 8 name must be empty');
+      end if;
+      if nvl(rcd_sms_query.que_dim_depth,0) < 9 and not(rcd_sms_query.que_dim_cod09 is null) then
+         sms_gen_function.add_mesg_data('Query dimension level 9 name must be empty');
+      end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
