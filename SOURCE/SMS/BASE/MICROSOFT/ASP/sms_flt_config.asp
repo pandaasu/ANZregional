@@ -221,8 +221,6 @@ sub PaintFunction()%>
          }
          displayScreen('dspSelect');
          var objSelCode = document.getElementById('SEL_SelCode');
-         var objSelPrev = document.getElementById('SEL_SelPrev');
-         var objSelNext = document.getElementById('SEL_SelNext');
          var objTabHead = document.getElementById('tabHeadList');
          var objTabBody = document.getElementById('tabBodyList');
          objTabHead.style.tableLayout = 'auto';
@@ -268,13 +266,8 @@ sub PaintFunction()%>
          objCell.style.whiteSpace = 'nowrap';
          cstrSelectStrCode = '';
          cstrSelectEndCode = '';
-         var strStrList = '1';
-         var strEndList = '1';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'LSTCTL') {
-               strStrList = objElements[i].getAttribute('STRLST');
-               strEndList = objElements[i].getAttribute('ENDLST');
-            } else if (objElements[i].nodeName == 'LSTROW') {
+            if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
                   cstrSelectStrCode = objElements[i].getAttribute('FLTCDE');
                }
@@ -324,18 +317,6 @@ sub PaintFunction()%>
             objTabBody.style.tableLayout = 'fixed';
          }
          objSelCode.value = cstrSelectStrCode;
-         objSelPrev.className = 'clsButton';
-         objSelPrev.onclick = function() {doSelectPrevious();};
-         if (strStrList == '1') {
-            objSelPrev.className = 'clsButtonD';
-            objSelPrev.onclick = '';
-         }
-         objSelNext.className = 'clsButton';
-         objSelNext.onclick = function() {doSelectNext();};
-         if (strEndList == '1') {
-            objSelNext.className = 'clsButtonD';
-            objSelNext.onclick = '';
-         }
          objSelCode.focus();
       }
    }
@@ -557,9 +538,9 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" name="SEL_SelPrev" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" name="SEL_SelNext" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
             </table>
          </nobr></td>
