@@ -261,6 +261,12 @@ create or replace package body sms_app.sms_flt_function as
           where t01.fil_flt_code = var_flt_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_query is
+         select t01.*
+           from sms_query t01
+          order by t01.que_qry_code asc;
+      rcd_query csr_query%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -316,6 +322,19 @@ create or replace package body sms_app.sms_flt_function as
       /* Pipe the XML start
       /*-*/
       pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the query XML
+      /*-*/
+      open csr_query;
+      loop
+         fetch csr_query into rcd_query;
+         if csr_query%notfound then
+            exit;
+         end if;
+         pipe row(pts_xml_object('<QRY_LIST QRYCDE="'||sms_to_xml(rcd_query.que_qry_code)||'" QRYNAM="'||sms_to_xml(rcd_query.que_qry_name)||'"/>'));
+      end loop;
+      close csr_query;
 
       /*-*/
       /* Pipe the filter XML
@@ -423,6 +442,12 @@ create or replace package body sms_app.sms_flt_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_query is
+         select t01.*
+           from sms_query t01
+          where t01.que_qry_code = rcd_sms_filter.fil_qry_code;
+      rcd_query csr_query%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -491,6 +516,19 @@ create or replace package body sms_app.sms_flt_function as
     --  if nvl(rcd_sms_filter.fil_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
     --     sms_gen_function.add_mesg_data('Filter dimension value 1 name must be empty');
     --  end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_query;
+      fetch csr_query into rcd_query;
+      if csr_query%notfound then
+         sms_gen_function.add_mesg_data('Query code ('||rcd_sms_filter.fil_qry_code||') does not exist');
+      end if;
+      close csr_query;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
