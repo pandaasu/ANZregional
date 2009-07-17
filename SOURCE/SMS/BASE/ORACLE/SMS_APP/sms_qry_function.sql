@@ -12,7 +12,7 @@ create or replace package sms_app.sms_qry_function as
 
     Description
     -----------
-    SMS Reporting System - Sample Function
+    SMS Reporting System - Query Function
 
     This package contain the query functions and procedures.
 
@@ -99,7 +99,7 @@ create or replace package body sms_app.sms_qry_function as
       /*-*/
       /* Local arrays
       /*-*/
-      type typ_list is table of csr_next%rowtype index by binary_integer;
+      type typ_list is table of csr_slct%rowtype index by binary_integer;
       tbl_list typ_list;
 
    /*-------------*/
@@ -597,31 +597,6 @@ create or replace package body sms_app.sms_qry_function as
       end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
-      end if;
-
-      /*-*/
-      /* Retrieve and lock the existing query when required
-      /*-*/
-      if var_action = '*UPDQRY' then
-         var_found := false;
-         begin
-            open csr_retrieve;
-            fetch csr_retrieve into rcd_retrieve;
-            if csr_retrieve%found then
-               var_found := true;
-            end if;
-            close csr_retrieve;
-         exception
-            when others then
-               var_found := true;
-               sms_gen_function.add_mesg_data('Query code ('||rcd_sms_query.que_qry_code||') is currently locked');
-         end;
-         if var_found = false then
-            sms_gen_function.add_mesg_data('Query code ('||rcd_sms_query.que_qry_code||') does not exist');
-         end if;
-         if sms_gen_function.get_mesg_count != 0 then
-            return;
-         end if;
       end if;
 
       /*-*/
