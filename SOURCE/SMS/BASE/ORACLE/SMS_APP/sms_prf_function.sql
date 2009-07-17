@@ -318,7 +318,7 @@ create or replace package body sms_app.sms_prf_function as
       pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
 
       /*-*/
-      /* Pipe the query XML
+      /* Pipe the profile XML
       /*-*/
       if var_action = '*UPDPRF' then
          var_output := '<PROFILE PRFCDE="'||sms_to_xml(rcd_retrieve.pro_prf_code)||'"';
