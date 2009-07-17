@@ -124,11 +124,13 @@ sub PaintFunction()%>
    // Load Functions //
    ////////////////////
    function loadFunction() {
-      cobjScreens[0] = new clsScreen('dspSelect','hedSelect');
-      cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[0].hedtxt = 'Query Selection';
-      cobjScreens[1].hedtxt = 'Query Maintenance';
-      displayScreen('dspSelect');
+      cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
+      cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
+      cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[0].hedtxt = '**LOADING**';
+      cobjScreens[1].hedtxt = 'Query Selection';
+      cobjScreens[2].hedtxt = 'Query Maintenance';
+      displayScreen('dspLoad');
       doSelectRefresh();
    }
 
@@ -164,10 +166,12 @@ sub PaintFunction()%>
    var cstrSelectStrCode;
    var cstrSelectEndCode;
    function doSelectUpdate(strCode) {
+      if (!processForm()) {return;}
       doActivityStart(document.body);
       window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
    }
    function doSelectCopy(strCode) {
+      if (!processForm()) {return;}
       doActivityStart(document.body);
       window.setTimeout('requestDefineCopy(\''+strCode+'\');',10);
    }
@@ -193,7 +197,6 @@ sub PaintFunction()%>
       window.setTimeout('requestSelectList(\'*NXTQRY\');',10);
    }
    function requestSelectList(strAction) {
-      document.getElementById('SEL_SelCode').value
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
       doPostRequest('<%=strBase%>sms_qry_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
@@ -226,44 +229,76 @@ sub PaintFunction()%>
          objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
          for (var i=objTabBody.rows.length-1;i>=0;i--) {
             objTabBody.deleteRow(i);
          }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Query&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Name&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
          cstrSelectStrCode = '';
          cstrSelectEndCode = '';
          var strStrList = '1';
          var strEndList = '1';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTCTL') {
-               strStrList = objElements[i].getAttribute(STRLST');
-               strEndList = objElements[i].getAttribute(ENDLST');
+               strStrList = objElements[i].getAttribute('STRLST');
+               strEndList = objElements[i].getAttribute('ENDLST');
             } else if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('SELCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('QRYCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('SELCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('QRYCDE');
                objRow = objTabBody.insertRow(-1);
-               objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
-               objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
-               objCell = objRow.insertCell(0);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '<a class="clsSelect" onClick="requestDefineUpdate(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="requestDefineCopy(\''+i+'\');">Copy</a>;
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('QRYCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('QRYCDE')+'\');">Copy</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(1);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(2);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(3);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYSTS')+'&nbsp;';
@@ -273,13 +308,18 @@ sub PaintFunction()%>
          }
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
-            objCell = objRow.insertCell(0);
-            objCell.colSpan = intColCount+1;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 4;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -288,14 +328,15 @@ sub PaintFunction()%>
          objSelPrev.onclick = function() {doSelectPrevious();};
          if (strStrList == '1') {
             objSelPrev.className = 'clsButtonD';
-            objSelPrev.onclick = null;
+            objSelPrev.onclick = '';
          }
          objSelNext.className = 'clsButton';
          objSelNext.onclick = function() {doSelectNext();};
          if (strEndList == '1') {
             objSelNext.className = 'clsButtonD';
-            objSelNext.onclick = null;
+            objSelNext.onclick = '';
          }
+         objSelCode.focus();
       }
    }
 
@@ -341,16 +382,17 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspDefine');
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Query ('+cstrDefineCode+')';
+            cobjScreens[2].hedtxt = 'Update Query ('+cstrDefineCode+')';
             document.getElementById('addDefine').style.display = 'none';
          } else {
-            cobjScreens[1].hedtxt = 'Create Query';
+            cobjScreens[2].hedtxt = 'Create Query';
             document.getElementById('addDefine').style.display = 'block';
          }
+         displayScreen('dspDefine');
          document.getElementById('DEF_QryCode').value = '';
          document.getElementById('DEF_QryName').value = '';
+         document.getElementById('DEF_EmaStxt').value = '';
          document.getElementById('DEF_RcvDay1').checked = false;
          document.getElementById('DEF_RcvDay2').checked = false;
          document.getElementById('DEF_RcvDay3').checked = false;
@@ -371,6 +413,7 @@ sub PaintFunction()%>
             if (objElements[i].nodeName == 'QUERY') {
                document.getElementById('DEF_QryCode').value = objElements[i].getAttribute('QRYCDE');
                document.getElementById('DEF_QryName').value = objElements[i].getAttribute('QRYNAM');
+               document.getElementById('DEF_EmaStxt').value = objElements[i].getAttribute('EMASUB');
                if (objElements[i].getAttribute('RCVD01') == '1') {
                   document.getElementById('DEF_RcvDay1').checked = true;
                } 
@@ -433,6 +476,7 @@ sub PaintFunction()%>
       }
       strXML = strXML+' QRYNAM="'+fixXML(document.getElementById('DEF_QryName').value)+'"';
       strXML = strXML+' QRYSTS="'+fixXML(objQryStat.options[objQryStat.selectedIndex].value)+'"';
+      strXML = strXML+' EMASUB="'+fixXML(document.getElementById('DEF_EmaStxt').value)+'"';
       if (document.getElementById('DEF_RcvDay1').checked) {
          strXML = strXML+' RCVD01="1"';
       } else {
@@ -511,16 +555,13 @@ sub PaintFunction()%>
                }
             }
          }
-         displayScreen('dspSelect');
-       ////  document.getElementById('SEL_QryCode').value = '';
-       ////  document.getElementById('SEL_QryCode').focus();
+         doSelectRefresh();
       }
    }
    function doDefineCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspSelect');
-     //// document.getElementById('SEL_QryCode').value = '';
-     //// document.getElementById('SEL_QryCode').focus();
+      document.getElementById('SEL_SelCode').focus();
    }
 // -->
 </script>
@@ -535,7 +576,13 @@ sub PaintFunction()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('sms_qry_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
-   <table id="dspSelect" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr>
+      <tr>
+         <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
+      </tr>
+   </table>
+   <table id="dspSelect" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Query Selection</nobr></td>
@@ -543,19 +590,19 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=9 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" id="SEL_SelPrev" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" name="SEL_SelPrev" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" id="SEL_SelNext" onClick="doSelectNext();">&nbspNext&nbsp><</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" name="SEL_SelNext" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -566,13 +613,7 @@ sub PaintFunction()%>
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHeadList">
-                     <table class="clsTableHead" id="tabHeadList" align=left cols=4 cellpadding="0" cellspacing="1"></table>
-                        <tr>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Query&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Name&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Status&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
-                        </tr>
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1">
                      </table>
                      </div>
                   </nobr></td>
@@ -602,10 +643,6 @@ sub PaintFunction()%>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_QryCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr id="updDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Code:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
-      </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -619,6 +656,12 @@ sub PaintFunction()%>
                <option value="0">Inactive
                <option value="1">Active
             </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query SMS Subject:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_EmaStxt" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
