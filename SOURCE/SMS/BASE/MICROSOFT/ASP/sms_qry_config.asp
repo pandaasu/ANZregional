@@ -409,6 +409,7 @@ sub PaintFunction()%>
          document.getElementById('DEF_DimCod6').value = '';
          document.getElementById('DEF_DimCod7').value = '';
          var strQryStat = '';
+         var objQryStat = document.getElementById('DEF_QryStat');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'QUERY') {
                document.getElementById('DEF_QryCode').value = objElements[i].getAttribute('QRYCDE');
@@ -448,7 +449,6 @@ sub PaintFunction()%>
                strQryStat = objElements[i].getAttribute('QRYSTS');
             }
          }
-         var objQryStat = document.getElementById('DEF_QryStat');
          objQryStat.selectedIndex = -1;
          for (var i=0;i<objQryStat.length;i++) {
             if (objQryStat.options[i].value == strQryStat) {
@@ -475,7 +475,11 @@ sub PaintFunction()%>
          strXML = strXML+' QRYCDE="'+fixXML(document.getElementById('DEF_QryCode').value.toUpperCase())+'"';
       }
       strXML = strXML+' QRYNAM="'+fixXML(document.getElementById('DEF_QryName').value)+'"';
-      strXML = strXML+' QRYSTS="'+fixXML(objQryStat.options[objQryStat.selectedIndex].value)+'"';
+      if (objQryStat.selectedIndex == -1) {
+         strXML = strXML+' QRYSTS=""';
+      } else {
+         strXML = strXML+' QRYSTS="'+fixXML(objQryStat.options[objQryStat.selectedIndex].value)+'"';
+      }
       strXML = strXML+' EMASUB="'+fixXML(document.getElementById('DEF_EmaStxt').value)+'"';
       if (document.getElementById('DEF_RcvDay1').checked) {
          strXML = strXML+' RCVD01="1"';
