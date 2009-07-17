@@ -59,9 +59,6 @@ create or replace package body sms_app.sms_qry_function as
       var_end_code varchar2(64);
       var_output varchar2(2000 char);
       var_pag_size number;
-      var_pag_more boolean;
-      var_str_list varchar2(1);
-      var_end_list varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -74,7 +71,7 @@ create or replace package body sms_app.sms_qry_function as
                    from sms_query t01
                   where (var_str_code is null or t01.que_qry_code >= var_str_code)
                   order by t01.que_qry_code asc) t01
-          where rownum <= var_pag_size + 1;
+          where rownum <= var_pag_size;
 
       cursor csr_next is
          select t01.*
@@ -82,9 +79,10 @@ create or replace package body sms_app.sms_qry_function as
                         t01.que_qry_name,
                         decode(t01.que_status,'0','Inactive','1','Active','*UNKNOWN') as que_status
                    from sms_query t01
-                  where (var_end_code is null or t01.que_qry_code > var_end_code)
+                  where (var_action = '*NXTQRY' and (var_end_code is null or t01.que_qry_code > var_end_code)) or
+                        (var_action = '*PRVQRY')
                   order by t01.que_qry_code asc) t01
-          where rownum <= var_pag_size + 1;
+          where rownum <= var_pag_size;
 
       cursor csr_prev is
          select t01.*
@@ -92,9 +90,10 @@ create or replace package body sms_app.sms_qry_function as
                         t01.que_qry_name,
                         decode(t01.que_status,'0','Inactive','1','Active','*UNKNOWN') as que_status
                    from sms_query t01
-                  where (var_str_code is null or t01.que_qry_code < var_str_code)
+                  where (var_action = '*PRVQRY' and (var_str_code is null or t01.que_qry_code < var_str_code)) or
+                        (var_action = '*NXTQRY')
                   order by t01.que_qry_code desc) t01
-          where rownum <= var_pag_size + 1;
+          where rownum <= var_pag_size;
 
       /*-*/
       /* Local arrays
@@ -144,7 +143,6 @@ create or replace package body sms_app.sms_qry_function as
       /* Retrieve the query list and pipe the results
       /*-*/
       var_pag_size := 20;
-      var_pag_more := false;
       if var_action = '*SELQRY' then
          tbl_list.delete;
          open csr_slct;
@@ -153,58 +151,41 @@ create or replace package body sms_app.sms_qry_function as
          for idx in 1..tbl_list.count loop
             pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
          end loop;
-         if tbl_list.count > var_pag_size then
-            var_pag_more := true;
-         end if;
       elsif var_action = '*NXTQRY' then
          tbl_list.delete;
          open csr_next;
          fetch csr_next bulk collect into tbl_list;
          close csr_next;
-         for idx in 1..tbl_list.count loop
-            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
-         end loop;
-         if tbl_list.count > var_pag_size then
-            var_pag_more := true;
+         if tbl_list.count = var_pag_size then
+            for idx in 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            end loop;
+         else
+            open csr_prev;
+            fetch csr_prev bulk collect into tbl_list;
+            close csr_prev;
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            end loop;
          end if;
       elsif var_action = '*PRVQRY' then
          tbl_list.delete;
          open csr_prev;
          fetch csr_prev bulk collect into tbl_list;
          close csr_prev;
-         for idx in reverse 1..tbl_list.count loop
-            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
-         end loop;
-         if tbl_list.count > var_pag_size then
-            var_pag_more := true;
+         if tbl_list.count = var_pag_size then
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            end loop;
+         else
+            open csr_next;
+            fetch csr_next bulk collect into tbl_list;
+            close csr_next;
+            for idx in 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).que_qry_code)||'" QRYNAM="'||sms_to_xml(tbl_list(idx).que_qry_name)||'" QRYSTS="'||sms_to_xml(tbl_list(idx).que_status)||'"/>'));
+            end loop;
          end if;
       end if;
-
-      /*-*/
-      /* Set and pipe the list control values
-      /*-*/
-      var_str_list := '1';
-      var_end_list := '1';
-      if var_action = '*SELQRY' then
-         var_str_list := '1';
-         var_end_list := '1';
-         if var_pag_more = true then
-            var_end_list := '0';
-         end if;
-      elsif var_action = '*NXTQRY' then
-         var_str_list := '0';
-         var_end_list := '1';
-         if var_pag_more = true then
-            var_end_list := '0';
-         end if;
-      elsif var_action = '*PRVQRY' then
-         var_str_list := '1';
-         var_end_list := '0';
-         if var_pag_more = true then
-            var_str_list := '0';
-         end if;
-      end if;
-      pipe row(sms_xml_object('<LSTCTL STRLST="'||var_str_list||'" ENDLST="'||var_end_list||'"/>'));
 
       /*-*/
       /* Pipe the XML end
