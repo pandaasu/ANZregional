@@ -650,7 +650,7 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Received Days:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Monitor Days:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input type="checkbox" name="DEF_RcvDay2" value="1">Monday&nbsp;
             <input type="checkbox" name="DEF_RcvDay3" value="1">Tuesday&nbsp;
