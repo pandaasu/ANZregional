@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : SMS (SMS Reporting System)                         //
-'// Script  : sms_flt_config.asp                                 //
+'// Script  : sms_rcp_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : July 2009                                          //
-'// Text    : This script implements the filter configuration    //
+'// Text    : This script implements the recipient configuration //
 '//           functionality                                      //
 '//////////////////////////////////////////////////////////////////
 
@@ -30,8 +30,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "sms_flt_config.asp"
-   strHeading = "Filter Maintenance"
+   strTarget = "sms_rcp_config.asp"
+   strHeading = "Recipient Maintenance"
 
    '//
    '// Get the base string
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("SMS_FLT_CONFIG")
+   strReturn = GetSecurityCheck("SMS_RCP_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -128,8 +128,8 @@ sub PaintFunction()%>
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Filter Selection';
-      cobjScreens[2].hedtxt = 'Filter Maintenance';
+      cobjScreens[1].hedtxt = 'Recipient Selection';
+      cobjScreens[2].hedtxt = 'Recipient Maintenance';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -184,21 +184,21 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*SELFLT\');',10);
+      window.setTimeout('requestSelectList(\'*SELRCP\');',10);
    }
    function doSelectPrevious() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*PRVFLT\');',10);
+      window.setTimeout('requestSelectList(\'*PRVRCP\');',10);
    }
    function doSelectNext() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*NXTFLT\');',10);
+      window.setTimeout('requestSelectList(\'*NXTRCP\');',10);
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>sms_flt_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>sms_rcp_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
       doActivityStop();
@@ -243,7 +243,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Filter&nbsp;';
+         objCell.innerHTML = '&nbsp;Recipient&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -269,32 +269,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('FLTCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('RCPCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('FLTCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('RCPCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('FLTCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('FLTCDE')+'\');">Copy</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('RCPCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('RCPCDE')+'\');">Copy</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('FLTCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('FLTNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('FLTSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -329,20 +329,20 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*UPDFLT" FLTCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_flt_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*UPDRCP" RCPCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CRTFLT" FLTCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_flt_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CRTRCP" RCPCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CPYFLT" FLTCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_flt_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CPYRCP" RCPCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -371,101 +371,60 @@ sub PaintFunction()%>
             document.getElementById('addDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_FltCode').value = '';
-         document.getElementById('DEF_FltName').value = '';
-         document.getElementById('DEF_DimVal1').value = '';
-         document.getElementById('DEF_DimVal2').value = '';
-         document.getElementById('DEF_DimVal3').value = '';
-         document.getElementById('DEF_DimVal4').value = '';
-         document.getElementById('DEF_DimVal5').value = '';
-         document.getElementById('DEF_DimVal6').value = '';
-         document.getElementById('DEF_DimVal7').value = '';
-         var strFltStat = '';
-         var strQryCode = '';
-         var objFltStat = document.getElementById('DEF_FltStat');
-         var objQryCode = document.getElementById('DEF_QryCode');
-         objQryCode.options.length = 0;
+         document.getElementById('DEF_RcpCode').value = '';
+         document.getElementById('DEF_RcpName').value = '';
+         document.getElementById('DEF_RcpMobi').value = '';
+         document.getElementById('DEF_RcpEmai').value = '';
+         var strRcpStat = '';
+         var objRcpStat = document.getElementById('DEF_RcpStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'QRY_LIST') {
-               objQryCode.options[objQryCode.options.length] = new Option(objElements[i].getAttribute('QRYNAM'),objElements[i].getAttribute('QRYCDE'));
-            } else if (objElements[i].nodeName == 'FILTER') {
-               document.getElementById('DEF_FltCode').value = objElements[i].getAttribute('FLTCDE');
-               document.getElementById('DEF_FltName').value = objElements[i].getAttribute('FLTNAM');
-               document.getElementById('DEF_DimVal1').value = objElements[i].getAttribute('DIMV01');
-               document.getElementById('DEF_DimVal2').value = objElements[i].getAttribute('DIMV02');
-               document.getElementById('DEF_DimVal3').value = objElements[i].getAttribute('DIMV03');
-               document.getElementById('DEF_DimVal4').value = objElements[i].getAttribute('DIMV04');
-               document.getElementById('DEF_DimVal5').value = objElements[i].getAttribute('DIMV05');
-               document.getElementById('DEF_DimVal6').value = objElements[i].getAttribute('DIMV06');
-               document.getElementById('DEF_DimVal7').value = objElements[i].getAttribute('DIMV07');
-               document.getElementById('DEF_DimVal8').value = objElements[i].getAttribute('DIMV08');
-               document.getElementById('DEF_DimVal9').value = objElements[i].getAttribute('DIMV09');
-               strFltStat = objElements[i].getAttribute('FLTSTS');
-               strQryCode = objElements[i].getAttribute('QRYCDE');
+            if (objElements[i].nodeName == 'FILTER') {
+               document.getElementById('DEF_RcpCode').value = objElements[i].getAttribute('RCPCDE');
+               document.getElementById('DEF_RcpName').value = objElements[i].getAttribute('RCPNAM');
+               document.getElementById('DEF_RcpMobi').value = objElements[i].getAttribute('RCPMOB');
+               document.getElementById('DEF_RcpEmai').value = objElements[i].getAttribute('RCPEMA');
+               strRcpStat = objElements[i].getAttribute('RCPSTS');
             }
          }
-         objFltStat.selectedIndex = -1;
-         for (var i=0;i<objFltStat.length;i++) {
-            if (objFltStat.options[i].value == strFltStat) {
-               objFltStat.options[i].selected = true;
+         objRcpStat.selectedIndex = -1;
+         for (var i=0;i<objRcpStat.length;i++) {
+            if (objRcpStat.options[i].value == strRcpStat) {
+               objRcpStat.options[i].selected = true;
                break;
             }
-         }
-         objQryCode.selectedIndex = -1;
-         for (var i=0;i<objQryCode.length;i++) {
-            if (objQryCode.options[i].value == strQryCode) {
-               objQryCode.options[i].selected = true;
-               break;
-            }
-         }
-         if (objQryCode.selectedIndex == -1 && objQryCode.length > 0) {
-            objQryCode.selectedIndex = 0;
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_FltName').focus();
+            document.getElementById('DEF_RcpName').focus();
          } else {
-            document.getElementById('DEF_FltCode').focus();
+            document.getElementById('DEF_RcpCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objFltStat = document.getElementById('DEF_FltStat');
-      var objQryCode = document.getElementById('DEF_QryCode');
+      var objRcpStat = document.getElementById('DEF_RcpStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<SMS_REQUEST ACTION="*UPDFLT"';
-         strXML = strXML+' FLTCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+'<SMS_REQUEST ACTION="*UPDRCP"';
+         strXML = strXML+' RCPCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
-         strXML = strXML+'<SMS_REQUEST ACTION="*CRTFLT"';
-         strXML = strXML+' FLTCDE="'+fixXML(document.getElementById('DEF_FltCode').value.toUpperCase())+'"';
+         strXML = strXML+'<SMS_REQUEST ACTION="*CRTRCP"';
+         strXML = strXML+' RCPCDE="'+fixXML(document.getElementById('DEF_RcpCode').value.toUpperCase())+'"';
       }
-      strXML = strXML+' FLTNAM="'+fixXML(document.getElementById('DEF_FltName').value)+'"';
-      if (objFltStat.selectedIndex == -1) {
-         strXML = strXML+' FLTSTS=""';
+      strXML = strXML+' RCPNAM="'+fixXML(document.getElementById('DEF_RcpName').value)+'"';
+      strXML = strXML+' RCPMOB="'+fixXML(document.getElementById('DEF_RcpMobi').value)+'"';
+      strXML = strXML+' RCPEMA="'+fixXML(document.getElementById('DEF_RcpEmai').value)+'"';
+      if (objRcpStat.selectedIndex == -1) {
+         strXML = strXML+' RCPSTS=""';
       } else {
-         strXML = strXML+' FLTSTS="'+fixXML(objFltStat.options[objFltStat.selectedIndex].value)+'"';
+         strXML = strXML+' RCPSTS="'+fixXML(objRcpStat.options[objRcpStat.selectedIndex].value)+'"';
       }
-      if (objQryCode.selectedIndex == -1) {
-         strXML = strXML+' QRYCDE=""';
-      } else {
-         strXML = strXML+' QRYCDE="'+fixXML(objQryCode.options[objQryCode.selectedIndex].value)+'"';
-      }
-      strXML = strXML+' DIMV01="'+fixXML(document.getElementById('DEF_DimVal1').value)+'"';
-      strXML = strXML+' DIMV02="'+fixXML(document.getElementById('DEF_DimVal2').value)+'"';
-      strXML = strXML+' DIMV03="'+fixXML(document.getElementById('DEF_DimVal3').value)+'"';
-      strXML = strXML+' DIMV04="'+fixXML(document.getElementById('DEF_DimVal4').value)+'"';
-      strXML = strXML+' DIMV05="'+fixXML(document.getElementById('DEF_DimVal5').value)+'"';
-      strXML = strXML+' DIMV06="'+fixXML(document.getElementById('DEF_DimVal6').value)+'"';
-      strXML = strXML+' DIMV07="'+fixXML(document.getElementById('DEF_DimVal7').value)+'"';
-      strXML = strXML+' DIMV08="'+fixXML(document.getElementById('DEF_DimVal8').value)+'"';
-      strXML = strXML+' DIMV09="'+fixXML(document.getElementById('DEF_DimVal9').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>sms_flt_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>sms_rcp_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -513,7 +472,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('sms_flt_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('sms_rcp_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -523,7 +482,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Filter Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Recipient Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -570,96 +529,42 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Filter Define</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Recipient Define</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Filter Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FltCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_RcpCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Filter Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_FltName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_RcpName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Filter Status:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_FltStat">
+            <select class="clsInputBN" id="DEF_RcpStat">
                <option value="0">Inactive
                <option value="1">Active
             </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Mobile Phone:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_QryCode"></select>
+            <input class="clsInputNN" type="text" name="DEF_RcpMobi" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>Dimension Filters (Value or *ALL)</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 1 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Email Address:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal1" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 2 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal2" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 3 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal3" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 4 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal4" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 5 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal5" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 6 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal6" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 7 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal7" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 8 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal8" size="80" maxlength="256" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 9 Value:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal9" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_RcpEmai" size="80" maxlength="128" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
