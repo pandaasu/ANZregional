@@ -1,5 +1,5 @@
    <table id="dspSltRule" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
-      <tr><td align=center colspan=2 nowrap><nobr>
+      <tr><td align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
