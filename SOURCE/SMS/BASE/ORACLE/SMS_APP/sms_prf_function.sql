@@ -273,7 +273,7 @@ create or replace package body sms_app.sms_prf_function as
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
       var_prf_code := xslProcessor.valueOf(obj_sms_request,'@PRFCDE');
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*PRFPRF' and var_action != '*PRFPRF' and var_action != '*PRFPRF' then
+      if var_action != '*UPDPRF' and var_action != '*CRTPRF' and var_action != '*CPYPRF' then
          sms_gen_function.add_mesg_data('Invalid request action');
       end if;
       if sms_gen_function.get_mesg_count != 0 then
