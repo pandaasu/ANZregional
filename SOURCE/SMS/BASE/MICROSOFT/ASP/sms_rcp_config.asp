@@ -364,10 +364,10 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Filter ('+cstrDefineCode+')';
+            cobjScreens[2].hedtxt = 'Update Recipient ('+cstrDefineCode+')';
             document.getElementById('addDefine').style.display = 'none';
          } else {
-            cobjScreens[2].hedtxt = 'Create Filter';
+            cobjScreens[2].hedtxt = 'Create Recipient';
             document.getElementById('addDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
