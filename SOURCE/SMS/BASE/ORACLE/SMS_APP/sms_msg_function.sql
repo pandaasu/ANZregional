@@ -242,6 +242,13 @@ create or replace package body sms_app.sms_msg_function as
           where t01.mes_msg_code = var_msg_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_detail is
+         select t01.*
+           from sms_mes_line t01
+          where t01.mli_msg_code = rcd_retrieve.mes_msg_code
+          order by t01.mli_msg_line asc;
+      rcd_detail csr_detail%rowtype;
+
       cursor csr_query is
          select t01.*
            from sms_query t01
@@ -341,6 +348,21 @@ create or replace package body sms_app.sms_msg_function as
       end if;
 
       /*-*/
+      /* Pipe the message line XML when required
+      /*-*/
+      if var_action != 'CRTMSG' then
+         open csr_detail;
+         loop
+            fetch csr_detail into rcd_detail;
+            if csr_detail%notfound then
+               exit;
+             end if;
+            pipe row(sms_xml_object('<MES_LINE MSGLIN="'||sms_to_xml(rcd_detail.mli_msg_line)||'" DETTXT="'||sms_to_xml(rcd_detail.mli_det_text)||'" TOTTXT="'||sms_to_xml(rcd_detail.mli_tot_text)||'" TOTCHD="'||sms_to_xml(rcd_detail.mli_tot_child)||'"/>'));
+         end loop;
+         close csr_detail;
+      end if;
+
+      /*-*/
       /* Pipe the XML end
       /*-*/
       pipe row(sms_xml_object('</SMS_RESPONSE>'));
@@ -381,10 +403,15 @@ create or replace package body sms_app.sms_msg_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_sms_request xmlDom.domNode;
+      obj_lin_list xmlDom.domNodeList;
+      obj_lin_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
+      var_detail boolean;
+      var_total boolean;
       rcd_sms_message sms_message%rowtype;
+      rcd_sms_mes_line sms_mes_line%rowtype;
 
       /*-*/
       /* Local cursors
@@ -501,6 +528,7 @@ create or replace package body sms_app.sms_msg_function as
                    mes_upd_date = rcd_sms_message.mes_upd_date,
                    mes_qry_code = rcd_sms_message.mes_qry_code
              where mes_msg_code = rcd_sms_message.mes_msg_code;
+            delete from sms_mes_line where mli_msg_code = rcd_sms_message.mes_msg_code;
          end if;
       elsif var_action = '*CRTMSG' then
          var_confirm := 'created';
@@ -515,6 +543,78 @@ create or replace package body sms_app.sms_msg_function as
          rollback;
          return;
       end if;
+
+      /*-*/
+      /* Retrieve and insert the message line data
+      /*-*/
+      rcd_sms_mes_line.mli_msg_code := rcd_sms_message.mes_msg_code;
+      obj_lin_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MES_LINE');
+      for idx in 0..xmlDom.getLength(obj_lin_list)-1 loop
+         obj_lin_node := xmlDom.item(obj_lin_list,idx);
+         rcd_sms_mes_line.mli_msg_line := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@MSGLIN'));
+         var_detail := false;
+         var_total := false;
+         if rcd_query.que_dim_depth = 1 and rcd_sms_mes_line.mli_msg_line <= '*LVL01' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL01' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 2 and rcd_sms_mes_line.mli_msg_line <= '*LVL02' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL02' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 3 and rcd_sms_mes_line.mli_msg_line <= '*LVL03' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL03' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 4 and rcd_sms_mes_line.mli_msg_line <= '*LVL04' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL04' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 5 and rcd_sms_mes_line.mli_msg_line <= '*LVL05' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL05' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 6 and rcd_sms_mes_line.mli_msg_line <= '*LVL06' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL06' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 7 and rcd_sms_mes_line.mli_msg_line <= '*LVL07' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL07' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 8 and rcd_sms_mes_line.mli_msg_line <= '*LVL08' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL08' then
+               var_total := true;
+            end if;
+         elsif rcd_query.que_dim_depth = 9 and rcd_sms_mes_line.mli_msg_line <= '*LVL09' then
+            var_detail := true;
+            if rcd_sms_mes_line.mli_msg_line < '*LVL09' then
+               var_total := true;
+            end if;
+         end if;
+         if var_detail = true then
+            rcd_sms_mes_line.mli_det_text := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@DETTXT'));
+            if var_total = true then
+               rcd_sms_mes_line.mli_tot_text := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@TOTTXT'));
+               if rcd_sms_mes_line.mli_tot_text is null then
+                  rcd_sms_mes_line.mli_det_text := '*NONE';
+               end if;
+               rcd_sms_mes_line.mli_tot_child := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@TOTCHD'));
+            else
+               rcd_sms_mes_line.mli_tot_text := '*NONE';
+               rcd_sms_mes_line.mli_tot_child := '1';
+            end if;
+            insert into sms_mes_line values rcd_sms_mes_line;
+         end if;
+      end loop;
 
       /*-*/
       /* Free the XML document
