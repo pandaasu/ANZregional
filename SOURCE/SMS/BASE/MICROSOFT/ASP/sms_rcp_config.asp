@@ -378,7 +378,7 @@ sub PaintFunction()%>
          var strRcpStat = '';
          var objRcpStat = document.getElementById('DEF_RcpStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'FILTER') {
+            if (objElements[i].nodeName == 'RECIPIENT') {
                document.getElementById('DEF_RcpCode').value = objElements[i].getAttribute('RCPCDE');
                document.getElementById('DEF_RcpName').value = objElements[i].getAttribute('RCPNAM');
                document.getElementById('DEF_RcpMobi').value = objElements[i].getAttribute('RCPMOB');
