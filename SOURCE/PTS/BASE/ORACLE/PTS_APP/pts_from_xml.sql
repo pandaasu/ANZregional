@@ -36,6 +36,7 @@ create or replace function pts_app.pts_from_xml(par_text in varchar2) return var
       var_return := replace(var_return,'&gt;','>');
       var_return := replace(var_return,'&#34;','"');
       var_return := replace(var_return,'&#39;','''');
+      var_return := replace(var_return,'&#43;','+');
       return var_return;
 
    /*-------------*/
