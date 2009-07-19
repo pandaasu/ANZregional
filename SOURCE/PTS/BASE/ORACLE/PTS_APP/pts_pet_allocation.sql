@@ -68,7 +68,6 @@ create or replace package body pts_app.pts_pet_allocation as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
-                nvl(t02.tty_sam_count,1) as tty_sam_count,
                 t02.tty_alc_proc
            from pts_tes_definition t01,
                 pts_tes_type t02
