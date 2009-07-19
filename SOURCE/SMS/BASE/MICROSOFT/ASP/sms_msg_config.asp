@@ -402,6 +402,9 @@ sub PaintFunction()%>
                document.getElementById('DEF_DimVal9').value = objElements[i].getAttribute('DIMV09');
                strMsgStat = objElements[i].getAttribute('MSGSTS');
                strQryCode = objElements[i].getAttribute('QRYCDE');
+            } else if (objElements[i].nodeName == 'DETAIL') {
+               document.getElementById('DEF_MsgCode').value = objElements[i].getAttribute('MSGCDE');
+               document.getElementById('DEF_MsgName').value = objElements[i].getAttribute('MSGNAM');
             }
          }
          objMsgStat.selectedIndex = -1;
