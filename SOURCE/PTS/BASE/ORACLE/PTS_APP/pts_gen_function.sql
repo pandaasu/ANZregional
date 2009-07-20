@@ -34,6 +34,7 @@ create or replace package pts_app.pts_gen_function as
    function get_list_from return pts_sel_list_type pipelined;
    function get_list_data(par_ent_code in varchar2, par_sel_group in varchar2) return pts_sel_list_type pipelined;
    procedure set_field_data;
+   function get_pet_report_data return pts_xml_type pipelined;
    function list_fld_data return pts_xml_type pipelined;
    function list_rul_data return pts_xml_type pipelined;
    function list_sel_data return pts_xml_type pipelined;
@@ -706,7 +707,7 @@ create or replace package body pts_app.pts_gen_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*FLDDTA' then
+      if var_action != '*SETFLD' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
@@ -756,6 +757,131 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end set_field_data;
+
+   /***********************************************************/
+   /* This procedure performs the get pet report data routine */
+   /***********************************************************/
+   function get_pet_report_data return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tab_flag boolean;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_table is
+         select t02.sta_tab_code,
+                t02.sta_tab_text
+           from pts_sys_link t01,
+                pts_sys_table t02
+          where t01.sli_tab_code = t02.sta_tab_code
+            and t01.sli_tab_code in ('*PET_CLA','*PET_SAM')
+            and t01.sli_ent_code = '*PET'
+          order by t02.sta_tab_text asc;
+      rcd_table csr_table%rowtype;
+
+      cursor csr_field is
+         select t01.sfi_fld_code,
+                t01.sfi_fld_text
+           from pts_sys_field t01
+          where t01.sfi_tab_code = rcd_table.sta_tab_code
+            and t01.sfi_fld_status = '1'
+          order by t01.sfi_fld_dsp_seqn asc,
+                   t01.sfi_fld_text asc;
+      rcd_field csr_field%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*GETFLD' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the pet field XML
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      open csr_table;
+      loop
+         fetch csr_table into rcd_table;
+         if csr_table%notfound then
+            exit;
+         end if;
+         var_tab_flag := false;
+         open csr_field;
+         loop
+            fetch csr_field into rcd_field;
+            if csr_field%notfound then
+               exit;
+            end if;
+            if var_tab_flag = false then
+               var_tab_flag := true;
+               pipe row(pts_xml_object('<TABLE TABCDE="'||rcd_table.sta_tab_code||'" TABTXT="'||pts_to_xml(rcd_table.sta_tab_text)||'"/>'));
+            end if;
+            pipe row(pts_xml_object('<FIELD FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"/>'));
+         end loop;
+         close csr_field;
+      end loop;
+      close csr_table;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_GEN_FUNCTION - GET_PET_REPORT_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_pet_report_data;
 
    /*******************************************************/
    /* This procedure performs the list field data routine */
