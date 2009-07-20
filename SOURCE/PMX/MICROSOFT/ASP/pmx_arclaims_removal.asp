@@ -263,7 +263,7 @@ sub PaintSearch()%>
 <script language="javascript">
 <!--
    function showError() {
-      document.main.INP_StrShortName.focus();<%if strReturn <> "*OK" then%>
+      document.main.INP_VarAcctgDocNum.focus();<%if strReturn <> "*OK" then%>
       alert('<%=strReturn%>');<%else%>return;<%end if%>
    }
 
