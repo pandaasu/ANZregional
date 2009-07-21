@@ -1988,12 +1988,11 @@ sub PaintFunction()%>
          }
       }
       objSelValue.options.length = 0;
-      oobjSelValue.selectedIndex = -1;
+      objSelValue.selectedIndex = -1;
       for (var i=0;i<objWork.length;i++) {
          objSelValue.options[i] = objWork[i];
       }
    }
-
    function sortResReportValues(obj01, obj02) {
       if ((obj01.text-0) < (obj02.text-0)) {
          return -1;
@@ -2683,7 +2682,7 @@ sub PaintFunction()%>
                         </tr>
                         <tr>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="RRP_PetClass" name="RRP_PetValue" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="RRP_PetValue" name="RRP_PetValue" style="width:300px" multiple size=20></select>
                            </nobr></td>
                            <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
                               <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
@@ -2694,7 +2693,7 @@ sub PaintFunction()%>
                               </table>
                            </nobr></td>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="RRP_RptClass" name="RRP_SelValue" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="RRP_SelValue" name="RRP_SelValue" style="width:300px" multiple size=20></select>
                            </nobr></td>
                         </tr>
                      </table>
