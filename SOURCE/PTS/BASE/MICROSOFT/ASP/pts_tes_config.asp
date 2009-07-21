@@ -1881,15 +1881,15 @@ sub PaintFunction()%>
          objSelValue.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
-               document.getElementById('subResResult').innerText = objElements[i].getAttribute('TESTXT');
+               document.getElementById('subResReport').innerText = objElements[i].getAttribute('TESTXT');
             } else if (objElements[i].nodeName == 'FIELD') {
                objPetValue.options[objPetValue.options.length] = new Option(objElements[i].getAttribute('FLDTXT'),objElements[i].getAttribute('FLDCDE'));
                objPetValue.options[objPetValue.options.length-1].setAttribute('tabcde',objElements[i].getAttribute('TABCDE'));
                objPetValue.options[objPetValue.options.length-1].setAttribute('fldcde',objElements[i].getAttribute('FLDCDE'));
             }
          }
-         displayScreen('dspResResult');
-         document.getElementById('RRP_PetValue').focus();
+         displayScreen('dspResReport');
+         objPetValue.focus();
       }
    }
    function doResReportAccept() {
@@ -1970,7 +1970,7 @@ sub PaintFunction()%>
          objWork[intIndex] = objSelValue[i];
          intIndex++;
       }
-      objWork.sort(sortRssReportValues);
+      objWork.sort(sortResReportValues);
       objSelValue.options.length = 0;
       objSelValue.selectedIndex = -1;
       for (var i=0;i<objWork.length;i++) {
@@ -1995,9 +1995,9 @@ sub PaintFunction()%>
    }
 
    function sortResReportValues(obj01, obj02) {
-      if ((obj01.value-0) < (obj02.value-0)) {
+      if ((obj01.text-0) < (obj02.text-0)) {
          return -1;
-      } else if ((obj01.value-0) > (obj02.value-0)) {
+      } else if ((obj01.text-0) > (obj02.text-0)) {
          return 1;
       }
       return 0;
