@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the test report field data
    '//
-   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_pet_report_data)"
+   strStatement = "select xml_text from table(pts_app.pts_tes_function.retrieve_report_fields)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

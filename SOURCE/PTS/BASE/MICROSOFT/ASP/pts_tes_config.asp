@@ -134,6 +134,7 @@ sub PaintFunction()%>
       cobjScreens[6] = new clsScreen('dspSamDetail','hedSamDetail');
       cobjScreens[7] = new clsScreen('dspSamSize','hedSamSize');
       cobjScreens[8] = new clsScreen('dspPanel','hedPanel');
+      cobjScreens[9] = new clsScreen('dspResReport','hedResReport');
       cobjScreens[0].hedtxt = 'Pet Test Prompt';
       cobjScreens[1].hedtxt = 'Pet Test Maintenance';
       cobjScreens[2].hedtxt = 'Pet Test Keyword Maintenance';
@@ -143,6 +144,7 @@ sub PaintFunction()%>
       cobjScreens[6].hedtxt = 'Pet Test Sample Maintenance';
       cobjScreens[7].hedtxt = 'Pet Test Sample Size';
       cobjScreens[8].hedtxt = 'Pet Test Panel Selection';
+      cobjScreens[9].hedtxt = 'Pet Test Results Report';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -283,6 +285,23 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestAllocationUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
+   function doPromptRelease() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for release';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      if (confirm('Please confirm the release request\r\npress OK continue (the selected test will be released)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestReleaseUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
+   }
    function doPromptClose() {
       if (!processForm()) {return;}
       var strMessage = '';
@@ -367,7 +386,8 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
-      requestResultsReport(document.getElementById('PRO_TesCode').value);
+      doActivityStart(document.body);
+      window.setTimeout('requestResReport(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
 
    //////////////////////
@@ -1501,7 +1521,7 @@ sub PaintFunction()%>
          return;
       }
       cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedqty = document.getElementById('SAM_FedQnty').value;
-      cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedtxt = document.getElementById('SAM_FedText').value;
+      cobjSampleData[cintSampleRow].sizary[cintSampleSize].fedtxt = document.getElementById('SAM_FedText').value.toUpperCase();
       loadSampleData();
       displayScreen('dspSample');
    }
@@ -1706,6 +1726,41 @@ sub PaintFunction()%>
       }
    }
 
+   ///////////////////////
+   // Release Functions //
+   ///////////////////////
+   var cstrReleaseTest;
+   function requestReleaseUpdate(strCode) {
+      cstrCloseTest = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDREL" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_release_update.asp',function(strResponse) {checkReleaseUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkReleaseUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+
    /////////////////////
    // Close Functions //
    /////////////////////
@@ -1788,12 +1843,164 @@ sub PaintFunction()%>
       document.getElementById('PRO_TesCode').focus();
    }
    function requestQuestionnaireReport(strCode) {
-      doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_report_questionnaire(' + strCode + '))');
+      doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*CSV','select * from table(pts_app.pts_tes_function.report_questionnaire(' + strCode + '))');
       document.getElementById('PRO_TesCode').focus();
    }
-   function requestResultsReport(strCode) {
-      doReportOutput(eval('document.body'),'Pet Test Results Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_results(' + strCode + '))');
+
+   /////////////////////////////
+   // Result Report Functions //
+   /////////////////////////////
+   var cstrResReportTest;
+   function requestResReport(strCode) {
+      cstrResReportTest = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETFLD" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_field_retrieve.asp',function(strResponse) {checkResReport(strResponse);},false,streamXML(strXML));
+   }
+   function checkResReport(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         var objPetValue = document.getElementById('RRP_PetValue');
+         var objSelValue = document.getElementById('RRP_SelValue');
+         objPetValue.options.length = 0;
+         objSelValue.options.length = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               document.getElementById('subResResult').innerText = objElements[i].getAttribute('TESTXT');
+            } else if (objElements[i].nodeName == 'FIELD') {
+               objPetValue.options[objPetValue.options.length] = new Option(objElements[i].getAttribute('FLDTXT'),objElements[i].getAttribute('FLDCDE'));
+               objPetValue.options[objPetValue.options.length-1].setAttribute('tabcde',objElements[i].getAttribute('TABCDE'));
+               objPetValue.options[objPetValue.options.length-1].setAttribute('fldcde',objElements[i].getAttribute('FLDCDE'));
+            }
+         }
+         displayScreen('dspResResult');
+         document.getElementById('RRP_PetValue').focus();
+      }
+   }
+   function doResReportAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var objSelValue = document.getElementById('RRP_SelValue');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*SETFLD">';
+      for (var i=0;i<objSelValue.options.length;i++) {
+         strXML = strXML+'<FIELD TABCDE="'+fixXML(objSelValue[i].getAttribute('tabcde'))+'"';
+         strXML = strXML+' FLDCDE="'+fixXML(objSelValue[i].getAttribute('fldcde'))+'"/>';
+      }
+      strXML = strXML+'</PTS_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestResReportAccept(\''+strXML+'\');',10);
+   }
+   function requestResReportAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_field_update.asp',function(strResponse) {checkResReportAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkResReportAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+         }
+         doReportOutput(eval('document.body'),'Pet Test Results Report','*CSV','select * from table(pts_app.pts_tes_function.report_results(' + cstrResReportTest + '))');
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+   function doResReportCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
+   }
+   function selectResReportValues() {
+      var objPetValue = document.getElementById('RRP_PetValue');
+      var objSelValue = document.getElementById('RRP_SelValue');
+      var bolFound;
+      for (var i=0;i<objPetValue.options.length;i++) {
+         if (objPetValue.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objSelValue.options.length;j++) {
+               if (objPetValue[i].value == objSelValue[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objSelValue.options[objSelValue.options.length] = new Option(objPetValue[i].text,objPetValue[i].value);
+               objSelValue.options[objSelValue.options.length-1].setAttribute('tabcde',objPetValue[i].getAttribute('tabcde'));
+               objSelValue.options[objSelValue.options.length-1].setAttribute('fldcde',objPetValue[i].getAttribute('fldcde'));
+            }
+         }
+      }
+      var objWork = new Array();
+      var intIndex = 0
+      for (var i=0;i<objSelValue.options.length;i++) {
+         objWork[intIndex] = objSelValue[i];
+         intIndex++;
+      }
+      objWork.sort(sortRssReportValues);
+      objSelValue.options.length = 0;
+      objSelValue.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSelValue.options[i] = objWork[i];
+      }
+   }
+   function removeResReportValues() {
+      var objSelValue = document.getElementById('RRP_SelValue');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objSelValue.options.length;i++) {
+         if (objSelValue.options[i].selected == false) {
+            objWork[intIndex] = objSelValue[i];
+            intIndex++;
+         }
+      }
+      objSelValue.options.length = 0;
+      oobjSelValue.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objSelValue.options[i] = objWork[i];
+      }
+   }
+
+   function sortResReportValues(obj01, obj02) {
+      if ((obj01.value-0) < (obj02.value-0)) {
+         return -1;
+      } else if ((obj01.value-0) > (obj02.value-0)) {
+         return 1;
+      }
+      return 0;
    }
 
 // -->
@@ -1850,7 +2057,7 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=13 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=15 cellpadding="0" cellspacing="0">
                <tr>
                   <td class="clsHeader" align=center colspan=1 nowrap><nobr>Maintenance</nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -1861,6 +2068,8 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptRelease();">&nbsp;Release&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptClose();">&nbsp;Close&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -2358,7 +2567,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feed Comment:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="SAM_FedText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_FedText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -2449,6 +2658,68 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
+
+   <table id="dspResReport" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSchListAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedResReport" class="clsFunction" align=center colspan=2 nowrap><nobr>Results Report</nobr></td>
+      </tr>
+      <tr>
+         <td id="subResReport" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+                        <tr>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Reporting Fields&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Reporting Fields&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="RRP_PetClass" name="RRP_PetValue" style="width:300px" multiple size=20></select>
+                           </nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeResReportValues();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectResReportValues();"></nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="RRP_RptClass" name="RRP_SelValue" style="width:300px" multiple size=20></select>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResReportCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doResReportAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+
 <!--#include file="pts_search_html.inc"-->
 <!--#include file="pts_select_html.inc"-->
 </body>
