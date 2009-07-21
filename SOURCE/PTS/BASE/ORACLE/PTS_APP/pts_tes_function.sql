@@ -4143,7 +4143,7 @@ create or replace package body pts_app.pts_tes_function as
          if csr_field%notfound then
          exit;
          end if;
-         pipe row(pts_xml_object('<FIELD TABCDE="'||rcd_field.sfi_tab_code||' FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"/>'));
+         pipe row(pts_xml_object('<FIELD TABCDE="'||rcd_field.sfi_tab_code||'" FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"/>'));
       end loop;
       close csr_field;
 
