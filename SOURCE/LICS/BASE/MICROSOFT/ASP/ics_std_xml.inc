@@ -42,6 +42,7 @@
       strReturn = strReturn.replace(/&/g,'&amp;');
       strReturn = strReturn.replace(/"/g,'&#34;');
       strReturn = strReturn.replace(/'/g,'&#39;');
+      strReturn = strReturn.replace(/\+/g,'&#43;');
       return strReturn;
    }
 // -->
