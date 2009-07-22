@@ -1994,9 +1994,9 @@ sub PaintFunction()%>
       }
    }
    function sortResReportValues(obj01, obj02) {
-      if ((obj01.text-0) < (obj02.text-0)) {
+      if (obj01.text < obj02.text) {
          return -1;
-      } else if ((obj01.text-0) > (obj02.text-0)) {
+      } else if (obj01.text > obj02.text) {
          return 1;
       }
       return 0;
