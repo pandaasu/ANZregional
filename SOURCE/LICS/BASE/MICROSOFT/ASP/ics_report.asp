@@ -66,6 +66,8 @@
             call ProcessReportPrompt
          case "*SPREADSHEET"
             call ProcessReportSpreadsheet
+         case "*CSV"
+            call ProcessReportCsv
          case else
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
             call PaintFatal
@@ -206,6 +208,103 @@ sub ProcessReportSpreadsheet()
 <body class="clsTable02" scroll="no">
    <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Report Spreadsheet Creation Failed</nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doClose();">&nbsp;Close&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScrollFrame" id="conBody">
+                     <table class="clsGrid01" id="tabBody" align=left cols=1 cellpadding="0" cellspacing="1">
+                        <tr>
+                           <td class="clsNormalFix" align=left colspan=1><pre><%=strReturn%></pre></td>
+                        </tr>
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+    </table>
+</body>
+</html><%
+   end if
+
+end sub
+
+'////////////////////////////////
+'// Process report csv routine //
+'////////////////////////////////
+sub ProcessReportCsv()
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Execute the report csv
+   '//
+   strReturn = objSelection.Execute("REPORT", objForm.Fields("DTA_Query").Value, 0)
+   if strReturn = "*OK" then
+      Response.Buffer = true
+      Response.ContentType = "application/vnd.ms-excel; charset=UTF-8"
+      Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("DTA_Name").Value & ".csv"
+      for i = objSelection.ListLower("REPORT") to objSelection.ListUpper("REPORT")
+         if i > objSelection.ListLower("REPORT") then
+            Response.Write vbNewLine
+         end if
+         Response.Write objSelection.ListValue01("REPORT",i)
+      next
+   else%>
+<script language="javascript">
+<!--
+   function document.onmouseover() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButton') {
+         objElement.className = 'clsButtonX';
+      }
+      if (objElement.className == 'clsSelect') {
+         objElement.className = 'clsSelectX';
+      }
+   }
+   function document.onmouseout() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButtonX') {
+         objElement.className = 'clsButton';
+      }
+      if (objElement.className == 'clsSelectX') {
+         objElement.className = 'clsSelect';
+      }
+   }
+   function doClose() {
+      parent.doReportClose();
+   }
+// -->
+</script>
+<html>
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
+   <meta http-equiv="expires" content="0">
+   <link rel="stylesheet" type="text/css" href="ics_style.css">
+   <title>Report</title>
+</head>
+<body class="clsTable02" scroll="no">
+   <table class="clsPopup" align=center cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
+      <tr><td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Report CSV Creation Failed</nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr><%=objForm.Fields("DTA_Name").Value%></nobr></td>
       </tr>
