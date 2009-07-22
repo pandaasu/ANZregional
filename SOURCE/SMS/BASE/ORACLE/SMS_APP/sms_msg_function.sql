@@ -167,6 +167,7 @@ create or replace package body sms_app.sms_msg_function as
             for idx in reverse 1..tbl_list.count loop
                pipe row(sms_xml_object('<LSTROW MSGCDE="'||to_char(tbl_list(idx).mes_msg_code)||'" MSGNAM="'||sms_to_xml(tbl_list(idx).mes_msg_name)||'" MSGSTS="'||sms_to_xml(tbl_list(idx).mes_status)||'"/>'));
             end loop;
+            pipe row(sms_xml_object('<LSTEND/>'));
          end if;
       elsif var_action = '*PRVMSG' then
          tbl_list.delete;
@@ -181,6 +182,7 @@ create or replace package body sms_app.sms_msg_function as
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
+            pipe row(sms_xml_object('<LSTSTR/>'));
             for idx in 1..tbl_list.count loop
                pipe row(sms_xml_object('<LSTROW MSGCDE="'||to_char(tbl_list(idx).mes_msg_code)||'" MSGNAM="'||sms_to_xml(tbl_list(idx).mes_msg_name)||'" MSGSTS="'||sms_to_xml(tbl_list(idx).mes_status)||'"/>'));
             end loop;
