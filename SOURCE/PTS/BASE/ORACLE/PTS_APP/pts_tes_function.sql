@@ -1319,6 +1319,9 @@ create or replace package body pts_app.pts_tes_function as
             if rcd_question.qde_que_status != 1 then
                pts_gen_function.add_mesg_data('Weight bowl question ('||to_char(var_que_code)||') is not active');
             end if;
+            if rcd_question.qde_rsp_type != 2 then
+               pts_gen_function.add_mesg_data('Weight bowl question ('||to_char(var_que_code)||') must be a range response');
+            end if;
          end if;
          close csr_question;
          var_que_code := rcd_pts_tes_definition.tde_wgt_que_offer;
@@ -1330,6 +1333,9 @@ create or replace package body pts_app.pts_tes_function as
             if rcd_question.qde_que_status != 1 then
                pts_gen_function.add_mesg_data('Weight offered question ('||to_char(var_que_code)||') is not active');
             end if;
+            if rcd_question.qde_rsp_type != 2 then
+               pts_gen_function.add_mesg_data('Weight offered question ('||to_char(var_que_code)||') must be a range response');
+            end if;
          end if;
          close csr_question;
          var_que_code := rcd_pts_tes_definition.tde_wgt_que_remain;
@@ -1340,6 +1346,9 @@ create or replace package body pts_app.pts_tes_function as
          else
             if rcd_question.qde_que_status != 1 then
                pts_gen_function.add_mesg_data('Weight remaining question ('||to_char(var_que_code)||') is not active');
+            end if;
+            if rcd_question.qde_rsp_type != 2 then
+               pts_gen_function.add_mesg_data('Weight remaining question ('||to_char(var_que_code)||') must be a range response');
             end if;
          end if;
          close csr_question;
@@ -4064,6 +4073,7 @@ create or replace package body pts_app.pts_tes_function as
            from pts_sys_field t01
           where t01.sfi_tab_code = '*PET_CLA'
             and t01.sfi_fld_status = '1'
+            and t01.sfi_fld_sel_type in ('*OPT_SINGLE_LIST','*MAN_SINGLE_LIST')
           order by t01.sfi_fld_dsp_seqn asc,
                    t01.sfi_fld_text asc;
       rcd_field csr_field%rowtype;
@@ -4188,6 +4198,12 @@ create or replace package body pts_app.pts_tes_function as
       var_tes_code number;
       var_found boolean;
       var_day_code number;
+      var_wgt_bowl number;
+      var_wgt_offer number;
+      var_wgt_remain number;
+      var_wgt_eaten number;
+      var_per_eaten number;
+      var_per_refuse number;
       var_output varchar2(4000 char);
 
       /*-*/
@@ -4195,17 +4211,43 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
-                t02.tty_typ_target
+                t02.tty_typ_target,
+                t02.tty_alc_proc
            from pts_tes_definition t01,
                 pts_tes_type t02
           where t01.tde_tes_type = t02.tty_tes_type(+)
             and t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_question is
+         select t01.tqu_que_code,
+                max(t02.qde_rsp_type) as qde_rsp_type,
+                0 as tre_res_value,
+                max(qde_que_text) as qre_res_text
+           from pts_tes_question t01,
+                pts_que_definition t02
+          where t01.tqu_que_code = t02.qde_que_code(+)
+            and t01.tqu_tes_code = rcd_retrieve.tde_tes_code
+          group by t01.tqu_que_code
+          order by t01.tqu_que_code asc;
+
+      cursor csr_classification is
+         select t01.sfi_tab_code,
+                t01.sfi_fld_code,
+                t01.sfi_fld_text,
+                t01.sfi_fld_text as val_text
+           from pts_sys_field t01
+          where (t01.sfi_tab_code, t01.sfi_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
+          order by t01.sfi_fld_text asc;
+
       cursor csr_panel is
          select t01.*,
-                nvl(t02.tcl_val_code,0) as pet_size
+                nvl(t02.gzo_zon_text,'*UNKNOWN') as gzo_zon_text,
+                nvl(t03.pty_typ_text,'*UNKNOWN') pty_typ_text,
+                nvl(t04.tcl_val_code,0) as pet_size
            from pts_tes_panel t01,
+                pts_geo_zone t02,
+                pts_pet_type t03,
                 (select t01.tcl_pan_code,
                         t01.tcl_val_code
                    from pts_tes_classification t01,
@@ -4217,54 +4259,74 @@ create or replace package body pts_app.pts_tes_function as
                   where t01.tcl_val_code = t02.sva_val_code(+)
                     and t01.tcl_tes_code = rcd_retrieve.tde_tes_code
                     and t01.tcl_tab_code = '*PET_CLA'
-                    and t01.tcl_fld_code = 8) t02
-          where t01.tpa_pan_code = t02.tcl_pan_code(+)
+                    and t01.tcl_fld_code = 8) t04
+          where t01.tpa_geo_type = t02.gzo_geo_type(+)
+            and t01.tpa_geo_zone = t02.gzo_geo_zone(+)
+            and t01.tpa_pet_type = t03.pty_pet_type(+)
+            and t01.tpa_pan_code = t04.tcl_pan_code(+)
             and t01.tpa_tes_code = rcd_retrieve.tde_tes_code
           order by t01.tpa_geo_zone asc,
                    t01.tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
-      cursor csr_classification is
-         select t01.tcl_val_code,
-                t01.tcl_val_text
-           from pts_tes_classification t01
-          where t01.tcl_tes_code = rcd_panel.tpa_tes_code
+      cursor csr_panel_classification is
+         select t01.tcl_tab_code,
+                t01.tcl_fld_code,
+                 nvl(t02.sva_val_text,t01.tcl_val_text) as val_text
+           from pts_tes_classification t01,
+                pts_sys_value t02
+          where t01.tcl_tab_code = t02.sva_tab_code(+)
+            and t01.tcl_fld_code = t02.sva_fld_code(+)
+            and t01.tcl_val_code = t02.sva_val_code(+)
+            and t01.tcl_tes_code = rcd_panel.tpa_tes_code
             and t01.tcl_pan_code = rcd_panel.tpa_pan_code
             and (t01.tcl_tab_code,t01.tcl_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
           order by t01.tcl_tab_code asc,
                    t01.tcl_fld_code asc;
-      rcd_classification csr_classification%rowtype;
+      rcd_panel_classification csr_panel_classification%rowtype;
 
       cursor csr_allocation is
          select t01.*,
-                nvl(t02.tsa_mkt_code,'*') as tsa_mkt_code,
-                nvl(t02.tsa_mkt_acde,'*') as tsa_mkt_acde,
-                to_char(nvl(t03.tfe_fed_qnty,1)) as tfe_fed_qnty,
-                t03.tfe_fed_text,
-                to_char(nvl(t04.sde_uom_size,0))||' '||nvl(t05.sva_val_text,'*UNKNOWN') as size_text
+                nvl(t02.tsa_rpt_code,'***') as tsa_rpt_code,
+                to_char(nvl(t03.tfe_fed_qnty,1)) as tfe_fed_qnty
            from pts_tes_allocation t01,
                 pts_tes_sample t02,
                 (select t01.*
                    from pts_tes_feeding t01
                   where t01.tfe_tes_code = rcd_panel.tpa_tes_code
-                    and t01.tfe_pet_size = rcd_panel.pet_size) t03,
-                pts_sam_definition t04,
-                (select t01.sva_val_code,
-                        t01.sva_val_text
-                   from pts_sys_value t01
-                  where t01.sva_tab_code = '*SAM_DEF'
-                    and t01.sva_fld_code = 4) t05
+                    and t01.tfe_pet_size = rcd_panel.pet_size) t03
           where t01.tal_tes_code = t02.tsa_tes_code(+)
             and t01.tal_sam_code = t02.tsa_sam_code(+)
             and t02.tsa_tes_code = t03.tfe_tes_code(+)
             and t02.tsa_sam_code = t03.tfe_sam_code(+)
-            and t02.tsa_sam_code = t04.sde_sam_code(+)
-            and t04.sde_uom_code = t05.sva_val_code(+)
             and t01.tal_tes_code = rcd_panel.tpa_tes_code
             and t01.tal_pan_code = rcd_panel.tpa_pan_code
             and t01.tal_day_code = var_day_code
           order by t01.tal_seq_numb asc;
       rcd_allocation csr_allocation%rowtype;
+
+      cursor csr_response is
+         select t01.tre_que_code,
+                t01.tre_res_value,
+                t02.qre_res_text
+           from pts_tes_response t01,
+                pts_que_response t02
+          where t01.tre_que_code = t02.qre_que_code(+)
+            and t01.tre_res_value = t02.qre_res_code(+)
+            and t01.tre_tes_code = rcd_allocation.tal_tes_code
+            and t01.tre_pan_code = rcd_allocation.tal_pan_code
+            and t01.tre_day_code = rcd_allocation.tal_day_code
+            and (t01.tre_sam_code = 0 or t01.tre_sam_code = rcd_allocation.tal_sam_code)
+          order by t01.tre_que_code asc;
+      rcd_response csr_response%rowtype;
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_qary is table of csr_question%rowtype index by binary_integer;
+      tbl_qary typ_qary;
+      type typ_cary is table of csr_classification%rowtype index by binary_integer;
+      tbl_cary typ_cary;
 
    /*-------------*/
    /* Begin block */
@@ -4290,30 +4352,48 @@ create or replace package body pts_app.pts_tes_function as
          raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - results report not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') target must be *PET - results report not allowed');
       end if;
+
+      /*-*/
+      /* Retrieve and load the discreet question array
+      /*-*/
+      tbl_qary.delete;
+      open csr_question;
+      fetch csr_question bulk collect into tbl_qary;
+      close csr_question;
+
+      /*-*/
+      /* Retrieve and load the classification array
+      /*-*/
+      tbl_cary.delete;
+      open csr_classification;
+      fetch csr_classification bulk collect into tbl_cary;
+      close csr_classification;
 
       /*-*/
       /* Start the report
       /*-*/
-      var_output := '"'||'TESTCODE'||'"';
-      var_output := var_output||',"'||'TESTITLE'||'"';
-      var_output := var_output||',"'||'AREA'||'"';
-      var_output := var_output||',"'||'PETCODE'||'"';
-      var_output := var_output||',"'||'PETNAME'||'"';
-      var_output := var_output||',"'||'PETSTATUS'||'"';
-      var_output := var_output||',"'||'PARTICIPANTNAME'||'"';
-      var_output := var_output||',"'||'STREET'||'"';
-      var_output := var_output||',"'||'CITYPOSTCODE'||'"';
-      var_output := var_output||',"'||'COUNTRY'||'"';
-      for idx in 1..rcd_retrieve.tde_tes_day_count loop
-         var_output := var_output||',"'||'DAY'||to_char(idx)||'"';
-         for idy in 1..rcd_retrieve.tde_tes_sam_count loop
-            var_output := var_output||',"'||'D'||to_char(idx)||'MR'||to_char(idy)||'"';
-            var_output := var_output||',"'||'D'||to_char(idx)||'QTY'||to_char(idy)||'"';
-            var_output := var_output||',"'||'D'||to_char(idx)||'OFF'||to_char(idy)||'"';
-            var_output := var_output||',"'||'D'||to_char(idx)||'SIZE'||to_char(idy)||'"';
-         end loop;
+      var_output := '"'||'Test'||'"';
+      var_output := var_output||',"'||'Pet'||'"';
+      var_output := var_output||',"'||'Sample'||'"';
+      var_output := var_output||',"'||'Sequence'||'"';
+      var_output := var_output||',"'||'Day'||'"';
+      var_output := var_output||',"'||'Offered Qty'||'"';
+      for idx in 1..tbl_qary.count loop
+         var_output := var_output||',"'||'Q'||to_char(tbl_qary(idx).tqu_que_code)||'"';
+      end loop;
+      if rcd_retrieve.tde_wgt_que_calc = '1' then
+         var_output := var_output||',"'||'Weight Eaten'||'"';
+         var_output := var_output||',"'||'% Eaten'||'"';
+         if upper(trim(rcd_retrieve.tty_alc_proc)) != 'DIFFERENCE' then
+            var_output := var_output||',"'||'<=5% Refusals'||'"';
+         end if;
+      end if;
+      var_output := var_output||',"'||'Area'||'"';
+      var_output := var_output||',"'||'Pet Type'||'"';
+      for idx in 1..tbl_cary.count loop
+         var_output := var_output||',"'||tbl_cary(idx).sfi_fld_text||'"';
       end loop;
       pipe row(var_output);
 
@@ -4328,35 +4408,117 @@ create or replace package body pts_app.pts_tes_function as
          end if;
 
          /*-*/
+         /* Set the classification array text
+         /*-*/
+         for idx in 1..tbl_cary.count loop
+            tbl_cary(idx).val_text := null;
+         end loop;
+         open csr_panel_classification;
+         loop
+            fetch csr_panel_classification into rcd_panel_classification;
+            if csr_panel_classification%notfound then
+               exit;
+            end if;
+            for idx in 1..tbl_cary.count loop
+               if (tbl_cary(idx).sfi_tab_code = rcd_panel_classification.tcl_tab_code and
+                   tbl_cary(idx).sfi_fld_code = rcd_panel_classification.tcl_fld_code) then
+                  tbl_cary(idx).val_text := rcd_panel_classification.val_text;
+                  exit;
+               end if;
+            end loop;
+         end loop;
+         close csr_panel_classification;
+
+         /*-*/
          /* Output the panel data
          /*-*/
-         var_output := '"'||to_char(rcd_retrieve.tde_tes_code)||'"';
-         var_output := var_output||',"'||replace(rcd_retrieve.tde_tes_title,'"','""')||'"';
-         var_output := var_output||',"'||to_char(rcd_panel.tpa_geo_zone)||'"';
-         var_output := var_output||',"'||to_char(rcd_panel.tpa_pet_code)||'"';
-         var_output := var_output||',"'||replace(rcd_panel.tpa_pet_name,'"','""')||'"';
-         var_output := var_output||',"'||to_char(rcd_panel.tpa_pet_status)||'"';
-         var_output := var_output||',"'||replace(rcd_panel.tpa_con_fullname,'"','""')||'"';
-         var_output := var_output||',"'||replace(rcd_panel.tpa_loc_street,'"','""')||'"';
-         var_output := var_output||',"'||replace(rcd_panel.tpa_loc_town||' '||rcd_panel.tpa_loc_postcode,'"','""')||'"';
-         var_output := var_output||',"'||replace(rcd_panel.tpa_loc_country,'"','""')||'"';
          for idx in 1..rcd_retrieve.tde_tes_day_count loop
             var_day_code := idx;
-            var_output := var_output||',"'||'Day'||to_char(var_day_code)||'"';
             open csr_allocation;
             loop
                fetch csr_allocation into rcd_allocation;
                if csr_allocation%notfound then
                   exit;
                end if;
-               var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
+               var_output := '"'||to_char(rcd_retrieve.tde_tes_code)||'"';
+               var_output := var_output||',"'||to_char(rcd_panel.tpa_pet_code)||'"';
+               var_output := var_output||',"'||replace(rcd_allocation.tsa_rpt_code,'"','""')||'"';
+               var_output := var_output||',"'||to_char(rcd_allocation.tal_seq_numb)||'"';
+               var_output := var_output||',"'||to_char(var_day_code)||'"';
                var_output := var_output||',"'||to_char(rcd_allocation.tfe_fed_qnty)||'"';
-               var_output := var_output||',"'||replace(rcd_allocation.tfe_fed_text,'"','""')||'"';
-               var_output := var_output||',"'||replace(rcd_allocation.size_text,'"','""')||'"';
+               if rcd_retrieve.tde_wgt_que_calc = '1' then
+                  var_wgt_bowl := null;
+                  var_wgt_offer := null;
+                  var_wgt_remain := null;
+               end if;
+               for idy in 1..tbl_qary.count loop
+                  tbl_qary(idy).tre_res_value := null;
+                  tbl_qary(idy).qre_res_text := null;
+               end loop;
+               open csr_response;
+               loop
+                  fetch csr_response into rcd_response;
+                  if csr_response%notfound then
+                     exit;
+                  end if;
+                  if rcd_retrieve.tde_wgt_que_calc = '1' then
+                     if rcd_response.tre_que_code = rcd_retrieve.tde_wgt_que_bowl then
+                        var_wgt_bowl := nvl(rcd_response.tre_res_value,0);
+                     elsif rcd_response.tre_que_code = rcd_retrieve.tde_wgt_que_offer then
+                        var_wgt_offer := nvl(rcd_response.tre_res_value,0);
+                     elsif rcd_response.tre_que_code = rcd_retrieve.tde_wgt_que_remain then
+                        var_wgt_remain := nvl(rcd_response.tre_res_value,0);
+                     end if;
+                  end if;
+                  for idy in 1..tbl_qary.count loop
+                     if tbl_qary(idy).tqu_que_code = rcd_response.tre_que_code then
+                        tbl_qary(idy).tre_res_value := rcd_response.tre_res_value;
+                        tbl_qary(idy).qre_res_text := rcd_response.qre_res_text;
+                        exit;
+                     end if;
+                  end loop;
+               end loop;
+               close csr_response;
+               for idy in 1..tbl_qary.count loop
+                  if tbl_qary(idy).qde_rsp_type = 1 then
+                     var_output := var_output||',"'||nvl(tbl_qary(idy).qre_res_text,'n/a')||'"';
+                  else
+                     var_output := var_output||',"'||nvl(to_char(tbl_qary(idy).tre_res_value),'n/a')||'"';
+                  end if;
+               end loop;
+               if rcd_retrieve.tde_wgt_que_calc = '1' then
+                  if var_wgt_bowl is null or var_wgt_offer is null or var_wgt_remain is null then
+                     var_output := var_output||',"n/a"';
+                     var_output := var_output||',"n/a"';
+                     if upper(trim(rcd_retrieve.tty_alc_proc)) != 'DIFFERENCE' then
+                        var_output := var_output||',"n/a"';
+                     end if;
+                  else
+                     var_wgt_eaten := (var_wgt_bowl + var_wgt_offer) - var_wgt_remain;
+                     var_per_eaten := 0;
+                     if var_wgt_offer != 0 then
+                        var_per_eaten := round((var_wgt_eaten / var_wgt_offer) * 100,0);
+                     end if;
+                     var_per_refuse := 0;
+                     if var_per_eaten <= 5 then
+                        var_per_refuse := 100;
+                     end if;
+                     var_output := var_output||',"'||to_char(var_wgt_eaten)||'"';
+                     var_output := var_output||',"'||to_char(var_per_eaten)||'"';
+                     if upper(trim(rcd_retrieve.tty_alc_proc)) != 'DIFFERENCE' then
+                        var_output := var_output||',"'||to_char(var_per_refuse)||'"';
+                     end if;
+                  end if;
+               end if;
+               var_output := var_output||',"'||replace(rcd_panel.gzo_zon_text,'"','""')||'"';
+               var_output := var_output||',"'||replace(rcd_panel.pty_typ_text,'"','""')||'"';
+               for idy in 1..tbl_cary.count loop
+                  var_output := var_output||',"'||replace(tbl_cary(idy).val_text,'"','""')||'"';
+               end loop;
+               pipe row(var_output);
             end loop;
             close csr_allocation;
          end loop;
-         pipe row(var_output);
 
       end loop;
       close csr_panel;
