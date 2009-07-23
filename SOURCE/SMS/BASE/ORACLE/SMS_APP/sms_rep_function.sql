@@ -25,6 +25,9 @@ create or replace package sms_app.sms_rep_function as
    /*-*/
    /* Public declarations
    /*-*/
+   function select_list return sms_xml_type pipelined;
+   function retrieve_data return sms_xml_type pipelined;
+   function retrieve_recipient return sms_xml_type pipelined;
    procedure generate(par_qry_code in varchar2,
                       par_qry_date in varchar2,
                       par_action in varchar2,
@@ -63,6 +66,470 @@ create or replace package body sms_app.sms_rep_function as
    pvar_cfrm varchar2(2000 char);
    type ptyp_mesg is table of varchar2(2000 char) index by binary_integer;
    ptbl_mesg ptyp_mesg;
+
+   /***************************************************/
+   /* This procedure performs the select list routine */
+   /***************************************************/
+   function select_list return sms_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_str_code varchar2(64);
+      var_str_date varchar2(14);
+      var_end_code varchar2(64);
+      var_end_date varchar2(14);
+      var_output varchar2(2000 char);
+      var_pag_size number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_slct is
+         select t01.*
+           from (select t01.rhe_qry_code,
+                        t01.rhe_qry_date,
+                        to_char(to_date(t01.rhe_qry_date,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rhe_rpt_date,
+                        decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resent','4','Stopped','*UNKNOWN') as rhe_status
+                   from sms_rpt_header t01
+                  where (var_str_code is null or t01.rhe_qry_code >= var_str_code or (t01.rhe_qry_code = var_str_code and t01.rhe_qry_date >= var_str_date))
+                  order by t01.rhe_qry_code asc,
+                           t01.rhe_qry_date asc) t01
+          where rownum <= var_pag_size;
+
+      cursor csr_next is
+         select t01.*
+           from (select t01.rhe_qry_code,
+                        t01.rhe_qry_date,
+                        to_char(to_date(t01.rhe_qry_date,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rhe_rpt_date,
+                        decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resent','4','Stopped','*UNKNOWN') as rhe_status
+                   from sms_rpt_header t01
+                  where (var_action = '*NXTRPT' and (var_end_code is null or t01.rhe_qry_code > var_end_code or (t01.rhe_qry_code = var_end_code and t01.rhe_qry_date > var_end_date))) or
+                        (var_action = '*PRVRPT')
+                  order by t01.rhe_qry_code asc,
+                           t01.rhe_qry_date asc) t01
+          where rownum <= var_pag_size;
+
+      cursor csr_prev is
+         select t01.*
+           from (select t01.rhe_qry_code,
+                        t01.rhe_qry_date,
+                        to_char(to_date(t01.rhe_qry_date,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rhe_rpt_date,
+                        decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resent','4','Stopped','*UNKNOWN') as rhe_status
+                   from sms_rpt_header t01
+                  where (var_action = '*PRVRPT' and (var_str_code is null or t01.rhe_qry_code < var_str_code or (t01.rhe_qry_code = var_str_code and t01.rhe_qry_date < var_str_date))) or
+                        (var_action = '*NXTRPT')
+                  order by t01.rhe_qry_code desc,
+                           t01.rhe_qry_date desc) t01
+          where rownum <= var_pag_size;
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_list is table of csr_slct%rowtype index by binary_integer;
+      tbl_list typ_list;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
+      var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*SELRPT' and var_action != '*PRVRPT' and var_action != '*NXTRPT' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Retrieve the report list and pipe the results
+      /*-*/
+      var_pag_size := 20;
+      if var_action = '*SELRPT' then
+         tbl_list.delete;
+         open csr_slct;
+         fetch csr_slct bulk collect into tbl_list;
+         close csr_slct;
+         for idx in 1..tbl_list.count loop
+            pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).rhe_qry_code)||'" QRYDTE="'||sms_to_xml(tbl_list(idx).rhe_qry_date)||'" RPTDTE="'||sms_to_xml(tbl_list(idx).rhe_rpt_date)||'" RPTSTS="'||sms_to_xml(tbl_list(idx).rhe_status)||'"/>'));
+         end loop;
+      elsif var_action = '*NXTRPT' then
+         tbl_list.delete;
+         open csr_next;
+         fetch csr_next bulk collect into tbl_list;
+         close csr_next;
+         if tbl_list.count = var_pag_size then
+            for idx in 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).rhe_qry_code)||'" QRYDTE="'||sms_to_xml(tbl_list(idx).rhe_qry_date)||'" RPTDTE="'||sms_to_xml(tbl_list(idx).rhe_rpt_date)||'" RPTSTS="'||sms_to_xml(tbl_list(idx).rhe_status)||'"/>'));
+            end loop;
+         else
+            open csr_prev;
+            fetch csr_prev bulk collect into tbl_list;
+            close csr_prev;
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).rhe_qry_code)||'" QRYDTE="'||sms_to_xml(tbl_list(idx).rhe_qry_date)||'" RPTDTE="'||sms_to_xml(tbl_list(idx).rhe_rpt_date)||'" RPTSTS="'||sms_to_xml(tbl_list(idx).rhe_status)||'"/>'));
+            end loop;
+         end if;
+      elsif var_action = '*PRVRPT' then
+         tbl_list.delete;
+         open csr_prev;
+         fetch csr_prev bulk collect into tbl_list;
+         close csr_prev;
+         if tbl_list.count = var_pag_size then
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).rhe_qry_code)||'" QRYDTE="'||sms_to_xml(tbl_list(idx).rhe_qry_date)||'" RPTDTE="'||sms_to_xml(tbl_list(idx).rhe_rpt_date)||'" RPTSTS="'||sms_to_xml(tbl_list(idx).rhe_status)||'"/>'));
+            end loop;
+         else
+            open csr_next;
+            fetch csr_next bulk collect into tbl_list;
+            close csr_next;
+            for idx in 1..tbl_list.count loop
+               pipe row(sms_xml_object('<LSTROW QRYCDE="'||to_char(tbl_list(idx).rhe_qry_code)||'" QRYDTE="'||sms_to_xml(tbl_list(idx).rhe_qry_date)||'" RPTDTE="'||sms_to_xml(tbl_list(idx).rhe_rpt_date)||'" RPTSTS="'||sms_to_xml(tbl_list(idx).rhe_status)||'"/>'));
+            end loop;
+         end if;
+      end if;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(sms_xml_object('</SMS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RPT_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_list;
+
+   /*****************************************************/
+   /* This procedure performs the retrieve data routine */
+   /*****************************************************/
+   function retrieve_data return sms_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_qry_code varchar2(64);
+      var_qry_date varchar2(14);
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.rhe_qry_code,
+                t01.rhe_qry_date,
+                to_char(to_date(t01.rhe_rpt_date,'yyyymmdd'),'yyyy/mm/dd') as rhe_rpt_date,
+                t01.rhe_rpt_yyyypp,
+                t01.rhe_rpt_yyyyppw,
+                t01.rhe_rpt_yyyyppdd,
+                t01.rhe_crt_user,
+                to_char(to_date(t01.rhe_crt_date||t01.rhe_crt_time,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rhe_crt_date,
+                t01.rhe_crt_yyyypp,
+                t01.rhe_crt_yyyyppw,
+                t01.rhe_crt_yyyyppdd,
+                t01.rhe_upd_user,
+                to_char(t01.rhe_upd_date,'yyyy/mm/dd hh24:mi:ss') as rhe_upd_date,
+                decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resent','4','Stopped','*UNKNOWN') as rhe_status
+           from sms_rpt_header t01
+          where t01.rhe_qry_code = var_qry_code
+            and t01.rhe_qry_date = var_qry_date;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_message is
+         select t01.rme_msg_seqn,
+                t01.rme_msg_text,
+                t01.rme_msg_time,
+                decode(t01.rme_msg_status,'1','Created','2','Sent','3','Error','*UNKNOWN') as rme_msg_status
+           from sms_rpt_message t01
+          where t01.rme_qry_code = rcd_retrieve.rhe_qry_code
+            and t01.rme_qry_date = rcd_retrieve.rhe_qry_date
+          order by t01.rme_msg_seqn asc;
+      rcd_message csr_message%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      var_qry_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@QRYCDE'));
+      var_qry_date := sms_to_number(xslProcessor.valueOf(obj_sms_request,'@QRYDTE'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*ENQRPT' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing report
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         sms_gen_function.add_mesg_data('Report ('||var_qry_code||'/'||var_qry_date||') does not exist');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the report XML
+      /*-*/
+      var_output := '<REPORT QRYCDE="'||sms_to_xml(rcd_retrieve.rhe_qry_code)||'"';
+      var_output := var_output||' QRYDTE="'||sms_to_xml(rcd_retrieve.rhe_qry_date)||'"';
+      var_output := var_output||' RPTDTE="'||sms_to_xml(rcd_retrieve.rhe_rpt_date)||'"';
+      var_output := var_output||' RPTPRD="'||sms_to_xml(rcd_retrieve.rhe_rpt_yyyypp)||'"';
+      var_output := var_output||' RPTWEK="'||sms_to_xml(rcd_retrieve.rhe_rpt_yyyyppw)||'"';
+      var_output := var_output||' RPTDAY="'||sms_to_xml(rcd_retrieve.rhe_rpt_yyyyppdd)||'"';
+      var_output := var_output||' CRTUSR="'||sms_to_xml(rcd_retrieve.rhe_crt_user)||'"';
+      var_output := var_output||' CRTDTE="'||sms_to_xml(rcd_retrieve.rhe_crt_date)||'"';
+      var_output := var_output||' CRTPRD="'||sms_to_xml(rcd_retrieve.rhe_crt_yyyypp)||'"';
+      var_output := var_output||' CRTWEK="'||sms_to_xml(rcd_retrieve.rhe_crt_yyyyppw)||'"';
+      var_output := var_output||' CRTDAY="'||sms_to_xml(rcd_retrieve.rhe_crt_yyyyppdd)||'"';
+      var_output := var_output||' UPDUSR="'||sms_to_xml(rcd_retrieve.rhe_upd_user)||'"';
+      var_output := var_output||' UPDDTE="'||sms_to_xml(rcd_retrieve.rhe_upd_date)||'"';
+      var_output := var_output||' RPTSTS="'||sms_to_xml(rcd_retrieve.rhe_status)||'"/>';
+      pipe row(sms_xml_object(var_output));
+
+      /*-*/
+      /* Pipe the message line XML when required
+      /*-*/
+      open csr_message;
+      loop
+         fetch csr_message into rcd_message;
+         if csr_message%notfound then
+            exit;
+          end if;
+         pipe row(sms_xml_object('<MESSAGE MSGSEQ="'||to_char(rcd_message.rme_msg_seqn)||'" MSGTXT="'||sms_to_xml(rcd_message.rme_msg_text)||'" MSGTIM="'||sms_to_xml(to_char(rcd_message.rme_msg_time,'yyyy/mm/dd hh24:mi:ss'))||'" MSGSTS="'||sms_to_xml(rcd_message.rme_msg_status)||'"/>'));
+      end loop;
+      close csr_message;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(sms_xml_object('</SMS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RPT_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_data;
+
+   /**********************************************************/
+   /* This procedure performs the retrieve recipient routine */
+   /**********************************************************/
+   function retrieve_recipient return sms_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_qry_code varchar2(64);
+      var_qry_date varchar2(14);
+      var_msg_seqn number;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_recipient is
+         select t01.rre_rcp_code,
+                t01.rre_rcp_name,
+                t01.rre_rcp_mobile
+           from sms_rpt_recipient t01
+          where t01.rre_qry_code = var_qry_code
+            and t01.rre_qry_date = var_qry_date
+            and t01.rre_msg_seqn = var_msg_seqn
+          order by t01.rre_rcp_code asc;
+      rcd_recipient csr_recipient%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      var_qry_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@QRYCDE'));
+      var_qry_date := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@QRYDTE'));
+      var_msg_seqn := sms_to_number(xslProcessor.valueOf(obj_sms_request,'@MSGSEQ'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*ENQRCP' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the recipient line XML
+      /*-*/
+      open csr_recipient;
+      loop
+         fetch csr_recipient into rcd_recipient;
+         if csr_recipient%notfound then
+            exit;
+          end if;
+         pipe row(sms_xml_object('<RECIPIENT RCPCDE="'||to_char(rcd_recipient.rre_rcp_code)||'" RCPNAM="'||sms_to_xml(rcd_recipient.rre_rcp_name)||'" RCPMOB="'||sms_to_xml(rcd_recipient.rre_rcp_mobile)||'"/>'));
+      end loop;
+      close csr_recipient;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(sms_xml_object('</SMS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RPT_FUNCTION - RETRIEVE_RECIPIENT - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_recipient;
 
    /************************************************/
    /* This procedure performs the generate routine */
