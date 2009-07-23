@@ -1,20 +1,20 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package sms_app.sms_rcp_function as
+create or replace package sms_app.sms_abb_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : sms_rcp_function
+    Package : sms_abb_function
     Owner   : sms_app
 
     Description
     -----------
-    SMS Reporting System - Recipient Function
+    SMS Reporting System - Abbreviation Function
 
-    This package contain the recipient functions and procedures.
+    This package contain the abbreviation functions and procedures.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -29,13 +29,13 @@ create or replace package sms_app.sms_rcp_function as
    function retrieve_data return sms_xml_type pipelined;
    procedure update_data(par_user in varchar2);
 
-end sms_rcp_function;
+end sms_abb_function;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body sms_app.sms_rcp_function as
+create or replace package body sms_app.sms_abb_function as
 
    /*-*/
    /* Private exceptions
@@ -55,8 +55,8 @@ create or replace package body sms_app.sms_rcp_function as
       obj_xml_document xmlDom.domDocument;
       obj_sms_request xmlDom.domNode;
       var_action varchar2(32);
-      var_str_code varchar2(64);
-      var_end_code varchar2(64);
+      var_str_code varchar2(256);
+      var_end_code varchar2(256);
       var_output varchar2(2000 char);
       var_pag_size number;
 
@@ -65,34 +65,31 @@ create or replace package body sms_app.sms_rcp_function as
       /*-*/
       cursor csr_slct is
          select t01.*
-           from (select t01.rec_rcp_code,
-                        t01.rec_rcp_name,
-                        decode(t01.rec_status,'0','Inactive','1','Active','*UNKNOWN') as rec_status
-                   from sms_recipient t01
-                  where (var_str_code is null or t01.rec_rcp_code >= var_str_code)
-                  order by t01.rec_rcp_code asc) t01
+           from (select t01.abb_dim_data,
+                        t01.abb_dim_abbr
+                   from sms_abbreviation t01
+                  where (var_str_code is null or t01.abb_dim_data >= var_str_code)
+                  order by t01.abb_dim_data asc) t01
           where rownum <= var_pag_size;
 
       cursor csr_next is
          select t01.*
-           from (select t01.rec_rcp_code,
-                        t01.rec_rcp_name,
-                        decode(t01.rec_status,'0','Inactive','1','Active','*UNKNOWN') as rec_status
-                   from sms_recipient t01
-                  where (var_action = '*NXTRCP' and (var_end_code is null or t01.rec_rcp_code > var_end_code)) or
-                        (var_action = '*PRVRCP')
-                  order by t01.rec_rcp_code asc) t01
+           from (select t01.abb_dim_data,
+                        t01.abb_dim_abbr
+                   from sms_abbreviation t01
+                  where (var_action = '*NXTABB' and (var_end_code is null or t01.abb_dim_data > var_end_code)) or
+                        (var_action = '*PRVABB')
+                  order by t01.abb_dim_data asc) t01
           where rownum <= var_pag_size;
 
       cursor csr_prev is
          select t01.*
-           from (select t01.rec_rcp_code,
-                        t01.rec_rcp_name,
-                        decode(t01.rec_status,'0','Inactive','1','Active','*UNKNOWN') as rec_status
-                   from sms_recipient t01
-                  where (var_action = '*PRVRCP' and (var_str_code is null or t01.rec_rcp_code < var_str_code)) or
-                        (var_action = '*NXTRCP')
-                  order by t01.rec_rcp_code desc) t01
+           from (select t01.abb_dim_data,
+                        t01.abb_dim_abbr
+                   from sms_abbreviation t01
+                  where (var_action = '*PRVABB' and (var_str_code is null or t01.abb_dim_data < var_str_code)) or
+                        (var_action = '*NXTABB')
+                  order by t01.abb_dim_data desc) t01
           where rownum <= var_pag_size;
 
       /*-*/
@@ -127,7 +124,7 @@ create or replace package body sms_app.sms_rcp_function as
       var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
       var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*SELRCP' and var_action != '*PRVRCP' and var_action != '*NXTRCP' then
+      if var_action != '*SELABB' and var_action != '*PRVABB' and var_action != '*NXTABB' then
          sms_gen_function.add_mesg_data('Invalid request action');
       end if;
       if sms_gen_function.get_mesg_count != 0 then
@@ -140,49 +137,49 @@ create or replace package body sms_app.sms_rcp_function as
       pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
 
       /*-*/
-      /* Retrieve the recipient list and pipe the results
+      /* Retrieve the abbreviation list and pipe the results
       /*-*/
       var_pag_size := 20;
-      if var_action = '*SELRCP' then
+      if var_action = '*SELABB' then
          tbl_list.delete;
          open csr_slct;
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(sms_xml_object('<LSTROW RCPCDE="'||to_char(tbl_list(idx).rec_rcp_code)||'" RCPNAM="'||sms_to_xml(tbl_list(idx).rec_rcp_name)||'" RCPSTS="'||sms_to_xml(tbl_list(idx).rec_status)||'"/>'));
+            pipe row(sms_xml_object('<LSTROW ABBCDE="'||to_char(tbl_list(idx).abb_dim_data)||'" ABBNAM="'||sms_to_xml(tbl_list(idx).abb_dim_abbr)||'"/>'));
          end loop;
-      elsif var_action = '*NXTRCP' then
+      elsif var_action = '*NXTABB' then
          tbl_list.delete;
          open csr_next;
          fetch csr_next bulk collect into tbl_list;
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(sms_xml_object('<LSTROW RCPCDE="'||to_char(tbl_list(idx).rec_rcp_code)||'" RCPNAM="'||sms_to_xml(tbl_list(idx).rec_rcp_name)||'" RCPSTS="'||sms_to_xml(tbl_list(idx).rec_status)||'"/>'));
+               pipe row(sms_xml_object('<LSTROW ABBCDE="'||to_char(tbl_list(idx).abb_dim_data)||'" ABBNAM="'||sms_to_xml(tbl_list(idx).abb_dim_abbr)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(sms_xml_object('<LSTROW RCPCDE="'||to_char(tbl_list(idx).rec_rcp_code)||'" RCPNAM="'||sms_to_xml(tbl_list(idx).rec_rcp_name)||'" RCPSTS="'||sms_to_xml(tbl_list(idx).rec_status)||'"/>'));
+               pipe row(sms_xml_object('<LSTROW ABBCDE="'||to_char(tbl_list(idx).abb_dim_data)||'" ABBNAM="'||sms_to_xml(tbl_list(idx).abb_dim_abbr)||'"/>'));
             end loop;
          end if;
-      elsif var_action = '*PRVRCP' then
+      elsif var_action = '*PRVABB' then
          tbl_list.delete;
          open csr_prev;
          fetch csr_prev bulk collect into tbl_list;
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(sms_xml_object('<LSTROW RCPCDE="'||to_char(tbl_list(idx).rec_rcp_code)||'" RCPNAM="'||sms_to_xml(tbl_list(idx).rec_rcp_name)||'" RCPSTS="'||sms_to_xml(tbl_list(idx).rec_status)||'"/>'));
+               pipe row(sms_xml_object('<LSTROW ABBCDE="'||to_char(tbl_list(idx).abb_dim_data)||'" ABBNAM="'||sms_to_xml(tbl_list(idx).abb_dim_abbr)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(sms_xml_object('<LSTROW RCPCDE="'||to_char(tbl_list(idx).rec_rcp_code)||'" RCPNAM="'||sms_to_xml(tbl_list(idx).rec_rcp_name)||'" RCPSTS="'||sms_to_xml(tbl_list(idx).rec_status)||'"/>'));
+               pipe row(sms_xml_object('<LSTROW ABBCDE="'||to_char(tbl_list(idx).abb_dim_data)||'" ABBNAM="'||sms_to_xml(tbl_list(idx).abb_dim_abbr)||'"/>'));
             end loop;
          end if;
       end if;
@@ -210,7 +207,7 @@ create or replace package body sms_app.sms_rcp_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RCP_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_ABB_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -230,7 +227,7 @@ create or replace package body sms_app.sms_rcp_function as
       obj_sms_request xmlDom.domNode;
       var_action varchar2(32);
       var_found boolean;
-      var_rcp_code varchar2(64);
+      var_dim_data varchar2(256);
       var_output varchar2(2000 char);
 
       /*-*/
@@ -238,8 +235,8 @@ create or replace package body sms_app.sms_rcp_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*
-           from sms_recipient t01
-          where t01.rec_rcp_code = var_rcp_code;
+           from sms_abbreviation t01
+          where t01.abb_dim_data = var_dim_data;
       rcd_retrieve csr_retrieve%rowtype;
 
    /*-------------*/
@@ -265,9 +262,9 @@ create or replace package body sms_app.sms_rcp_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_rcp_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPCDE'));
+      var_dim_data := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ABBCDE'));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDRCP' and var_action != '*CRTRCP' and var_action != '*CPYRCP' then
+      if var_action != '*UPDABB' then
          sms_gen_function.add_mesg_data('Invalid request action');
       end if;
       if sms_gen_function.get_mesg_count != 0 then
@@ -275,9 +272,9 @@ create or replace package body sms_app.sms_rcp_function as
       end if;
 
       /*-*/
-      /* Retrieve the existing recipient when required
+      /* Retrieve the existing abbreviation when required
       /*-*/
-      if var_action = '*UPDRCP' or var_action = '*CPYRCP' then
+      if var_action = '*UPDABB' then
          var_found := false;
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
@@ -286,7 +283,7 @@ create or replace package body sms_app.sms_rcp_function as
          end if;
          close csr_retrieve;
          if var_found = false then
-            sms_gen_function.add_mesg_data('Recipient ('||var_rcp_code||') does not exist');
+            sms_gen_function.add_mesg_data('Abbreviation ('||var_dim_data||') does not exist');
          end if;
          if sms_gen_function.get_mesg_count != 0 then
             return;
@@ -299,28 +296,11 @@ create or replace package body sms_app.sms_rcp_function as
       pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
 
       /*-*/
-      /* Pipe the recipient XML
+      /* Pipe the abbreviation XML
       /*-*/
-      if var_action = '*UPDRCP' then
-         var_output := '<RECIPIENT RCPCDE="'||sms_to_xml(rcd_retrieve.rec_rcp_code)||'"';
-         var_output := var_output||' RCPNAM="'||sms_to_xml(rcd_retrieve.rec_rcp_name)||'"';
-         var_output := var_output||' RCPMOB="'||sms_to_xml(rcd_retrieve.rec_rcp_mobile)||'"';
-         var_output := var_output||' RCPEMA="'||sms_to_xml(rcd_retrieve.rec_rcp_email)||'"';
-         var_output := var_output||' RCPSTS="'||sms_to_xml(rcd_retrieve.rec_status)||'"/>';
-         pipe row(sms_xml_object(var_output));
-      elsif var_action = '*CPYRCP' then
-         var_output := '<RECIPIENT RCPCDE=""';
-         var_output := var_output||' RCPNAM="'||sms_to_xml(rcd_retrieve.rec_rcp_name)||'"';
-         var_output := var_output||' RCPMOB="'||sms_to_xml(rcd_retrieve.rec_rcp_mobile)||'"';
-         var_output := var_output||' RCPEMA="'||sms_to_xml(rcd_retrieve.rec_rcp_email)||'"';
-         var_output := var_output||' RCPSTS="'||sms_to_xml(rcd_retrieve.rec_status)||'"/>';
-         pipe row(sms_xml_object(var_output));
-      elsif var_action = '*CRTRCP' then
-         var_output := '<RECIPIENT RCPCDE=""';
-         var_output := var_output||' RCPNAM=""';
-         var_output := var_output||' RCPMOB=""';
-         var_output := var_output||' RCPEMA=""';
-         var_output := var_output||' RCPSTS="1"/>';
+      if var_action = '*UPDABB' then
+         var_output := '<ABBREVIATION ABBCDE="'||sms_to_xml(rcd_retrieve.abb_dim_data)||'"';
+         var_output := var_output||' ABBNAM="'||sms_to_xml(rcd_retrieve.abb_dim_abbr)||'"/>';
          pipe row(sms_xml_object(var_output));
       end if;
 
@@ -347,7 +327,7 @@ create or replace package body sms_app.sms_rcp_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RCP_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_ABB_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -368,15 +348,15 @@ create or replace package body sms_app.sms_rcp_function as
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
-      rcd_sms_recipient sms_recipient%rowtype;
+      rcd_sms_abbreviation sms_abbreviation%rowtype;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
          select t01.*
-           from sms_recipient t01
-          where t01.rec_rcp_code = rcd_sms_recipient.rec_rcp_code
+           from sms_abbreviation t01
+          where t01.abb_dim_data = rcd_sms_abbreviation.abb_dim_data
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -399,19 +379,14 @@ create or replace package body sms_app.sms_rcp_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      if var_action != '*UPDRCP' and var_action != '*CRTRCP' then
+      if var_action != '*UPDABB' then
          sms_gen_function.add_mesg_data('Invalid request action');
       end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_sms_recipient.rec_rcp_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPCDE'));
-      rcd_sms_recipient.rec_rcp_name := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPNAM'));
-      rcd_sms_recipient.rec_rcp_mobile := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPMOB'));
-      rcd_sms_recipient.rec_rcp_email := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPEMA'));
-      rcd_sms_recipient.rec_status := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPSTS'));
-      rcd_sms_recipient.rec_upd_user := upper(par_user);
-      rcd_sms_recipient.rec_upd_date := sysdate;
+      rcd_sms_abbreviation.abb_dim_data := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ABBCDE'));
+      rcd_sms_abbreviation.abb_dim_abbr := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ABBNAM'));
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -419,32 +394,17 @@ create or replace package body sms_app.sms_rcp_function as
       /*-*/
       /* Validate the input
       /*-*/
-      if rcd_sms_recipient.rec_rcp_code is null then
-         sms_gen_function.add_mesg_data('Recipient code must be supplied');
-      end if;
-      if rcd_sms_recipient.rec_rcp_name is null then
-         sms_gen_function.add_mesg_data('Recipient name must be supplied');
-      end if;
-      if rcd_sms_recipient.rec_rcp_mobile is null then
-         sms_gen_function.add_mesg_data('Recipient mobile must be supplied');
-      end if;
-      if rcd_sms_recipient.rec_rcp_email is null then
-         sms_gen_function.add_mesg_data('Recipient email must be supplied');
-      end if;
-      if rcd_sms_recipient.rec_status is null or (rcd_sms_recipient.rec_status != '0' and rcd_sms_recipient.rec_status != '1') then
-         sms_gen_function.add_mesg_data('Recipient status must be (0)inactive or (1)active');
-      end if;
-      if rcd_sms_recipient.rec_upd_user is null then
-         sms_gen_function.add_mesg_data('Update user must be supplied');
+      if rcd_sms_abbreviation.abb_dim_data is null then
+         sms_gen_function.add_mesg_data('Abbreviation dimension data must be supplied');
       end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
-      /* Process the recipient definition
+      /* Process the abbreviation definition
       /*-*/
-      if var_action = '*UPDRCP' then
+      if var_action = '*UPDABB' then
          var_confirm := 'updated';
          var_found := false;
          begin
@@ -457,29 +417,16 @@ create or replace package body sms_app.sms_rcp_function as
          exception
             when others then
                var_found := true;
-               sms_gen_function.add_mesg_data('Recipient code ('||rcd_sms_recipient.rec_rcp_code||') is currently locked');
+               sms_gen_function.add_mesg_data('Abbreviation dimension data ('||rcd_sms_abbreviation.abb_dim_data||') is currently locked');
          end;
          if var_found = false then
-            sms_gen_function.add_mesg_data('Recipient code ('||rcd_sms_recipient.rec_rcp_code||') does not exist');
+            sms_gen_function.add_mesg_data('Abbreviation dimension data ('||rcd_sms_abbreviation.abb_dim_data||') does not exist');
          end if;
          if sms_gen_function.get_mesg_count = 0 then
-            update sms_recipient
-               set rec_rcp_name = rcd_sms_recipient.rec_rcp_name,
-                   rec_rcp_mobile = rcd_sms_recipient.rec_rcp_mobile,
-                   rec_rcp_email = rcd_sms_recipient.rec_rcp_email,
-                   rec_status = rcd_sms_recipient.rec_status,
-                   rec_upd_user = rcd_sms_recipient.rec_upd_user,
-                   rec_upd_date = rcd_sms_recipient.rec_upd_date
-             where rec_rcp_code = rcd_sms_recipient.rec_rcp_code;
+            update sms_abbreviation
+               set abb_dim_abbr = rcd_sms_abbreviation.abb_dim_abbr
+             where abb_dim_data = rcd_sms_abbreviation.abb_dim_data;
          end if;
-      elsif var_action = '*CRTRCP' then
-         var_confirm := 'created';
-         begin
-            insert into sms_recipient values rcd_sms_recipient;
-         exception
-            when dup_val_on_index then
-               sms_gen_function.add_mesg_data('Recipient code ('||rcd_sms_recipient.rec_rcp_code||') already exists - unable to create');
-         end;
       end if;
       if sms_gen_function.get_mesg_count != 0 then
          rollback;
@@ -499,7 +446,7 @@ create or replace package body sms_app.sms_rcp_function as
       /*-*/
       /* Send the confirm message
       /*-*/
-      sms_gen_function.set_cfrm_data('Recipient ('||to_char(rcd_sms_recipient.rec_rcp_code)||') successfully '||var_confirm);
+      sms_gen_function.set_cfrm_data('Abbreviation dimension data ('||to_char(rcd_sms_abbreviation.abb_dim_data)||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
@@ -519,18 +466,18 @@ create or replace package body sms_app.sms_rcp_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_RCP_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_ABB_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end update_data;
 
-end sms_rcp_function;
+end sms_abb_function;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym sms_rcp_function for sms_app.sms_rcp_function;
-grant execute on sms_app.sms_rcp_function to public;
+create or replace public synonym sms_abb_function for sms_app.sms_abb_function;
+grant execute on sms_app.sms_abb_function to public;
