@@ -157,7 +157,9 @@ create or replace package body sms_app.sms_rep_function as
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
       var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
+      var_str_date := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRDTE'));
       var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
+      var_end_date := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDDTE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELRPT' and var_action != '*PRVRPT' and var_action != '*NXTRPT' then
          sms_gen_function.add_mesg_data('Invalid request action');
