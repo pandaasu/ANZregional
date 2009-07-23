@@ -242,6 +242,36 @@ create or replace package body sms_app.sms_prf_function as
           where t01.pro_prf_code = var_prf_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_recipient is
+         select t01.*,
+                decode(t02.pre_rcp_code,null,'0','1') as rcp_select
+           from sms_recipient t01,
+                sms_pro_recipient t02
+          where t01.rec_rcp_code = t02.pre_rcp_code(+)
+            and rcd_retrieve.pro_prf_code = t02.pre_prf_code(+)
+          order by t01.rec_rcp_code asc;
+      rcd_recipient csr_recipient%rowtype;
+
+      cursor csr_filter is
+         select t01.*,
+                decode(t02.pfi_flt_code,null,'0','1') as flt_select
+           from sms_filter t01,
+                sms_pro_filter t02
+          where t01.fil_flt_code = t02.pfi_flt_code(+)
+            and rcd_retrieve.pro_prf_code = t02.pfi_prf_code(+)
+          order by t01.fil_flt_code asc;
+      rcd_filter csr_filter%rowtype;
+
+      cursor csr_message is
+         select t01.*,
+                decode(t02.pme_msg_code,null,'0','1') as msg_select
+           from sms_message t01,
+                sms_pro_message t02
+          where t01.mes_msg_code = t02.pme_msg_code(+)
+            and rcd_retrieve.pro_prf_code = t02.pme_prf_code(+)
+          order by t01.mes_msg_code asc;
+      rcd_message csr_message%rowtype;
+
       cursor csr_query is
          select t01.*
            from sms_query t01
@@ -362,6 +392,39 @@ create or replace package body sms_app.sms_prf_function as
       end if;
 
       /*-*/
+      /* Pipe the profile detail XML when required
+      /*-*/
+      if var_action != 'CRTPRF' then
+         open csr_recipient;
+         loop
+            fetch csr_recipient into rcd_recipient;
+            if csr_recipient%notfound then
+               exit;
+            end if;
+            pipe row(sms_xml_object('<RECIPIENT RCPCDE="'||sms_to_xml(rcd_recipient.rec_rcp_code)||'" RCPNAM="'||sms_to_xml('('||rcd_recipient.rec_rcp_code||') '||rcd_recipient.rec_rcp_name)||'" RCPSEL="'||sms_to_xml(rcd_recipient.rcp_select)||'"/>'));
+         end loop;
+         close csr_recipient;
+         open csr_filter;
+         loop
+            fetch csr_filter into rcd_filter;
+            if csr_filter%notfound then
+               exit;
+            end if;
+            pipe row(sms_xml_object('<FILTER FLTCDE="'||sms_to_xml(rcd_filter.fil_flt_code)||'" FLTNAM="'||sms_to_xml('('||rcd_filter.fil_flt_code||') '||rcd_filter.fil_flt_name)||'" FLTSEL="'||sms_to_xml(rcd_filter.flt_select)||'"/>'));
+         end loop;
+         close csr_filter;
+         open csr_message;
+         loop
+            fetch csr_message into rcd_message;
+            if csr_message%notfound then
+               exit;
+            end if;
+            pipe row(sms_xml_object('<MESSAGE MSGCDE="'||sms_to_xml(rcd_message.mes_msg_code)||'" MSGNAM="'||sms_to_xml('('||rcd_message.mes_msg_code||') '||rcd_message.mes_msg_name)||'" MSGSEL="'||sms_to_xml(rcd_message.msg_select)||'"/>'));
+         end loop;
+         close csr_message;
+      end if;
+
+      /*-*/
       /* Pipe the XML end
       /*-*/
       pipe row(sms_xml_object('</SMS_RESPONSE>'));
@@ -402,10 +465,19 @@ create or replace package body sms_app.sms_prf_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_sms_request xmlDom.domNode;
+      obj_rcp_list xmlDom.domNodeList;
+      obj_rcp_node xmlDom.domNode;
+      obj_flt_list xmlDom.domNodeList;
+      obj_flt_node xmlDom.domNode;
+      obj_msg_list xmlDom.domNodeList;
+      obj_msg_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
       rcd_sms_profile sms_profile%rowtype;
+      rcd_sms_pro_recipient sms_pro_recipient%rowtype;
+      rcd_sms_pro_filter sms_pro_filter%rowtype;
+      rcd_sms_pro_message sms_pro_message%rowtype;
 
       /*-*/
       /* Local cursors
@@ -557,6 +629,9 @@ create or replace package body sms_app.sms_prf_function as
                    pro_snd_day06 = rcd_sms_profile.pro_snd_day06,
                    pro_snd_day07 = rcd_sms_profile.pro_snd_day07
              where pro_prf_code = rcd_sms_profile.pro_prf_code;
+            delete from sms_pro_recipient where pre_prf_code = rcd_sms_profile.pro_prf_code;
+            delete from sms_pro_filter where pfi_prf_code = rcd_sms_profile.pro_prf_code;
+            delete from sms_pro_message where pme_prf_code = rcd_sms_profile.pro_prf_code;
          end if;
       elsif var_action = '*CRTPRF' then
          var_confirm := 'created';
@@ -571,6 +646,39 @@ create or replace package body sms_app.sms_prf_function as
          rollback;
          return;
       end if;
+
+      /*-*/
+      /* Retrieve and insert the profile recipient data
+      /*-*/
+      rcd_sms_pro_recipient.pre_prf_code := rcd_sms_profile.pro_prf_code;
+      obj_rcp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/RECIPIENT');
+      for idx in 0..xmlDom.getLength(obj_rcp_list)-1 loop
+         obj_rcp_node := xmlDom.item(obj_rcp_list,idx);
+         rcd_sms_pro_recipient.pre_rcp_code := sms_from_xml(xslProcessor.valueOf(obj_rcp_node,'@RCPCDE'));
+         insert into sms_pro_recipient values rcd_sms_pro_recipient;
+      end loop;
+
+      /*-*/
+      /* Retrieve and insert the profile filter data
+      /*-*/
+      rcd_sms_pro_filter.pfi_prf_code := rcd_sms_profile.pro_prf_code;
+      obj_flt_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/FILTER');
+      for idx in 0..xmlDom.getLength(obj_flt_list)-1 loop
+         obj_flt_node := xmlDom.item(obj_flt_list,idx);
+         rcd_sms_pro_filter.pfi_flt_code := sms_from_xml(xslProcessor.valueOf(obj_flt_node,'@FLTCDE'));
+         insert into sms_pro_filter values rcd_sms_pro_filter;
+      end loop;
+
+      /*-*/
+      /* Retrieve and insert the profile message data
+      /*-*/
+      rcd_sms_pro_message.pme_prf_code := rcd_sms_profile.pro_prf_code;
+      obj_msg_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/MESSAGE');
+      for idx in 0..xmlDom.getLength(obj_msg_list)-1 loop
+         obj_msg_node := xmlDom.item(obj_msg_list,idx);
+         rcd_sms_pro_message.pme_msg_code := sms_from_xml(xslProcessor.valueOf(obj_msg_node,'@MSGCDE'));
+         insert into sms_pro_message values rcd_sms_pro_message;
+      end loop;
 
       /*-*/
       /* Free the XML document
