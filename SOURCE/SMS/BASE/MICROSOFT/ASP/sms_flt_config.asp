@@ -182,7 +182,7 @@ sub PaintFunction()%>
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
       doActivityStart(document.body);
       window.setTimeout('requestSelectList(\'*SELFLT\');',10);
    }
@@ -438,7 +438,7 @@ sub PaintFunction()%>
          strXML = strXML+' FLTCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<SMS_REQUEST ACTION="*CRTFLT"';
-         strXML = strXML+' FLTCDE="'+fixXML(document.getElementById('DEF_FltCode').value.toUpperCase())+'"';
+         strXML = strXML+' FLTCDE="'+fixXML(document.getElementById('DEF_FltCode').value)+'"';
       }
       strXML = strXML+' FLTNAM="'+fixXML(document.getElementById('DEF_FltName').value)+'"';
       if (objFltStat.selectedIndex == -1) {
@@ -534,7 +534,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -578,7 +578,7 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Filter Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FltCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_FltCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>

@@ -182,7 +182,7 @@ sub PaintFunction()%>
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
       doActivityStart(document.body);
       window.setTimeout('requestSelectList(\'*SELMSG\');',10);
    }
@@ -373,17 +373,46 @@ sub PaintFunction()%>
          displayScreen('dspDefine');
          document.getElementById('DEF_MsgCode').value = '';
          document.getElementById('DEF_MsgName').value = '';
-         document.getElementById('DEF_DimVal1').value = '';
-         document.getElementById('DEF_DimVal2').value = '';
-         document.getElementById('DEF_DimVal3').value = '';
-         document.getElementById('DEF_DimVal4').value = '';
-         document.getElementById('DEF_DimVal5').value = '';
-         document.getElementById('DEF_DimVal6').value = '';
-         document.getElementById('DEF_DimVal7').value = '';
+         document.getElementById('DEF_DetTxt1').value = '';
+         document.getElementById('DEF_TotTxt1').value = '';
+         document.getElementById('DEF_DetTxt2').value = '';
+         document.getElementById('DEF_TotTxt2').value = '';
+         document.getElementById('DEF_DetTxt3').value = '';
+         document.getElementById('DEF_TotTxt3').value = '';
+         document.getElementById('DEF_DetTxt4').value = '';
+         document.getElementById('DEF_TotTxt4').value = '';
+         document.getElementById('DEF_DetTxt5').value = '';
+         document.getElementById('DEF_TotTxt5').value = '';
+         document.getElementById('DEF_DetTxt6').value = '';
+         document.getElementById('DEF_TotTxt6').value = '';
+         document.getElementById('DEF_DetTxt7').value = '';
+         document.getElementById('DEF_TotTxt7').value = '';
+         document.getElementById('DEF_DetTxt8').value = '';
+         document.getElementById('DEF_TotTxt8').value = '';
+         document.getElementById('DEF_DetTxt9').value = '';
+         document.getElementById('DEF_TotTxt9').value = '';
          var strMsgStat = '';
          var strQryCode = '';
+         var strTotChd1 = '';
+         var strTotChd2 = '';
+         var strTotChd3 = '';
+         var strTotChd4 = '';
+         var strTotChd5 = '';
+         var strTotChd6 = '';
+         var strTotChd7 = '';
+         var strTotChd8 = '';
+         var strTotChd9 = '';
          var objMsgStat = document.getElementById('DEF_MsgStat');
          var objQryCode = document.getElementById('DEF_QryCode');
+         var objTotChd1 = document.getElementById('DEF_TotChd1');
+         var objTotChd2 = document.getElementById('DEF_TotChd2');
+         var objTotChd3 = document.getElementById('DEF_TotChd3');
+         var objTotChd4 = document.getElementById('DEF_TotChd4');
+         var objTotChd5 = document.getElementById('DEF_TotChd5');
+         var objTotChd6 = document.getElementById('DEF_TotChd6');
+         var objTotChd7 = document.getElementById('DEF_TotChd7');
+         var objTotChd8 = document.getElementById('DEF_TotChd8');
+         var objTotChd9 = document.getElementById('DEF_TotChd9');
          objQryCode.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'QRY_LIST') {
@@ -391,20 +420,46 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'MESSAGE') {
                document.getElementById('DEF_MsgCode').value = objElements[i].getAttribute('MSGCDE');
                document.getElementById('DEF_MsgName').value = objElements[i].getAttribute('MSGNAM');
-               document.getElementById('DEF_DimVal1').value = objElements[i].getAttribute('DIMV01');
-               document.getElementById('DEF_DimVal2').value = objElements[i].getAttribute('DIMV02');
-               document.getElementById('DEF_DimVal3').value = objElements[i].getAttribute('DIMV03');
-               document.getElementById('DEF_DimVal4').value = objElements[i].getAttribute('DIMV04');
-               document.getElementById('DEF_DimVal5').value = objElements[i].getAttribute('DIMV05');
-               document.getElementById('DEF_DimVal6').value = objElements[i].getAttribute('DIMV06');
-               document.getElementById('DEF_DimVal7').value = objElements[i].getAttribute('DIMV07');
-               document.getElementById('DEF_DimVal8').value = objElements[i].getAttribute('DIMV08');
-               document.getElementById('DEF_DimVal9').value = objElements[i].getAttribute('DIMV09');
                strMsgStat = objElements[i].getAttribute('MSGSTS');
                strQryCode = objElements[i].getAttribute('QRYCDE');
-            } else if (objElements[i].nodeName == 'DETAIL') {
-               document.getElementById('DEF_MsgCode').value = objElements[i].getAttribute('MSGCDE');
-               document.getElementById('DEF_MsgName').value = objElements[i].getAttribute('MSGNAM');
+            } else if (objElements[i].nodeName == 'MES_LINE') {
+               if (objElements[i].getAttribute('MSGLIN') == '*LVL01') {
+                  document.getElementById('DEF_DetTxt1').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt1').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd1 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL02') {
+                  document.getElementById('DEF_DetTxt2').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt2').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd2 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL03') {
+                  document.getElementById('DEF_DetTxt3').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt3').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd3 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL04') {
+                  document.getElementById('DEF_DetTxt4').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt4').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd4 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL05') {
+                  document.getElementById('DEF_DetTxt5').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt5').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd5 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL06') {
+                  document.getElementById('DEF_DetTxt6').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt6').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd6 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL07') {
+                  document.getElementById('DEF_DetTxt7').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt7').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd7 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL08') {
+                  document.getElementById('DEF_DetTxt8').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt8').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd8 = objElements[i].getAttribute('TOTCHD');
+               } else if (objElements[i].getAttribute('MSGLIN') == '*LVL09') {
+                  document.getElementById('DEF_DetTxt9').value = objElements[i].getAttribute('DETTXT');
+                  document.getElementById('DEF_TotTxt9').value = objElements[i].getAttribute('TOTTXT');
+                  strTotChd9 = objElements[i].getAttribute('TOTCHD');
+               }
             }
          }
          objMsgStat.selectedIndex = -1;
@@ -424,6 +479,96 @@ sub PaintFunction()%>
          if (objQryCode.selectedIndex == -1 && objQryCode.length > 0) {
             objQryCode.selectedIndex = 0;
          }
+         objTotChd1.selectedIndex = -1;
+         for (var i=0;i<objTotChd1.length;i++) {
+            if (objTotChd1.options[i].value == strTotChd1) {
+               objTotChd1.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd1.selectedIndex == -1) {
+            objTotChd1.selectedIndex = 0;
+         }
+         objTotChd2.selectedIndex = -1;
+         for (var i=0;i<objTotChd2.length;i++) {
+            if (objTotChd2.options[i].value == strTotChd2) {
+               objTotChd2.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd2.selectedIndex == -1) {
+            objTotChd2.selectedIndex = 0;
+         }
+         objTotChd3.selectedIndex = -1;
+         for (var i=0;i<objTotChd3.length;i++) {
+            if (objTotChd3.options[i].value == strTotChd3) {
+               objTotChd3.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd3.selectedIndex == -1) {
+            objTotChd3.selectedIndex = 0;
+         }
+         objTotChd4.selectedIndex = -1;
+         for (var i=0;i<objTotChd4.length;i++) {
+            if (objTotChd4.options[i].value == strTotChd4) {
+               objTotChd4.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd4.selectedIndex == -1) {
+            objTotChd4.selectedIndex = 0;
+         }
+         objTotChd5.selectedIndex = -1;
+         for (var i=0;i<objTotChd5.length;i++) {
+            if (objTotChd5.options[i].value == strTotChd5) {
+               objTotChd5.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd5.selectedIndex == -1) {
+            objTotChd5.selectedIndex = 0;
+         }
+         objTotChd6.selectedIndex = -1;
+         for (var i=0;i<objTotChd6.length;i++) {
+            if (objTotChd6.options[i].value == strTotChd6) {
+               objTotChd6.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd6.selectedIndex == -1) {
+            objTotChd6.selectedIndex = 0;
+         }
+         objTotChd7.selectedIndex = -1;
+         for (var i=0;i<objTotChd7.length;i++) {
+            if (objTotChd7.options[i].value == strTotChd7) {
+               objTotChd7.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd7.selectedIndex == -1) {
+            objTotChd7.selectedIndex = 0;
+         }
+         objTotChd8.selectedIndex = -1;
+         for (var i=0;i<objTotChd8.length;i++) {
+            if (objTotChd8.options[i].value == strTotChd8) {
+               objTotChd8.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd8.selectedIndex == -1) {
+            objTotChd8.selectedIndex = 0;
+         }
+         objTotChd9.selectedIndex = -1;
+         for (var i=0;i<objTotChd9.length;i++) {
+            if (objTotChd9.options[i].value == strTotChd9) {
+               objTotChd9.options[i].selected = true;
+               break;
+            }
+         }
+         if (objTotChd9.selectedIndex == -1) {
+            objTotChd9.selectedIndex = 0;
+         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_MsgName').focus();
          } else {
@@ -435,13 +580,22 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objMsgStat = document.getElementById('DEF_MsgStat');
       var objQryCode = document.getElementById('DEF_QryCode');
+      var objTotChd1 = document.getElementById('DEF_TotChd1');
+      var objTotChd2 = document.getElementById('DEF_TotChd2');
+      var objTotChd3 = document.getElementById('DEF_TotChd3');
+      var objTotChd4 = document.getElementById('DEF_TotChd4');
+      var objTotChd5 = document.getElementById('DEF_TotChd5');
+      var objTotChd6 = document.getElementById('DEF_TotChd6');
+      var objTotChd7 = document.getElementById('DEF_TotChd7');
+      var objTotChd8 = document.getElementById('DEF_TotChd8');
+      var objTotChd9 = document.getElementById('DEF_TotChd9');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<SMS_REQUEST ACTION="*UPDMSG"';
          strXML = strXML+' MSGCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<SMS_REQUEST ACTION="*CRTMSG"';
-         strXML = strXML+' MSGCDE="'+fixXML(document.getElementById('DEF_MsgCode').value.toUpperCase())+'"';
+         strXML = strXML+' MSGCDE="'+fixXML(document.getElementById('DEF_MsgCode').value)+'"';
       }
       strXML = strXML+' MSGNAM="'+fixXML(document.getElementById('DEF_MsgName').value)+'"';
       if (objMsgStat.selectedIndex == -1) {
@@ -454,16 +608,17 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' QRYCDE="'+fixXML(objQryCode.options[objQryCode.selectedIndex].value)+'"';
       }
-      strXML = strXML+' DIMV01="'+fixXML(document.getElementById('DEF_DimVal1').value)+'"';
-      strXML = strXML+' DIMV02="'+fixXML(document.getElementById('DEF_DimVal2').value)+'"';
-      strXML = strXML+' DIMV03="'+fixXML(document.getElementById('DEF_DimVal3').value)+'"';
-      strXML = strXML+' DIMV04="'+fixXML(document.getElementById('DEF_DimVal4').value)+'"';
-      strXML = strXML+' DIMV05="'+fixXML(document.getElementById('DEF_DimVal5').value)+'"';
-      strXML = strXML+' DIMV06="'+fixXML(document.getElementById('DEF_DimVal6').value)+'"';
-      strXML = strXML+' DIMV07="'+fixXML(document.getElementById('DEF_DimVal7').value)+'"';
-      strXML = strXML+' DIMV08="'+fixXML(document.getElementById('DEF_DimVal8').value)+'"';
-      strXML = strXML+' DIMV09="'+fixXML(document.getElementById('DEF_DimVal9').value)+'"';
-      strXML = strXML+'/>';
+      strXML = strXML+'>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL01" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt1').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt1').value)+'" TOTCHD="'+fixXML(objTotChd1.options[objTotChd1.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL02" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt2').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt2').value)+'" TOTCHD="'+fixXML(objTotChd2.options[objTotChd2.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL03" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt3').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt3').value)+'" TOTCHD="'+fixXML(objTotChd3.options[objTotChd3.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL04" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt4').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt4').value)+'" TOTCHD="'+fixXML(objTotChd4.options[objTotChd4.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL05" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt5').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt5').value)+'" TOTCHD="'+fixXML(objTotChd5.options[objTotChd5.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL06" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt6').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt6').value)+'" TOTCHD="'+fixXML(objTotChd6.options[objTotChd6.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL07" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt7').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt7').value)+'" TOTCHD="'+fixXML(objTotChd7.options[objTotChd7.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL08" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt8').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt8').value)+'" TOTCHD="'+fixXML(objTotChd8.options[objTotChd8.selectedIndex].value)+'"/>';
+      strXML = strXML+'<MES_LINE MSGLIN="*LVL09" DETTXT="'+fixXML(document.getElementById('DEF_DetTxt9').value)+'" TOTTXT="'+fixXML(document.getElementById('DEF_TotTxt9').value)+'" TOTCHD="'+fixXML(objTotChd9.options[objTotChd9.selectedIndex].value)+'"/>';
+      strXML = strXML+'</SMS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -537,7 +692,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -581,7 +736,7 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Message Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_MsgCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_MsgCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -609,60 +764,150 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>Message Lines Definition</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>Message Lines Definitions</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 1 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 1 Detail Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal1" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DetTxt1" size="80" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 2 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal2" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_TotTxt1" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd1">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 3 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 2 Detail Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal3" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DetTxt2" size="80" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 4 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal4" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_TotTxt2" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd2">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 5 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 3 Detail Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal5" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DetTxt3" size="80" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 6 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal6" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_TotTxt3" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd3">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 7 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 4 Detail Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal7" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DetTxt4" size="80" maxlength="256" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 8 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal8" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_TotTxt4" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd4">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Level 9 Value:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 5 Detail Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_DimVal9" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DetTxt5" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TotTxt5" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd5">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 6 Detail Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DetTxt6" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TotTxt6" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd6">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 7 Detail Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DetTxt7" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TotTxt7" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd7">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 8 Detail Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DetTxt8" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TotTxt8" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd8">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 9 Detail Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DetTxt9" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Total Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_TotTxt9" size="80" maxlength="256" value="" onFocus="setSelect(this);">
+            <select class="clsInputBN" id="DEF_TotChd9">
+               <option value="1">All totals
+               <option value="2">Multiple children totals only
+            </select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

@@ -182,7 +182,7 @@ sub PaintFunction()%>
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
       doActivityStart(document.body);
       window.setTimeout('requestSelectList(\'*SELRCP\');',10);
    }
@@ -409,7 +409,7 @@ sub PaintFunction()%>
          strXML = strXML+' RCPCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<SMS_REQUEST ACTION="*CRTRCP"';
-         strXML = strXML+' RCPCDE="'+fixXML(document.getElementById('DEF_RcpCode').value.toUpperCase())+'"';
+         strXML = strXML+' RCPCDE="'+fixXML(document.getElementById('DEF_RcpCode').value)+'"';
       }
       strXML = strXML+' RCPNAM="'+fixXML(document.getElementById('DEF_RcpName').value)+'"';
       strXML = strXML+' RCPMOB="'+fixXML(document.getElementById('DEF_RcpMobi').value)+'"';
@@ -493,7 +493,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -537,7 +537,7 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_RcpCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_RcpCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
