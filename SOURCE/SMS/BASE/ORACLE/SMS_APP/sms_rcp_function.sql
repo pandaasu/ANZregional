@@ -124,8 +124,8 @@ create or replace package body sms_app.sms_rcp_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_str_code := xslProcessor.valueOf(obj_sms_request,'@STRCDE');
-      var_end_code := xslProcessor.valueOf(obj_sms_request,'@ENDCDE');
+      var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
+      var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELRCP' and var_action != '*PRVRCP' and var_action != '*NXTRCP' then
          sms_gen_function.add_mesg_data('Invalid request action');
@@ -265,7 +265,7 @@ create or replace package body sms_app.sms_rcp_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_rcp_code := xslProcessor.valueOf(obj_sms_request,'@RCPCDE');
+      var_rcp_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@RCPCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDRCP' and var_action != '*CRTRCP' and var_action != '*CPYRCP' then
          sms_gen_function.add_mesg_data('Invalid request action');

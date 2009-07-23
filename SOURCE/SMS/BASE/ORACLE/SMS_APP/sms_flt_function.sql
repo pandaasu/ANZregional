@@ -124,8 +124,8 @@ create or replace package body sms_app.sms_flt_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_str_code := xslProcessor.valueOf(obj_sms_request,'@STRCDE');
-      var_end_code := xslProcessor.valueOf(obj_sms_request,'@ENDCDE');
+      var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
+      var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELFLT' and var_action != '*PRVFLT' and var_action != '*NXTFLT' then
          sms_gen_function.add_mesg_data('Invalid request action');
@@ -271,7 +271,7 @@ create or replace package body sms_app.sms_flt_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_flt_code := xslProcessor.valueOf(obj_sms_request,'@FLTCDE');
+      var_flt_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@FLTCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDFLT' and var_action != '*CRTFLT' and var_action != '*CPYFLT' then
          sms_gen_function.add_mesg_data('Invalid request action');
@@ -505,31 +505,31 @@ create or replace package body sms_app.sms_flt_function as
       end if;
       close csr_query;
       if nvl(rcd_query.que_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 1 must be supplied');
+         rcd_sms_filter.fil_dim_val01 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 2 and rcd_sms_filter.fil_dim_val02 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 2 must be supplied');
+         rcd_sms_filter.fil_dim_val02 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 3 and rcd_sms_filter.fil_dim_val03 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 3 must be supplied');
+         rcd_sms_filter.fil_dim_val03 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 4 and rcd_sms_filter.fil_dim_val04 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 4 must be supplied');
+         rcd_sms_filter.fil_dim_val04 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 5 and rcd_sms_filter.fil_dim_val05 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 5 must be supplied');
+         rcd_sms_filter.fil_dim_val05 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 6 and rcd_sms_filter.fil_dim_val06 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 6 must be supplied');
+         rcd_sms_filter.fil_dim_val06 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 7 and rcd_sms_filter.fil_dim_val07 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 7 must be supplied');
+         rcd_sms_filter.fil_dim_val07 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 8 and rcd_sms_filter.fil_dim_val08 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 8 must be supplied');
+         rcd_sms_filter.fil_dim_val08 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) >= 9 and rcd_sms_filter.fil_dim_val09 is null then
-         sms_gen_function.add_mesg_data('Filter dimension value 9 must be supplied');
+         rcd_sms_filter.fil_dim_val09 := '*ALL';
       end if;
       if nvl(rcd_query.que_dim_depth,0) < 1 and not(rcd_sms_filter.fil_dim_val01 is null) then
          sms_gen_function.add_mesg_data('Filter dimension value 1 must be empty');

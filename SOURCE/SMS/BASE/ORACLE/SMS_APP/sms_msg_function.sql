@@ -124,8 +124,8 @@ create or replace package body sms_app.sms_msg_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_str_code := xslProcessor.valueOf(obj_sms_request,'@STRCDE');
-      var_end_code := xslProcessor.valueOf(obj_sms_request,'@ENDCDE');
+      var_str_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@STRCDE'));
+      var_end_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@ENDCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELMSG' and var_action != '*PRVMSG' and var_action != '*NXTMSG' then
          sms_gen_function.add_mesg_data('Invalid request action');
@@ -167,7 +167,6 @@ create or replace package body sms_app.sms_msg_function as
             for idx in reverse 1..tbl_list.count loop
                pipe row(sms_xml_object('<LSTROW MSGCDE="'||to_char(tbl_list(idx).mes_msg_code)||'" MSGNAM="'||sms_to_xml(tbl_list(idx).mes_msg_name)||'" MSGSTS="'||sms_to_xml(tbl_list(idx).mes_status)||'"/>'));
             end loop;
-            pipe row(sms_xml_object('<LSTEND/>'));
          end if;
       elsif var_action = '*PRVMSG' then
          tbl_list.delete;
@@ -182,7 +181,6 @@ create or replace package body sms_app.sms_msg_function as
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
-            pipe row(sms_xml_object('<LSTSTR/>'));
             for idx in 1..tbl_list.count loop
                pipe row(sms_xml_object('<LSTROW MSGCDE="'||to_char(tbl_list(idx).mes_msg_code)||'" MSGNAM="'||sms_to_xml(tbl_list(idx).mes_msg_name)||'" MSGSTS="'||sms_to_xml(tbl_list(idx).mes_status)||'"/>'));
             end loop;
@@ -280,7 +278,7 @@ create or replace package body sms_app.sms_msg_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
-      var_msg_code := xslProcessor.valueOf(obj_sms_request,'@MSGCDE');
+      var_msg_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@MSGCDE'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDMSG' and var_action != '*CRTMSG' and var_action != '*CPYMSG' then
          sms_gen_function.add_mesg_data('Invalid request action');
@@ -550,65 +548,62 @@ create or replace package body sms_app.sms_msg_function as
       /* Retrieve and insert the message line data
       /*-*/
       rcd_sms_mes_line.mli_msg_code := rcd_sms_message.mes_msg_code;
-      obj_lin_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MES_LINE');
+      obj_lin_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/MES_LINE');
       for idx in 0..xmlDom.getLength(obj_lin_list)-1 loop
          obj_lin_node := xmlDom.item(obj_lin_list,idx);
          rcd_sms_mes_line.mli_msg_line := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@MSGLIN'));
          var_detail := false;
          var_total := false;
-         if rcd_query.que_dim_depth = 1 and rcd_sms_mes_line.mli_msg_line <= '*LVL01' then
+         if rcd_sms_mes_line.mli_msg_line = '*LVL01' and rcd_query.que_dim_depth >= 1 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL01' then
+            if rcd_query.que_dim_depth > 1 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 2 and rcd_sms_mes_line.mli_msg_line <= '*LVL02' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL02' and rcd_query.que_dim_depth >= 2 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL02' then
+            if rcd_query.que_dim_depth > 2 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 3 and rcd_sms_mes_line.mli_msg_line <= '*LVL03' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL03' and rcd_query.que_dim_depth >= 3 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL03' then
+            if rcd_query.que_dim_depth > 3 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 4 and rcd_sms_mes_line.mli_msg_line <= '*LVL04' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL04' and rcd_query.que_dim_depth >= 4 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL04' then
+            if rcd_query.que_dim_depth > 4 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 5 and rcd_sms_mes_line.mli_msg_line <= '*LVL05' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL05' and rcd_query.que_dim_depth >= 5 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL05' then
+            if rcd_query.que_dim_depth > 5 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 6 and rcd_sms_mes_line.mli_msg_line <= '*LVL06' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL06' and rcd_query.que_dim_depth >= 6 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL06' then
+            if rcd_query.que_dim_depth > 6 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 7 and rcd_sms_mes_line.mli_msg_line <= '*LVL07' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL07' and rcd_query.que_dim_depth >= 7 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL07' then
+            if rcd_query.que_dim_depth > 7 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 8 and rcd_sms_mes_line.mli_msg_line <= '*LVL08' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL08' and rcd_query.que_dim_depth >= 8 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL08' then
+            if rcd_query.que_dim_depth > 8 then
                var_total := true;
             end if;
-         elsif rcd_query.que_dim_depth = 9 and rcd_sms_mes_line.mli_msg_line <= '*LVL09' then
+         elsif rcd_sms_mes_line.mli_msg_line = '*LVL09' and rcd_query.que_dim_depth >= 9 then
             var_detail := true;
-            if rcd_sms_mes_line.mli_msg_line < '*LVL09' then
+            if rcd_query.que_dim_depth > 9 then
                var_total := true;
             end if;
          end if;
          if var_detail = true then
-            rcd_sms_mes_line.mli_det_text := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@DETTXT'));
+            rcd_sms_mes_line.mli_det_text := nvl(sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@DETTXT')),'*NONE');
             if var_total = true then
-               rcd_sms_mes_line.mli_tot_text := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@TOTTXT'));
-               if rcd_sms_mes_line.mli_tot_text is null then
-                  rcd_sms_mes_line.mli_det_text := '*NONE';
-               end if;
+               rcd_sms_mes_line.mli_tot_text := nvl(sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@TOTTXT')),'*NONE');
                rcd_sms_mes_line.mli_tot_child := sms_from_xml(xslProcessor.valueOf(obj_lin_node,'@TOTCHD'));
             else
                rcd_sms_mes_line.mli_tot_text := '*NONE';
