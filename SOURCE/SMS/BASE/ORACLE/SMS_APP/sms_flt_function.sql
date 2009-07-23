@@ -429,6 +429,15 @@ create or replace package body sms_app.sms_flt_function as
           where t01.que_qry_code = rcd_sms_filter.fil_qry_code;
       rcd_query csr_query%rowtype;
 
+      cursor csr_profile is
+         select t01.*
+           from sms_pro_filter t01,
+                sms_profile t02
+          where t01.pfi_prf_code = t02.pro_prf_code
+            and t01.pfi_flt_code = rcd_sms_filter.fil_flt_code
+            and t02.pro_qry_code != rcd_sms_filter.fil_qry_code;
+      rcd_profile csr_profile%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -504,6 +513,12 @@ create or replace package body sms_app.sms_flt_function as
          sms_gen_function.add_mesg_data('Query code ('||rcd_sms_filter.fil_qry_code||') does not exist');
       end if;
       close csr_query;
+      open csr_profile;
+      fetch csr_profile into rcd_profile;
+      if csr_profile%notfound then
+         sms_gen_function.add_mesg_data('Filter is attached to profiles with a different query code - unable to change the query code');
+      end if;
+      close csr_profile;
       if nvl(rcd_query.que_dim_depth,0) >= 1 and rcd_sms_filter.fil_dim_val01 is null then
          rcd_sms_filter.fil_dim_val01 := '*ALL';
       end if;

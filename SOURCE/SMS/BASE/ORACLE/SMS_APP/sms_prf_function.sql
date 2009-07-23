@@ -244,6 +244,7 @@ create or replace package body sms_app.sms_prf_function as
 
       cursor csr_recipient is
          select t01.*,
+                decode(t01.rec_status,'0','Inactive','1','Active','*UNKNOWN') as rcp_status,
                 decode(t02.pre_rcp_code,null,'0','1') as rcp_select
            from sms_recipient t01,
                 sms_pro_recipient t02
@@ -254,6 +255,7 @@ create or replace package body sms_app.sms_prf_function as
 
       cursor csr_filter is
          select t01.*,
+                decode(t01.fil_status,'0','Inactive','1','Active','*UNKNOWN') as flt_status,
                 decode(t02.pfi_flt_code,null,'0','1') as flt_select
            from sms_filter t01,
                 sms_pro_filter t02
@@ -264,6 +266,7 @@ create or replace package body sms_app.sms_prf_function as
 
       cursor csr_message is
          select t01.*,
+                decode(t01.mes_status,'0','Inactive','1','Active','*UNKNOWN') as msg_status,
                 decode(t02.pme_msg_code,null,'0','1') as msg_select
            from sms_message t01,
                 sms_pro_message t02
@@ -401,7 +404,7 @@ create or replace package body sms_app.sms_prf_function as
             if csr_recipient%notfound then
                exit;
             end if;
-            pipe row(sms_xml_object('<RECIPIENT RCPCDE="'||sms_to_xml(rcd_recipient.rec_rcp_code)||'" RCPNAM="'||sms_to_xml('('||rcd_recipient.rec_rcp_code||') '||rcd_recipient.rec_rcp_name)||'" RCPSEL="'||sms_to_xml(rcd_recipient.rcp_select)||'"/>'));
+            pipe row(sms_xml_object('<RECIPIENT RCPCDE="'||sms_to_xml(rcd_recipient.rec_rcp_code)||'" RCPNAM="'||sms_to_xml('('||rcd_recipient.rec_rcp_code||') '||rcd_recipient.rec_rcp_name||' - ('||rcd_recipient.rcp_status||')')||'" RCPSEL="'||sms_to_xml(rcd_recipient.rcp_select)||'"/>'));
          end loop;
          close csr_recipient;
          open csr_filter;
@@ -410,7 +413,7 @@ create or replace package body sms_app.sms_prf_function as
             if csr_filter%notfound then
                exit;
             end if;
-            pipe row(sms_xml_object('<FILTER FLTCDE="'||sms_to_xml(rcd_filter.fil_flt_code)||'" FLTNAM="'||sms_to_xml('('||rcd_filter.fil_flt_code||') '||rcd_filter.fil_flt_name)||'" FLTSEL="'||sms_to_xml(rcd_filter.flt_select)||'"/>'));
+            pipe row(sms_xml_object('<FILTER FLTCDE="'||sms_to_xml(rcd_filter.fil_flt_code)||'" FLTNAM="'||sms_to_xml('('||rcd_filter.fil_flt_code||') '||rcd_filter.fil_flt_name||' - ('||rcd_filter.flt_status||')')||'" FLTSEL="'||sms_to_xml(rcd_filter.flt_select)||'"/>'));
          end loop;
          close csr_filter;
          open csr_message;
@@ -419,7 +422,7 @@ create or replace package body sms_app.sms_prf_function as
             if csr_message%notfound then
                exit;
             end if;
-            pipe row(sms_xml_object('<MESSAGE MSGCDE="'||sms_to_xml(rcd_message.mes_msg_code)||'" MSGNAM="'||sms_to_xml('('||rcd_message.mes_msg_code||') '||rcd_message.mes_msg_name)||'" MSGSEL="'||sms_to_xml(rcd_message.msg_select)||'"/>'));
+            pipe row(sms_xml_object('<MESSAGE MSGCDE="'||sms_to_xml(rcd_message.mes_msg_code)||'" MSGNAM="'||sms_to_xml('('||rcd_message.mes_msg_code||') '||rcd_message.mes_msg_name||' - ('||rcd_message.msg_status||')')||'" MSGSEL="'||sms_to_xml(rcd_message.msg_select)||'"/>'));
          end loop;
          close csr_message;
       end if;
@@ -473,6 +476,7 @@ create or replace package body sms_app.sms_prf_function as
       obj_msg_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
+      var_code varchar2(64);
       var_found boolean;
       rcd_sms_profile sms_profile%rowtype;
       rcd_sms_pro_recipient sms_pro_recipient%rowtype;
@@ -494,6 +498,24 @@ create or replace package body sms_app.sms_prf_function as
            from sms_query t01
           where t01.que_qry_code = rcd_sms_profile.pro_qry_code;
       rcd_query csr_query%rowtype;
+
+      cursor csr_recipient is
+         select t01.*
+           from sms_recipient t01
+          where t01.rec_rcp_code = var_code;
+      rcd_recipient csr_recipient%rowtype;
+
+      cursor csr_filter is
+         select t01.fil_qry_code
+           from sms_filter t01
+          where t01.fil_flt_code = var_code;
+      rcd_filter csr_filter%rowtype;
+
+      cursor csr_message is
+         select t01.mes_qry_code
+           from sms_message t01
+          where t01.mes_msg_code = var_code;
+      rcd_message csr_message%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -589,6 +611,45 @@ create or replace package body sms_app.sms_prf_function as
          sms_gen_function.add_mesg_data('Query code ('||rcd_sms_profile.pro_qry_code||') does not exist');
       end if;
       close csr_query;
+      obj_rcp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/RECIPIENT');
+      for idx in 0..xmlDom.getLength(obj_rcp_list)-1 loop
+         obj_rcp_node := xmlDom.item(obj_rcp_list,idx);
+         var_code := sms_from_xml(xslProcessor.valueOf(obj_rcp_node,'@RCPCDE'));
+         open csr_recipient;
+         fetch csr_recipient into rcd_recipient;
+         if csr_recipient%notfound then
+            sms_gen_function.add_mesg_data('Recipient code ('||var_code||') does not exist');
+         end if;
+         close csr_recipient;
+      end loop;
+      obj_flt_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/FILTER');
+      for idx in 0..xmlDom.getLength(obj_flt_list)-1 loop
+         obj_flt_node := xmlDom.item(obj_flt_list,idx);
+         var_code := sms_from_xml(xslProcessor.valueOf(obj_flt_node,'@FLTCDE'));
+         open csr_filter;
+         fetch csr_filter into rcd_filter;
+         if csr_filter%notfound then
+            sms_gen_function.add_mesg_data('Filter code ('||var_code||') does not exist');
+         end if;
+         close csr_filter;
+         if rcd_filter.fil_qry_code != rcd_sms_profile.pro_qry_code then
+            sms_gen_function.add_mesg_data('Filter code ('||var_code||') does not belong to the same query as the profile');
+         end if;
+      end loop;
+      obj_msg_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/MESSAGE');
+      for idx in 0..xmlDom.getLength(obj_msg_list)-1 loop
+         obj_msg_node := xmlDom.item(obj_msg_list,idx);
+         var_code := sms_from_xml(xslProcessor.valueOf(obj_msg_node,'@MSGCDE'));
+         open csr_message;
+         fetch csr_message into rcd_message;
+         if csr_message%notfound then
+            sms_gen_function.add_mesg_data('Message code ('||var_code||') does not exist');
+         end if;
+         close csr_message;
+         if rcd_message.mes_qry_code != rcd_sms_profile.pro_qry_code then
+            sms_gen_function.add_mesg_data('Message code ('||var_code||') does not belong to the same query as the profile');
+         end if;
+      end loop;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;

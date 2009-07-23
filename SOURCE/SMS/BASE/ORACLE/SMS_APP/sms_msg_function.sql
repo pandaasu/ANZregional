@@ -429,6 +429,15 @@ create or replace package body sms_app.sms_msg_function as
           where t01.que_qry_code = rcd_sms_message.mes_qry_code;
       rcd_query csr_query%rowtype;
 
+      cursor csr_profile is
+         select t01.*
+           from sms_pro_message t01,
+                sms_profile t02
+          where t01.pme_prf_code = t02.pro_prf_code
+            and t01.pme_msg_code = rcd_sms_message.mes_msg_code
+            and t02.pro_qry_code != rcd_sms_message.mes_qry_code;
+      rcd_profile csr_profile%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -495,6 +504,12 @@ create or replace package body sms_app.sms_msg_function as
          sms_gen_function.add_mesg_data('Query code ('||rcd_sms_message.mes_qry_code||') does not exist');
       end if;
       close csr_query;
+      open csr_profile;
+      fetch csr_profile into rcd_profile;
+      if csr_profile%notfound then
+         sms_gen_function.add_mesg_data('Message is attached to profiles with a different query code - unable to change the query code');
+      end if;
+      close csr_profile;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
