@@ -129,7 +129,7 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'System Control';
       displayScreen('dspLoad');
-      doSelectRefresh();
+      doDefineRefresh();
    }
 
    ///////////////////////
@@ -189,7 +189,7 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspDisplay');
+         displayScreen('dspDefine');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
                document.getElementById('subDefine').innerText = objElements[i].getAttribute('STATUS');
