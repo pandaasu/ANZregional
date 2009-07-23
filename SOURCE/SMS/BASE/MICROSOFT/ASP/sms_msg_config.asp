@@ -476,9 +476,6 @@ sub PaintFunction()%>
                break;
             }
          }
-         if (objQryCode.selectedIndex == -1 && objQryCode.length > 0) {
-            objQryCode.selectedIndex = 0;
-         }
          objTotChd1.selectedIndex = -1;
          for (var i=0;i<objTotChd1.length;i++) {
             if (objTotChd1.options[i].value == strTotChd1) {

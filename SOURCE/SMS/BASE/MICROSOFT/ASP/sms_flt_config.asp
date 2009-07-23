@@ -418,9 +418,6 @@ sub PaintFunction()%>
                break;
             }
          }
-         if (objQryCode.selectedIndex == -1 && objQryCode.length > 0) {
-            objQryCode.selectedIndex = 0;
-         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_FltName').focus();
          } else {
