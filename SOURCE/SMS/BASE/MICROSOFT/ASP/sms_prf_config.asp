@@ -384,7 +384,25 @@ sub PaintFunction()%>
          var strQryCode = '';
          var objPrfStat = document.getElementById('DEF_PrfStat');
          var objQryCode = document.getElementById('DEF_QryCode');
+         var objRcpValu = document.getElementById('DEF_RcpValu');
+         var objFltValu = document.getElementById('DEF_FltValu');
+         var objMsgValu = document.getElementById('DEF_MsgValu');
+         var objRcpList = document.getElementById('DEF_RcpList');
+         var objFltList = document.getElementById('DEF_FltList');
+         var objMsgList = document.getElementById('DEF_MsgList');
          objQryCode.options.length = 0;
+         objRcpValu.options.length = 0;
+         objFltValu.options.length = 0;
+         objMsgValu.options.length = 0;
+         objRcpList.options.length = 0;
+         objFltList.options.length = 0;
+         objMsgList.options.length = 0;
+         objRcpValu.selectedIndex = -1;
+         objFltValu.selectedIndex = -1;
+         objMsgValu.selectedIndex = -1;
+         objRcpList.selectedIndex = -1;
+         objFltList.selectedIndex = -1;
+         objMsgList.selectedIndex = -1;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'QRY_LIST') {
                objQryCode.options[objQryCode.options.length] = new Option(objElements[i].getAttribute('QRYNAM'),objElements[i].getAttribute('QRYCDE'));
@@ -414,6 +432,21 @@ sub PaintFunction()%>
                }
                strPrfStat = objElements[i].getAttribute('PRFSTS');
                strQryCode = objElements[i].getAttribute('QRYCDE');
+            } else if (objElements[i].nodeName == 'RECIPIENT') {
+               if (objElements[i].getAttribute('RCPSEL') == '1') {
+                  objRcpValu.options[objRcpValu.options.length] = new Option(objElements[i].getAttribute('RCPNAM'),objElements[i].getAttribute('RCPCDE'));
+               }
+               objRcpList.options[objRcpList.options.length] = new Option(objElements[i].getAttribute('RCPNAM'),objElements[i].getAttribute('RCPCDE'));
+            } else if (objElements[i].nodeName == 'FILTER') {
+               if (objElements[i].getAttribute('FLTSEL') == '1') {
+                  objFltValu.options[objFltValu.options.length] = new Option(objElements[i].getAttribute('FLTNAM'),objElements[i].getAttribute('FLTCDE'));
+               }
+               objFltList.options[objFltList.options.length] = new Option(objElements[i].getAttribute('FLTNAM'),objElements[i].getAttribute('FLTCDE'));
+            } else if (objElements[i].nodeName == 'MESSAGE') {
+               if (objElements[i].getAttribute('MSGSEL') == '1') {
+                  objMsgValu.options[objMsgValu.options.length] = new Option(objElements[i].getAttribute('MSGNAM'),objElements[i].getAttribute('MSGCDE'));
+               }
+               objMsgList.options[objMsgList.options.length] = new Option(objElements[i].getAttribute('MSGNAM'),objElements[i].getAttribute('MSGCDE'));
             }
          }
          objPrfStat.selectedIndex = -1;
@@ -444,6 +477,9 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objPrfStat = document.getElementById('DEF_PrfStat');
       var objQryCode = document.getElementById('DEF_QryCode');
+      var objRcpValu = document.getElementById('DEF_RcpValu');
+      var objFltValu = document.getElementById('DEF_FltValu');
+      var objMsgValu = document.getElementById('DEF_MsgValu');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<SMS_REQUEST ACTION="*UPDPRF"';
@@ -498,7 +534,18 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' SNDD07="0"';
       }
-      strXML = strXML+'/>';
+      strXML = strXML+'>';
+      for (var i=0;i<objRcpValu.options.length;i++) {
+         strXML = strXML+'<RECIPIENT RCPCDE="'+fixXML(objRcpValu[i].value)+'"/>';
+      }
+      for (var i=0;i<objFltValu.options.length;i++) {
+         strXML = strXML+'<FILTER FLTCDE="'+fixXML(objFltValu[i].value)+'"/>';
+      }
+      for (var i=0;i<objMsgValu.options.length;i++) {
+         strXML = strXML+'<MESSAGE MSGCDE="'+fixXML(objMsgValu[i].value)+'"/>';
+      }
+      strXML = strXML+'</SMS_REQUEST>'
+
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -538,6 +585,111 @@ sub PaintFunction()%>
       if (checkChange() == false) {return;}
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
+   }
+   function selectRcpValues() {
+      var objRcpValu = document.getElementById('DEF_RcpValu');
+      var objRcpList = document.getElementById('DEF_RcpList');
+      var bolFound;
+      for (var i=0;i<objRcpList.options.length;i++) {
+         if (objRcpList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objRcpValu.options.length;j++) {
+               if (objRcpList[i].value == objRcpValu[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objRcpValu.options[objRcpValu.options.length] = new Option(objRcpList[i].text,objRcpList[i].value);
+            }
+         }
+      }
+   }
+   function removeRcpValues() {
+      var objRcpValu = document.getElementById('DEF_RcpValu');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objRcpValu.options.length;i++) {
+         if (objRcpValu.options[i].selected == false) {
+            objWork[intIndex] = objRcpValu[i];
+            intIndex++;
+         }
+      }
+      objRcpValu.options.length = 0;
+      objRcpValu.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objRcpValu.options[i] = objWork[i];
+      }
+   }
+   function selectFltValues() {
+      var objFltValu = document.getElementById('DEF_FltValu');
+      var objFltList = document.getElementById('DEF_FltList');
+      var bolFound;
+      for (var i=0;i<objFltList.options.length;i++) {
+         if (objFltList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objFltValu.options.length;j++) {
+               if (objFltList[i].value == objFltValu[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objFltValu.options[objFltValu.options.length] = new Option(objFltList[i].text,objFltList[i].value);
+            }
+         }
+      }
+   }
+   function removeFltValues() {
+      var objFltValu = document.getElementById('DEF_FltValu');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objFltValu.options.length;i++) {
+         if (objFltValu.options[i].selected == false) {
+            objWork[intIndex] = objFltValu[i];
+            intIndex++;
+         }
+      }
+      objFltValu.options.length = 0;
+      objFltValu.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objFltValu.options[i] = objWork[i];
+      }
+   }
+   function selectMsgValues() {
+      var objMsgValu = document.getElementById('DEF_MsgValu');
+      var objMsgList = document.getElementById('DEF_MsgList');
+      var bolFound;
+      for (var i=0;i<objMsgList.options.length;i++) {
+         if (objMsgList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objMsgValu.options.length;j++) {
+               if (objMsgList[i].value == objMsgValu[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objMsgValu.options[objMsgValu.options.length] = new Option(objMsgList[i].text,objMsgList[i].value);
+            }
+         }
+      }
+   }
+   function removeMsgValues() {
+      var objMsgValu = document.getElementById('DEF_MsgValu');
+      var objWork = new Array();
+      var intIndex = 0;
+      for (var i=0;i<objMsgValu.options.length;i++) {
+         if (objMsgValu.options[i].selected == false) {
+            objWork[intIndex] = objMsgValu[i];
+            intIndex++;
+         }
+      }
+      objMsgValu.options.length = 0;
+      objMsgValu.selectedIndex = -1;
+      for (var i=0;i<objWork.length;i++) {
+         objMsgValu.options[i] = objWork[i];
+      }
    }
 // -->
 </script>
@@ -653,6 +805,68 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+               <tr>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Recipients&nbsp;</nobr></td>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Filters&nbsp;</nobr></td>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Messages&nbsp;</nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_RcpValu" name="DEF_RcpValu" style="width:300px" multiple size=5></select>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_FltValu" name="DEF_FltValu" style="width:300px" multiple size=5></select>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_MsgValu" name="DEF_MsgValu" style="width:300px" multiple size=5></select>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="selectRcpValues();"></nobr></td>
+                           <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="removeRcpValues();"></nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="selectFltValues();"></nobr></td>
+                           <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="removeFltValues();"></nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="selectMsgValues();"></nobr></td>
+                           <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="removeMsgValues();"></nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_RcpList" name="DEF_RcpList" style="width:300px" multiple size=15></select>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_FltList" name="DEF_FltList" style="width:300px" multiple size=15></select>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_MsgList" name="DEF_MsgList" style="width:300px" multiple size=15></select>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
