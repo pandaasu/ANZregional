@@ -506,7 +506,7 @@ create or replace package body sms_app.sms_msg_function as
       close csr_query;
       open csr_profile;
       fetch csr_profile into rcd_profile;
-      if csr_profile%notfound then
+      if csr_profile%found then
          sms_gen_function.add_mesg_data('Message is attached to profiles with a different query code - unable to change the query code');
       end if;
       close csr_profile;
