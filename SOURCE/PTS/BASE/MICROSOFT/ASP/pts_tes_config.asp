@@ -375,6 +375,19 @@ sub PaintFunction()%>
       }
       requestQuestionnaireReport(document.getElementById('PRO_TesCode').value);
    }
+   function doReportSelection() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for selection reporting';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestSelectionReport(document.getElementById('PRO_TesCode').value);
+   }
    function doReportResults() {
       if (!processForm()) {return;}
       var strMessage = '';
@@ -1846,6 +1859,10 @@ sub PaintFunction()%>
       doReportOutput(eval('document.body'),'Pet Test Questionnaire Report','*CSV','select * from table(pts_app.pts_tes_function.report_questionnaire(' + strCode + '))');
       document.getElementById('PRO_TesCode').focus();
    }
+   function requestSelectionReport(strCode) {
+      doReportOutput(eval('document.body'),'Pet Test Selection Report','*SPREADSHEET','select * from table(pts_app.pts_tes_function.report_selection(' + strCode + '))');
+      document.getElementById('PRO_TesCode').focus();
+   }
 
    /////////////////////////////
    // Result Report Functions //
@@ -2082,7 +2099,7 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=9 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=11 cellpadding="0" cellspacing="0">
                <tr>
                   <td class="clsHeader" align=center colspan=1 nowrap><nobr>Reporting</nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
@@ -2091,6 +2108,8 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportQuestionnaire();">&nbsp;Questionnaire&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportSelection();">&nbsp;Selection&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportResults();">&nbsp;Results&nbsp;</a></nobr></td>
                </tr>
