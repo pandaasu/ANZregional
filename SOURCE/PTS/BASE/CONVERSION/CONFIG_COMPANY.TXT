@@ -1,7 +1,0 @@
-
-------------------------
--- COMPANY DEFINITION --
-------------------------
-
-insert into pts_com_definition values(1,1,user,sysdate,'Oakham Research','ACN 008 454313','P.O. BOX 1300','WODONGA  VIC','3690','AUSTRALIA','1800','812271','ANDREW PENTON');
-commit;
