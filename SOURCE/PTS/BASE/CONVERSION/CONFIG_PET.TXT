@@ -1,4 +1,11 @@
 
+create or replace procedure config_pet is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
 -----------------
 -- PET EXTRACT --
 -----------------
@@ -219,3 +226,8 @@ select t1.pet_code,'*PET_SAM',49,t1.sample_classn_code,null
   from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 49 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
 commit;
 
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end config_pet;
+/ 

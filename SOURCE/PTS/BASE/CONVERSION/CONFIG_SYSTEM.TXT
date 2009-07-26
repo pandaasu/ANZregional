@@ -1,4 +1,11 @@
 
+create or replace procedure config_system is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
 -------------------
 -- SYSTEM ENTITY --
 -------------------
@@ -2086,3 +2093,9 @@ insert into pts_pty_sys_value values(3,'*PET_CLA',1,129);
 insert into pts_pty_sys_value values(3,'*PET_CLA',1,130);
 insert into pts_pty_sys_value values(3,'*PET_CLA',1,147);
 commit;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end config_system;
+/ 

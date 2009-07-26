@@ -1,4 +1,11 @@
 
+create or replace procedure config_test is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
 ------------------
 -- TEST EXTRACT --
 ------------------
@@ -546,4 +553,8 @@ select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 26, min(t2.pet_environment), nul
   group by t1.tde_tes_code, t2.pet_code;
 commit;
 
-
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end config_test;
+/ 
