@@ -1,0 +1,368 @@
+
+------------------
+-- TEST EXTRACT --
+------------------
+insert into pts_tes_definition
+select
+  t1.test_code,
+  trim(t1.test_title),
+  t1.rcmpy_code,
+  t1.test_status,
+  t1.glopal_status,
+  t2.method_code,
+  user,
+  sysdate,
+  trim(t1.test_requestor),
+  trim(t1.requestor_mars_id),
+  trim(t1.test_aim),
+  trim(t1.test_reason),
+  trim(t1.test_prediction),
+  trim(t1.test_comment),
+  t1.panel_selected_date,
+  t1.test_field_work_date,
+  t1.number_parameters,
+  t1.maximum_temperature,
+  t2.test_length,
+  decode(t2.method_code,2,2,11,2,1),
+  0,
+  0,
+  '0',
+  '0',
+  null,
+  null,
+  null
+  from test@wod016.ap.mars t1, test_type@wod016.ap.mars t2
+  where t1.test_type_code = t2.test_type_code
+    and not(t1.test_code in (1658, 2192)
+    and t1.restricted_access != 2;
+commit;
+
+insert into pts_tes_sample
+select
+  t1.tde_tes_code,
+  t2.sample_code,
+  trim(t2.report_code),
+  trim(t2.market_research_code),
+  trim(t2.market_research_code),
+  trim(t2.sample_id)
+  from pts_tes_definition t1, test_sample@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_question
+select
+  t1.tde_tes_code,
+  t2.param_code,
+  t2.question_code,
+  decode(t2.sample_specific,'F','1','2'),
+  decode(t2.test_quest_id,null,1,t2.test_quest_id)
+  from pts_tes_definition t1, test_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_keyword
+select
+  t1.tde_tes_code,
+  trim(t2.keyword)
+  from pts_tes_definition t1, test_keyword@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  1,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code < 1800;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 0
+    and t1.tde_tes_code <= 1800;
+commit;
+
+insert into pts_tes_allocation
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.sample_code,
+  t2.sequence_number
+  from pts_tes_definition t1, pet_sample@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_feeding
+select
+  t1.tde_tes_code,
+  t2.sample_code,
+  t2.pet_size,
+  t2.default_qty,
+  null
+  from pts_tes_definition t1, pet_sample_size@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_panel
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  decode(t2.pet_status,1,'*MEMBER',2,'*RESERVE','*RECRUITED'),
+  '*GROUP1',
+  t2.pet_code,
+  t2.pet_status,
+  trim(t2.pet_name),
+  t2.pet_type_code,
+  t2.pet_year_of_birth,
+  trim(t2.feeding_comments),
+  trim(t2.pet_health_comments),
+  t2.hhold_code,
+  t2.household_status,
+  t2.geog_zone_type_code,
+  t2.geog_zone_code,
+  trim(t2.hhold_locn_street),
+  trim(t2.hhold_locn_town),
+  trim(t2.hhold_locn_postcode),
+  trim(t2.hhold_locn_country),
+  trim(t2.hhold_phone_areacode),
+  trim(t2.hhold_phone_num),
+  trim(t2.prcpt_name),
+  trim(t2.prcpt_name),
+  t2.prcpt_year_of_birth
+  from pts_tes_definition t1,
+       (select t1.test_code,
+               t1.pet_code,
+               t1.pet_status,
+               t1.pet_name,
+               t1.pet_type_code,
+               t1.pet_year_of_birth,
+               t1.feeding_comments,
+               t1.pet_health_comments,
+               t2.hhold_code,
+               t2.household_status,
+               t2.geog_zone_type_code,
+               t2.geog_zone_code,
+               t2.hhold_locn_street,
+               t2.hhold_locn_town,
+               t2.hhold_locn_postcode,
+               t2.hhold_locn_country,
+               t2.hhold_phone_areacode,
+               t2.hhold_phone_num,
+               t2.prcpt_name,
+               t2.prcpt_year_of_birth
+          from pet_sshot@wod016.ap.mars t1,
+               hhold_sshot@wod016.ap.mars t2
+         where t1.test_code = t2.test_code
+           and t1.hhold_code = t2.hhold_code) t2
+  where t1.tde_tes_code = t2.test_code);
+commit;
+
+insert into pts_tes_statistic
+select
+  t1.tpa_tes_code,
+  t1.tpa_pan_code,
+  t2.pet_type_code,
+  t2.pets_per_hhold
+  from pts_tes_panel t1,
+       hhold_pet_type_sshot@wod016.ap.mars t2
+  where t1.tpa_tes_code = t2.test_code
+    and t1.tpa_hou_code = t2.hhold_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 1, min(t2.pet_breed_code), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_breed_code is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 2, min(t2.pet_fussiness), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_fussiness is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 3, min(t2.pet_sex), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_sex is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 4, min(t2.health_rstrct), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and health_rstrct is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 5, min(t2.pet_desexed), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_desexed is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 6, min(t2.pet_pedigree), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_pedigree is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 7, min(t2.pet_relationship), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_relationship is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 8, min(t2.pet_size), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_size is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 9, min(t2.pet_act_level), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_act_level is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 10, min(t2.pet_awake), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_awake is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 11, min(t2.pet_asleep), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_asleep is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 12, min(t2.pet_meals), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_meals is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 13, min(t2.main_meal), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and main_meal is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 14, min(t2.can_freq), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and can_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 15, min(t2.chub_freq), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and chub_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 16, min(t2.dry_freq), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and dry_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 17, min(t2.chilled_freq), null
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and chilled_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 18, min(t2.semi_moist_freq), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and semi_moist_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 19, min(t2.scrap_raw_freq), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and scrap_raw_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 20, min(t2.meat_fish_freq), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and meat_fish_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 21, min(t2.bones_freq), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and bones_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 22, min(t2.milk_special_drinks), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and milk_special_drinks is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 23, min(t2.snak_freq), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and snak_freq is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 24, min(t2.feeding_preference), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and feeding_preference is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 25, min(t2.format), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and format is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+insert into pts_tes_classification 
+select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 26, min(t2.pet_environment), null 
+  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code and pet_environment is not null
+  group by t1.tde_tes_code, t2.pet_code;
+commit;
+
+

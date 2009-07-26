@@ -1,0 +1,221 @@
+
+-----------------
+-- PET EXTRACT --
+-----------------
+insert into pts_pet_definition
+select
+  pet_code,
+  pet_status,
+  user,
+  sysdate,
+  decode(pet_name,null,null,trim(pet_name)),
+  decode(pet_type_code,null,null,pet_type_code),
+  decode(hhold_code,null,null,hhold_code),
+  decode(pet_year_of_birth,null,null,pet_year_of_birth),
+  decode(delete_noted_by,null,null,delete_noted_by),
+  decode(pet_last_tested,null,null,to_date(to_char(pet_last_tested,'yyyymmdd'),'yyyymmdd')),
+  decode(feeding_comments,null,null,trim(feeding_comments)),
+  decode(pet_health_comments,null,null,trim(pet_health_comments))
+  from pet@wod016.ap.mars where pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',1,pet_breed_code,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_breed_code is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',2,pet_fussiness,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_fussiness is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',3,pet_sex,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_sex is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',4,health_rstrct,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and health_rstrct is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',5,pet_desexed,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_desexed is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',6,pet_pedigree,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_pedigree is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',7,pet_relationship,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_relationship is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',8,pet_size,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_size is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',9,pet_act_level,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_act_level is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',10,pet_awake,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_awake is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',11,pet_asleep,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_asleep is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',12,pet_meals,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_meals is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',13,main_meal,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and main_meal is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',14,can_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and can_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',15,chub_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and chub_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',16,dry_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and dry_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',17,chilled_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and chilled_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',18,semi_moist_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and semi_moist_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',19,scrap_raw_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and scrap_raw_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',20,meat_fish_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and meat_fish_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',21,bones_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and bones_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',22,milk_special_drinks,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and milk_special_drinks is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',23,snak_freq,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and snak_freq is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',24,feeding_preference,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and feeding_preference is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',25,format,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and format is not null;
+commit;
+
+insert into pts_pet_classification 
+select pet_code,'*PET_CLA',26,pet_environment,null
+  from pet@wod016.ap.mars where pet_type_code != 4 and pet_environment is not null;
+commit;
+ 
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',4,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 4 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',5,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 5 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',6,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 6 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',7,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 7 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',40,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 40 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',41,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 41 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',42,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 42 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',43,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 43 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',44,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 44 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',45,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 45 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',46,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 46 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',47,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 47 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',48,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 48 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+
+insert into pts_pet_classification 
+select t1.pet_code,'*PET_SAM',49,t1.sample_classn_code,null
+  from pet_sample_classn@wod016.ap.mars t1, pet@wod016.ap.mars t2 where t1.pet_code = t2.pet_code and t1.sample_classn_type_code = 49 and t1.sample_classn_code is not null and t2.pet_type_code != 4;
+commit;
+

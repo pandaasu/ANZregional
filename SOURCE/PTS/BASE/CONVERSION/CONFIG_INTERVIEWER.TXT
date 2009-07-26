@@ -1,0 +1,30 @@
+
+----------------------------
+-- INTERVIEWER DEFINITION --
+----------------------------
+
+insert into pts_int_definition values(1,1,user,sysdate,30,133,'MARJ MOORE','4 TOWER STREET','WODONGA','3690',null,'060','241 458');
+insert into pts_int_definition values(2,1,user,sysdate,30,133,'JENNY MILES','''GLENBRAE'' RMB 5051','WODONGA','3690',null,'060','206 119');
+insert into pts_int_definition values(3,1,user,sysdate,30,132,'JEAN GIBBS','13 MAYFAIR DRIVE','WODONGA','3690',null,'060','592 022');
+insert into pts_int_definition values(4,1,user,sysdate,30,135,'ROS JOHAN','22 PARKVIEW CLOSE','WODONGA','3690',null,'060','252 954');
+insert into pts_int_definition values(5,1,user,sysdate,30,134,'MYRNA SCHUBERT','118 COLEMAN STREET','WODONGA','3690',null,'060','242 076');
+insert into pts_int_definition values(6,1,user,sysdate,30,121,'WENDY JOB','18 MUMFORD STREET','WAGGA WAGGA','2650',null,'069','311 902');
+insert into pts_int_definition values(7,1,user,sysdate,30,122,'JOY BYNG','6 NILMA AVENUE','WAGGA WAGGA','2650',null,'069','252 899');
+insert into pts_int_definition values(8,1,user,sysdate,30,123,'PAT SCOTT','98 GROVE STREET','KOORINGAL','2650',null,'069','226 367');
+insert into pts_int_definition values(10,1,user,sysdate,30,124,'DEIDRE HUCKEL','21 STANLEY STREET','WAGGA WAGGA','2650',null,'069','262 688');
+insert into pts_int_definition values(11,1,user,sysdate,30,111,'HELEN AYLWARD','363 SHELLEY AVENUE','LAVINGTON','2641',null,'060','257 519');
+insert into pts_int_definition values(12,1,user,sysdate,30,115,'PAT SWAYN','759 DAVID STREET','ALBURY','2640',null,'060','215 772');
+insert into pts_int_definition values(13,1,user,sysdate,30,141,'LORRAINE VAN DER STEEG','4 CRUSE STREET','WANGARATTA','3677',null,'057','213 272');
+insert into pts_int_definition values(14,1,user,sysdate,30,142,'DIANNE CRIBBES','38 VERNON ROAD','WANGARATTA','3677',null,'057','217 318');
+insert into pts_int_definition values(15,2,user,sysdate,30,143,'FAYE DOYLE','88 MURDOCH ROAD','WANGARATTA','3677',null,'057','215 193');
+insert into pts_int_definition values(16,1,user,sysdate,30,144,'BERYL BELLIS','RMB 1018','MILAWA','3677',null,'057','273 546');
+insert into pts_int_definition values(17,1,user,sysdate,30,151,'DEAN SWIFT','2 WINTERBORNE RISE','BENDIGO','3550',null,'054','417 100');
+insert into pts_int_definition values(18,1,user,sysdate,30,153,'BRIAN O''MAHONY','168 MITCHELL STREET','BENDIGO','3550',null,'054','411 298');
+insert into pts_int_definition values(19,1,user,sysdate,30,161,'JUDY LOWNE','9 TIMBERTOP DRIVE','MT HELEN','3350',null,'053','302 783');
+insert into pts_int_definition values(20,1,user,sysdate,30,163,'JUDY SEGRAVE','4 RODNEY AVENUE','MT CLEAR','3350',null,'053','302 544');
+insert into pts_int_definition values(21,1,user,sysdate,30,171,'LORRAINE SUMICH','50 TUDOR ROAD','HENDERSON',null,'NEW ZEALAND','09','836 1972');
+insert into pts_int_definition values(22,2,user,sysdate,30,174,'SONYA EASTLAKE','8 SIMON OWEN PLACE','HOWICK',null,'NEW ZEALAND','09','273 7970');
+insert into pts_int_definition values(23,2,user,sysdate,30,181,'CHRISTINE MURPHY','20 KINGSFORD MEWS','HAMILTON',null,'NEW ZEALAND','07','856 1502');
+insert into pts_int_definition values(24,1,user,sysdate,30,184,'HELEN BELL','23 SAMUEL PLACE','HAMILTON',null,'NEW ZEALAND','07','855 2234');
+commit;
+

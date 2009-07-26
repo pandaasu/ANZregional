@@ -1,0 +1,19 @@
+
+--------------------
+-- SAMPLE EXTRACT --
+--------------------
+insert into pts_sam_definition
+select
+  sample_code,
+  decode(sample_desc,null,null,trim(sample_desc)),
+  sample_status,
+  user,
+  sysdate,
+  decode(unit_of_measure,null,null,unit_of_measure),
+  decode(sample_size,null,null,sample_size),
+  decode(prepared_location,null,null,prepared_location),
+  decode(prepared_date,null,null,to_date(to_char(prepared_date,'yyyymmdd'),'yyyymmdd')),
+  decode(external_recipe_reference,null,null,trim(external_recipe_reference)),
+  decode(plop_code,null,null,trim(plop_code))
+  from sample@wod016.ap.mars;
+commit;
