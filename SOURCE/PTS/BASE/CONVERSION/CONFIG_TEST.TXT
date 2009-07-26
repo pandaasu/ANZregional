@@ -79,7 +79,7 @@ select
   t2.valid_response
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
-    and t1.tde_tes_code < 1800;
+    and t1.tde_tes_code <= 1600;
 
 insert into pts_tes_response
 select
@@ -91,8 +91,189 @@ select
   t2.valid_response
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
-    and t1.tde_tes_code > 0
+    and t1.tde_tes_code > 1600
     and t1.tde_tes_code <= 1800;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 1800
+    and t1.tde_tes_code <= 2000;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 2000
+    and t1.tde_tes_code <= 2200;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 2200
+    and t1.tde_tes_code <= 2400;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 2400
+    and t1.tde_tes_code <= 2600;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 2600
+    and t1.tde_tes_code <= 2800;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 2800
+    and t1.tde_tes_code <= 3000;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3000
+    and t1.tde_tes_code <= 3200;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3200
+    and t1.tde_tes_code <= 3400;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3400
+    and t1.tde_tes_code <= 3600;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3600
+    and t1.tde_tes_code <= 3800;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3800
+    and t1.tde_tes_code <= 4000;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 4000
+    and t1.tde_tes_code <= 4200;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 4200;
 commit;
 
 insert into pts_tes_allocation
