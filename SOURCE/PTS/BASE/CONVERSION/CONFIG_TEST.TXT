@@ -40,8 +40,28 @@ select
   null
   from test@wod016.ap.mars t1, test_type@wod016.ap.mars t2
   where t1.test_type_code = t2.test_type_code
-    and not(t1.test_code in (1658, 2192)
+    and not(t1.test_code in (1658, 2192))
+    and t1.test_code >= 3800
     and t1.restricted_access != 2;
+commit;
+
+insert into pts_tes_keyword
+select
+  t1.tde_tes_code,
+  trim(t2.keyword)
+  from pts_tes_definition t1, test_keyword@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_question
+select
+  t1.tde_tes_code,
+  t2.param_code,
+  t2.question_code,
+  decode(t2.sample_specific,'F','1','2'),
+  nvl(translate(upper(nvl(trim(t2.test_quest_id),'0')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),1)
+  from pts_tes_definition t1, test_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code;
 commit;
 
 insert into pts_tes_sample
@@ -56,23 +76,92 @@ select
   where t1.tde_tes_code = t2.test_code;
 commit;
 
-insert into pts_tes_question
+insert into pts_tes_allocation
 select
   t1.tde_tes_code,
+  t2.pet_code,
   t2.param_code,
-  t2.question_code,
-  decode(t2.sample_specific,'F','1','2'),
-  decode(t2.test_quest_id,null,1,t2.test_quest_id)
-  from pts_tes_definition t1, test_question@wod016.ap.mars t2
+  t2.sample_code,
+  t2.sequence_number
+  from pts_tes_definition t1, pet_sample@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code;
 commit;
 
-insert into pts_tes_keyword
+insert into pts_tes_feeding
 select
   t1.tde_tes_code,
-  trim(t2.keyword)
-  from pts_tes_definition t1, test_keyword@wod016.ap.mars t2
+  t2.sample_code,
+  t2.pet_size,
+  t2.default_qty,
+  null
+  from pts_tes_definition t1, pet_sample_size@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_panel
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  decode(t2.pet_status,1,'*MEMBER',2,'*RESERVE','*RECRUITED'),
+  '*GROUP1',
+  t2.pet_code,
+  t2.pet_status,
+  trim(t2.pet_name),
+  t2.pet_type_code,
+  t2.pet_year_of_birth,
+  trim(t2.feeding_comments),
+  trim(t2.pet_health_comments),
+  t2.hhold_code,
+  t2.household_status,
+  t2.geog_zone_type_code,
+  t2.geog_zone_code,
+  trim(t2.hhold_locn_street),
+  trim(t2.hhold_locn_town),
+  trim(t2.hhold_locn_postcode),
+  trim(t2.hhold_locn_country),
+  trim(t2.hhold_phone_areacode),
+  trim(t2.hhold_phone_num),
+  substr(trim(t2.prcpt_name),instr(trim(t2.prcpt_name),' ',-1)+1),
+  trim(t2.prcpt_name),
+  t2.prcpt_year_of_birth
+  from pts_tes_definition t1,
+       (select t1.test_code,
+               t1.pet_code,
+               t1.pet_status,
+               t1.pet_name,
+               t1.pet_type_code,
+               t1.pet_year_of_birth,
+               t1.feeding_comments,
+               t1.pet_health_comments,
+               t2.hhold_code,
+               t2.household_status,
+               t2.geog_zone_type_code,
+               t2.geog_zone_code,
+               t2.hhold_locn_street,
+               t2.hhold_locn_town,
+               t2.hhold_locn_postcode,
+               t2.hhold_locn_country,
+               t2.hhold_phone_areacode,
+               t2.hhold_phone_num,
+               t2.prcpt_name,
+               t2.prcpt_year_of_birth
+          from pet_sshot@wod016.ap.mars t1,
+               hhold_sshot@wod016.ap.mars t2
+         where t1.test_code = t2.test_code
+           and t1.hhold_code = t2.hhold_code) t2
+  where t1.tde_tes_code = t2.test_code;
+commit;
+
+insert into pts_tes_statistic
+select
+  t1.tpa_tes_code,
+  t1.tpa_pan_code,
+  t2.pet_type_code,
+  t2.pets_per_hhold
+  from pts_tes_panel t1,
+       hhold_pet_type_sshot@wod016.ap.mars t2
+  where t1.tpa_tes_code = t2.test_code
+    and t1.tpa_hou_code = t2.hhold_code;
 commit;
 
 insert into pts_tes_response
@@ -82,11 +171,11 @@ select
   t2.param_code,
   t2.question_code,
   t2.sample_code,
-  1,
   t2.valid_response
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
     and t1.tde_tes_code <= 1600;
+commit;
 
 insert into pts_tes_response
 select
@@ -239,6 +328,20 @@ select
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
     and t1.tde_tes_code > 3600
+    and t1.tde_tes_code <= 3700;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3700
     and t1.tde_tes_code <= 3800;
 commit;
 
@@ -253,6 +356,20 @@ select
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
     and t1.tde_tes_code > 3800
+    and t1.tde_tes_code <= 3900;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 3900
     and t1.tde_tes_code <= 4000;
 commit;
 
@@ -267,6 +384,20 @@ select
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
     and t1.tde_tes_code > 4000
+    and t1.tde_tes_code <= 4100;
+commit;
+
+insert into pts_tes_response
+select
+  t1.tde_tes_code,
+  t2.pet_code,
+  t2.param_code,
+  t2.question_code,
+  t2.sample_code,
+  t2.valid_response
+  from pts_tes_definition t1, pet_question@wod016.ap.mars t2
+  where t1.tde_tes_code = t2.test_code
+    and t1.tde_tes_code > 4100
     and t1.tde_tes_code <= 4200;
 commit;
 
@@ -281,94 +412,6 @@ select
   from pts_tes_definition t1, pet_question@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code
     and t1.tde_tes_code > 4200;
-commit;
-
-insert into pts_tes_allocation
-select
-  t1.tde_tes_code,
-  t2.pet_code,
-  t2.param_code,
-  t2.sample_code,
-  t2.sequence_number
-  from pts_tes_definition t1, pet_sample@wod016.ap.mars t2
-  where t1.tde_tes_code = t2.test_code;
-commit;
-
-insert into pts_tes_feeding
-select
-  t1.tde_tes_code,
-  t2.sample_code,
-  t2.pet_size,
-  t2.default_qty,
-  null
-  from pts_tes_definition t1, pet_sample_size@wod016.ap.mars t2
-  where t1.tde_tes_code = t2.test_code;
-commit;
-
-insert into pts_tes_panel
-select
-  t1.tde_tes_code,
-  t2.pet_code,
-  decode(t2.pet_status,1,'*MEMBER',2,'*RESERVE','*RECRUITED'),
-  '*GROUP1',
-  t2.pet_code,
-  t2.pet_status,
-  trim(t2.pet_name),
-  t2.pet_type_code,
-  t2.pet_year_of_birth,
-  trim(t2.feeding_comments),
-  trim(t2.pet_health_comments),
-  t2.hhold_code,
-  t2.household_status,
-  t2.geog_zone_type_code,
-  t2.geog_zone_code,
-  trim(t2.hhold_locn_street),
-  trim(t2.hhold_locn_town),
-  trim(t2.hhold_locn_postcode),
-  trim(t2.hhold_locn_country),
-  trim(t2.hhold_phone_areacode),
-  trim(t2.hhold_phone_num),
-  trim(t2.prcpt_name),
-  trim(t2.prcpt_name),
-  t2.prcpt_year_of_birth
-  from pts_tes_definition t1,
-       (select t1.test_code,
-               t1.pet_code,
-               t1.pet_status,
-               t1.pet_name,
-               t1.pet_type_code,
-               t1.pet_year_of_birth,
-               t1.feeding_comments,
-               t1.pet_health_comments,
-               t2.hhold_code,
-               t2.household_status,
-               t2.geog_zone_type_code,
-               t2.geog_zone_code,
-               t2.hhold_locn_street,
-               t2.hhold_locn_town,
-               t2.hhold_locn_postcode,
-               t2.hhold_locn_country,
-               t2.hhold_phone_areacode,
-               t2.hhold_phone_num,
-               t2.prcpt_name,
-               t2.prcpt_year_of_birth
-          from pet_sshot@wod016.ap.mars t1,
-               hhold_sshot@wod016.ap.mars t2
-         where t1.test_code = t2.test_code
-           and t1.hhold_code = t2.hhold_code) t2
-  where t1.tde_tes_code = t2.test_code);
-commit;
-
-insert into pts_tes_statistic
-select
-  t1.tpa_tes_code,
-  t1.tpa_pan_code,
-  t2.pet_type_code,
-  t2.pets_per_hhold
-  from pts_tes_panel t1,
-       hhold_pet_type_sshot@wod016.ap.mars t2
-  where t1.tpa_tes_code = t2.test_code
-    and t1.tpa_hou_code = t2.hhold_code;
 commit;
 
 insert into pts_tes_classification 
@@ -543,13 +586,6 @@ insert into pts_tes_classification
 select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 25, min(t2.format), null 
   from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
   where t1.tde_tes_code = t2.test_code and format is not null
-  group by t1.tde_tes_code, t2.pet_code;
-commit;
-
-insert into pts_tes_classification 
-select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 26, min(t2.pet_environment), null 
-  from pts_tes_definition t1, pet_sshot@wod016.ap.mars t2
-  where t1.tde_tes_code = t2.test_code and pet_environment is not null
   group by t1.tde_tes_code, t2.pet_code;
 commit;
 
