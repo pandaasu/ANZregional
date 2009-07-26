@@ -115,8 +115,6 @@ sub ProcessSearch()
          call ProcessDeleteLoad
       case "DELETE_ACCEPT"
          call ProcessDeleteAccept
-      case else
-         strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
    end select
    
 end sub
