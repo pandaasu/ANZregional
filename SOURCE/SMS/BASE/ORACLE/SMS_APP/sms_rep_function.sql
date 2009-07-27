@@ -50,7 +50,8 @@ create or replace package body sms_app.sms_rep_function as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure send_sms(par_smtp_host in varchar2,
+   procedure send_sms(par_smtp_target in varchar2,
+                      par_smtp_host in varchar2,
                       par_smtp_port in varchar2,
                       par_qry_code in varchar2,
                       par_qry_date in varchar2,
@@ -555,6 +556,7 @@ create or replace package body sms_app.sms_rep_function as
       var_found boolean;
       var_process boolean;
       var_sent boolean;
+      var_smtp_target varchar2(256);
       var_smtp_host varchar2(256);
       var_smtp_port varchar2(256);
       var_subject varchar2(64);
@@ -604,7 +606,7 @@ create or replace package body sms_app.sms_rep_function as
       rcd_report csr_report%rowtype;
 
       cursor csr_execution is
-         select max(rex_exe_seqn) as max_exe_seqn
+         select nvl(max(rex_exe_seqn),0) as max_exe_seqn
            from sms_rpt_execution t01
           where t01.rex_qry_code = par_qry_code
             and t01.rex_qry_date = par_qry_date;
@@ -753,8 +755,12 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       /* Retrieve SMTP server values
       /*-*/
+      var_smtp_target := sms_gen_function.retrieve_system_value('SMTP_TARGET');
       var_smtp_host := sms_gen_function.retrieve_system_value('SMTP_HOST');
       var_smtp_port := sms_gen_function.retrieve_system_value('SMTP_PORT');
+      if trim(var_smtp_target) is null or trim(upper(var_smtp_target)) = '*NONE' then
+         raise_application_error(-20000, 'SMTP target system value has not been specified');
+      end if;
       if trim(var_smtp_host) is null or trim(upper(var_smtp_host)) = '*NONE' then
          raise_application_error(-20000, 'SMTP host system value has not been specified');
       end if;
@@ -1323,14 +1329,15 @@ create or replace package body sms_app.sms_rep_function as
          close csr_rcp_count;
          if rcd_rcp_count.rec_count != 0 then
             begin
-               send_sms(var_smtp_host,
+               send_sms(var_smtp_target,
+                        var_smtp_host,
                         var_smtp_port,
                         rcd_rpt_message.rme_qry_code,
                         rcd_rpt_message.rme_qry_date,
                         rcd_rpt_message.rme_exe_seqn,
                         rcd_rpt_message.rme_msg_seqn,
                         var_subject,
-                        rcd_sms_rpt_message.rme_msg_text);
+                        rcd_rpt_message.rme_msg_text);
             exception
                when others then
                   var_warnings := true;
@@ -1357,6 +1364,12 @@ create or replace package body sms_app.sms_rep_function as
                and rme_exe_seqn = rcd_rpt_message.rme_exe_seqn
                and rme_msg_seqn = rcd_rpt_message.rme_msg_seqn;
          end if;
+
+-----
+exit;
+-----
+
+
       end loop;
       close csr_rpt_message;
 
@@ -1373,7 +1386,7 @@ create or replace package body sms_app.sms_rep_function as
              rhe_upd_date = sysdate,
              rhe_status = '2'
        where rhe_qry_code = par_qry_code
-         and rhe_rpt_date = par_qry_date;
+         and rhe_qry_date = par_qry_date;
 
       /*-*/
       /* Commit the database
@@ -1402,7 +1415,7 @@ create or replace package body sms_app.sms_rep_function as
             lics_notification.send_email(sms_parameter.system_code,
                                          sms_parameter.system_unit,
                                          sms_parameter.system_environment,
-                                         con_function,
+                                         con_function||' - **WARNING**',
                                          'SMS_REPORT_GENERATION',
                                          var_email,
                                          'SMS message warnings occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
@@ -1425,7 +1438,7 @@ create or replace package body sms_app.sms_rep_function as
             lics_notification.send_email(sms_parameter.system_code,
                                          sms_parameter.system_unit,
                                          sms_parameter.system_environment,
-                                         con_function,
+                                         con_function||' - **ERROR**',
                                          'SMS_REPORT_GENERATION',
                                          var_email,
                                          'One or more errors occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
@@ -1479,7 +1492,8 @@ create or replace package body sms_app.sms_rep_function as
    /************************************************/
    /* This procedure performs the send SMS routine */
    /************************************************/
-   procedure send_sms(par_smtp_host in varchar2,
+   procedure send_sms(par_smtp_target in varchar2,
+                      par_smtp_host in varchar2,
                       par_smtp_port in varchar2,
                       par_qry_code in varchar2,
                       par_qry_date in varchar2,
@@ -1544,7 +1558,7 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       /* Initialise the email
       /*-*/
-      utl_smtp.mail(var_connection, 'SMS Sales');
+      utl_smtp.mail(var_connection, 'MCH.Atlas@MCH');
 
       /*-*/
       /* Set the recipient(s)
@@ -1555,7 +1569,7 @@ create or replace package body sms_app.sms_rep_function as
          if csr_rpt_recipient%notfound then
             exit;
          end if;
-         utl_smtp.rcpt(var_connection, '"'||trim(rcd_rpt_recipient.rre_rcp_name)||'"<'||rcd_rpt_recipient.rre_rcp_mobile||'@'||par_smtp_host||'>');
+         utl_smtp.rcpt(var_connection, rcd_rpt_recipient.rre_rcp_mobile||'@'||par_smtp_target);
       end loop;
       close csr_rpt_recipient;
 
