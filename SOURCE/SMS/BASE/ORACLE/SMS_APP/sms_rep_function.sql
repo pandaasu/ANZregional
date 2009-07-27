@@ -1365,11 +1365,6 @@ create or replace package body sms_app.sms_rep_function as
                and rme_msg_seqn = rcd_rpt_message.rme_msg_seqn;
          end if;
 
------
-exit;
------
-
-
       end loop;
       close csr_rpt_message;
 
@@ -1505,6 +1500,7 @@ exit;
       /*-*/
       /* Local definitions
       /*-*/
+      con_max_length constant number := 160;
       var_connection utl_smtp.connection;
       var_indx number;
       var_part number;
@@ -1533,13 +1529,13 @@ exit;
       /* Initialise the message parts
       /*-*/
       tbl_line.delete;
-      if length(par_content) <= 160 then
+      if length(par_content) <= con_max_length then
          tbl_line(tbl_line.count+1) := par_content;
       else
          var_part := 1;
-         var_indx := 160;
+         var_indx := con_max_length;
          for idx in 1..length(par_content) loop
-            if var_indx >= 160 then
+            if var_indx >= con_max_length then
                tbl_line(tbl_line.count+1) := 'M'||to_char(par_msg_seqn)||'P'||to_char(var_part)||' ';
                var_part := var_part + 1;
                var_indx := length('M'||to_char(par_msg_seqn)||'P'||to_char(var_part)||' ');
@@ -1556,34 +1552,45 @@ exit;
       utl_smtp.helo(var_connection, par_smtp_host);
 
       /*-*/
-      /* Initialise the email
+      /* Send all SMS message parts
       /*-*/
-      utl_smtp.mail(var_connection, 'MCH.Atlas@MCH');
+      for idx in 1..tbl_line.count loop
 
-      /*-*/
-      /* Set the recipient(s)
-      /*-*/
-      open csr_rpt_recipient;
-      loop
-         fetch csr_rpt_recipient into rcd_rpt_recipient;
-         if csr_rpt_recipient%notfound then
-            exit;
-         end if;
-         utl_smtp.rcpt(var_connection, rcd_rpt_recipient.rre_rcp_mobile||'@'||par_smtp_target);
+         /*-*/
+         /* Initialise the email
+         /*-*/
+         utl_smtp.mail(var_connection, 'MCH.BW@MCH');
+
+         /*-*/
+         /* Set the recipient(s)
+         /*-*/
+         open csr_rpt_recipient;
+         loop
+            fetch csr_rpt_recipient into rcd_rpt_recipient;
+            if csr_rpt_recipient%notfound then
+               exit;
+            end if;
+            utl_smtp.rcpt(var_connection, rcd_rpt_recipient.rre_rcp_mobile||'@'||par_smtp_target);
+         end loop;
+         close csr_rpt_recipient;
+
+         /*-*/
+         /* Load the email message
+         /*-*/
+         utl_smtp.open_data(var_connection);
+         utl_smtp.write_data(var_connection, 'Subject: ' || par_subject || utl_tcp.CRLF);
+         utl_smtp.write_data(var_connection, utl_tcp.CRLF || tbl_line(idx));
+
+         /*-*/
+         /* Close the data stream
+         /*-*/
+         utl_smtp.close_data(var_connection);
+
       end loop;
-      close csr_rpt_recipient;
-
-      /*-*/
-      /* Load the email message
-      /*-*/
-      utl_smtp.open_data(var_connection);
-      utl_smtp.write_data(var_connection, 'Subject: ' || par_subject || utl_tcp.CRLF);
-      utl_smtp.write_data(var_connection, utl_tcp.CRLF || par_content);
 
       /*-*/
       /* Close the data stream and quit the connection
       /*-*/
-      utl_smtp.close_data(var_connection);
       utl_smtp.quit(var_connection);
 
    /*-------------*/
