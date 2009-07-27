@@ -32,9 +32,9 @@ create table sms.sms_rpt_execution
 comment on table sms.sms_rpt_execution is 'Report Execution Table';
 comment on column sms.sms_rpt_execution.rex_qry_code is 'Query code';
 comment on column sms.sms_rpt_execution.rex_qry_date is 'Query timestamp';
-comment on column sms.sms_rpt_execution.rex_gen_seqn is 'Execution sequence';
-comment on column sms.sms_rpt_execution.rex_upd_user is 'Execution user';
-comment on column sms.sms_rpt_execution.rex_upd_date is 'Execution date';
+comment on column sms.sms_rpt_execution.rex_exe_seqn is 'Execution sequence';
+comment on column sms.sms_rpt_execution.rex_exe_user is 'Execution user';
+comment on column sms.sms_rpt_execution.rex_exe_date is 'Execution date';
 comment on column sms.sms_rpt_execution.rex_status is 'Execution status (1=loaded or 2=processed or 3=resend or 4=stopped)';
 
 /**/
