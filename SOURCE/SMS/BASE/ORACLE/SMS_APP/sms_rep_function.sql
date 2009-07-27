@@ -54,6 +54,7 @@ create or replace package body sms_app.sms_rep_function as
                       par_smtp_port in varchar2,
                       par_qry_code in varchar2,
                       par_qry_date in varchar2,
+                      par_exe_seqn in number,
                       par_msg_seqn in number,
                       par_subject in varchar2,
                       par_content in varchar2);
@@ -557,7 +558,6 @@ create or replace package body sms_app.sms_rep_function as
       var_smtp_host varchar2(256);
       var_smtp_port varchar2(256);
       var_subject varchar2(64);
-      var_mes_count number;
       var_rec_count number;
       var_out_day varchar2(64);
       var_day_number number;
@@ -575,6 +575,7 @@ create or replace package body sms_app.sms_rep_function as
       var_sav_val09 varchar2(256);
       var_sms_text varchar2(32767);
       var_sms_work varchar2(32767);
+      rcd_sms_rpt_execution sms_rpt_execution%rowtype;
       rcd_sms_rpt_message sms_rpt_message%rowtype;
       rcd_sms_rpt_recipient sms_rpt_recipient%rowtype;
       type typ_count is table of integer index by binary_integer;
@@ -601,6 +602,13 @@ create or replace package body sms_app.sms_rep_function as
             and t01.rhe_qry_date = par_qry_date
             for update;
       rcd_report csr_report%rowtype;
+
+      cursor csr_execution is
+         select max(rex_exe_seqn) as max_exe_seqn
+           from sms_rpt_execution t01
+          where t01.rex_qry_code = par_qry_code
+            and t01.rex_qry_date = par_qry_date;
+      rcd_execution csr_execution%rowtype;
 
       cursor csr_query is
          select t01.*
@@ -699,16 +707,18 @@ create or replace package body sms_app.sms_rep_function as
       cursor csr_rpt_message is
          select t01.*
            from sms_rpt_message t01
-          where t01.rme_qry_code = par_qry_code
-            and t01.rme_qry_date = par_qry_date
+          where t01.rme_qry_code = rcd_sms_rpt_execution.rex_qry_code
+            and t01.rme_qry_date = rcd_sms_rpt_execution.rex_qry_date
+            and t01.rme_exe_seqn = rcd_sms_rpt_execution.rex_exe_seqn
           order by t01.rme_msg_seqn asc;
       rcd_rpt_message csr_rpt_message%rowtype;
 
       cursor csr_rcp_count is
          select count(*) as rec_count
            from sms_rpt_recipient t01
-          where t01.rre_qry_code = par_qry_code
-            and t01.rre_qry_date = par_qry_date
+          where t01.rre_qry_code = rcd_sms_rpt_execution.rex_qry_code
+            and t01.rre_qry_date = rcd_sms_rpt_execution.rex_qry_date
+            and t01.rre_exe_seqn = rcd_sms_rpt_execution.rex_exe_seqn
             and t01.rre_msg_seqn = rcd_rpt_message.rme_msg_seqn;
       rcd_rcp_count csr_rcp_count%rowtype;
 
@@ -782,6 +792,17 @@ create or replace package body sms_app.sms_rep_function as
       end if;
 
       /*-*/
+      /* Retrieve the report execution sequence
+      /*-*/
+      open csr_execution;
+      fetch csr_execution into rcd_execution;
+      if csr_execution%notfound then
+         rcd_execution.max_exe_seqn := 0;
+      end if;
+      close csr_execution;
+      rcd_execution.max_exe_seqn := rcd_execution.max_exe_seqn + 1;
+
+      /*-*/
       /* Retrieve the related query
       /*-*/
       var_found := false;
@@ -829,10 +850,22 @@ create or replace package body sms_app.sms_rep_function as
       var_day_number := to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')));
 
       /*-*/
+      /* Insert the report execution
+      /*-*/
+      rcd_sms_rpt_execution.rex_qry_code := rcd_report.rhe_qry_code;
+      rcd_sms_rpt_execution.rex_qry_date := rcd_report.rhe_qry_date;
+      rcd_sms_rpt_execution.rex_exe_seqn := rcd_execution.max_exe_seqn;
+      rcd_sms_rpt_execution.rex_exe_user := par_user;
+      rcd_sms_rpt_execution.rex_exe_date := sysdate;
+      rcd_sms_rpt_execution.rex_status := rcd_report.rhe_status;
+      insert into sms_rpt_execution values rcd_sms_rpt_execution;
+
+      /*-*/
       /* Initialise the report message data
       /*-*/
       rcd_sms_rpt_message.rme_qry_code := rcd_report.rhe_qry_code;
       rcd_sms_rpt_message.rme_qry_date := rcd_report.rhe_qry_date;
+      rcd_sms_rpt_message.rme_exe_seqn := rcd_execution.max_exe_seqn;
       rcd_sms_rpt_message.rme_msg_seqn := 0;
 
       /*-*/
@@ -840,6 +873,7 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       rcd_sms_rpt_recipient.rre_qry_code := rcd_report.rhe_qry_code;
       rcd_sms_rpt_recipient.rre_qry_date := rcd_report.rhe_qry_date;
+      rcd_sms_rpt_recipient.rre_exe_seqn := rcd_execution.max_exe_seqn;
 
       /*-*/
       /* Retrieve the report query profiles
@@ -1206,11 +1240,6 @@ create or replace package body sms_app.sms_rep_function as
                   if tbl_data.count != 0 then
 
                      /*-*/
-                     /* Increment the message count
-                     /*-*/
-                     var_mes_count := var_mes_count +1;
-
-                     /*-*/
                      /* Build and insert the report message
                      /*-*/
                      var_sms_text := null;
@@ -1298,6 +1327,7 @@ create or replace package body sms_app.sms_rep_function as
                         var_smtp_port,
                         rcd_rpt_message.rme_qry_code,
                         rcd_rpt_message.rme_qry_date,
+                        rcd_rpt_message.rme_exe_seqn,
                         rcd_rpt_message.rme_msg_seqn,
                         var_subject,
                         rcd_sms_rpt_message.rme_msg_text);
@@ -1317,12 +1347,14 @@ create or replace package body sms_app.sms_rep_function as
                set rme_msg_status = '2'
              where rme_qry_code = rcd_rpt_message.rme_qry_code
                and rme_qry_date = rcd_rpt_message.rme_qry_date
+               and rme_exe_seqn = rcd_rpt_message.rme_exe_seqn
                and rme_msg_seqn = rcd_rpt_message.rme_msg_seqn;
          else
             update sms_rpt_message
                set rme_msg_status = '3'
              where rme_qry_code = rcd_rpt_message.rme_qry_code
                and rme_qry_date = rcd_rpt_message.rme_qry_date
+               and rme_exe_seqn = rcd_rpt_message.rme_exe_seqn
                and rme_msg_seqn = rcd_rpt_message.rme_msg_seqn;
          end if;
       end loop;
@@ -1451,6 +1483,7 @@ create or replace package body sms_app.sms_rep_function as
                       par_smtp_port in varchar2,
                       par_qry_code in varchar2,
                       par_qry_date in varchar2,
+                      par_exe_seqn in number,
                       par_msg_seqn in number,
                       par_subject in varchar2,
                       par_content in varchar2) is
@@ -1459,6 +1492,10 @@ create or replace package body sms_app.sms_rep_function as
       /* Local definitions
       /*-*/
       var_connection utl_smtp.connection;
+      var_indx number;
+      var_part number;
+      type typ_line is table of varchar2(256) index by binary_integer;
+      tbl_line typ_line;
 
       /*-*/
       /* Local cursors
@@ -1468,6 +1505,7 @@ create or replace package body sms_app.sms_rep_function as
            from sms_rpt_recipient t01
           where t01.rre_qry_code = par_qry_code
             and t01.rre_qry_date = par_qry_date
+            and t01.rre_exe_seqn = par_exe_seqn
             and t01.rre_msg_seqn = par_msg_seqn
           order by t01.rre_rcp_code asc;
       rcd_rpt_recipient csr_rpt_recipient%rowtype;
@@ -1477,22 +1515,25 @@ create or replace package body sms_app.sms_rep_function as
    /*-------------*/
    begin
 
-----------------MULTIPART MESSAGE
-   --   tbl_line.delete;
-   --   if length(par_content) <= 160 then
-   --      tbl_line(1) := par_content;
-   --   else
-   --      var_indx := 0;
-   --      for idx in 1..length(par_content) loop
---
-   --         if var_indx = 160 then
-   --            var_indx := 0;
-   --         end if;
-   --         var_indx := var_indx + 1;
-   --         tbl_line(var_indx) := tbl_line(var_indx)||substr(par_content,idx,1);
---
-   --      end loop;
-   --   end if;
+      /*-*/
+      /* Initialise the message parts
+      /*-*/
+      tbl_line.delete;
+      if length(par_content) <= 160 then
+         tbl_line(tbl_line.count+1) := par_content;
+      else
+         var_part := 1;
+         var_indx := 160;
+         for idx in 1..length(par_content) loop
+            if var_indx >= 160 then
+               tbl_line(tbl_line.count+1) := 'M'||to_char(par_msg_seqn)||'P'||to_char(var_part)||' ';
+               var_part := var_part + 1;
+               var_indx := length('M'||to_char(par_msg_seqn)||'P'||to_char(var_part)||' ');
+            end if;
+            tbl_line(tbl_line.count) := tbl_line(tbl_line.count)||substr(par_content,idx,1);
+            var_indx := var_indx + 1;
+         end loop;
+      end if;
 
       /*-*/
       /* Initialise the email environment
