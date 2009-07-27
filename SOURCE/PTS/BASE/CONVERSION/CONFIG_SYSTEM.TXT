@@ -386,16 +386,16 @@ insert into pts_sys_field values('*PET_CLA',23,'Pet snacks feeding frequency','1
 insert into pts_sys_field values('*PET_CLA',24,'Pet feeding preference','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 24 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_CLA',25,'Pet food format','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 25 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_CLA',26,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 26 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-
-insert into pts_sys_field values('*PET_CLA',27,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 27 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',28,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 28 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',29,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 29 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',30,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 30 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',31,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 31 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',32,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 32 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',33,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 33 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-insert into pts_sys_field values('*PET_CLA',34,'Pet environment','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 34 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-
+insert into pts_sys_field values('*PET_CLA',27,'Pet asleep','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 27 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',28,'Pet pouch/tray/little tins feeding frequency','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 28 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',29,'Pet dry food','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 29 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',30,'Pet relationship','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 30 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',31,'Pet food health','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 31 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',32,'Pet wet shopping','1',user,sysdate,'1','1',5,'*OPT_MULTI_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 32 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',33,'Pet dry shopping','1',user,sysdate,'1','1',5,'*OPT_MULTI_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 33 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',34,'Pet food enjoyment importance','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 34 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',35,'Pet food cost importance','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 35 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+insert into pts_sys_field values('*PET_CLA',36,'Pet food health importance','1',user,sysdate,'1','1',5,'*OPT_SINGLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_CLA'' and pcl_fld_code = 36 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_DEF',1,'Pet code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','p1.pde_pet_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*PET_DEF',2,'Pet type','1',user,sysdate,'0','1',5,'*LOGIC','*PET_TYPE','p1.pde_pet_type<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*PET_DEF',3,'Pet name','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(p1.pde_pet_name,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
@@ -422,6 +422,9 @@ insert into pts_sys_field values('*PET_SAM',46,'Pet Milk Brand','1',user,sysdate
 insert into pts_sys_field values('*PET_SAM',47,'Pet Snacks','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 47 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_SAM',48,'Pet Bird Brands','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 48 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_SAM',49,'Pet Vitamins & Supplements','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 49 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+
+-----insert into pts_sys_field values('*PET_SAM',50,'Pet Vitamins','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 50 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
+
 insert into pts_sys_field values('*QUE_DEF',1,'Question code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','q1.qde_que_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*QUE_DEF',2,'Question text','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(q1.qde_que_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*QUE_DEF',3,'Question type','1',user,sysdate,'1','0',5,'*LOGIC','*LIST','nvl(q1.qde_que_type,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
@@ -635,7 +638,6 @@ insert into pts_sys_select values('*PET_CLA',25,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_CLA',26,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLA',26,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_select values('*PET_CLA',26,'*SELECT_WHEN_NOT_EQUAL');
-
 insert into pts_sys_select values('*PET_CLA',27,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLA',27,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_select values('*PET_CLA',27,'*SELECT_WHEN_NOT_EQUAL');
@@ -652,15 +654,20 @@ insert into pts_sys_select values('*PET_CLA',31,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLA',31,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_select values('*PET_CLA',31,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_CLA',32,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLA',32,'*SELECT_WHEN_EQUAL_MIX');
+insert into pts_sys_select values('*PET_CLA',32,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_CLA',32,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_select values('*PET_CLA',32,'*SELECT_WHEN_NOT_EQUAL_ALL');
 insert into pts_sys_select values('*PET_CLA',33,'*SELECT_WHEN_EQUAL');
-insert into pts_sys_select values('*PET_CLA',33,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_select values('*PET_CLA',33,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_CLA',34,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_CLA',34,'*SELECT_WHEN_EQUAL_MIX');
 insert into pts_sys_select values('*PET_CLA',34,'*SELECT_WHEN_NOT_EQUAL');
-
+insert into pts_sys_select values('*PET_CLA',35,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLA',35,'*SELECT_WHEN_EQUAL_MIX');
+insert into pts_sys_select values('*PET_CLA',35,'*SELECT_WHEN_NOT_EQUAL');
+insert into pts_sys_select values('*PET_CLA',36,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*PET_CLA',36,'*SELECT_WHEN_EQUAL_MIX');
+insert into pts_sys_select values('*PET_CLA',36,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_DEF',1,'*SELECT_WHEN_EQ');
 insert into pts_sys_select values('*PET_DEF',2,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_DEF',2,'*SELECT_WHEN_EQUAL_MIX');
@@ -744,6 +751,12 @@ insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_NOT_EQUAL_ALL');
+
+--insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_EQUAL');
+--insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_EQUAL_ALL');
+--insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_NOT_EQUAL');
+--insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_NOT_EQUAL_ALL');
+
 insert into pts_sys_select values('*QUE_DEF',1,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*QUE_DEF',2,'*SELECT_WHEN_LIKE');
 insert into pts_sys_select values('*QUE_DEF',3,'*SELECT_WHEN_EQUAL');
@@ -1152,14 +1165,12 @@ insert into pts_sys_value values('*PET_CLA',26,1,'Household');
 insert into pts_sys_value values('*PET_CLA',26,2,'Cattery');
 insert into pts_sys_value values('*PET_CLA',26,3,'WPCN');
 insert into pts_sys_value values('*PET_CLA',26,4,'Japan');
-
-
-insert into pts_sys_value values('*PET_CLA',27,1,'Sleeps on my bed or someone else's bed');
-insert into pts_sys_value values('*PET_CLA',27,2,'Its own bed in my or someone else's bedroom');
+insert into pts_sys_value values('*PET_CLA',27,1,'Sleeps on my bed or someone else''s bed');
+insert into pts_sys_value values('*PET_CLA',27,2,'Its own bed in my or someone else''s bedroom');
 insert into pts_sys_value values('*PET_CLA',27,3,'Sleeps in another place');
 insert into pts_sys_value values('*PET_CLA',28,1,'5 to 7 times a week');
 insert into pts_sys_value values('*PET_CLA',28,2,'3 to 4 times a week');
-insert into pts_sys_value values('*PET_CLA',28,3,'once/twice a week');
+insert into pts_sys_value values('*PET_CLA',28,3,'Once/twice a week');
 insert into pts_sys_value values('*PET_CLA',28,4,'Never');
 insert into pts_sys_value values('*PET_CLA',28,5,'Occasionally');
 insert into pts_sys_value values('*PET_CLA',29,1,'Available all day');
@@ -1190,17 +1201,15 @@ insert into pts_sys_value values('*PET_CLA',33,4,'Agriculture stores (eg: Dalget
 insert into pts_sys_value values('*PET_CLA',33,5,'Pet shops or bulk pet food stores');
 insert into pts_sys_value values('*PET_CLA',33,6,'Vets');
 insert into pts_sys_value values('*PET_CLA',33,7,'Other');
-
-
-
-insert into pts_sys_value values('*PET_CLA',34,1,'1. How much my dog will enjoy the food, 2. How much the food costs, 3. How much the food contributes to health');
-insert into pts_sys_value values('*PET_CLA',34,2,'1. How much my dog will enjoy the food, 2. How much the food contributes to my dog's health, 3. How much the food costs');
-insert into pts_sys_value values('*PET_CLA',34,3,'1. How much the food costs, 2. How much the food contributes to health, 3. How much my dog will enjoy the food');
-insert into pts_sys_value values('*PET_CLA',34,4,'1. How much the food costs, 2. How much my dog will enjoy the food, 3. How much the food contributes to health');
-insert into pts_sys_value values('*PET_CLA',34,5,'1. How much the food contributes to health, 2. How much my dog will enjoy the food, 3. How much the food costs');
-insert into pts_sys_value values('*PET_CLA',34,6,'1. How much the food contributes to health, 2. How much the food costs, 3. How much my dog will enjoy the food');
-
-
+insert into pts_sys_value values('*PET_CLA',34,1,'Least important');
+insert into pts_sys_value values('*PET_CLA',34,2,'Important');
+insert into pts_sys_value values('*PET_CLA',34,3,'Most important');
+insert into pts_sys_value values('*PET_CLA',35,1,'Least important');
+insert into pts_sys_value values('*PET_CLA',35,2,'Important');
+insert into pts_sys_value values('*PET_CLA',35,3,'Most important');
+insert into pts_sys_value values('*PET_CLA',36,1,'Least important');
+insert into pts_sys_value values('*PET_CLA',36,2,'Important');
+insert into pts_sys_value values('*PET_CLA',36,3,'Most important');
 insert into pts_sys_value values('*PET_DEF',4,1,'Available');
 insert into pts_sys_value values('*PET_DEF',4,2,'On Test');
 insert into pts_sys_value values('*PET_DEF',4,3,'Suspended');
@@ -1780,6 +1789,9 @@ insert into pts_sys_value values('*PET_SAM',49,30,'DEER VELVET');
 insert into pts_sys_value values('*PET_SAM',49,31,'ZINC');
 insert into pts_sys_value values('*PET_SAM',49,32,'VITAMIN C');
 insert into pts_sys_value values('*PET_SAM',49,33,'OMEGA 3');
+
+--insert into pts_sys_value values('*PET_SAM',50,1,'OMEGA 3');
+
 insert into pts_sys_value values('*QUE_DEF',3,1,'Preference');
 insert into pts_sys_value values('*QUE_DEF',3,2,'Acceptance');
 insert into pts_sys_value values('*QUE_DEF',4,1,'Discrete Values');
@@ -1858,6 +1870,16 @@ insert into pts_pty_sys_field values(1,'*PET_CLA',23);
 insert into pts_pty_sys_field values(1,'*PET_CLA',24);
 insert into pts_pty_sys_field values(1,'*PET_CLA',25);
 insert into pts_pty_sys_field values(1,'*PET_CLA',26);
+insert into pts_pty_sys_field values(1,'*PET_CLA',27);
+insert into pts_pty_sys_field values(1,'*PET_CLA',28);
+insert into pts_pty_sys_field values(1,'*PET_CLA',29);
+insert into pts_pty_sys_field values(1,'*PET_CLA',30);
+insert into pts_pty_sys_field values(1,'*PET_CLA',31);
+insert into pts_pty_sys_field values(1,'*PET_CLA',32);
+insert into pts_pty_sys_field values(1,'*PET_CLA',33);
+insert into pts_pty_sys_field values(1,'*PET_CLA',34);
+insert into pts_pty_sys_field values(1,'*PET_CLA',35);
+insert into pts_pty_sys_field values(1,'*PET_CLA',36);
 insert into pts_pty_sys_field values(1,'*PET_SAM',4);
 insert into pts_pty_sys_field values(1,'*PET_SAM',5);
 insert into pts_pty_sys_field values(1,'*PET_SAM',6);
@@ -1898,6 +1920,16 @@ insert into pts_pty_sys_field values(2,'*PET_CLA',23);
 insert into pts_pty_sys_field values(2,'*PET_CLA',24);
 insert into pts_pty_sys_field values(2,'*PET_CLA',25);
 insert into pts_pty_sys_field values(2,'*PET_CLA',26);
+insert into pts_pty_sys_field values(2,'*PET_CLA',27);
+insert into pts_pty_sys_field values(2,'*PET_CLA',28);
+insert into pts_pty_sys_field values(2,'*PET_CLA',29);
+insert into pts_pty_sys_field values(2,'*PET_CLA',30);
+insert into pts_pty_sys_field values(2,'*PET_CLA',31);
+insert into pts_pty_sys_field values(2,'*PET_CLA',32);
+insert into pts_pty_sys_field values(2,'*PET_CLA',33);
+insert into pts_pty_sys_field values(2,'*PET_CLA',34);
+insert into pts_pty_sys_field values(2,'*PET_CLA',35);
+insert into pts_pty_sys_field values(2,'*PET_CLA',36);
 insert into pts_pty_sys_field values(2,'*PET_SAM',4);
 insert into pts_pty_sys_field values(2,'*PET_SAM',5);
 insert into pts_pty_sys_field values(2,'*PET_SAM',6);
