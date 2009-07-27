@@ -758,7 +758,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>Message Lines Definitions</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>Message Line Definitions</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension 1 Detail Text:&nbsp;</nobr></td>
