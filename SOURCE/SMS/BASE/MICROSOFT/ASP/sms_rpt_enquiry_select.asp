@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the report selection
+   '// Retrieve the query selection
    '//
-   strStatement = "select xml_text from table(sms_app.sms_rpt_function.select_list)"
+   strStatement = "select xml_text from table(sms_app.sms_rep_function.select_enquiry)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

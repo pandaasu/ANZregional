@@ -126,10 +126,14 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
-      cobjScreens[2] = new clsScreen('dspEnquiry','hedEnquiry');
+      cobjScreens[2] = new clsScreen('dspReport','hedReport');
+      cobjScreens[3] = new clsScreen('dspMessage','hedMessage');
+      cobjScreens[4] = new clsScreen('dspRecipient','hedRecipient');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Report Selection';
-      cobjScreens[2].hedtxt = 'Report Enquiry';
+      cobjScreens[1].hedtxt = 'Query Selection';
+      cobjScreens[2].hedtxt = 'Report Selection';
+      cobjScreens[3].hedtxt = 'Report Message Selection';
+      cobjScreens[4].hedtxt = 'Report Message Enquiry';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -164,33 +168,30 @@ sub PaintFunction()%>
    // Select Functions //
    //////////////////////
    var cstrSelectStrCode;
-   var cstrSelectStrDate;
    var cstrSelectEndCode;
-   var cstrSelectEndDate;
-   function doSelectEnquiry(strCode,strDate) {
+   function doSelectReport(strCode) {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectEnquiry(\''+strCode+'\',\''+strDate+'\');',10);
+      window.setTimeout('requestReportSelect(\''+strCode+'\');',10);
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
-      cstrSelectStrDate = document.getElementById('SEL_SelDate').value;
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*SELRPT\');',10);
+      window.setTimeout('requestSelectList(\'*SELQRY\');',10);
    }
    function doSelectPrevious() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*PRVRPT\');',10);
+      window.setTimeout('requestSelectList(\'*PRVQRY\');',10);
    }
    function doSelectNext() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*NXTRPT\');',10);
+      window.setTimeout('requestSelectList(\'*NXTQRY\');',10);
    }
    function requestSelectList(strAction) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" STRDTE="'+cstrSelectStrDate+'" ENDCDE="'+cstrSelectEndCode+'" ENDDTE="'+cstrSelectEndDate+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
       doPostRequest('<%=strBase%>sms_rpt_enquiry_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
@@ -236,7 +237,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Report&nbsp;';
+         objCell.innerHTML = '&nbsp;Query&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -263,15 +264,13 @@ sub PaintFunction()%>
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
                   cstrSelectStrCode = objElements[i].getAttribute('QRYCDE');
-                  cstrSelectStrDate = objElements[i].getAttribute('QRYDTE');
                }
                cstrSelectEndCode = objElements[i].getAttribute('QRYCDE');
-               cstrSelectEndDate = objElements[i].getAttribute('QRYDTE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectEnquiry(\''+objElements[i].getAttribute('QRYCDE')+'\',\''+objElements[i].getAttribute('QRYDTE')+'\');">Select</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectReport(\''+objElements[i].getAttribute('QRYCDE')+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -283,13 +282,13 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RPTDTE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RPTSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -317,19 +316,15 @@ sub PaintFunction()%>
    }
 
    //////////////////////
-   // Enquiry Functions //
+   // Report Functions //
    //////////////////////
-   var cstrEnquiryMode;
-   var cstrEnquiryCode;
-   var cstrEnquiryDate;
-   function requestSelectEnquiry(strCode,strDate) {
-      cstrEnquiryMode = '*ENQ';
-      cstrEnquiryCode = strCode;
-      cstrEnquiryDate = strDate;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*ENQRPT" QRYCDE="'+fixXML(strCode)+" QRYDTE="'+fixXML(strDate)+'"/>';
-      doPostRequest('<%=strBase%>sms_rpt_enquiry_retrieve.asp',function(strResponse) {checkEnquiryLoad(strResponse);},false,streamXML(strXML));
+   var cstrReportCode;
+   function requestReportSelect(strCode) {
+      cstrReportCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*RTVRPT" QRYCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>sms_rpt_enquiry_report.asp',function(strResponse) {checkReportLoad(strResponse);},false,streamXML(strXML));
    }
-   function checkEnquiryLoad(strResponse) {
+   function checkReportLoad(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -348,43 +343,21 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         cobjScreens[2].hedtxt = 'Report Enquiry ('+cstrEnquiryCode+'/'+cstrEnquiryDate+')';
-         displayScreen('dspEnquiry');
-         document.getElementById('ENQ_RptData').innerHTML = '';
-         document.getElementById('ENQ_CrtData').innerHTML = '';
-         document.getElementById('ENQ_UpdData').innerHTML = '';
-         document.getElementById('ENQ_RptStat').innerHTML = '';
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'REPORT') {
-               document.getElementById('ENQ_RptData').innerHTML = objElements[i].getAttribute('RPTDTE')+' Period('+objElements[i].getAttribute('RPTPRD')+') Week('+objElements[i].getAttribute('RPTWEK')+') Day('+objElements[i].getAttribute('RPTDAY')+')';
-               document.getElementById('ENQ_CrtData').innerHTML = objElements[i].getAttribute('CRTDTE')+' Period('+objElements[i].getAttribute('CRTPRD')+') Week('+objElements[i].getAttribute('CRTWEK')+') Day('+objElements[i].getAttribute('CRTDAY')+')';
-               document.getElementById('ENQ_UpdData').innerHTML = objElements[i].getAttribute('UPDUSR')+' Date('+objElements[i].getAttribute('UPDDTE')+')';
-               document.getElementById('ENQ_RptData').innerHTML = objElements[i].getAttribute('RPTSTS');
-            }
-         }
-         var objTabHmsg = document.getElementById('tabHeadMessage');
-         var objTabBmsg = document.getElementById('tabBodyMessage');
-         objTabHmsg.style.tableLayout = 'auto';
-         objTabBmsg.style.tableLayout = 'auto';
-         for (var i=objTabHmsg.rows.length-1;i>=0;i--) {
-            objTabHmsg.deleteRow(i);
-         }
-         for (var i=objTabBmsg.rows.length-1;i>=0;i--) {
-            objTabBmsg.deleteRow(i);
-         }
-         var objTabHrcp = document.getElementById('tabHeadRecipient');
-         var objTabBrcp = document.getElementById('tabBodyRecipient');
-         objTabHrcp.style.tableLayout = 'auto';
-         objTabBrcp.style.tableLayout = 'auto';
-         for (var i=objTabHrcp.rows.length-1;i>=0;i--) {
-            objTabHrcp.deleteRow(i);
-         }
-         for (var i=objTabBrcp.rows.length-1;i>=0;i--) {
-            objTabBrcp.deleteRow(i);
-         }
+         cobjScreens[2].hedtxt = 'Report Selection ('+cstrReportCode+')';
+         displayScreen('dspReport');
+         var objTabHead = document.getElementById('tabHeadReport');
+         var objTabBody = document.getElementById('tabBodyReport');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
-         objRow = objTabHmsg.insertRow(-1);
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
@@ -394,19 +367,37 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Text&nbsp;';
+         objCell.innerHTML = '&nbsp;Report Date&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Time&nbsp;';
+         objCell.innerHTML = '&nbsp;Extract Date&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Status&nbsp;';
+         objCell.innerHTML = '&nbsp;Execution&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Execution User&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Execution Date&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Execution Status&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -416,73 +407,77 @@ sub PaintFunction()%>
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'MESSAGE') {
-               objRow = objTabBmsg.insertRow(-1);
+            if (objElements[i].nodeName == 'REPORT') {
+               objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectMessage(\''+objElements[i].getAttribute('MSGSEQ')+'\');">Recipients</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doReportMessage(\''+objElements[i].getAttribute('QRYDTE')+'\',\''+objElements[i].getAttribute('EXESEQ')+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MSGTXT')+'&nbsp;';
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXQDTE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MSGTIM')+'&nbsp;';
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXRDTE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MSGSTS')+'&nbsp;';
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXESEQ')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXEUSR')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXEDTE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXESTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
          }
-         if (objTabBmsg.rows.length == 0) {
-            objRow = objTabBmsg.insertRow(-1);
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = 4;
-            objCell.innerHTML = '&nbsp;NO MESSAGES FOUND&nbsp;';
+            objCell.colSpan = 7;
+            objCell.innerHTML = '&nbsp;NO REPORTS FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
-            setScrollable('HeadMessage','BodyMessage','horizontal');
-            objTabHmsg.rows(0).cells[4].style.width = 16;
-            objTabHmsg.style.tableLayout = 'auto';
-            objTabBmsg.style.tableLayout = 'auto';
+            setScrollable('HeadReport','BodyReport','horizontal');
+            objTabHead.rows(0).cells[7].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
          } else {
-            setScrollable('HeadMessage','BodyMessage','horizontal');
-            objTabHmsg.rows(0).cells[4].style.width = 16;
-            objTabHmsg.style.tableLayout = 'fixed';
-            objTabBmsg.style.tableLayout = 'fixed';
-         }
-         if (objTabBrcp.rows.length == 0) {
-            objRow = objTabBrcp.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 3;
-            objCell.innerHTML = '&nbsp;Select message&nbsp;';
-            objCell.className = 'clsLabelFB';
-            objCell.style.whiteSpace = 'nowrap';
-            setScrollable('HeadRecipient','BodyRecipient','horizontal');
-            objTabHrcp.rows(0).cells[3].style.width = 16;
-            objTabHrcp.style.tableLayout = 'auto';
-            objTabBrcp.style.tableLayout = 'auto';
-         } else {
-            setScrollable('HeadRecipient','BodyRecipient','horizontal');
-            objTabHrcp.rows(0).cells[3].style.width = 16;
-            objTabHrcp.style.tableLayout = 'fixed';
-            objTabBrcp.style.tableLayout = 'fixed';
+            setScrollable('HeadReport','BodyReport','horizontal');
+            objTabHead.rows(0).cells[7].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
          }
       }
    }
-
-   function doEnquiryCancel() {
-      if (checkChange() == false) {return;}
+   function doReportMessage(strDate,strSeqn) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestMessageSelect(\''+cstrReportCode+'\',\''+strCode+'\',\''+strSeqn+'\');',10);
+   }
+   function doReportBack() {
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
    }
@@ -508,7 +503,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Report Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Query Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -516,11 +511,10 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelDate" size="14" maxlength="14" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
@@ -549,10 +543,50 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspEnquiry" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspReport" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedEnquiry" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Report Enquiry</nobr></td>
+         <td id="hedReport" class="clsFunction" align=center colspan=2 nowrap><nobr>Report Selection</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadReport">
+                     <table class="clsTableHead" id="tabHeadReport" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyReport">
+                     <table class="clsTableBody" id="tabBodyReport" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportBack();">&nbsp;Back&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspMessage" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedMessage" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Message Enquiry</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -574,7 +608,7 @@ sub PaintFunction()%>
          <td id="ENQ_RptStat" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       </table></nobr></td></tr>
-      <tr height=75%>
+      <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
@@ -595,21 +629,59 @@ sub PaintFunction()%>
             </table>
          </nobr></td>
       </tr>
-      <tr height=25%>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doMessageBack();">&nbsp;Back&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspRecipient" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedRecipient" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Message Enquiry</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Date:&nbsp;</nobr></td>
+         <td id="ENQ_RptData" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Created User:&nbsp;</nobr></td>
+         <td id="ENQ_CrtData" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Updated User:&nbsp;</nobr></td>
+         <td id="ENQ_UpdData" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Status:&nbsp;</nobr></td>
+         <td id="ENQ_RptStat" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conHeadRecipient">
-                     <table class="clsTableHead" id="tabHeadRecipient" align=left cols=1 cellpadding="0" cellspacing="1">
+                     <div class="clsFixed" id="conHeadDetail">
+                     <table class="clsTableHead" id="tabHeadDetail" align=left cols=1 cellpadding="0" cellspacing="1">
                      </table>
                      </div>
                   </nobr></td>
                </tr>
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conBodyRecipient">
-                     <table class="clsTableBody" id="tabBodyRecipient" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsScroll" id="conBodyDetail">
+                     <table class="clsTableBody" id="tabBodyDetail" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
