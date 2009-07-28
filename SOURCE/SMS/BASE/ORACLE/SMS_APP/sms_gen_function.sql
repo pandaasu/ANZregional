@@ -35,6 +35,7 @@ create or replace package sms_app.sms_gen_function as
    function retrieve_system_value(par_code in varchar2) return varchar2;
    procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2);
    function retrieve_abbreviation(par_dim_data in varchar2) return varchar2;
+   procedure check_query;
 
 end sms_gen_function;
 /
@@ -759,6 +760,229 @@ create or replace package body sms_app.sms_gen_function as
    /* End routine */
    /*-------------*/
    end retrieve_abbreviation;
+
+   /***************************************************/
+   /* This procedure performs the check query routine */
+   /***************************************************/
+   procedure check_query is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_exception varchar2(4000);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
+      var_alert varchar2(256);
+      var_email varchar2(256);
+      var_errors boolean;
+      var_required boolean;
+      var_day_number number;
+
+      /*-*/
+      /* Local constants
+      /*-*/
+      con_function constant varchar2(128) := 'SMS Query Checker';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_query is
+         select t01.*
+           from sms_query t01
+          where t01.que_status = '1';
+      rcd_query csr_query%rowtype;
+
+      cursor csr_report is
+         select t01.*
+           from sms_rpt_header t01
+          where t01.rhe_qry_code = rcd_query.que_qry_code
+            and substr(t01.rhe_qry_date,1,8) = to_char(sysdate,'yyyymmdd');
+      rcd_report csr_report%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the log variables
+      /*-*/
+      var_log_prefix := 'SMS - QUERY_CHECKER';
+      var_log_search := 'SMS_QUERY_CHECKER';
+      var_alert := sms_gen_function.retrieve_system_value('QUERY_CHECKER_ALERT');
+      var_email := sms_gen_function.retrieve_system_value('QUERY_CHECKER_EMAIL_GROUP');
+      var_errors := false;
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - SMS Query Checker');
+
+      /*-*/
+      /* Retrieve the current day number
+      /*-*/
+      var_day_number := to_number(trim(to_char(sysdate,'D')));
+
+      /*-*/
+      /* Retrieve the active queries
+      /*-*/
+      open csr_query;
+      loop
+         fetch csr_query into rcd_query;
+         if csr_query%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('#-> Checking query - '||rcd_query.que_qry_code);
+
+         /*-*/
+         /* Check the query receipt requirement
+         /*-*/
+         var_required := false;
+         if var_day_number = 1 and rcd_query.que_rcv_day01 = '1' then
+            var_required := true;
+         elsif var_day_number = 2 and rcd_query.que_rcv_day02 = '1' then
+            var_required := true;
+         elsif var_day_number = 3 and rcd_query.que_rcv_day03 = '1' then
+            var_required := true;
+         elsif var_day_number = 4 and rcd_query.que_rcv_day04 = '1' then
+            var_required := true;
+         elsif var_day_number = 5 and rcd_query.que_rcv_day05 = '1' then
+            var_required := true;
+         elsif var_day_number = 6 and rcd_query.que_rcv_day06 = '1' then
+            var_required := true;
+         elsif var_day_number = 7 and rcd_query.que_rcv_day07 = '1' then
+            var_required := true;
+         end if;
+         if var_required = true then
+            open csr_report;
+            fetch csr_report into rcd_report;
+            if csr_report%found then
+               lics_logging.write_log('#---> Query expected and received');
+            else
+               lics_logging.write_log('#---> Query expected and **NOT** received');
+               var_errors := true;
+            end if;
+            close csr_report;
+         else
+            lics_logging.write_log('#---> Query not expected');
+         end if;
+
+         /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('#-> Purging query report history - '||rcd_query.que_qry_code);
+
+         /*-*/
+         /* Purge the query report data
+         /*-*/
+         delete from sms_rpt_recipient
+          where rre_qry_code = rcd_query.que_qry_code
+            and rre_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+         delete from sms_rpt_message
+          where rme_qry_code = rcd_query.que_qry_code
+            and rme_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+         delete from sms_rpt_execution
+          where rex_qry_code = rcd_query.que_qry_code
+            and rex_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+         delete from sms_rpt_data
+          where rda_qry_code = rcd_query.que_qry_code
+            and rda_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+         delete from sms_rpt_header
+          where rhe_qry_code = rcd_query.que_qry_code
+            and rhe_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+
+      end loop;
+      close csr_query;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - SMS Query Checker');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+      /*-*/
+      /* Errors
+      /*-*/
+      if var_errors = true then
+
+         /*-*/
+         /* Alert and email
+         /*-*/
+         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+            lics_notification.send_alert(var_alert);
+         end if;
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
+            lics_notification.send_email(sms_parameter.system_code,
+                                         sms_parameter.system_unit,
+                                         sms_parameter.system_environment,
+                                         con_function||' - **ERROR**',
+                                         'SMS_QUERY_CHECKER',
+                                         var_email,
+                                         'One or more errors occurred during the SMS Query Checker execution - refer to web log - ' || lics_logging.callback_identifier);
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**LOGGED ERROR**');
+
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         end if;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - CHECK_QUERY - ' || var_exception);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end check_query;
 
 /*----------------------*/
 /* Initialisation block */
