@@ -10,6 +10,7 @@ insert into sms_system values ('REPORT_GENERATION_EMAIL_GROUP','stephen.gregan@s
 insert into sms_system values ('REPORT_GENERATION_JOB_GROUP','DWP',user,sysdate);
 insert into sms_system values ('QUERY_CHECKER_ALERT','*NONE',user,sysdate);
 insert into sms_system values ('QUERY_CHECKER_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
+insert into sms_system values ('QUERY_HISTORY_DAYS','28',user,sysdate);
 commit;
 
 --
