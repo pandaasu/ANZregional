@@ -126,10 +126,10 @@ sub PaintFunction()%>
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
-      cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[2] = new clsScreen('dspExecute','hedExecute');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Recipient Selection';
-      cobjScreens[2].hedtxt = 'Recipient Maintenance';
+      cobjScreens[1].hedtxt = 'Query Selection';
+      cobjScreens[2].hedtxt = 'Report Execution';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -165,40 +165,30 @@ sub PaintFunction()%>
    //////////////////////
    var cstrSelectStrCode;
    var cstrSelectEndCode;
-   function doSelectUpdate(strCode) {
+   function doSelectExecute(strCode) {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
-   }
-   function doSelectCopy(strCode) {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCopy(\''+strCode+'\');',10);
-   }
-   function doSelectCreate() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCreate(\'*NEW\');',10);
+      window.setTimeout('requestExecuteUpdate(\''+strCode+'\');',10);
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value.toUpperCase();
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*SELRCP\');',10);
+      window.setTimeout('requestSelectList(\'*SELQRY\');',10);
    }
    function doSelectPrevious() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*PRVRCP\');',10);
+      window.setTimeout('requestSelectList(\'*PRVQRY\');',10);
    }
    function doSelectNext() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*NXTRCP\');',10);
+      window.setTimeout('requestSelectList(\'*NXTQRY\');',10);
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>sms_rcp_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>sms_rpt_execution_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
       doActivityStop();
@@ -243,7 +233,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Recipient&nbsp;';
+         objCell.innerHTML = '&nbsp;Query&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -269,32 +259,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('RCPCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('QRYCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('RCPCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('QRYCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('RCPCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('RCPCDE')+'\');">Copy</a>';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doSelectExecute(\''+objElements[i].getAttribute('QRYCDE')+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RCPSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -321,30 +311,17 @@ sub PaintFunction()%>
       }
    }
 
-   //////////////////////
-   // Define Functions //
-   //////////////////////
-   var cstrDefineMode;
-   var cstrDefineCode;
-   function requestDefineUpdate(strCode) {
-      cstrDefineMode = '*UPD';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*UPDRCP" RCPCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+   ///////////////////////
+   // Execute Functions //
+   ///////////////////////
+   var cstrExecuteCode;
+   var cstrExecuteDate;
+   function requestExecuteUpdate(strCode) {
+      cstrExecuteCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*SELRPT" QRYCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>sms_rpt_execution_retrieve.asp',function(strResponse) {checkExecuteLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestDefineCreate(strCode) {
-      cstrDefineMode = '*CRT';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CRTRCP" RCPCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestDefineCopy(strCode) {
-      cstrDefineMode = '*CPY';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><SMS_REQUEST ACTION="*CPYRCP" RCPCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>sms_rcp_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
-   }
-   function checkDefineLoad(strResponse) {
+   function checkExecuteLoad(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -363,70 +340,38 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Recipient ('+cstrDefineCode+')';
-            document.getElementById('addDefine').style.display = 'none';
-         } else {
-            cobjScreens[2].hedtxt = 'Create Recipient';
-            document.getElementById('addDefine').style.display = 'block';
-         }
-         displayScreen('dspDefine');
-         document.getElementById('DEF_RcpCode').value = '';
-         document.getElementById('DEF_RcpName').value = '';
-         document.getElementById('DEF_RcpMobi').value = '';
-         document.getElementById('DEF_RcpEmai').value = '';
-         var strRcpStat = '';
-         var objRcpStat = document.getElementById('DEF_RcpStat');
+         cobjScreens[2].hedtxt = 'Execute Report ('+cstrExecuteCode+')';
+         displayScreen('dspExecute');
+         document.getElementById('EXE_RptDate').innerHTML = '';
+         document.getElementById('EXE_CrtDate').innerHTML = '';
+         document.getElementById('EXE_RptStat').innerHTML = '';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'RECIPIENT') {
-               document.getElementById('DEF_RcpCode').value = objElements[i].getAttribute('RCPCDE');
-               document.getElementById('DEF_RcpName').value = objElements[i].getAttribute('RCPNAM');
-               document.getElementById('DEF_RcpMobi').value = objElements[i].getAttribute('RCPMOB');
-               document.getElementById('DEF_RcpEmai').value = objElements[i].getAttribute('RCPEMA');
-               strRcpStat = objElements[i].getAttribute('RCPSTS');
+            if (objElements[i].nodeName == 'REPORT') {
+               cstrExecuteDate = objElements[i].getAttribute('QRYDTE');
+               document.getElementById('EXE_RptDate').innerHTML = objElements[i].getAttribute('RPTDTE');
+               document.getElementById('EXE_CrtDate').innerHTML = objElements[i].getAttribute('CRTDTE');
+               document.getElementById('EXE_RptStat').innerHTML = objElements[i].getAttribute('RPTSTS');
             }
-         }
-         objRcpStat.selectedIndex = -1;
-         for (var i=0;i<objRcpStat.length;i++) {
-            if (objRcpStat.options[i].value == strRcpStat) {
-               objRcpStat.options[i].selected = true;
-               break;
-            }
-         }
-         if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_RcpName').focus();
-         } else {
-            document.getElementById('DEF_RcpCode').focus();
          }
       }
    }
-   function doDefineAccept() {
+   function doExecuteAccept() {
       if (!processForm()) {return;}
-      var objRcpStat = document.getElementById('DEF_RcpStat');
+      if (confirm('Please confirm the report execution\r\npress OK continue (The report will be executed and SMS messages sent)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<SMS_REQUEST ACTION="*UPDRCP"';
-         strXML = strXML+' RCPCDE="'+fixXML(cstrDefineCode)+'"';
-      } else {
-         strXML = strXML+'<SMS_REQUEST ACTION="*CRTRCP"';
-         strXML = strXML+' RCPCDE="'+fixXML(document.getElementById('DEF_RcpCode').value)+'"';
-      }
-      strXML = strXML+' RCPNAM="'+fixXML(document.getElementById('DEF_RcpName').value)+'"';
-      strXML = strXML+' RCPMOB="'+fixXML(document.getElementById('DEF_RcpMobi').value)+'"';
-      strXML = strXML+' RCPEMA="'+fixXML(document.getElementById('DEF_RcpEmai').value)+'"';
-      if (objRcpStat.selectedIndex == -1) {
-         strXML = strXML+' RCPSTS=""';
-      } else {
-         strXML = strXML+' RCPSTS="'+fixXML(objRcpStat.options[objRcpStat.selectedIndex].value)+'"';
-      }
+      strXML = strXML+'<SMS_REQUEST ACTION="*EXERPT"';
+      strXML = strXML+' QRYCDE="'+fixXML(cstrExecuteCode)+'"';
+      strXML = strXML+' QRYDTE="'+fixXML(cstrExecuteDate)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
-      window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
+      window.setTimeout('requestExecuteAccept(\''+strXML+'\');',10);
    }
-   function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>sms_rcp_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+   function requestExecuteAccept(strXML) {
+      doPostRequest('<%=strBase%>sms_rpt_execution_update.asp',function(strResponse) {checkExecuteAccept(strResponse);},false,streamXML(strXML));
    }
-   function checkDefineAccept(strResponse) {
+   function checkExecuteAccept(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -452,10 +397,11 @@ sub PaintFunction()%>
                }
             }
          }
-         doSelectRefresh();
+         displayScreen('dspSelect');
+         document.getElementById('SEL_SelCode').focus();
       }
    }
-   function doDefineCancel() {
+   function doExecuteCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
@@ -482,7 +428,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Recipient Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Query Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -493,7 +439,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
@@ -523,46 +469,25 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
+   <table id="dspExecute" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Recipient Define</nobr></td>
+         <td id="hedExecute" class="clsFunction" align=center colspan=2 nowrap><nobr>Report Execution</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Code:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RcpCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
-         </nobr></td>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Date:&nbsp;</nobr></td>
+         <td id="EXE_RptDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Name:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RcpName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
-         </nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Creation Date:&nbsp;</nobr></td>
+         <td id="EXE_CrtDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Status:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_RcpStat">
-               <option value="0">Inactive
-               <option value="1">Active
-            </select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Mobile Phone:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RcpMobi" size="64" maxlength="64" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Email Address:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RcpEmai" size="80" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Status:&nbsp;</nobr></td>
+         <td id="EXE_RptStat" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
@@ -572,9 +497,9 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doExecuteCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doExecuteAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

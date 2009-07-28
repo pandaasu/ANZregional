@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the recipient definition
    '//
-   strStatement = "select xml_text from table(sms_app.sms_rec_function.retrieve_execution)"
+   strStatement = "select xml_text from table(sms_app.sms_rep_function.retrieve_execution)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

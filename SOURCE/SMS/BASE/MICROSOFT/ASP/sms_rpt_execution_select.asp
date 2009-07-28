@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the report selection
    '//
-   strStatement = "select xml_text from table(sms_app.sms_rec_function.select_execution)"
+   strStatement = "select xml_text from table(sms_app.sms_rep_function.select_execution)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
