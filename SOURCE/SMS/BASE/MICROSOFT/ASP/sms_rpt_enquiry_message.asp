@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : SMS (SMS Reporting System)                         //
-'// Script  : sms_rpt_enquiry_retrieve.asp                       //
+'// Script  : sms_rpt_enquiry_message.asp                        //
 '// Author  : Steve Gregan                                       //
 '// Date    : July 2009                                          //
-'// Text    : This script implements the report enquiry          //
+'// Text    : This script implements the report message          //
 '//           retrieve functionality                             //
 '//////////////////////////////////////////////////////////////////
 
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the report definition
+   '// Retrieve the message retrieve
    '//
-   strStatement = "select xml_text from table(sms_app.sms_rep_function.retrieve_data)"
+   strStatement = "select xml_text from table(sms_app.sms_rep_function.retrieve_message)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
