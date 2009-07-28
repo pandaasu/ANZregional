@@ -516,7 +516,7 @@ sub PaintFunction()%>
          }
          cobjScreens[3].hedtxt = 'Message Selection ('+cstrMessageCode+')';
          displayScreen('dspMessage');
-         document.getElementById('subMessage').innerHTML = 'Date ('+cstrMessageDate+') Execution ('+cstrMessageSeqn+')';
+         document.getElementById('subMessage').innerHTML = 'Instance ('+cstrMessageDate+') Execution ('+cstrMessageSeqn+')';
          var objTabHead = document.getElementById('tabHeadMessage');
          var objTabBody = document.getElementById('tabBodyMessage');
          objTabHead.style.tableLayout = 'auto';
@@ -665,7 +665,7 @@ sub PaintFunction()%>
          }
          cobjScreens[4].hedtxt = 'Message Recipients ('+cstrRecipientCode+')';
          displayScreen('dspRecipient');
-         document.getElementById('subRecipient').innerHTML = 'Date ('+cstrRecipientDate+') Execution ('+cstrRecipientSeqn+') Message ('+cstrRecipientMsqn+')';
+         document.getElementById('subRecipient').innerHTML = 'Instance ('+cstrRecipientDate+') Execution ('+cstrRecipientSeqn+') Message ('+cstrRecipientMsqn+')';
          var objTabHead = document.getElementById('tabHeadRecipient');
          var objTabBody = document.getElementById('tabBodyRecipient');
          objTabHead.style.tableLayout = 'auto';
