@@ -32,6 +32,8 @@ create or replace package sms_app.sms_gen_function as
    procedure set_cfrm_data(par_confirm in varchar2);
    function retrieve_system_control return sms_xml_type pipelined;
    procedure update_system_control(par_user in varchar2);
+   function retrieve_system_values return sms_xml_type pipelined;
+   procedure update_system_values(par_user in varchar2);
    function retrieve_system_value(par_code in varchar2) return varchar2;
    procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2);
    function retrieve_abbreviation(par_dim_data in varchar2) return varchar2;
@@ -517,6 +519,202 @@ create or replace package body sms_app.sms_gen_function as
    /* End routine */
    /*-------------*/
    end update_system_control;
+
+   /**************************************************************/
+   /* This procedure performs the retrieve system values routine */
+   /**************************************************************/
+   function retrieve_system_values return sms_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from sms_system t01
+          where t01.sys_code != 'SYSTEM_PROCESS';
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*GETVAL' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Retrieve the system values
+      /*-*/
+      open csr_retrieve;
+      loop
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%notfound then
+            exit;
+         end if;
+         pipe row(sms_xml_object('<SYSTEM SYSCDE="'||sms_to_xml(rcd_retrieve.sys_code)||'" SYSVAL="'||sms_to_xml(rcd_retrieve.sys_value)||'"/>'));
+      end loop;
+      close csr_retrieve;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(sms_xml_object('</SMS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_GEN_FUNCTION - RETRIEVE_SYSTEM_VALUES - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_system_values;
+
+   /************************************************************/
+   /* This procedure performs the update system values routine */
+   /************************************************************/
+   procedure update_system_values(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      obj_val_list xmlDom.domNodeList;
+      obj_val_node xmlDom.domNode;
+      var_action varchar2(32);
+      rcd_sms_system sms_system%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      if var_action != '*UPDVAL' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and update the system values
+      /*-*/
+      obj_val_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST/SYSTEM');
+      for idx in 0..xmlDom.getLength(obj_val_list)-1 loop
+         obj_val_node := xmlDom.item(obj_val_list,idx);
+         rcd_sms_system.sys_code := sms_from_xml(xslProcessor.valueOf(obj_val_node,'@SYSCDE'));
+         rcd_sms_system.sys_value := sms_from_xml(xslProcessor.valueOf(obj_val_node,'@SYSVAL'));
+         rcd_sms_system.sys_upd_user := upper(par_user);
+         rcd_sms_system.sys_upd_date := sysdate;
+         update sms_system
+            set sys_value = rcd_sms_system.sys_value,
+                sys_upd_user = rcd_sms_system.sys_upd_user,
+                sys_upd_date = rcd_sms_system.sys_upd_date
+          where sys_code = rcd_sms_system.sys_code;
+      end loop;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_GEN_FUNCTION - UPDATE_SYSTEM_VALUES - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_system_values;
 
    /*************************************************************/
    /* This procedure performs the retrieve system value routine */
