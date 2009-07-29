@@ -422,9 +422,6 @@ insert into pts_sys_field values('*PET_SAM',46,'Pet Milk Brand','1',user,sysdate
 insert into pts_sys_field values('*PET_SAM',47,'Pet Snacks','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 47 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_SAM',48,'Pet Bird Brands','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 48 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
 insert into pts_sys_field values('*PET_SAM',49,'Pet Vitamins & Supplements','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 49 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-
------insert into pts_sys_field values('*PET_SAM',50,'Pet Vitamins','1',user,sysdate,'1','1',5,'*OPT_MULTIPLE_LIST','*LIST','exists(select 1 from pts_pet_classification where pcl_pet_code = p1.pde_pet_code and pcl_tab_code = ''*PET_SAM'' and pcl_fld_code = 50 and pcl_val_code<%RULE_TEST%><%RULE_VALUE%>)',null,'*ALL');
-
 insert into pts_sys_field values('*QUE_DEF',1,'Question code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','q1.qde_que_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*QUE_DEF',2,'Question text','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(q1.qde_que_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*QUE_DEF',3,'Question type','1',user,sysdate,'1','0',5,'*LOGIC','*LIST','nvl(q1.qde_que_type,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
@@ -751,12 +748,6 @@ insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_EQUAL_ALL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*PET_SAM',49,'*SELECT_WHEN_NOT_EQUAL_ALL');
-
---insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_EQUAL');
---insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_EQUAL_ALL');
---insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_NOT_EQUAL');
---insert into pts_sys_select values('*PET_SAM',50,'*SELECT_WHEN_NOT_EQUAL_ALL');
-
 insert into pts_sys_select values('*QUE_DEF',1,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*QUE_DEF',2,'*SELECT_WHEN_LIKE');
 insert into pts_sys_select values('*QUE_DEF',3,'*SELECT_WHEN_EQUAL');
