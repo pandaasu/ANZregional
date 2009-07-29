@@ -127,7 +127,7 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'System Values';
+      cobjScreens[1].hedtxt = 'System Value Maintenance';
       displayScreen('dspLoad');
       doDefineRefresh();
    }
@@ -190,31 +190,69 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspDefine');
+         document.getElementById('DEF_StpTarg').value = '';
+         document.getElementById('DEF_StpHost').value = '';
+         document.getElementById('DEF_StpPort').value = '';
+         document.getElementById('DEF_RptAlrt').value = '';
+         document.getElementById('DEF_RptEgrp').value = '';
+         document.getElementById('DEF_RptJgrp').value = '';
+         document.getElementById('DEF_QryAlrt').value = '';
+         document.getElementById('DEF_QryEgrp').value = '';
+         document.getElementById('DEF_QryHDay').value = '';
+         document.getElementById('DEF_AbrEgrp').value = '';
+         document.getElementById('DEF_RcpEgrp').value = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
-               document.getElementById('subDefine').innerText = objElements[i].getAttribute('STATUS');
+               if (objElements[i].getAttribute('SYSCDE') == 'SMTP_TARGET') {
+                  document.getElementById('DEF_StpTarg').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'SMTP_HOST') {
+                  document.getElementById('DEF_StpHost').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'SMTP_PORT') {
+                  document.getElementById('DEF_StpPort').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_ALERT') {
+                  document.getElementById('DEF_RptAlrt').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_EMAIL_GROUP') {
+                  document.getElementById('DEF_RptEgrp').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_JOB_GROUP') {
+                  document.getElementById('DEF_RptJgrp').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_ALERT') {
+                  document.getElementById('DEF_QryAlrt').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_EMAIL_GROUP') {
+                  document.getElementById('DEF_QryEgrp').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_HISTORY_DAYS') {
+                  document.getElementById('DEF_QryHDay').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'ABBREVIATION_EMAIL_GROUP') {
+                  document.getElementById('DEF_AbrEgrp').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'RECIPIENT_EMAIL_GROUP') {
+                  document.getElementById('DEF_RcpEgrp').value = objElements[i].getAttribute('SYSVAL');
+               }
             }
          }
+         document.getElementById('DEF_StpTarg').focus();
       }
    }
-   function doDefineStop() {
+   function doDefineAccept() {
       if (!processForm()) {return;}
-      var objRcpStat = document.getElementById('DEF_RcpStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<SMS_REQUEST ACTION="*UPDVAL"/>';
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
-   }
-   function doDefineStart() {
-      if (!processForm()) {return;}
-      var objRcpStat = document.getElementById('DEF_RcpStat');
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<SMS_REQUEST ACTION="*SYSSTART"/>';
+      strXML = strXML+'/>';
+      strXML = strXML+'SYSTEM SYSCDE="SMTP_TARGET" SYSVAL="'+fixXML(document.getElementById('DEF_StpTarg').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="SMTP_HOST" SYSVAL="'+fixXML(document.getElementById('DEF_StpHost').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="SMTP_PORT" SYSVAL="'+fixXML(document.getElementById('DEF_StpPort').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_RptAlrt').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptEgrp').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_JOB_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptJgrp').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="QUERY_CHECKER_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_QryAlrt').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="QUERY_CHECKER_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_QryEgrp').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="QUERY_HISTORY_DAYS" SYSVAL="'+fixXML(document.getElementById('DEF_QryHDay').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="ABBREVIATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_AbrEgrp').value)+'"/>';
+      strXML = strXML+'SYSTEM SYSCDE="RECIPIENT_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RcpEgrp').value)+'"/>';
+      strXML = strXML+'</SMS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>sms_sys_control_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>sms_sys_value_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -266,13 +304,76 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System Values</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System Value Maintenance</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="subDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System is started</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Target:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_StpTarg" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Host:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_StpHost" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Port:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_StpPort" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Alert:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_RptAlrt" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Email Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_RptEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Job Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_RptJgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker Alert:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_QryAlrt" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker Email Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_QryEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker History Days:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_QryHDay" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Abbreviation Report Email Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_AbrEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Audit Report Email Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_RcpEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
@@ -280,11 +381,9 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineStop();">&nbsp;Stop System&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineStart();">&nbsp;Start System&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
