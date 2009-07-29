@@ -131,9 +131,9 @@ create or replace package body vds_utility as
          end if;
          var_columns := true;
          if upper(rcd_vds_meta.vme_type) = 'F' then
-            var_view_source := var_view_source || ' to_number(replace(nvl(trim(substr(t01.vda_data,' || to_char(rcd_vds_meta.vme_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vme_length,'fm99990') || ')),''0''),'','',''.'')) as ' || rcd_vds_meta.vme_column;
+            var_view_source := var_view_source || ' to_number(replace(nvl(trim(substr(t01.vda_data,' || to_char(rcd_vds_meta.vme_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vme_length,'fm99990') || ')),''0''),'','',null)) as ' || rcd_vds_meta.vme_column;
          elsif upper(rcd_vds_meta.vme_type) = 'N' or upper(rcd_vds_meta.vme_type) = 'P' then
-            var_view_source := var_view_source || ' to_number(nvl(trim(substr(t01.vda_data,' || to_char(rcd_vds_meta.vme_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vme_length,'fm99990') || ')),''0'')) as ' || rcd_vds_meta.vme_column;
+            var_view_source := var_view_source || ' to_number(replace(nvl(trim(substr(t01.vda_data,' || to_char(rcd_vds_meta.vme_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vme_length,'fm99990') || ')),''0''),'','',null)) as ' || rcd_vds_meta.vme_column;
          else
             var_view_source := var_view_source || ' rtrim(substr(t01.vda_data,' || to_char(rcd_vds_meta.vme_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vme_length,'fm99990') || ')) as ' || rcd_vds_meta.vme_column;
          end if;
