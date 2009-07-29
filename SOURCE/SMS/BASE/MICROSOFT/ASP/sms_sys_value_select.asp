@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the system value selection
+   '// Retrieve the system values selection
    '//
-   strStatement = "select xml_text from table(sms_app.sms_gen_function.retrieve_system_value)"
+   strStatement = "select xml_text from table(sms_app.sms_gen_function.retrieve_system_values)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

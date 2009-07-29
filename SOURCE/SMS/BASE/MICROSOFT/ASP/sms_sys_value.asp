@@ -31,7 +31,7 @@
    '// Initialise the script
    '//
    strTarget = "sms_sys_value.asp"
-   strHeading = "System Value"
+   strHeading = "System Maintenance"
 
    '//
    '// Get the base string
@@ -127,7 +127,7 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'System Value Maintenance';
+      cobjScreens[1].hedtxt = 'System Maintenance';
       displayScreen('dspLoad');
       doDefineRefresh();
    }
@@ -304,7 +304,7 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System Value Maintenance</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System Maintenance</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

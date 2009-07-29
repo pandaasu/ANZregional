@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the system value update
    '//
-   call objProcedure.Execute("sms_app.sms_gen_function.update_system_value('" & GetUser() & "')")
+   call objProcedure.Execute("sms_app.sms_gen_function.update_system_values('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if
