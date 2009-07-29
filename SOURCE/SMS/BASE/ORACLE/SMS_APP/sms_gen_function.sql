@@ -35,7 +35,8 @@ create or replace package sms_app.sms_gen_function as
    function retrieve_system_value(par_code in varchar2) return varchar2;
    procedure update_abbreviation(par_qry_code in varchar2, par_qry_date in varchar2);
    function retrieve_abbreviation(par_dim_data in varchar2) return varchar2;
-   procedure check_query;
+   procedure daily_maintenance;
+   procedure period_maintenance;
 
 end sms_gen_function;
 /
@@ -761,10 +762,10 @@ create or replace package body sms_app.sms_gen_function as
    /*-------------*/
    end retrieve_abbreviation;
 
-   /***************************************************/
-   /* This procedure performs the check query routine */
-   /***************************************************/
-   procedure check_query is
+   /*********************************************************/
+   /* This procedure performs the daily maintenance routine */
+   /*********************************************************/
+   procedure daily_maintenance is
 
       /*-*/
       /* Local definitions
@@ -772,24 +773,27 @@ create or replace package body sms_app.sms_gen_function as
       var_exception varchar2(4000);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
-      var_alert varchar2(256);
-      var_email varchar2(256);
+      var_check_alert varchar2(256);
+      var_check_email varchar2(256);
+      var_abbrv_email varchar2(256);
+      var_purge number;
       var_errors boolean;
+      var_warnings boolean;
       var_required boolean;
+      var_found boolean;
       var_day_number number;
 
       /*-*/
       /* Local constants
       /*-*/
-      con_function constant varchar2(128) := 'SMS Query Checker';
+      con_function constant varchar2(128) := 'SMS Daily Maintenance';
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_query is
          select t01.*
-           from sms_query t01
-          where t01.que_status = '1';
+           from sms_query t01;
       rcd_query csr_query%rowtype;
 
       cursor csr_report is
@@ -799,6 +803,13 @@ create or replace package body sms_app.sms_gen_function as
             and substr(t01.rhe_qry_date,1,8) = to_char(sysdate,'yyyymmdd');
       rcd_report csr_report%rowtype;
 
+      cursor csr_abbreviation is
+         select t01.*
+           from sms_abbreviation t01
+          where t01.abb_dim_abbr is null
+          order by t01.abb_dim_data asc;
+      rcd_abbreviation csr_abbreviation%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -807,11 +818,14 @@ create or replace package body sms_app.sms_gen_function as
       /*-*/
       /* Initialise the log variables
       /*-*/
-      var_log_prefix := 'SMS - QUERY_CHECKER';
-      var_log_search := 'SMS_QUERY_CHECKER';
-      var_alert := sms_gen_function.retrieve_system_value('QUERY_CHECKER_ALERT');
-      var_email := sms_gen_function.retrieve_system_value('QUERY_CHECKER_EMAIL_GROUP');
+      var_log_prefix := 'SMS - DAILY_MAINTENANCE';
+      var_log_search := 'SMS_DAILY_MAINTENANCE';
+      var_check_alert := sms_gen_function.retrieve_system_value('QUERY_CHECKER_ALERT');
+      var_check_email := sms_gen_function.retrieve_system_value('QUERY_CHECKER_EMAIL_GROUP');
+      var_abbrv_email := sms_gen_function.retrieve_system_value('ABBREVIATION_EMAIL_GROUP');
+      var_purge := nvl(sms_to_number(sms_gen_function.retrieve_system_value('QUERY_HISTORY_DAYS')),30);
       var_errors := false;
+      var_warnings := false;
 
       /*-*/
       /* Log start
@@ -821,12 +835,17 @@ create or replace package body sms_app.sms_gen_function as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SMS Query Checker');
+      lics_logging.write_log('Begin - SMS Daily Maintenance');
 
       /*-*/
       /* Retrieve the current day number
       /*-*/
       var_day_number := to_number(trim(to_char(sysdate,'D')));
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('#-> Starting query maintenance');
 
       /*-*/
       /* Retrieve the active queries
@@ -839,112 +858,206 @@ create or replace package body sms_app.sms_gen_function as
          end if;
 
          /*-*/
-         /* Log the event
+         /* Check query for receipt requirement when active
          /*-*/
-         lics_logging.write_log('#-> Checking query - '||rcd_query.que_qry_code);
+         if rcd_query.que_status = '1' then
 
-         /*-*/
-         /* Check the query receipt requirement
-         /*-*/
-         var_required := false;
-         if var_day_number = 1 and rcd_query.que_rcv_day01 = '1' then
-            var_required := true;
-         elsif var_day_number = 2 and rcd_query.que_rcv_day02 = '1' then
-            var_required := true;
-         elsif var_day_number = 3 and rcd_query.que_rcv_day03 = '1' then
-            var_required := true;
-         elsif var_day_number = 4 and rcd_query.que_rcv_day04 = '1' then
-            var_required := true;
-         elsif var_day_number = 5 and rcd_query.que_rcv_day05 = '1' then
-            var_required := true;
-         elsif var_day_number = 6 and rcd_query.que_rcv_day06 = '1' then
-            var_required := true;
-         elsif var_day_number = 7 and rcd_query.que_rcv_day07 = '1' then
-            var_required := true;
-         end if;
-         if var_required = true then
-            open csr_report;
-            fetch csr_report into rcd_report;
-            if csr_report%found then
-               lics_logging.write_log('#---> Query expected and received');
-            else
-               lics_logging.write_log('#---> Query expected and **NOT** received');
-               var_errors := true;
+            /*-*/
+            /* Log the event
+            /*-*/
+            lics_logging.write_log('#---> Checking active query receipt requirement for today - '||rcd_query.que_qry_code);
+
+            /*-*/
+            /* Check the query receipt requirement
+            /*-*/
+            var_required := false;
+            if var_day_number = 1 and rcd_query.que_rcv_day01 = '1' then
+               var_required := true;
+            elsif var_day_number = 2 and rcd_query.que_rcv_day02 = '1' then
+               var_required := true;
+            elsif var_day_number = 3 and rcd_query.que_rcv_day03 = '1' then
+               var_required := true;
+            elsif var_day_number = 4 and rcd_query.que_rcv_day04 = '1' then
+               var_required := true;
+            elsif var_day_number = 5 and rcd_query.que_rcv_day05 = '1' then
+               var_required := true;
+            elsif var_day_number = 6 and rcd_query.que_rcv_day06 = '1' then
+               var_required := true;
+            elsif var_day_number = 7 and rcd_query.que_rcv_day07 = '1' then
+               var_required := true;
             end if;
-            close csr_report;
-         else
-            lics_logging.write_log('#---> Query not expected');
+            if var_required = true then
+               open csr_report;
+               fetch csr_report into rcd_report;
+               if csr_report%found then
+                  lics_logging.write_log('#-----> Query expected and received');
+               else
+                  lics_logging.write_log('#-----> **WARNING** Query expected and NOT received');
+                  var_warnings := true;
+               end if;
+               close csr_report;
+            else
+               lics_logging.write_log('#-----> Query not expected');
+            end if;
+
          end if;
 
          /*-*/
          /* Log the event
          /*-*/
-         lics_logging.write_log('#-> Purging query report history - '||rcd_query.que_qry_code);
+         lics_logging.write_log('#---> Purging all query report history older than '||to_char(var_purge)||' days - '||rcd_query.que_qry_code);
 
          /*-*/
          /* Purge the query report data
          /*-*/
          delete from sms_rpt_recipient
           where rre_qry_code = rcd_query.que_qry_code
-            and rre_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+            and rre_qry_date < to_char(trunc(sysdate)-var_purge,'yyyymmddhh24miss');
          delete from sms_rpt_message
           where rme_qry_code = rcd_query.que_qry_code
-            and rme_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+            and rme_qry_date < to_char(trunc(sysdate)-var_purge,'yyyymmddhh24miss');
          delete from sms_rpt_execution
           where rex_qry_code = rcd_query.que_qry_code
-            and rex_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+            and rex_qry_date < to_char(trunc(sysdate)-var_purge,'yyyymmddhh24miss');
          delete from sms_rpt_data
           where rda_qry_code = rcd_query.que_qry_code
-            and rda_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+            and rda_qry_date < to_char(trunc(sysdate)-var_purge,'yyyymmddhh24miss');
          delete from sms_rpt_header
           where rhe_qry_code = rcd_query.que_qry_code
-            and rhe_qry_date < to_char(trunc(sysdate)-30,'yyyymmddhh24miss');
+            and rhe_qry_date < to_char(trunc(sysdate)-var_purge,'yyyymmddhh24miss');
+
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
 
       end loop;
       close csr_query;
 
       /*-*/
-      /* Commit the database
+      /* Check warnings
       /*-*/
-      commit;
+      if var_warnings = true then
+
+         /*-*/
+         /* Log the event
+         /*-*/
+         lics_logging.write_log('#---> Sending query warning');
+
+         /*-*/
+         /* Alert and email
+         /*-*/
+         if not(trim(var_check_alert) is null) and trim(upper(var_check_alert)) != '*NONE' then
+            lics_notification.send_alert(var_check_alert);
+         end if;
+         if not(trim(var_check_email) is null) and trim(upper(var_check_email)) != '*NONE' then
+            lics_notification.send_email(sms_parameter.system_code,
+                                         sms_parameter.system_unit,
+                                         sms_parameter.system_environment,
+                                         con_function||' - **WARNING**',
+                                         'SMS_DAILY_MAINTENANCE',
+                                         var_check_email,
+                                         'One or more warnings occurred during the SMS Daily Maintenance execution - refer to web log - ' || lics_logging.callback_identifier);
+         end if;
+
+      end if;
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('#-> Checking for missing abbreviations');
+
+      /*-*/
+      /* Generate the missing abbreviation report when required
+      /*-*/
+      var_found := false;
+      open csr_abbreviation;
+      loop
+         fetch csr_abbreviation into rcd_abbreviation;
+         if csr_abbreviation%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Report data found
+         /*-*/
+         if var_found = false then
+
+            /*-*/
+            /* Set the indicator
+            /*-*/
+            var_found := true;
+
+            /*-*/
+            /* Log the event
+            /*-*/
+            lics_logging.write_log('#---> Sending missing abbreviations report');
+
+            /*-*/
+            /* Create the new email and create the email text header part
+            /*-*/
+            lics_mailer.create_email('SMS_' || sms_parameter.system_unit || '_' || sms_parameter.system_environment,
+                                     var_abbrv_email,
+                                     'SMS Reporting - Missing Abbbreviations',
+                                     null,
+                                     null);
+            lics_mailer.create_part(null);
+            lics_mailer.append_data('SMS Reporting - Missing Abbbreviations');
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+
+            /*-*/
+            /* Create the email file and output the header data
+            /*-*/
+            lics_mailer.create_part('SMS_Missing_Abbreviation.xls');
+            lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+            lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+            lics_mailer.append_data('<tr>');
+            lics_mailer.append_data('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SMS Reporting - Missing Abbbreviations Report - '||to_char(sysdate,'yyyy/mm/dd')||'</td>');
+            lics_mailer.append_data('</tr>');
+
+            /*-*/
+            /* Output the report header
+            /*-*/
+            lics_mailer.append_data('<tr>');
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Dimension Data</td>');
+            lics_mailer.append_data('</tr>');
+
+         end if;
+
+         /*-*/
+         /* Output the report data
+         /*-*/
+         lics_mailer.append_data('<tr>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_abbreviation.abb_dim_data||'</td>');
+         lics_mailer.append_data('</tr>');
+
+      end loop;
+      close csr_abbreviation;
+
+      /*-*/
+      /* Output the email file part trailer data when required
+      /*-*/
+      if var_found = true then
+         lics_mailer.append_data('</table>');
+         lics_mailer.create_part(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data(null);
+         lics_mailer.append_data('** Email End **');
+         lics_mailer.finalise_email('utf-8');
+      end if;
 
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - SMS Query Checker');
+      lics_logging.write_log('End - SMS Daily Maintenance');
 
       /*-*/
       /* Log end
       /*-*/
       lics_logging.end_log;
-
-      /*-*/
-      /* Errors
-      /*-*/
-      if var_errors = true then
-
-         /*-*/
-         /* Alert and email
-         /*-*/
-         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
-            lics_notification.send_alert(var_alert);
-         end if;
-         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
-            lics_notification.send_email(sms_parameter.system_code,
-                                         sms_parameter.system_unit,
-                                         sms_parameter.system_environment,
-                                         con_function||' - **ERROR**',
-                                         'SMS_QUERY_CHECKER',
-                                         var_email,
-                                         'One or more errors occurred during the SMS Query Checker execution - refer to web log - ' || lics_logging.callback_identifier);
-         end if;
-
-         /*-*/
-         /* Raise an exception to the caller
-         /*-*/
-         raise_application_error(-20000, '**LOGGED ERROR**');
-
-      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -977,12 +1090,191 @@ create or replace package body sms_app.sms_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - CHECK_QUERY - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - DAILY_MAINTENANCE - ' || var_exception);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end check_query;
+   end daily_maintenance;
+
+   /**********************************************************/
+   /* This procedure performs the period maintenance routine */
+   /**********************************************************/
+   procedure period_maintenance is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_exception varchar2(4000);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
+      var_recpt_email varchar2(256);
+      var_purge number;
+      var_errors boolean;
+      var_warnings boolean;
+      var_found boolean;
+
+      /*-*/
+      /* Local constants
+      /*-*/
+      con_function constant varchar2(128) := 'SMS Period Maintenance';
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_recipient is
+         select t01.*,
+                decode(t01.rec_status,'0','Inactive','1','Active','*UNKNOWN') as sts_text
+           from sms_recipient t01
+          order by t01.rec_rcp_code asc;
+      rcd_recipient csr_recipient%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the log variables
+      /*-*/
+      var_log_prefix := 'SMS - PERIOD_MAINTENANCE';
+      var_log_search := 'SMS_PERIOD_MAINTENANCE';
+      var_recpt_email := sms_gen_function.retrieve_system_value('RECIPIENT_EMAIL_GROUP');
+      var_errors := false;
+      var_warnings := false;
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - SMS Period Maintenance');
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('#-> Sending recipient audit report');
+
+      /*-*/
+      /* Create the new email and create the email text header part
+      /*-*/
+      lics_mailer.create_email('SMS_' || sms_parameter.system_unit || '_' || sms_parameter.system_environment,
+                               var_recpt_email,
+                               'SMS Reporting - Recipient Audit',
+                               null,
+                               null);
+      lics_mailer.create_part(null);
+      lics_mailer.append_data('SMS Reporting - Recipient Audit');
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+
+      /*-*/
+      /* Create the email file and output the header data
+      /*-*/
+      lics_mailer.create_part('SMS_Recipient_Audit.xls');
+      lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+      lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+      lics_mailer.append_data('<tr>');
+      lics_mailer.append_data('<td align=center colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SMS Reporting - Recipient Audit Report - '||to_char(sysdate,'yyyy/mm/dd')||'</td>');
+      lics_mailer.append_data('</tr>');
+
+      /*-*/
+      /* Output the report header columns
+      /*-*/
+      lics_mailer.append_data('<tr>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Code</td>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Name</td>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Mobile</td>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Email</td>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Status</td>');
+      lics_mailer.append_data('</tr>');
+
+      /*-*/
+      /* Generate the recipient audit report
+      /*-*/
+      open csr_recipient;
+      loop
+         fetch csr_recipient into rcd_recipient;
+         if csr_recipient%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Output the report data
+         /*-*/
+         lics_mailer.append_data('<tr>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_recipient.rec_rcp_code||'</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_recipient.rec_rcp_name||'</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_recipient.rec_rcp_mobile||'</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_recipient.rec_rcp_email||'</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_recipient.sts_text||'</td>');
+         lics_mailer.append_data('</tr>');
+
+      end loop;
+      close csr_recipient;
+
+      /*-*/
+      /* Output the email file part trailer data
+      /*-*/
+      lics_mailer.append_data('</table>');
+      lics_mailer.create_part(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data('** Email End **');
+      lics_mailer.finalise_email('utf-8');
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - SMS Period Maintenance');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         end if;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - SMS_GEN_FUNCTION - PERIOD_MAINTENANCE - ' || var_exception);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end period_maintenance;
 
 /*----------------------*/
 /* Initialisation block */
