@@ -234,19 +234,18 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<SMS_REQUEST ACTION="*UPDVAL"/>';
-      strXML = strXML+'/>';
-      strXML = strXML+'SYSTEM SYSCDE="SMTP_TARGET" SYSVAL="'+fixXML(document.getElementById('DEF_StpTarg').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="SMTP_HOST" SYSVAL="'+fixXML(document.getElementById('DEF_StpHost').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="SMTP_PORT" SYSVAL="'+fixXML(document.getElementById('DEF_StpPort').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_RptAlrt').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptEgrp').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="REPORT_GENERATION_JOB_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptJgrp').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="QUERY_CHECKER_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_QryAlrt').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="QUERY_CHECKER_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_QryEgrp').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="QUERY_HISTORY_DAYS" SYSVAL="'+fixXML(document.getElementById('DEF_QryHDay').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="ABBREVIATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_AbrEgrp').value)+'"/>';
-      strXML = strXML+'SYSTEM SYSCDE="RECIPIENT_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RcpEgrp').value)+'"/>';
+      strXML = strXML+'<SMS_REQUEST ACTION="*UPDVAL">';
+      strXML = strXML+'<SYSTEM SYSCDE="SMTP_TARGET" SYSVAL="'+fixXML(document.getElementById('DEF_StpTarg').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="SMTP_HOST" SYSVAL="'+fixXML(document.getElementById('DEF_StpHost').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="SMTP_PORT" SYSVAL="'+fixXML(document.getElementById('DEF_StpPort').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_RptAlrt').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptEgrp').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_JOB_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptJgrp').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_QryAlrt').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_QryEgrp').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="QUERY_HISTORY_DAYS" SYSVAL="'+fixXML(document.getElementById('DEF_QryHDay').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="ABBREVIATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_AbrEgrp').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="RECIPIENT_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RcpEgrp').value)+'"/>';
       strXML = strXML+'</SMS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
