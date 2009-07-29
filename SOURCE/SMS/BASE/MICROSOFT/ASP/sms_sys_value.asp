@@ -233,6 +233,9 @@ sub PaintFunction()%>
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
+      if (confirm('Please confirm the system update\r\npress OK continue (The system values will be updated)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<SMS_REQUEST ACTION="*UPDVAL">';
       strXML = strXML+'<SYSTEM SYSCDE="SMTP_TARGET" SYSVAL="'+fixXML(document.getElementById('DEF_StpTarg').value)+'"/>';
