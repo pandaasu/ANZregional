@@ -344,14 +344,9 @@
          objRow.setAttribute('grppct',document.getElementById('SGR_GrpPcnt').value);
          objRow.setAttribute('tabcde','*GROUP');
          objCell = objRow.insertCell(0);
-         objCell.colSpan = 1;
+         objCell.colSpan = 4;
          objCell.innerHTML = '';
          objCell.className = 'clsLabelFN';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(1);
-         objCell.colSpan = 3;
-         objCell.innerText = '';
-         objCell.className = 'clsLabelFB';
          objCell.style.whiteSpace = 'nowrap';
       }
       updateSltData();
