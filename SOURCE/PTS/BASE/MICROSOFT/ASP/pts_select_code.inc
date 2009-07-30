@@ -83,7 +83,7 @@
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objCell = objRow.insertCell(0);
             objCell.colSpan = 4;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;-nbsp;SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
          } else {
@@ -159,7 +159,7 @@
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (objRow.getAttribute('tabcde') == '*GROUP') {
-            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
+            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;-nbsp;SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
             objRow.cells[0].colSpan = 4;
             cobjSelectData[i] = new clsSltRule();
             cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
@@ -873,6 +873,8 @@
          }
       }
       loadSltData();
+      document.getElementById('divSltRule').scrollTop = 0;
+      document.getElementById('divSltRule').scrollLeft = 0;
    }
    function getSltData() {
       var strXML = '';
