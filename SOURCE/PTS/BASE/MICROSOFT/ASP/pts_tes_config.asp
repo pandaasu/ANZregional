@@ -2651,6 +2651,10 @@ sub PaintFunction()%>
             </select>
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>
             <table class="clsTable01" align=right cols=1 cellpadding="0" cellspacing="0">
@@ -2658,10 +2662,6 @@ sub PaintFunction()%>
             </table>
          </nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td></nobr></td>
-      </tr>
-      </table></nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
