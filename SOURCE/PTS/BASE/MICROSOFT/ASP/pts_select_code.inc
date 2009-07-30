@@ -888,12 +888,10 @@
    function checkSltData() {
       var strMessage = '';
       var bolData = true;
-      var intTotal = 0;
       var bolGroup = false;
       var bolRule = false;
       for (var i=0;i<cobjSelectData.length;i++) {
          if (cobjSelectData[i].tabcde == '*GROUP') {
-            intTotal = intTotal + (cobjSelectData[i].grppct-0);
             if (bolGroup && !bolRule) {
                bolData = false;
             }
@@ -915,10 +913,6 @@
       if (!bolData) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Groups must have at least one rule';
-      }
-      if (intTotal != 100) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Group percentage must sum to 100';
       }
       return strMessage;
    }

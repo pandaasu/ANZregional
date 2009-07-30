@@ -129,7 +129,7 @@ sub PaintFunction()%>
       cobjScreens[2] = new clsScreen('dspTest','hedTest');
       cobjScreens[0].hedtxt = 'Selection Template Prompt';
       cobjScreens[1].hedtxt = 'Selection Template Maintenance';
-      cobjScreens[2].hedtxt = 'Selection Template Test';
+      cobjScreens[2].hedtxt = 'Selection Template Selection';
       initSearch();
       initSelect('dspDefine','Selection Template');
       displayScreen('dspPrompt');
@@ -211,13 +211,13 @@ sub PaintFunction()%>
       var strMessage = '';
       if (document.getElementById('PRO_StmCode').value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Selection template code must be entered for test';
+         strMessage = strMessage + 'Selection template code must be entered for select';
       }
       if (strMessage != '') {
          alert(strMessage);
          return;
       }
-      cobjScreens[2].hedtxt = 'Test Selection Template ('+document.getElementById('PRO_StmCode').value+')';
+      cobjScreens[2].hedtxt = 'Selection Template Selection ('+document.getElementById('PRO_StmCode').value+')';
       displayScreen('dspTest');
       document.getElementById('TES_StmCode').value = document.getElementById('PRO_StmCode').value;
       document.getElementById('TES_MemCount').value = '0';
@@ -243,7 +243,6 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
-   var cintDefineTarget;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -290,47 +289,37 @@ sub PaintFunction()%>
          document.getElementById('DEF_StmCode').value = '';
          document.getElementById('DEF_StmText').value = '';
          var strStmStat;
-         var strStmTarg;
-         var strStmEnty;
+         var strStmType;
          var objStmStat = document.getElementById('DEF_StmStat');
-         var objStmTarg = document.getElementById('DEF_StmTarg');
+         var objStmType = document.getElementById('DEF_StmType');
          objStmStat.options.length = 0;
-         objStmTarg.options.length = 0;
          document.getElementById('DEF_StmText').focus();
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objStmStat.options[objStmStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
-            } else if (objElements[i].nodeName == 'TAR_LIST') {
-               objStmTarg.options[objStmTarg.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'SELECTION') {
                document.getElementById('DEF_StmCode').value = objElements[i].getAttribute('STMCODE');
                document.getElementById('DEF_StmText').value = objElements[i].getAttribute('STMTEXT');
                strStmStat = objElements[i].getAttribute('STMSTAT');
-               strStmTarg = objElements[i].getAttribute('STMTARG');
+               strStmType = objElements[i].getAttribute('STMTYPE');
             }
          }
-         objStmStat.selectedIndex = -1;
+         objStmStat.selectedIndex = 0;
          for (var i=0;i<objStmStat.length;i++) {
             if (objStmStat.options[i].value == strStmStat) {
                objStmStat.options[i].selected = true;
                break;
             }
          }
-         strStmEnty = '';
-         cintDefineTarget = -1;
-         objStmTarg.selectedIndex = -1;
-         for (var i=0;i<objStmTarg.length;i++) {
-            if (objStmTarg.options[i].value == strStmTarg) {
-               objStmTarg.options[i].selected = true;
-               cintDefineTarget = i;
-               strStmEnty = objStmTarg.options[i].text.substring(objStmTarg.options[i].value.length+3);
+         objStmType.selectedIndex = 0;
+         for (var i=0;i<objStmType.length;i++) {
+            if (objStmType.options[i].value == strStmType) {
+               objStmType.options[i].selected = true;
                break;
             }
          }
-         if (strStmEnty != '') {
-            startSltInstance(strStmEnty);
-            putSltData(objElements);
-         }
+         startSltInstance('*PET');
+         putSltData(objElements);
       }
    }
    function doDefineAccept() {
@@ -341,13 +330,13 @@ sub PaintFunction()%>
          return;
       }
       var objStmStat = document.getElementById('DEF_StmStat');
-      var objStmTarg = document.getElementById('DEF_StmTarg');
+      var objStmType = document.getElementById('DEF_StmType');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSTM"';
       strXML = strXML+' STMCODE="'+fixXML(document.getElementById('DEF_StmCode').value)+'"';
       strXML = strXML+' STMTEXT="'+fixXML(document.getElementById('DEF_StmText').value)+'"';
       strXML = strXML+' STMSTAT="'+fixXML(objStmStat.options[objStmStat.selectedIndex].value)+'"';
-      strXML = strXML+' STMTARG="'+fixXML(objStmTarg.options[objStmTarg.selectedIndex].value)+'"';
+      strXML = strXML+' STMTYPE="'+fixXML(objStmType.options[objStmType.selectedIndex].value)+'"';
       strXML = strXML+'>';
       strXML = strXML + getSltData();
       strXML = strXML+'</PTS_REQUEST>';
@@ -393,15 +382,6 @@ sub PaintFunction()%>
       displayScreen('dspPrompt');
       document.getElementById('PRO_StmCode').value = '';
       document.getElementById('PRO_StmCode').focus();
-   }
-   function doDefineTarget(objSelect) {
-      if (confirm('Please confirm the target change\r\npress OK continue (all existing selection rules will be deleted)\r\npress Cancel to return ignore') == false) {
-         objSelect.selectedIndex = cintDefineTarget;
-         return;
-      }
-      cintDefineTarget = objSelect.selectedIndex;
-      var strValue = objSelect.options[objSelect.selectedIndex].text.substring(objSelect.options[objSelect.selectedIndex].value.length+3);
-      startSltInstance(strValue);
    }
    ////////////////////
    // Test Functions //
@@ -475,7 +455,7 @@ sub PaintFunction()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_stm_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
-   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
+   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Selection Template Prompt</nobr></td>
@@ -503,7 +483,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptTest();">&nbsp;Test&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptTest();">&nbsp;Select&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
                </tr>
@@ -533,9 +513,12 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Target:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_StmTarg" onChange="doDefineTarget(this);"></select>
+            <select class="clsInputBN" name="DEF_StmType">
+               <option value="*PERCENT" selected>Percentage selection
+               <option value="*TOTAL">Total selection
+            </select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -565,7 +548,7 @@ sub PaintFunction()%>
    <table id="dspTest" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedTest" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Selection Template Test</nobr></td>
+         <td id="hedTest" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Selection Template Selection</nobr></td>
          <input type="hidden" name="TES_StmCode" value="">
       </tr>
       <tr>
