@@ -48,8 +48,8 @@ create or replace package body pts_app.pts_stm_function as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure clear_panel(par_stm_code in number, par_req_mem_count in number, par_req_res_count in number);
-   procedure select_panel(par_stm_code in number, par_pan_type in varchar2, par_pet_multiple in varchar2);
+   procedure clear_panel(par_stm_code in number, par_sel_type in varchar2, par_req_mem_count in number, par_req_res_count in number);
+   procedure select_panel(par_stm_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number);
 
    /*-*/
    /* Private definitions
@@ -323,13 +323,13 @@ create or replace package body pts_app.pts_stm_function as
          var_output := '<SELECTION STMCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
          var_output := var_output||' STMTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
          var_output := var_output||' STMSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
-         var_output := var_output||' STMTYPE="'||to_char(rcd_retrieve.std_sel_type)||'"/>';
+         var_output := var_output||' STMTYPE="'||pts_to_xml(rcd_retrieve.std_sel_type)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYSTM' then
          var_output := '<SELECTION STMCODE="'||to_char(rcd_retrieve.std_stm_code)||'"';
          var_output := var_output||' STMTEXT="'||pts_to_xml(rcd_retrieve.std_stm_text)||'"';
          var_output := var_output||' STMSTAT="'||to_char(rcd_retrieve.std_stm_status)||'"';
-         var_output := var_output||' STMTYPE="'||to_char(rcd_retrieve.std_sel_type)||'"/>';
+         var_output := var_output||' STMTYPE="'||pts_to_xml(rcd_retrieve.std_sel_type)||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTSTM' then
          var_output := '<SELECTION STMCODE="*NEW"';
@@ -469,7 +469,9 @@ create or replace package body pts_app.pts_stm_function as
       rcd_pts_stm_definition.std_upd_user := upper(par_user);
       rcd_pts_stm_definition.std_upd_date := sysdate;
       rcd_pts_stm_definition.std_stm_target := 1;
-      rcd_pts_stm_definition.std_sel_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMTYPE'));
+      rcd_pts_stm_definition.std_sel_type := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@STMTYPE'));
+      rcd_pts_stm_definition.std_req_mem_count := 0;
+      rcd_pts_stm_definition.std_req_res_count := 0;
       if rcd_pts_stm_definition.std_stm_code is null and not(xslProcessor.valueOf(obj_pts_request,'@STMCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Selection template code ('||xslProcessor.valueOf(obj_pts_request,'@STMCODE')||') must be a number');
       end if;
@@ -565,7 +567,7 @@ create or replace package body pts_app.pts_stm_function as
             rcd_pts_stm_group.stg_sel_mem_count := 0;
             rcd_pts_stm_group.stg_sel_res_count := 0;
             if rcd_pts_stm_definition.std_sel_type != '*PERCENT' then
-               rcd_pts_stm_group.stg_sel_pcnt := 0;
+               rcd_pts_stm_group.stg_sel_pcnt := 100;
             end if;
             insert into pts_stm_group values rcd_pts_stm_group;
             for idy in 0..xmlDom.getLength(obj_rul_list)-1 loop
@@ -650,11 +652,9 @@ create or replace package body pts_app.pts_stm_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
-      var_stm_code number;
-      var_req_mem_count number;
-      var_req_res_count number;
       var_hou_pet_multi varchar2(32);
       var_found boolean;
+      rcd_pts_stm_definition pts_stm_definition%rowtype;
 
       /*-*/
       /* Local cursors
@@ -662,7 +662,7 @@ create or replace package body pts_app.pts_stm_function as
       cursor csr_retrieve is
          select t01.*
            from pts_stm_definition t01
-          where t01.std_stm_code = var_stm_code
+          where t01.std_stm_code = rcd_pts_stm_definition.std_stm_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -689,18 +689,18 @@ create or replace package body pts_app.pts_stm_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      var_stm_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMCODE'));
-      var_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
-      var_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
+      rcd_pts_stm_definition.std_stm_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@STMCODE'));
+      rcd_pts_stm_definition.std_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
+      rcd_pts_stm_definition.std_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
       var_hou_pet_multi := xslProcessor.valueOf(obj_pts_request,'@PETMLT');
-      if var_stm_code is null then
+      if rcd_pts_stm_definition.std_stm_code is null then
          pts_gen_function.add_mesg_data('Selection template code ('||xslProcessor.valueOf(obj_pts_request,'@STMCODE')||') must be a number');
       end if;
-      if var_req_mem_count is null or var_req_mem_count < 1 then
+      if rcd_pts_stm_definition.std_req_mem_count is null or rcd_pts_stm_definition.std_req_mem_count < 1 then
          pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
       end if;
-      if var_req_res_count is null or var_req_res_count < 1 then
-         var_req_res_count := 0;
+      if rcd_pts_stm_definition.std_req_res_count is null or rcd_pts_stm_definition.std_req_res_count < 1 then
+         rcd_pts_stm_definition.std_req_res_count := 0;
       end if;
       if var_hou_pet_multi is null or (var_hou_pet_multi != '0' and var_hou_pet_multi != '1') then
          pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
@@ -723,27 +723,75 @@ create or replace package body pts_app.pts_stm_function as
          close csr_retrieve;
       exception
          when others then
-            pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') is currently locked');
+            pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') is currently locked');
             return;
       end;
       if var_found = false then
-         pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') does not exist');
+         pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') does not exist');
       end if;
       if rcd_retrieve.std_stm_target != 1 then
-         pts_gen_function.add_mesg_data('Selection template ('||to_char(var_stm_code)||') target must be *PET - panel update not allowed');
+         pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') target must be *PET - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
-      /* Clear and select the selection template panel
-      /* **note** 1. Autonomous transactions that not impact the test lock
+      /* Delete the existing panel data
       /*-*/
-      clear_panel(rcd_retrieve.std_stm_code, var_req_mem_count, var_req_res_count);
-      select_panel(rcd_retrieve.std_stm_code, '*MEMBER', nvl(var_hou_pet_multi,'0'));
-      if var_req_res_count != 0 then
-         select_panel(rcd_retrieve.std_stm_code, '*RESERVE', nvl(var_hou_pet_multi,'0'));
+      delete from pts_stm_panel where stp_stm_code = rcd_pts_stm_definition.std_stm_code;
+
+      /*-*/
+      /* Clear the selection template panel
+      /*-*/
+      clear_panel(rcd_retrieve.std_stm_code, rcd_retrieve.std_sel_type, rcd_pts_stm_definition.std_req_mem_count, rcd_pts_stm_definition.std_req_res_count);
+
+      /*-*/
+      /* Update the selection template definition
+      /*-*/
+      update pts_stm_definition
+         set std_req_mem_count = rcd_pts_stm_definition.std_req_mem_count,
+             std_req_res_count = rcd_pts_stm_definition.std_req_res_count
+       where std_stm_code = rcd_pts_stm_definition.std_stm_code;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Relock the selection template
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') is currently locked');
+            return;
+      end;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') does not exist');
+      end if;
+      if rcd_retrieve.std_stm_target != 1 then
+         pts_gen_function.add_mesg_data('Selection template ('||to_char(rcd_pts_stm_definition.std_stm_code)||') target must be *PET - panel update not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Select the test panel
+      /* **note** 1. Select panel is an autonomous transaction that not impact the test lock
+      /*-*/
+      select_panel(rcd_retrieve.std_stm_code, rcd_retrieve.std_sel_type, '*MEMBER', nvl(var_hou_pet_multi,'0'), rcd_retrieve.std_req_mem_count, rcd_retrieve.std_req_res_count);
+      if rcd_retrieve.std_req_res_count != 0 then
+         select_panel(rcd_retrieve.std_stm_code, rcd_retrieve.std_sel_type, '*RESERVE', nvl(var_hou_pet_multi,'0'), rcd_retrieve.std_req_mem_count, rcd_retrieve.std_req_res_count);
       end if;
 
       /*-*/
@@ -894,7 +942,7 @@ create or replace package body pts_app.pts_stm_function as
       /* Start the report
       /*-*/
       pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selection Template - ('||rcd_retrieve.std_stm_code||') '||rcd_retrieve.std_stm_text||'</td></tr>');
+      pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selection Template - ('||rcd_retrieve.std_stm_code||') '||rcd_retrieve.std_stm_text||' - Type ('||upper(rcd_retrieve.std_sel_type)||')</td></tr>');
       pipe row('<tr>');
       pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
       pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
@@ -1050,12 +1098,7 @@ create or replace package body pts_app.pts_stm_function as
    /***************************************************/
    /* This procedure performs the clear panel routine */
    /***************************************************/
-   procedure clear_panel(par_stm_code in number, par_req_mem_count in number, par_req_res_count in number) is
-
-      /*-*/
-      /* Autonomous transaction
-      /*-*/
-      pragma autonomous_transaction;
+   procedure clear_panel(par_stm_code in number, par_sel_type in varchar2, par_req_mem_count in number, par_req_res_count in number) is
 
       /*-*/
       /* Local definitions
@@ -1100,6 +1143,10 @@ create or replace package body pts_app.pts_stm_function as
    /*-------------*/
    begin
 
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
       /*-*/
       /* Clear the work selection temporary tables
       /*-*/
@@ -1138,8 +1185,10 @@ create or replace package body pts_app.pts_stm_function as
          tbl_sel_group(tbl_sel_group.count).req_res_count := round(par_req_res_count * (nvl(rcd_group.stg_sel_pcnt,0)/100), 0);
          tbl_sel_group(tbl_sel_group.count).sel_mem_count := 0;
          tbl_sel_group(tbl_sel_group.count).sel_res_count := 0;
-         var_stg_mem_count := var_stg_mem_count + tbl_sel_group(tbl_sel_group.count).req_mem_count;
-         var_stg_res_count := var_stg_res_count + tbl_sel_group(tbl_sel_group.count).req_res_count;
+         if upper(par_sel_type) = '*PERCENT' then
+            var_stg_mem_count := var_stg_mem_count + tbl_sel_group(tbl_sel_group.count).req_mem_count;
+            var_stg_res_count := var_stg_res_count + tbl_sel_group(tbl_sel_group.count).req_res_count;
+         end if;
 
       end loop;
       close csr_group;
@@ -1153,11 +1202,13 @@ create or replace package body pts_app.pts_stm_function as
          /* Adjust the group counts when required
          /* **note** 1. the last group contains any rounding
          /*-*/
-         if var_stg_mem_count != par_req_mem_count then
-            tbl_sel_group(tbl_sel_group.count).req_mem_count := tbl_sel_group(tbl_sel_group.count).req_mem_count + (par_req_mem_count - var_stg_mem_count);
-         end if;
-         if var_stg_res_count != par_req_res_count then
-            tbl_sel_group(tbl_sel_group.count).req_res_count := tbl_sel_group(tbl_sel_group.count).req_res_count + (par_req_res_count - var_stg_res_count);
+         if upper(par_sel_type) = '*PERCENT' then
+            if var_stg_mem_count != par_req_mem_count then
+               tbl_sel_group(tbl_sel_group.count).req_mem_count := tbl_sel_group(tbl_sel_group.count).req_mem_count + (par_req_mem_count - var_stg_mem_count);
+            end if;
+            if var_stg_res_count != par_req_res_count then
+               tbl_sel_group(tbl_sel_group.count).req_res_count := tbl_sel_group(tbl_sel_group.count).req_res_count + (par_req_res_count - var_stg_res_count);
+            end if;
          end if;
 
          /*-*/
@@ -1307,37 +1358,6 @@ create or replace package body pts_app.pts_stm_function as
 
       end loop;
 
-      /*-*/
-      /* Delete the existing panel data
-      /*-*/
-      delete from pts_stm_panel
-       where stp_stm_code = par_stm_code;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_STM_FUNCTION - CLEAR_PANEL - ' || substr(SQLERRM, 1, 2048));
-
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -1346,7 +1366,7 @@ create or replace package body pts_app.pts_stm_function as
    /****************************************************/
    /* This procedure performs the select panel routine */
    /****************************************************/
-   procedure select_panel(par_stm_code in number, par_pan_type in varchar2, par_pet_multiple in varchar2) is
+   procedure select_panel(par_stm_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number) is
 
       /*-*/
       /* Autonomous transaction
@@ -1358,6 +1378,10 @@ create or replace package body pts_app.pts_stm_function as
       /*-*/
       rcd_pts_stm_panel pts_stm_panel%rowtype;
       var_sel_group varchar2(32);
+      var_tot_req_mem_count number;
+      var_tot_req_res_count number;
+      var_tot_sel_mem_count number;
+      var_tot_sel_res_count number;
       var_set_tot_count number;
       var_set_sel_count number;
       var_pan_selected boolean;
@@ -1427,6 +1451,18 @@ create or replace package body pts_app.pts_stm_function as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*------------------------------------------*/
+      /* NOTE - This is an autonomous transaction */
+      /*------------------------------------------*/
+
+      /*-*/
+      /* Set the total count variables
+      /*-*/
+      var_tot_req_mem_count := par_req_mem_count;
+      var_tot_req_res_count := par_req_res_count;
+      var_tot_sel_mem_count := 0;
+      var_tot_sel_res_count := 0;
 
       /*-*/
       /* Process the test selection groups for panel inclusion
@@ -1599,6 +1635,7 @@ create or replace package body pts_app.pts_stm_function as
                /* Update the internal selection counts
                /*-*/
                if upper(par_pan_type) = '*MEMBER' then
+                  var_tot_sel_mem_count := var_tot_sel_mem_count + 1;
                   tbl_sel_group(idg).sel_mem_count := tbl_sel_group(idg).sel_mem_count + 1;
                   for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                      if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
@@ -1610,6 +1647,7 @@ create or replace package body pts_app.pts_stm_function as
                      end if;
                   end loop;
                else
+                  var_tot_sel_res_count := var_tot_sel_res_count + 1;
                   tbl_sel_group(idg).sel_res_count := tbl_sel_group(idg).sel_res_count + 1;
                   for idr in tbl_sel_group(idg).str_rule..tbl_sel_group(idg).end_rule loop
                      if tbl_sel_rule(idr).rul_code = '*SELECT_WHEN_EQUAL_MIX' then
@@ -1692,8 +1730,34 @@ create or replace package body pts_app.pts_stm_function as
                end if;
             end if;
 
+            /*-*/
+            /* Exit the panel loop when total panel requirements satisfied
+            /*-*/
+            if upper(par_sel_type) != '*PERCENT' then
+               if var_tot_sel_mem_count >= var_tot_req_mem_count then
+                  exit;
+               end if;
+            else
+               if var_tot_sel_res_count >= var_tot_req_res_count then
+                  exit;
+               end if;
+            end if;
+
          end loop;
          close csr_panel;
+
+         /*-*/
+         /* Exit the group loop when total panel requirements satisfied
+         /*-*/
+         if upper(par_sel_type) != '*PERCENT' then
+            if var_tot_sel_mem_count >= var_tot_req_mem_count then
+               exit;
+            end if;
+         else
+            if var_tot_sel_res_count >= var_tot_req_res_count then
+               exit;
+            end if;
+         end if;
 
       end loop;
 
