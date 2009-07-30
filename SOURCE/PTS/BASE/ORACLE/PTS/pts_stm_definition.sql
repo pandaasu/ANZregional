@@ -25,7 +25,9 @@ create table pts.pts_stm_definition
     std_upd_user                    varchar2(30 char)             not null,
     std_upd_date                    date                          not null,
     std_stm_target                  number                        not null,
-    std_sel_type                    varchar2(32 char)             not null);
+    std_sel_type                    varchar2(32 char)             not null,
+    std_req_mem_count               number                        null,
+    std_req_res_count               number                        null);
 
 /**/
 /* Comments
@@ -38,6 +40,8 @@ comment on column pts.pts_stm_definition.std_upd_user is 'Selection template upd
 comment on column pts.pts_stm_definition.std_upd_date is 'Selection template update date';
 comment on column pts.pts_stm_definition.std_stm_target is 'Selection template target';
 comment on column pts.pts_stm_definition.std_sel_type is 'Selection type (*PERCENT or *TOTAL)';
+comment on column pts.pts_stm_definition.std_req_mem_count is 'Selection template panel requested member count';
+comment on column pts.pts_stm_definition.std_req_res_count is 'Selection template panel requested reserve count';
 
 /**/
 /* Primary Key Constraint
