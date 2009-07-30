@@ -334,7 +334,7 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSTM"';
       strXML = strXML+' STMCODE="'+fixXML(document.getElementById('DEF_StmCode').value)+'"';
-      strXML = strXML+' STMTEXT="'+fixXML(document.getElementById('DEF_StmText').value)+'"';
+      strXML = strXML+' STMTEXT="'+fixXML(document.getElementById('DEF_StmText').value.toUpperCase())+'"';
       strXML = strXML+' STMSTAT="'+fixXML(objStmStat.options[objStmStat.selectedIndex].value)+'"';
       strXML = strXML+' STMTYPE="'+fixXML(objStmType.options[objStmType.selectedIndex].value)+'"';
       strXML = strXML+'>';
@@ -503,7 +503,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Description:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StmText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_StmText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
