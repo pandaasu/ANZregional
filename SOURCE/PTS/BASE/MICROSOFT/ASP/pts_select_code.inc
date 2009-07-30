@@ -71,7 +71,6 @@
       var objFont = document.getElementById('fntSltRule');
       var objRow;
       var objCell;
-      var bolFound = false;
       for (var i=objTable.rows.length-1;i>=0;i--) {
          objTable.deleteRow(i);
       }
@@ -83,19 +82,8 @@
             objRow.setAttribute('grppct',cobjSelectData[i].grppct);
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objCell = objRow.insertCell(0);
-            objCell.colSpan = 1;
-            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
-            objCell.className = 'clsLabelFN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell = objRow.insertCell(1);
-            objCell.colSpan = 3;
-            objCell.innerText = '';
-            if (!bolFound) {
-               objCell.innerText = 'SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
-            } else {
-               objCell.innerText = 'SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
-            }
-            bolFound = true;
+            objCell.colSpan = 4;
+            objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
          } else {
@@ -167,19 +155,12 @@
       var objTable = document.getElementById('tabSltRule');
       var objFont = document.getElementById('fntSltRule');
       var objValues;
-      var bolFound = false;
       cobjSelectData.length = 0;
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (objRow.getAttribute('tabcde') == '*GROUP') {
-            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>';
-            if (!bolFound) {
-               objRow.cells[1].innerText = 'SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
-            } else {
-               objRow.cells[1].innerText = 'SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
-            }
-            objRow.cells[1].colSpan = 3;
-            bolFound = true;
+            objRow.cells[0].innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;SELECTION GROUP - '+objRow.getAttribute('grptxt')+' ('+objRow.getAttribute('grppct')+'%)';
+            objRow.cells[0].colSpan = 4;
             cobjSelectData[i] = new clsSltRule();
             cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
             cobjSelectData[i].grptxt = objRow.getAttribute('grptxt');
@@ -265,6 +246,41 @@
          }
       }
       updateSltData();
+   }
+   function doSltRuleCpyGroup(intRow) {
+      var objTable = document.getElementById('tabSltRule');
+      var strGroup = objTable.rows[intRow].getAttribute('grpcde');
+      var objValues;
+      cintSelectGroup++;
+      var strNext = '*GROUP'+cintSelectGroup;
+      var intIndex = cobjSelectData.length-1;
+      for (var i=0;i<cobjSelectData.length;i++) {
+         if (cobjSelectData[i].grpcde == strGroup) {
+            if (cobjSelectData[i].tabcde == '*GROUP') {
+               intIndex++;
+               cobjSelectData[intIndex] = new clsSltRule();
+               cobjSelectData[intIndex].grpcde = strNext;
+               cobjSelectData[intIndex].grptxt = cobjSelectData[i].grptxt;
+               cobjSelectData[intIndex].grppct = cobjSelectData[i].grppct;
+               cobjSelectData[intIndex].tabcde = '*GROUP';
+            } else {
+               intIndex++;
+               cobjSelectData[intIndex] = new clsSltRule();
+               cobjSelectData[intIndex].grpcde = strNext;
+               cobjSelectData[intIndex].tabcde = cobjSelectData[i].tabcde;
+               cobjSelectData[intIndex].fldcde = cobjSelectData[i].fldcde;
+               cobjSelectData[intIndex].fldtxt = cobjSelectData[i].fldtxt;
+               cobjSelectData[intIndex].inplen = cobjSelectData[i].inplen;
+               cobjSelectData[intIndex].rultyp = cobjSelectData[i].rultyp;
+               cobjSelectData[intIndex].rulcde = cobjSelectData[i].rulcde;
+               objValues = cobjSelectData[i].valary;
+               for (var j=0;j<objValues.length;j++) {
+                  cobjSelectData[intIndex].valary[cobjSelectData[intIndex].valary.length] = new clsSltValue(objValues[j].valcde,objValues[j].valtxt,objValues[j].valpct);
+               }
+            }
+         }
+      }
+      loadSltData();
    }
    function doSltRuleAddRule(intRow) {
       var objTable = document.getElementById('tabSltRule');
