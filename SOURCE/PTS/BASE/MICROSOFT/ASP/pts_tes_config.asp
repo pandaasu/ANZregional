@@ -1569,17 +1569,20 @@ sub PaintFunction()%>
             return;
          }
          var strPetMult;
+         var strSelType;
          var strSelTemp;
          var objPetMult = document.getElementById('PAN_PetMult');
+         var objSelType = document.getElementById('PAN_SelType');
          var objSelTemp = document.getElementById('PAN_SelTemp');
          objSelTemp.options.length = 0;
-         objSelTemp.selectedIndex = -1;
+         objSelTemp.selectedIndex = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
                document.getElementById('subPanel').innerText = objElements[i].getAttribute('TESTXT');
                document.getElementById('PAN_MemCount').value = objElements[i].getAttribute('MEMCNT');
                document.getElementById('PAN_ResCount').value = objElements[i].getAttribute('RESCNT');
                strPetMult = objElements[i].getAttribute('PETMLT');
+               strSelType = objElements[i].getAttribute('SELTYP');
                cstrPanelTarget = objElements[i].getAttribute('TESTAR');
             } else if (objElements[i].nodeName == 'TEM_LIST') {
                objSelTemp.options[objSelTemp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
@@ -1587,10 +1590,17 @@ sub PaintFunction()%>
          }
          startSltInstance(cstrPanelTarget);
          putSltData(objElements);
-         objPetMult.selectedIndex = -1;
+         objPetMult.selectedIndex = 0;
          for (var i=0;i<objPetMult.length;i++) {
             if (objPetMult.options[i].value == strPetMult) {
                objPetMult.options[i].selected = true;
+               break;
+            }
+         }
+         objSelType.selectedIndex = 0;
+         for (var i=0;i<objSelType.length;i++) {
+            if (objSelType.options[i].value == strSelType) {
+               objSelType.options[i].selected = true;
                break;
             }
          }
@@ -1605,6 +1615,7 @@ sub PaintFunction()%>
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Member count must be entered';
       }
+      var strMessage = checkSltData();
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -2616,14 +2627,9 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member Count:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member/Reserve Counts:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PAN_MemCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reserve Count:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAN_MemCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">&nbsp;
             <input class="clsInputNN" type="text" name="PAN_ResCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
@@ -2637,20 +2643,21 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Template:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
-               <tr>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=left colspan=1 nowrap><nobr>
-                     <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
-                        <tr><td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Select&nbsp;</a></nobr></td></tr>
-                     </table>
-                  </nobr></td>
-               </tr>
+            <select class="clsInputBN" name="PAN_SelType">
+               <option value="*PERCENT" selected>Percentage selection
+               <option value="*TOTAL">Total selection
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=right cols=1 cellpadding="0" cellspacing="0">
+               <tr><td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Copy Selection Template&nbsp;</a></nobr></td></tr>
             </table>
          </nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td></nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
