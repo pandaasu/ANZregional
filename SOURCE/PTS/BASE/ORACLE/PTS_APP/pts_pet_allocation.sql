@@ -176,6 +176,7 @@ create or replace package body pts_app.pts_pet_allocation as
                     and t01.tcl_tab_code = '*PET_CLA'
                     and t01.tcl_fld_code = 8) t02
           where t01.tpa_pan_code = t02.tcl_pan_code(+)
+            and t01.tpa_pan_status = '*MEMBER'
             and t01.tpa_tes_code = par_tes_code
           order by nvl(t02.tcl_val_code,1),
                    t01.tpa_pan_code;
@@ -299,6 +300,7 @@ create or replace package body pts_app.pts_pet_allocation as
                     and t01.tcl_tab_code = '*PET_CLA'
                     and t01.tcl_fld_code = 8) t02
           where t01.tpa_pan_code = t02.tcl_pan_code(+)
+            and t01.tpa_pan_status = '*MEMBER'
             and t01.tpa_tes_code = par_tes_code
           order by nvl(t02.tcl_val_code,1),
                    t01.tpa_pan_code;
@@ -442,6 +444,7 @@ create or replace package body pts_app.pts_pet_allocation as
                     and t01.tcl_tab_code = '*PET_CLA'
                     and t01.tcl_fld_code = 8) t02
           where t01.tpa_pan_code = t02.tcl_pan_code(+)
+            and t01.tpa_pan_status = '*MEMBER'
             and t01.tpa_tes_code = par_tes_code
           order by nvl(t02.tcl_val_code,1),
                    t01.tpa_pan_code;
