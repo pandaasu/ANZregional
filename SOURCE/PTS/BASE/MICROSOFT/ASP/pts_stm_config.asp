@@ -522,16 +522,10 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
 <!--#include file="pts_select_disp.inc"-->
          </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
