@@ -39,6 +39,7 @@ create table pts.pts_tes_definition
     tde_tes_max_temp                number                        null,
     tde_tes_day_count               number                        null,
     tde_tes_sam_count               number                        null,
+    tde_pan_sel_type                varchar2(32 char)             null,
     tde_req_mem_count               number                        null,
     tde_req_res_count               number                        null,
     tde_hou_pet_multi               varchar2(1 char)              null,
@@ -72,6 +73,7 @@ comment on column pts.pts_tes_definition.tde_tes_len_meal is 'Test meal length m
 comment on column pts.pts_tes_definition.tde_tes_max_temp is 'Test maximum temperature';
 comment on column pts.pts_tes_definition.tde_tes_day_count is 'Test day count';
 comment on column pts.pts_tes_definition.tde_tes_sam_count is 'Test sample per day count';
+comment on column pts.pts_tes_definition.tde_pan_sel_type is 'Test panel selection type (*PERCENT or *TOTAL)';
 comment on column pts.pts_tes_definition.tde_req_mem_count is 'Test panel requested member count';
 comment on column pts.pts_tes_definition.tde_req_res_count is 'Test panel requested reserve count';
 comment on column pts.pts_tes_definition.tde_hou_pet_multi is 'Test multiple pets per household';
