@@ -919,10 +919,10 @@ sub PaintFunction()%>
       document.getElementById('subQueDetail').innerText = cstrQuestionTestText+' - Day '+cobjQuestionDay[cintQuestionRow].daycde;
       displayScreen('dspQueDetail');
       document.getElementById('QUE_QueCode').value = '';
-      document.getElementById('QUE_QueType').selectedIndex = 0;
+      document.getElementById('QUE_QueType').selectedIndex = 1;
       var objQueList = document.getElementById('QUE_QueList');
       objQueList.options.length = 0;
-      objQueList.selectedIndex = -1;
+      objQueList.selectedIndex = 0;
       var strText;
       var objQueAry = cobjQuestionDay[cintQuestionRow].queary;
       for (var i=0;i<objQueAry.length;i++) {
@@ -2400,9 +2400,6 @@ sub PaintFunction()%>
                <table id="tabQuestion" class="clsTableBody" style="display:block;visibility:visible" align=left cellpadding="2" cellspacing="1"></table>
             </div>
          </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
