@@ -1734,12 +1734,14 @@ create or replace package body pts_app.pts_stm_function as
             /* Exit the panel loop when total panel requirements satisfied
             /*-*/
             if upper(par_sel_type) != '*PERCENT' then
-               if var_tot_sel_mem_count >= var_tot_req_mem_count then
-                  exit;
-               end if;
-            else
-               if var_tot_sel_res_count >= var_tot_req_res_count then
-                  exit;
+               if upper(par_pan_type) = '*MEMBER' then
+                  if var_tot_sel_mem_count >= var_tot_req_mem_count then
+                     exit;
+                  end if;
+               else
+                  if var_tot_sel_res_count >= var_tot_req_res_count then
+                     exit;
+                  end if;
                end if;
             end if;
 
@@ -1750,12 +1752,14 @@ create or replace package body pts_app.pts_stm_function as
          /* Exit the group loop when total panel requirements satisfied
          /*-*/
          if upper(par_sel_type) != '*PERCENT' then
-            if var_tot_sel_mem_count >= var_tot_req_mem_count then
-               exit;
-            end if;
-         else
-            if var_tot_sel_res_count >= var_tot_req_res_count then
-               exit;
+            if upper(par_pan_type) = '*MEMBER' then
+               if var_tot_sel_mem_count >= var_tot_req_mem_count then
+                  exit;
+               end if;
+            else
+               if var_tot_sel_res_count >= var_tot_req_res_count then
+                  exit;
+               end if;
             end if;
          end if;
 
