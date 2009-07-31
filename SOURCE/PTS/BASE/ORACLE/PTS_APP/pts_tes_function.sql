@@ -2353,7 +2353,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEMPLATE SELTYP="('||pts_to_xml(rcd_retrieve.std_sel_type)||'"/>'));
+      pipe row(pts_xml_object('<TEMPLATE SELTYP="'||pts_to_xml(rcd_retrieve.std_sel_type)||'"/>'));
 
       /*-*/
       /* Pipe the selection template rules
@@ -2833,7 +2833,7 @@ create or replace package body pts_app.pts_tes_function as
       /* Start the report
       /*-*/
       pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Panel - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||' - Type ('||upper(rcd_retrieve.tde_pan_sel_type)||'</td></tr>');
+      pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Panel - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||' - Type ('||upper(rcd_retrieve.tde_pan_sel_type)||')</td></tr>');
       pipe row('<tr>');
       pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
       pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
