@@ -1543,7 +1543,8 @@ sub PaintFunction()%>
    // Panel Functions //
    /////////////////////
    var cstrPanelTest;
-   var cstrPanelTarget;
+   var cstrPanelDone;
+   var cstrPanelTarget = '*PET';
    function requestPanelUpdate(strCode) {
       cstrPanelTest = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVPAN" TESCDE="'+strCode+'"/>';
@@ -1583,7 +1584,7 @@ sub PaintFunction()%>
                document.getElementById('PAN_ResCount').value = objElements[i].getAttribute('RESCNT');
                strPetMult = objElements[i].getAttribute('PETMLT');
                strSelType = objElements[i].getAttribute('SELTYP');
-               cstrPanelTarget = objElements[i].getAttribute('TESTAR');
+               cstrPanelDone = objElements[i].getAttribute('PANDON');
             } else if (objElements[i].nodeName == 'TEM_LIST') {
                objSelTemp.options[objSelTemp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             }
@@ -1615,10 +1616,15 @@ sub PaintFunction()%>
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Member count must be entered';
       }
-      var strMessage = checkSltData();
+      strMessage = checkSltData();
       if (strMessage != '') {
          alert(strMessage);
          return;
+      }
+      if (cstrPanelDone == '1') {
+         if (confirm('Panel exists for this test - Please confirm the panel update\r\npress OK continue (the existing panel will be replaced)\r\npress Cancel to cancel the request') == false) {
+            return;
+         }
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDPAN"';
@@ -1626,6 +1632,7 @@ sub PaintFunction()%>
       strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
       strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
       strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
+      strXML = strXML+' SELTYP="'+fixXML(document.getElementById('PAN_SelType').options[document.getElementById('PAN_SelType').selectedIndex].value)+'"';
       strXML = strXML+'>';
       strXML = strXML + getSltData();
       strXML = strXML+'</PTS_REQUEST>';
@@ -1669,9 +1676,9 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objSelTemp = document.getElementById('PAN_SelTemp');
       var strMessage = '';
-      if (objSelTemp.selectedIndex == -1) {
+      if (objSelTemp.selectedIndex == -1 || objSelTemp.selectedIndex == 0) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Selection template must be selected';
+         strMessage = strMessage + 'Selection template must be selected for copy';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -1709,8 +1716,22 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         var strSelType;
+         var objSelType = document.getElementById('PAN_SelType');
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEMPLATE') {
+               strSelType = objElements[i].getAttribute('SELTYP');
+            }
+         }
          startSltInstance(cstrPanelTarget);
          putSltData(objElements);
+         objSelType.selectedIndex = 0;
+         for (var i=0;i<objSelType.length;i++) {
+            if (objSelType.options[i].value == strSelType) {
+               objSelType.options[i].selected = true;
+               break;
+            }
+         }
          document.getElementById('tabSltRule').focus();
       }
    }
@@ -2616,21 +2637,24 @@ sub PaintFunction()%>
       </tr>
    </table>
    <table id="dspPanel" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPanelAccept();}">
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=4 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedPanel" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Test Panel Selection</nobr></td>
+         <td id="hedPanel" class="clsFunction" align=center valign=center colspan=4 nowrap><nobr>Test Panel Selection</nobr></td>
       </tr>
       <tr>
-         <td id="subPanel" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+         <td id="subPanel" class="clsLabelBB" align=center colspan=4 nowrap><nobr>Test Name</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=4 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member/Reserve Counts:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;MemberCount:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PAN_MemCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">&nbsp;
-            <input class="clsInputNN" type="text" name="PAN_ResCount" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PAN_MemCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reserve Count:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAN_ResCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
@@ -2641,8 +2665,6 @@ sub PaintFunction()%>
                <option value="1">Yes
             </select>
          </nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" name="PAN_SelType">
@@ -2651,25 +2673,21 @@ sub PaintFunction()%>
             </select>
          </nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=4 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>
-            <table class="clsTable01" align=right cols=1 cellpadding="0" cellspacing="0">
-               <tr><td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Copy Selection Template&nbsp;</a></nobr></td></tr>
+         <td class="clsLabelBB" align=center valign=center colspan=4 nowrap><nobr>
+            <table class="clsTable01" align=right cols=2 cellpadding="0" cellspacing="0">
+               <tr><td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Copy Selection Template&nbsp;</a></nobr></td><td align=left colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td></tr>
             </table>
          </nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td></nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
 <!--#include file="pts_select_disp.inc"-->
          </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
@@ -2683,7 +2701,6 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-
    <table id="dspResReport" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSchListAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
