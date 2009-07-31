@@ -31,6 +31,7 @@ select
   t1.maximum_temperature,
   t2.test_length,
   decode(t2.method_code,2,2,11,2,1),
+  '*PERCENT',
   0,
   0,
   '0',
