@@ -3311,84 +3311,57 @@ create or replace package body pts_app.pts_tes_function as
          var_panel := true;
 
          /*-*/
-         /* Retrieve the test panel allocation as required
+         /* Retrieve the test panel allocation
          /*-*/
-         if rcd_panel.tpa_pan_status = '*MEMBER' then
-            var_first := true;
-            var_day := 0;
-            open csr_allocation;
-            loop
-               fetch csr_allocation into rcd_allocation;
-               if csr_allocation%notfound then
-                  exit;
-               end if;
-               var_output := '<tr>';
-               if var_first = true then
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pan_status||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.zone_text||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.type_text||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.size_text||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_pan_code||') '||rcd_panel.tpa_pet_name||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town||'</td>';
-               else
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-               end if;
-               var_first := false;
-               if rcd_retrieve.tde_tes_sam_count = 1 then
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_day_code)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_rpt_code)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_code)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_acde)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.sample_text)||'</td>';
-                  var_output := var_output||'</tr>';
-               else
-                  if rcd_allocation.tal_day_code != var_day then
-                     var_day := rcd_allocation.tal_day_code;
-                     var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_day_code)||'</td>';
-                  else
-                     var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  end if;
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_seq_numb)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_rpt_code)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_code)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_acde)||'</td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.sample_text)||'</td>';
-                  var_output := var_output||'</tr>';
-               end if;
-               pipe row(var_output);
-            end loop;
-            close csr_allocation;
-         else
+         var_first := true;
+         var_day := 0;
+         open csr_allocation;
+         loop
+            fetch csr_allocation into rcd_allocation;
+            if csr_allocation%notfound then
+               exit;
+            end if;
             var_output := '<tr>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pan_status||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.zone_text||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.type_text||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.size_text||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_pan_code||') '||rcd_panel.tpa_pet_name||'</td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town||'</td>';
+            if var_first = true then
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pan_status||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.zone_text||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.type_text||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_panel.size_text||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_pan_code||') '||rcd_panel.tpa_pet_name||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||rcd_panel.tpa_hou_code||') '||rcd_panel.tpa_con_fullname||', '||rcd_panel.tpa_loc_street||', '||rcd_panel.tpa_loc_town||'</td>';
+            else
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+            end if;
+            var_first := false;
             if rcd_retrieve.tde_tes_sam_count = 1 then
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_day_code)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_rpt_code)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_code)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_acde)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.sample_text)||'</td>';
                var_output := var_output||'</tr>';
             else
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap></td>';
+               if rcd_allocation.tal_day_code != var_day then
+                  var_day := rcd_allocation.tal_day_code;
+                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_day_code)||'</td>';
+               else
+                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+               end if;
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tal_seq_numb)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_rpt_code)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_code)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.tsa_mkt_acde)||'</td>';
+               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||to_char(rcd_allocation.sample_text)||'</td>';
                var_output := var_output||'</tr>';
             end if;
             pipe row(var_output);
-         end if;
+         end loop;
+         close csr_allocation;
 
       end loop;
       close csr_panel;
@@ -3956,6 +3929,7 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tpa_pan_code = t02.tcl_pan_code(+)
             and t01.tpa_tes_code = rcd_retrieve.tde_tes_code
           order by t01.tpa_geo_zone asc,
+                   t01.tpa_pan_status asc,
                    t01.tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
@@ -4074,12 +4048,20 @@ create or replace package body pts_app.pts_tes_function as
                   exit;
                end if;
                if rcd_retrieve.tde_tes_sam_count = 1 then
-                  var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
-               else
-                  if var_day_code = 1 then
+                  if rcd_panel.tpa_pan_status = '*MEMBER' then
                      var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
                   else
-                     var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
+                     var_output := var_output||',""';
+                  end if;
+               else
+                  if rcd_panel.tpa_pan_status = '*MEMBER' then
+                     if var_day_code = 1 then
+                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
+                     else
+                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
+                     end if;
+                  else
+                     var_output := var_output||',""';
                   end if;
                end if;
                var_output := var_output||',"'||to_char(rcd_allocation.tfe_fed_qnty)||'"';
@@ -4129,7 +4111,6 @@ create or replace package body pts_app.pts_tes_function as
       var_tes_code number;
       var_found boolean;
       var_panel boolean;
-      var_first boolean;
       var_geo_zone number;
       var_index number;
       var_output varchar2(4000 char);
@@ -4169,6 +4150,12 @@ create or replace package body pts_app.pts_tes_function as
           order by t01.tsa_mkt_code asc;
       rcd_sample csr_sample%rowtype;
 
+      cursor csr_check_allocation is
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = rcd_retrieve.tde_tes_code;
+      rcd_check_allocation csr_check_allocation%rowtype;
+
       cursor csr_panel is
          select t01.*,
                 decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
@@ -4193,6 +4180,7 @@ create or replace package body pts_app.pts_tes_function as
             and t01.tpa_pan_code = t03.tcl_pan_code(+)
             and t01.tpa_tes_code = rcd_retrieve.tde_tes_code
           order by t01.tpa_geo_zone asc,
+                   t01.tpa_pan_status asc,
                    t01.tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
@@ -4246,6 +4234,26 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Check for allocation
+      /*-*/
+      var_found := false;
+      open csr_check_allocation;
+      fetch csr_check_allocation into rcd_check_allocation;
+      if csr_check_allocation%found then
+         var_found := true;
+      end if;
+      close csr_check_allocation;
+      if var_found = false then
+         pipe row('<table border=1>');
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-WEIGHT:bold;">NO ALLOCATION</td></tr>');
+         pipe row('</table>');
+         return;
+      end if;
+
+      /*-*/
       /* Load the sample array
       /*-*/
       tbl_sdta.delete;
@@ -4284,15 +4292,6 @@ create or replace package body pts_app.pts_tes_function as
       /* Start the report
       /*-*/
       pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
-      pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
-      pipe row('<tr>');
-      pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet</td>');
-      pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Name</td>');
-      pipe row('<td align=left colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">MR/Qty</td>');
-      pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Household</td>');
-      pipe row('</tr>');
-      pipe row('<tr><td align=center colspan=7></td></tr>');
 
       /*-*/
       /* Retrieve the test panel
@@ -4320,9 +4319,15 @@ create or replace package body pts_app.pts_tes_function as
             /* Process area total when required
             /*-*/
             if var_geo_zone != -1 then
+               pipe row('<tr><td align=center colspan=6></td></tr>');
+               pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||var_geo_zone||') Sample Totals</td></tr>');
                for idx in 1..tbl_sdta.count loop
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-                  var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+                  pipe row('<tr>');
+                  pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+                  pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(idx).mkt_code||'</td>');
+                  pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(idx).ara_qnty)||'</td>');
+                  pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+                  pipe row('</tr>');
                end loop;
             end if;
             var_geo_zone := rcd_panel.tpa_geo_zone;
@@ -4330,15 +4335,16 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             /* Output the new area heading
             /*-*/
-            pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
-            pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
+            pipe row('<tr><td align=center colspan=6></td></tr>');
+            pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
+            pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_panel.tpa_geo_zone||')</td></tr>');
             pipe row('<tr>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Name</td>');
-            pipe row('<td align=left colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">MR/Qty</td>');
+            pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">MR/Qty</td>');
             pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Household</td>');
             pipe row('</tr>');
-            pipe row('<tr><td align=center colspan=7></td></tr>');
+            pipe row('<tr><td align=center colspan=6></td></tr>');
 
             /*-*/
             /* Reset the area totals
@@ -4350,33 +4356,29 @@ create or replace package body pts_app.pts_tes_function as
          end if;
 
          /*-*/
-         /* Retrieve the test panel allocation
+         /* Clear the panel array
          /*-*/
          for idx in 1..tbl_sdta.count loop
             tbl_sdta(idx).pan_seqn := 0;
             tbl_sdta(idx).pan_qnty := 0;
          end loop;
-         var_index := 0;
-         open csr_allocation;
-         loop
-            fetch csr_allocation into rcd_allocation;
-            if csr_allocation%notfound then
-               exit;
-            end if;
-            if rcd_retrieve.tde_tes_sam_count = 1 then
-               for idx in 1..tbl_sdta.count loop
-                  if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
-                     if tbl_sdta(idx).pan_seqn = 0 then
-                        var_index := var_index + 1;
-                        tbl_sdta(idx).pan_seqn := var_index;
-                     end if;
-                     tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                     tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                     tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                  end if;
-               end loop;
-            else
-               if rcd_allocation.tal_day_code = 1 then
+
+         /*-*/
+         /* Process member allocation only
+         /*-*/
+         if rcd_panel.tpa_pan_status = '*MEMBER' then
+
+            /*-*/
+            /* Retrieve the test panel allocation
+            /*-*/
+            var_index := 0;
+            open csr_allocation;
+            loop
+               fetch csr_allocation into rcd_allocation;
+               if csr_allocation%notfound then
+                  exit;
+               end if;
+               if rcd_retrieve.tde_tes_sam_count = 1 then
                   for idx in 1..tbl_sdta.count loop
                      if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
                         if tbl_sdta(idx).pan_seqn = 0 then
@@ -4389,123 +4391,127 @@ create or replace package body pts_app.pts_tes_function as
                      end if;
                   end loop;
                else
-                  for idx in 1..tbl_sdta.count loop
-                     if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_acde then
-                        if tbl_sdta(idx).pan_seqn = 0 then
-                           var_index := var_index + 1;
-                           tbl_sdta(idx).pan_seqn := var_index;
+                  if rcd_allocation.tal_day_code = 1 then
+                     for idx in 1..tbl_sdta.count loop
+                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
+                           if tbl_sdta(idx).pan_seqn = 0 then
+                              var_index := var_index + 1;
+                              tbl_sdta(idx).pan_seqn := var_index;
+                           end if;
+                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
                         end if;
-                        tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                        tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                        tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                     end if;
-                  end loop;
+                     end loop;
+                  else
+                     for idx in 1..tbl_sdta.count loop
+                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_acde then
+                           if tbl_sdta(idx).pan_seqn = 0 then
+                              var_index := var_index + 1;
+                              tbl_sdta(idx).pan_seqn := var_index;
+                           end if;
+                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
+                        end if;
+                     end loop;
+                  end if;
                end if;
-            end if;
-         end loop;
-         close csr_allocation;
+            end loop;
+            close csr_allocation;
 
-         /*-*/
-         /* Sort the panel data
-         /*-*/
-         tbl_pdta.delete;
-         for idx in 1..tbl_sdta.count loop
-            tbl_pdta(tbl_sdta(idx).pan_seqn) := idx;
-         end loop;
+            /*-*/
+            /* Sort the panel data
+            /*-*/
+            tbl_pdta.delete;
+            for idx in 1..tbl_sdta.count loop
+               tbl_pdta(tbl_sdta(idx).pan_seqn) := idx;
+            end loop;
 
-         /*-*/
-         /* Output the panel data
-         /*-*/
-         var_first := false;
+         end if;
 
          /*-*/
          /* Output the panel line 1
          /*-*/
          pipe row('<tr>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
-         if tbl_pdta.count >= 1 then
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(1)).mkt_code||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(1)).pan_qnty)||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(1)).sam_iden)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
+         if rcd_panel.tpa_pan_status = '*MEMBER' and tbl_pdta.count >= 1 then
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(1)).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(1)).pan_qnty)||'</td>');
          else
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
          end if;
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_hou_code)||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_con_fullname||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_hou_code)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_con_fullname||'</td>');
          pipe row('</tr>');
 
          /*-*/
          /* Output the panel line 2
          /*-*/
          pipe row('<tr>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
-         if tbl_pdta.count >= 2 then
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(2)).mkt_code||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(2)).pan_qnty)||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(2)).sam_iden)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pan_status||'</td>');
+         if rcd_panel.tpa_pan_status = '*MEMBER' and tbl_pdta.count >= 2 then
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(2)).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(2)).pan_qnty)||'</td>');
          else
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
          end if;
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||'xxxxxxxxxx'||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_loc_street||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_loc_street||'</td>');
          pipe row('</tr>');
 
          /*-*/
          /* Output the panel line 3
          /*-*/
          pipe row('<tr>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
-         if tbl_pdta.count >= 3 then
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(3)).mkt_code||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(3)).pan_qnty)||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(3)).sam_iden)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.size_text||'</td>');
+         if rcd_panel.tpa_pan_status = '*MEMBER' and tbl_pdta.count >= 3 then
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(3)).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(3)).pan_qnty)||'</td>');
          else
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
          end if;
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||'xxxxxxxxxx'||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_loc_town||' '||rcd_panel.tpa_loc_postcode||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_loc_town||' '||rcd_panel.tpa_loc_postcode||'</td>');
          pipe row('</tr>');
 
          /*-*/
          /* Output the panel line 4
          /*-*/
          pipe row('<tr>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
-         if tbl_pdta.count >= 4 then
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(4)).mkt_code||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(4)).pan_qnty)||'</td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(4)).sam_iden)||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         if rcd_panel.tpa_pan_status = '*MEMBER' and tbl_pdta.count >= 4 then
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(4)).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(4)).pan_qnty)||'</td>');
          else
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-            pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
          end if;
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||'xxxxxxxxxx'||'</td>');
-         pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_tel_number||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_tel_number||'</td>');
          pipe row('</tr>');
 
-         if tbl_pdta.count > 4 then
-            for idx in 1..tbl_pdta.count loop
+         /*-*/
+         /* Output the additional panel line data
+         /*-*/
+         if rcd_panel.tpa_pan_status = '*MEMBER' and tbl_pdta.count > 4 then
+            for idx in 5..tbl_pdta.count loop
                pipe row('<tr>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(idx)).mkt_code||'</td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(idx)).pan_qnty)||'</td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(idx)).sam_iden)||'</td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
-               pipe row('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(tbl_pdta(idx)).mkt_code||'</td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(tbl_pdta(idx)).pan_qnty)||'</td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+               pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
                pipe row('</tr>');
-               end loop;
+            end loop;
          end if;
 
       end loop;
@@ -4519,19 +4525,29 @@ create or replace package body pts_app.pts_tes_function as
          /*-*/
          /* Process area total when required
          /*-*/
-         if var_geo_zone != -1 then
-            for idx in 1..tbl_sdta.count loop
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-               var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            end loop;
-         end if;
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||var_geo_zone||') Sample Totals</td></tr>');
+         for idx in 1..tbl_sdta.count loop
+            pipe row('<tr>');
+            pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(idx).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(idx).ara_qnty)||'</td>');
+            pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('</tr>');
+         end loop;
 
          /*-*/
          /* Process grand total
          /*-*/
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Grand Totals</td></tr>');
          for idx in 1..tbl_sdta.count loop
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
-            var_output := var_output||'<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>';
+            pipe row('<tr>');
+            pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||tbl_sdta(idx).mkt_code||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(tbl_sdta(idx).tot_qnty)||'</td>');
+            pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('</tr>');
          end loop;
 
       end if;
@@ -4540,7 +4556,10 @@ create or replace package body pts_app.pts_tes_function as
       /* No Panel selection
       /*-*/
       if var_panel = false then
-         pipe row('<tr><td align=center colspan=10 style="FONT-WEIGHT:bold;">NO PANEL</td></tr>');
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
+         pipe row('<tr><td align=center colspan=6></td></tr>');
+         pipe row('<tr><td align=center colspan=6 style="FONT-WEIGHT:bold;">NO PANEL SELECTION</td></tr>');
       end if;
 
       /*-*/
