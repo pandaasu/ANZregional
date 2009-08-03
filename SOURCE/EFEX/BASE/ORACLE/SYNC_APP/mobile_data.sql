@@ -25,6 +25,7 @@ create or replace package mobile_data as
                              Included existing distribution total in the call download
                              Included range update for customer update with customer type change
                              Fix oracle 10G cdata issue
+    2009/08   Steve Gregan   Included BANNER and CHANNEL in customer communication selection
 
    *******************************************************************************/
 
@@ -1123,6 +1124,8 @@ create or replace package body mobile_data as
       var_cust_cluster varchar2(128);
       var_cust_area varchar2(128);
       var_cust_city varchar2(128);
+      var_cust_channel varchar2(128);
+      var_cust_banner varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -1149,10 +1152,12 @@ create or replace package body mobile_data as
                 t01.geo_level3_code,
                 t01.geo_level4_code,
                 t01.geo_level5_code,
+                t01.affiliation_id,
                 t02.sales_territory_id,
                 t03.sales_area_id,
                 t04.sales_region_id,
-                t05.segment_id
+                t05.segment_id,
+                t06.cust_trade_channel_id
            from customer t01,
                 (select t01.customer_id,
                         t01.sales_territory_id
@@ -1171,11 +1176,13 @@ create or replace package body mobile_data as
                   where t01.rnkseq = 1) t02,
                 sales_territory t03,
                 sales_area t04,
-                sales_region t05
+                sales_region t05,
+                cust_type t06
           where t01.customer_id = t02.customer_id
             and t02.sales_territory_id = t03.sales_territory_id
             and t03.sales_area_id = t04.sales_area_id
             and t04.sales_region_id = t05.sales_region_id
+            and t01.cust_type_id = t06.cust_type_id
             and t01.status = 'A'
             and t01.active_flg = 'Y'
             and t01.customer_id in (select t01.customer_id
@@ -1231,7 +1238,13 @@ create or replace package body mobile_data as
                  t01.selection_string not like '%<GRD_AREA>%')
             and (t01.selection_string like var_cust_city or
                  t01.selection_string like '%<GRD_CITY></GRD_CITY>%' or
-                 t01.selection_string not like '%<GRD_CITY>%');
+                 t01.selection_string not like '%<GRD_CITY>%')
+            and (t01.selection_string like var_cust_channel or
+                 t01.selection_string like '%<CHANNEL></CHANNEL>%' or
+                 t01.selection_string not like '%<CHANNEL>%')
+            and (t01.selection_string like var_cust_banner or
+                 t01.selection_string like '%<BANNER></BANNER>%' or
+                 t01.selection_string not like '%<BANNER>%');
       rcd_customer_comm csr_customer_comm%rowtype;
 
    /*-------------*/
@@ -1288,6 +1301,8 @@ create or replace package body mobile_data as
          var_cust_cluster := '%<GRD_CLUSTER>'||rcd_customer.geo_level3_code||'</GRD_CLUSTER>%';
          var_cust_area := '%<GRD_AREA>'||rcd_customer.geo_level4_code||'</GRD_AREA>%';
          var_cust_city := '%<GRD_CITY>'||rcd_customer.geo_level5_code||'</GRD_CITY>%';
+         var_cust_channel := '%<CHANNEL>'||to_char(rcd_customer.cust_trade_channel_id)||'</CHANNEL>%';
+         var_cust_banner := '%<BANNER>'||to_char(rcd_customer.affiliation_id)||'</BANNER>%';
          open csr_customer_comm;
          loop
             fetch csr_customer_comm into rcd_customer_comm;
