@@ -123,12 +123,11 @@ create or replace package body ladefx02_chn_customer as
                   group by t01.customer_code) t03,
                 (select t01.customer_code,
                         max(case when t01.partner_funcn_code = 'ZB' then t01.partner_cust_code end) as salesman_code,
-                        max(case when t01.partner_funcn_code = 'ZB' then t02.name end) as salesman_name,
-                        max(case when t01.partner_funcn_code = 'ZA' then t01.partner_cust_code end) as city_code
+                        max(case when t01.partner_funcn_code = 'ZB' then t02.name end) as salesman_name
                  from bds_cust_sales_area_pnrfun t01,
                       bds_addr_customer t02
                 where t01.partner_cust_code = t02.customer_code(+)
-                  and t01.partner_funcn_code in ('ZB','ZA')
+                  and t01.partner_funcn_code = 'ZB'
                 group by t01.customer_code) t04,
                 (select t01.customer_code,
                         t01.contact_name
@@ -138,13 +137,27 @@ create or replace package body ladefx02_chn_customer as
                            from bds_cust_contact t01) t01
                   where t01.rnkseq = 1) t05,
                 (select t01.customer_code,
-                        max(t01.sales_org_code) as sales_org_code,
-                        max(t01.distbn_chnl_code) as distbn_chnl_code,
-                        max(t01.division_code) as division_code
-                   from bds_cust_sales_area t01
-                  where t01.sales_org_code = '135'
-                    and t01.distbn_chnl_code = '10'
-                  group by t01.customer_code) t06,
+                        ltrim(t01.customer_code,'0') as hier_code,
+                        t01.sales_org_code,
+                        t01.distbn_chnl_code,
+                        t01.division_code,
+                        ltrim(t02.city_code,'0') as city_code
+                   from (select t01.customer_code,
+                                max(t01.sales_org_code) as sales_org_code,
+                                max(t01.distbn_chnl_code) as distbn_chnl_code,
+                                max(t01.division_code) as division_code
+                           from bds_cust_sales_area t01
+                          where t01.sales_org_code = '135'
+                            and t01.distbn_chnl_code = '10'
+                          group by t01.customer_code) t01,
+                        (select t01.customer_code,
+                                max(case when t01.partner_funcn_code = 'ZA' then t01.partner_cust_code end) as city_code
+                           from bds_cust_sales_area_pnrfun t01,
+                                bds_addr_customer t02
+                          where t01.partner_cust_code = t02.customer_code(+)
+                            and t01.partner_funcn_code = 'ZA'
+                          group by t01.customer_code) t02
+                  where t01.customer_code = t02.customer_code(+)) t06,
                 sales_force_geo_hier t07,
                 std_hier t08,
                 (select sap_customer_code as customer_code,
@@ -160,11 +173,11 @@ create or replace package body ladefx02_chn_customer as
             and t01.customer_code = t04.customer_code(+)
             and t01.customer_code = t05.customer_code(+)
             and t01.customer_code = t06.customer_code
-            and ltrim(t04.city_code,'0') = t07.sap_hier_cust_code(+)
+            and t06.city_code = t07.sap_hier_cust_code(+)
             and t06.sales_org_code = t07.sap_sales_org_code(+)
             and t06.distbn_chnl_code = t07.sap_distbn_chnl_code(+)
             and t06.division_code = t07.sap_division_code(+)
-            and ltrim(t06.customer_code,'0') = t08.sap_hier_cust_code(+)
+            and t06.hier_code = t08.sap_hier_cust_code(+)
             and t06.sales_org_code = t08.sap_sales_org_code(+)
             and t06.distbn_chnl_code = t08.sap_distbn_chnl_code(+)
             and t06.division_code = t08.sap_division_code(+)
