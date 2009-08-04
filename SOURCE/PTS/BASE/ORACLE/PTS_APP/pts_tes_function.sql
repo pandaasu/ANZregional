@@ -4329,13 +4329,13 @@ create or replace package body pts_app.pts_tes_function as
                   pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
                   pipe row('</tr>');
                end loop;
+               pipe row('<tr><td align=center colspan=6></td></tr>');
             end if;
             var_geo_zone := rcd_panel.tpa_geo_zone;
 
             /*-*/
             /* Output the new area heading
             /*-*/
-            pipe row('<tr><td align=center colspan=6></td></tr>');
             pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Pet Test Selection - ('||rcd_retrieve.tde_tes_code||') '||rcd_retrieve.tde_tes_title||'</td></tr>');
             pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_panel.tpa_geo_zone||')</td></tr>');
             pipe row('<tr>');
@@ -4344,7 +4344,6 @@ create or replace package body pts_app.pts_tes_function as
             pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">MR/Qty</td>');
             pipe row('<td align=left colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Household</td>');
             pipe row('</tr>');
-            pipe row('<tr><td align=center colspan=6></td></tr>');
 
             /*-*/
             /* Reset the area totals
@@ -4433,6 +4432,7 @@ create or replace package body pts_app.pts_tes_function as
          /*-*/
          /* Output the panel line 1
          /*-*/
+         pipe row('<tr><td align=center colspan=6></td></tr>');
          pipe row('<tr>');
          pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_panel.tpa_pan_code)||'</td>');
          pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_panel.tpa_pet_name||'</td>');
