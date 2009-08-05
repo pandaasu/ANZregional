@@ -1828,7 +1828,6 @@ insert into pts_sys_value values('*TES_DEF',9,1,'Raised');
 insert into pts_sys_value values('*TES_DEF',9,2,'Questionnaires Printed');
 insert into pts_sys_value values('*TES_DEF',9,3,'Results Entered');
 insert into pts_sys_value values('*TES_DEF',9,4,'Closed');
-insert into pts_sys_value values('*TES_DEF',9,5,'Released');
 insert into pts_sys_value values('*TES_DEF',9,9,'Cancelled');
 commit;
 
