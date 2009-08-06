@@ -590,10 +590,9 @@ select t1.tde_tes_code, t2.pet_code,'*PET_CLA', 25, min(t2.format), null
   group by t1.tde_tes_code, t2.pet_code;
 commit;
 
-update pts_pet_definition set pde_tes_code = (select max(tpa_tes_code) from pts_tes_panel where tpa_pan_code = pde_pet_code group by tpa_pan_code)
- where pde_pet_status in (2,5);
+update pts_pet_definition set pde_tes_code = (select max(tpa_tes_code) from pts_tes_panel where tpa_pan_code = pde_pet_code group by tpa_pan_code) where pde_pet_status in (2,5);
 update pts_hou_definition set hde_tes_code = (select max(pde_tes_code) from pts_pet_definition where pde_hou_code = hde_hou_code group by pde_hou_code);
-update pts_hou_definition set hde_hou_status = 2 where hde_tes_code is not null;
+update pts_hou_definition set hde_hou_status = 2 where hde_tes_code is not null and hde_hou_status not in (2,5);
 commit;
 
    /*-------------*/
