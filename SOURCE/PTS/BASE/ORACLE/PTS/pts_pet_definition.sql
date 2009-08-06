@@ -49,7 +49,7 @@ comment on column pts.pts_pet_definition.pde_del_notifier is 'Pet deletion notif
 comment on column pts.pts_pet_definition.pde_test_date is 'Pet last tested date';
 comment on column pts.pts_pet_definition.pde_feed_comment is 'Pet feeding comments';
 comment on column pts.pts_pet_definition.pde_health_comment is 'Pet health comments';
-comment on column pts.pts_hou_definition.pde_tes_code is 'Pet current test code';
+comment on column pts.pts_pet_definition.pde_tes_code is 'Pet current test code';
 
 /**/
 /* Primary Key Constraint
