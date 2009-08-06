@@ -29,7 +29,8 @@ select
   decode(prcpt_name,null,null,substr(trim(prcpt_name),instr(trim(prcpt_name),' ',-1)+1)),
   decode(prcpt_name,null,null,trim(prcpt_name)),
   decode(prcpt_year_of_birth,null,null,prcpt_year_of_birth),
-  decode(hhold_notes,null,null,trim(hhold_notes))
+  decode(hhold_notes,null,null,trim(hhold_notes)),
+  null
   from household@wod016.ap.mars;
 commit;
 

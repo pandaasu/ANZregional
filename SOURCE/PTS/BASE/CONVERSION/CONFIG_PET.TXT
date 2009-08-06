@@ -22,7 +22,8 @@ select
   decode(delete_noted_by,null,null,delete_noted_by),
   decode(pet_last_tested,null,null,to_date(to_char(pet_last_tested,'yyyymmdd'),'yyyymmdd')),
   decode(feeding_comments,null,null,trim(feeding_comments)),
-  decode(pet_health_comments,null,null,trim(pet_health_comments))
+  decode(pet_health_comments,null,null,trim(pet_health_comments)),
+  null
   from pet@wod016.ap.mars where pet_code > 0 and pet_code < 500000 and pet_type_code != 4;
 commit;
 
