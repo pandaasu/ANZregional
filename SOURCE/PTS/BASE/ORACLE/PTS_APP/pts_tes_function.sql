@@ -763,40 +763,40 @@ create or replace package body pts_app.pts_tes_function as
       close csr_tes_type;
       if var_locked = true then
          if rcd_retrieve.tde_tes_status = 1 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 9) then
-            pts_gen_function.add_mesg_data('Current status is Raised - new status must be Raised, Questionnaires Printed or Cancelled');
+            pts_gen_function.add_mesg_data('Current status is Raised - new status must be Raised, Allocation Completed or Cancelled');
          end if;
          if rcd_retrieve.tde_tes_status = 2 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 4 and rcd_pts_tes_definition.tde_tes_status != 9) then
-            pts_gen_function.add_mesg_data('Current status is Questionnaires Printed - new status must be Raised, Questionnaires Printed, Closed or Cancelled');
+            pts_gen_function.add_mesg_data('Current status is Allocation Completed - new status must be Raised, Allocation Completed, Closed or Cancelled');
          end if;
          if rcd_retrieve.tde_tes_status = 3 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 3 and rcd_pts_tes_definition.tde_tes_status != 4 and rcd_pts_tes_definition.tde_tes_status != 9) then
             pts_gen_function.add_mesg_data('Current status is Results Entered - new status must be Raised, Results Entered, Closed or Cancelled');
          end if;
          if rcd_retrieve.tde_tes_status = 4 and (rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 4) then
-            pts_gen_function.add_mesg_data('Current status is Closed - new status must be Questionnaires Printed or Closed');
+            pts_gen_function.add_mesg_data('Current status is Closed - new status must be Allocation Completed or Closed');
          end if;
          if rcd_retrieve.tde_tes_status = 9 then
             pts_gen_function.add_mesg_data('Current status is Cancelled - update not allowed');
          end if;
          if rcd_pts_tes_definition.tde_tes_status = 2 or rcd_pts_tes_definition.tde_tes_status = 3 or rcd_pts_tes_definition.tde_tes_status = 4 then
             if var_question = false then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no questions defined - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no questions defined - update not allowed');
             end if;
             if var_sample = false then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no samples defined - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no samples defined - update not allowed');
             end if;
             if var_panel = false then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no panel selected - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no panel selected - update not allowed');
             end if;
             if var_allocation = false then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no allocation - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no allocation - update not allowed');
             end if;
          end if;
          if rcd_pts_tes_definition.tde_tes_status = 2 or rcd_pts_tes_definition.tde_tes_status = 3 or rcd_pts_tes_definition.tde_tes_status = 4 then
             if rcd_retrieve.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and test type changed - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and test type changed - update not allowed');
             end if;
             if rcd_retrieve.tde_tes_day_count != rcd_pts_tes_definition.tde_tes_day_count then
-                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and number of days changed - update not allowed');
+                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and number of days changed - update not allowed');
             end if;
          end if;
       end if;
@@ -1098,7 +1098,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status = 1 then
          var_status := ' - (Raised)';
       elsif rcd_retrieve.tde_tes_status = 2 then
-         var_status := ' - (Questionnaire Printed)';
+         var_status := ' - (Allocation Completed)';
       elsif rcd_retrieve.tde_tes_status = 3 then
          var_status := ' - (Results Entered)';
       elsif rcd_retrieve.tde_tes_status = 4 then
@@ -1725,7 +1725,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status = 1 then
          var_status := ' - (Raised)';
       elsif rcd_retrieve.tde_tes_status = 2 then
-         var_status := ' - (Questionnaire Printed)';
+         var_status := ' - (Allocation Completed)';
       elsif rcd_retrieve.tde_tes_status = 3 then
          var_status := ' - (Results Entered)';
       elsif rcd_retrieve.tde_tes_status = 4 then
@@ -2314,7 +2314,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status = 1 then
          var_status := ' - (Raised)';
       elsif rcd_retrieve.tde_tes_status = 2 then
-         var_status := ' - (Questionnaire Printed)';
+         var_status := ' - (Allocation Completed)';
       elsif rcd_retrieve.tde_tes_status = 3 then
          var_status := ' - (Results Entered)';
       elsif rcd_retrieve.tde_tes_status = 4 then
@@ -3734,7 +3734,7 @@ create or replace package body pts_app.pts_tes_function as
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Questionnaires Printed or Results Entered - panel release not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Allocation Completed or Results Entered - panel release not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          rollback;
@@ -5167,7 +5167,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 and
          rcd_retrieve.tde_tes_status != 4 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Allocation Completed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5339,7 +5339,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 and
          rcd_retrieve.tde_tes_status != 4 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Allocation Completed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5503,7 +5503,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 and
          rcd_retrieve.tde_tes_status != 4 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Allocation Completed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5765,7 +5765,7 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 and
          rcd_retrieve.tde_tes_status != 4 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Allocation Completed, Results Entered or Closed - response update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          rollback;
