@@ -374,8 +374,8 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
-   var cintDefineStatus;
-   var cintDefineType;
+   var cstrDefineStatus;
+   var cstrDefineType;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -485,12 +485,11 @@ sub PaintFunction()%>
                break;
             }
          }
-         cintDefineStatus = -1;
+         cstrDefineStatus = strTesStat;
          objTesStat.selectedIndex = -1;
          for (var i=0;i<objTesStat.length;i++) {
             if (objTesStat.options[i].value == strTesStat) {
                objTesStat.options[i].selected = true;
-               cintDefineStatus = i;
                break;
             }
          }
@@ -501,12 +500,11 @@ sub PaintFunction()%>
                break;
             }
          }
-         cintDefineType = -1;
+         cstrDefineType = strTesType;
          objTesType.selectedIndex = -1;
          for (var i=0;i<objTesType.length;i++) {
             if (objTesType.options[i].value == strTesType) {
                objTesType.options[i].selected = true;
-               cintDefineType = i;
                break;
             }
          }
@@ -520,8 +518,13 @@ sub PaintFunction()%>
       var objTesType = document.getElementById('DEF_TesType');
       var objTesKwrd = document.getElementById('DEF_TesKwrd');
       if (cstrDefineMode == '*UPD') {
-         if (objTesType.selectedIndex != cintDefineType) {
+         if (objTesType.options[objTesType.selectedIndex].value != cstrDefineType) {
             if (confirm('The test type has been changed - Please confirm\r\npress OK continue (any existing allocation and response data will be deleted)\r\npress Cancel to cancel update and return') == false) {
+               return;
+            }
+         }
+         if (objTesStat.options[objTesStat.selectedIndex].value == '1' && (cstrDefineStatus == '3' || cstrDefineStatus == '4')) {
+            if (confirm('The test status has been set to Raised from Results Entered or Closed - Please confirm\r\npress OK continue (any existing response data will be deleted)\r\npress Cancel to cancel update and return') == false) {
                return;
             }
          }
