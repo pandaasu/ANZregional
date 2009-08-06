@@ -41,8 +41,6 @@ create or replace package pts_app.pts_tes_function as
    procedure update_allocation(par_user in varchar2);
    function report_allocation(par_tes_code in number) return pts_xls_type pipelined;
    procedure update_release(par_user in varchar2);
-   procedure update_close(par_user in varchar2);
-   procedure update_cancel(par_user in varchar2);
    function report_questionnaire(par_tes_code in number) return pts_xls_type pipelined;
    function report_selection(par_tes_code in number) return pts_xls_type pipelined;
    function retrieve_report_fields return pts_xml_type pipelined;
@@ -214,7 +212,6 @@ create or replace package body pts_app.pts_tes_function as
       obj_xml_document xmlDom.domDocument;
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
-      var_target varchar2(32);
       var_tes_code number;
       var_found boolean;
 
@@ -222,16 +219,13 @@ create or replace package body pts_app.pts_tes_function as
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
-         select t01.*
-           from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code;
+         select t01.*,
+                t02.tty_typ_target
+           from pts_tes_definition t01,
+                pts_tes_type t02
+          where t01.tde_tes_type = t02.tty_tes_type(+)
+            and t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
-
-      cursor csr_target is
-         select t01.*
-           from pts_tes_type t01
-          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
-      rcd_target csr_target%rowtype;
 
       cursor csr_company is
          select to_char(t01.cde_com_code) as val_code,
@@ -254,7 +248,7 @@ create or replace package body pts_app.pts_tes_function as
          select t01.*
            from table(pts_app.pts_gen_function.list_tes_type) t01
           where t01.tty_status = 1
-            and t01.tty_target = rcd_target.tty_typ_target;
+            and t01.tty_target = 1;
       rcd_tes_type csr_tes_type%rowtype;
 
       cursor csr_keyword is
@@ -291,7 +285,6 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      var_target := upper(xslProcessor.valueOf(obj_pts_request,'@TESTAR'));
       var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -312,33 +305,11 @@ create or replace package body pts_app.pts_tes_function as
          if var_found = false then
             pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
          end if;
-         if rcd_retrieve.tde_tes_status != 1 and
-            rcd_retrieve.tde_tes_status != 2 and
-            rcd_retrieve.tde_tes_status != 3 then
-            pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Raised, Questionnaires Printed or Results Entered) - Test update not allowed');
+         if rcd_retrieve.tty_typ_target != 1 then
+            pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - update not allowed');
          end if;
          if pts_gen_function.get_mesg_count != 0 then
             return;
-         end if;
-         var_found := false;
-         open csr_target;
-         fetch csr_target into rcd_target;
-         if csr_target%found then
-            var_found := true;
-         end if;
-         close csr_target;
-         if var_found = false then
-            pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
-         end if;
-         if pts_gen_function.get_mesg_count != 0 then
-            return;
-         end if;
-      else
-         rcd_target.tty_typ_target := 0;
-         if var_target = '*PET' then
-            rcd_target.tty_typ_target := 1;
-         elsif var_action = '*HOUSEHOLD' then
-            rcd_target.tty_typ_target := 2;
          end if;
       end if;
 
@@ -438,31 +409,13 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' MEALEN="'||to_char(rcd_retrieve.tde_tes_len_meal)||'"'));
          pipe row(pts_xml_object(' MAXTEM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
          pipe row(pts_xml_object(' DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
-      elsif var_target = '*PET' then
+      elsif var_action = 'CRTTES' then
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT=""'));
          pipe row(pts_xml_object(' TESCOM="1"'));
          pipe row(pts_xml_object(' TESSTA="1"'));
          pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="1"'));
-         pipe row(pts_xml_object(' REQNAM=""'));
-         pipe row(pts_xml_object(' REQMID=""'));
-         pipe row(pts_xml_object(' AIMTXT=""'));
-         pipe row(pts_xml_object(' REATXT=""'));
-         pipe row(pts_xml_object(' PRETXT=""'));
-         pipe row(pts_xml_object(' COMTXT=""'));
-         pipe row(pts_xml_object(' STRDAT=""'));
-         pipe row(pts_xml_object(' FLDWEK=""'));
-         pipe row(pts_xml_object(' MEALEN=""'));
-         pipe row(pts_xml_object(' MAXTEM=""'));
-         pipe row(pts_xml_object(' DAYCNT=""/>'));
-      elsif var_target = '*HOUSEHOLD' then
-         pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
-         pipe row(pts_xml_object(' TESTIT=""'));
-         pipe row(pts_xml_object(' TESCOM="1"'));
-         pipe row(pts_xml_object(' TESSTA="1"'));
-         pipe row(pts_xml_object(' TESGLO="2"'));
-         pipe row(pts_xml_object(' TESTYP=""'));
          pipe row(pts_xml_object(' REQNAM=""'));
          pipe row(pts_xml_object(' REQMID=""'));
          pipe row(pts_xml_object(' AIMTXT=""'));
@@ -536,6 +489,11 @@ create or replace package body pts_app.pts_tes_function as
       obj_key_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
+      var_locked boolean;
+      var_question boolean;
+      var_sample boolean;
+      var_panel boolean;
+      var_allocation boolean;
       var_cpy_code number;
       rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_keyword pts_tes_keyword%rowtype;
@@ -543,11 +501,12 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_check is
+      cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
-      rcd_check csr_check%rowtype;
+          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_company is
          select t01.*
@@ -569,9 +528,33 @@ create or replace package body pts_app.pts_tes_function as
 
       cursor csr_tes_type is
          select t01.*
-           from table(pts_app.pts_gen_function.list_tes_type) t01
-          where t01.tty_code = rcd_pts_tes_definition.tde_tes_type;
+           from pts_tes_type t01
+          where t01.tty_tes_type = rcd_pts_tes_definition.tde_tes_type;
       rcd_tes_type csr_tes_type%rowtype;
+
+      cursor csr_question is
+         select t01.*
+           from pts_tes_question t01
+          where t01.tqu_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_question csr_question%rowtype;
+
+      cursor csr_sample is
+         select t01.*
+           from pts_tes_sample t01
+          where t01.tsa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_sample csr_sample%rowtype;
+
+      cursor csr_panel is
+         select t01.*
+           from pts_tes_panel t01
+          where t01.tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_panel csr_panel%rowtype;
+
+      cursor csr_allocation is
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_allocation csr_allocation%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -659,6 +642,70 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve and lock the existing test when required
+      /*-*/
+      var_locked := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_locked := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') is currently locked');
+      end;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the test question
+      /*-*/
+      var_question := false;
+      open csr_question;
+      fetch csr_question into rcd_question;
+      if csr_question%found then
+         var_question := true;
+      end if;
+      close csr_question;
+
+      /*-*/
+      /* Retrieve the test sample
+      /*-*/
+      var_sample := false;
+      open csr_sample;
+      fetch csr_sample into rcd_sample;
+      if csr_sample%found then
+         var_sample := true;
+      end if;
+      close csr_sample;
+
+      /*-*/
+      /* Retrieve the test panel
+      /*-*/
+      var_panel := false;
+      open csr_panel;
+      fetch csr_panel into rcd_panel;
+      if csr_panel%found then
+         var_panel := true;
+      end if;
+      close csr_panel;
+
+      /*-*/
+      /* Retrieve the test allocation
+      /*-*/
+      var_allocation := false;
+      open csr_allocation;
+      fetch csr_allocation into rcd_allocation;
+      if csr_allocation%found then
+         var_allocation := true;
+      end if;
+      close csr_allocation;
+
+      /*-*/
       /* Validate the input
       /*-*/
       if rcd_pts_tes_definition.tde_tes_title is null then
@@ -705,22 +752,67 @@ create or replace package body pts_app.pts_tes_function as
       if csr_tes_type%notfound then
          pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_pts_tes_definition.tde_tes_type)||') does not exist');
       else
-         if rcd_tes_type.tty_status != 1 then
+         if rcd_tes_type.tty_typ_status != 1 then
             pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_pts_tes_definition.tde_tes_type)||') is not active');
+         end if;
+         if rcd_tes_type.tty_typ_target != 1 then
+            pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_pts_tes_definition.tde_tes_type)||') target must be *PET');
          end if;
          rcd_pts_tes_definition.tde_tes_sam_count := rcd_tes_type.tty_sam_count;
       end if;
       close csr_tes_type;
+      if var_locked = true then
+         if rcd_retrieve.tde_tes_status = 1 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Raised - new status must be Raised, Questionnaires Printed or Cancelled');
+         end if;
+         if rcd_retrieve.tde_tes_status = 2 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 4 and rcd_pts_tes_definition.tde_tes_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Questionnaires Printed - new status must be Raised, Questionnaires Printed, Closed or Cancelled');
+         end if;
+         if rcd_retrieve.tde_tes_status = 3 and (rcd_pts_tes_definition.tde_tes_status != 1 and rcd_pts_tes_definition.tde_tes_status != 3 and rcd_pts_tes_definition.tde_tes_status != 4 and rcd_pts_tes_definition.tde_tes_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Results Entered - new status must be Raised, Results Entered, Closed or Cancelled');
+         end if;
+         if rcd_retrieve.tde_tes_status = 4 and (rcd_pts_tes_definition.tde_tes_status != 2 and rcd_pts_tes_definition.tde_tes_status != 4) then
+            pts_gen_function.add_mesg_data('Current status is Closed - new status must be Questionnaires Printed or Closed');
+         end if;
+         if rcd_retrieve.tde_tes_status = 9 then
+            pts_gen_function.add_mesg_data('Current status is Cancelled - update not allowed');
+         end if;
+         if rcd_pts_tes_definition.tde_tes_status = 2 or rcd_pts_tes_definition.tde_tes_status = 3 or rcd_pts_tes_definition.tde_tes_status = 4 then
+            if var_question = false then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no questions defined - update not allowed');
+            end if;
+            if var_sample = false then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no samples defined - update not allowed');
+            end if;
+            if var_panel = false then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no panel selected - update not allowed');
+            end if;
+            if var_allocation = false then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and no allocation - update not allowed');
+            end if;
+         end if;
+         if rcd_pts_tes_definition.tde_tes_status = 2 or rcd_pts_tes_definition.tde_tes_status = 3 or rcd_pts_tes_definition.tde_tes_status = 4 then
+            if rcd_retrieve.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and test type changed - update not allowed');
+            end if;
+            if rcd_retrieve.tde_tes_day_count != rcd_pts_tes_definition.tde_tes_day_count then
+                pts_gen_function.add_mesg_data('Test status is Questionnaires Printed, Results Entered or Closed and number of days changed - update not allowed');
+            end if;
+         end if;
+      end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
       /*-*/
-      /* Retrieve and process the test definition
+      /* Process the test definition
       /*-*/
-      open csr_check;
-      fetch csr_check into rcd_check;
-      if csr_check%found then
+      if var_locked = true then
+
+         /*-*/
+         /* Update the test
+         /*-*/
          var_confirm := 'updated';
          update pts_tes_definition
             set tde_tes_title = rcd_pts_tes_definition.tde_tes_title,
@@ -744,19 +836,53 @@ create or replace package body pts_app.pts_tes_function as
                 tde_tes_sam_count = rcd_pts_tes_definition.tde_tes_sam_count
           where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
          delete from pts_tes_keyword where tke_tes_code = rcd_pts_tes_definition.tde_tes_code;
-         delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code and tqu_day_code > rcd_pts_tes_definition.tde_tes_day_count;
-         if rcd_check.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
+
+         /*-*/
+         /* Remove response data when required
+         /*-*/
+         if rcd_pts_tes_definition.tde_tes_status = 1 or
+            rcd_retrieve.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
             delete from pts_tes_response where tre_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code;
-            delete from pts_tes_sample where tsa_tes_code = rcd_pts_tes_definition.tde_tes_code;
          end if;
+
+         /*-*/
+         /* Remove allocation data when required
+         /*-*/
+         if rcd_retrieve.tde_tes_type != rcd_pts_tes_definition.tde_tes_type then
+            delete from pts_tes_allocation where tal_tes_code = rcd_pts_tes_definition.tde_tes_code;
+         end if;
+
+         /*-*/
+         /* Remove excess question data when required
+         /*-*/
+         if rcd_retrieve.tde_tes_day_count > rcd_pts_tes_definition.tde_tes_day_count then
+            delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code and tqu_day_code > rcd_pts_tes_definition.tde_tes_day_count;
+         end if;
+
+         /*-*/
+         /* Release any test panel members when required
+         /*-*/
+         if rcd_pts_tes_definition.tde_tes_status = 4 or rcd_pts_tes_definition.tde_tes_status = 9 then
+            update pts_pet_definition
+               set pde_pet_status = decode(pde_pet_status,2,1,5,3,1),
+                   pde_tes_code = null
+             where pde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+            update pts_hou_definition
+               set hde_hou_status = decode(hde_hou_status,2,1,5,3,1),
+                   hde_tes_code = null
+             where hde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+         end if;
+
       else
+
+         /*-*/
+         /* Create the test
+         /*-*/
          var_confirm := 'created';
          select pts_tes_sequence.nextval into rcd_pts_tes_definition.tde_tes_code from dual;
          insert into pts_tes_definition values rcd_pts_tes_definition;
+
       end if;
-      close csr_check;
 
       /*-*/
       /* Retrieve and insert the keyword data
@@ -888,6 +1014,7 @@ create or replace package body pts_app.pts_tes_function as
       var_tes_code number;
       var_day_code number;
       var_found boolean;
+      var_status varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -961,14 +1088,23 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Raised) - question update not allowed');
-      end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - question update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Questionnaire Printed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
       end if;
 
       /*-*/
@@ -979,7 +1115,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'" WEICAL="'||pts_to_xml(nvl(rcd_retrieve.tde_wgt_que_calc,'0'))||'" WEIBOL="'||to_char(rcd_retrieve.tde_wgt_que_bowl)||'" WEIOFF="'||to_char(rcd_retrieve.tde_wgt_que_offer)||'" WEIREM="'||to_char(rcd_retrieve.tde_wgt_que_remain)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'" WEICAL="'||pts_to_xml(nvl(rcd_retrieve.tde_wgt_que_calc,'0'))||'" WEIBOL="'||to_char(rcd_retrieve.tde_wgt_que_bowl)||'" WEIOFF="'||to_char(rcd_retrieve.tde_wgt_que_offer)||'" WEIREM="'||to_char(rcd_retrieve.tde_wgt_que_remain)||'"/>'));
 
       /*-*/
       /* Pipe the test question xml
@@ -1280,9 +1416,10 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Raised) - question update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Raised - question update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -1303,6 +1440,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - question update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -1393,6 +1531,7 @@ create or replace package body pts_app.pts_tes_function as
          end if;
       end loop;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -1411,6 +1550,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Delete the existing question data
       /*-*/
+      delete from pts_tes_response where tre_tes_code = rcd_pts_tes_definition.tde_tes_code;
       delete from pts_tes_question where tqu_tes_code = rcd_pts_tes_definition.tde_tes_code;
 
       /*-*/
@@ -1482,6 +1622,7 @@ create or replace package body pts_app.pts_tes_function as
       var_day_code number;
       var_target varchar2(64);
       var_found boolean;
+      var_status varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -1574,14 +1715,23 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Raised) - sample update not allowed');
-      end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Questionnaire Printed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
       end if;
 
       /*-*/
@@ -1592,7 +1742,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"/>'));
 
       /*-*/
       /* Pipe the test sample xml
@@ -1821,10 +1971,10 @@ create or replace package body pts_app.pts_tes_function as
       obj_fed_list xmlDom.domNodeList;
       obj_fed_node xmlDom.domNode;
       var_action varchar2(32);
-      var_tes_code number;
       var_sam_code number;
       var_found boolean;
       var_error boolean;
+      rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_sample pts_tes_sample%rowtype;
       rcd_pts_tes_feeding pts_tes_feeding%rowtype;
 
@@ -1834,7 +1984,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*
            from pts_tes_definition t01
-          where t01.tde_tes_code = var_tes_code
+          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -1873,8 +2023,10 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
-      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      if var_tes_code is null then
+      rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      rcd_pts_tes_definition.tde_upd_user := upper(par_user);
+      rcd_pts_tes_definition.tde_upd_date := sysdate;
+      if rcd_pts_tes_definition.tde_tes_code is null then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
@@ -1894,16 +2046,17 @@ create or replace package body pts_app.pts_tes_function as
          close csr_retrieve;
       exception
          when others then
-            pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') is currently locked');
+            pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') is currently locked');
             return;
       end;
       if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+         pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Raised) - sample update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Raised - sample update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -1924,6 +2077,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_retrieve.tde_tes_code) || ') target must be *PET - sample update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -1946,14 +2100,25 @@ create or replace package body pts_app.pts_tes_function as
          close csr_sample;
       end loop;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
       /*-*/
-      /* Delete the existing sample data
+      /* Update the test definition
       /*-*/
-      delete from pts_tes_feeding where tfe_tes_code = var_tes_code;
-      delete from pts_tes_sample where tsa_tes_code = var_tes_code;
+      update pts_tes_definition
+         set tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
+             tde_upd_date = rcd_pts_tes_definition.tde_upd_date
+       where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+
+      /*-*/
+      /* Delete the existing relevant test data
+      /*-*/
+      delete from pts_tes_response where tre_tes_code = rcd_retrieve.tde_tes_code;
+      delete from pts_tes_allocation where tal_tes_code = rcd_retrieve.tde_tes_code;
+      delete from pts_tes_feeding where tfe_tes_code = rcd_retrieve.tde_tes_code;
+      delete from pts_tes_sample where tsa_tes_code = rcd_retrieve.tde_tes_code;
 
       /*-*/
       /* Retrieve and insert the sample data
@@ -1961,7 +2126,7 @@ create or replace package body pts_app.pts_tes_function as
       obj_sam_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/SAMPLE');
       for idx in 0..xmlDom.getLength(obj_sam_list)-1 loop
          obj_sam_node := xmlDom.item(obj_sam_list,idx);
-         rcd_pts_tes_sample.tsa_tes_code := var_tes_code;
+         rcd_pts_tes_sample.tsa_tes_code := rcd_retrieve.tde_tes_code;
          rcd_pts_tes_sample.tsa_sam_code := pts_to_number(xslProcessor.valueOf(obj_sam_node,'@SAMCDE'));
          rcd_pts_tes_sample.tsa_rpt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@RPTCDE'))));
          rcd_pts_tes_sample.tsa_mkt_code := upper(trim(pts_from_xml(xslProcessor.valueOf(obj_sam_node,'@MKTCDE'))));
@@ -2033,6 +2198,7 @@ create or replace package body pts_app.pts_tes_function as
       var_action varchar2(32);
       var_tes_code number;
       var_found boolean;
+      var_status varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -2138,14 +2304,23 @@ create or replace package body pts_app.pts_tes_function as
       if var_found = false then
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
-      if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Raised) - panel update not allowed');
-      end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Questionnaire Printed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
       end if;
 
       /*-*/
@@ -2156,7 +2331,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" SELTYP="'||pts_to_xml(rcd_retrieve.tde_pan_sel_type)||'" PANDON="'||pts_to_xml(rcd_retrieve.pan_done)||'" MEMCNT="'||to_char(rcd_retrieve.tde_req_mem_count)||'" RESCNT="'||to_char(rcd_retrieve.tde_req_res_count)||'" PETMLT="'||pts_to_xml(rcd_retrieve.tde_hou_pet_multi)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" SELTYP="'||pts_to_xml(rcd_retrieve.tde_pan_sel_type)||'" PANDON="'||pts_to_xml(rcd_retrieve.pan_done)||'" MEMCNT="'||to_char(rcd_retrieve.tde_req_mem_count)||'" RESCNT="'||to_char(rcd_retrieve.tde_req_res_count)||'" PETMLT="'||pts_to_xml(rcd_retrieve.tde_hou_pet_multi)||'"/>'));
 
       /*-*/
       /* Pipe the selection template XML
@@ -2525,9 +2700,10 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Raised) - panel update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Raised - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -2548,6 +2724,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -2555,11 +2732,13 @@ create or replace package body pts_app.pts_tes_function as
       /* Release any test panel members
       /*-*/
       update pts_pet_definition
-         set pde_pet_status = 1
-       where pde_pet_code in (select tpa_pan_code
-                                from pts_tes_panel
-                               where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code)
-         and pde_pet_status in (2,5);
+         set pde_pet_status = decode(pde_pet_status,2,1,5,3,1),
+             pde_tes_code = null
+       where pde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      update pts_hou_definition
+         set hde_hou_status = decode(hde_hou_status,2,1,5,3,1),
+             hde_tes_code = null
+       where hde_tes_code = rcd_pts_tes_definition.tde_tes_code;
 
       /*-*/
       /* Delete the existing relevant test data
@@ -2671,6 +2850,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Raised) - panel update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -3017,6 +3197,18 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
       rcd_target csr_target%rowtype;
 
+      cursor csr_sample is
+         select t01.*
+           from pts_tes_sample t01
+          where t01.tsa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_sample csr_sample%rowtype;
+
+      cursor csr_panel is
+         select t01.*
+           from pts_tes_panel t01
+          where t01.tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_panel csr_panel%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -3071,9 +3263,10 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Raised) - allocation update not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Raised - allocation update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -3094,6 +3287,35 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - allocation update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the test sample and panel
+      /*-*/
+      var_found := false;
+      open csr_sample;
+      fetch csr_sample into rcd_sample;
+      if csr_sample%found then
+         var_found := true;
+      end if;
+      close csr_sample;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') does not have samples defined - allocation update not allowed');
+      end if;
+      var_found := false;
+      open csr_panel;
+      fetch csr_panel into rcd_panel;
+      if csr_panel%found then
+         var_found := true;
+      end if;
+      close csr_panel;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') does not have a panel selected - allocation update not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -3111,6 +3333,8 @@ create or replace package body pts_app.pts_tes_function as
       exception
          when others then
          pts_gen_function.add_mesg_data(substr(SQLERRM, 1, 2000));
+         rollback;
+         return;
       end;
 
       /*-*/
@@ -3125,6 +3349,11 @@ create or replace package body pts_app.pts_tes_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') allocation completed successfully');
 
    /*-------------------*/
    /* Exception handler */
@@ -3438,6 +3667,18 @@ create or replace package body pts_app.pts_tes_function as
           where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
       rcd_target csr_target%rowtype;
 
+      cursor csr_panel is
+         select t01.*
+           from pts_tes_panel t01
+          where t01.tpa_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_panel csr_panel%rowtype;
+
+      cursor csr_pet is
+         select t01.*
+           from pts_pet_definition t01
+          where t01.pde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      rcd_pet csr_pet%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -3493,9 +3734,10 @@ create or replace package body pts_app.pts_tes_function as
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
          rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - release not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status Questionnaires Printed or Results Entered - panel release not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -3513,9 +3755,38 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
       end if;
       if rcd_target.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - close not allowed');
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - panel release not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the test panel and pets
+      /*-*/
+      var_found := false;
+      open csr_panel;
+      fetch csr_panel into rcd_panel;
+      if csr_panel%found then
+         var_found := true;
+      end if;
+      close csr_panel;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') does not have a panel selected - panel release not allowed');
+      end if;
+      var_found := false;
+      open csr_pet;
+      fetch csr_pet into rcd_pet;
+      if csr_pet%found then
+         var_found := true;
+      end if;
+      close csr_pet;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') panel has already been released - panel release not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -3523,11 +3794,13 @@ create or replace package body pts_app.pts_tes_function as
       /* Release any test panel members
       /*-*/
       update pts_pet_definition
-         set pde_pet_status = 1
-       where pde_pet_code in (select tpa_pan_code
-                                from pts_tes_panel
-                               where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code)
-         and pde_pet_status in (2,5);
+         set pde_pet_status = decode(pde_pet_status,2,1,5,3,1),
+             pde_tes_code = null
+       where pde_tes_code = rcd_pts_tes_definition.tde_tes_code;
+      update pts_hou_definition
+         set hde_hou_status = decode(hde_hou_status,2,1,5,3,1),
+             hde_tes_code = null
+       where hde_tes_code = rcd_pts_tes_definition.tde_tes_code;
 
       /*-*/
       /* Update the test definition
@@ -3541,6 +3814,11 @@ create or replace package body pts_app.pts_tes_function as
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') panel households and pets released successfully');
 
    /*-------------------*/
    /* Exception handler */
@@ -3565,324 +3843,6 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end update_release;
-
-   /****************************************************/
-   /* This procedure performs the update close routine */
-   /****************************************************/
-   procedure update_close(par_user in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_found boolean;
-      rcd_pts_tes_definition pts_tes_definition%rowtype;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_retrieve is
-         select t01.*
-           from pts_tes_definition t01
-          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
-            for update nowait;
-      rcd_retrieve csr_retrieve%rowtype;
-
-      cursor csr_target is
-         select t01.*
-           from pts_tes_type t01
-          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
-      rcd_target csr_target%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*UPDCLO' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      rcd_pts_tes_definition.tde_upd_user := upper(par_user);
-      rcd_pts_tes_definition.tde_upd_date := sysdate;
-      if rcd_pts_tes_definition.tde_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Retrieve and lock the existing test
-      /*-*/
-      var_found := false;
-      begin
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-      exception
-         when others then
-            pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') is currently locked');
-            return;
-      end;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
-      end if;
-      if rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Results Entered) - close not allowed');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Retrieve the test target
-      /*-*/
-      var_found := false;
-      open csr_target;
-      fetch csr_target into rcd_target;
-      if csr_target%found then
-         var_found := true;
-      end if;
-      close csr_target;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
-      end if;
-      if rcd_target.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - close not allowed');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Release any test panel members
-      /*-*/
-      update pts_pet_definition
-         set pde_pet_status = 1
-       where pde_pet_code in (select tpa_pan_code
-                                from pts_tes_panel
-                               where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code)
-         and pde_pet_status in (2,5);
-
-      /*-*/
-      /* Update the test definition to closed
-      /*-*/
-      update pts_tes_definition
-         set tde_tes_status = 4,
-             tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
-             tde_upd_date = rcd_pts_tes_definition.tde_upd_date
-       where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /*-*/
-      /* Exception trap
-      /*-*/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /* Raise an exception to the calling application
-         /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - UPDATE_CLOSE - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end update_close;
-
-   /*****************************************************/
-   /* This procedure performs the update cancel routine */
-   /*****************************************************/
-   procedure update_cancel(par_user in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_pts_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_found boolean;
-      rcd_pts_tes_definition pts_tes_definition%rowtype;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_retrieve is
-         select t01.*
-           from pts_tes_definition t01
-          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
-            for update nowait;
-      rcd_retrieve csr_retrieve%rowtype;
-
-      cursor csr_target is
-         select t01.*
-           from pts_tes_type t01
-          where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
-      rcd_target csr_target%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      pts_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
-      if var_action != '*UPDCAN' then
-         pts_gen_function.add_mesg_data('Invalid request action');
-         return;
-      end if;
-      rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      rcd_pts_tes_definition.tde_upd_user := upper(par_user);
-      rcd_pts_tes_definition.tde_upd_date := sysdate;
-      if rcd_pts_tes_definition.tde_tes_code is null then
-         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Retrieve and lock the existing test
-      /*-*/
-      var_found := false;
-      begin
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-      exception
-         when others then
-            pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') is currently locked');
-            return;
-      end;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code)||') does not exist');
-      end if;
-      if rcd_retrieve.tde_tes_status > 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') must be status (Raised, Questionnaires Printed or Results Entered) - cancel not allowed');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Retrieve the test target
-      /*-*/
-      var_found := false;
-      open csr_target;
-      fetch csr_target into rcd_target;
-      if csr_target%found then
-         var_found := true;
-      end if;
-      close csr_target;
-      if var_found = false then
-         pts_gen_function.add_mesg_data('Test type ('||to_char(rcd_retrieve.tde_tes_type)||') does not exist');
-      end if;
-      if rcd_target.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code) || ') target must be *PET - close not allowed');
-      end if;
-      if pts_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Release any test panel members
-      /*-*/
-      update pts_pet_definition
-         set pde_pet_status = 1
-       where pde_pet_code in (select tpa_pan_code
-                                from pts_tes_panel
-                               where tpa_tes_code = rcd_pts_tes_definition.tde_tes_code)
-         and pde_pet_status in (2,5);
-
-      /*-*/
-      /* Update the test definition to cancelled
-      /*-*/
-      update pts_tes_definition
-         set tde_tes_status = 9,
-             tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
-             tde_upd_date = rcd_pts_tes_definition.tde_upd_date
-       where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /*-*/
-      /* Exception trap
-      /*-*/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /* Raise an exception to the calling application
-         /*-*/
-         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - UPDATE_CANCEL - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end update_cancel;
 
    /************************************************************/
    /* This procedure performs the report questionnaire routine */
@@ -5205,8 +5165,9 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+         rcd_retrieve.tde_tes_status != 3 and
+         rcd_retrieve.tde_tes_status != 4 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5223,7 +5184,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" TESTRG="'||pts_to_xml('Pet')||'" TESSAM="'||to_char(rcd_retrieve.tde_tes_sam_count)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||'" TESSAM="'||to_char(rcd_retrieve.tde_tes_sam_count)||'"/>'));
 
       /*-*/
       /* Pipe the test response meta xml
@@ -5376,8 +5337,9 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+         rcd_retrieve.tde_tes_status != 3 and
+         rcd_retrieve.tde_tes_status != 4 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5539,8 +5501,9 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+         rcd_retrieve.tde_tes_status != 3 and
+         rcd_retrieve.tde_tes_status != 4 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
          pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - response update not allowed');
@@ -5800,10 +5763,12 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tde_tes_status != 2 and
-         rcd_retrieve.tde_tes_status != 3 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status (Questionnaires Printed or Results Entered) - response update not allowed');
+         rcd_retrieve.tde_tes_status != 3 and
+         rcd_retrieve.tde_tes_status != 4 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') must be status Questionnaires Printed, Results Entered or Closed - response update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -5824,8 +5789,16 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_retrieve.tde_tes_code) || ') target must be *PET - response update not allowed');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
+
+      /*-*/
+      /* Update the test definition
+      /*-*/
+      update pts_tes_definition
+         set tde_tes_status = 3
+       where tde_tes_code = rcd_retrieve.tde_tes_code;
 
       /*-*/
       /* Retrieve the existing panel member
@@ -5906,6 +5879,7 @@ create or replace package body pts_app.pts_tes_function as
          close csr_pet;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
@@ -6554,9 +6528,7 @@ create or replace package body pts_app.pts_tes_function as
           where t01.pde_hou_code = t02.hde_hou_code
             and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
             and t01.pde_pet_status = 1
-            and t01.pde_pet_code not in (select nvl(tpa_pan_code,-1)
-                                           from pts_tes_panel
-                                          where tpa_tes_code = par_tes_code)
+            and (t02.hde_hou_status = 1 or t02.hde_tes_code = par_tes_code)
           order by dbms_random.value;
       rcd_panel csr_panel%rowtype;
 
@@ -6586,11 +6558,18 @@ create or replace package body pts_app.pts_tes_function as
                    t01.val_code asc;
       rcd_classification csr_classification%rowtype;
 
+      cursor csr_hou_update is
+         select t01.*
+           from pts_hou_definition t01
+          where t01.hde_hou_code = rcd_panel.hde_hou_code
+                for update wait 20;
+      rcd_hou_update csr_hou_update%rowtype;
+
       cursor csr_pet_update is
          select t01.*
            from pts_pet_definition t01
           where t01.pde_pet_code = rcd_panel.pde_pet_code
-                for update wait 10;
+                for update wait 20;
       rcd_pet_update csr_pet_update%rowtype;
 
       cursor csr_panel_stat is
@@ -6793,6 +6772,42 @@ create or replace package body pts_app.pts_tes_function as
                end if;
 
                /*-*/
+               /* Attempt to lock the household definition for update
+               /* **notes** 1. Must exist
+               /*           2. Must be status available or on same test
+               /*           3. must not be locked
+               /*-*/
+               if var_pan_selected = true then
+                  var_available := true;
+                  begin
+                     open csr_hou_update;
+                     fetch csr_hou_update into rcd_hou_update;
+                     if csr_hou_update%notfound then
+                        var_available := false;
+                     else
+                        if not(rcd_hou_update.hde_tes_code is null) then
+                           if rcd_hou_update.hde_tes_code != par_tes_code then
+                              var_available := false;
+                           end if;
+                        else
+                           if rcd_hou_update.hde_hou_status != 1 then
+                              var_available := false;
+                           end if;
+                        end if;
+                     end if;
+                  exception
+                     when others then
+                        var_available := false;
+                  end;
+                  if csr_hou_update%isopen then
+                     close csr_hou_update;
+                  end if;
+                  if var_available = false then
+                     var_pan_selected := false;
+                  end if;
+               end if;
+
+               /*-*/
                /* Attempt to lock the pet definition for update
                /* **notes** 1. Must exist
                /*           2. Must be status available
@@ -6919,8 +6934,17 @@ create or replace package body pts_app.pts_tes_function as
                /* Update the pet status
                /*-*/
                update pts_pet_definition
-                  set pde_pet_status = 2
+                  set pde_pet_status = 2,
+                      pde_tes_code = par_tes_code
                 where pde_pet_code = rcd_panel.pde_pet_code;
+
+               /*-*/
+               /* Update the household status
+               /*-*/
+               update pts_hou_definition
+                  set hde_hou_status = 2,
+                      hde_tes_code = par_tes_code
+                where hde_hou_code = rcd_panel.hde_hou_code;
 
                /*-*/
                /* Update the test counts

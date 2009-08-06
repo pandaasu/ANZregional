@@ -1407,7 +1407,7 @@ create or replace package body pts_app.pts_stm_function as
                 pts_hou_definition t02
           where t01.pde_hou_code = t02.hde_hou_code
             and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
-            and t01.pde_pet_status in (1,2,3)
+            and t01.pde_pet_status in (1,2)
             and t01.pde_pet_code not in (select nvl(stp_pan_code,-1)
                                            from pts_stm_panel
                                           where stp_stm_code = par_stm_code)
