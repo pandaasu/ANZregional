@@ -200,7 +200,6 @@ sub PaintFunction()%>
    ////////////////////////
    var cstrRespTesCde;
    var cstrRespTesTxt;
-   var cstrRespTesTrg;
    var cstrRespTesSam;
    var cstrRespResCde;
    var cobjTesResMeta = new Array();
@@ -252,7 +251,6 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
                cstrRespTesTxt = objElements[i].getAttribute('TESTXT');
-               cstrRespTesTrg = objElements[i].getAttribute('TESTRG');
                cstrRespTesSam = objElements[i].getAttribute('TESSAM');
             } else if (objElements[i].nodeName == 'METD') {
                objTesResMeta = new clsTesResMeta();
@@ -322,7 +320,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'right';
-         objCell.innerHTML = '&nbsp;'+cstrRespTesTrg+' Code:&nbsp;';
+         objCell.innerHTML = '&nbsp;Pet Code:&nbsp;';
          objCell.className = 'clsLabelBB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
