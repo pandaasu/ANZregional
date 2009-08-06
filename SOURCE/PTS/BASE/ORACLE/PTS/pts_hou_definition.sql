@@ -37,7 +37,8 @@ create table pts.pts_hou_definition
     hde_con_surname                 varchar2(120 char)            null,
     hde_con_fullname                varchar2(120 char)            null,
     hde_con_birth_year              number                        null,
-    hde_notes                       varchar2(2000 char)           null);                                                                                                                                                                              
+    hde_notes                       varchar2(2000 char)           null,
+    hde_tes_code                    number                        null);                                                                                                                                                                              
 
 /**/
 /* Comments
@@ -62,6 +63,7 @@ comment on column pts.pts_hou_definition.hde_con_surname is 'Household contact s
 comment on column pts.pts_hou_definition.hde_con_fullname is 'Household contact full name';
 comment on column pts.pts_hou_definition.hde_con_birth_year is 'Household contact birth year';
 comment on column pts.pts_hou_definition.hde_notes is 'Household notes';
+comment on column pts.pts_hou_definition.hde_tes_code is 'Household current test code';
 
 /**/
 /* Primary Key Constraint
