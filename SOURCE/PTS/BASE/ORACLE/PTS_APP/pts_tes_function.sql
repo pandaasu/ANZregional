@@ -3006,7 +3006,7 @@ create or replace package body pts_app.pts_tes_function as
          raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - panel report not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') target must be *PET - panel report not allowed');
       end if;
 
       /*-*/
@@ -3480,7 +3480,7 @@ create or replace package body pts_app.pts_tes_function as
          raise_application_error(-20000, 'Test code ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - allocation report not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') target must be *PET - allocation report not allowed');
       end if;
 
       /*-*/
@@ -3948,7 +3948,7 @@ create or replace package body pts_app.pts_tes_function as
          raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') does not exist');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - questionnaire report not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') target must be *PET - questionnaire report not allowed');
       end if;
 
       /*-*/
@@ -4190,7 +4190,7 @@ create or replace package body pts_app.pts_tes_function as
          raise_application_error(-20000, 'Test code ('||to_char(var_tes_code)||') does not exist');
       end if;
       if rcd_retrieve.tty_typ_target != 1 then
-         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - selection report not allowed');
+         raise_application_error(-20000, 'Test code (' || to_char(var_tes_code) || ') target must be *PET - selection report not allowed');
       end if;
 
       /*-*/
