@@ -313,13 +313,13 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFINT"';
       strXML = strXML+' INTCODE="'+fixXML(document.getElementById('DEF_IntCode').value)+'"';
-      strXML = strXML+' INTNAME="'+fixXML(document.getElementById('DEF_IntName').value)+'"';
+      strXML = strXML+' INTNAME="'+fixXML(document.getElementById('DEF_IntName').value.toUpperCase())+'"';
       strXML = strXML+' INTSTAT="'+fixXML(objIntStat.options[objIntStat.selectedIndex].value)+'"';
       strXML = strXML+' GEOZONE="'+fixXML(objGeoZone.options[objGeoZone.selectedIndex].value)+'"';
-      strXML = strXML+' LOCSTRT="'+fixXML(document.getElementById('DEF_LocStrt').value)+'"';
-      strXML = strXML+' LOCTOWN="'+fixXML(document.getElementById('DEF_LocTown').value)+'"';
+      strXML = strXML+' LOCSTRT="'+fixXML(document.getElementById('DEF_LocStrt').value.toUpperCase())+'"';
+      strXML = strXML+' LOCTOWN="'+fixXML(document.getElementById('DEF_LocTown').value.toUpperCase())+'"';
       strXML = strXML+' LOCPCDE="'+fixXML(document.getElementById('DEF_LocPcde').value)+'"';
-      strXML = strXML+' LOCCNTY="'+fixXML(document.getElementById('DEF_LocCnty').value)+'"';
+      strXML = strXML+' LOCCNTY="'+fixXML(document.getElementById('DEF_LocCnty').value.toUpperCase())+'"';
       strXML = strXML+' TELACDE="'+fixXML(document.getElementById('DEF_TelAcde').value)+'"';
       strXML = strXML+' TELNUMB="'+fixXML(document.getElementById('DEF_TelNumb').value)+'"';
       strXML = strXML+'/>';
@@ -511,19 +511,19 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_IntName" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_IntName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Street:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocStrt" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocStrt" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Town:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocTown" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocTown" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -535,7 +535,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Country:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocCnty" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocCnty" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
