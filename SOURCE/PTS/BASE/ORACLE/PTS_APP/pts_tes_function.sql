@@ -38,8 +38,10 @@ create or replace package pts_app.pts_tes_function as
    function retrieve_template return pts_xml_type pipelined;
    procedure update_panel(par_user in varchar2);
    function report_panel(par_tes_code in number) return pts_xls_type pipelined;
+   function retrieve_allocation return pts_xml_type pipelined;
    procedure update_allocation(par_user in varchar2);
    function report_allocation(par_tes_code in number) return pts_xls_type pipelined;
+   function retrieve_release return pts_xml_type pipelined;
    procedure update_release(par_user in varchar2);
    function report_questionnaire(par_tes_code in number) return pts_xls_type pipelined;
    function report_selection(par_tes_code in number) return pts_xls_type pipelined;
@@ -3167,6 +3169,145 @@ create or replace package body pts_app.pts_tes_function as
    /*-------------*/
    end report_panel;
 
+   /***********************************************************/
+   /* This procedure performs the retrieve allocation routine */
+   /***********************************************************/
+   function retrieve_allocation return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code number;
+      var_found boolean;
+      var_status varchar2(128);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*,
+                t02.tty_typ_target,
+                decode(t03.allocation_count,0,'0','1') as allocation_done
+           from pts_tes_definition t01,
+                pts_tes_type t02,
+                (select tal_tes_code, count(*) as allocation_count from pts_tes_allocation where tal_tes_code = var_tes_code group by tal_tes_code) t03
+          where t01.tde_tes_type = t02.tty_tes_type(+)
+            and t01.tde_tes_type = t03.tal_tes_code(+)
+            and t01.tde_tes_code = var_tes_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*RTVALC' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+      end if;
+      if rcd_retrieve.tty_typ_target != 1 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - allocation update not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Allocation Completed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test xml
+      /*-*/
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" ALCDON="'||pts_to_xml(rcd_retrieve.allocation_done)||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_ALLOCATION - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_allocation;
+
    /*********************************************************/
    /* This procedure performs the update allocation routine */
    /*********************************************************/
@@ -3636,6 +3777,143 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end report_allocation;
+
+
+   /********************************************************/
+   /* This procedure performs the retrieve release routine */
+   /********************************************************/
+   function retrieve_release return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code number;
+      var_found boolean;
+      var_status varchar2(128);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*,
+                t02.tty_typ_target
+           from pts_tes_definition t01,
+                pts_tes_type t02
+          where t01.tde_tes_type = t02.tty_tes_type(+)
+            and t01.tde_tes_code = var_tes_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*RTVREL' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+      end if;
+      if rcd_retrieve.tty_typ_target != 1 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - release update not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Allocation Completed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test xml
+      /*-*/
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_RELEASE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_release;
 
    /******************************************************/
    /* This procedure performs the update release routine */
