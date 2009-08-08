@@ -995,8 +995,8 @@ create or replace package body pts_app.pts_hou_function as
       cursor csr_pet is
          select t01.*,
                 decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as status_text,
-                decode(t02.pty_pet_type,null,'*UNKNOWN','('||t02.pty_pet_type||') '||t02.pty_typ_text) as type_text,
-                decode(t03.pcl_val_code,null,'*UNKNOWN','('||t03.pcl_val_code||') '||t03.size_text) as size_text
+                decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
+                decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text
            from pts_pet_definition t01,
                 pts_pet_type t02,
                 (select t01.pcl_pet_code,
@@ -1046,7 +1046,6 @@ create or replace package body pts_app.pts_hou_function as
       /* Start the report
       /*-*/
       pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=7></td></tr>');
       pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_retrieve.gzo_geo_zone||') '||rcd_retrieve.gzo_zon_text|| ' - Household Register</td></tr>');
 
       /*-*/
@@ -1068,6 +1067,7 @@ create or replace package body pts_app.pts_hou_function as
          /*-*/
          /* Output the household
          /*-*/
+         pipe row('<tr><td align=center colspan=7></td></tr>');
          pipe row('<tr>');
          pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Household</td>');
          pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Contact Name/Address</td>');
@@ -1122,15 +1122,15 @@ create or replace package body pts_app.pts_hou_function as
             /*-*/
             /* Output the pet data
             /*-*/
-            pipe row('<tr><td align=center colspan=1></td></tr>');
             pipe row('<tr>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_pet.pde_pet_code)||'</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.pde_pet_name||'</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.type_text||'</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.size_text||'</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.status_text||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
             pipe row('</tr>');
-            pipe row('<tr><td align=center colspan=1></td></tr>');
 
          end loop;
          close csr_pet;
@@ -1139,9 +1139,11 @@ create or replace package body pts_app.pts_hou_function as
          /* No pets found
          /*-*/
          if var_pet = false then
-            pipe row('<tr><td align=center colspan=1></td></tr>');
-            pipe row('<tr><td align=center colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">NO PET</td></tr>');
-            pipe row('<tr><td align=center colspan=1></td></tr>');
+            pipe row('<tr>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('<td align=center colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">NO PETS</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+            pipe row('</tr>');
          end if;
 
       end loop;
