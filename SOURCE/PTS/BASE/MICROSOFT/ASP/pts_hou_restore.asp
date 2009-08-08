@@ -220,18 +220,18 @@ sub PaintFunction()%>
          }
          cobjScreens[1].hedtxt ='Restore Household ('+cstrDefineCode+')';
          displayScreen('dspDefine');
-         document.getElementById('DEF_LocStrt').value = '';
-         document.getElementById('DEF_LocTown').value = '';
-         document.getElementById('DEF_LocPcde').value = '';
-         document.getElementById('DEF_LocCnty').value = '';
-         document.getElementById('DEF_ConFnam').value = '';
+         document.getElementById('DEF_LocStrt').innerHTML = '';
+         document.getElementById('DEF_LocTown').innerHTML = '';
+         document.getElementById('DEF_LocPcde').innerHTML = '';
+         document.getElementById('DEF_LocCnty').innerHTML = '';
+         document.getElementById('DEF_ConFnam').innerHTML = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'HOUSEHOLD') {
-               document.getElementById('DEF_LocStrt').value = objElements[i].getAttribute('LOCSTRT');
-               document.getElementById('DEF_LocTown').value = objElements[i].getAttribute('LOCTOWN');
-               document.getElementById('DEF_LocPcde').value = objElements[i].getAttribute('LOCPCDE');
-               document.getElementById('DEF_LocCnty').value = objElements[i].getAttribute('LOCCNTY');
-               document.getElementById('DEF_ConFnam').value = objElements[i].getAttribute('CONFNAM');
+               document.getElementById('DEF_LocStrt').innerHTML = objElements[i].getAttribute('LOCSTRT');
+               document.getElementById('DEF_LocTown').innerHTML = objElements[i].getAttribute('LOCTOWN');
+               document.getElementById('DEF_LocPcde').innerHTML = objElements[i].getAttribute('LOCPCDE');
+               document.getElementById('DEF_LocCnty').innerHTML = objElements[i].getAttribute('LOCCNTY');
+               document.getElementById('DEF_ConFnam').innerHTML = objElements[i].getAttribute('CONFNAM');
             }
          }
       }
@@ -330,7 +330,6 @@ sub PaintFunction()%>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Household Restore</nobr></td>
-         <input type="hidden" name="DEF_HouCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
