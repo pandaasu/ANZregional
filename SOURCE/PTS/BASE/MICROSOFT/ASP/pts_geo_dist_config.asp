@@ -411,23 +411,21 @@ sub PaintFunction()%>
             if (objElements[i].nodeName == 'LSTCTL') {
                intColCount = objElements[i].getAttribute('COLCNT');
                objRow = objTabHead.insertRow(-1);
-               objCell = objRow.insertCell(0);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '&nbsp;Action&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
-                  objCell = objRow.insertCell(j);
+                  objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('HED'+j)+'&nbsp;';
                   objCell.className = 'clsLabelHB';
                   objCell.style.whiteSpace = 'nowrap';
                }
-               intColCount++;
-               objCell = objRow.insertCell(intColCount);
-               intColCount--;
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '&nbsp;';
@@ -437,14 +435,14 @@ sub PaintFunction()%>
                objRow = objTabBody.insertRow(-1);
                objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
-               objCell = objRow.insertCell(0);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
-                  objCell = objRow.insertCell(j);
+                  objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('COL'+j)+'&nbsp;';
@@ -455,13 +453,18 @@ sub PaintFunction()%>
          }
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
-            objCell = objRow.insertCell(0);
-            objCell.colSpan = intColCount+1;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = objTabHead.rows(0).cells.length-1;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }

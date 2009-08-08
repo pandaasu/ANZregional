@@ -225,23 +225,21 @@ sub PaintFunction()%>
             if (objElements[i].nodeName == 'LSTCTL') {
                intColCount = objElements[i].getAttribute('COLCNT');
                objRow = objTabHead.insertRow(-1);
-               objCell = objRow.insertCell(0);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '&nbsp;Action&nbsp;';
                objCell.className = 'clsLabelHB';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
-                  objCell = objRow.insertCell(j);
+                  objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('HED'+j)+'&nbsp;';
                   objCell.className = 'clsLabelHB';
                   objCell.style.whiteSpace = 'nowrap';
                }
-               intColCount++;
-               objCell = objRow.insertCell(intColCount);
-               intColCount--;
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '&nbsp;';
@@ -251,14 +249,14 @@ sub PaintFunction()%>
                objRow = objTabBody.insertRow(-1);
                objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
                objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
-               objCell = objRow.insertCell(0);
+               objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                for (var j=1;j<=intColCount;j++) {
-                  objCell = objRow.insertCell(j);
+                  objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('COL'+j)+'&nbsp;';
@@ -270,16 +268,17 @@ sub PaintFunction()%>
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = intColCount+1;
+            objCell.colSpan = objTabHead.rows(0).cells.length-1;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
-            objTabHead.rows(0).cells[intColCount+1].style.width = 16;
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[intColCount+1].style.width = 16;
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -300,7 +299,9 @@ sub PaintFunction()%>
 <!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_scrollable.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -331,6 +332,48 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptReport();">&nbsp;Report&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptList();">&nbsp;List&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspList" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedList" class="clsFunction" align=center colspan=2 nowrap><nobr>Area List</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadList">
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyList">
+                     <table class="clsTableBody" id="tabBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doListCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
