@@ -331,14 +331,14 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFSAM"';
       strXML = strXML+' SAMCODE="'+fixXML(document.getElementById('DEF_SamCode').value)+'"';
-      strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value)+'"';
+      strXML = strXML+' SAMTEXT="'+fixXML(document.getElementById('DEF_SamText').value.toUpperCase())+'"';
       strXML = strXML+' SAMSTAT="'+fixXML(objSamStat.options[objSamStat.selectedIndex].value)+'"';
       strXML = strXML+' UOMCODE="'+fixXML(objUomCode.options[objUomCode.selectedIndex].value)+'"';
       strXML = strXML+' UOMSIZE="'+fixXML(document.getElementById('DEF_UomSize').value)+'"';
       strXML = strXML+' PRELOCN="'+fixXML(objPreLocn.options[objPreLocn.selectedIndex].value)+'"';
       strXML = strXML+' PREDATE="'+fixXML(document.getElementById('DEF_PreDate').value)+'"';
       strXML = strXML+' EXTRFNR="'+fixXML(document.getElementById('DEF_ExtRfnr').value)+'"';
-      strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value)+'"';
+      strXML = strXML+' PLOPCDE="'+fixXML(document.getElementById('DEF_PlopCde').value.toUpperCase())+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -442,7 +442,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Sample Description:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_SamText" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_SamText" size="120" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -484,7 +484,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;PLOP Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PlopCde" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PlopCde" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

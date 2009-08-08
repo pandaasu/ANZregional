@@ -342,7 +342,7 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFQUE"';
       strXML = strXML+' QUECODE="'+fixXML(document.getElementById('DEF_QueCode').value)+'"';
-      strXML = strXML+' QUETEXT="'+fixXML(document.getElementById('DEF_QueText').value)+'"';
+      strXML = strXML+' QUETEXT="'+fixXML(document.getElementById('DEF_QueText').value.toUpperCase())+'"';
       strXML = strXML+' QUESTAT="'+fixXML(objQueStat.options[objQueStat.selectedIndex].value)+'"';
       strXML = strXML+' QUETYPE="'+fixXML(objQueType.options[objQueType.selectedIndex].value)+'"';;
       strXML = strXML+' RSPTYPE="'+fixXML(objRspType.options[objRspType.selectedIndex].value)+'"';
@@ -539,10 +539,10 @@ sub PaintFunction()%>
          return;
       }
       if (cstrResponseMode == '*ADD') {
-         objResValu.options[objResValu.options.length] = new Option('('+(objResValu.options.length+1)+') '+objResText.value,objResText.value);
+         objResValu.options[objResValu.options.length] = new Option('('+(objResValu.options.length+1)+') '+objResText.value.toUpperCase(),objResText.value.toUpperCase());
       } else if (cstrResponseMode == '*UPD') {
-         objResValu.options[cintResponseIndx].value = objResText.value;
-         objResValu.options[cintResponseIndx].text = '('+(cintResponseIndx+1)+') '+objResText.value;
+         objResValu.options[cintResponseIndx].value = objResText.value.toUpperCase();
+         objResValu.options[cintResponseIndx].text = '('+(cintResponseIndx+1)+') '+objResText.value.toUpperCase();
       }
       displayScreen('dspDefine');
    }
@@ -605,7 +605,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <textArea class="clsInputNN" name="DEF_QueText" rows="10" cols="120" value="" onFocus="setSelect(this);"></textArea>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_QueText" size="120" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -703,7 +703,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="RES_ResText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="RES_ResText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
