@@ -434,16 +434,16 @@ sub PaintFunction()%>
       strXML = strXML+' HOUSTAT="'+fixXML(objHouStat.options[objHouStat.selectedIndex].value)+'"';
       strXML = strXML+' GEOZONE="'+fixXML(objGeoZone.options[objGeoZone.selectedIndex].value)+'"';
       strXML = strXML+' DELNOTE="'+fixXML(objDelNote.options[objDelNote.selectedIndex].value)+'"';
-      strXML = strXML+' LOCSTRT="'+fixXML(document.getElementById('DEF_LocStrt').value)+'"';
-      strXML = strXML+' LOCTOWN="'+fixXML(document.getElementById('DEF_LocTown').value)+'"';
+      strXML = strXML+' LOCSTRT="'+fixXML(document.getElementById('DEF_LocStrt').value.toUpperCase())+'"';
+      strXML = strXML+' LOCTOWN="'+fixXML(document.getElementById('DEF_LocTown').value.toUpperCase())+'"';
       strXML = strXML+' LOCPCDE="'+fixXML(document.getElementById('DEF_LocPcde').value)+'"';
-      strXML = strXML+' LOCCNTY="'+fixXML(document.getElementById('DEF_LocCnty').value)+'"';
+      strXML = strXML+' LOCCNTY="'+fixXML(document.getElementById('DEF_LocCnty').value.toUpperCase())+'"';
       strXML = strXML+' TELACDE="'+fixXML(document.getElementById('DEF_TelAcde').value)+'"';
       strXML = strXML+' TELNUMB="'+fixXML(document.getElementById('DEF_TelNumb').value)+'"';
-      strXML = strXML+' CONSNAM="'+fixXML(document.getElementById('DEF_ConSnam').value)+'"';
-      strXML = strXML+' CONFNAM="'+fixXML(document.getElementById('DEF_ConFnam').value)+'"';
+      strXML = strXML+' CONSNAM="'+fixXML(document.getElementById('DEF_ConSnam').value.toUpperCase())+'"';
+      strXML = strXML+' CONFNAM="'+fixXML(document.getElementById('DEF_ConFnam').value.toUpperCase())+'"';
       strXML = strXML+' CONBYER="'+fixXML(document.getElementById('DEF_ConByer').value)+'"';
-      strXML = strXML+' HOUNOTE="'+fixXML(document.getElementById('DEF_HouNote').value)+'"';
+      strXML = strXML+' HOUNOTE="'+fixXML(document.getElementById('DEF_HouNote').value.toUpperCase())+'"';
       strXML = strXML+'>';
       for (var i=0;i<objClaData.rows.length;i++) {
          objRow = objClaData.rows[i];
@@ -650,13 +650,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Street:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocStrt" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocStrt" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Town:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocTown" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocTown" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -668,7 +668,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Location Country:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LocCnty" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LocCnty" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -686,13 +686,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Contact Surname:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ConSnam" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_ConSnam" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Contact Full Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ConFnam" size="120" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_ConFnam" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -704,7 +704,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Notes:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <textArea class="clsInputNN" name="DEF_HouNote" rows="4" cols="100" value="" onFocus="setSelect(this);"></textArea>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_HouNote" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

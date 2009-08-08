@@ -603,7 +603,7 @@ sub PaintFunction()%>
       strXML = strXML+' TABCDE="'+cstrFieldTabCde+'"';
       strXML = strXML+' FLDCDE="'+cstrFieldFldCde+'"';
       strXML = strXML+' VALCDE="'+cstrFieldValCde+'"';
-      strXML = strXML+' VALTXT="'+fixXML(objValText.value)+'"';
+      strXML = strXML+' VALTXT="'+fixXML(objValText.value.toUpperCase())+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestValUpdUpdate(\''+strXML+'\');',10);
@@ -847,7 +847,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Value Text:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="VUP_ValText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="VUP_ValText" size="100" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </tr>

@@ -406,14 +406,14 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFPET"';
       strXML = strXML+' PETCODE="'+fixXML(document.getElementById('DEF_PetCode').value)+'"';
-      strXML = strXML+' PETNAME="'+fixXML(document.getElementById('DEF_PetName').value)+'"';
+      strXML = strXML+' PETNAME="'+fixXML(document.getElementById('DEF_PetName').value.toUpperCase())+'"';
       strXML = strXML+' PETSTAT="'+fixXML(objPetStat.options[objPetStat.selectedIndex].value)+'"';
       strXML = strXML+' PETTYPE="'+fixXML(objPetType.options[objPetType.selectedIndex].value)+'"';
       strXML = strXML+' HOUCODE="'+fixXML(document.getElementById('DEF_HouCode').value)+'"';
       strXML = strXML+' DELNOTE="'+fixXML(objDelNote.options[objDelNote.selectedIndex].value)+'"';
       strXML = strXML+' BTHYEAR="'+fixXML(document.getElementById('DEF_BthYear').value)+'"';
-      strXML = strXML+' FEDCMNT="'+fixXML(document.getElementById('DEF_FedCmnt').value)+'"';
-      strXML = strXML+' HTHCMNT="'+fixXML(document.getElementById('DEF_HthCmnt').value)+'"';
+      strXML = strXML+' FEDCMNT="'+fixXML(document.getElementById('DEF_FedCmnt').value.toUpperCase())+'"';
+      strXML = strXML+' HTHCMNT="'+fixXML(document.getElementById('DEF_HthCmnt').value.toUpperCase())+'"';
       strXML = strXML+'>';
       for (var i=0;i<objClaData.rows.length;i++) {
          objRow = objClaData.rows[i];
@@ -627,7 +627,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PetName" size="100" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PetName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -681,13 +681,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feeding Comments:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <textArea class="clsInputNN" name="DEF_FedCmnt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FedCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Health Comments:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <textArea class="clsInputNN" name="DEF_HthCmnt" rows="2" cols="100" onFocus="setSelect(this);"></textArea>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_HthCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

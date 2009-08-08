@@ -134,7 +134,9 @@ sub PaintFunction()%>
       cobjScreens[6] = new clsScreen('dspSamDetail','hedSamDetail');
       cobjScreens[7] = new clsScreen('dspSamSize','hedSamSize');
       cobjScreens[8] = new clsScreen('dspPanel','hedPanel');
-      cobjScreens[9] = new clsScreen('dspResReport','hedResReport');
+      cobjScreens[9] = new clsScreen('dspAllocation','hedAllocation');
+      cobjScreens[10] = new clsScreen('dspRelease','hedRelease');
+      cobjScreens[11] = new clsScreen('dspResReport','hedResReport');
       cobjScreens[0].hedtxt = 'Pet Test Prompt';
       cobjScreens[1].hedtxt = 'Pet Test Maintenance';
       cobjScreens[2].hedtxt = 'Pet Test Keyword Maintenance';
@@ -144,7 +146,9 @@ sub PaintFunction()%>
       cobjScreens[6].hedtxt = 'Pet Test Sample Maintenance';
       cobjScreens[7].hedtxt = 'Pet Test Sample Size';
       cobjScreens[8].hedtxt = 'Pet Test Panel Selection';
-      cobjScreens[9].hedtxt = 'Pet Test Results Report';
+      cobjScreens[9].hedtxt = 'Pet Test Allocation';
+      cobjScreens[10].hedtxt = 'Pet Test Release';
+      cobjScreens[11].hedtxt = 'Pet Test Results Report';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -279,9 +283,6 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
-      if (confirm('Please confirm the allocation request\r\npress OK continue (any existing allocation will be replaced)\r\npress Cancel to cancel the request') == false) {
-         return;
-      }
       doActivityStart(document.body);
       window.setTimeout('requestAllocationUpdate(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
@@ -294,9 +295,6 @@ sub PaintFunction()%>
       }
       if (strMessage != '') {
          alert(strMessage);
-         return;
-      }
-      if (confirm('Please confirm the release request\r\npress OK continue (the selected test will be released)\r\npress Cancel to cancel the request') == false) {
          return;
       }
       doActivityStart(document.body);
@@ -1734,52 +1732,69 @@ sub PaintFunction()%>
    // Allocation Functions //
    //////////////////////////
    var cstrAllocationTestCode;
+   var cstrAllocationTestText;
+   var cstrAllocationTestStatus;
+   var cstrAllocationDone;
    function requestAllocationUpdate(strCode) {
       cstrAllocationTestCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDALC" TESCDE="'+strCode+'"/>';
-      doPostRequest('<%=strBase%>pts_tes_config_allocation_update.asp',function(strResponse) {checkAllocationUpdate(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVALC" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_allocation_retrieve.asp',function(strResponse) {checkAllocationUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkAllocationUpdate(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
             }
          }
-         displayScreen('dspPrompt');
-         document.getElementById('PRO_TesCode').focus();
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               cstrAllocationTestText = objElements[i].getAttribute('TESTXT');
+               cstrAllocationTestStatus = objElements[i].getAttribute('TESSTA');
+               cstrAllocationDone = objElements[i].getAttribute('ALCDON');
+            }
+         }
+         document.getElementById('subAllocation').innerText = cstrAllocationTestText;
+         displayScreen('dspAllocation');
       }
    }
-
-   ///////////////////////
-   // Release Functions //
-   ///////////////////////
-   var cstrReleaseTestCode;
-   function requestReleaseUpdate(strCode) {
-      cstrReleaseTestCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDREL" TESCDE="'+strCode+'"/>';
-      doPostRequest('<%=strBase%>pts_tes_config_release_update.asp',function(strResponse) {checkReleaseUpdate(strResponse);},false,streamXML(strXML));
+   function doAllocationAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (cstrAllocationTestStatus != '1') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test must be status Raised for allocation update';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      if (cstrAllocationDone == '1') {
+         if (confirm('Allocation already exists for this test - Please confirm the allocation update\r\npress OK continue (the existing allocation will be replaced)\r\npress Cancel to cancel the request') == false) {
+            return;
+         }
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDALC" TESCDE="'+fixXML(cstrAllocationTestCode)+'"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestAllocationAccept(\''+strXML+'\');',10);
    }
-   function checkReleaseUpdate(strResponse) {
+   function requestAllocationAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_allocation_update.asp',function(strResponse) {checkAllocationAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkAllocationAccept(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -1808,6 +1823,104 @@ sub PaintFunction()%>
          displayScreen('dspPrompt');
          document.getElementById('PRO_TesCode').focus();
       }
+   }
+   function doAllocationCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
+   }
+
+   ///////////////////////
+   // Release Functions //
+   ///////////////////////
+   var cstrReleaseTestCode;
+   var cstrReleaseTestText;
+   var cstrReleaseTestStatus;
+   function requestReleaseUpdate(strCode) {
+      cstrReleaseTestCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVREL" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_release_retrieve.asp',function(strResponse) {checkReleaseUpdate(strResponse);},false,streamXML(strXML));
+   }
+   function checkReleaseUpdate(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               cstrReleaseTestText = objElements[i].getAttribute('TESTXT');
+               cstrReleaseTestStatus = objElements[i].getAttribute('TESSTA');
+            }
+         }
+         document.getElementById('subRelease').innerText = cstrReleaseTestText;
+         displayScreen('dspRelease');
+      }
+   }
+   function doReleaseAccept() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (cstrReleaseTestStatus != '2' && cstrReleaseTestStatus != '3') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test must be status Allocation Completed or Results Entered for release update';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*UPDREL" TESCDE="'+fixXML(cstrReleaseTestCode)+'"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestReleaseAccept(\''+strXML+'\');',10);
+   }
+   function requestReleaseAccept(strXML) {
+      doPostRequest('<%=strBase%>pts_tes_config_release_update.asp',function(strResponse) {checkReleaseAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkReleaseAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_TesCode').focus();
+      }
+   }
+   function doReleaseCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
    }
 
    //////////////////////
@@ -2623,6 +2736,60 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspAllocation" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doAllocationAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedAllocation" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Allocation</nobr></td>
+      </tr>
+      <tr>
+         <td id="subAllocation" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+       <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doAllocationCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doAllocationAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspRelease" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doReleaseAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedRelease" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Release</nobr></td>
+      </tr>
+      <tr>
+         <td id="subRelease" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+       <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReleaseCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReleaseAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
