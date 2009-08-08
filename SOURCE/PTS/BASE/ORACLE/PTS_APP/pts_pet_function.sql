@@ -28,6 +28,8 @@ create or replace package pts_app.pts_pet_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
+   function retrieve_restore return pts_xml_type pipelined;
+   procedure update_restore(par_user in varchar2);
 
 end pts_pet_function;
 /
@@ -679,6 +681,263 @@ create or replace package body pts_app.pts_pet_function as
    /* End routine */
    /*-------------*/
    end update_data;
+
+   /********************************************************/
+   /* This procedure performs the retrieve restore routine */
+   /********************************************************/
+   function retrieve_restore return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_pet_code number;
+      var_found boolean;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_pet_definition t01
+          where t01.pde_pet_code = var_pet_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*RTVRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_pet_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETCODE'));
+      if var_pet_code is null then
+         pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the pet
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Pet ('||to_char(var_pet_code)||') does not exist');
+      end if;
+      if rcd_retrieve.pde_pet_status != 9 then
+         pts_gen_function.add_mesg_data('Pet ('||to_char(var_pet_code)||') must be status Deleted');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the pet xml
+      /*-*/
+      var_output := '<PET PETCODE="'||to_char(rcd_retrieve.pde_pet_code)||'"';
+      var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"/>';
+      pipe row(pts_xml_object(var_output));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_RESTORE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_restore;
+
+   /******************************************************/
+   /* This procedure performs the update restore routine */
+   /******************************************************/
+   procedure update_restore(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_pet_code number;
+      var_found boolean;
+      rcd_pts_pet_definition pts_pet_definition%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_pet_definition t01
+          where t01.pde_pet_code = rcd_pts_pet_definition.pde_pet_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*UPDRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      rcd_pts_pet_definition.pde_pet_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PETCODE'));
+      rcd_pts_pet_definition.pde_upd_user := upper(par_user);
+      rcd_pts_pet_definition.pde_upd_date := sysdate;
+      if rcd_pts_pet_definition.pde_pet_code is null then
+         pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the existing pet
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Pet ('||to_char(rcd_pts_pet_definition.pde_pet_code)||') is currently locked');
+            return;
+      end;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Pet ('||to_char(rcd_pts_pet_definition.pde_pet_code)||') does not exist');
+      end if;
+      if rcd_retrieve.pde_pet_status != 9 then
+         pts_gen_function.add_mesg_data('Pet (' || to_char(rcd_pts_pet_definition.pde_pet_code) || ') must be status Deleted - restore not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Update the pet definition
+      /*-*/
+      update pts_pet_definition
+         set pde_upd_user = rcd_pts_pet_definition.pde_upd_user,
+             pde_upd_date = rcd_pts_pet_definition.pde_upd_date,
+             pde_pet_status = 1
+       where pde_pet_code = rcd_pts_pet_definition.pde_pet_code;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      pts_gen_function.set_cfrm_data('Pet ('||to_char(rcd_pts_pet_definition.pde_pet_code)||') successfully restored');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - UPDATE_RESTORE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_restore;
 
 end pts_pet_function;
 /

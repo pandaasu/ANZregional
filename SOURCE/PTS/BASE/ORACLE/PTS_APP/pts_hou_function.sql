@@ -28,6 +28,9 @@ create or replace package pts_app.pts_hou_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
+   function retrieve_restore return pts_xml_type pipelined;
+   procedure update_restore(par_user in varchar2);
+   function report_household(par_geo_zone in number) return pts_xls_type pipelined;
 
 end pts_hou_function;
 /
@@ -699,6 +702,488 @@ create or replace package body pts_app.pts_hou_function as
    /* End routine */
    /*-------------*/
    end update_data;
+
+   /********************************************************/
+   /* This procedure performs the retrieve restore routine */
+   /********************************************************/
+   function retrieve_restore return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_hou_code number;
+      var_found boolean;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_hou_definition t01
+          where t01.hde_hou_code = var_hou_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*RTVRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_hou_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUCODE'));
+      if var_hou_code is null then
+         pts_gen_function.add_mesg_data('Household code ('||xslProcessor.valueOf(obj_pts_request,'@HOUCODE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the household
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Household ('||to_char(var_hou_code)||') does not exist');
+      end if;
+      if rcd_retrieve.hde_hou_status != 9 then
+         pts_gen_function.add_mesg_data('Household ('||to_char(var_hou_code)||') must be status Deleted');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the household xml
+      /*-*/
+      var_output := '<HOUSEHOLD HOUCODE="'||to_char(rcd_retrieve.hde_hou_code)||'"';
+      var_output := var_output||' LOCSTRT="'||pts_to_xml(rcd_retrieve.hde_loc_street)||'"';
+      var_output := var_output||' LOCTOWN="'||pts_to_xml(rcd_retrieve.hde_loc_town)||'"';
+      var_output := var_output||' LOCPCDE="'||pts_to_xml(rcd_retrieve.hde_loc_postcode)||'"';
+      var_output := var_output||' LOCCNTY="'||pts_to_xml(rcd_retrieve.hde_loc_country)||'"';
+      var_output := var_output||' CONFNAM="'||pts_to_xml(rcd_retrieve.hde_con_fullname)||'"/>';
+      pipe row(pts_xml_object(var_output));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_HOU_FUNCTION - RETRIEVE_RESTORE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_restore;
+
+   /******************************************************/
+   /* This procedure performs the update restore routine */
+   /******************************************************/
+   procedure update_restore(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_hou_code number;
+      var_found boolean;
+      rcd_pts_hou_definition pts_hou_definition%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_hou_definition t01
+          where t01.hde_hou_code = rcd_pts_hou_definition.hde_hou_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*UPDRES' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      rcd_pts_hou_definition.hde_hou_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@HOUCODE'));
+      rcd_pts_hou_definition.hde_upd_user := upper(par_user);
+      rcd_pts_hou_definition.hde_upd_date := sysdate;
+      if rcd_pts_hou_definition.hde_hou_code is null then
+         pts_gen_function.add_mesg_data('Household code ('||xslProcessor.valueOf(obj_pts_request,'@HOUCODE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the existing household
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Household ('||to_char(rcd_pts_hou_definition.hde_hou_code)||') is currently locked');
+            return;
+      end;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Household ('||to_char(rcd_pts_hou_definition.hde_hou_code)||') does not exist');
+      end if;
+      if rcd_retrieve.hde_hou_status != 9 then
+         pts_gen_function.add_mesg_data('Household (' || to_char(rcd_pts_hou_definition.hde_hou_code) || ') must be status Deleted - restore not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Update the household definition
+      /*-*/
+      update pts_hou_definition
+         set hde_upd_user = rcd_pts_hou_definition.hde_upd_user,
+             hde_upd_date = rcd_pts_hou_definition.hde_upd_date,
+             hde_hou_status = 1
+       where hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_HOU_FUNCTION - UPDATE_RESTORE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_restore;
+
+   /********************************************************/
+   /* This procedure performs the report household routine */
+   /********************************************************/
+   function report_household(par_geo_zone in number) return pts_xls_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_geo_zone number;
+      var_found boolean;
+      var_household boolean;
+      var_pet boolean;
+      var_output varchar2(4000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_geo_zone t01
+          where t01.gzo_geo_type = 40
+            and t01.gzo_geo_zone = var_geo_zone;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_household is
+         select t01.*,
+                decode(t01.hde_hou_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as status_text
+           from pts_hou_definition t01
+          where t01.hde_geo_zone = rcd_retrieve.gzo_geo_zone
+            and t01.hde_hou_status in (1,2,3,5)
+          order by t01.hde_hou_code asc;
+      rcd_household csr_household%rowtype;
+
+      cursor csr_pet is
+         select t01.*,
+                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as status_text,
+                decode(t02.pty_pet_type,null,'*UNKNOWN','('||t02.pty_pet_type||') '||t02.pty_typ_text) as type_text,
+                decode(t03.pcl_val_code,null,'*UNKNOWN','('||t03.pcl_val_code||') '||t03.size_text) as size_text
+           from pts_pet_definition t01,
+                pts_pet_type t02,
+                (select t01.pcl_pet_code,
+                        t01.pcl_val_code,
+                        nvl(t02.sva_val_text,'*UNKNOWN') as size_text
+                   from pts_pet_classification t01,
+                        (select t01.sva_val_code,
+                                t01.sva_val_text
+                           from pts_sys_value t01
+                          where t01.sva_tab_code = '*PET_CLA'
+                            and t01.sva_fld_code = 8) t02
+                  where t01.pcl_val_code = t02.sva_val_code(+)
+                    and t01.pcl_tab_code = '*PET_CLA'
+                    and t01.pcl_fld_code = 8) t03
+          where t01.pde_pet_type = t02.pty_pet_type(+)
+            and t01.pde_pet_code = t03.pcl_pet_code(+)
+            and t01.pde_hou_code = rcd_household.hde_hou_code
+            and t01.pde_pet_status in (1,2,3,5)
+          order by t01.pde_pet_code asc;
+      rcd_pet csr_pet%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the parameters
+      /*-*/
+      var_geo_zone := par_geo_zone;
+
+      /*-*/
+      /* Retrieve the area
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         raise_application_error(-20000, 'Area ('||to_char(var_geo_zone)||') does not exist');
+      end if;
+
+      /*-*/
+      /* Start the report
+      /*-*/
+      pipe row('<table border=1>');
+      pipe row('<tr><td align=center colspan=7></td></tr>');
+      pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Area - ('||rcd_retrieve.gzo_geo_zone||') '||rcd_retrieve.gzo_zon_text|| ' - Household Register</td></tr>');
+
+      /*-*/
+      /* Retrieve the households
+      /*-*/
+      var_household := false;
+      open csr_household;
+      loop
+         fetch csr_household into rcd_household;
+         if csr_household%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Household found
+         /*-*/
+         var_household := true;
+
+         /*-*/
+         /* Output the household
+         /*-*/
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Household</td>');
+         pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Contact Name/Address</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Phone</td>');
+         pipe row('</tr>');
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_household.hde_hou_code)||'</td>');
+         pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_household.hde_con_fullname||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_household.hde_tel_number||'</td>');
+         pipe row('</tr>');
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_household.hde_loc_street||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('</tr>');
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_household.hde_loc_town||' '||rcd_household.hde_loc_postcode||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('</tr>');
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_household.status_text||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('</tr>');
+         pipe row('<tr>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Pet</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Name</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Type</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Size</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Status</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
+         pipe row('</tr>');
+
+         /*-*/
+         /* Retrieve the pets
+         /*-*/
+         var_pet := false;
+         open csr_pet;
+         loop
+            fetch csr_pet into rcd_pet;
+            if csr_pet%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Pet found
+            /*-*/
+            var_pet := true;
+
+            /*-*/
+            /* Output the pet data
+            /*-*/
+            pipe row('<tr><td align=center colspan=1></td></tr>');
+            pipe row('<tr>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_pet.pde_pet_code)||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.pde_pet_name||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.type_text||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.size_text||'</td>');
+            pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.status_text||'</td>');
+            pipe row('</tr>');
+            pipe row('<tr><td align=center colspan=1></td></tr>');
+
+         end loop;
+         close csr_pet;
+
+         /*-*/
+         /* No pets found
+         /*-*/
+         if var_pet = false then
+            pipe row('<tr><td align=center colspan=1></td></tr>');
+            pipe row('<tr><td align=center colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">NO PET</td></tr>');
+            pipe row('<tr><td align=center colspan=1></td></tr>');
+         end if;
+
+      end loop;
+      close csr_household;
+
+      /*-*/
+      /* No households found
+      /*-*/
+      if var_household = false then
+         pipe row('<tr><td align=center colspan=7></td></tr>');
+         pipe row('<tr><td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">NO HOUSEHOLDS</td></tr>');
+      end if;
+
+      /*-*/
+      /* End the report
+      /*-*/
+      pipe row('</table>');
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_HOU_FUNCTION - REPORT_HOUSEHOLD - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end report_household;
 
 end pts_hou_function;
 /

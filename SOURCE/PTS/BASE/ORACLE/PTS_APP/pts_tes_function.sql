@@ -236,7 +236,8 @@ create or replace package body pts_app.pts_tes_function as
 
       cursor csr_sta_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_class('*TES_DEF',9)) t01;
+           from table(pts_app.pts_gen_function.list_class('*TES_DEF',9)) t01
+          where var_action = '*UPDTES' or val_code = 1;
       rcd_sta_code csr_sta_code%rowtype;
 
       cursor csr_glo_code is
@@ -395,8 +396,8 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT="'||pts_to_xml(rcd_retrieve.tde_tes_title)||'"'));
          pipe row(pts_xml_object(' TESCOM="'||to_char(rcd_retrieve.tde_com_code)||'"'));
-         pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
-         pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
+         pipe row(pts_xml_object(' TESSTA="1"'));
+         pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
          pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
          pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
@@ -409,7 +410,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' MEALEN="'||to_char(rcd_retrieve.tde_tes_len_meal)||'"'));
          pipe row(pts_xml_object(' MAXTEM="'||to_char(rcd_retrieve.tde_tes_max_temp)||'"'));
          pipe row(pts_xml_object(' DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'"/>'));
-      elsif var_action = 'CRTTES' then
+      elsif var_action = '*CRTTES' then
          pipe row(pts_xml_object('<TEST TESCDE="*NEW"'));
          pipe row(pts_xml_object(' TESTIT=""'));
          pipe row(pts_xml_object(' TESCOM="1"'));
