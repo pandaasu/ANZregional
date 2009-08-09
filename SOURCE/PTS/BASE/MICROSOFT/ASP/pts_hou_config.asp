@@ -332,6 +332,21 @@ sub PaintFunction()%>
                objCell.innerText = objElements[i].getAttribute('PETNAME');
                objCell.className = 'clsLabelFB';
                objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(1);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('PETTYPE');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(2);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('PETSIZE');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(3);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('PETSTAT');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'TABLE') {
                objRow = objClaData.insertRow(-1);
                objRow.setAttribute('tabcde','*HEAD');
