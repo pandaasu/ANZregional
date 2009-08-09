@@ -126,6 +126,13 @@ insert into lics_job values('CARE_SBW_VALIDATION','SAP BW Consumer Response Vali
 insert into lics_job values('CARE_SBW_EXECUTION','SAP BW Consumer Response Execution (12:00AM 1st Tuesday of Period)',null,20,null,'AP_CARE_REPORT@ap.effem.com','*PROCEDURE',null,'cr_app.care_bw_extract.execute(''*LAST'',''*EXECUTE'')','lics_time.schedule_next(''*MARS03'',12)','lics_time.schedule_next(''*MARS03'',12)','0');
 commit;
 
+
+
+
+
+-------------HERE ---------------
+
+
 insert into lics_job values('CARE_PROCESSOR','Care (Processor 01)',null,20,null,'stephen.gregan@smtp.ap.mars','*DAEMON','CAR#01','lics_trigger_processor.execute_from_daemon','sysdate',null,'1');
 insert into lics_setting values('TRIGGER_SUBMIT_ALERT','CARE_SAPBW_EXTRACT','*NONE');
 insert into lics_setting values('TRIGGER_SUBMIT_EMAIL_GROUP','CARE_SAPBW_EXTRACT','stephen.gregan@ap.effem.com');
@@ -137,7 +144,7 @@ insert into lics_sec_menu('CUC_MENU','Care Menu');
 insert into lics_sec_link values('CUC_MENU',1,'*OPT','CARE_BW_XREF');
 insert into lics_sec_link values('CUC_MENU',2,'*OPT','BW_EXTRACT_EXECUTE');
 
-
+----------------------------------
 
 
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> QM0020P QM0033P /sapmq/Sources/GCC/NonCRM *NOCOMPRESS *CMP' where int_interface = 'CARSBW01';

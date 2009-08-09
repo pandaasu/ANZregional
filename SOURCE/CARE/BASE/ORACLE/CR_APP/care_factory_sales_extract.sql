@@ -156,6 +156,34 @@ create or replace package body care_factory_sales_extract as
          extract('NZ93','NZ09,NZ10','147,149','05',par_period);
          extract('AU99','AU01,AU02,AU03,AU04,AU05,AU06,AU07,AU08,AU11,AU12,NZ09,NZ10','147,149','05',par_period);
 
+
+AU14 - Ballarat Factory (Direct from Atlas)
+AU15 - Scoresby Factory (Direct from Atlas)
+AU16 - Snack BIFG (Direct from Atlas)
+AU17 - Snack CoCoSub (Direct from Atlas)
+AU89 - Aus Snack (AU14 + AU15 + AU16 + AU17)
+
+00	Not Applicable
+01	Wodonga Can
+02	Wodonga Flexi
+03	Wodonga Single Serve
+04	Wodonga Nutri
+05	Wodonga Pilot
+06	Wodonga Winergy
+07	Bathurst Dry
+08	Bathurst Snacks
+09	Wanganui Chilled
+10	Wanganui Pouch
+11	Pet Affiliate Imports
+12	Pet BIFG
+13	Wacol
+14	Ballarat Factory
+15	Scoresby Factory
+16	Snack BIFG
+17	Snack CoCoSub
+
+
+
          /*-*/
          /* Create the interface
          /*-*/
