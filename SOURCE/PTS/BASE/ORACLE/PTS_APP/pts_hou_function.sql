@@ -170,7 +170,8 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_sta_code is
          select t01.*
-           from table(pts_app.pts_gen_function.list_class('*HOU_DEF',13)) t01;
+           from table(pts_app.pts_gen_function.list_class('*HOU_DEF',13)) t01
+          where var_action = '*UPDHOU' or val_code = 1;
       rcd_sta_code csr_sta_code%rowtype;
 
       cursor csr_geo_zone is
@@ -305,15 +306,17 @@ create or replace package body pts_app.pts_hou_function as
       /* Pipe the delete notifier XML
       /*-*/
       pipe row(pts_xml_object('<DEL_NOTE VALCDE="" VALTXT="** NO DELETE NOTIFIER **"/>'));
-      open csr_del_note;
-      loop
-         fetch csr_del_note into rcd_del_note;
-         if csr_del_note%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<DEL_NOTE VALCDE="'||to_char(rcd_del_note.val_code)||'" VALTXT="'||pts_to_xml(rcd_del_note.val_text)||'"/>'));
-      end loop;
-      close csr_del_note;
+      if var_action = '*UPDHOU' then
+         open csr_del_note;
+         loop
+            fetch csr_del_note into rcd_del_note;
+            if csr_del_note%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<DEL_NOTE VALCDE="'||to_char(rcd_del_note.val_code)||'" VALTXT="'||pts_to_xml(rcd_del_note.val_text)||'"/>'));
+         end loop;
+         close csr_del_note;
+      end if;
 
       /*-*/
       /* Pipe the household XML
@@ -477,17 +480,19 @@ create or replace package body pts_app.pts_hou_function as
       obj_val_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
+      var_locked boolean;
       rcd_pts_hou_definition pts_hou_definition%rowtype;
       rcd_pts_hou_classification pts_hou_classification%rowtype;
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_check is
+      cursor csr_retrieve is
          select t01.*
            from pts_hou_definition t01
-          where t01.hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
-      rcd_check csr_check%rowtype;
+          where t01.hde_hou_code = rcd_pts_hou_definition.hde_hou_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_sta_code is
          select t01.*
@@ -567,6 +572,26 @@ create or replace package body pts_app.pts_hou_function as
       end if;
 
       /*-*/
+      /* Retrieve and lock the existing household when required
+      /*-*/
+      var_locked := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_locked := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Household ('||to_char(rcd_pts_hou_definition.hde_hou_code)||') is currently locked');
+      end;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Validate the input
       /*-*/
       if rcd_pts_hou_definition.hde_hou_status is null then
@@ -605,16 +630,48 @@ create or replace package body pts_app.pts_hou_function as
          end if;
          close csr_del_note;
       end if;
+      if var_locked = true then
+         if rcd_retrieve.hde_hou_status = 1 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4) then
+            pts_gen_function.add_mesg_data('Current status is Available - new status must be Available, Suspended or Flagged For Deletion');
+         end if;
+         if rcd_retrieve.hde_hou_status = 2 and (rcd_pts_hou_definition.hde_hou_status != 2 and rcd_pts_hou_definition.hde_hou_status != 5) then
+            pts_gen_function.add_mesg_data('Current status is On Test - new status must be On Test or Suspended On Test');
+         end if;
+         if rcd_retrieve.hde_hou_status = 3 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4) then
+            pts_gen_function.add_mesg_data('Current status is Suspended - new status must be Available, Suspended or Flagged For Deletion');
+         end if;
+         if rcd_retrieve.hde_hou_status = 4 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4 and rcd_pts_hou_definition.hde_hou_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Flagged For Deletion - new status must be Available, Suspended, Flagged For Deletion or Deleted');
+         end if;
+         if rcd_retrieve.hde_hou_status = 5 and (rcd_pts_hou_definition.hde_hou_status != 2 and rcd_pts_hou_definition.hde_hou_status != 5) then
+            pts_gen_function.add_mesg_data('Current status is Suspended On Test - new status must be On Test or Suspended On Test');
+         end if;
+         if rcd_retrieve.hde_hou_status = 9 then
+            pts_gen_function.add_mesg_data('Current status is Deleted - update not allowed');
+         end if;
+         if rcd_pts_hou_definition.hde_hou_status = 4 or rcd_pts_hou_definition.hde_hou_status = 9 then
+            if rcd_pts_hou_definition.hde_del_notifier is null then
+                pts_gen_function.add_mesg_data('Household status is Flagged For Deletion or Deleted and no delete notifier defined');
+            end if;
+         else
+            if not(rcd_pts_hou_definition.hde_del_notifier is null) then
+                pts_gen_function.add_mesg_data('Delete notifier must only be selected for status Flagged For Deletion or Deleted');
+            end if;
+         end if;
+      end if;
       if pts_gen_function.get_mesg_count != 0 then
+         rollback;
          return;
       end if;
 
       /*-*/
-      /* Retrieve and process the household definition
+      /* Process the household definition
       /*-*/
-      open csr_check;
-      fetch csr_check into rcd_check;
-      if csr_check%found then
+      if var_locked = true then
+
+         /*-*/
+         /* Update the household
+         /*-*/
          var_confirm := 'updated';
          update pts_hou_definition
             set hde_hou_status = rcd_pts_hou_definition.hde_hou_status,
@@ -635,15 +692,20 @@ create or replace package body pts_app.pts_hou_function as
                 hde_notes = rcd_pts_hou_definition.hde_notes
           where hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
          delete from pts_hou_classification where hcl_hou_code = rcd_pts_hou_definition.hde_hou_code;
+
       else
+
+         /*-*/
+         /* Create the household
+         /*-*/
          var_confirm := 'created';
          select pts_hou_sequence.nextval into rcd_pts_hou_definition.hde_hou_code from dual;
          rcd_pts_hou_definition.hde_del_notifier := null;
          rcd_pts_hou_definition.hde_dat_joined := trunc(sysdate);
          rcd_pts_hou_definition.hde_dat_used := null;
          insert into pts_hou_definition values rcd_pts_hou_definition;
+
       end if;
-      close csr_check;
 
       /*-*/
       /* Retrieve and insert the classification data
