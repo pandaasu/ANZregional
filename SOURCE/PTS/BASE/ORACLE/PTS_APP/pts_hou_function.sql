@@ -186,9 +186,27 @@ create or replace package body pts_app.pts_hou_function as
       rcd_del_note csr_del_note%rowtype;
 
       cursor csr_pet is
-         select t01.*
-           from pts_pet_definition t01
-          where t01.pde_hou_code = pts_to_number(var_hou_code)
+         select t01.*,
+                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as status_text,
+                decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
+                decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text
+           from pts_pet_definition t01,
+                pts_pet_type t02,
+                (select t01.pcl_pet_code,
+                        t01.pcl_val_code,
+                        nvl(t02.sva_val_text,'*UNKNOWN') as size_text
+                   from pts_pet_classification t01,
+                        (select t01.sva_val_code,
+                                t01.sva_val_text
+                           from pts_sys_value t01
+                          where t01.sva_tab_code = '*PET_CLA'
+                            and t01.sva_fld_code = 8) t02
+                  where t01.pcl_val_code = t02.sva_val_code(+)
+                    and t01.pcl_tab_code = '*PET_CLA'
+                    and t01.pcl_fld_code = 8) t03
+          where t01.pde_pet_type = t02.pty_pet_type(+)
+            and t01.pde_pet_code = t03.pcl_pet_code(+)
+            and t01.pde_hou_code = pts_to_number(var_hou_code)
           order by t01.pde_pet_code;
       rcd_pet csr_pet%rowtype;
 
@@ -387,7 +405,7 @@ create or replace package body pts_app.pts_hou_function as
             if csr_pet%notfound then
                exit;
              end if;
-            pipe row(pts_xml_object('<PET PETCODE="'||to_char(rcd_pet.pde_pet_code)||'" PETNAME="'||pts_to_xml('('||to_char(rcd_pet.pde_pet_code)||') '||rcd_pet.pde_pet_name)||'"/>'));
+            pipe row(pts_xml_object('<PET PETCODE="'||to_char(rcd_pet.pde_pet_code)||'" PETNAME="'||pts_to_xml('('||to_char(rcd_pet.pde_pet_code)||') '||rcd_pet.pde_pet_name)||'" PETTYPE="'||pts_to_xml(rcd_pet.type_text)||'" PETSIZE="'||pts_to_xml(rcd_pet.size_text)||'" PETSTAT="'||pts_to_xml(rcd_pet.status_text)||'"/>'));
          end loop;
          close csr_pet;
       end if;
