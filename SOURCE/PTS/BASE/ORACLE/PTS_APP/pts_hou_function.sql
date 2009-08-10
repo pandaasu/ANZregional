@@ -66,6 +66,7 @@ create or replace package body pts_app.pts_hou_function as
                 t01.hde_con_fullname,
                 t01.hde_loc_street,
                 t01.hde_loc_town,
+                t01.hde_notes,
                 nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*HOU_DEF' and sva_fld_code = 13 and sva_val_code = t01.hde_hou_status),'*UNKNOWN') as hde_hou_status
            from pts_hou_definition t01
           where t01.hde_hou_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*HOUSEHOLD',null)))
@@ -91,7 +92,7 @@ create or replace package body pts_app.pts_hou_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="4"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="5"/>'));
 
       /*-*/
       /* Retrieve the household list and pipe the results
@@ -106,7 +107,7 @@ create or replace package body pts_app.pts_hou_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.hde_hou_code)||'" SELTXT="'||pts_to_xml(rcd_list.hde_con_fullname||', '||rcd_list.hde_loc_street||', '||rcd_list.hde_loc_town)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.hde_hou_code)||') '||rcd_list.hde_con_fullname)||'" COL2="'||pts_to_xml(rcd_list.hde_loc_street)||'" COL3="'||pts_to_xml(rcd_list.hde_loc_town)||'" COL4="'||pts_to_xml(rcd_list.hde_hou_status)||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.hde_hou_code)||'" SELTXT="'||pts_to_xml(rcd_list.hde_con_fullname||', '||rcd_list.hde_loc_street||', '||rcd_list.hde_loc_town)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.hde_hou_code)||') '||rcd_list.hde_con_fullname)||'" COL2="'||pts_to_xml(rcd_list.hde_loc_street)||'" COL3="'||pts_to_xml(rcd_list.hde_loc_town)||'" COL4="'||pts_to_xml(rcd_list.hde_hou_status)||'" COL5="'||pts_to_xml(substr(rcd_list.hde_notes,1,120))||'"/>'));
          else
             exit;
          end if;
@@ -187,7 +188,7 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_pet is
          select t01.*,
-                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as status_text,
+                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',4,'Flagged For Deletion',5,'Suspended On Test',9,'Deleted','*UNKNOWN') as status_text,
                 decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
                 decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text
            from pts_pet_definition t01,
