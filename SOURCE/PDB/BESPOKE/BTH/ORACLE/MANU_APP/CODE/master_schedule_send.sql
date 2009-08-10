@@ -23,7 +23,7 @@ create or replace package master_schedule_send as
                       How the send works :
                       1. The items scheduled in the medium term schedule window are retrieved.
                          from the PS schema.
-                      2. This data is exported using the remote file loader called MANU_REMOTE_LOADER.
+                      2. This data is exported using the remote file loader called lics_outbound_loader.
                       3. A trigger file is generated. The trigger file is linked to the data file via
                          the var_serialise_code. The trigger file and data file must arrive in SAP
                          within 30 minutes of each other, otherwise SAP will not process the data.
@@ -47,7 +47,8 @@ create or replace package master_schedule_send as
    1.2		    05-Nov-08	  Chris Munn       Prevent Schedule from sending if window
                                   			   width is greater than 2.
    1.3        01-APR-09   Chris Munn       Added functionality to allow users to send
-                                           the schedule to SAP on demand.                      
+                                           the schedule to SAP on demand.         
+   1.4        15-JUN-09   Trevor Keon      Configured to send via ICS                                                        
 *******************************************************************************/
  
   procedure execute(i_plant_code in varchar2, i_demand_send in number default 0);
@@ -87,7 +88,7 @@ create or replace package body master_schedule_send as
                       How the send works :
                       1. The items scheduled in the medium term schedule window are retrieved.
                          from the PS schema.
-                      2. This data is exported using the remote file loader called MANU_REMOTE_LOADER.
+                      2. This data is exported using the remote file loader called lics_outbound_loader.
                       3. A trigger file is generated. The trigger file is linked to the data file via
                          the var_serialise_code. The trigger file and data file must arrive in SAP
                          within 30 minutes of each other, otherwise SAP will not process the data.
@@ -111,28 +112,36 @@ create or replace package body master_schedule_send as
    1.2		    05-Nov-08	  Chris Munn       Prevent Schedule from sending if window
                                   			   width is greater than 2.
    1.3        01-APR-09   Chris Munn       Added functionality to allow users to send
-                                           the schedule to SAP on demand.                      
+                                           the schedule to SAP on demand.           
+   1.4        15-JUN-09   Trevor Keon      Configured to send via ICS                                                      
 *******************************************************************************/
    
 	/*-*/
 	/* Constants used 
 	/*-*/
+	cst_sched_group   constant  varchar2(32) := 'MASTER_SCHED_SEND';   
 	
-   /*-*/
-	/* this value defines the schedule window in days 
-	/*-*/
-	--cst_Offset      CONSTANT NUMBER(2)    := 2;
-	cst_fil_path	    constant	varchar2(60) := 'MANU_OUTBOUND';
-	cst_fil_name	    constant	varchar2(20) := 'CISATL11_';  -- the .1 will be added with the time stamp 
-	cst_trig_name     constant  varchar2(20) := 'CISATL09_';  -- the .1 will be added with the time stamp
-  cst_sched_group   constant  varchar2(32) := 'MASTER_SCHED_SEND';   
-	
-	/*-*/
-	/* unix command to send the file over mq series - not workinyg yet 
-	/*-*/
-  cst_prc_script	  constant	varchar2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_fil_name;
-	cst_prc_script1   constant	varchar2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_trig_name;
-	
+  /*-*/
+  /* Variables for ICS interface creation
+  /*-*/    
+  var_site              varchar2(4);
+  var_db_value          varchar2(4);
+  var_extension         varchar2(2);
+  var_interface         varchar2(100);
+  var_msg_name          varchar2(100);
+  var_interface_id      number;
+
+  var_vir_table lics_datastore_table := lics_datastore_table();  
+  	
+  /*-*/
+  /* This value defines the interface to send
+  /*-*/
+  cst_file_name	      constant varchar2(20) := 'CISATL11';
+  cst_file_interface  constant varchar2(20) := 'PDBICS11';
+  
+  cst_trig_name	      constant varchar2(20) := 'CISATL09';
+  cst_trig_interface  constant varchar2(20) := 'PDBICS09';
+  
 	/*-*/
   /* private exceptions
   /*-*/
@@ -160,6 +169,7 @@ create or replace package body master_schedule_send as
     var_non_grd			     varchar2(4000) default '';
     var_message_code     varchar(3);
     var_send_type_flag   char;
+    var_int_success      boolean;
     	 
     /*-*/
     /* start time based on 7am start and end 
@@ -211,6 +221,21 @@ create or replace package body master_schedule_send as
   begin
     -- only send the schedule if the length of the frozen window is 2 days or less.
     if var_start_date - trunc(sysdate) <= 2 then
+    
+      /*-*/
+      /* Get site specific settings
+      /*-*/     
+      var_site := lics_app.lics_setting_configuration.retrieve_setting('pdb','site_code');
+      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'GR');
+      var_db_value := var_vir_table(1).dsv_value;      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'BU');
+      var_extension := var_vir_table(1).dsv_value;         
+      
+      var_interface := cst_file_interface || '.' || var_db_value;
+      var_msg_name := cst_file_name || '.' || var_extension;
+      var_int_success := false;
+    
       /*-*/
       /* get the schedule end date
       /*-*/
@@ -249,24 +274,22 @@ create or replace package body master_schedule_send as
         var_send_type_flag := 'M';
       end if;
                   
-      begin
-        /*-*/
-        /*  specify path and file name for remote transfer  
-        /*-*/
-        manu_remote_loader.create_interface (cst_fil_path, cst_fil_name || var_timestamp);
-                       
+      begin                        
         open csr_po;
         loop
           fetch csr_po into  rcd_po;
           exit when csr_po%notfound;
-                                  
+           
+          if ( lics_outbound_loader.is_created = false ) then
+            var_interface_id := lics_outbound_loader.create_interface (var_interface, null, var_msg_name);
+          end if;          
+                                 
           /*-*/
           /*  append records 
           /*-*/			   
-          manu_remote_loader.append_data('CTL'  || lpad(var_message_code,3,'0') 
-                                  || to_char(trunc(var_serialise_code),'YYYYMMDD')
-                                  || to_char(var_serialise_code,'HH24MISS')
-                                );				   
+          lics_outbound_loader.append_data('CTL'  || lpad(var_message_code,3,'0') 
+            || to_char(trunc(var_serialise_code),'YYYYMMDD')
+            || to_char(var_serialise_code,'HH24MISS'));				   
                                   
           if ascii(rtrim(ltrim(substr(rcd_po.matl_code,1,1)))) >= 48 and  ascii(rtrim(ltrim(substr(rcd_po.matl_code,1,1)))) <= 57 then
             -- alpha start character to material code 
@@ -276,85 +299,85 @@ create or replace package body master_schedule_send as
             var_matl := rpad(trim(rcd_po.matl_code),18,' ');
           end if;
                                       
-          manu_remote_loader.append_data('HDR' 
-                                      --|| lpad(trim(rcd_po.matl_code),18,'0')
-                           || var_matl
-                           || rpad(trim(rcd_po.plant),4,' ')
-                           || rpad(trim(rcd_po.plant),10,' ')
-                           || lpad(trim(rcd_po.qty),15,'0')
-                           || rpad(trim(rcd_po.uom),3,' ')
-                           || rpad(trim(var_prodn_version),4)
-                         );
+          lics_outbound_loader.append_data('HDR' 
+            --|| lpad(trim(rcd_po.matl_code),18,'0')
+            || var_matl
+            || rpad(trim(rcd_po.plant),4,' ')
+            || rpad(trim(rcd_po.plant),10,' ')
+            || lpad(trim(rcd_po.qty),15,'0')
+            || rpad(trim(rcd_po.uom),3,' ')
+            || rpad(trim(var_prodn_version),4));
                                                            
-           run_start_datime := rcd_po.run_start_datime;	
-           run_end_datime := rcd_po.run_end_datime;
-                                                   
-           manu_remote_loader.append_data('DET'
-                           || '0010' -- operation number 
-                           || '0020' -- superior numbner 
-                           /*-*/
-                           /* existing or modified start and end dates for run 
-                             /*-*/
-                           || to_char(trunc(run_end_datime),'YYYYMMDD')
-                           || to_char(run_end_datime,'HH24MISS')
-                           || to_char(trunc(run_start_datime),'YYYYMMDD')
-                           || to_char(run_start_datime,'HH24MISS')
-                          );
+          run_start_datime := rcd_po.run_start_datime;	
+          run_end_datime := rcd_po.run_end_datime;
+                                                             
+          lics_outbound_loader.append_data('DET'
+            || '0010' -- operation number 
+            || '0020' -- superior numbner 
+            /*-*/
+            /* existing or modified start and end dates for run 
+            /*-*/
+            || to_char(trunc(run_end_datime),'YYYYMMDD')
+            || to_char(run_end_datime,'HH24MISS')
+            || to_char(trunc(run_start_datime),'YYYYMMDD')
+            || to_char(run_start_datime,'HH24MISS'));
                                               
-           var_count := var_count + 1;
+          var_count := var_count + 1;
                                
         end loop;
         close csr_po;
                      
-        /*-*/
-        /* close remote loader transfer 
-        /*-*/
-        manu_remote_loader.finalise_interface(cst_prc_script || var_timestamp);
+        if ( lics_outbound_loader.is_created ) then
+          lics_outbound_loader.finalise_interface;
+          var_int_success := true;
+        end if;
                       
       exception
         when others then
-          if ( manu_remote_loader.is_created()) then
-            manu_remote_loader.finalise_interface(cst_prc_script); -- use a dummy command 
+          if ( lics_outbound_loader.is_created ) then
+            lics_outbound_loader.finalise_interface;
           end if;
           raise_application_error(-20000, 'Send Schedule - Schedule file construction failed - ' || substr(sqlerrm, 1, 512));
       end execute;
                     
       begin
-                    
-        /*-*/
-        /* send the trigger idoc - this will start a 
-        /* batch job within atlas to update the changes 
-        /* create interface - append data - and close task 
-        /*-*/
-        manu_remote_loader.create_interface (cst_fil_path, cst_trig_name || var_timestamp);
-        --dbms_output.put_line(cst_fil_path || ' - ' || cst_trig_name || var_timestamp);
-        manu_remote_loader.append_data('HDR'
-                                || rpad('Z_PRODUCTION_SCHEDULE',32,' ')
-                                || rpad(var_message_code,64,' ') -- address value for cannery schedule 
-                                || rpad(' ',20,' ')
-                                || rpad(to_char(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
-                                || var_message_code -- address value for cannery schedule 
-                                || '64'  -- atlas status 
-                                || lpad(to_char(var_count),6,'0') -- number of schedule records 
-                                || rpad('ZIN_MAPP',30,' ') -- idoc type 
-                                || rpad('COUNT', 20,' ')
-                                || '05'
-                                || '0300' -- delay in seconds 
-                              );
-                                 
-        manu_remote_loader.finalise_interface(cst_prc_script1 || var_timestamp);
+      
+        if ( var_int_success = true ) then        
+          var_interface := cst_trig_interface || '.' || var_db_value;
+          var_msg_name := cst_trig_name || '.' || var_extension;
                       
+          /*-*/
+          /* send the trigger idoc - this will start a 
+          /* batch job within atlas to update the changes 
+          /* create interface - append data - and close task 
+          /*-*/
+          var_interface_id := lics_outbound_loader.create_interface (var_interface, null, var_msg_name);   
+               
+          lics_outbound_loader.append_data('HDR'
+            || rpad('Z_PRODUCTION_SCHEDULE',32,' ')
+            || rpad(var_message_code,64,' ') -- address value for cannery schedule 
+            || rpad(' ',20,' ')
+            || rpad(to_char(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
+            || var_message_code -- address value for cannery schedule 
+            || '64'  -- atlas status 
+            || lpad(to_char(var_count),6,'0') -- number of schedule records 
+            || rpad('ZIN_MAPP',30,' ') -- idoc type 
+            || rpad('COUNT', 20,' ')
+            || '05'
+            || '0300'); -- delay in seconds                                 
+                                   
+          lics_outbound_loader.finalise_interface;            
+        end if;                 
                       
       exception
         when others then
-          if ( manu_remote_loader.is_created()) then
-              manu_remote_loader.finalise_interface(cst_prc_script1); -- use a dummy command 
+          if ( lics_outbound_loader.is_created ) then
+            lics_outbound_loader.finalise_interface; -- use a dummy command 
           end if;
           raise;
             -- raise_application_error(-20000, 'send schedule - trigger command failed  - ' || chr(13)
               --  || substr(sqlerrm, 1, 512) || chr(13));
-      end;
-                    
+      end;                    
                     
       --dbms_output.put_line('finished');
                     
@@ -697,5 +720,6 @@ end master_schedule_send;
 grant execute on manu_app.master_schedule_send to appsupport;
 grant execute on manu_app.master_schedule_send to bthsupport;
 grant execute on manu_app.master_schedule_send to bth_scheduler;
+grant execute on manu_app.master_schedule_send to lics_app;
 
 create or replace public synonym master_schedule_send for manu_app.master_schedule_send;

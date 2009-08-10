@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE Re_Timing_Schedule_Send AS
+create or replace package re_timing_schedule_send as
 /******************************************************************************
    NAME:       Send_Schedule
    PURPOSE:		This will send a mini schedule of say 2 days. 
@@ -13,17 +13,16 @@ CREATE OR REPLACE PACKAGE Re_Timing_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        14-Sep-05   Jeff Phillipson  Created this package.
-   1.1        15-Jan-2007 Jeff Phillipson   Added filtering for validation recipes 
+   1.1        15-Jan-07   Jeff Phillipson  Added filtering for validation recipes 
+   1.2        15-Jun-09   Trevor Keon      Configured to send via ICS
 ******************************************************************************/
-
  
-  PROCEDURE EXECUTE(i_plant_code IN VARCHAR2);
+  procedure execute(i_plant_code in varchar2);
  
-
-END Re_Timing_Schedule_Send;
+end re_timing_schedule_send;
 /
 
-CREATE OR REPLACE PACKAGE BODY Re_Timing_Schedule_Send AS
+create or replace package body re_timing_schedule_send as
 /******************************************************************************
    NAME:       Send_Schedule 
    PURPOSE:		This package is called from Execute which return a query based on a standard 
@@ -48,292 +47,302 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        21-Sep-05   Jeff Phillipson  Created this package body.
+   1.1        15-Jan-07   Jeff Phillipson  Added filtering for validation recipes 
+   1.2        15-Jun-09   Trevor Keon      Configured to send via ICS
 ******************************************************************************/
    
-	/*-*/
-	/* Constants used 
-	/*-*/
-	
-   /*-*/
-	/* this value defines the schedule window in days 
-	/*-*/
-	--cst_Offset     CONSTANT NUMBER(2)    := 2;
-	cst_fil_path	CONSTANT	VARCHAR2(60) := 'MANU_OUTBOUND';
-	cst_fil_name	CONSTANT	VARCHAR2(20) := 'CISATL11_';  -- the .1 will be added with the time stamp 
-	cst_trig_name  CONSTANT VARCHAR2(20) := 'CISATL09_';  -- the .1 will be added with the time stamp 
-	
-	/*-*/
-	/* Unix command to send the file over MQ series  
-	/*-*/
-	cst_prc_script	 CONSTANT	VARCHAR2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_fil_name;
-	cst_prc_script1 CONSTANT	VARCHAR2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_trig_name;
-	
-	/*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception EXCEPTION;
-   PRAGMA EXCEPTION_INIT(application_exception, -20000);
-		
-		run_start_datime DATE;
-		run_end_datime DATE;
-				
-	/*-*/
-	/* Start of process
-	/*-*/
-   PROCEDURE EXECUTE(i_plant_code IN VARCHAR2)
-	AS
-	
-		/*-*/
-		/* start time based on 7am start and end 
-		/* get ALL active Proc Orders over the time scale required 
-		/*-*/
-   	    CURSOR csr_po IS
-	     SELECT c.matl_code, c.plant, uom, 
-		 		/* change line so that always take the Atlas value unless a merge */
-                --DECODE(qty_lcl,NULL,qty,qty_lcl) qty,
-				DECODE(l.MERGE_FLAG,'M',qty_lcl, qty) qty,
-				/******/
-		 		c.proc_order,
-		 		DECODE(run_start_datime_lcl,NULL, run_start_datime, run_start_datime_lcl) run_start_datime,
-		 		DECODE(run_end_datime_lcl,NULL,run_end_datime, run_end_datime_lcl) run_end_datime
-           FROM cntl_rec_vw c, cntl_rec_lcl l, matl_vw m
-		  WHERE teco_stat = 'NO'
-			AND LTRIM(c.PROC_ORDER,'0') = l.PROC_ORDER(+)
-            -- Commented out and the next line added 21 Jul 2006
-			-- AND (run_end_datime_lcl >= TO_DATE(Re_Timing.GET_FIRM_start(c.plant),'dd/mm/yyyy hh24:mi') OR run_end_datime >= TO_DATE(Re_Timing.GET_FIRM_START(c.plant),'dd/mm/yyyy hh24:mi'))
-		    AND (run_start_datime_lcl >= TRUNC(SYSDATE) -1 OR run_start_datime >= TRUNC(SYSDATE)-1)
-			AND (run_start_datime_lcl < TO_DATE(Re_Timing.GET_FIRM(c.plant),'dd/mm/yyyy hh24:mi') OR run_start_datime < TO_DATE(Re_Timing.GET_FIRM(c.plant),'dd/mm/yyyy hh24:mi'))
-			AND c.plant = i_plant_code 
-			AND l.MERGE_FLAG <> 'Z'
-			-- hide any process order that is a BLEND - mrp controller = 098 for blends
-			AND LTRIM(c.MATL_CODE,'0') = m.MATL_CODE AND m.MRP_CNTRLLR <> '098'
-		  ORDER BY run_start_datime;
-		
-		
-			
-      rcd_po csr_po%ROWTYPE;
-   	 
-   	
-   	    var_prodn_version  VARCHAR2(4)  := '0001';
-		var_count          NUMBER DEFAULT 0;
-		var_serialise_code DATE;
-		var_timestamp      VARCHAR2(20);
-		var_retiming_code  VARCHAR2(3);
-		var_local		   NUMBER;
-     
-   BEGIN
-   		
-		/*-*/
-		/* update all records that will be sent and have changed to sent
-		/*-*/
-		BEGIN
-		   OPEN csr_po;
-    	   LOOP
-       	      FETCH csr_po INTO  rcd_po;
-       	      EXIT WHEN csr_po%NOTFOUND;
-			  
-			      /*-*/
-				  /* check if the record has been saved in ther local table first
-				  /*-*/
-				  SELECT COUNT(*) INTO var_local FROM cntl_rec_lcl WHERE proc_order = LTRIM(rcd_po.proc_order,'0');
-				 
-				  IF var_local = 1 THEN
-			          UPDATE cntl_rec_lcl 
-				         SET changed = 'S' , upd_datime = SYSDATE
-				       WHERE proc_order = LTRIM(rcd_po.proc_order,'0')
-				         AND changed = 'Y';
-						
-				  END IF;
-		   END LOOP;
-		
-           CLOSE csr_po;
-		   
-		   COMMIT;
-		EXCEPTION
-		    WHEN OTHERS THEN
-			    RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Update changed field failed - ' || SUBSTR(SQLERRM, 1, 512));
-		END;
-		
-		/*-*/
-		/* Change Atlas entry code depending upon time frame of schedule
-		/*-*/
-   		/* IF Datediff('ss',TRUNC(SYSDATE) + Re_Timing_Common.SCHEDULE_CHANGE,  SYSDATE ) < 0 THEN */
-                
-                /* -- check current size of RTT window and choose msg code to suit */
-                CASE re_timing.get_firm('AU30')
-				WHEN TO_CHAR(TRUNC(SYSDATE) + 2,'dd/mm/yyyy hh24:mi') THEN
-					--2 Days
-					var_retiming_code := Re_Timing_Common.RETIMING_CODE_2DAYS;
-	                
-				WHEN TO_CHAR(TRUNC(SYSDATE) + 3,'dd/mm/yyyy hh24:mi') THEN
-					--3 Days
-					var_retiming_code := Re_Timing_Common.RETIMING_CODE_3DAYS;
-	        
-				WHEN TO_CHAR(TRUNC(SYSDATE) + 4,'dd/mm/yyyy hh24:mi') THEN
-					--4 Days
-					var_retiming_code := Re_Timing_Common.RETIMING_CODE_4DAYS;
-	        
-				WHEN TO_CHAR(TRUNC(SYSDATE) + 5,'dd/mm/yyyy hh24:mi') THEN
-					--5 Days
-					var_retiming_code := Re_Timing_Common.RETIMING_CODE_5DAYS;  
-				WHEN TO_CHAR(TRUNC(SYSDATE) + 6,'dd/mm/yyyy hh24:mi') THEN
-                    --6 Days
-                    var_retiming_code := Re_Timing_Common.RETIMING_CODE_6DAYS;     					         
-	                
-				ELSE
-					--TODO: Do not send (exit with error)
-					--RAISE_APPLICATION_ERROR(-20000, 'RTT Schedule Not Sent - No Msg Code for current RTT Window Size. - ' || SUBSTR(SQLERRM, 1, 512));       
-	                
-					-- For now, just send as a 2 day - any extra days will be converted to new planned orders
-					var_retiming_code := Re_Timing_Common.RETIMING_CODE_2DAYS;
-                END CASE;
+  /*-*/
+  /* Variables for ICS interface creation
+  /*-*/    
+  var_site              varchar2(4);
+  var_db_value          varchar2(4);
+  var_extension         varchar2(2);
+  var_interface         varchar2(100);
+  var_msg_name          varchar2(100);
+  var_interface_id      number;
 
-		
-	    var_serialise_code := SYSDATE;
-		var_timestamp := TO_CHAR(SYSDATE,'yyyymmddhh24miss') || '.1';
-	
-		BEGIN
-		
-		   /*-*/
-		   /*  specify path and file name for remote transfer  
-		   /*-*/
-		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_fil_name || var_timestamp);
- 
-		   OPEN csr_po;
-    	   LOOP
-       	      FETCH csr_po INTO  rcd_po;
-       	      EXIT WHEN csr_po%NOTFOUND;	
-			  				
-			 /*-*/
-		     /*  append records 
-			 /*-*/			   
-	         Manu_Remote_Loader.append_data('CTL' || LPAD(var_retiming_code,3,'0') 
-	                       					|| TO_CHAR(TRUNC(var_serialise_code),'YYYYMMDD')
-	              			  				|| TO_CHAR(var_serialise_code,'HH24MISS')
-								  			);				   
-				 
-	         Manu_Remote_Loader.append_data('HDR' 
-	  		                 				|| LPAD(TRIM(rcd_po.matl_code),18,'0')
-				 		        			|| RPAD(TRIM(rcd_po.plant),4,' ')
-				 		        			|| RPAD(TRIM(rcd_po.plant),10,' ')
-				 				  			|| LPAD(TRIM(rcd_po.qty),15,'0')
-				 				  			|| RPAD(TRIM(rcd_po.uom),3,' ')
-				 				  			|| RPAD(trim(var_prodn_version),4)
-								  			);
-														 
-				
-			   run_start_datime := rcd_po.run_start_datime;	
-				run_end_datime := rcd_po.run_end_datime;
-				
-								   
-	         Manu_Remote_Loader.append_data('DET'
-	  			 	           				|| '0010' -- operation number 
-				 				  			|| '0020' -- superior numbner 
-											/*-*/
-											/* existing or modified start and end dates for run 
-				 				  			/*-*/
-											|| TO_CHAR(TRUNC(run_end_datime),'YYYYMMDD')
-				 				  			|| TO_CHAR(run_end_datime,'HH24MISS')
-				 				  			|| TO_CHAR(TRUNC(run_start_datime),'YYYYMMDD')
-				 				  			|| TO_CHAR(run_start_datime,'HH24MISS')
-											);
-								
-				var_count := var_count + 1;
-					   
-         END LOOP;
-         CLOSE csr_po;
-	 		
-	 	   /*-*/
-	      /* Close remote loader transfer 
-	      /*-*/
-         Manu_Remote_Loader.finalise_interface(cst_prc_script || var_timestamp);
-			
-			
-		
-      EXCEPTION
-         WHEN OTHERS THEN
-	         IF ( Manu_Remote_Loader.is_created()) THEN
-	   	      Manu_Remote_Loader.finalise_interface(cst_prc_script); -- use a dummy command 
-	         END IF;
-	         RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Schedule file construction failed - ' || SUBSTR(SQLERRM, 1, 512));
-	   END EXECUTE;
-		
-		
-		BEGIN
-		
-	      /*-*/
-			/* Send the trigger Idoc - this will start a 
-			/* batch job within Atlas to update the changes 
-			/* Create interface - append data - and close task 
-			/*-*/
-		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_trig_name || var_timestamp);
-		
-		   Manu_Remote_Loader.append_data('HDR'
-		                				 || RPAD('Z_PRODUCTION_SCHEDULE',32,' ')
-							 			 || RPAD(var_retiming_code,64,' ') -- address value for Cannery 
-							 			 || RPAD(' ',20,' ')
-							 			 || RPAD(TO_CHAR(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
-							 			 || LPAD(var_retiming_code,3,'0') -- address value for Cannery 
-							 			 || '64'  -- Atlas status 
-							 			 || LPAD(TO_CHAR(var_count),6,'0') -- number of schedule records 
-							 			 || RPAD('ZIN_MAPP',30,' ') -- idoc type 
-							 			 || RPAD('COUNT', 20,' ')
-							 			 || '10' -- retries in atlas
-							 			 || '0060' -- delay in seconds 
-										 );
-							 
-         Manu_Remote_Loader.finalise_interface(cst_prc_script1 || var_timestamp);
-			
-			--DBMS_OUTPUT.PUT_LINE('Trigger sent');
-			
-			/*-*/
-			/* update the status table 
-			/*-*/
-			UPDATE RE_TIME_STAT  
-			   SET atlas_sent_flag = 'Y',
-			       atlas_sent_datime = SYSDATE
-			 WHERE re_time_start_datime = (SELECT MAX(re_time_start_datime) 
-			 		 						 FROM re_time_stat
-			   								WHERE  re_time_stat_flag = 'E'
-											  AND atlas_sent_flag IS NULL);
-		
-			COMMIT;
-	  
-	  EXCEPTION
-	     WHEN OTHERS THEN
-           IF ( Manu_Remote_Loader.is_created()) THEN
-	   	     Manu_Remote_Loader.finalise_interface(cst_prc_script1); -- use a dummy command 
-	        END IF;
-			  RAISE;
-			 -- RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Trigger command failed  - ' || CHR(13)
-			      --  || SUBSTR(SQLERRM, 1, 512) || CHR(13));
-	  END;
-	  
-	  /*-*/
-	  /* update the log table with the serialisation code
-	  /*-*/
-	  BEGIN
-	  
-	      UPDATE RE_TIME_STAT  
-		      SET trig_key = TO_CHAR(var_serialise_code,'YYYYMMDDHH24MISS')
-		    WHERE re_time_stat_flag = 'E'
-			   AND re_time_stat_id = (SELECT MAX(re_time_stat_id) FROM re_time_stat);
-			 
-			 COMMIT;
-	  
-	  EXCEPTION
-	      WHEN OTHERS THEN
-			    RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Update RE_TIME_STAT failed - ' || CHR(13)  
-		             || SUBSTR(SQLERRM, 1, 512) || CHR(13));
-	  END;
-	  
-	EXCEPTION
-	   WHEN OTHERS THEN
-		  RAISE;
-	  
-   END EXECUTE; 
-	
-END Re_Timing_Schedule_Send;
+  var_vir_table lics_datastore_table := lics_datastore_table();  
+  	
+  /*-*/
+  /* This value defines the interface to send
+  /*-*/
+  cst_file_name	      constant varchar2(20) := 'CISATL11';
+  cst_file_interface  constant varchar2(20) := 'PDBICS11';
+  
+  cst_trig_name	      constant varchar2(20) := 'CISATL09';
+  cst_trig_interface  constant varchar2(20) := 'PDBICS09';
+  	
+  /*-*/
+  /* private exceptions
+  /*-*/
+  application_exception exception;
+  pragma exception_init(application_exception, -20000);
+  		
+  run_start_datime date;
+  run_end_datime date;
+  				
+  /*-*/
+  /* start of process
+  /*-*/
+  procedure execute(i_plant_code in varchar2)as
+  	
+    /*-*/
+    /* start time based on 7am start and end 
+    /* get all active proc orders over the time scale required 
+    /*-*/
+    cursor csr_po is
+      select c.matl_code, c.plant, uom, 
+        /* change line so that always take the atlas value unless a merge */
+        --decode(qty_lcl,null,qty,qty_lcl) qty,
+        decode(l.merge_flag,'M',qty_lcl, qty) qty,
+        /******/
+        c.proc_order,
+        decode(run_start_datime_lcl,null, run_start_datime, run_start_datime_lcl) run_start_datime,
+        decode(run_end_datime_lcl,null,run_end_datime, run_end_datime_lcl) run_end_datime
+      from cntl_rec_vw c, 
+        cntl_rec_lcl l, 
+        matl_vw m
+      where teco_stat = 'NO'
+        and ltrim(c.proc_order,'0') = l.proc_order(+)
+        -- commented out and the next line added 21 jul 2006
+        -- and (run_end_datime_lcl >= to_date(re_timing.get_firm_start(c.plant),'dd/mm/yyyy hh24:mi') or run_end_datime >= to_date(re_timing.get_firm_start(c.plant),'dd/mm/yyyy hh24:mi'))
+        and (run_start_datime_lcl >= trunc(sysdate) -1 or run_start_datime >= trunc(sysdate)-1)
+        and (run_start_datime_lcl < to_date(re_timing.get_firm(c.plant),'dd/mm/yyyy hh24:mi') or run_start_datime < to_date(re_timing.get_firm(c.plant),'dd/mm/yyyy hh24:mi'))
+        and c.plant = i_plant_code 
+        and l.merge_flag <> 'Z'
+        -- hide any process order that is a blend - mrp controller = 098 for blends
+        and ltrim(c.matl_code,'0') = m.matl_code and m.mrp_cntrllr <> '098'
+      order by run_start_datime;    			
+    rcd_po csr_po%rowtype;
+       	        	
+    var_prodn_version  varchar2(4)  := '0001';
+    var_count          number default 0;
+    var_serialise_code date;
+    var_timestamp      varchar2(20);
+    var_retiming_code  varchar2(3);
+    var_local		   number;
+    var_int_success    boolean;
+       
+  begin
+       		
+    /*-*/
+    /* update all records that will be sent and have changed to sent
+    /*-*/
+    begin
+      open csr_po;
+      loop
+        fetch csr_po into  rcd_po;
+        exit when csr_po%notfound;
+      			  
+        /*-*/
+        /* check if the record has been saved in ther local table first
+        /*-*/
+        select count(*) 
+        into var_local 
+        from cntl_rec_lcl 
+        where proc_order = ltrim(rcd_po.proc_order,'0');
+        				 
+        if var_local = 1 then
+          update cntl_rec_lcl 
+          set changed = 'S', 
+            upd_datime = sysdate
+          where proc_order = ltrim(rcd_po.proc_order,'0')
+            and changed = 'Y';        						
+        end if;
+      end loop;
+      		
+      close csr_po;
+      		   
+      commit;
+    exception
+      when others then
+        raise_application_error(-20000, 'Send Schedule - Update changed field failed - ' || substr(sqlerrm, 1, 512));
+    end;
+    		
+    /*-*/
+    /* change atlas entry code depending upon time frame of schedule
+    /*-*/
+    /* if datediff('ss',trunc(sysdate) + re_timing_common.schedule_change,  sysdate ) < 0 then */
+                    
+    /* -- check current size of rtt window and choose msg code to suit */
+    case re_timing.get_firm('AU30')
+      when to_char(trunc(sysdate) + 2,'dd/mm/yyyy hh24:mi') then
+        --2 days
+        var_retiming_code := re_timing_common.retiming_code_2days;    	                
+      when to_char(trunc(sysdate) + 3,'dd/mm/yyyy hh24:mi') then
+        --3 days
+        var_retiming_code := re_timing_common.retiming_code_3days;    	        
+      when to_char(trunc(sysdate) + 4,'dd/mm/yyyy hh24:mi') then
+        --4 days
+        var_retiming_code := re_timing_common.retiming_code_4days;    	        
+      when to_char(trunc(sysdate) + 5,'dd/mm/yyyy hh24:mi') then
+        --5 days
+        var_retiming_code := re_timing_common.retiming_code_5days;  
+      when to_char(trunc(sysdate) + 6,'dd/mm/yyyy hh24:mi') then
+        --6 days
+        var_retiming_code := re_timing_common.retiming_code_6days; 					                         
+      else
+        --todo: do not send (exit with error)
+        --raise_application_error(-20000, 'rtt schedule not sent - no msg code for current rtt window size. - ' || substr(sqlerrm, 1, 512));       	                
+        -- for now, just send as a 2 day - any extra days will be converted to new planned orders
+        var_retiming_code := re_timing_common.retiming_code_2days;
+    end case;
+    		
+    var_serialise_code := sysdate;
+    var_timestamp := to_char(sysdate,'yyyymmddhh24miss') || '.1';
+    	
+    begin
+      		
+      /*-*/
+      /* Get site specific settings
+      /*-*/     
+      var_site := lics_app.lics_setting_configuration.retrieve_setting('pdb','site_code');
+      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'GR');
+      var_db_value := var_vir_table(1).dsv_value;      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'BU');
+      var_extension := var_vir_table(1).dsv_value;         
+      
+      var_interface := cst_file_interface || '.' || var_db_value;
+      var_msg_name := cst_file_name || '.' || var_extension;
+      var_int_success := false;    
+       
+      open csr_po;
+      loop
+        fetch csr_po into  rcd_po;
+        exit when csr_po%notfound;	
+        
+        if ( lics_outbound_loader.is_created = false ) then
+          var_interface_id := lics_outbound_loader.create_interface(var_interface, null, var_msg_name);
+        end if;        
+        			  				
+        /*-*/
+        /*  append records 
+        /*-*/			   
+        lics_outbound_loader.append_data('CTL' || lpad(var_retiming_code,3,'0') 
+          || to_char(trunc(var_serialise_code),'YYYYMMDD')
+          || to_char(var_serialise_code,'HH24MISS'));				   
+        				 
+        lics_outbound_loader.append_data('HDR' 
+          || lpad(trim(rcd_po.matl_code),18,'0')
+          || rpad(trim(rcd_po.plant),4,' ')
+          || rpad(trim(rcd_po.plant),10,' ')
+          || lpad(trim(rcd_po.qty),15,'0')
+          || rpad(trim(rcd_po.uom),3,' ')
+          || rpad(trim(var_prodn_version),4));        														 
+        				
+        run_start_datime := rcd_po.run_start_datime;	
+        run_end_datime := rcd_po.run_end_datime;
+        				        								   
+        lics_outbound_loader.append_data('DET'
+          || '0010' -- operation number 
+          || '0020' -- superior numbner 
+          /*-*/
+          /* existing or modified start and end dates for run 
+          /*-*/
+          || to_char(trunc(run_end_datime),'YYYYMMDD')
+          || to_char(run_end_datime,'HH24MISS')
+          || to_char(trunc(run_start_datime),'YYYYMMDD')
+          || to_char(run_start_datime,'HH24MISS'));
+        								
+        var_count := var_count + 1;
+      					   
+      end loop;
+      close csr_po;
+      	 		        	 
+      if ( lics_outbound_loader.is_created ) then      
+        lics_outbound_loader.finalise_interface;
+        var_int_success := true;
+      end if;
+      	
+    exception
+      when others then
+        if ( lics_outbound_loader.is_created ) then
+          lics_outbound_loader.finalise_interface; -- use a dummy command 
+        end if;
+        raise_application_error(-20000, 'Send Schedule - Schedule file construction failed - ' || substr(sqlerrm, 1, 512));
+    end execute;  		
+  		
+    begin
+      		
+      if ( var_int_success = true ) then        
+        var_interface := cst_trig_interface || '.' || var_db_value;
+        var_msg_name := cst_trig_name || '.' || var_extension;
+        
+        /*-*/
+        /* send the trigger idoc - this will start a 
+        /* batch job within atlas to update the changes 
+        /* create interface - append data - and close task 
+        /*-*/
+        var_interface_id := lics_outbound_loader.create_interface(var_interface, null, var_msg_name);
+        		
+        lics_outbound_loader.append_data('HDR'
+          || rpad('Z_PRODUCTION_SCHEDULE',32,' ')
+          || rpad(var_retiming_code,64,' ') -- address value for cannery 
+          || rpad(' ',20,' ')
+          || rpad(to_char(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
+          || lpad(var_retiming_code,3,'0') -- address value for cannery 
+          || '64'  -- atlas status 
+          || lpad(to_char(var_count),6,'0') -- number of schedule records 
+          || rpad('ZIN_MAPP',30,' ') -- idoc type 
+          || rpad('COUNT', 20,' ')
+          || '10' -- retries in atlas
+          || '0060'); -- delay in seconds 
+  						 
+        lics_outbound_loader.finalise_interface;
+        			
+        --dbms_output.put_line('trigger sent');
+        			
+        /*-*/
+        /* update the status table 
+        /*-*/
+        update re_time_stat  
+        set atlas_sent_flag = 'Y',
+          atlas_sent_datime = sysdate
+        where re_time_start_datime = 
+          (
+            select max(re_time_start_datime) 
+            from re_time_stat
+            where  re_time_stat_flag = 'E'
+              and atlas_sent_flag is null
+          );
+        		
+        commit;
+      
+      end if;
+      	  
+    exception
+      when others then
+        if ( lics_outbound_loader.is_created ) then
+          lics_outbound_loader.finalise_interface; -- use a dummy command 
+        end if;
+        raise;
+    -- raise_application_error(-20000, 'send schedule - trigger command failed  - ' || chr(13)
+    --  || substr(sqlerrm, 1, 512) || chr(13));
+    end;
+    	  
+    /*-*/
+    /* update the log table with the serialisation code
+    /*-*/
+    begin
+    	  
+      update re_time_stat  
+      set trig_key = to_char(var_serialise_code,'YYYYMMDDHH24MISS')
+      where re_time_stat_flag = 'E'
+        and re_time_stat_id = (select max(re_time_stat_id) from re_time_stat);
+        			 
+      commit;
+        	  
+    exception
+      when others then
+        raise_application_error(-20000, 'Send Schedule - Update RE_TIME_STAT failed - ' || chr(13) || substr(sqlerrm, 1, 512) || chr(13));
+    end;
+    	  
+  exception
+    when others then
+      raise;    	  
+  end execute;   	
+end re_timing_schedule_send;
 /
 
 grant execute on manu_app.re_timing_schedule_send to appsupport;

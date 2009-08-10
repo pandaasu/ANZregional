@@ -1,6 +1,4 @@
-DROP PACKAGE MANU_APP.RD_SCHEDULE_SEND;
-
-CREATE OR REPLACE PACKAGE MANU_APP.Rd_Schedule_Send AS
+create or replace package manu_app.rd_schedule_send as
 /******************************************************************************
    NAME:       Send_Schedule
    PURPOSE:		This will send a mini schedule of say 2 days. 
@@ -15,19 +13,15 @@ CREATE OR REPLACE PACKAGE MANU_APP.Rd_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        14-Sep-05   Jeff Phillipson  Created this package.
+   1.1        15-Jun-09   Trevor Keon      Configured to send via ICS
 ******************************************************************************/
-
  
-  PROCEDURE EXECUTE(i_plant_code IN VARCHAR2);
- 
+  procedure execute(i_plant_code in varchar2);
 
-END Rd_Schedule_Send;
+end rd_schedule_send;
 /
 
-
-DROP PACKAGE BODY MANU_APP.RD_SCHEDULE_SEND;
-
-CREATE OR REPLACE PACKAGE BODY MANU_APP.Rd_Schedule_Send AS
+create or replace package body manu_app.rd_schedule_send as
 /******************************************************************************
    NAME:       Send_Schedule 
    PURPOSE:		This package is called from Execute which return a query based on a standard 
@@ -52,214 +46,216 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Rd_Schedule_Send AS
    Ver        Date        Author           Description
    ---------  ----------  ---------------  ------------------------------------
    1.0        21-Sep-05   Jeff Phillipson  Created this package body.
+   1.1        15-Jun-09   Trevor Keon      Configured to send via ICS
 ******************************************************************************/
    
-	/*-*/
-	/* Constants used 
-	/*-*/
-	
-   /*-*/
-	/* this value defines the interface sand server directory 
-	/*-*/
-	cst_fil_path	CONSTANT	VARCHAR2(60) := 'MANU_OUTBOUND';
-	cst_fil_name	CONSTANT	VARCHAR2(20) := 'CISATL11_';  -- the .1 will be added with the time stamp 
-	cst_trig_name  CONSTANT VARCHAR2(20) := 'CISATL09_';  -- the .1 will be added with the time stamp 
-	
-	/*-*/
-	/* Unix command to send the file over MQ series  
-	/*-*/
-	cst_prc_script	 CONSTANT	VARCHAR2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_fil_name;
-	cst_prc_script1 CONSTANT	VARCHAR2(100):= '/manu/prod/bin/send_file.sh -f ' || cst_trig_name;
-	
-	/*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception EXCEPTION;
-   PRAGMA EXCEPTION_INIT(application_exception, -20000);
-		
-		run_start_datime DATE;
-		run_end_datime DATE;
-				
-	/*-*/
-	/* Start of process
-	/*-*/
-   PROCEDURE EXECUTE(i_plant_code IN VARCHAR2)
-	AS
-	
-		/*-*/
-		/* start time based on 7am start and end 
-		/* get ALL active Proc Orders over the time scale required 
-		/*-*/
-	   CURSOR csr_po IS
-		    SELECT matl_code, 
-			       plant_code plant,
-		  	  	   qty, 
-		  	  	   uom, 
-		  	  	   start_datime, 
-		  	  	   end_datime
-	          FROM RD_SCHED;
-				 
-			
-        rcd_po csr_po%ROWTYPE;
-   
-   	
-   	    var_prodn_version  VARCHAR2(4)  := '0001';
-		var_count          NUMBER DEFAULT 0;
-		var_count1          NUMBER DEFAULT 0;
-		var_serialise_code DATE;
-		var_timestamp      VARCHAR2(20);
-		var_plant_atlas_address VARCHAR2(3);
-		
-		CURSOR csr_atlas_code
-		IS
-		SELECT MAX(t01.RD_ATLAS_CODE) atlas_code
- 		  FROM RD_ATLAS_CODE t01
-		 WHERE t01.plant_code = i_plant_code
- 		   AND t01.EFF_DATIME < SYSDATE;
-     
-   BEGIN
+  /*-*/
+  /* Variables for ICS interface creation
+  /*-*/    
+  var_site              varchar2(4);
+  var_db_value          varchar2(4);
+  var_extension         varchar2(2);
+  var_interface         varchar2(100);
+  var_msg_name          varchar2(100);
+  var_interface_id      number;
 
-	    var_serialise_code := SYSDATE;
-		var_timestamp := TO_CHAR(SYSDATE,'yyyymmddhh24miss') || '.1';
-		
-		
-	
-		BEGIN
-		
-		   /*-*/
-		   /*  specify path and file name for remote transfer  
-		   /*-*/
-		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_fil_name || var_timestamp);
- 
- 		   /* Each plant has a unique Atlas "Address code" */
-		   OPEN csr_atlas_code;
-               FETCH csr_atlas_code INTO var_plant_atlas_address;
-           CLOSE csr_atlas_code;
-		   
-		   OPEN csr_po;
-    	   LOOP
-       	   FETCH csr_po INTO  rcd_po;
-       	   EXIT WHEN csr_po%NOTFOUND;
-		   						
-				/*-*/
-		      /*  append records 
-				/*-*/			   
-	         Manu_Remote_Loader.append_data('CTL' || var_plant_atlas_address  
-	                       				 || TO_CHAR(TRUNC(var_serialise_code),'YYYYMMDD')
-	              			  			 || TO_CHAR(var_serialise_code,'HH24MISS')
-								  		 );				   
-				 
-	         Manu_Remote_Loader.append_data('HDR' 
-	  		                 			 || LPAD(TRIM(rcd_po.matl_code),18,'0')
-				 		        		 || RPAD(TRIM(rcd_po.plant),4,' ')
-				 		        		 || RPAD(TRIM(rcd_po.plant),10,' ')
-				 				  		 || LPAD(TRIM(rcd_po.qty),15,'0')
-				 				  		 || RPAD(TRIM(rcd_po.uom),3,' ')
-				 				  		 || RPAD(trim(var_prodn_version),4)
-								  		 );
-														 
-				
-			   run_start_datime := rcd_po.start_datime;	
-				run_end_datime := rcd_po.end_datime;
-				
-								   
-	         Manu_Remote_Loader.append_data('DET'
-	  			 	           			 || '0010' -- operation number 
-				 				  		 || '0020' -- superior numbner 
-										 /*-*/
-										 /* existing or modified start and end dates for run 
-				 				  		 /*-*/
-										 || TO_CHAR(TRUNC(run_end_datime),'YYYYMMDD')
-				 				  		 || TO_CHAR(run_end_datime,'HH24MISS')
-				 				  		 || TO_CHAR(TRUNC(run_start_datime),'YYYYMMDD')
-				 				  		 || TO_CHAR(run_start_datime,'HH24MISS')
-										 );
-								
-				var_count := var_count + 1;
-					   
-         END LOOP;
-         CLOSE csr_po;
-	 
-	 	   /*-*/
-	      /* Close remote loader transfer 
-	      /*-*/
-         Manu_Remote_Loader.finalise_interface(cst_prc_script  || var_timestamp);
-		
-      EXCEPTION
-         WHEN OTHERS THEN
-	         IF ( Manu_Remote_Loader.is_created()) THEN
-	   	      Manu_Remote_Loader.finalise_interface(cst_prc_script); -- use a dummy command 
-	         END IF;
-	         RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Schedule file construction failed - ' || SUBSTR(SQLERRM, 1, 512));
-	   END EXECUTE;
-		
-		
-		
-		BEGIN
-		
-	      /*-*/
-			/* Send the trigger Idoc - this will start a 
-			/* batch job within Atlas to update the changes 
-			/* Create interface - append data - and close task 
-			/*-*/
-		   Manu_Remote_Loader.create_interface (cst_fil_path, cst_trig_name || var_timestamp);
-		
-		   Manu_Remote_Loader.append_data('HDR'
-		                				|| RPAD('Z_PRODUCTION_SCHEDULE',32,' ')
-							 			|| RPAD(var_plant_atlas_address,64,' ') -- address value for Cannery Schedule 
-							 			|| RPAD(' ',20,' ')
-							 			|| RPAD(TO_CHAR(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
-							 			|| var_plant_atlas_address -- address value for Cannery Schedule 
-							 			|| '64'  -- Atlas status 
-							 			|| LPAD(TO_CHAR(var_count),6,'0') -- number of schedule records 
-							 			|| RPAD('ZIN_MAPP',30,' ') -- idoc type 
-							 			|| RPAD('COUNT', 20,' ')
-							 			|| '05'
-							 			|| '0060' -- delay in seconds 
-										);
-							 
-         Manu_Remote_Loader.finalise_interface(cst_prc_script1 || var_timestamp);
-			
-			/*-*/
-			/* update the status table 
-			/*-*/
-			UPDATE RE_TIME_STAT  
-			   SET atlas_sent_flag = 'Y',
-			       atlas_sent_datime = SYSDATE
-			 WHERE re_time_start_datime = (SELECT MAX(re_time_start_datime) 
-			 		 							 	FROM RE_TIME_STAT
-			   								   WHERE  re_time_stat_flag = 'E'
-												   AND atlas_sent_flag IS NULL);
-		
-			COMMIT;
-	  
-	  EXCEPTION
-	     WHEN OTHERS THEN
-           IF ( Manu_Remote_Loader.is_created()) THEN
-	   	     Manu_Remote_Loader.finalise_interface(cst_prc_script1); -- use a dummy command 
-	        END IF;
-			  RAISE;
-			 -- RAISE_APPLICATION_ERROR(-20000, 'Send Schedule - Trigger command failed  - ' || CHR(13)
-			     --   || SUBSTR(SQLERRM, 1, 512) || CHR(13));
-	  END;
-	  
+  var_vir_table lics_datastore_table := lics_datastore_table();  
+  	
+  /*-*/
+  /* This value defines the interface to send
+  /*-*/
+  cst_file_name	      constant varchar2(20) := 'CISATL11';
+  cst_file_interface  constant varchar2(20) := 'PDBICS11';
   
-	EXCEPTION
-	   WHEN OTHERS THEN
-		  RAISE;
-	  
-   END EXECUTE; 
-	
-END Rd_Schedule_Send;
+  cst_trig_name	      constant varchar2(20) := 'CISATL09';
+  cst_trig_interface  constant varchar2(20) := 'PDBICS09'; 
+  	
+  /*-*/
+  /* private exceptions
+  /*-*/
+  application_exception exception;
+  pragma exception_init(application_exception, -20000);
+  		
+  run_start_datime date;
+  run_end_datime date;
+  				
+  /*-*/
+  /* start of process
+  /*-*/
+  procedure execute(i_plant_code in varchar2) as
+  	
+    /*-*/
+    /* start time based on 7am start and end 
+    /* get all active proc orders over the time scale required 
+    /*-*/
+    cursor csr_po is
+      select matl_code, 
+        plant_code plant,
+        qty, 
+        uom, 
+        start_datime, 
+        end_datime
+      from rd_sched;   			
+    rcd_po csr_po%rowtype;
+              	
+    var_prodn_version  varchar2(4)  := '0001';
+    var_count          number default 0;
+    var_count1         number default 0;
+    var_serialise_code date;
+    var_timestamp      varchar2(20);
+    var_plant_atlas_address varchar2(3);
+    var_int_success    boolean;
+    		
+    cursor csr_atlas_code is
+      select max(t01.rd_atlas_code) atlas_code
+      from rd_atlas_code t01
+      where t01.plant_code = i_plant_code
+        and t01.eff_datime < sysdate;
+       
+  begin
+
+    var_serialise_code := sysdate;
+    var_timestamp := to_char(sysdate,'yyyymmddhh24miss') || '.1';
+  	
+    begin
+        		
+      /*-*/
+      /* Get site specific settings
+      /*-*/     
+      var_site := lics_app.lics_setting_configuration.retrieve_setting('pdb','site_code');
+      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'GR');
+      var_db_value := var_vir_table(1).dsv_value;      
+      var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'BU');
+      var_extension := var_vir_table(1).dsv_value;         
+      
+      var_interface := cst_file_interface || '.' || var_db_value;
+      var_msg_name := cst_file_name || '.' || var_extension;
+      var_int_success := false;    
+         
+      /* each plant has a unique atlas "address code" */
+      open csr_atlas_code;
+       fetch csr_atlas_code into var_plant_atlas_address;
+      close csr_atlas_code;
+        		   
+      open csr_po;
+      loop
+        fetch csr_po into  rcd_po;
+        exit when csr_po%notfound;
+        
+        if ( lics_outbound_loader.is_created = false ) then
+          var_interface_id := lics_outbound_loader.create_interface(var_interface, null, var_msg_name);
+        end if;
+          		   						
+        /*-*/
+        /*  append records 
+        /*-*/			   
+        lics_outbound_loader.append_data('CTL' || var_plant_atlas_address  
+          || to_char(trunc(var_serialise_code),'YYYYMMDD')
+          || to_char(var_serialise_code,'HH24MISS'));				   
+          				 
+        lics_outbound_loader.append_data('HDR' 
+          || lpad(trim(rcd_po.matl_code),18,'0')
+          || rpad(trim(rcd_po.plant),4,' ')
+          || rpad(trim(rcd_po.plant),10,' ')
+          || lpad(trim(rcd_po.qty),15,'0')
+          || rpad(trim(rcd_po.uom),3,' ')
+          || rpad(trim(var_prodn_version),4));          														 
+          				
+        run_start_datime := rcd_po.start_datime;	
+        run_end_datime := rcd_po.end_datime;          				
+          								   
+        lics_outbound_loader.append_data('DET'
+          || '0010' -- operation number 
+          || '0020' -- superior numbner 
+          || to_char(trunc(run_end_datime),'YYYYMMDD')
+          || to_char(run_end_datime,'HH24MISS')
+          || to_char(trunc(run_start_datime),'YYYYMMDD')
+          || to_char(run_start_datime,'HH24MISS'));
+          								
+        var_count := var_count + 1;
+        					   
+      end loop;
+      close csr_po;
+        	 
+      if ( lics_outbound_loader.is_created ) then      
+        lics_outbound_loader.finalise_interface;
+        var_int_success := true;
+      end if;
+        		
+    exception
+      when others then
+        if ( lics_outbound_loader.is_created ) then
+          lics_outbound_loader.finalise_interface;
+        end if;
+        raise_application_error(-20000, 'Send Schedule - Schedule file construction failed - ' || substr(sqlerrm, 1, 512));
+    end;
+  		
+    begin
+    		
+      if ( var_int_success = true ) then        
+        var_interface := cst_trig_interface || '.' || var_db_value;
+        var_msg_name := cst_trig_name || '.' || var_extension;
+        
+        /*-*/
+        /* send the trigger idoc - this will start a 
+        /* batch job within atlas to update the changes 
+        /* create interface - append data - and close task 
+        /*-*/
+        var_interface_id := lics_outbound_loader.create_interface(var_interface, null, var_msg_name);
+        		
+        lics_outbound_loader.append_data('HDR'
+          || rpad('Z_PRODUCTION_SCHEDULE',32,' ')
+          || rpad(var_plant_atlas_address,64,' ') -- address value for cannery schedule 
+          || rpad(' ',20,' ')
+          || rpad(to_char(var_serialise_code,'YYYYMMDDHH24MISS'),20,' ')
+          || var_plant_atlas_address -- address value for cannery schedule 
+          || '64'  -- atlas status 
+          || lpad(to_char(var_count),6,'0') -- number of schedule records 
+          || rpad('ZIN_MAPP',30,' ') -- idoc type 
+          || rpad('COUNT', 20,' ')
+          || '05'
+          || '0060'); -- delay in seconds           
+        							 
+        lics_outbound_loader.finalise_interface;
+        			
+        /*-*/
+        /* update the status table 
+        /*-*/
+        update re_time_stat  
+        set atlas_sent_flag = 'Y',
+          atlas_sent_datime = sysdate
+        where re_time_start_datime = 
+          (
+            select max(re_time_start_datime) 
+            from re_time_stat
+            where  re_time_stat_flag = 'E'
+              and atlas_sent_flag is null
+          );
+        		
+        commit;
+      
+      end if;
+      	  
+    exception
+      when others then
+        if ( lics_outbound_loader.is_created ) then
+          lics_outbound_loader.finalise_interface; 
+        end if;
+        raise;
+      -- raise_application_error(-20000, 'send schedule - trigger command failed  - ' || chr(13)
+      --   || substr(sqlerrm, 1, 512) || chr(13));
+    end;    	  
+      
+  exception
+    when others then
+      raise;  	  
+  end execute; 
+  	
+end rd_schedule_send;
 /
 
+grant execute on manu_app.rd_schedule_send to appsupport;
+grant execute on manu_app.rd_schedule_send to bthsupport;
 
-DROP PUBLIC SYNONYM RD_SCHEDULE_SEND;
-
-CREATE PUBLIC SYNONYM RD_SCHEDULE_SEND FOR MANU_APP.RD_SCHEDULE_SEND;
-
-
-GRANT EXECUTE ON MANU_APP.RD_SCHEDULE_SEND TO APPSUPPORT;
-
-GRANT EXECUTE ON MANU_APP.RD_SCHEDULE_SEND TO BTHSUPPORT;
-
+create or replace public synonym rd_schedule_send for manu_app.rd_schedule_send;

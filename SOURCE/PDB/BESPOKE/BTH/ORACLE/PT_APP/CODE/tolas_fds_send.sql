@@ -1,255 +1,251 @@
-DROP PROCEDURE PT_APP.TOLAS_FDS_SEND;
+create or replace procedure pt_app.tolas_fds_send(o_result          in out number,
+                                                  o_result_msg      in out varchar2,
+                                                  i_message_type		in varchar2,	-- z_pi1 create or z_pi2 reverse , z_pi6 hu reversal 
+                                                  i_plant_code		in varchar2,
+                                                  i_sender_name		in varchar2,
+                                                  i_test_flag			in boolean,		-- if true, then create test atlas message
+                                                  i_proc_order		in number,
+                                                  i_xactn_date		in date,
+                                                  i_xactn_time		in number,
+                                                  i_material_code	in varchar2,
+                                                  i_qty					in number,	   	-- material produced
+                                                  i_uom					in varchar2,
+                                                  i_stor_loc_code	in number,
+                                                  i_dispn_code		in varchar2,	-- stock type
+                                                  i_zpppi_batch		in varchar2,	-- atlas batch code
+                                                  i_bb_date			in varchar2,	-- best before date 
+                                                  i_plt_code			in varchar2,
+                                                  i_plt_type			in varchar2,
+                                                  i_pkg_matl 			in varchar2,
+                                                  i_start_prodn_date in date,
+                                                  i_start_prodn_time in number,
+                                                  i_end_prodn_date	in date,
+                                                  i_end_prodn_time	in number,
+                                                  i_seq				in varchar2) as
+                                                  
+  /******************************************************************************
+     NAME:       TOLAS_FDS_SEND
+     PURPOSE:    Transfer data through ICS to Tolas
 
-CREATE OR REPLACE PROCEDURE PT_APP.Tolas_Fds_Send(
-   o_result          IN OUT NUMBER,
-	o_result_msg      IN OUT VARCHAR2,
-	i_MESSAGE_TYPE		IN VARCHAR2,	-- Z_PI1 Create or Z_PI2 Reverse , Z_PI6 HU Reversal 
-	i_PLANT_CODE		IN VARCHAR2,
-	i_SENDER_NAME		IN VARCHAR2,
-	i_TEST_FLAG			IN BOOLEAN,		-- IF TRUE, THEN CREATE TEST ATLAS MESSAGE
-	i_PROC_ORDER		IN NUMBER,
-	i_XACTN_DATE		IN DATE,
-	i_XACTN_TIME		IN NUMBER,
-	i_MATERIAL_CODE	IN VARCHAR2,
-	i_QTY					IN NUMBER,	   	-- Material Produced
-	i_UOM					IN VARCHAR2,
-	i_STOR_LOC_CODE	IN NUMBER,
-	i_DISPN_CODE		IN VARCHAR2,	-- Stock Type
-	i_ZPPPI_BATCH		IN VARCHAR2,	-- ATLAS BATCH CODE
-	i_BB_DATE			IN VARCHAR2,	-- Best Before Date 
-	i_plt_code			IN VARCHAR2,
-	i_plt_type			IN VARCHAR2,
-	i_pkg_matl 			IN VARCHAR2,
-	i_START_PRODN_DATE IN DATE,
-	i_START_PRODN_TIME IN NUMBER,
-	i_END_PRODN_DATE	IN DATE,
-	i_END_PRODN_TIME	IN NUMBER,
-	i_seq				IN VARCHAR2)
+     REVISIONS:
+     Ver        Date        Author                    Description
+     ---------  ----------  ---------------------  ------------------------------------
+     1.0        ??/??/????  Unknown                 1. Created this package.
+     1.1        11/06/2009  Trevor G. Keon          2. Configured to send via ICS
+  ******************************************************************************/                                                  
 	
-AS
-	
-	/*-*/
-	/* variables
-	/*-*/
-	var_intfc_rtn		NUMBER(15,0);
-	var_seq_no			VARCHAR2(20);
-	var_TEST_FLAG		VARCHAR2(1)  := '';
-	var_dispn			VARCHAR2(2);
-	
-   exc_process_exception	EXCEPTION;
-	
-	
-	/*-*/
-	/* this value defines the interface sand server directory 
-	/*-*/
-	cst_fil_path	CONSTANT	VARCHAR2(60) := 'MANU_OUTBOUND';
-	cst_fil_name	CONSTANT	VARCHAR2(20) := 'IPAL' || i_PLANT_CODE  ;
-	cst_fil_ext     CONSTANT    VARCHAR2(4)  := '.int';
-	/*-*/
-	/* Unix command to send the file over MQIF 
-	/*-*/
-	cst_prc_script	 CONSTANT	VARCHAR2(100):= '/manu/prod/bin/send_file.sh -f ' ||  cst_fil_name;
-	--cst_prc_script	 CONSTANT	VARCHAR2(100):= '/manu/test/bin/donothing.sh';
-	
-	
-BEGIN
+  /*-*/
+  /* variables
+  /*-*/
+  var_intfc_rtn		number(15,0);
+  var_test_flag		varchar2(1)  := '';
+  var_dispn			  varchar2(2);
+  	
+  exc_process_exception	exception;	
+  
+  /*-*/
+  /* Variables for ICS interface creation
+  /*-*/    
+  var_site              varchar2(4);
+  var_db_value          varchar2(4);
+  var_interface         varchar2(100);
+  var_interface_id      number;
 
-    o_result := 0;
-    o_result_msg := 'OK';
-	
-	/*IF Plt_Common.DISABLE_ATLAS_TOLAS_SEND = TRUE THEN
-	    GOTO tempEnd;
-	END IF;*/
-	
-	 /*-*/
-	 /* set seq_no for file and add the txt extension for use latter 
-	 /*-*/
-	 var_seq_no := LPAD(i_seq,8,'0') || cst_fil_ext ;
-    
-	 IF (i_TEST_FLAG = TRUE) THEN
-	     var_TEST_FLAG := 'X';
-	 ELSE
-	     var_TEST_FLAG := ' ';
-	 END IF;
-	 
-	 IF i_DISPN_CODE = ' ' THEN
-	     -- unrestrited 
-		  var_dispn := 'GD';
-	 END IF;
-	 IF i_DISPN_CODE = 'S' THEN
-		 -- blocked 
-		 var_dispn := 'HD';
-	 END IF;
-	 IF i_DISPN_CODE = 'X' THEN
-	 	  -- QI - dont know the choice for this yet 
-		  var_dispn := 'HD';
-	 END IF;
+  var_vir_table lics_datastore_table := lics_datastore_table();  
+  	
+  /*-*/
+  /* This value defines the interface to send
+  /*-*/
+  cst_file_interface  constant varchar2(20) := 'PDBTOL01';
+  	
+begin
+
+  o_result := 0;
+  o_result_msg := 'OK';
+  
+  /*-*/
+  /* Get site specific settings
+  /*-*/     
+  var_site := lics_app.lics_setting_configuration.retrieve_setting('pdb','site_code');
+  var_vir_table := lics_app.lics_datastore.retrieve_value('PDB',var_site,'GR');
+  var_db_value := var_vir_table(1).dsv_value;
+  
+  var_interface := cst_file_interface || '.' || var_db_value;
+        
+  if (i_test_flag = true) then
+    var_test_flag := 'X';
+  else
+    var_test_flag := ' ';
+  end if;
+    	 
+  if i_dispn_code = ' ' then
+    -- unrestrited 
+    var_dispn := 'GD';
+  end if;
+  
+  if i_dispn_code = 'S' then
+    -- blocked 
+    var_dispn := 'HD';
+  end if;
+  
+  if i_dispn_code = 'X' then
+    -- qi - dont know the choice for this yet 
+    var_dispn := 'HD';
+  end if;
 			
-			
+  /*-*/
+  /* Create local interface to send Tolas data
+  /*-*/ 
+  var_interface_id := lics_outbound_loader.create_interface(var_interface);  			
 
-      /*-*/  
-      /* Create REMOTE interface on MANU for GR or RGR message to Atlas 
-	  /*-*/
-      Manu_Remote_Loader.create_interface(cst_fil_path, cst_fil_name || var_seq_no);
+  /*-*/
+  /* HEADER: Header Record 
+  /* Including 'X' at the end of the header record will cause Atlas
+  /* to treat the message as a test, meaning no further processing
+  /* will be completed once it reaches Atlas.
+  /*-*/			
+  lics_outbound_loader.append_data('HDR'
+    ||'000000000000000001'
+    ||rpad(trim(i_plant_code),4,' ')
+    ||rpad(i_message_type,8,' ')
+    ||rpad(trim(i_sender_name),32,' ')
+    ||rpad(var_test_flag,1,' ')
+    ||rpad('R',1,' ')  -- could be r and h 
+    ||rpad(var_dispn,4,' '));
 
-	  /*-*/
-      /* HEADER: Header Record 
-      /* Including 'X' at the end of the header record will cause Atlas
-      /* to treat the message as a test, meaning no further processing
-      /* will be completed once it reaches Atlas.
-	  /*-*/
-			
-      Manu_Remote_Loader.append_data('HDR'
-												||'000000000000000001'
-                                    ||RPAD(TRIM(i_PLANT_CODE),4,' ')
-                                    ||RPAD(i_MESSAGE_TYPE,8,' ')
-                                    ||RPAD(TRIM(i_SENDER_NAME),32,' ')
-										   	||RPAD(var_TEST_FLAG,1,' ')
-												||RPAD('R',1,' ')  -- could be R and H 
-												||RPAD(var_DISPN,4,' '));
+  														 
+  --det: process order
+  lics_outbound_loader.append_data('DET'
+    ||'000000000000000001'
+    ||rpad('PPPI_PROCESS_ORDER',30,' ')
+    ||rpad(lpad(trim(to_char(i_proc_order)),12,0),30,' ')
+    ||'CHAR');
 
-														 
-      --DET: PROCESS ORDER
-      Manu_Remote_Loader.append_data('DET'
-												||'000000000000000001'
-                                    ||RPAD('PPPI_PROCESS_ORDER',30,' ')
-                                    ||RPAD(LPAD(TRIM(TO_CHAR(i_PROC_ORDER)),12,0),30,' ')
-                                    ||'CHAR');
+  --det: event date 
+  lics_outbound_loader.append_data('DET000000000000000001'
+    ||rpad('PPPI_EVENT_DATE',30,' ')
+    ||rpad(to_char(i_xactn_date,'YYYYMMDD'),30,' ')
+    ||'DATE');
 
-      --DET: EVENT DATE 
-      Manu_Remote_Loader.append_data('DET000000000000000001'
-                                    ||RPAD('PPPI_EVENT_DATE',30,' ')
-                                    ||RPAD(TO_CHAR(i_XACTN_DATE,'YYYYMMDD'),30,' ')
-                                    ||'DATE');
+  --det: event time 
+  lics_outbound_loader.append_data('DET000000000000000001'
+    ||rpad('PPPI_EVENT_TIME',30,' ')
+    ||rpad(trim(to_char(i_xactn_time)),30,' ')
+    ||'TIME');
 
-      --DET: EVENT TIME 
-      Manu_Remote_Loader.append_data('DET000000000000000001'
-                                    ||RPAD('PPPI_EVENT_TIME',30,' ')
-                                    ||RPAD(TRIM(TO_CHAR(i_XACTN_TIME)),30,' ')
-                                    ||'TIME');
+  if ascii(rtrim(ltrim(substr(i_material_code,1,1)))) >= 48 and  ascii(rtrim(ltrim(substr(i_material_code,1,1)))) <= 57 then
+    --det: material code
+    lics_outbound_loader.append_data('DET000000000000000001'
+      ||rpad('PPPI_MATERIAL',30,' ')
+      ||rpad(lpad(trim(i_material_code),18,'0'),30,' ')
+      ||'CHAR');
+  else
+    lics_outbound_loader.append_data('DET000000000000000001'
+      ||rpad('PPPI_MATERIAL',30,' ')
+      ||rpad(trim(i_material_code),30,' ')
+      ||'CHAR');
+  end if;
 
-      IF ASCII(RTRIM(LTRIM(SUBSTR(i_MATERIAL_CODE,1,1)))) >= 48 AND  ASCII(RTRIM(LTRIM(SUBSTR(i_MATERIAL_CODE,1,1)))) <= 57 THEN
-          --DET: MATERIAL CODE
-          Manu_Remote_Loader.append_data('DET000000000000000001'
-                                        ||RPAD('PPPI_MATERIAL',30,' ')
-                                        ||RPAD(LPAD(TRIM(i_MATERIAL_CODE),18,'0'),30,' ')
-                                        ||'CHAR');
-      ELSE
-          Manu_Remote_Loader.append_data('DET000000000000000001'
-                                        ||RPAD('PPPI_MATERIAL',30,' ')
-                                        ||RPAD(trim(i_MATERIAL_CODE),30,' ')
-                                        ||'CHAR');
-      END IF;
+  --det: material produced (qty)
+  lics_outbound_loader.append_data('DET000000000000000001'
+    ||rpad('PPPI_MATERIAL_PRODUCED',30,' ')
+    ||rpad(lpad(trim(to_char(i_qty)),4,'0'),30,' ')
+    ||'NUM');
 
-      --DET: MATERIAL PRODUCED (QTY)
-      Manu_Remote_Loader.append_data('DET000000000000000001'
-                                    ||RPAD('PPPI_MATERIAL_PRODUCED',30,' ')
-                                    ||RPAD(LPAD(TRIM(TO_CHAR(i_QTY)),4,'0'),30,' ')
-                                    ||'NUM');
+  --det: unit of measure (uom)
+  lics_outbound_loader.append_data('DET000000000000000001'
+    ||rpad('PPPI_UNIT_OF_MEASURE',30,' ')
+    ||rpad(trim(i_uom),30,' ')
+    ||'CHAR');
 
-      --DET: UNIT OF MEASURE (UOM)
-      Manu_Remote_Loader.append_data('DET000000000000000001'
-                                    ||RPAD('PPPI_UNIT_OF_MEASURE',30,' ')
-                                    ||RPAD(TRIM(i_UOM),30,' ')
-                                    ||'CHAR');
+  --det: storage location
+  if (i_stor_loc_code is not null) then
+    lics_outbound_loader.append_data('DET000000000000000001'
+      ||rpad('PPPI_STORAGE_LOCATION',30,' ')
+      ||rpad(lpad(trim(to_char('H001')),4,0),30,' ')
+      ||'CHAR');
+  end if;
 
-      --DET: STORAGE LOCATION
-	  IF (i_STOR_LOC_CODE IS NOT NULL) THEN
-         Manu_Remote_Loader.append_data('DET000000000000000001'
-                                       ||RPAD('PPPI_STORAGE_LOCATION',30,' ')
-                                       ||RPAD(LPAD(TRIM(TO_CHAR('H001')),4,0),30,' ')
-                                       ||'CHAR');
-	  END IF;
+  --det: stock type (dispn)
+  if (i_dispn_code is not null) then
+    lics_outbound_loader.append_data('DET000000000000000001'
+      ||rpad('PPPI_STOCK_TYPE',30,' ')
+      ||rpad(var_dispn,30,' ')
+      ||'CHAR');
+  end if;
 
-     --DET: STOCK TYPE (DISPN)
-	  IF (i_DISPN_CODE IS NOT NULL) THEN
-         Manu_Remote_Loader.append_data('DET000000000000000001'
-                                       ||RPAD('PPPI_STOCK_TYPE',30,' ')
-                                       ||RPAD(var_dispn,30,' ')
-                                       ||'CHAR');
-	  END IF;
+  -- batch send 
+  if (i_zpppi_batch is not null) then
+    lics_outbound_loader.append_data('DET000000000000000001'
+      ||rpad('PPPI_BATCH',30,' ')
+      ||rpad(i_zpppi_batch,30,' ')
+      ||'CHAR');
+  end if;
+  	  
+  /*-*/
+  /* det: best before date (shelf life expiration date = sled) 
+  /*-*/
+  if (i_bb_date is not null) then
+    if i_message_type  = 'Z_PI1' then
+      lics_outbound_loader.append_data('DET000000000000000001'
+        ||rpad('ZPPPI_SLED',30,' ')
+        ||rpad(trim(i_bb_date),30,' ')
+        ||'DATE');
+    end if;
+  end if;
 
-	  -- Batch send 
-	  IF (i_ZPPPI_BATCH IS NOT NULL) THEN
-	      Manu_Remote_Loader.append_data('DET000000000000000001'
-                                        ||RPAD('PPPI_BATCH',30,' ')
-                                        ||RPAD(i_ZPPPI_BATCH,30,' ')
-                                        ||'CHAR');
-	  END IF;
+  	  
+  if (i_plt_code is not null) then
+    if (i_message_type  = 'Z_PI1' or i_message_type = 'Z_PI6') then
+      lics_outbound_loader.append_data('DET000000000000000001'
+        ||rpad('ZPPPI_EXIDV',30,' ')
+        ||rpad(trim(i_plt_code),30,' ')
+        ||'CHAR');
+    end if;
+  end if;
+  	  
+  if (i_plt_type is not null) then
+    if i_message_type  = 'Z_PI1' then
+      lics_outbound_loader.append_data('DET000000000000000001'
+        ||rpad('ZPPPI_VHILM',30,' ')
+        ||rpad(trim(i_pkg_matl),30,' ')
+        ||'CHAR');
+    end if;
+  end if;
+  	  
+  	  
+  if (i_plt_type is not null and i_plt_type <> ' ' ) then
+    if i_message_type  = 'Z_PI1' then
+      lics_outbound_loader.append_data('DET000000000000000001'
+        ||rpad('ZPPPI_ZZENDPRDATE',30,' ')
+        ||rpad(trim(i_start_prodn_date),30,' ')
+        ||'CHAR');
+      
+      lics_outbound_loader.append_data('DET000000000000000001'
+        ||rpad('ZPPPI_ZZENDPRTIME',30,' ')
+        ||rpad(trim(i_start_prodn_time),30,' ')
+        ||'CHAR');
+    end if;
+  end if;
 	  
-	  /*-*/
-	  /* DET: BEST BEFORE DATE (SHELF LIFE EXPIRATION DATE = SLED) 
-	  /*-*/
-	  IF (i_BB_DATE IS NOT NULL) THEN
-          IF i_MESSAGE_TYPE  = 'Z_PI1' THEN
-              Manu_Remote_Loader.append_data('DET000000000000000001'
-                                            ||RPAD('ZPPPI_SLED',30,' ')
-                                            ||RPAD(TRIM(i_BB_DATE),30,' ')
-                                            ||'DATE');
-          END IF;
-	  END IF;
-
+  if (lics_outbound_loader.is_created) then
+    lics_outbound_loader.finalise_interface;
+  end if;
 	  
-	  IF (i_plt_code IS NOT NULL) THEN
-	      IF (i_MESSAGE_TYPE  = 'Z_PI1' OR i_MESSAGE_TYPE = 'Z_PI6') THEN
-			    Manu_Remote_Loader.append_data('DET000000000000000001'
-                                           ||RPAD('ZPPPI_EXIDV',30,' ')
-                                           ||RPAD(TRIM(i_plt_code),30,' ')
-                                           ||'CHAR');
-			END IF;
-	  END IF;
-	  
-	  IF (i_plt_Type IS NOT NULL) THEN
-	      IF i_MESSAGE_TYPE  = 'Z_PI1' THEN
-			    Manu_Remote_Loader.append_data('DET000000000000000001'
-                                           ||RPAD('ZPPPI_VHILM',30,' ')
-                                           ||RPAD(TRIM(i_pkg_matl),30,' ')
-                                           ||'CHAR');
-			END IF;
-	  END IF;
-	  
-	  
-	  IF (i_plt_Type IS NOT NULL AND i_plt_Type <> ' ' ) THEN
-	      IF i_MESSAGE_TYPE  = 'Z_PI1' THEN
-				 Manu_Remote_Loader.append_data('DET000000000000000001'
-                                           ||RPAD('ZPPPI_ZZENDPRDATE',30,' ')
-                                           ||RPAD(TRIM(i_start_prodn_date),30,' ')
-                                           ||'CHAR');
-			    Manu_Remote_Loader.append_data('DET000000000000000001'
-                                           ||RPAD('ZPPPI_ZZENDPRTIME',30,' ')
-                                           ||RPAD(TRIM(i_start_prodn_time),30,' ')
-                                           ||'CHAR');
-			END IF;
-	  END IF;
-	  
-      /*-*/
-	  /* Close Remote Interface and send Unix script 
-	  /*-*/
-	  Manu_Remote_Loader.finalise_interface(cst_prc_script || var_seq_no);
-	  
-	  <<tempEnd>>
-	  o_result := o_result;
-	 
-	 
-   EXCEPTION
-     WHEN OTHERS THEN
-	     IF (Manu_Remote_Loader.is_created()) THEN
-	   	  Manu_Remote_Loader.finalise_interface(cst_prc_script);
-	     END IF;
-		
-        o_result := 1;
-	     o_result_msg := 'Tolas_Fds_Send failed ['||SUBSTR(SQLERRM,0.250) || SUBSTR(SQLERRM,251.350) ||']';
-       RAISE_APPLICATION_ERROR(-20001, o_result_msg);
-END;
+  o_result := o_result; 
+exception
+  when others then
+    if (lics_outbound_loader.is_created) then
+      lics_outbound_loader.finalise_interface;
+    end if;
+    		
+    o_result := 1;
+    o_result_msg := 'Tolas_Fds_Send failed [' || substr(sqlerrm,0.250) || substr(sqlerrm,251.350) || ']';
+    raise_application_error(-20001, o_result_msg);
+end;
 /
 
+grant execute on pt_app.tolas_fds_send to appsupport;
+grant execute on pt_app.tolas_fds_send to bthsupport;
 
-DROP PUBLIC SYNONYM TOLAS_FDS_SEND;
-
-CREATE PUBLIC SYNONYM TOLAS_FDS_SEND FOR PT_APP.TOLAS_FDS_SEND;
-
-
-GRANT EXECUTE ON PT_APP.TOLAS_FDS_SEND TO APPSUPPORT;
-
-GRANT EXECUTE ON PT_APP.TOLAS_FDS_SEND TO BTHSUPPORT;
-
+create or replace public synonym tolas_fds_send for pt_app.tolas_fds_send;
