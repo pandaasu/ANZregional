@@ -618,17 +618,14 @@ create or replace package body pts_app.pts_pet_function as
          close csr_del_note;
       end if;
       if var_locked = true then
-         if rcd_retrieve.pde_pet_status = 1 and (rcd_pts_pet_definition.pde_pet_status != 1 and rcd_pts_pet_definition.pde_pet_status != 3 and rcd_pts_pet_definition.pde_pet_status != 4) then
-            pts_gen_function.add_mesg_data('Current status is Available - new status must be Available, Suspended or Flagged For Deletion');
+         if rcd_retrieve.pde_pet_status = 1 and (rcd_pts_pet_definition.pde_pet_status != 1 and rcd_pts_pet_definition.pde_pet_status != 3 and rcd_pts_pet_definition.pde_pet_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Available - new status must be Available, Suspended or Deleted');
          end if;
          if rcd_retrieve.pde_pet_status = 2 and (rcd_pts_pet_definition.pde_pet_status != 2 and rcd_pts_pet_definition.pde_pet_status != 5) then
             pts_gen_function.add_mesg_data('Current status is On Test - new status must be On Test or Suspended On Test');
          end if;
-         if rcd_retrieve.pde_pet_status = 3 and (rcd_pts_pet_definition.pde_pet_status != 1 and rcd_pts_pet_definition.pde_pet_status != 3 and rcd_pts_pet_definition.pde_pet_status != 4) then
-            pts_gen_function.add_mesg_data('Current status is Suspended - new status must be Available, Suspended or Flagged For Deletion');
-         end if;
-         if rcd_retrieve.pde_pet_status = 4 and (rcd_pts_pet_definition.pde_pet_status != 1 and rcd_pts_pet_definition.pde_pet_status != 3 and rcd_pts_pet_definition.pde_pet_status != 4 and rcd_pts_pet_definition.pde_pet_status != 9) then
-            pts_gen_function.add_mesg_data('Current status is Flagged For Deletion - new status must be Available, Suspended, Flagged For Deletion or Deleted');
+         if rcd_retrieve.pde_pet_status = 3 and (rcd_pts_pet_definition.pde_pet_status != 1 and rcd_pts_pet_definition.pde_pet_status != 3 and rcd_pts_pet_definition.pde_pet_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Suspended - new status must be Available, Suspended or Deleted');
          end if;
          if rcd_retrieve.pde_pet_status = 5 and (rcd_pts_pet_definition.pde_pet_status != 2 and rcd_pts_pet_definition.pde_pet_status != 5) then
             pts_gen_function.add_mesg_data('Current status is Suspended On Test - new status must be On Test or Suspended On Test');
@@ -636,13 +633,13 @@ create or replace package body pts_app.pts_pet_function as
          if rcd_retrieve.pde_pet_status = 9 then
             pts_gen_function.add_mesg_data('Current status is Deleted - update not allowed');
          end if;
-         if rcd_pts_pet_definition.pde_pet_status = 4 or rcd_pts_pet_definition.pde_pet_status = 9 then
+         if rcd_pts_pet_definition.pde_pet_status = 9 then
             if rcd_pts_pet_definition.pde_del_notifier is null then
-                pts_gen_function.add_mesg_data('Pet status is Flagged For Deletion or Deleted and no delete notifier defined');
+                pts_gen_function.add_mesg_data('Pet status is Deleted and no delete notifier defined');
             end if;
          else
             if not(rcd_pts_pet_definition.pde_del_notifier is null) then
-                pts_gen_function.add_mesg_data('Delete notifier must only be selected for status Flagged For Deletion or Deleted');
+                pts_gen_function.add_mesg_data('Delete notifier must only be selected for status Deleted');
             end if;
          end if;
       end if;

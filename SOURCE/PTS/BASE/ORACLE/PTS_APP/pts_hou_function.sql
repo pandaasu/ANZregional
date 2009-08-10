@@ -188,7 +188,7 @@ create or replace package body pts_app.pts_hou_function as
 
       cursor csr_pet is
          select t01.*,
-                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',4,'Flagged For Deletion',5,'Suspended On Test',9,'Deleted','*UNKNOWN') as status_text,
+                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test',9,'Deleted','*UNKNOWN') as status_text,
                 decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
                 decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text
            from pts_pet_definition t01,
@@ -650,17 +650,14 @@ create or replace package body pts_app.pts_hou_function as
          close csr_del_note;
       end if;
       if var_locked = true then
-         if rcd_retrieve.hde_hou_status = 1 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4) then
-            pts_gen_function.add_mesg_data('Current status is Available - new status must be Available, Suspended or Flagged For Deletion');
+         if rcd_retrieve.hde_hou_status = 1 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Available - new status must be Available, Suspended or Deleted');
          end if;
          if rcd_retrieve.hde_hou_status = 2 and (rcd_pts_hou_definition.hde_hou_status != 2 and rcd_pts_hou_definition.hde_hou_status != 5) then
             pts_gen_function.add_mesg_data('Current status is On Test - new status must be On Test or Suspended On Test');
          end if;
-         if rcd_retrieve.hde_hou_status = 3 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4) then
-            pts_gen_function.add_mesg_data('Current status is Suspended - new status must be Available, Suspended or Flagged For Deletion');
-         end if;
-         if rcd_retrieve.hde_hou_status = 4 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 4 and rcd_pts_hou_definition.hde_hou_status != 9) then
-            pts_gen_function.add_mesg_data('Current status is Flagged For Deletion - new status must be Available, Suspended, Flagged For Deletion or Deleted');
+         if rcd_retrieve.hde_hou_status = 3 and (rcd_pts_hou_definition.hde_hou_status != 1 and rcd_pts_hou_definition.hde_hou_status != 3 and rcd_pts_hou_definition.hde_hou_status != 9) then
+            pts_gen_function.add_mesg_data('Current status is Suspended - new status must be Available, Suspended or Deleted');
          end if;
          if rcd_retrieve.hde_hou_status = 5 and (rcd_pts_hou_definition.hde_hou_status != 2 and rcd_pts_hou_definition.hde_hou_status != 5) then
             pts_gen_function.add_mesg_data('Current status is Suspended On Test - new status must be On Test or Suspended On Test');
@@ -668,13 +665,13 @@ create or replace package body pts_app.pts_hou_function as
          if rcd_retrieve.hde_hou_status = 9 then
             pts_gen_function.add_mesg_data('Current status is Deleted - update not allowed');
          end if;
-         if rcd_pts_hou_definition.hde_hou_status = 4 or rcd_pts_hou_definition.hde_hou_status = 9 then
+         if rcd_pts_hou_definition.hde_hou_status = 9 then
             if rcd_pts_hou_definition.hde_del_notifier is null then
-                pts_gen_function.add_mesg_data('Household status is Flagged For Deletion or Deleted and no delete notifier defined');
+                pts_gen_function.add_mesg_data('Household status is Deleted and no delete notifier defined');
             end if;
          else
             if not(rcd_pts_hou_definition.hde_del_notifier is null) then
-                pts_gen_function.add_mesg_data('Delete notifier must only be selected for status Flagged For Deletion or Deleted');
+                pts_gen_function.add_mesg_data('Delete notifier must only be selected for status Deleted');
             end if;
          end if;
       end if;
@@ -711,6 +708,37 @@ create or replace package body pts_app.pts_hou_function as
                 hde_notes = rcd_pts_hou_definition.hde_notes
           where hde_hou_code = rcd_pts_hou_definition.hde_hou_code;
          delete from pts_hou_classification where hcl_hou_code = rcd_pts_hou_definition.hde_hou_code;
+
+         /*-*/
+         /* Update the related pets
+         /*-*/
+         if rcd_retrieve.hde_hou_status = 1 and rcd_pts_hou_definition.hde_hou_status = 3 then
+            update pts_pet_definition
+               set pde_pet_status = 3
+             where pde_hou_code = rcd_pts_hou_definition.hde_hou_code
+               and pde_pet_status = 1;
+         elsif rcd_retrieve.hde_hou_status = 2 and rcd_pts_hou_definition.hde_hou_status = 5 then
+            update pts_pet_definition
+               set pde_pet_status = 5
+             where pde_hou_code = rcd_pts_hou_definition.hde_hou_code
+               and pde_pet_status = 2;
+         elsif rcd_retrieve.hde_hou_status = 3 and rcd_pts_hou_definition.hde_hou_status = 1 then
+            update pts_pet_definition
+               set pde_pet_status = 1
+             where pde_hou_code = rcd_pts_hou_definition.hde_hou_code
+               and pde_pet_status = 3;
+         elsif rcd_retrieve.hde_hou_status = 5 and rcd_pts_hou_definition.hde_hou_status = 2 then
+            update pts_pet_definition
+               set pde_pet_status = 2
+             where pde_hou_code = rcd_pts_hou_definition.hde_hou_code
+               and pde_pet_status = 5;
+         elsif rcd_retrieve.hde_hou_status != 9 and rcd_pts_hou_definition.hde_hou_status = 9 then
+            update pts_pet_definition
+               set pde_pet_status = 9,
+                   pde_del_notifier = rcd_pts_hou_definition.hde_del_notifier
+             where pde_hou_code = rcd_pts_hou_definition.hde_hou_code
+               and pde_pet_status != 9;
+         end if;
 
       else
 
