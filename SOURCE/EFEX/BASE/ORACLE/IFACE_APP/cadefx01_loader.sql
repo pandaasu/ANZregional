@@ -17,6 +17,7 @@ create or replace package iface_app.cadefx01_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/02   Steve Gregan   Created
+    2009/08   Steve Gregan   Added business unit id to customer lookup
 
    *******************************************************************************/
 
