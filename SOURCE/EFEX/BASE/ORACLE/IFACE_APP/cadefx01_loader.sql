@@ -100,7 +100,8 @@ create or replace package body iface_app.cadefx01_loader as
       /* Local cursors
       /*-*/
       cursor csr_users is 
-         select t01.user_id
+         select t01.user_id,
+                t01.business_unit_id
            from users t01
           where t01.username = upper(var_username);
       rcd_users csr_users%rowtype;
@@ -109,6 +110,7 @@ create or replace package body iface_app.cadefx01_loader as
          select t01.customer_id
            from customer t01
           where t01.customer_code = var_customer_code
+            and t01.business_unit_id = rcd_users.business_unit_id
             and t01.market_id = 4;
       rcd_customer csr_customer%rowtype;
 
@@ -162,7 +164,7 @@ create or replace package body iface_app.cadefx01_loader as
       open csr_customer;
       fetch csr_customer into rcd_customer;
       if csr_customer%notfound then
-         lics_inbound_utility.add_exception('Customer ('||var_customer_code||') does not exist');
+         lics_inbound_utility.add_exception('Customer ('||var_customer_code||') Business Unit ('||to_char(rcd_users.business_unit_id)||') does not exist');
          var_trn_error := true;
       end if;
       close csr_customer;
