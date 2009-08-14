@@ -19,6 +19,7 @@ create or replace package ladcad04_order_summary as
  2008/01   Linden Glen    Created
  2008/01   Linden Glen    Added data check to stop empty interfaces
  2008/02   Linden Glen    Added NIV values
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
 
 *******************************************************************************/
 
@@ -77,7 +78,10 @@ create or replace package body ladcad04_order_summary as
                 to_char(a.pod_qty,'fm0000000000.00000') as pod_qty,
                 to_char(a.ord_niv,'fm0000000000.00000') as ord_niv,
                 to_char(a.del_niv,'fm0000000000.00000') as del_niv,
-                to_char(a.pod_niv,'fm0000000000.00000') as pod_niv
+                to_char(a.pod_niv,'fm0000000000.00000') as pod_niv,
+                a.sap_sales_hdr_sales_org_code as sales_org_code,
+                a.sap_sales_hdr_distbn_chnl_code as distbn_chnl_code,
+                a.sap_sales_hdr_division_code as division_code
          from order_fact a
          where a.sap_company_code in ('135','234')
            and a.ord_lin_status in ('*ORD','*DEL','*POD','*INV','*NVL')
@@ -149,7 +153,10 @@ create or replace package body ladcad04_order_summary as
                                           rpad(to_char(nvl(rec_order_summary.pod_qty,' ')),16, ' ') ||
                                           rpad(to_char(nvl(rec_order_summary.ord_niv,' ')),16, ' ') ||
                                           rpad(to_char(nvl(rec_order_summary.del_niv,' ')),16, ' ') ||
-                                          rpad(to_char(nvl(rec_order_summary.pod_niv,' ')),16, ' '));
+                                          rpad(to_char(nvl(rec_order_summary.pod_niv,' ')),16, ' ') ||
+                                          rpad(to_char(nvl(rec_order_summary.sales_org_code,' ')),4, ' ') ||
+                                          rpad(to_char(nvl(rec_order_summary.distbn_chnl_code,' ')),2, ' ') ||
+                                          rpad(to_char(nvl(rec_order_summary.division_code,' ')),2, ' '));
 
       end loop;
       close csr_order_summary;

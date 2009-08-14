@@ -20,6 +20,8 @@ create or replace package ladcad03_customer as
  2008/01   Linden Glen    Created
  2008/01   Linden Glen    Added data check to stop empty interfaces
  2008/05   Linden Glen    Added swb_status
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
+ 2009/07   Trevor Keon    Added division 56 to query
 
 *******************************************************************************/
 
@@ -93,7 +95,10 @@ create or replace package body ladcad03_customer as
                     and max(i.order_block_flag) is null then 'ACTIVE'
                    else 'INACTIVE'
                 end as swb_status,
-                max(to_char(a.bds_lads_date,'yyyymmddhh24miss')) as bds_lads_date
+                max(to_char(a.bds_lads_date,'yyyymmddhh24miss')) as bds_lads_date,
+                max(i.sales_org_code) as sales_org_code,
+                max(i.distbn_chnl_code) as distbn_chnl_code,
+                i.division_code as division_code
          from bds_cust_header a,
               (select t01.customer_code,
                       max(case when t01.partner_funcn_code = 'WE' then t01.partner_cust_code end) as ship_to_cust_code,
@@ -127,7 +132,7 @@ create or replace package body ladcad03_customer as
            and a.customer_code = i.customer_code
            and i.sales_org_code = '135'
            and i.distbn_chnl_code = '10'
-           and i.division_code = '51'
+           and i.division_code in ('51','56')
            and e.country_code(+) = 'CN'
            and f.company_code(+) = '135'
            and ltrim(i.customer_code,'0') = ltrim(g.sap_hier_cust_code(+),'0')
@@ -135,7 +140,7 @@ create or replace package body ladcad03_customer as
            and i.distbn_chnl_code = g.sap_distbn_chnl_code(+)
            and i.division_code = g.sap_division_code(+)
            and trunc(a.bds_lads_date) >= trunc(sysdate) - var_history
-         group by a.customer_code;
+         group by a.customer_code, i.division_code;
    rec_cust_master  csr_cust_master%rowtype;
 
    /*-------------*/
@@ -210,7 +215,10 @@ create or replace package body ladcad03_customer as
                                           rpad(to_char(nvl(rec_cust_master.channel_grp_code,' ')),10, ' ') ||
                                           nvl(rec_cust_master.channel_grp_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_grp_name,' ')),' ') ||
                                           rpad(to_char(nvl(rec_cust_master.swb_status,' ')),8, ' ') ||
-                                          rpad(to_char(nvl(rec_cust_master.bds_lads_date,' ')),14, ' '));
+                                          rpad(to_char(nvl(rec_cust_master.bds_lads_date,' ')),14, ' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.sales_org_code,' ')),4, ' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.distbn_chnl_code,' ')),2, ' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.division_code,' ')),2, ' '));
 
       end loop;
       close csr_cust_master;

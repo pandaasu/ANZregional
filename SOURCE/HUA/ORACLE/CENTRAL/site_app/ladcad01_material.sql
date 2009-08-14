@@ -22,6 +22,7 @@ create or replace package ladcad01_material as
  2008/05   Linden Glen    Added dstrbtn_chain_status
                           Added lads_change_date (LADS Last Updated timestamp)
                           Added sap_change_date (SAP Last Updated timestamp)
+ 2009/04   Trevor Keon    Changed MOE to include 0413(SNACK) and 0414(PET)                          
                            
 *******************************************************************************/
 
@@ -116,8 +117,8 @@ create or replace package body ladcad01_material as
                 c.sap_china_bdt_desc as bdt_desc,
                 null as bdt_abbrd_desc,
                 f.tax_classfctn_01 as tax_classification,
-                j.sell_moe_0168 as sell_moe_0168,
-                j.make_moe_0168 as make_moe_0168,
+                j.sell_moe as sell_moe,
+                j.make_moe as make_moe,
                 a.mars_intrmdt_prdct_compnt_flag as intrmdt_prdct_compnt,
                 k.dstrbtn_chain_status as dstrbtn_chain_status,
                 to_char(a.bds_lads_date,'yyyymmddhh24miss') as lads_change_date,
@@ -149,11 +150,11 @@ create or replace package body ladcad01_material as
                 from bds_material_hdr
                 where bds_lads_status = '1') i,
               (select sap_material_code,
-                      max(case when usage_code = 'SEL' then 'X' end) as sell_moe_0168,
-                      max(case when usage_code = 'MKE' then 'X' end) as make_moe_0168
+                      max(case when usage_code = 'SEL' then 'X' end) as sell_moe,
+                      max(case when usage_code = 'MKE' then 'X' end) as make_moe
                from bds_material_moe
                where usage_code in ('SEL','MKE')
-                 and moe_code = '0168'
+                 and moe_code in ('0168','0413','0414')
                group by sap_material_code) j,
               (select sap_material_code,
                       dstrbtn_chain_status as dstrbtn_chain_status
@@ -276,8 +277,8 @@ create or replace package body ladcad01_material as
                                           rpad(to_char(nvl(rec_matl_master.bdt_desc,' ')),30, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.bdt_abbrd_desc,' ')),12, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.tax_classification,' ')),1, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.sell_moe_0168,' ')),1, ' ') ||
-                                          rpad(to_char(nvl(rec_matl_master.make_moe_0168,' ')),1, ' ') ||
+                                          rpad(to_char(nvl(rec_matl_master.sell_moe,' ')),1, ' ') ||
+                                          rpad(to_char(nvl(rec_matl_master.make_moe,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.intrmdt_prdct_compnt,' ')),1, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.dstrbtn_chain_status,' ')),2, ' ') ||
                                           rpad(to_char(nvl(rec_matl_master.lads_change_date,' ')),14, ' ') ||
