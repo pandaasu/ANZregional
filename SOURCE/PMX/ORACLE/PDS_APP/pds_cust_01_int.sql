@@ -14,7 +14,8 @@ CREATE OR REPLACE PACKAGE pds_cust_01_int IS
   1.0   10/08/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   14/03/2006 Craig Ford           Add processing to identify new Customers.
                                          Delete from new (temp) customer table in
-																				 preparation for reloading with new customers.
+					 preparation for reloading with new customers.
+  2.0   06/08/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -104,6 +105,7 @@ PROCEDURE run_pds_cust_01_int IS
 
 BEGIN
   -- Start run_pds_cust_01_int procedure.
+  pds_utils.create_log;
   write_log(pc_data_type_cust, 'N/A',pv_log_level, 'run_pds_cust_01_int - START.');
 
   -- Open csr_cmpny_div_list cursor.
@@ -177,6 +179,9 @@ BEGIN
       pds_pos_format_grpg t3
     WHERE
       t1.cocode = v_cmpny_code AND
+      ((var_div_code = '01' and t1.divcode in ('51,'55')) or
+       (var_div_code = '02' and t1.divcode in ('51,'57')) or
+       (var_div_code = '05' and t1.divcode in ('51,'56'))) AND
       t2.cmpny_code = v_cmpny_code AND
       t2.div_code = v_div_code AND
       t1.posformat = t3.pos_format_grpg_code (+) AND
@@ -203,6 +208,7 @@ BEGIN
 
   -- End run_pds_cust_01_int procedure.
   write_log(pc_data_type_cust, 'N/A',pv_log_level, 'run_pds_cust_01_int - END.');
+  pds_utils.end_log;
 
 EXCEPTION
 
@@ -217,6 +223,7 @@ EXCEPTION
     write_log(pc_data_type_cust,'N/A',pv_log_level,pv_result_msg);
     pds_utils.send_email_to_group(pc_job_type_cust_01_int,'MFANZ Promax Customer Interface 01.',
       pv_result_msg);
+  pds_utils.end_log;
 
 END run_pds_cust_01_int;
 
