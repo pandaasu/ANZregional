@@ -16,6 +16,7 @@ create or replace package ladcad04_order_summary as
  -------   ------         -----------
  2008/01   Linden Glen    Created
  2008/02   Linden Glen    Added NIV values
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
 
 *******************************************************************************/
 
@@ -99,6 +100,9 @@ create or replace package body ladcad04_order_summary as
       lics_inbound_utility.set_definition('HDR','ORD_NIV',16);
       lics_inbound_utility.set_definition('HDR','DEL_NIV',16);
       lics_inbound_utility.set_definition('HDR','POD_NIV',16);
+      lics_inbound_utility.set_definition('HDR','ORG_CODE',4);
+      lics_inbound_utility.set_definition('HDR','DISTBN_CHNL_CODE',2);
+      lics_inbound_utility.set_definition('HDR','DIVISION',2);
 
    /*-------------*/
    /* End routine */
@@ -251,7 +255,7 @@ create or replace package body ladcad04_order_summary as
 
       /*-*/
       /* Retrieve field values
-      /*-*/      
+      /*-*/
       rcd_cad_order_summary.ord_doc_num := lics_inbound_utility.get_variable('ORD_DOC_NUM');
       rcd_cad_order_summary.ord_doc_line_num := lics_inbound_utility.get_variable('ORD_DOC_LINE_NUM');
       rcd_cad_order_summary.ord_lin_status := lics_inbound_utility.get_variable('ORD_LIN_STATUS');
@@ -275,6 +279,9 @@ create or replace package body ladcad04_order_summary as
       rcd_cad_order_summary.del_niv := lics_inbound_utility.get_number('DEL_NIV',null);
       rcd_cad_order_summary.pod_niv := lics_inbound_utility.get_number('POD_NIV',null);
       rcd_cad_order_summary.cad_load_date := sysdate;
+      rcd_cad_order_summary.org_code := lics_inbound_utility.get_number('ORG_CODE',null);
+      rcd_cad_order_summary.distbn_chnl_code := lics_inbound_utility.get_number('DISTBN_CHNL_CODE',null);
+      rcd_cad_order_summary.division := lics_inbound_utility.get_number('DIVISION',null);
 
       /*-*/
       /* Retrieve exceptions raised
@@ -337,7 +344,10 @@ create or replace package body ladcad04_order_summary as
           ord_niv,
           del_niv,
           pod_niv,
-          cad_load_date)
+          cad_load_date,
+          org_code,
+          distbn_chnl_code,
+          division)
       values
          (rcd_cad_order_summary.ord_doc_num,
           rcd_cad_order_summary.ord_doc_line_num,
@@ -361,7 +371,10 @@ create or replace package body ladcad04_order_summary as
           rcd_cad_order_summary.ord_niv,
           rcd_cad_order_summary.del_niv,
           rcd_cad_order_summary.pod_niv,
-          rcd_cad_order_summary.cad_load_date);
+          rcd_cad_order_summary.cad_load_date,
+          rcd_cad_order_summary.org_code,
+          rcd_cad_order_summary.distbn_chnl_code,
+          rcd_cad_order_summary.division);
 
    /*-------------*/
    /* End routine */

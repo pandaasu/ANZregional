@@ -17,6 +17,7 @@ create or replace package ladcad03_customer as
  2008/01   Linden Glen    Created
  2008/02   Linden Glen    Added LAST_UPDATE_DATE
  2008/05   Linden Glen    Added swb_status
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
 
 *******************************************************************************/
 
@@ -77,7 +78,7 @@ create or replace package body ladcad03_customer as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);      
+      lics_inbound_utility.set_definition('HDR','IDOC_HDR',3);
       lics_inbound_utility.set_definition('HDR','SAP_CUSTOMER_CODE',10);
       lics_inbound_utility.set_definition('HDR','SAP_CUSTOMER_NAME',160);
       lics_inbound_utility.set_definition('HDR','SHIP_TO_CUST_CODE',10);
@@ -107,7 +108,9 @@ create or replace package body ladcad03_customer as
       lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_NAME',120);
       lics_inbound_utility.set_definition('HDR','SWB_STATUS',8);
       lics_inbound_utility.set_definition('HDR','LAST_UPDATE_DATE',14);
-
+      lics_inbound_utility.set_definition('HDR','ORG_CODE',4);
+      lics_inbound_utility.set_definition('HDR','DISTBN_CHNL_CODE',2);
+      lics_inbound_utility.set_definition('HDR','DIVISION',2);
 
    /*-------------*/
    /* End routine */
@@ -261,7 +264,7 @@ create or replace package body ladcad03_customer as
 
       /*-*/
       /* Retrieve field values
-      /*-*/      
+      /*-*/
       rcd_cad_customer_master.sap_customer_code := lics_inbound_utility.get_variable('SAP_CUSTOMER_CODE');
       rcd_cad_customer_master.sap_customer_name := lics_inbound_utility.get_variable('SAP_CUSTOMER_NAME');
       rcd_cad_customer_master.ship_to_cust_code := lics_inbound_utility.get_variable('SHIP_TO_CUST_CODE');
@@ -292,6 +295,9 @@ create or replace package body ladcad03_customer as
       rcd_cad_customer_master.last_update_date := lics_inbound_utility.get_variable('LAST_UPDATE_DATE');
       rcd_cad_customer_master.swb_status := lics_inbound_utility.get_variable('SWB_STATUS');
       rcd_cad_customer_master.cad_load_date := sysdate;
+      rcd_cad_customer_master.org_code := lics_inbound_utility.get_variable('ORG_CODE');
+      rcd_cad_customer_master.distbn_chnl_code := lics_inbound_utility.get_variable('DISTBN_CHNL_CODE');
+      rcd_cad_customer_master.division := lics_inbound_utility.get_variable('DIVISION');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -323,7 +329,8 @@ create or replace package body ladcad03_customer as
       /* Delete Material master entry if it exists
       /*-*/
       delete cad_customer_master
-       where sap_customer_code = rcd_cad_customer_master.sap_customer_code;
+       where sap_customer_code = rcd_cad_customer_master.sap_customer_code
+         and division = rcd_cad_customer_master.division;
 
       insert into cad_customer_master
          (sap_customer_code,
@@ -355,7 +362,10 @@ create or replace package body ladcad03_customer as
           channel_grp_name,
           swb_status,
           last_update_date,
-          cad_load_date)
+          cad_load_date,
+          org_code,
+          distbn_chnl_code,
+          division)
       values
          (rcd_cad_customer_master.sap_customer_code,
           rcd_cad_customer_master.sap_customer_name,
@@ -386,7 +396,10 @@ create or replace package body ladcad03_customer as
           rcd_cad_customer_master.channel_grp_name,
           rcd_cad_customer_master.swb_status,
           rcd_cad_customer_master.last_update_date,
-          rcd_cad_customer_master.cad_load_date);
+          rcd_cad_customer_master.cad_load_date,
+          rcd_cad_customer_master.org_code,
+          rcd_cad_customer_master.distbn_chnl_code,
+          rcd_cad_customer_master.division);
 
    /*-------------*/
    /* End routine */
