@@ -28,6 +28,7 @@ create or replace package pts_app.pts_tes_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
+   function retrieve_preview return pts_xml_type pipelined;
    function retrieve_question return pts_xml_type pipelined;
    function select_question return pts_xml_type pipelined;
    procedure update_question(par_user in varchar2);
@@ -1002,6 +1003,233 @@ create or replace package body pts_app.pts_tes_function as
    /*-------------*/
    end update_data;
 
+   /********************************************************/
+   /* This procedure performs the retrieve preview routine */
+   /********************************************************/
+   function retrieve_preview return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_tes_code number;
+      var_day_code number;
+      var_found boolean;
+      var_status varchar2(128);
+      var_question varchar2(1);
+      var_sample varchar2(1);
+      var_panel varchar2(1);
+      var_allocation varchar2(1);
+      var_response varchar2(1);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*,
+                t02.tty_typ_target
+           from pts_tes_definition t01,
+                pts_tes_type t02
+          where t01.tde_tes_type = t02.tty_tes_type(+)
+            and t01.tde_tes_code = var_tes_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_question is
+         select t01.*
+           from pts_tes_question t01
+          where t01.tqu_tes_code = csr_retrieve.tde_tes_code;
+      rcd_question csr_question%rowtype;
+
+      cursor csr_sample is
+         select t01.*
+           from pts_tes_sample t01
+          where t01.tsa_tes_code = csr_retrieve.tde_tes_code;
+      rcd_sample csr_sample%rowtype;
+
+      cursor csr_panel is
+         select t01.*
+           from pts_tes_panel t01
+          where t01.tpa_tes_code = csr_retrieve.tde_tes_code;
+      rcd_panel csr_panel%rowtype;
+
+      cursor csr_allocation is
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = csr_retrieve.tde_tes_code;
+      rcd_allocation csr_allocation%rowtype;
+
+      cursor csr_response is
+         select t01.*
+           from pts_tes_response t01
+          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+      rcd_response csr_response%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*RTVPVW' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
+      if var_tes_code is null then
+         pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Test ('||to_char(var_tes_code)||') does not exist');
+      end if;
+      if rcd_retrieve.tty_typ_target != 1 then
+         pts_gen_function.add_mesg_data('Test code (' || to_char(var_tes_code) || ') target must be *PET - question preview not allowed');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_status := ' - (*UNKNOWN)';
+      if rcd_retrieve.tde_tes_status = 1 then
+         var_status := ' - (Raised)';
+      elsif rcd_retrieve.tde_tes_status = 2 then
+         var_status := ' - (Allocation Completed)';
+      elsif rcd_retrieve.tde_tes_status = 3 then
+         var_status := ' - (Results Entered)';
+      elsif rcd_retrieve.tde_tes_status = 4 then
+         var_status := ' - (Closed)';
+      elsif rcd_retrieve.tde_tes_status = 9 then
+         var_status := ' - (Cancelled)';
+      end if;
+
+      /*-*/
+      /* Retrieve the test question
+      /*-*/
+      var_question := '0';
+      open csr_question;
+      fetch csr_question into rcd_question;
+      if csr_question%found then
+         var_question := '1';
+      end if;
+      close csr_question;
+
+      /*-*/
+      /* Retrieve the test sample
+      /*-*/
+      var_sample := '0';
+      open csr_sample;
+      fetch csr_sample into rcd_sample;
+      if csr_sample%found then
+         var_sample := '1';
+      end if;
+      close csr_sample;
+
+      /*-*/
+      /* Retrieve the test panel
+      /*-*/
+      var_panel := '0';
+      open csr_panel;
+      fetch csr_panel into rcd_panel;
+      if csr_panel%found then
+         var_panel := '1';
+      end if;
+      close csr_panel;
+
+      /*-*/
+      /* Retrieve the test allocation
+      /*-*/
+      var_allocation := '0';
+      open csr_allocation;
+      fetch csr_allocation into rcd_allocation;
+      if csr_allocation%found then
+         var_allocation := '1';
+      end if;
+      close csr_allocation;
+
+      /*-*/
+      /* Retrieve the test response
+      /*-*/
+      var_response := '0';
+      open csr_response;
+      fetch csr_response into rcd_response;
+      if csr_response%found then
+         var_response := '1';
+      end if;
+      close csr_response;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test xml
+      /*-*/
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" QUEDTA="'||var_question||'" SAMDTA="'||var_sample||'" PANDTA="'||var_panel||'" ALCDTA="'||var_allocation||'" RESDTA="'||var_response||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_PREVIEW - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_preview;
+
    /*********************************************************/
    /* This procedure performs the retrieve question routine */
    /*********************************************************/
@@ -1018,6 +1246,7 @@ create or replace package body pts_app.pts_tes_function as
       var_day_code number;
       var_found boolean;
       var_status varchar2(128);
+      var_response varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -1041,6 +1270,12 @@ create or replace package body pts_app.pts_tes_function as
             and t01.tqu_day_code = var_day_code
           order by t01.tqu_dsp_seqn asc;
       rcd_question csr_question%rowtype;
+
+      cursor csr_response is
+         select t01.*
+           from pts_tes_response t01
+          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+      rcd_response csr_response%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1111,6 +1346,17 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test response
+      /*-*/
+      var_response := '0';
+      open csr_response;
+      fetch csr_response into rcd_response;
+      if csr_response%found then
+         var_response := '1';
+      end if;
+      close csr_response;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -1118,7 +1364,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'" WEICAL="'||pts_to_xml(nvl(rcd_retrieve.tde_wgt_que_calc,'0'))||'" WEIBOL="'||to_char(rcd_retrieve.tde_wgt_que_bowl)||'" WEIOFF="'||to_char(rcd_retrieve.tde_wgt_que_offer)||'" WEIREM="'||to_char(rcd_retrieve.tde_wgt_que_remain)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" RESDTA="'||var_response||'" DAYCNT="'||to_char(rcd_retrieve.tde_tes_day_count)||'" WEICAL="'||pts_to_xml(nvl(rcd_retrieve.tde_wgt_que_calc,'0'))||'" WEIBOL="'||to_char(rcd_retrieve.tde_wgt_que_bowl)||'" WEIOFF="'||to_char(rcd_retrieve.tde_wgt_que_offer)||'" WEIREM="'||to_char(rcd_retrieve.tde_wgt_que_remain)||'"/>'));
 
       /*-*/
       /* Pipe the test question xml
@@ -1626,6 +1872,8 @@ create or replace package body pts_app.pts_tes_function as
       var_target varchar2(64);
       var_found boolean;
       var_status varchar2(128);
+      var_allocation varchar2(1);
+      var_response varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -1668,6 +1916,18 @@ create or replace package body pts_app.pts_tes_function as
             and t01.tfe_sam_code = rcd_sample.tsa_sam_code
             and t01.tfe_pet_size = rcd_size.val_code;
       rcd_feeding csr_feeding%rowtype;
+
+      cursor csr_allocation is
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = csr_retrieve.tde_tes_code;
+      rcd_allocation csr_allocation%rowtype;
+
+      cursor csr_response is
+         select t01.*
+           from pts_tes_response t01
+          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+      rcd_response csr_response%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1738,6 +1998,28 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test allocation
+      /*-*/
+      var_allocation := '0';
+      open csr_allocation;
+      fetch csr_allocation into rcd_allocation;
+      if csr_allocation%found then
+         var_allocation := '1';
+      end if;
+      close csr_allocation;
+
+      /*-*/
+      /* Retrieve the test response
+      /*-*/
+      var_response := '0';
+      open csr_response;
+      fetch csr_response into rcd_response;
+      if csr_response%found then
+         var_response := '1';
+      end if;
+      close csr_response;
+
+      /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
@@ -1745,7 +2027,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" ALCDTA="'||var_allocation||'" RESDTA="'||var_response||'"/>'));
 
       /*-*/
       /* Pipe the test sample xml
@@ -2214,7 +2496,7 @@ create or replace package body pts_app.pts_tes_function as
                 pts_tes_type t02,
                 (select tpa_tes_code, count(*) as pan_count from pts_tes_panel where tpa_tes_code = var_tes_code group by tpa_tes_code) t03
           where t01.tde_tes_type = t02.tty_tes_type(+)
-            and t01.tde_tes_type = t03.tpa_tes_code(+)
+            and t01.tde_tes_code = t03.tpa_tes_code(+)
             and t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
@@ -3196,7 +3478,7 @@ create or replace package body pts_app.pts_tes_function as
                 pts_tes_type t02,
                 (select tal_tes_code, count(*) as allocation_count from pts_tes_allocation where tal_tes_code = var_tes_code group by tal_tes_code) t03
           where t01.tde_tes_type = t02.tty_tes_type(+)
-            and t01.tde_tes_type = t03.tal_tes_code(+)
+            and t01.tde_tes_code = t03.tal_tes_code(+)
             and t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
 
