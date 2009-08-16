@@ -1040,31 +1040,31 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_question is
          select t01.*
            from pts_tes_question t01
-          where t01.tqu_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tqu_tes_code = rcd_retrieve.tde_tes_code;
       rcd_question csr_question%rowtype;
 
       cursor csr_sample is
          select t01.*
            from pts_tes_sample t01
-          where t01.tsa_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tsa_tes_code = rcd_retrieve.tde_tes_code;
       rcd_sample csr_sample%rowtype;
 
       cursor csr_panel is
          select t01.*
            from pts_tes_panel t01
-          where t01.tpa_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tpa_tes_code = rcd_retrieve.tde_tes_code;
       rcd_panel csr_panel%rowtype;
 
       cursor csr_allocation is
          select t01.*
            from pts_tes_allocation t01
-          where t01.tal_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tal_tes_code = rcd_retrieve.tde_tes_code;
       rcd_allocation csr_allocation%rowtype;
 
       cursor csr_response is
          select t01.*
            from pts_tes_response t01
-          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tre_tes_code = rcd_retrieve.tde_tes_code;
       rcd_response csr_response%rowtype;
 
    /*-------------*/
@@ -1274,7 +1274,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_response is
          select t01.*
            from pts_tes_response t01
-          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tre_tes_code = rcd_retrieve.tde_tes_code;
       rcd_response csr_response%rowtype;
 
    /*-------------*/
@@ -1920,13 +1920,13 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_allocation is
          select t01.*
            from pts_tes_allocation t01
-          where t01.tal_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tal_tes_code = rcd_retrieve.tde_tes_code;
       rcd_allocation csr_allocation%rowtype;
 
       cursor csr_response is
          select t01.*
            from pts_tes_response t01
-          where t01.tre_tes_code = csr_retrieve.tde_tes_code;
+          where t01.tre_tes_code = rcd_retrieve.tde_tes_code;
       rcd_response csr_response%rowtype;
 
    /*-------------*/
