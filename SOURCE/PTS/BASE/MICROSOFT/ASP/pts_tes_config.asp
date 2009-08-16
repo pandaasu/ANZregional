@@ -128,27 +128,29 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
       cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[2] = new clsScreen('dspKeyword','hedKeyword');
-      cobjScreens[3] = new clsScreen('dspQuestion','hedQuestion');
-      cobjScreens[4] = new clsScreen('dspQueDetail','hedQueDetail');
-      cobjScreens[5] = new clsScreen('dspSample','hedSample');
-      cobjScreens[6] = new clsScreen('dspSamDetail','hedSamDetail');
-      cobjScreens[7] = new clsScreen('dspSamSize','hedSamSize');
-      cobjScreens[8] = new clsScreen('dspPanel','hedPanel');
-      cobjScreens[9] = new clsScreen('dspAllocation','hedAllocation');
-      cobjScreens[10] = new clsScreen('dspRelease','hedRelease');
-      cobjScreens[11] = new clsScreen('dspResReport','hedResReport');
+      cobjScreens[3] = new clsScreen('dspPreview','hedPreview');
+      cobjScreens[4] = new clsScreen('dspQuestion','hedQuestion');
+      cobjScreens[5] = new clsScreen('dspQueDetail','hedQueDetail');
+      cobjScreens[6] = new clsScreen('dspSample','hedSample');
+      cobjScreens[7] = new clsScreen('dspSamDetail','hedSamDetail');
+      cobjScreens[8] = new clsScreen('dspSamSize','hedSamSize');
+      cobjScreens[9] = new clsScreen('dspPanel','hedPanel');
+      cobjScreens[10] = new clsScreen('dspAllocation','hedAllocation');
+      cobjScreens[11] = new clsScreen('dspRelease','hedRelease');
+      cobjScreens[12] = new clsScreen('dspResReport','hedResReport');
       cobjScreens[0].hedtxt = 'Pet Test Prompt';
       cobjScreens[1].hedtxt = 'Pet Test Maintenance';
       cobjScreens[2].hedtxt = 'Pet Test Keyword Maintenance';
-      cobjScreens[3].hedtxt = 'Pet Test Question Review';
-      cobjScreens[4].hedtxt = 'Pet Test Question Maintenance';
-      cobjScreens[5].hedtxt = 'Pet Test Sample Review';
-      cobjScreens[6].hedtxt = 'Pet Test Sample Maintenance';
-      cobjScreens[7].hedtxt = 'Pet Test Sample Size';
-      cobjScreens[8].hedtxt = 'Pet Test Panel Selection';
-      cobjScreens[9].hedtxt = 'Pet Test Allocation';
-      cobjScreens[10].hedtxt = 'Pet Test Release';
-      cobjScreens[11].hedtxt = 'Pet Test Results Report';
+      cobjScreens[3].hedtxt = 'Pet Test Preview';
+      cobjScreens[4].hedtxt = 'Pet Test Question Review';
+      cobjScreens[5].hedtxt = 'Pet Test Question Maintenance';
+      cobjScreens[6].hedtxt = 'Pet Test Sample Review';
+      cobjScreens[7].hedtxt = 'Pet Test Sample Maintenance';
+      cobjScreens[8].hedtxt = 'Pet Test Sample Size';
+      cobjScreens[9].hedtxt = 'Pet Test Panel Selection';
+      cobjScreens[10].hedtxt = 'Pet Test Allocation';
+      cobjScreens[11].hedtxt = 'Pet Test Release';
+      cobjScreens[12].hedtxt = 'Pet Test Results Report';
       initSearch();
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
@@ -229,6 +231,20 @@ sub PaintFunction()%>
       document.getElementById('PRO_TesCode').value = strCode;
       displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
+   }
+   function doPromptPreview() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_TesCode').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Test code must be entered for preview';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestPreview(\''+document.getElementById('PRO_TesCode').value+'\');',10);
    }
    function doPromptQuestion() {
       if (!processForm()) {return;}
@@ -684,6 +700,67 @@ sub PaintFunction()%>
       displayScreen('dspDefine');
    }
 
+   ///////////////////////
+   // Preview Functions //
+   ///////////////////////
+   var cstrPreviewTestCode;
+   function requestPreview(strCode) {
+      cstrQuestionTestCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*RTVPVW" TESCDE="'+strCode+'"/>';
+      doPostRequest('<%=strBase%>pts_tes_config_preview_retrieve.asp',function(strResponse) {checkPreview(strResponse);},false,streamXML(strXML));
+   }
+   function checkPreview(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         document.getElementById('PRE_QueDta').innerHTML = 'No';
+         document.getElementById('PRE_SamDta').innerHTML = 'No';
+         document.getElementById('PRE_PanDta').innerHTML = 'No';
+         document.getElementById('PRE_AlcDta').innerHTML = 'No';
+         document.getElementById('PRE_ResDta').innerHTML = 'No';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TEST') {
+               document.getElementById('subPreview').innerHTML = objElements[i].getAttribute('TESTXT');
+               if (objElements[i].getAttribute('QUEDTA') == '1') {
+                  document.getElementById('PRE_QueDta').innerHTML = 'YES';
+               }
+               if (objElements[i].getAttribute('SAMDTA') == '1') {
+                  document.getElementById('PRE_SamDta').innerHTML = 'YES';
+               }
+               if (objElements[i].getAttribute('PANDTA') == '1') {
+                  document.getElementById('PRE_PanDta').innerHTML = 'YES';
+               }
+               if (objElements[i].getAttribute('ALCDTA') == '1') {
+                  document.getElementById('PRE_AlcDta').innerHTML = 'YES';
+               }
+               if (objElements[i].getAttribute('RESDTA') == '1') {
+                  document.getElementById('PRE_ResDta').innerHTML = 'YES';
+               }
+            }
+         }
+         displayScreen('dspPreview');
+      }
+   }
+   function doPreviewCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_TesCode').focus();
+   }
+
    ////////////////////////
    // Question Functions //
    ////////////////////////
@@ -693,6 +770,7 @@ sub PaintFunction()%>
    var cstrQuestionTarget;
    var cintQuestionRow;
    var cobjQuestionDay;
+   var cstrQuestionResponse;
    function clsQueDay() {
       this.daycde = '';
       this.queary = new Array();
@@ -726,6 +804,7 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         cstrQuestionResponse = '0';
          cobjQuestionDay = new Array();
          var intIndex = -1;
          var strWeiCalc;
@@ -734,6 +813,7 @@ sub PaintFunction()%>
             if (objElements[i].nodeName == 'TEST') {
                cstrQuestionTestText = objElements[i].getAttribute('TESTXT');
                cstrQuestionTestStatus = objElements[i].getAttribute('TESSTA');
+               cstrQuestionResponse = objElements[i].getAttribute('RESDTA');
                strWeiCalc = objElements[i].getAttribute('WEICAL');
                document.getElementById('QUE_WeiBowl').value = objElements[i].getAttribute('WEIBOL');
                document.getElementById('QUE_WeiOffr').value = objElements[i].getAttribute('WEIOFF');
@@ -809,6 +889,11 @@ sub PaintFunction()%>
       if (strMessage != '') {
          alert(strMessage);
          return;
+      }
+      if (cstrQuestionResponse == '1') {
+         if (confirm('Response data exists for this test - Please confirm the question update\r\npress OK continue (the existing response data will be removed)\r\npress Cancel to cancel the request') == false) {
+            return;
+         }
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDQUE"';
@@ -1012,7 +1097,7 @@ sub PaintFunction()%>
          objQueList.options[objQueList.options.length-1].setAttribute('quetxt',strQueText);
          objQueList.focus();
          document.getElementById('QUE_QueCode').value = '';
-         document.getElementById('QUE_QueType').selectedIndex = 0;
+         document.getElementById('QUE_QueType').selectedIndex = 1;
       }
    }
    function doQueDetailDelete() {
@@ -1159,6 +1244,8 @@ sub PaintFunction()%>
    var cintSampleSize;
    var cstrSampleCode;
    var cobjSampleData;
+   var cstrSampleAllocation;
+   var cstrSampleResponse;
    function clsSamData() {
       this.samcde = '';
       this.samtxt = '';
@@ -1197,12 +1284,16 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         cstrSampleAllocation = '0';
+         cstrSampleResponse = '0';
          cobjSampleData = new Array();
          var intIndex = -1;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'TEST') {
                cstrSampleTestText = objElements[i].getAttribute('TESTXT');
                cstrSampleTestStatus = objElements[i].getAttribute('TESSTA');
+               cstrSampleAllocation = objElements[i].getAttribute('ALCDTA');
+               cstrSampleResponse = objElements[i].getAttribute('RESDTA');
             } else if (objElements[i].nodeName == 'SAMPLE') {
                intIndex++;
                cobjSampleData[intIndex] = new clsSamData();
@@ -1264,6 +1355,11 @@ sub PaintFunction()%>
       if (strMessage != '') {
          alert(strMessage);
          return;
+      }
+      if (cstrSampleAllocation == '1' || cstrSampleResponse == '1') {
+         if (confirm('Allocation and or response data exists for this test - Please confirm the sample update\r\npress OK continue (the existing allocation and response data will be removed)\r\npress Cancel to cancel the request') == false) {
+            return;
+         }
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDSAM"';
@@ -2134,13 +2230,15 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=9 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPreview();">&nbsp;Preview&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
                </tr>
@@ -2363,6 +2461,48 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doKeywordAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspPreview" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedPreview" class="clsFunction" align=center colspan=2 nowrap><nobr>Test Preview</nobr></td>
+      </tr>
+      <tr>
+         <td id="subPreview" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Test Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Questions Created:&nbsp;</nobr></td>
+         <td id="PRE_QueDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Samples Created:&nbsp;</nobr></td>
+         <td id="PRE_SamDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Panel Selected:&nbsp;</nobr></td>
+         <td id="PRE_PanDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allocation Created:&nbsp;</nobr></td>
+         <td id="PRE_AlcDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Entered:&nbsp;</nobr></td>
+         <td id="PRE_ResDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPreviewCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
