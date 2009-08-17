@@ -99,7 +99,7 @@
 
     <interface identifier="SAPVDSDTA#03"
                description="SAP GRD Server to VDS Customer Change Interface"
-               class="com.isi.vds.cSapVds02"
+               class="com.isi.vds.cSapVds03"
                SapClient01="002"
                SapUserId01="*PROMPTED"
                SapPassword01="*PROMPTED"
@@ -124,7 +124,7 @@
 
     <interface identifier="SAPVDSDTA#04"
                description="SAP GRD Server to VDS Vendor Change Interface"
-               class="com.isi.vds.cSapVds02"
+               class="com.isi.vds.cSapVds04"
                SapClient01="002"
                SapUserId01="*PROMPTED"
                SapPassword01="*PROMPTED"
