@@ -54,6 +54,7 @@ public final class cSapVds01 implements iSapDualInterface {
       //
       cSapSingleQuery objSapSingleQuery = null;
       cSapSingleResultSet objSapSingleResultSet = null;
+      PrintWriter objPrintWriter = null;
       
       /////////////////////////////////////////////////////////////////
       // Step 1 - Retrieve the reference data from the source server //
@@ -68,15 +69,39 @@ public final class cSapVds01 implements iSapDualInterface {
       
       //
       // Retrieve the reference data
-      //   
+      //
+      boolean bolAppend = false;
       try {
-         objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
          for (int i=0; i<strTableNames.length; i++) {
-            objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[0],0,0);
+            boolean bolData = false;
+            int intRowSkips = 0;
+            int intRowCount = 10000;
+            boolean bolRead = true;
+            while (bolRead) {
+               objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
+               objSapSingleQuery.execute(strTableNames[i].toUpperCase(), strTableNames[i].toUpperCase(), "*", new String[0], intRowSkips, intRowCount);
+               objSapSingleResultSet = objSapSingleQuery.getResultSet();
+               if (!bolData) {
+                  if (!bolAppend) {
+                     objSapSingleResultSet.getMetaData().toInterface(strOutputFile, strIdoc, strVdsQuery, bolAppend);
+                  } else {
+                     objPrintWriter = new PrintWriter(new FileWriter(strOutputFile, bolAppend));
+                     objSapSingleResultSet.getMetaData().toInterface(strTableNames[i].toUpperCase(), objPrintWriter);
+                     objPrintWriter.close();
+                  }
+                  objSapSingleResultSet.appendToInterface(strOutputFile);
+                  bolAppend = true;
+                  bolData = true;
+               } else {
+                  objSapSingleResultSet.appendToInterface(strOutputFile);
+               }
+               if (objSapSingleResultSet.getRowCount() < intRowCount) {
+                  bolRead = false;
+               } else {
+                  intRowSkips = intRowSkips + intRowCount;
+               }
+            }
          }
-         objSapSingleResultSet = objSapSingleQuery.getResultSet();
-         objSapSingleResultSet.getMetaData().toInterface(strOutputFile, strIdoc, strVdsQuery, false);
-         objSapSingleResultSet.toInterface(strOutputFile, strIdoc, strVdsQuery, true);
       } catch(Exception objException) {
          throw new Exception("SAPVDS01 - SAP query failed - " + objException.getMessage());
       } finally {
