@@ -2479,25 +2479,28 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Questions Created:&nbsp;</nobr></td>
-         <td id="PRE_QueDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PRE_QueDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Samples Created:&nbsp;</nobr></td>
-         <td id="PRE_SamDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PRE_SamDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Panel Selected:&nbsp;</nobr></td>
-         <td id="PRE_PanDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PRE_PanDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allocation Created:&nbsp;</nobr></td>
-         <td id="PRE_AlcDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PRE_AlcDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Response Entered:&nbsp;</nobr></td>
-         <td id="PRE_ResDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PRE_ResDta" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
