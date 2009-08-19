@@ -179,9 +179,9 @@ BEGIN
       pds_pos_format_grpg t3
     WHERE
       t1.cocode = v_cmpny_code AND
-      ((var_div_code = '01' and t1.divcode in ('51,'55')) or
-       (var_div_code = '02' and t1.divcode in ('51,'57')) or
-       (var_div_code = '05' and t1.divcode in ('51,'56'))) AND
+      ((v_div_code = '01' and t1.divcode in ('51','55')) or
+       (v_div_code = '02' and t1.divcode in ('51','57')) or
+       (v_div_code = '05' and t1.divcode in ('51','56'))) AND
       t2.cmpny_code = v_cmpny_code AND
       t2.div_code = v_div_code AND
       t1.posformat = t3.pos_format_grpg_code (+) AND
