@@ -1335,7 +1335,7 @@ sub PaintFunction()%>
             objCell.colSpan = 1;
             objCell.innerHTML = '<a class="clsSelect" onClick="doSampleSizeUpdate(\''+i+'\',\''+j+'\');">Update</a>&nbsp;-&nbsp;'+cobjSampleData[i].sizary[j].siztxt;
             if (cobjSampleData[i].sizary[j].fedqty != '') {
-               objCell.innerHTML = objCell.innerHTML+' - Feed Quantity ('+cobjSampleData[i].sizary[j].fedqty+')';
+               objCell.innerHTML = objCell.innerHTML+' - Unit Quantity ('+cobjSampleData[i].sizary[j].fedqty+')';
             }
             if (cobjSampleData[i].sizary[j].fedtxt != '') {
                objCell.innerHTML = objCell.innerHTML+' - '+cobjSampleData[i].sizary[j].fedtxt;
@@ -1607,7 +1607,7 @@ sub PaintFunction()%>
       var strMessage = '';
       if (document.getElementById('SAM_FedQnty').value == '' && document.getElementById('SAM_FedText').value != '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Feed comment must not be entered when no feed quantity';
+         strMessage = strMessage + 'Unit comment must not be entered when no unit quantity';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -2282,7 +2282,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportQuestionnaire();">&nbsp;Questionnaire&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportSelection();">&nbsp;Selection&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportSelection();">&nbsp;Pet Selection&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReportResults();">&nbsp;Results&nbsp;</a></nobr></td>
                </tr>
@@ -2792,13 +2792,13 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feed Quantity:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Unit Quantity:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="SAM_FedQnty" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feed Comment:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Unit Comment:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_FedText" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
@@ -2862,7 +2862,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center valign=center colspan=4 nowrap><nobr>
             <table class="clsTable01" align=right cols=2 cellpadding="0" cellspacing="0">
-               <tr><td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Copy Selection Template&nbsp;</a></nobr></td><td align=left colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td></tr>
+               <tr><td align=right colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td><td align=left colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Retrieve Selection Template&nbsp;</a></nobr></td></tr>
             </table>
          </nobr></td>
       </tr>
@@ -2905,7 +2905,7 @@ sub PaintFunction()%>
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doAllocationCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doAllocationAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doAllocationAccept();">&nbsp;Allocate&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -2932,7 +2932,7 @@ sub PaintFunction()%>
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReleaseCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReleaseAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doReleaseAccept();">&nbsp;Release&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
