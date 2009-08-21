@@ -249,12 +249,22 @@ insert into lics_das_value values('CHINA','CHINA_FCST','DOM_DISTBN_CHNL_CODE',1,
 insert into lics_das_code values('CHINA','CHINA_FCST','DOM_DIVISION_CODE','Domestic Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','DOM_DIVISION_CODE',1,'51');
 
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_SNK_DIVISION_CODE','Domestic Snack Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_SNK_DIVISION_CODE',1,'51');
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_PET_DIVISION_CODE','Domestic Pet Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_PET_DIVISION_CODE',1,'56');
+
 insert into lics_das_code values('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE','Affiliate Sales Organisation Code','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','AFF_SALES_ORG_CODE',1,'135');
 insert into lics_das_code values('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE','Affiliate Distribution Channel Code','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','AFF_DISTBN_CHNL_CODE',1,'99');
 insert into lics_das_code values('CHINA','CHINA_FCST','AFF_DIVISION_CODE','Affiliate Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','AFF_DIVISION_CODE',1,'51');
+
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_SNK_DIVISION_CODE','Affiliate Snack Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_SNK_DIVISION_CODE',1,'51');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PET_DIVISION_CODE','Affiliate Pet Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PET_DIVISION_CODE',1,'56');
 
 insert into lics_das_code values('CHINA','CHINA_FCST','FPPS_DOM_DEST_CODE','FPPS Domestic Destination Code','*SINGLE','*MIXED','LICS_APP',sysdate);
 insert into lics_das_value values('CHINA','CHINA_FCST','FPPS_DOM_DEST_CODE',1,'187');
