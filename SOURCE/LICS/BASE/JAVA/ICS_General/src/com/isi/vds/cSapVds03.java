@@ -12,7 +12,7 @@ import java.text.*;
 import java.io.*;
 
 /**
- * This class implements the SAP material change functionality. This functionality retrieves
+ * This class implements the SAP customer change functionality. This functionality retrieves
  * SAP customer data based on changes to SAP table KNA1 within the specified data range.
  */
 public final class cSapVds03 implements iSapDualInterface {
@@ -25,23 +25,11 @@ public final class cSapVds03 implements iSapDualInterface {
       
       //
       // Retrieve any interface specific interface parameters
-      //
-      if (objSapConnection02 == null) {
-         throw new Exception("SAPVDS03 - Timezone connection must be supplied");
-      }
-      
-      
-   //   /*/IDOC/EDI_DC40[MESTYP='Z_DEBMAS' and IDOCTYP='DEBMAS05' and CIMTYP='ZDEBMAS05' and SNDPRN='%GRD_S%']
-  //    and ((/*/IDOC/EDI_DC40/RCVPRN[.='%GRD_R_EN%'] and (/*/IDOC/E1KNVVM[VKORG[.= '147' or .= '149']] or /*/IDOC/E1KNB1M[BUKRS[.= '147' or .= '149']])) or
-   //   (/*/IDOC/EDI_DC40/RCVPRN[.='%GRD_R_JA%'] and (/*/IDOC/E1KNVVM[VKORG[.= '131' or .= '132']] or /*/IDOC/E1KNB1M[BUKRS[.= '131' or .= '132']])) or
-   //   (/*/IDOC/EDI_DC40/RCVPRN[.='%GRD_R_CH%'] and (/*/IDOC/E1KNVVM[VKORG[.= '137' or .= '135' or .='234']] or /*/IDOC/E1KNB1M[BUKRS[.= '137' or .= '135' or .='234']])))
-      
-      //
-      // Retrieve any interface specific interface parameters
-      //
+      //                
       String strGlobalKNA1DateRange = (String)objParameters.get("GLOBAL_KNA1_DATERANGE");
-      String strGlobalKNA1Filter = (String)objParameters.get("GLOBAL_KNA1_FILTER");
-      String strVdsGlobalQuery = (String)objParameters.get("VDS_GLOBAL_QUERY");
+      String strGlobalKNB1Filter = (String)objParameters.get("GLOBAL_KNB1_FILTER");
+      String strGlobalKNVVFilter = (String)objParameters.get("GLOBAL_KNVV_FILTER");
+      String strVdsGlobalQuery = (String)objParameters.get("VDS_GLOBAL_QUERY");                
       String strVdsKNA1Columns = (String)objParameters.get("VDS_KNA1_COLUMNS");
       String strVdsKNB1Columns = (String)objParameters.get("VDS_KNB1_COLUMNS");
       String strVdsKNVIColumns = (String)objParameters.get("VDS_KNVI_COLUMNS");
@@ -77,6 +65,7 @@ public final class cSapVds03 implements iSapDualInterface {
       String strSpaces = String.valueOf(chrSpaces);
       strVdsGlobalQuery = strVdsGlobalQuery + strSpaces.substring(0,30-strVdsGlobalQuery.length());
       String strIdoc = "SAPVDS03";
+      String strTable = null;
       
       //
       // Retrieve the date range from the parameter value
@@ -124,24 +113,20 @@ public final class cSapVds03 implements iSapDualInterface {
       }
       
       //
-      // Retrieve the list of MARA changes for the data range
+      // Retrieve the list of KNA1 changes for the data range
       //
-      ArrayList objMATNR = null;
+      ArrayList objKUNNR = null;
       String[] strFilter = null;
-      if (strGlobalMARAFilter == null) {
-         strFilter = new String[]{"LAEDA >= '" + strGlobalMARADateRange + "'"};
-      } else {
-         strFilter = new String[]{"LAEDA >= '" + strGlobalMARADateRange + "'","AND (" + strGlobalMARAFilter + ")"};
-      }
+      strFilter = new String[]{"ERDAT >= '" + strGlobalKNA1DateRange + "'"};
       try {
          objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
-         objSapSingleQuery.execute("MARA", "MARA", "MATNR", strFilter,0,0);
-         objMATNR = objSapSingleQuery.getResultSet().getOrConditionsArray("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'",1000);
+         objSapSingleQuery.execute("KNA1", "KNA1", "KUNNR", strFilter,0,0);
+         objKUNNR = objSapSingleQuery.getResultSet().getOrConditionsArray("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'",1000);
          if (strLogging.equals("1")) {
-            System.out.println("Global change list count: " + objSapSingleQuery.getResultSet().getRowCount("MARA"));
+            System.out.println("Global change list count: " + objSapSingleQuery.getResultSet().getRowCount("KNA1"));
          }
       } catch(Exception objException) {
-         throw new Exception("SAPVDS02 - Global MARA query failed - " + objException.getMessage());
+         throw new Exception("SAPVDS03 - Global KNA1 query failed - " + objException.getMessage());
       } finally {
          objSapSingleResultSet = null;
          objSapSingleQuery = null;
@@ -155,41 +140,41 @@ public final class cSapVds03 implements iSapDualInterface {
          System.out.println("End Global change list retrieval: " + Calendar.getInstance().getTime());
       }
       
-      //////////////////////////////////////////////////////////////////////
-      // Step 2 - Check the material change list with the timezone server //
-      //////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////
+      // Step 2 - Check the customer change list with the GRD server //
+      /////////////////////////////////////////////////////////////////
 
       //
-      // Process when material changes found
+      // Process when customer changes found
       //
-      ArrayList objTimezoneMATNR = new ArrayList();
-      if (objMATNR.size() != 0) {
+      ArrayList objGlobalKUNNR= new ArrayList();
+      if (objKUNNR.size() != 0) {
             
          //
-         // Apply the timezone filters to the material list
+         // Apply the global filters to the vendor list
          //
          try {
-            for (int i=0; i<objMATNR.size(); i++) {
-               objSapSingleQuery = new cSapSingleQuery(objSapConnection02);
+            for (int i=0; i<objKUNNR.size(); i++) {
+               objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
                try {
-                  if (strTimezoneMARCFilter == null) {
-                     objSapSingleQuery.execute("MARC", "MARC", "MATNR, WERKS", (String[])objMATNR.get(i),0,0);
+                  if (strGlobalKNB1Filter == null) {
+                     objSapSingleQuery.execute("KNB1", "KNB1", "KUNNR", (String[])objKUNNR.get(i),0,0);
                   } else {
-                     objSapSingleQuery.execute("MARC", "MARC", "MATNR, WERKS", cSapUtility.concatenateArray((String[])objMATNR.get(i), new String[]{"AND (" + strTimezoneMARCFilter + ")"}),0,0);
+                     objSapSingleQuery.execute("KNB1", "KNB1", "KUNNR", cSapUtility.concatenateArray((String[])objKUNNR.get(i), new String[]{"AND (" + strGlobalKNB1Filter + ")"}),0,0);
                   }
-                  objTimezoneMATNR = objSapSingleQuery.getResultSet().getMergedArray(objTimezoneMATNR, "MARC", "MATNR");
+                  objGlobalKUNNR = objSapSingleQuery.getResultSet().getMergedArray(objGlobalKUNNR, "KNB1", "KUNNR");
                } catch(Exception objException) {
-                  throw new Exception("SAPVDS02 - Timezone MARC query failed - " + objException.getMessage());
+                  throw new Exception("SAPVDS03 - Global KNB1 query failed - " + objException.getMessage());
                }
                try {
-                  if (strTimezoneMVKEFilter == null) {
-                     objSapSingleQuery.execute("MVKE", "MVKE", "MATNR, VKORG", (String[])objMATNR.get(i),0,0);
+                  if (strGlobalKNVVFilter == null) {
+                     objSapSingleQuery.execute("KNVV", "KNVV", "KUNNR", (String[])objKUNNR.get(i),0,0);
                   } else {
-                     objSapSingleQuery.execute("MVKE", "MVKE", "MATNR, VKORG", cSapUtility.concatenateArray((String[])objMATNR.get(i), new String[]{"AND (" + strTimezoneMVKEFilter + ")"}),0,0);
+                     objSapSingleQuery.execute("KNVV", "KNVV", "KUNNR", cSapUtility.concatenateArray((String[])objKUNNR.get(i), new String[]{"AND (" + strGlobalKNVVFilter + ")"}),0,0);
                   }
-                  objTimezoneMATNR = objSapSingleQuery.getResultSet().getMergedArray(objTimezoneMATNR, "MVKE", "MATNR");
+                  objGlobalKUNNR = objSapSingleQuery.getResultSet().getMergedArray(objGlobalKUNNR, "KNVV", "KUNNR");
                } catch(Exception objException) {
-                  throw new Exception("SAPVDS02 - Timezone MVKE query failed - " + objException.getMessage());
+                  throw new Exception("SAPVDS03 - Global KNVV query failed - " + objException.getMessage());
                }
             }
          } catch(Exception objException) {
@@ -203,77 +188,39 @@ public final class cSapVds03 implements iSapDualInterface {
          // Perform logging when required
          //
          if (strLogging.equals("1")) {
-            System.out.println("Timezone filter list count: " + objTimezoneMATNR.size());
-            System.out.println("End timezone filter retrieval: " + Calendar.getInstance().getTime());
+            System.out.println("Global filter list count: " + objGlobalKUNNR.size());
+            System.out.println("End global filter retrieval: " + Calendar.getInstance().getTime());
          }
          
          //
-         // Reset the customer array from the timezone data
+         // Reset the customer array from the global data
          //
-         objMATNR = cSapUtility.getOrConditionsArray(objTimezoneMATNR,"KUNNR = '<KEYVALUE></KEYVALUE>'",1000);
-
-         //
-         // Retrieve the timezone query when required
-         //
-         if (!strVdsTimezoneQuery.trim().toUpperCase().equals("*NONE") && objMATNR.size() != 0) {
-            if (strLogging.equals("1")) {
-               System.out.println("Start timezone data retrieval: " + Calendar.getInstance().getTime());
-            }
-            try {
-               for (int i=0; i<objMATNR.size(); i++) {
-                  objSapSingleQuery = new cSapSingleQuery(objSapConnection02);
-                  objSapSingleQuery.execute("MARA", "MARA", strVdsMARAColumns, (String[])objMATNR.get(i),0,0);
-                  objSapSingleQuery.execute("MARM", "MARM", strVdsMARMColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("MAKT", "MAKT", strVdsMAKTColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("MARC", "MARC", strVdsMARCColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("MVKE", "MVKE", strVdsMVKEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("MMOE", "/MARS/MDMOEDATA", strVdsMMOEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("INOB", "INOB", strVdsINOBColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","OBJEK = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-                  objSapSingleQuery.execute("AUSP", "AUSP", strVdsAUSPColumns, objSapSingleQuery.getResultSet().getOrConditions("INOB","OBJEK = '<KEYVALUE>CUOBJ</KEYVALUE>'"),0,0);
-                  objSapSingleResultSet = objSapSingleQuery.getResultSet();
-                  if (i == 0) {
-                     objSapSingleResultSet.getMetaData().toInterface(strOutputFile,strIdoc, strVdsTimezoneQuery, bolAppend);
-                     bolAppend = true;
-                     objSapSingleResultSet.appendToInterface(strOutputFile);
-                  } else {
-                     objSapSingleResultSet.appendToInterface(strOutputFile);
-                  }
-               }
-            } catch(Exception objException) {
-               throw new Exception("SAPVDS02 - Timezone data query failed - " + objException.getMessage());
-            } finally {
-               objSapSingleResultSet = null;
-               objSapSingleQuery = null;
-            }
-            if (strLogging.equals("1")) {
-               System.out.println("End timezone data retrieval: " + Calendar.getInstance().getTime());
-            }
-         }
- 
+         objKUNNR = cSapUtility.getOrConditionsArray(objGlobalKUNNR,"KUNNR = '<KEYVALUE></KEYVALUE>'",1000);
+         
       }
-      
+          
       //////////////////////////////////////////////////////////////////////////
-      // Step 3 - Retrieve the material interface data from the source server //
+      // Step 3 - Retrieve the customer interface data from the source server //
       //////////////////////////////////////////////////////////////////////////
       
       //
       // Retrieve the SAP query when required
       //
-      if (objMATNR.size() != 0) {
+      if (objKUNNR.size() != 0) {
          if (strLogging.equals("1")) {
             System.out.println("Start Global data retrieval: " + Calendar.getInstance().getTime());
          }
          try {
-            for (int i=0; i<objMATNR.size(); i++) {
+            for (int i=0; i<objKUNNR.size(); i++) {
                objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
-               objSapSingleQuery.execute("MARA", "MARA", strVdsMARAColumns, (String[])objMATNR.get(i),0,0);
-               objSapSingleQuery.execute("MARM", "MARM", strVdsMARMColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MAKT", "MAKT", strVdsMAKTColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MARC", "MARC", strVdsMARCColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MVKE", "MVKE", strVdsMVKEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MMOE", "/MARS/MDMOEDATA", strVdsMMOEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("INOB", "INOB", strVdsINOBColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","OBJEK = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("AUSP", "AUSP", strVdsAUSPColumns, objSapSingleQuery.getResultSet().getOrConditions("INOB","OBJEK = '<KEYVALUE>CUOBJ</KEYVALUE>'"),0,0);
+               strTable = "KNA1";
+               objSapSingleQuery.execute("KNA1", "KNA1", strVdsKNA1Columns, (String[])objKUNNR.get(i),0,0);
+               strTable = "KNB1";
+               objSapSingleQuery.execute("KNB1", "KNB1", strVdsKNB1Columns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+               strTable = "KNVI";
+               objSapSingleQuery.execute("KNVI", "KNVI", strVdsKNVIColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+               strTable = "KNVV";
+               objSapSingleQuery.execute("KNVV", "KNVV", strVdsKNVVColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
                objSapSingleResultSet = objSapSingleQuery.getResultSet();
                if (i == 0) {
                   objSapSingleResultSet.getMetaData().toInterface(strOutputFile, strIdoc, strVdsGlobalQuery, bolAppend);
@@ -284,7 +231,7 @@ public final class cSapVds03 implements iSapDualInterface {
                }
             }
          } catch(Exception objException) {
-            throw new Exception("SAPVDS02 - Global data query failed - " + objException.getMessage());
+            throw new Exception("SAPVDS03 - Global data query failed - " + strTable + " - " + objException.getMessage());
          } finally {
             objSapSingleResultSet = null;
             objSapSingleQuery = null;
@@ -292,7 +239,8 @@ public final class cSapVds03 implements iSapDualInterface {
          if (strLogging.equals("1")) {
             System.out.println("End Global data retrieval: " + Calendar.getInstance().getTime());
          }
-      }     
+      }
+         
    }
 
 }

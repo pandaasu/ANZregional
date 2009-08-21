@@ -12,7 +12,7 @@ import java.text.*;
 import java.io.*;
 
 /**
- * This class implements the SAP vemdor change functionality. This functionality retrieves
+ * This class implements the SAP vendor change functionality. This functionality retrieves
  * SAP vendor data based on changes to SAP table LFA1 within the specified data range.
  */
 public final class cSapVds04 implements iSapDualInterface {
@@ -41,7 +41,7 @@ public final class cSapVds04 implements iSapDualInterface {
          throw new Exception("SAPVDS04 - Global validation query must be supplied");
       }
       if (strGlobalLFA1DateRange == null) {
-         throw new Exception("SAPVDS04 - Global LAF1 date range must be supplied");
+         throw new Exception("SAPVDS04 - Global LFA1 date range must be supplied");
       }
       if (strVdsLFA1Columns == null) {
          strVdsLFA1Columns = "*";
