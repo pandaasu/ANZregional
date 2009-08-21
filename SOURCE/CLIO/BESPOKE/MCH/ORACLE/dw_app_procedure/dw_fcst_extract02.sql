@@ -21,6 +21,7 @@ create or replace package dw_fcst_extract02 as
     2008/03   Steve Gregan   Created
     2008/05   Steve Gregan   Changed customer description logic
     2008/08   Steve Gregan   Changed draft period selection to include all periods
+    2009/08   Steve Gregan   Changed division code based on planning group
 
    *******************************************************************************/
 
@@ -57,6 +58,8 @@ create or replace package body dw_fcst_extract02 as
       var_type varchar2(32 char);
       var_version varchar2(32 char);
       var_planner varchar2(32 char);
+      var_dom_division_code varchar2(32 char);
+      var_aff_division_code varchar2(32 char);
 
       /*-*/
       /* Local cursors
@@ -153,6 +156,30 @@ create or replace package body dw_fcst_extract02 as
       close csr_fcst_extract_header;
 
       /*-*/
+      /* Retrieve the plan group division data
+      /*-*/
+      if upper(rcd_fcst_extract_header.extract_plan_group) = '*SNACK' then
+         select dsv_value into var_dom_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_SNK_DIVISION_CODE'));
+         select dsv_value into var_aff_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_SNK_DIVISION_CODE'));
+         if var_dom_division_code is null then
+            raise_application_error(-20000, 'Forecast domestic SNACK division code not set in the LICS data store');
+         end if;
+         if var_aff_division_code is null then
+            raise_application_error(-20000, 'Forecast affiliate SNACK division code not set in the LICS data store');
+         end if;
+      end if;
+      if upper(rcd_fcst_extract_header.extract_plan_group) = '*PET' then
+         select dsv_value into var_dom_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','DOM_PET_DIVISION_CODE'));
+         select dsv_value into var_aff_division_code from table(lics_datastore.retrieve_value('CHINA','CHINA_FCST','AFF_PET_DIVISION_CODE'));
+         if var_dom_division_code is null then
+            raise_application_error(-20000, 'Forecast domestic PET division code not set in the LICS data store');
+         end if;
+         if var_aff_division_code is null then
+            raise_application_error(-20000, 'Forecast affiliate PET division code not set in the LICS data store');
+         end if;
+      end if;
+
+      /*-*/
       /* Pipe the header row
       /*-*/
       var_output := 'Plan Type';
@@ -237,7 +264,7 @@ create or replace package body dw_fcst_extract02 as
                var_output := var_output || chr(9) || to_char(rcd_fcst_load_detail_01.fcst_yyyypp,'fm000000');
                var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                var_output := var_output || chr(9) || rcd_fcst_load_header.distbn_chnl_code;
-               var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
+               var_output := var_output || chr(9) || var_dom_division_code;
                var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_01.plant_code;
                var_output := var_output || chr(9) || null;
@@ -296,7 +323,7 @@ create or replace package body dw_fcst_extract02 as
                var_output := var_output || chr(9) || to_char(rcd_fcst_load_detail_02.fcst_yyyypp,'fm000000');
                var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                var_output := var_output || chr(9) || rcd_fcst_load_header.distbn_chnl_code;
-               var_output := var_output || chr(9) || rcd_fcst_load_header.division_code;
+               var_output := var_output || chr(9) || var_aff_division_code;
                var_output := var_output || chr(9) || rcd_fcst_load_header.sales_org_code;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_02.plant_code;
                var_output := var_output || chr(9) || rcd_fcst_load_detail_02.dmnd_group;
