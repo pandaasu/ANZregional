@@ -1789,7 +1789,7 @@ create or replace package body sms_app.sms_rep_function as
                   if tbl_data.count != 0 then
 
                      /*-*/
-                     /* Build and insert the report message
+                     /* Build the report message
                      /*-*/
                      var_sms_text := null;
                      for idt in 1..tbl_text.count loop
@@ -1798,36 +1798,54 @@ create or replace package body sms_app.sms_rep_function as
                         end if;
                         var_sms_text := var_sms_text || tbl_text(idt);
                      end loop;
-                     rcd_sms_rpt_message.rme_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn + 1;
-                     rcd_sms_rpt_message.rme_msg_text := substr(var_sms_text,1,2000);
-                     rcd_sms_rpt_message.rme_msg_time := sysdate;
-                     rcd_sms_rpt_message.rme_msg_status := '1';
-                     insert into sms_rpt_message values rcd_sms_rpt_message;
 
                      /*-*/
-                     /* Retrieve and attached all profile recipients
+                     /* Process the message when required
                      /*-*/
-                     var_rec_count := 0;
-                     open csr_pro_recipient;
-                     loop
-                        fetch csr_pro_recipient into rcd_pro_recipient;
-                        if csr_pro_recipient%notfound then
-                           exit;
-                        end if;
-                        var_rec_count := var_rec_count + 1;
-                        rcd_sms_rpt_recipient.rre_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn;
-                        rcd_sms_rpt_recipient.rre_rcp_code := rcd_pro_recipient.rec_rcp_code;
-                        rcd_sms_rpt_recipient.rre_rcp_name := rcd_pro_recipient.rec_rcp_name;
-                        rcd_sms_rpt_recipient.rre_rcp_mobile := rcd_pro_recipient.rec_rcp_mobile;
-                        rcd_sms_rpt_recipient.rre_rcp_email := rcd_pro_recipient.rec_rcp_email;
-                        insert into sms_rpt_recipient values rcd_sms_rpt_recipient;
-                     end loop;
-                     close csr_pro_recipient;
+                     if not(var_sms_text is null) then
 
-                     /*-*/
-                     /* Log the event
-                     /*-*/
-                     lics_logging.write_log('#---------> Message constructed and attached to '||to_char(var_rec_count)||' recipient(s)');
+                        /*-*/
+                        /* Insert the report message
+                        /*-*/
+                        rcd_sms_rpt_message.rme_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn + 1;
+                        rcd_sms_rpt_message.rme_msg_text := substr(var_sms_text,1,2000);
+                        rcd_sms_rpt_message.rme_msg_time := sysdate;
+                        rcd_sms_rpt_message.rme_msg_status := '1';
+                        insert into sms_rpt_message values rcd_sms_rpt_message;
+
+                        /*-*/
+                        /* Retrieve and attached all profile recipients
+                        /*-*/
+                        var_rec_count := 0;
+                        open csr_pro_recipient;
+                        loop
+                           fetch csr_pro_recipient into rcd_pro_recipient;
+                           if csr_pro_recipient%notfound then
+                              exit;
+                           end if;
+                           var_rec_count := var_rec_count + 1;
+                           rcd_sms_rpt_recipient.rre_msg_seqn := rcd_sms_rpt_message.rme_msg_seqn;
+                           rcd_sms_rpt_recipient.rre_rcp_code := rcd_pro_recipient.rec_rcp_code;
+                           rcd_sms_rpt_recipient.rre_rcp_name := rcd_pro_recipient.rec_rcp_name;
+                           rcd_sms_rpt_recipient.rre_rcp_mobile := rcd_pro_recipient.rec_rcp_mobile;
+                           rcd_sms_rpt_recipient.rre_rcp_email := rcd_pro_recipient.rec_rcp_email;
+                           insert into sms_rpt_recipient values rcd_sms_rpt_recipient;
+                        end loop;
+                        close csr_pro_recipient;
+
+                        /*-*/
+                        /* Log the event
+                        /*-*/
+                        lics_logging.write_log('#---------> Message constructed and attached to '||to_char(var_rec_count)||' recipient(s)');
+
+                     else
+
+                        /*-*/
+                        /* Log the event
+                        /*-*/
+                        lics_logging.write_log('#---------> Report data found for the filter dimensions but no message text generated');
+
+                     end if;
 
                   else
 
