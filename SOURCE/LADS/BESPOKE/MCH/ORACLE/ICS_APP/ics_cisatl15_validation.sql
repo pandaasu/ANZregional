@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ics_cisatl15_validation as
+CREATE OR REPLACE package ics_cisatl15_validation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -19,7 +19,9 @@ create or replace package ics_cisatl15_validation as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/11   Steve Gregan   Created
-
+    2009/07   Trevor Keon    Updated to support storage location (102 length limit)
+    2009/08   Ben Halicki    Updated to support plant code (106 length limit)
+	
    *******************************************************************************/
 
    /*-*/
@@ -33,7 +35,7 @@ end ics_cisatl15_validation;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ics_cisatl15_validation as
+CREATE OR REPLACE package body ics_cisatl15_validation as
 
    /***********************************************/
    /* This procedure performs the on data routine */
@@ -65,11 +67,11 @@ create or replace package body ics_cisatl15_validation as
          var_message := var_message || 'Record must start with HDR not (' || substr(par_record,1,3) || ')';
       end if;
       if substr(par_record,1,3) = 'HDR' then
-         if length(par_record) != 98 then
+         if length(par_record) != 106 then
             if not(var_message is null) then
                var_message := var_message || '; ';
             end if;
-            var_message := var_message || 'Record HDR length must be 98';
+            var_message := var_message || 'Record HDR length must be 106';
          end if;
       end if;
 
