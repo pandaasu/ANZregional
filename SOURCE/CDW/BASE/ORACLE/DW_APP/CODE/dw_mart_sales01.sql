@@ -39,6 +39,7 @@ create or replace package dw_mart_sales01 as
     2008/10   Steve Gregan   Added PTW/PTG/LYRM1/LYRM2/P01-26FCST/P01-26BR
     2009/02   Steve Gregan   Removed *NZMKT from *MFANZ forecasts
     2009/05   Steve Gregan   Added new measures
+    2009/08   Steve Gregan   Added logging
 
    *******************************************************************************/
 
@@ -119,36 +120,42 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       /* Clear the data mart data
       /*-*/
+      lics_logging.write_log('--> Clearing the data mart');
       delete from dw_mart_sales01_det where company_code = par_company_code;
       commit;
 
       /*-*/
       /* Refresh the order data
       /*-*/
+      lics_logging.write_log('--> Loading *MZANZ order data');
       extract_order(par_company_code, '*MFANZ');
       commit;
 
       /*-*/
-      /* Extract the sales data
+      /* Refresh the sales data
       /*-*/
+      lics_logging.write_log('--> Loading *MZANZ sales data');
       extract_sale(par_company_code, '*MFANZ');
       commit;
 
       /*-*/
       /* Refresh the forecast data
       /*-*/
+      lics_logging.write_log('--> Loading *MZANZ forecast data');
       extract_forecast(par_company_code, '*MFANZ');
       commit;
 
       /*-*/
       /* Refresh the NZ market sales data
       /*-*/
+      lics_logging.write_log('--> Loading *NZMKT sales data');
       extract_nzmkt_sale(par_company_code, '*NZMKT');
       commit;
 
       /*-*/
       /* Refresh the NZ market forecast data
       /*-*/
+      lics_logging.write_log('--> Loading *NZMKT forecast data');
       extract_nzmkt_forecast(par_company_code, '*NZMKT');
       commit;
 
