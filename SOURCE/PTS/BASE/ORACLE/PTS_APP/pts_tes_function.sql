@@ -6378,64 +6378,59 @@ create or replace package body pts_app.pts_tes_function as
          if csr_pet%notfound then
             pts_gen_function.add_mesg_data('Pet ('||to_char(var_pan_code)||') does not exist');
          else
-            if rcd_pet.pde_pet_status != 1 then
-               pts_gen_function.add_mesg_data('Pet ('||to_char(var_pan_code)||') is not available');
-            end if;
-            if pts_gen_function.get_mesg_count = 0 then
-               rcd_pts_tes_panel.tpa_tes_code := var_tes_code;
-               rcd_pts_tes_panel.tpa_pan_code := var_pan_code;
-               rcd_pts_tes_panel.tpa_pan_status := '*RECRUITED';
-               rcd_pts_tes_panel.tpa_sel_group := '*RECRUITED';
-               rcd_pts_tes_panel.tpa_pet_code := rcd_pet.pde_pet_code;
-               rcd_pts_tes_panel.tpa_pet_status := rcd_pet.pde_pet_status;
-               rcd_pts_tes_panel.tpa_pet_name := rcd_pet.pde_pet_name;
-               rcd_pts_tes_panel.tpa_pet_type := rcd_pet.pde_pet_type;
-               rcd_pts_tes_panel.tpa_birth_year := rcd_pet.pde_birth_year;
-               rcd_pts_tes_panel.tpa_feed_comment := rcd_pet.pde_feed_comment;
-               rcd_pts_tes_panel.tpa_health_comment := rcd_pet.pde_health_comment;
-               rcd_pts_tes_panel.tpa_hou_code := rcd_pet.hde_hou_code;
-               rcd_pts_tes_panel.tpa_hou_status := rcd_pet.hde_hou_status;
-               rcd_pts_tes_panel.tpa_geo_type := rcd_pet.hde_geo_type;
-               rcd_pts_tes_panel.tpa_geo_zone := rcd_pet.hde_geo_zone;
-               rcd_pts_tes_panel.tpa_loc_street := rcd_pet.hde_loc_street;
-               rcd_pts_tes_panel.tpa_loc_town := rcd_pet.hde_loc_town;
-               rcd_pts_tes_panel.tpa_loc_postcode := rcd_pet.hde_loc_postcode;
-               rcd_pts_tes_panel.tpa_loc_country := rcd_pet.hde_loc_country;
-               rcd_pts_tes_panel.tpa_tel_areacode := rcd_pet.hde_tel_areacode;
-               rcd_pts_tes_panel.tpa_tel_number := rcd_pet.hde_tel_number;
-               rcd_pts_tes_panel.tpa_con_surname := rcd_pet.hde_con_surname;
-               rcd_pts_tes_panel.tpa_con_fullname := rcd_pet.hde_con_fullname;
-               rcd_pts_tes_panel.tpa_con_birth_year := rcd_pet.hde_con_birth_year;
-               insert into pts_tes_panel values rcd_pts_tes_panel;
-               open csr_pet_stat;
-               loop
-                  fetch csr_pet_stat into rcd_pet_stat;
-                  if csr_pet_stat%notfound then
-                     exit;
-                  end if;
-                  rcd_pts_tes_statistic.tst_tes_code := var_tes_code;
-                  rcd_pts_tes_statistic.tst_pan_code := var_pan_code;
-                  rcd_pts_tes_statistic.tst_pet_type := rcd_pet_stat.pde_pet_type;
-                  rcd_pts_tes_statistic.tst_pet_count := rcd_pet_stat.typ_count;
-                  insert into pts_tes_statistic values rcd_pts_tes_statistic;
-               end loop;
-               close csr_pet_stat;
-               open csr_pet_class;
-               loop
-                  fetch csr_pet_class into rcd_pet_class;
-                  if csr_pet_class%notfound then
-                     exit;
-                  end if;
-                  rcd_pts_tes_classification.tcl_tes_code := var_tes_code;
-                  rcd_pts_tes_classification.tcl_pan_code := var_pan_code;
-                  rcd_pts_tes_classification.tcl_tab_code := rcd_pet_class.pcl_tab_code;
-                  rcd_pts_tes_classification.tcl_fld_code := rcd_pet_class.pcl_fld_code;
-                  rcd_pts_tes_classification.tcl_val_code := rcd_pet_class.pcl_val_code;
-                  rcd_pts_tes_classification.tcl_val_text := rcd_pet_class.pcl_val_text;
-                  insert into pts_tes_classification values rcd_pts_tes_classification;
-               end loop;
-               close csr_pet_class;
-            end if;
+            rcd_pts_tes_panel.tpa_tes_code := var_tes_code;
+            rcd_pts_tes_panel.tpa_pan_code := var_pan_code;
+            rcd_pts_tes_panel.tpa_pan_status := '*RECRUITED';
+            rcd_pts_tes_panel.tpa_sel_group := '*RECRUITED';
+            rcd_pts_tes_panel.tpa_pet_code := rcd_pet.pde_pet_code;
+            rcd_pts_tes_panel.tpa_pet_status := rcd_pet.pde_pet_status;
+            rcd_pts_tes_panel.tpa_pet_name := rcd_pet.pde_pet_name;
+            rcd_pts_tes_panel.tpa_pet_type := rcd_pet.pde_pet_type;
+            rcd_pts_tes_panel.tpa_birth_year := rcd_pet.pde_birth_year;
+            rcd_pts_tes_panel.tpa_feed_comment := rcd_pet.pde_feed_comment;
+            rcd_pts_tes_panel.tpa_health_comment := rcd_pet.pde_health_comment;
+            rcd_pts_tes_panel.tpa_hou_code := rcd_pet.hde_hou_code;
+            rcd_pts_tes_panel.tpa_hou_status := rcd_pet.hde_hou_status;
+            rcd_pts_tes_panel.tpa_geo_type := rcd_pet.hde_geo_type;
+            rcd_pts_tes_panel.tpa_geo_zone := rcd_pet.hde_geo_zone;
+            rcd_pts_tes_panel.tpa_loc_street := rcd_pet.hde_loc_street;
+            rcd_pts_tes_panel.tpa_loc_town := rcd_pet.hde_loc_town;
+            rcd_pts_tes_panel.tpa_loc_postcode := rcd_pet.hde_loc_postcode;
+            rcd_pts_tes_panel.tpa_loc_country := rcd_pet.hde_loc_country;
+            rcd_pts_tes_panel.tpa_tel_areacode := rcd_pet.hde_tel_areacode;
+            rcd_pts_tes_panel.tpa_tel_number := rcd_pet.hde_tel_number;
+            rcd_pts_tes_panel.tpa_con_surname := rcd_pet.hde_con_surname;
+            rcd_pts_tes_panel.tpa_con_fullname := rcd_pet.hde_con_fullname;
+            rcd_pts_tes_panel.tpa_con_birth_year := rcd_pet.hde_con_birth_year;
+            insert into pts_tes_panel values rcd_pts_tes_panel;
+            open csr_pet_stat;
+            loop
+               fetch csr_pet_stat into rcd_pet_stat;
+               if csr_pet_stat%notfound then
+                  exit;
+               end if;
+               rcd_pts_tes_statistic.tst_tes_code := var_tes_code;
+               rcd_pts_tes_statistic.tst_pan_code := var_pan_code;
+               rcd_pts_tes_statistic.tst_pet_type := rcd_pet_stat.pde_pet_type;
+               rcd_pts_tes_statistic.tst_pet_count := rcd_pet_stat.typ_count;
+               insert into pts_tes_statistic values rcd_pts_tes_statistic;
+            end loop;
+            close csr_pet_stat;
+            open csr_pet_class;
+            loop
+               fetch csr_pet_class into rcd_pet_class;
+               if csr_pet_class%notfound then
+                  exit;
+               end if;
+               rcd_pts_tes_classification.tcl_tes_code := var_tes_code;
+               rcd_pts_tes_classification.tcl_pan_code := var_pan_code;
+               rcd_pts_tes_classification.tcl_tab_code := rcd_pet_class.pcl_tab_code;
+               rcd_pts_tes_classification.tcl_fld_code := rcd_pet_class.pcl_fld_code;
+               rcd_pts_tes_classification.tcl_val_code := rcd_pet_class.pcl_val_code;
+               rcd_pts_tes_classification.tcl_val_text := rcd_pet_class.pcl_val_text;
+               insert into pts_tes_classification values rcd_pts_tes_classification;
+            end loop;
+            close csr_pet_class;
          end if;
          close csr_pet;
       end if;
