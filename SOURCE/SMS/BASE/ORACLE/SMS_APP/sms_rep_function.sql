@@ -19,6 +19,7 @@ create or replace package sms_app.sms_rep_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/07   Steve Gregan   Created
+    2009/09   Steve Gregan   Added profile, message and filter codes to report message
 
    *******************************************************************************/
 
@@ -417,7 +418,10 @@ create or replace package body sms_app.sms_rep_function as
          select to_char(t01.rme_msg_seqn) as rme_msg_seqn,
                 t01.rme_msg_text,
                 to_char(t01.rme_msg_time,'yyyy/mm/dd hh24:mi:ss') as rme_msg_time,
-                decode(t01.rme_msg_status,'1','Created','2','Sent','3','Error','*UNKNOWN') as rme_msg_status
+                decode(t01.rme_msg_status,'1','Created','2','Sent','3','Error','*UNKNOWN') as rme_msg_status,
+                t01.rme_prf_code,
+                t01.rme_msg_code,
+                t01.rme_flt_code
            from sms_rpt_message t01
           where t01.rme_qry_code = var_qry_code
             and t01.rme_qry_date = var_qry_date
@@ -490,7 +494,7 @@ create or replace package body sms_app.sms_rep_function as
          if csr_message%notfound then
             exit;
          end if;
-         pipe row(sms_xml_object('<MESSAGE MSGSEQ="'||sms_to_xml(rcd_message.rme_msg_seqn)||'" MSGTXT="'||sms_to_xml(rcd_message.rme_msg_text)||'" MSGTIM="'||sms_to_xml(rcd_message.rme_msg_time)||'" MSGSTS="'||sms_to_xml(rcd_message.rme_msg_status)||'"/>'));
+         pipe row(sms_xml_object('<MESSAGE MSGSEQ="'||sms_to_xml(rcd_message.rme_msg_seqn)||'" MSGTXT="'||sms_to_xml(rcd_message.rme_msg_text)||'" MSGTIM="'||sms_to_xml(rcd_message.rme_msg_time)||'" MSGSTS="'||sms_to_xml(rcd_message.rme_msg_status)||'" PRFCDE="'||sms_to_xml(rcd_message.rme_prf_code)||'" MSGCDE="'||sms_to_xml(rcd_message.rme_msg_code)||'" FLTCDE="'||sms_to_xml(rcd_message.rme_flt_code)||'"/>'));
       end loop;
       close csr_message;
 
@@ -1811,6 +1815,9 @@ create or replace package body sms_app.sms_rep_function as
                         rcd_sms_rpt_message.rme_msg_text := substr(var_sms_text,1,2000);
                         rcd_sms_rpt_message.rme_msg_time := sysdate;
                         rcd_sms_rpt_message.rme_msg_status := '1';
+                        rcd_sms_rpt_message.rme_prf_code := rcd_profile.pro_prf_code;
+                        rcd_sms_rpt_message.rme_msg_code := rcd_pro_message.mes_msg_code;
+                        rcd_sms_rpt_message.rme_flt_code := rcd_pro_filter.fil_flt_code;
                         insert into sms_rpt_message values rcd_sms_rpt_message;
 
                         /*-*/
