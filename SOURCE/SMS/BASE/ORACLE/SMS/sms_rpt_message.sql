@@ -25,7 +25,10 @@ create table sms.sms_rpt_message
     rme_msg_seqn                    number                        not null,
     rme_msg_text                    varchar2(2000 char)           not null,
     rme_msg_time                    date                          not null,
-    rme_msg_status                  varchar2(1 char)              not null);  
+    rme_msg_status                  varchar2(1 char)              not null,
+    rme_prf_code                    varchar2(64 char)             not null,
+    rme_msg_code                    varchar2(64 char)             not null,
+    rme_flt_code                    varchar2(64 char)             not null);  
 
 /**/
 /* Comments
@@ -38,6 +41,9 @@ comment on column sms.sms_rpt_message.rme_msg_seqn is 'Message sequence';
 comment on column sms.sms_rpt_message.rme_msg_text is 'Message text';
 comment on column sms.sms_rpt_message.rme_msg_time is 'Message create time';
 comment on column sms.sms_rpt_message.rme_msg_status is 'Message status (1=created or 2=sent or 3=error)';
+comment on column sms.sms_rpt_message.rme_prf_code is 'Profile code';
+comment on column sms.sms_rpt_message.rme_msg_code is 'Message code';
+comment on column sms.sms_rpt_message.rme_flt_code is 'Filter code';
 
 /**/
 /* Primary Key Constraint
