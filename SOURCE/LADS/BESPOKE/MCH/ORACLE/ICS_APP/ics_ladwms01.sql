@@ -34,7 +34,7 @@ CREATE OR REPLACE package ics_ladwms01 as
  2006/08   Linden Glen          MOD: change PAC to PK - initially incorrectly specified
  2006/08   Linden Glen          MOD: MATL_B_UOM logic to use (in order of availability) SB, PK, null
  2006/10   Linden Glen          MOD: Hardcode MATL_GROSS_WGT and MATL_VOL_PER_BASE to 0000000000.000
-
+ 2009/09   Ben Halicki			MOD: Updated csr_matl_master to retrieve materials based on LADS_MAT_HDR.LADS_DATE instead of LADS_MAT_HDR.LAEDA
 
  NOTES:
   * It is assumed that material codes for HK will not exceed 8 character in length (Zou Kai)
@@ -66,9 +66,7 @@ CREATE OR REPLACE package ics_ladwms01 as
    procedure execute(par_days in number default 0);
 
 end ics_ladwms01;
-
 /
-
 
 CREATE OR REPLACE package body ics_ladwms01 as
 
@@ -197,8 +195,8 @@ CREATE OR REPLACE package body ics_ladwms01 as
          where ltrim(a.matnr,'0') = b.sap_material_code
            and a.matnr = c.matnr(+)
            and a.matnr = d.matnr
-           and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
-           and a.mtart in ('FERT','ZPRM','VERP')
+	       and a.lads_date > (sysdate - 3)
+		   and a.mtart in ('FERT','ZPRM','VERP')
            and d.werks = 'HK01'
            and d.mmsta in ('03','20');
       rec_matl_master csr_matl_master%rowtype;
@@ -408,5 +406,4 @@ CREATE OR REPLACE package body ics_ladwms01 as
    end format_xml_str;
 
 end ics_ladwms01;
-
 /
