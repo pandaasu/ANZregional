@@ -110,10 +110,10 @@
                Global_KNB1_Filter="BUKRS in ('121')"
                Global_KNVV_Filter="VKORG = '121' AND VTWEG = '10' AND SPART = '51'"
                VDS_Global_Query="AMB_CUS_CHG_GRD"
-               VDS_KNA1_Columns="KTOKD, KUNNR, LAND1, LZONE, REGIO, TXJCD"
-               VDS_KNB1_Columns="KUNNR, AKONT, BUKRS, FDGRV, GUZTE, XZVER, ZUAWA, ZWELS"
+               VDS_KNA1_Columns="KTOKD, KUNNR, LAND1, LZONE, REGIO, TXJCD, NAME1"
+               VDS_KNB1_Columns="KUNNR, AKONT, BUKRS, FDGRV, GUZTE, XZVER, ZUAWA, ZWELS, LOCKB, ZTERM"
                VDS_KNVI_Columns="KUNNR, TAXKD"
-               VDS_KNVV_Columns="KUNNR, ANTLF, KALKS, KONDA, KZAZU, KZTLF, PLTYP, SPART, VERSG, VKORG, VTWEG, VWERK"
+               VDS_KNVV_Columns="KUNNR, ANTLF, KALKS, KONDA, KZAZU, KZTLF, PLTYP, SPART, VERSG, VKORG, VTWEG, VWERK, KTGRD"
                Logging="0"/>
 
     <interface identifier="SAPVDSDTA#04"
