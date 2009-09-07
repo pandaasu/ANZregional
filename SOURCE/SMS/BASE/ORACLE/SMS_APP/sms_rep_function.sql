@@ -20,6 +20,7 @@ create or replace package sms_app.sms_rep_function as
     -------   ------         -----------
     2009/07   Steve Gregan   Created
     2009/09   Steve Gregan   Added profile, message and filter codes to report message
+    2009/09   Trevor Keon    Update output date to show previous period on first day of period
 
    *******************************************************************************/
 
@@ -1392,9 +1393,13 @@ create or replace package body sms_app.sms_rep_function as
       /* Initialise the output day
       /*-*/
       if (to_number(substr(to_char(rcd_report.rhe_crt_yyyyppw,'fm0000000'),7,1)) = 1 and
-          to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')))-2 = 0) then
-         var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)),'fm90')||
-                        'W4D5';
+          to_number(trim(to_char(to_date(rcd_report.rhe_crt_date,'yyyymmdd'),'D')))-2 = 0) then         
+         if (to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)) = 1) then
+            var_out_day := 'P13W4D5';
+         else
+            var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)-1),'fm90')||
+                           'W4D5';
+         end if;
       else
          var_out_day := 'P'||to_char(to_number(substr(to_char(rcd_report.rhe_crt_yyyypp,'fm000000'),5,2)),'fm90')||
                         'W'||substr(to_char(rcd_report.rhe_crt_yyyyppw,'fm0000000'),7,1)||
