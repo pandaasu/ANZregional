@@ -37,9 +37,9 @@
    }
    function fixXML(strXML) {
       var strReturn = strXML;
+      strReturn = strReturn.replace(/&/g,'&amp;');
       strReturn = strReturn.replace(/</g,'&lt;');
       strReturn = strReturn.replace(/>/g,'&gt;');
-      strReturn = strReturn.replace(/&/g,'&amp;');
       strReturn = strReturn.replace(/"/g,'&#34;');
       strReturn = strReturn.replace(/'/g,'&#39;');
       strReturn = strReturn.replace(/\+/g,'&#43;');
