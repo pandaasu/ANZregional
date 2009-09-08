@@ -55,14 +55,14 @@ comment on column pts.pts_pet_definition.pde_tes_code is 'Pet current test code'
 /* Primary Key Constraint
 /**/
 alter table pts.pts_pet_definition
-   add constraint pts_pde_pk primary key (pde_pet_code);
+   add constraint pts_pet_definition_pk primary key (pde_pet_code);
 
 /**/
 /* Indexes
 /**/
-create index pts_pde_ix01 on pts.pts_pet_definition
+create index pts_pet_definition_ix01 on pts.pts_pet_definition
    (pde_pet_type, pde_pet_code);
-create index pts_pde_ix02 on pts.pts_pet_definition
+create index pts_pet_definition_ix02 on pts.pts_pet_definition
    (pde_hou_code, pde_pet_code);
 
 /**/
