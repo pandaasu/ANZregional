@@ -1898,9 +1898,9 @@ create or replace package body dw_fcst_maintenance as
          /*-*/
          /* Forecast load must be *VALID
          /*-*/
-     --    if rcd_fcst_load_header.load_status != '*VALID' then
-     --       var_message := var_message || chr(13) || 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') must be *VALID status';
-     --    end if;
+         if rcd_fcst_load_header.load_status != '*VALID' then
+            var_message := var_message || chr(13) || 'Forecast load (' || rcd_fcst_load_header.load_identifier || ') must be *VALID status';
+         end if;
 
          /*-*/
          /* Forecast load version must match the extract version
