@@ -309,3 +309,53 @@ insert into lics_sec_menu values('CHN_FORECASTING','China Forecasting');
 
 commit;
 
+
+
+-- NEW CONFIG -- 09/09/2009
+
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_SNK_DIVISION_CODE','Domestic Snack Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_SNK_DIVISION_CODE',1,'51');
+insert into lics_das_code values('CHINA','CHINA_FCST','DOM_PET_DIVISION_CODE','Domestic Pet Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','DOM_PET_DIVISION_CODE',1,'56');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_SNK_DIVISION_CODE','Affiliate Snack Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_SNK_DIVISION_CODE',1,'51');
+insert into lics_das_code values('CHINA','CHINA_FCST','AFF_PET_DIVISION_CODE','Affiliate Pet Division Code','*SINGLE','*MIXED','LICS_APP',sysdate);
+insert into lics_das_value values('CHINA','CHINA_FCST','AFF_PET_DIVISION_CODE',1,'51');
+
+
+delete from fcst_extract_type where extract_type = 'FPPS_DOM_PLAN';
+delete from fcst_extract_type where extract_type = 'FPPS_AFF_PLAN';
+delete from fcst_extract_type where extract_type = 'FPPS_DOM_REPLAN';
+delete from fcst_extract_type where extract_type = 'FPPS_AFF_REPLAN';
+delete from fcst_extract_type where extract_type = 'APOLLO_FRESHNESS';
+--TEST ONLY-- delete from fcst_extract_type where extract_type = 'APOLLO_AFFILIATE';
+
+
+insert into fcst_extract_type values('FPPS_SNACK_DOM_PLAN','FPPS Domestic Plan Extract (Snackfood)','*YEAR','*SNACK','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_SNACK_AFF_PLAN','FPPS Affiliate Plan Extract (Snackfood)','*YEAR','*SNACK','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('FPPS_SNACK_DOM_REPLAN','FPPS Domestic Replan Extract (Snackfood)','*YEAR','*SNACK','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_SNACK_AFF_REPLAN','FPPS Affiliate Replan Extract (Snackfood)','*YEAR','*SNACK','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('FPPS_PET_DOM_PLAN','FPPS Domestic Plan Extract (Petcare)','*YEAR','*PET','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_PET_AFF_PLAN','FPPS Affiliate Plan Extract (Petcare)','*YEAR','*PET','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('FPPS_PET_DOM_REPLAN','FPPS Domestic Replan Extract (Petcare)','*YEAR','*PET','*FILE','*NONE','dw_fcst_extract07',null,null);
+insert into fcst_extract_type values('FPPS_PET_AFF_REPLAN','FPPS Affiliate Replan Extract (Petcare)','*YEAR','*PET','*FILE','*NONE','dw_fcst_extract08',null,null);
+insert into fcst_extract_type values('APOLLO_SNACK_FRESHNESS','Apollo Freshness Extract (Snackfood)','*PERIOD','*SNACK','APOLLO','*NONE','dw_fcst_extract06',null,null);
+insert into fcst_extract_type values('APOLLO_PET_FRESHNESS','Apollo Freshness Extract (Petcare)','*PERIOD','*PET','APOLLO','*NONE','dw_fcst_extract06',null,null);
+--TEST ONLY-- insert into fcst_extract_type values('APOLLO_SNACK_AFFILIATE','Apollo Affiliate Extract (Snackfood)','*PERIOD','*SNACK','APOLLO','*NONE','dw_fcst_extract06',null,null);
+--TEST ONLY-- insert into fcst_extract_type values('APOLLO_PET_AFFILIATE','Apollo Affiliate Extract (Petcare)','*PERIOD','*PET','APOLLO','*NONE','dw_fcst_extract06',null,null);
+
+
+insert into fcst_extract_type_load values('FPPS_SNACK_DOM_PLAN','*PLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_SNACK_DOM_REPLAN','*REPLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_SNACK_AFF_PLAN','*PLAN_AFFILIATE');
+insert into fcst_extract_type_load values('FPPS_SNACK_AFF_REPLAN','*REPLAN_AFFILIATE');
+insert into fcst_extract_type_load values('FPPS_PET_DOM_PLAN','*PLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_PET_DOM_REPLAN','*REPLAN_DOMESTIC');
+insert into fcst_extract_type_load values('FPPS_PET_AFF_PLAN','*PLAN_AFFILIATE');
+insert into fcst_extract_type_load values('FPPS_PET_AFF_REPLAN','*REPLAN_AFFILIATE');
+insert into fcst_extract_type_load values('APOLLO_SNACK_FRESHNESS','*FCST_FRESHNESS');
+insert into fcst_extract_type_load values('APOLLO_PET_FRESHNESS','*FCST_FRESHNESS');
+--TEST ONLY-- insert into fcst_extract_type_load values('APOLLO_SNACK_AFFILIATE','*FCST_AFFILIATE');
+--TEST ONLY-- insert into fcst_extract_type_load values('APOLLO_PET_AFFILIATE','*FCST_AFFILIATE');
+
+
