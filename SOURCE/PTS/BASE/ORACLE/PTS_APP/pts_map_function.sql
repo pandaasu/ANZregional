@@ -28,6 +28,7 @@ create or replace package pts_app.pts_map_function as
    function retrieve_list return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
+   function select_question return pts_xml_type pipelined;
    procedure execute_extract;
 
 end pts_map_function;
@@ -44,17 +45,6 @@ create or replace package body pts_app.pts_map_function as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /*-*/
-   /* Private declarations
-   /*-*/
-   procedure extract_customer;
-
-   /*-*/
-   /* Private constants
-   /*-*/
-   con_separator constant varchar2(1) := ',';
-   con_missing constant varchar2(4) := 'null';
-
    /*****************************************************/
    /* This procedure performs the retrieve list routine */
    /*****************************************************/
@@ -66,7 +56,7 @@ create or replace package body pts_app.pts_map_function as
       cursor csr_list is
          select t01.mde_map_code
            from pts_map_definition t01
-          order by t01.ide_int_code asc;
+          order by t01.mde_map_code asc;
       rcd_list csr_list%rowtype;
 
    /*-------------*/
@@ -98,7 +88,7 @@ create or replace package body pts_app.pts_map_function as
          if csr_list%notfound then
             exit;
          end if;
-         pipe row(pts_xml_object('<LSTROW SELCDE="'||pts_to_xml(rcd_list.mde_map_code)||'" SELTXT="'||pts_to_xml(rcd_list.mde_map_code)||'" COL2="'||pts_to_xml(rcd_list.rcd_list.mde_map_code)||'"/>'));
+         pipe row(pts_xml_object('<LSTROW SELCDE="'||pts_to_xml(rcd_list.mde_map_code)||'" SELTXT="'||pts_to_xml(rcd_list.mde_map_code)||'" COL1="'||pts_to_xml(rcd_list.mde_map_code)||'"/>'));
       end loop;
       close csr_list;
 
@@ -300,12 +290,6 @@ create or replace package body pts_app.pts_map_function as
           where t01.mde_map_code = rcd_pts_map_definition.mde_map_code;
       rcd_check csr_check%rowtype;
 
-      cursor csr_geo_zone is
-         select t01.*
-           from table(pts_app.pts_gen_function.list_geo_zone(rcd_pts_int_definition.ide_geo_type)) t01
-          where t01.geo_zone = rcd_pts_int_definition.ide_geo_zone;
-      rcd_geo_zone csr_geo_zone%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -337,8 +321,8 @@ create or replace package body pts_app.pts_map_function as
       /*-*/
       /* Validate the input
       /*-*/
-      obj_map_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MAP_QUESTION');
-      if xmlDom.getLength(obj_map_list) = 0 then
+      obj_que_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MAP_QUESTION');
+      if xmlDom.getLength(obj_que_list) = 0 then
          pts_gen_function.add_mesg_data('At least one question must be supplied');
       end if;
       if pts_gen_function.get_mesg_count != 0 then
@@ -363,10 +347,10 @@ create or replace package body pts_app.pts_map_function as
       /* Retrieve and insert the map question data
       /*-*/
       rcd_pts_map_question.mqu_map_code := rcd_pts_map_definition.mde_map_code;
-      obj_map_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MAP_QUESTION');
-      for idx in 0..xmlDom.getLength(obj_map_list)-1 loop
-         obj_map_node := xmlDom.item(obj_map_list,idx);
-         rcd_pts_map_question.mqu_que_code := pts_to_number(xslProcessor.valueOf(obj_map_node,'@QUECODE'));
+      obj_que_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/MAP_QUESTION');
+      for idx in 0..xmlDom.getLength(obj_que_list)-1 loop
+         obj_que_node := xmlDom.item(obj_que_list,idx);
+         rcd_pts_map_question.mqu_que_code := pts_to_number(xslProcessor.valueOf(obj_que_node,'@QUECODE'));
          insert into pts_map_question values rcd_pts_map_question;
       end loop;
 
@@ -411,6 +395,123 @@ create or replace package body pts_app.pts_map_function as
    end update_data;
 
    /*******************************************************/
+   /* This procedure performs the select question routine */
+   /*******************************************************/
+   function select_question return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_que_code number;
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_question is
+         select t01.*
+           from pts_que_definition t01
+          where t01.qde_que_code = var_que_code;
+      rcd_question csr_question%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*SELQUE' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_que_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@QUECDE'));
+      if var_que_code is null then
+         pts_gen_function.add_mesg_data('Question code ('||xslProcessor.valueOf(obj_pts_request,'@QUECDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the question
+      /*-*/
+      var_found := false;
+      open csr_question;
+      fetch csr_question into rcd_question;
+      if csr_question%found then
+         var_found := true;
+      end if;
+      close csr_question;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Question ('||to_char(var_que_code)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the question xml
+      /*-*/
+      pipe row(pts_xml_object('<QUESTION QUECDE="'||to_char(rcd_question.qde_que_code)||'" QUETXT="('||to_char(rcd_question.qde_que_code)||') '||pts_to_xml(rcd_question.qde_que_text)||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_MAP_FUNCTION - SELECT_QUESTION - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end select_question;
+
+   /*******************************************************/
    /* This procedure performs the execute extract routine */
    /*******************************************************/
    procedure execute_extract is
@@ -426,10 +527,6 @@ create or replace package body pts_app.pts_map_function as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
-      var_str_period number;
-      var_end_period number;
-      var_str_date date;
-      var_end_date date;
 
       /*-*/
       /* Local constants
@@ -443,21 +540,7 @@ create or replace package body pts_app.pts_map_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_this_period is
-         select t01.mars_period
-           from mars_date t01
-          where trunc(t01.calendar_date) = trunc(sysdate);
-      rcd_this_period csr_this_period%rowtype;
 
-      cursor csr_mars_date is
-         select min(t01.mars_period) as str_period,
-                max(t01.mars_period) as end_period,
-                min(t01.calendar_date) as str_date,
-                max(t01.calendar_date) as end_date
-           from mars_date t01
-          where t01.mars_period >= var_str_period
-            and t01.mars_period <= var_end_period;
-      rcd_mars_date csr_mars_date%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -475,167 +558,6 @@ create or replace package body pts_app.pts_map_function as
       var_errors := false;
       var_locked := false;
 
-      /*-*/
-      /* Validate the data parameter
-      /*-*/
-      if upper(par_data) != '*ALL' and
-         upper(par_data) != '*DELIVERY' and
-         upper(par_data) != '*MATERIAL' and
-         upper(par_data) != '*CUSTOMER' then
-         raise_application_error(-20000, 'Data parameter (' || par_data || ') must be *ALL, *DELIVERY, *MATERIAL or *CUSTOMER');
-      end if;
-
-      /*-*/
-      /* Validate the delivery parameters when required
-      /*-*/
-      if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-         if upper(par_action) != '*PERIOD_THIS' and
-            upper(par_action) != '*PERIOD_LAST' and
-            upper(par_action) != '*PERIOD_RANGE' and
-            upper(par_action) != '*DATE_RANGE' then
-            raise_application_error(-20000, 'Action parameter (' || par_action || ') must be *PERIOD_THIS, *PERIOD_LAST, *PERIOD_RANGE or *DATE_RANGE');
-         end if;
-      end if;
-
-      /*-*/
-      /* Validate the period this when required
-      /*-*/
-      if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-         if upper(par_action) = '*PERIOD_THIS' then
-            open csr_this_period;
-            fetch csr_this_period into rcd_this_period;
-            if csr_this_period%notfound then
-               raise_application_error(-20000, 'Start and end period not found in MARS_DATE');
-            else
-               var_str_period := rcd_this_period.mars_period;
-               var_end_period := var_str_period;
-            end if;
-            close csr_this_period;
-            open csr_mars_date;
-            fetch csr_mars_date into rcd_mars_date;
-            if csr_mars_date%notfound then
-               raise_application_error(-20000, 'Start and end period not found in MARS_DATE');
-            else
-               if rcd_mars_date.str_period is null or rcd_mars_date.str_period != var_str_period then
-                  raise_application_error(-20000, 'Start period ' || to_char(par_str_value) || ' not found in MARS_DATE');
-               end if;
-               if rcd_mars_date.end_period is null or rcd_mars_date.end_period != var_end_period then
-                  raise_application_error(-20000, 'End period ' || to_char(par_end_value) || ' not found in MARS_DATE');
-               end if;
-            end if;
-            close csr_mars_date;
-            var_str_date := rcd_mars_date.str_date;
-            var_end_date := rcd_mars_date.end_date;
-         end if;
-      end if;
-
-      /*-*/
-      /* Validate the period last when required
-      /*-*/
-      if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-         if upper(par_action) = '*PERIOD_LAST' then
-            open csr_this_period;
-            fetch csr_this_period into rcd_this_period;
-            if csr_this_period%notfound then
-               raise_application_error(-20000, 'Start and end period not found in MARS_DATE');
-            else
-               var_str_period := rcd_this_period.mars_period - 1;
-               if to_number(substr(to_char(var_str_period,'FM000000'),5,2)) = 0 then
-                  var_str_period := var_str_period - 87;
-               end if;
-               var_end_period := var_str_period;
-            end if;
-            close csr_this_period;
-            open csr_mars_date;
-            fetch csr_mars_date into rcd_mars_date;
-            if csr_mars_date%notfound then
-               raise_application_error(-20000, 'Start and end period not found in MARS_DATE');
-            else
-               if rcd_mars_date.str_period is null or rcd_mars_date.str_period != var_str_period then
-                  raise_application_error(-20000, 'Start period ' || to_char(par_str_value) || ' not found in MARS_DATE');
-               end if;
-               if rcd_mars_date.end_period is null or rcd_mars_date.end_period != var_end_period then
-                  raise_application_error(-20000, 'End period ' || to_char(par_end_value) || ' not found in MARS_DATE');
-               end if;
-            end if;
-            close csr_mars_date;
-            var_str_date := rcd_mars_date.str_date;
-            var_end_date := rcd_mars_date.end_date;
-         end if;
-      end if;
-
-      /*-*/
-      /* Validate the period range when required
-      /*-*/
-      if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-         if upper(par_action) = '*PERIOD_RANGE' then
-            if par_str_value is null then
-               raise_application_error(-20000, 'Start period parameter must be supplied for action *PERIOD_RANGE');
-            end if;
-            if par_end_value is null then
-               raise_application_error(-20000, 'End period parameter must be supplied for action *PERIOD_RANGE');
-            end if;
-            if par_str_value > par_end_value then
-               raise_application_error(-20000, 'End period must be greater than or equal to start period for action *PERIOD_RANGE');
-            end if;
-            begin
-               var_str_period := to_number(par_str_value);
-            exception
-               when others then
-                  raise_application_error(-20000, 'Start period parameter (' || par_str_value || ') - unable to convert to number');
-            end;
-            begin
-               var_end_period := to_number(par_end_value);
-            exception
-               when others then
-                  raise_application_error(-20000, 'End period parameter (' || par_end_value || ') - unable to convert to number');
-            end;
-            open csr_mars_date;
-            fetch csr_mars_date into rcd_mars_date;
-            if csr_mars_date%notfound then
-               raise_application_error(-20000, 'Start and end period not found in MARS_DATE');
-            else
-               if rcd_mars_date.str_period is null or rcd_mars_date.str_period != var_str_period then
-                  raise_application_error(-20000, 'Start period ' || to_char(par_str_value) || ' not found in MARS_DATE');
-               end if;
-               if rcd_mars_date.end_period is null or rcd_mars_date.end_period != var_end_period then
-                  raise_application_error(-20000, 'End period ' || to_char(par_end_value) || ' not found in MARS_DATE');
-               end if;
-            end if;
-            close csr_mars_date;
-            var_str_date := rcd_mars_date.str_date;
-            var_end_date := rcd_mars_date.end_date;
-         end if;
-      end if;
-
-      /*-*/
-      /* Validate the date range when required
-      /*-*/
-      if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-         if upper(par_action) = '*DATE_RANGE' then
-            if par_str_value is null then
-               raise_application_error(-20000, 'Start date parameter must be supplied for action *DATE_RANGE');
-            end if;
-            if par_end_value is null then
-               raise_application_error(-20000, 'End date parameter must be supplied for action *DATE_RANGE');
-            end if;
-            if par_str_value > par_end_value then
-               raise_application_error(-20000, 'End date must be greater than or equal to start date for action *DATE_RANGE');
-            end if;
-            begin
-               var_str_date := to_date(par_str_value,'yyyymmdd');
-            exception
-               when others then
-                  raise_application_error(-20000, 'Start date parameter (' || par_str_value || ') - unable to convert to date format YYYYMMDD');
-            end;
-            begin
-               var_end_date := to_date(par_end_value,'yyyymmdd');
-            exception
-               when others then
-                  raise_application_error(-20000, 'End date parameter (' || par_end_value || ') - unable to convert to date format YYYYMMDD');
-            end;
-          end if;
-      end if;
 
       /*-*/
       /* Log start
@@ -645,7 +567,7 @@ create or replace package body pts_app.pts_map_function as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - PTS Extract - Parameters(' || upper(par_data) || ' + ' || upper(par_action) || ' + ' || upper(par_str_value) || ' + ' || upper(par_end_value) || ')');
+   --   lics_logging.write_log('Begin - PTS Extract - Parameters(' || upper(par_data) || ' + ' || upper(par_action) || ' + ' || upper(par_str_value) || ' + ' || upper(par_end_value) || ')');
 
       /*-*/
       /* Request the lock
@@ -667,38 +589,12 @@ create or replace package body pts_app.pts_map_function as
          /*-*/
          /* Execute the delivery extract procedure when required
          /*-*/
-         if upper(par_data) = '*ALL' or upper(par_data) = '*DELIVERY' then
-            begin
-               extract_delivery(var_str_date, var_end_date);
-            exception
-               when others then
-                  var_errors := true;
-            end;
-         end if;
-
-         /*-*/
-         /* Execute the material extract procedure when required
-         /*-*/
-         if upper(par_data) = '*ALL' or upper(par_data) = '*MATERIAL' then
-            begin
-               extract_material;
-            exception
-               when others then
-                  var_errors := true;
-            end;
-         end if;
-
-         /*-*/
-         /* Execute the customer extract procedure when required
-         /*-*/
-         if upper(par_data) = '*ALL' or upper(par_data) = '*CUSTOMER' then
-            begin
-               extract_customer;
-            exception
-               when others then
-                  var_errors := true;
-            end;
-         end if;
+        --    begin
+        --       extract_delivery(var_str_date, var_end_date);
+        --    exception
+        --       when others then
+        --          var_errors := true;
+        --    end;
 
          /*-*/
          /* Release the lock
@@ -725,9 +621,9 @@ create or replace package body pts_app.pts_map_function as
             lics_notification.send_alert(var_alert);
          end if;
          if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
-            lics_notification.send_email(lads_parameter.system_code,
-                                         lads_parameter.system_unit,
-                                         lads_parameter.system_environment,
+            lics_notification.send_email(pts_parameter.system_code,
+                                         pts_parameter.system_unit,
+                                         pts_parameter.system_environment,
                                          con_function,
                                          'PTS_GLOPAL',
                                          var_email,
@@ -776,189 +672,12 @@ create or replace package body pts_app.pts_map_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PTS_GLO_FUNCTION - EXECUTE_EXTRACT - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - PTS_MAP_FUNCTION - EXECUTE_EXTRACT - ' || var_exception);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end execute_extract;
-
-   /********************************************************/
-   /* This procedure performs the extract customer routine */
-   /********************************************************/
-   procedure extract_customer is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_exception varchar2(4000);
-      var_instance number(15,0);
-      var_output varchar2(2000);
-
-      type typ_cus_outp is table of varchar2(2000) index by binary_integer;
-      tbl_cus_data typ_cus_data;
-      tbl_cus_outp typ_cus_outp;
-      var_cidx number;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_lads_cus_hdr is
-         select t01.kunnr as cus_kunnr,
-                t01.ktokd as cus_ktokd
-           from lads_cus_hdr t01,
-          where t01.kunnr = t02.kunnr(+)
-            and t01.kunnr = t03.kunnr(+)
-            and t03.sap_cust_group_code = t04.sap_cust_group_code(+)
-            and t03.sap_channel_code = t05.sap_channel_code(+)
-            and t03.sap_banner_code = t06.sap_banner_code(+)
-            and t03.sap_loc_type_code = t07.sap_loc_type_code(+)
-          order by t01.kunnr;
-      rcd_lads_cus_hdr csr_lads_cus_hdr%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Begin procedure
-      /*-*/
-      lics_logging.write_log('Begin - PTS Extract - Extract customer');
-
-      /*-*/
-      /* Clear the extract data
-      /*-*/
-      tbl_cus_data.delete;
-      tbl_cus_outp.delete;
-
-      /*-*/
-      /* Retrieve the customer rows
-      /*-*/
-      open csr_lads_cus_hdr;
-      loop
-         fetch csr_lads_cus_hdr into rcd_lads_cus_hdr;
-         if csr_lads_cus_hdr%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Clear the customer data
-         /*-*/
-         tbl_cus_data.delete;
-
-         /*-*/
-         /* Initialise the customer values
-         /*-*/
-         var_cidx := tbl_cus_data.count + 1;
-         tbl_cus_data(var_cidx).customer := rcd_lads_cus_hdr.cus_kunnr;
-         tbl_cus_data(var_cidx).name := rcd_lads_cus_hdr.cus_name;
-         tbl_cus_data(var_cidx).addr := rcd_lads_cus_hdr.cus_street;
-         if not(rcd_lads_cus_hdr.cus_house_no is null) then
-            tbl_cus_data(var_cidx).addr := rcd_lads_cus_hdr.cus_house_no || ' ' || rcd_lads_cus_hdr.cus_street;
-         end if;
-         tbl_cus_data(var_cidx).city := rcd_lads_cus_hdr.cus_city;
-         tbl_cus_data(var_cidx).state := rcd_lads_cus_hdr.cus_region;
-         tbl_cus_data(var_cidx).pcode := rcd_lads_cus_hdr.cus_pcode;
-         tbl_cus_data(var_cidx).route := con_missing;
-         tbl_cus_data(var_cidx).rte_desc := con_missing;
-         tbl_cus_data(var_cidx).trn_zone := rcd_lads_cus_hdr.cus_transpzone;
-         tbl_cus_data(var_cidx).channel := rcd_lads_cus_hdr.chl_desc;
-         tbl_cus_data(var_cidx).cus_grp := rcd_lads_cus_hdr.cgp_desc;
-         tbl_cus_data(var_cidx).banner := rcd_lads_cus_hdr.ban_desc;
-         tbl_cus_data(var_cidx).loc_typ := rcd_lads_cus_hdr.ltp_desc;
-         tbl_cus_data(var_cidx).excess_wait := con_missing;
-         tbl_cus_data(var_cidx).del_hours := con_missing;
-         tbl_cus_data(var_cidx).special_wrap := con_missing;
-         tbl_cus_data(var_cidx).single_sku := con_missing;
-
-         /*-*/
-         /* Append the customer record
-         /*-*/
-         var_output := tbl_cus_data(var_cidx).customer || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).name || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).addr || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).city || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).state || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).pcode || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).route || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).rte_desc || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).trn_zone || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).channel || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).cus_grp || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).banner || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).loc_typ || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).excess_wait || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).del_hours || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).special_wrap || con_separator;
-         var_output := var_output || tbl_cus_data(var_cidx).single_sku;
-         tbl_cus_outp(tbl_cus_outp.count + 1) := var_output;
-
-      end loop;
-      close csr_lads_cus_hdr;
-
-      /*-*/
-      /* Create the customer interface
-      /*-*/
-      var_instance := lics_outbound_loader.create_interface('PTSGPL','xxxxxx.txt');
-      for idx in 1..tbl_cus_outp.count loop
-         lics_outbound_loader.append_data(tbl_cus_outp(idx));
-      end loop;
-      lics_outbound_loader.finalise_interface;
-
-      /*-*/
-      /* End procedure
-      /*-*/
-      lics_logging.write_log('End - PTS Extract - Extract customer');
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Save the exception
-         /*-*/
-         var_exception := substr(SQLERRM, 1, 1024);
-
-         /*-*/
-         /* Finalise the outbound loader when required
-         /*-*/
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(var_exception);
-            lics_outbound_loader.finalise_interface;
-         end if;
-
-         /*-*/
-         /* Log error
-         /*-*/
-         begin
-            lics_logging.write_log('**ERROR** - PTS Extract - Extract customer - ' || var_exception);
-            lics_logging.write_log('End - PTS Extract - Extract customer');
-         exception
-            when others then
-               null;
-         end;
-
-         /*-*/
-         /* Raise an exception to the caller
-         /*-*/
-         raise_application_error(-20000, '**ERROR**');
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end extract_customer;
 
 end pts_map_function;
 /
