@@ -3,11 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_geo_area_list.asp                              //
+'// Script  : pts_map_list.asp                                   //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the geographic area         //
-'//           listing                                            //
+'// Text    : This script implements the mapping listing         //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -67,9 +66,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the geographic area list
+   '// Retrieve the mapping list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_geo_function.retrieve_area_list)"
+   strStatement = "select xml_text from table(pts_app.pts_map_function.retrieve_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

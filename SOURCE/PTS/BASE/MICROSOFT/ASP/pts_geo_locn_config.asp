@@ -471,7 +471,7 @@ sub PaintFunction()%>
       }
    }
    function doListAccept(intRow) {
-      document.getElementById('PRO_GeoZone').value = document.getElementById('tabListBody').rows[intRow].getAttribute('selcde');
+      document.getElementById('PRO_GeoZone').value = document.getElementById('tabBodyList').rows[intRow].getAttribute('selcde');
       displayScreen('dspPrompt');
       document.getElementById('PRO_GeoZone').focus();
    }

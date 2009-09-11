@@ -31,7 +31,7 @@
    '// Initialise the script
    '//
    strTarget = "pts_map_config.asp"
-   strHeading = "Mapping Maintenance"
+   strHeading = "GloPla Mapping Maintenance"
 
    '//
    '// Get the base string
@@ -189,21 +189,7 @@ sub PaintFunction()%>
    function doPromptCreate() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestDefineCreate(\'*NEW\');',10);
-   }
-   function doPromptCopy() {
-      if (!processForm()) {return;}
-      var strMessage = '';
-      if (document.getElementById('PRO_MapCode').value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Mapping code must be entered for copy';
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCopy(\''+document.getElementById('PRO_MapCode').value+'\');',10);
+      window.setTimeout('requestDefineCreate();',10);
    }
    function doPromptList() {
       if (!processForm()) {return;}
@@ -222,16 +208,10 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDMAP" MAPCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_map_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestDefineCreate(strCode) {
+   function requestDefineCreate() {
       cstrDefineMode = '*CRT';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTMAP" MAPCODE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>pts_map_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestDefineCopy(strCode) {
-      cstrDefineMode = '*CPY';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CPYMAP" MAPCODE="'+fixXML(strCode)+'"/>';
+      cstrDefineCode = '*NEW';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTMAP" MAPCODE="'+fixXML(cstrDefineCode)+'"/>';
       doPostRequest('<%=strBase%>pts_map_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -255,30 +235,37 @@ sub PaintFunction()%>
          }
          if (cstrDefineMode == '*UPD') {
             cobjScreens[1].hedtxt = 'Update Mapping ('+cstrDefineCode+')';
+            document.getElementById('addDefine').style.display = 'none';
          } else {
-            cobjScreens[1].hedtxt = 'Create Mapping (*NEW)';
+            cobjScreens[1].hedtxt = 'Create Mapping';
+            document.getElementById('addDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
          var objQueList = document.getElementById('DEF_QueList');
          objQueList.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'MAP') {
-               document.getElementById('DEF_mapCode').innerText = objElements[i].getAttribute('MAPCODE');
+               document.getElementById('DEF_MapCode').value = objElements[i].getAttribute('MAPCODE');
             } else if (objElements[i].nodeName == 'MAP_QUESTION') {
                objQueList.options[objQueList.options.length] = new Option('('+objElements[i].getAttribute('QUECODE')+') '+objElements[i].getAttribute('QUETEXT'),objElements[i].getAttribute('QUECODE'));
             }
          }
-         document.getElementById('DEF_MapCode').focus();
+         if (cstrDefineMode == '*UPD') {
+            document.getElementById('DEF_QueCode').focus();
+         } else {
+            document.getElementById('DEF_MapCode').focus();
+         }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objQueList = document.getElementById('DEF_QueList');
-      var objRow;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION="*DEFMAP"';
-      strXML = strXML+' MAPCODE="'+fixXML(document.getElementById('DEF_MapCode').value)+'"';
-      strXML = strXML+'>';
+      if (cstrDefineMode == '*UPD') {
+         strXML = strXML+'<PTS_REQUEST ACTION="*DEFMAP" MAPCODE="'+fixXML(cstrDefineCode)+'">';
+      } else {
+         strXML = strXML+'<PTS_REQUEST ACTION="*DEFMAP" MAPCODE="'+fixXML(document.getElementById('DEF_MapCode').value)+'">';
+      }
       for (var i=0;i<objQueList.length;i++) {
          strXML = strXML+'<MAP_QUESTION QUECODE="'+fixXML(objQueList.options[i].value)+'"/>';
       }
@@ -326,7 +313,6 @@ sub PaintFunction()%>
       document.getElementById('PRO_MapCode').value = '';
       document.getElementById('PRO_MapCode').focus();
    }
-
    function doQueSelect() {
       if (!processForm()) {return;}
       startSchInstance('*QUESTION','Question','pts_que_search.asp',function() {doQueSelectCancel();},function(strCode,strText) {doQueSelectAccept(strCode,strText);});
@@ -349,7 +335,7 @@ sub PaintFunction()%>
       }
       var objQueList = document.getElementById('DEF_QueList');
       for (var i=0;i<objQueList.options.length;i++) {
-         if (objQueList.options[i].getAttribute('quecde') == document.getElementById('DEF_QueCode').value) {
+         if (objQueList.options[i].value == document.getElementById('DEF_QueCode').value) {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Question code already selected';
             break;
@@ -359,9 +345,9 @@ sub PaintFunction()%>
          alert(strMessage);
          return;
       }
-      var objQueCode = document.getElementById('QUE_QueCode');
+      var objQueCode = document.getElementById('DEF_QueCode');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PTS_REQUEST ACTION="*SELQUE"' QUECDE="'+fixXML(objQueCode.value)+'"/>';
+      strXML = strXML+'<PTS_REQUEST ACTION="*SELQUE" QUECDE="'+fixXML(objQueCode.value)+'"/>';
       doActivityStart(document.body);
       window.setTimeout('requestQueSelect(\''+strXML+'\');',10);
    }
@@ -400,7 +386,6 @@ sub PaintFunction()%>
          objQueList.focus();
          document.getElementById('DEF_QueCode').value = '';
       }
-   }
    }
    function doQueDelete() {
       if (document.getElementById('DEF_QueList').selectedIndex == -1) {
@@ -527,7 +512,7 @@ sub PaintFunction()%>
       }
    }
    function doListAccept(intRow) {
-      document.getElementById('PRO_MapCode').value = document.getElementById('tabListBody').rows[intRow].getAttribute('selcde');
+      document.getElementById('PRO_MapCode').value = document.getElementById('tabBodyList').rows[intRow].getAttribute('selcde');
       displayScreen('dspPrompt');
       document.getElementById('PRO_MapCode').focus();
    }
@@ -543,6 +528,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
+<!--#include file="pts_search_code.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
@@ -568,13 +554,11 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptList();">&nbsp;List&nbsp;</a></nobr></td>
                </tr>
@@ -586,10 +570,15 @@ sub PaintFunction()%>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Mapping Maintenance</nobr></td>
-         <input type="hidden" name="DEF_MapCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr id="addDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Mapping Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_MapCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+         </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Question Code:&nbsp;</nobr></td>

@@ -2568,7 +2568,7 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiRemn" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></select></nobr></td>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="QUE_WeiRemn" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsTable01" align=left cols=1 cellpadding="0" cellspacing="0">
