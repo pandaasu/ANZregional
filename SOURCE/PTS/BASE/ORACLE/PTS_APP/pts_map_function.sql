@@ -181,7 +181,7 @@ create or replace package body pts_app.pts_map_function as
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_map_code := xslProcessor.valueOf(obj_pts_request,'@MAPCODE');
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDMAP' and var_action != '*CRTMAP' and var_action != '*CPYMAP' then
+      if var_action != '*UPDMAP' and var_action != '*CRTMAP' then
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
@@ -189,7 +189,7 @@ create or replace package body pts_app.pts_map_function as
       /*-*/
       /* Retrieve the existing mapping when required
       /*-*/
-      if var_action = '*UPDMAP' or var_action = '*CPYMAP' then
+      if var_action = '*UPDMAP' then
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
          if csr_retrieve%notfound then
@@ -210,11 +210,8 @@ create or replace package body pts_app.pts_map_function as
       if var_action = '*UPDMAP' then
          var_output := '<MAP MAPCODE="'||pts_to_xml(rcd_retrieve.mde_map_code)||'"/>';
          pipe row(pts_xml_object(var_output));
-      elsif var_action = '*CPYMAP' then
-         var_output := '<MAP MAPCODE="*NEW"/>';
-         pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTMAP' then
-         var_output := '<MAP MAPCODE="*NEW"/>';
+         var_output := '<MAP MAPCODE=""/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -314,6 +311,9 @@ create or replace package body pts_app.pts_map_function as
          return;
       end if;
       rcd_pts_map_definition.mde_map_code := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@MAPCODE'));
+      if rcd_pts_map_definition.mde_map_code is null then
+         pts_gen_function.add_mesg_data('Mapping code must be supplied');
+      end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
