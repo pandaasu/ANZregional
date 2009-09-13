@@ -111,9 +111,9 @@
                Global_KNVV_Filter="VKORG = '121' AND VTWEG = '10' AND SPART = '51'"
                VDS_Global_Query="AMB_CUS_CHG_GRD"
                VDS_KNA1_Columns="KTOKD, KUNNR, LAND1, LZONE, REGIO, TXJCD, NAME1"
-               VDS_KNB1_Columns="KUNNR, AKONT, BUKRS, FDGRV, GUZTE, XZVER, ZUAWA, ZWELS, LOCKB, ZTERM"
+               VDS_KNB1_Columns="KUNNR, AKONT, BUKRS, FDGRV, GUZTE, XZVER, ZUAWA, ZWELS, LOCKB, ZTERM, BUSAB"
                VDS_KNVI_Columns="KUNNR, TAXKD"
-               VDS_KNVV_Columns="KUNNR, ANTLF, KALKS, KONDA, KZAZU, KZTLF, PLTYP, SPART, VERSG, VKORG, VTWEG, VWERK, KTGRD"
+               VDS_KNVV_Columns="KUNNR, ANTLF, KALKS, KONDA, KZAZU, KZTLF, PLTYP, SPART, VERSG, VKORG, VTWEG, VWERK, KTGRD, ZTERM, AGREL, BOKRE, VKGRP"
                Logging="0"/>
 
     <interface identifier="SAPVDSDTA#04"
@@ -129,8 +129,8 @@
                Global_LFB1_Filter="BUKRS in ('121')"
                Global_LFM1_Filter="EKORG &gt;= '0441' AND EKORG &lt;= '0459'"
                VDS_Global_Query="AMB_VEN_CHG_GRD"
-               VDS_LFA1_Columns="KTOKK, LIFNR, LAND1, LZONE, REGIO, TXJCD"
-               VDS_LFB1_Columns="LIFNR, AKONT, BUKRS, FDGRV, INTAD, REPRF, ZTERM, ZUAWA, ZWELS"
+               VDS_LFA1_Columns="KTOKK, LIFNR, LAND1, LZONE, REGIO, TXJCD, NAME1"
+               VDS_LFB1_Columns="LIFNR, AKONT, BUKRS, FDGRV, INTAD, REPRF, ZTERM, ZUAWA, ZWELS, TOGRR"
                VDS_LFBK_Columns="LIFNR, BANKN"
                VDS_LFM1_Columns="LIFNR, ZTERM"
                VDS_LFM2_Columns="LIFNR, BSTAE, EKORG, KZAUT, WAERS, WEBRE"
