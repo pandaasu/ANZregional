@@ -20,14 +20,13 @@
 /**/
 create table dds.dw_fcst_base
    (fcst_identifier                   varchar2(32 char)    not null,
-    fcst_sequence                     number               not null,
     company_code                      varchar2(10 char)    not null,
     sales_org_code                    varchar2(4 char)     not null,
     distbn_chnl_code                  varchar2(2 char)     not null,
     division_code                     varchar2(2 char)     null,
     fcst_type_code                    varchar2(4 char)     not null,
-    fcst_yyyypp                       number(6, 0)         not null,
-    fcst_yyyyppw                      number(7, 0)         null,
+    fcst_yyyypp                       number(6,0)          not null,
+    fcst_yyyyppw                      number(7,0)          null,
     demand_plng_grp_code              varchar2(10 char)    null,
     cntry_code                        varchar2(3 char)     null,
     region_code                       varchar2(3 char)     null,
@@ -40,35 +39,35 @@ create table dds.dw_fcst_base
     cust_code                         varchar2(10 char)    null,
     matl_zrep_code                    varchar2(18 char)    not null,
     currcy_code                       varchar2(3 char)     not null,
-    fcst_value                        number(16, 2)        not null,
-    fcst_value_aud                    number(16, 2)        not null,
-    fcst_value_usd                    number(16, 2)        not null,
-    fcst_value_eur                    number(16, 2)        not null,
-    fcst_qty                          number(16, 2)        not null,
-    fcst_qty_gross_tonnes             number(16, 6)        not null,
-    fcst_qty_net_tonnes               number(16, 6)        not null,
+    fcst_value                        number(16,2)         not null,
+    fcst_value_aud                    number(16,2)         not null,
+    fcst_value_usd                    number(16,2)         not null,
+    fcst_value_eur                    number(16,2)         not null,
+    fcst_qty                          number(16,2)         not null,
+    fcst_qty_gross_tonnes             number(16,6)         not null,
+    fcst_qty_net_tonnes               number(16,6)         not null,
     moe_code                          varchar2(4 char)     null,
     matl_tdu_code                     varchar2(18 char)    null,
-    base_value                        number(16, 2)        not null,
-    base_qty                          number(16, 2)        not null,
-    aggreg_mkt_actvty_value           number(16, 2)        not null,
-    aggreg_mkt_actvty_qty             number(16, 2)        not null,
-    lock_value                        number(16, 2)        not null,
-    lock_qty                          number(16, 2)        not null,
-    rcncl_value                       number(16, 2)        not null,
-    rcncl_qty                         number(16, 2)        not null,
-    auto_adjmt_value                  number(16, 2)        not null,
-    auto_adjmt_qty                    number(16, 2)        not null,
-    override_value                    number(16, 2)        not null,
-    override_qty                      number(16, 2)        not null,
-    mkt_actvty_value                  number(16, 2)        not null,
-    mkt_actvty_qty                    number(16, 2)        not null,
-    data_driven_event_value           number(16, 2)        not null,
-    data_driven_event_qty             number(16, 2)        not null,
-    tgt_impact_value                  number(16, 2)        not null,
-    tgt_impact_qty                    number(16, 2)        not null,
-    dfn_adjmt_value                   number(16, 2)        not null,
-    dfn_adjmt_qty                     number(16, 2)        not null)
+    base_value                        number(16,2)         not null,
+    base_qty                          number(16,2)         not null,
+    aggreg_mkt_actvty_value           number(16,2)         not null,
+    aggreg_mkt_actvty_qty             number(16,2)         not null,
+    lock_value                        number(16,2)         not null,
+    lock_qty                          number(16,2)         not null,
+    rcncl_value                       number(16,2)         not null,
+    rcncl_qty                         number(16,2)         not null,
+    auto_adjmt_value                  number(16,2)         not null,
+    auto_adjmt_qty                    number(16,2)         not null,
+    override_value                    number(16,2)         not null,
+    override_qty                      number(16,2)         not null,
+    mkt_actvty_value                  number(16,2)         not null,
+    mkt_actvty_qty                    number(16,2)         not null,
+    data_driven_event_value           number(16,2)         not null,
+    data_driven_event_qty             number(16,2)         not null,
+    tgt_impact_value                  number(16,2)         not null,
+    tgt_impact_qty                    number(16,2)         not null,
+    dfn_adjmt_value                   number(16,2)         not null,
+    dfn_adjmt_qty                     number(16,2)         not null)
    partition by list (fcst_identifier)
       (partition the_rest values less than (default));
 
@@ -77,7 +76,6 @@ create table dds.dw_fcst_base
 /**/
 comment on table dds.dw_fcst_base is 'Forecast Base Fact Table';
 comment on column dds.dw_fcst_base.fcst_identifier IS 'Forecast Identifier - Unique identifier for the forecast';
-comment on column dds.dw_fcst_base.fcst_sequence IS 'Forecast Sequence - Unique sequence for the forecast';
 comment on column dds.dw_fcst_base.company_code is 'Company Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.dw_fcst_base.sales_org_code is 'Sales Organisation Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.dw_fcst_base.distbn_chnl_code is 'Distribution Channel Code - Source Data ODS.FCST_HDR.DISTBN_CHNL_CODE';
@@ -126,12 +124,6 @@ comment on column dds.dw_fcst_base.tgt_impact_value is 'Target Impacts Type Fore
 comment on column dds.dw_fcst_base.tgt_impact_qty is 'Target Impacts Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
 comment on column dds.dw_fcst_base.dfn_adjmt_value is 'Demand Financials Adjustment Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
 comment on column dds.dw_fcst_base.dfn_adjmt_qty is 'Demand Financials Adjustment Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
-
-/**/
-/* Primary Key Constraint
-/**/
-alter table dds.dw_sales_base
-   add constraint dw_sales_base_pk primary key (fcst_identifier, fcst_sequence);
 
 /**/
 /* Indexes
