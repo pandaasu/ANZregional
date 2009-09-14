@@ -25,6 +25,7 @@ create or replace package dw_fcst_maintenance as
     2008/05   Steve Gregan   Changed customer description logic
     2008/05   Steve Gregan   Changed create apollo load to ignore zero quantity rows
     2008/05   Steve Gregan   Added forecast load pricing exception report
+    2009/09   Steve Gregan   Modified to fix XML parsing cdata section bug
 
    *******************************************************************************/
 
@@ -4120,7 +4121,7 @@ create or replace package body dw_fcst_maintenance as
                   tbl_wrkw(idx+par_data_range) := 0;
 	       end loop;
             end if;
-            var_string := xmlDom.getNodeValue(par_xml_node);
+            var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
             if not(var_string is null) then
                var_value := null;
                var_index := 0;
