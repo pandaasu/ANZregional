@@ -18,6 +18,7 @@ create or replace package ladefx02_loader as
     -------   ------         -----------
     2008/08   Steve Gregan   Created
     2009/06   Steve Gregan   China sales dedication - included business unit id
+    2009/09   Steve Gregan   China sales dedication - change distributor to cust type
 
    *******************************************************************************/
 
@@ -319,7 +320,7 @@ create or replace package body ladefx02_loader as
       rcd_iface_customer.std_level4_name := lics_inbound_utility.get_variable('STD_LEVEL4_NAME');
       rcd_iface_customer.business_unit_id := lics_inbound_utility.get_number('BUSINESS_UNIT_ID',null);
       rcd_iface_customer.distributor_flg := 'N';
-      if upper(rcd_iface_customer.affiliation) = 'WHOLESALER' then
+      if upper(rcd_iface_customer.cust_type) = 'DISTRIBUTOR' then
          rcd_iface_customer.distributor_flg := 'Y';
       end if;
 
