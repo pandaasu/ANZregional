@@ -28,6 +28,7 @@ create or replace package efxsbw02_coremat_extract as
     2008/10   Steve Gregan   Created
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
+    2009/09   Steve Gregan   Modified to add hero sku to the extract
 
    *******************************************************************************/
 
@@ -83,9 +84,10 @@ create or replace package body efxsbw02_coremat_extract as
           where t01.range_id = t02.range_id
             and t02.item_id = t03.item_id(+)
             and t01.market_id = con_market_id
-            and t02.required_flg = 'Y'
+            and (t02.required_flg = 'Y' or (t02.required_flg = 'N' and t03.topseller_flg = 'Y'))
             and (t01.range_id in (select range_id from range where trunc(modified_date) >= trunc(sysdate) - var_history) or
-                 t01.range_id in (select distinct(range_id) from range_item where trunc(modified_date) >= trunc(sysdate) - var_history));
+                 t01.range_id in (select distinct(range_id) from range_item where trunc(modified_date) >= trunc(sysdate) - var_history) or
+                 t02.item_id in (select distinct(item_id) from item where trunc(modified_date) >= trunc(sysdate) - var_history));
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/

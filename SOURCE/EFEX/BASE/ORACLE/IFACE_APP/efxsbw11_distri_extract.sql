@@ -30,6 +30,7 @@ create or replace package efxsbw11_distri_extract as
     2008/11   Steve Gregan   Modified interface to include name as first row
     2008/11   Steve Gregan   Modified to send empty file (just first row)
     2009/06   Steve Gregan   China sales dedication - included business unit id to division
+    2009/09   Steve Gregan   Modified to add facing quantity to extract
 
    *******************************************************************************/
 
@@ -81,6 +82,7 @@ create or replace package body efxsbw11_distri_extract as
       cursor csr_extract is
          select to_char(t01.customer_id) as customer_id,
                 to_char(nvl(t02.inventory_qty,0)) as inventory_qty,
+                to_char(nvl(t02.facing_qty,0)) as facing_qty,
                 to_char(t01.call_date,'yyyymmdd') as call_date,
                 to_char(nvl(t04.total_qty,0)) as total_qty,
                 to_char(t01.user_id) as user_id,
@@ -164,7 +166,8 @@ create or replace package body efxsbw11_distri_extract as
                                           '"'||replace(rcd_extract.inventory_qty,'"','""')||'";'||
                                           '"'||replace(rcd_extract.call_date,'"','""')||'";'||
                                           '"'||replace(rcd_extract.total_qty,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.user_id,'"','""')||'"');
+                                          '"'||replace(rcd_extract.user_id,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.facing_qty,'"','""')||'"');
 
       end loop;
       close csr_extract;

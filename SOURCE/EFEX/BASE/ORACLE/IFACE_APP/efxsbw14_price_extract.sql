@@ -12,7 +12,7 @@ create or replace package efxsbw14_price_extract as
 
     Description
     -----------
-    Distribution Extract - EFEX to SAP BW
+    Price Extract - EFEX to SAP BW
 
     This package extracts the Efex distribution price that have been modified within
     the last history number of days and sends the extract file to the SAP BW environment.
@@ -187,7 +187,7 @@ create or replace package body efxsbw14_price_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXSBW11 EFEX_DISTRI_EXTRACT - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - EFXSBW14 EFEX_PRICE_EXTRACT - ' || var_exception);
 
    /*-------------*/
    /* End routine */
