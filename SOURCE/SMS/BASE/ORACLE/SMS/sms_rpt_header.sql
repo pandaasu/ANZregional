@@ -53,7 +53,7 @@ comment on column sms.sms_rpt_header.rhe_crt_yyyyppw is 'creation Mars week';
 comment on column sms.sms_rpt_header.rhe_crt_yyyyppdd is 'creation Mars day';
 comment on column sms.sms_rpt_header.rhe_upd_user is 'Updated user';
 comment on column sms.sms_rpt_header.rhe_upd_date is 'Updated date';
-comment on column sms.sms_rpt_header.rhe_status is 'Report status (1=loaded or 2=processed or 3=resend or 4=stopped)';
+comment on column sms.sms_rpt_header.rhe_status is 'Report status (1=loaded or 2=processed or 3=resent or 4=cancelled or 5=submitted or 6=executing)';
 
 /**/
 /* Primary Key Constraint
