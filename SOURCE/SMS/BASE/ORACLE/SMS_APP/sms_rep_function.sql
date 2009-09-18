@@ -21,6 +21,7 @@ create or replace package sms_app.sms_rep_function as
     2009/07   Steve Gregan   Created
     2009/09   Steve Gregan   Added profile, message and filter codes to report message
     2009/09   Trevor Keon    Update output date to show previous period on first day of period
+    2009/09   Steve Gregan   Modified to move generation to the SMS poller
 
    *******************************************************************************/
 
@@ -34,10 +35,7 @@ create or replace package sms_app.sms_rep_function as
    function select_execution return sms_xml_type pipelined;
    function retrieve_execution return sms_xml_type pipelined;
    procedure update_execution(par_user in varchar2);
-   procedure generate(par_qry_code in varchar2,
-                      par_qry_date in varchar2,
-                      par_action in varchar2,
-                      par_user in varchar2);
+   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2);
 
 end sms_rep_function;
 /
@@ -281,7 +279,7 @@ create or replace package body sms_app.sms_rep_function as
                 to_char(to_date(t01.rhe_rpt_date,'yyyymmdd'),'yyyy/mm/dd') as exe_rpt_date,
                 t02.rex_exe_user as exe_user,
                 to_char(t02.rex_exe_date,'yyyy/mm/dd hh24:mi:ss') as exe_date,
-                decode(t02.rex_status,'1','Loaded','2','Processed','3','Resend','4','Stopped','*UNKNOWN') as exe_status
+                decode(t02.rex_status,'1','Loaded','2','Processed','3','Resent','4','Cancelled','5','Submitted','6','Executing','*UNKNOWN') as exe_status
            from sms_rpt_header t01,
                 sms_rpt_execution t02
           where t01.rhe_qry_code = t02.rex_qry_code
@@ -851,11 +849,19 @@ create or replace package body sms_app.sms_rep_function as
       cursor csr_report is
          select t01.*,
                 to_char(to_date(t01.rhe_qry_date,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rpt_rpt_date,
-                to_char(to_date(t01.rhe_crt_date||t01.rhe_crt_time,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rpt_crt_date,
-                decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resend','4','Stopped','*UNKNOWN') as rpt_status
-           from sms_rpt_header t01
-          where t01.rhe_qry_code = rcd_retrieve.que_qry_code
-            and t01.rhe_status != '1'
+                nvl(t02.exe_date,'NOT EXECUTED') as rpt_exe_date,
+                decode(t01.rhe_status,'1','Loaded','2','Processed','3','Resent','4','Cancelled','5','Submitted','6','Executing','*UNKNOWN') as rpt_status
+           from sms_rpt_header t01,
+                (select rex_qry_code,
+                        rex_qry_date,
+                        to_char(max(rex_exe_date),'yyyy/mm/dd hh24:mi:ss') as exe_date
+                   from sms_rpt_execution
+                  group by rex_qry_code,
+                           rex_qry_date) t02
+          where t01.rhe_qry_code = t02.rex_qry_code(+)
+            and t01.rhe_qry_date = t02.rex_qry_date(+)
+            and t01.rhe_qry_code = rcd_retrieve.que_qry_code
+            and (t01.rhe_status = '2' or t01.rhe_status = '3')
           order by t01.rhe_qry_date desc;
       rcd_report csr_report%rowtype;
 
@@ -929,7 +935,7 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       /* Pipe the report XML
       /*-*/
-      pipe row(sms_xml_object('<REPORT QRYDTE="'||sms_to_xml(rcd_report.rhe_qry_date)||'" RPTDTE="'||sms_to_xml(rcd_report.rpt_rpt_date)||'" CRTDTE="'||sms_to_xml(rcd_report.rpt_crt_date)||'" RPTSTS="'||sms_to_xml(rcd_report.rpt_status)||'"/>'));
+      pipe row(sms_xml_object('<REPORT QRYDTE="'||sms_to_xml(rcd_report.rhe_qry_date)||'" RPTDTE="'||sms_to_xml(rcd_report.rpt_rpt_date)||'" EXEDTE="'||sms_to_xml(rcd_report.rpt_exe_date)||'" RPTSTS="'||sms_to_xml(rcd_report.rpt_status)||'"/>'));
 
       /*-*/
       /* Pipe the XML end
@@ -984,7 +990,8 @@ create or replace package body sms_app.sms_rep_function as
          select t01.*
            from sms_rpt_header t01
           where t01.rhe_qry_code = var_qry_code
-            and t01.rhe_qry_date = var_qry_date;
+            and t01.rhe_qry_date = var_qry_date
+            for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
    /*-------------*/
@@ -1019,29 +1026,38 @@ create or replace package body sms_app.sms_rep_function as
       /* Retrieve the existing report
       /*-*/
       var_found := false;
-      open csr_retrieve;
-      fetch csr_retrieve into rcd_retrieve;
-      if csr_retrieve%found then
-         var_found := true;
-      end if;
-      close csr_retrieve;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') is currently locked');
+      end;
       if var_found = false then
          sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') does not exist');
+      else
+         if rcd_retrieve.rhe_status != '2' and rcd_retrieve.rhe_status != '3' then
+            sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') must be status processed or resent');
+         end if;
       end if;
       if sms_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
-      /* Trigger the report generation
+      /* Update the report header to submitted
       /*-*/
-      lics_trigger_loader.execute('SMS Report Message Generation',
-                                  'sms_app.sms_rep_function.generate(''' || rcd_retrieve.rhe_qry_code || ''',''' ||
-                                                                            rcd_retrieve.rhe_qry_date || ''',''*MANUAL'',''' ||
-                                                                            upper(par_user) || ''')',
-                                  sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT'),
-                                  sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP'),
-                                  sms_gen_function.retrieve_system_value('REPORT_GENERATION_JOB_GROUP'));
+      update sms_rpt_header
+         set rhe_upd_user = par_user,
+             rhe_upd_date = sysdate,
+             rhe_status = '5'
+       where rhe_qry_code = rcd_retrieve.rhe_qry_code
+         and rhe_qry_date = rcd_retrieve.rhe_qry_date;
 
       /*-*/
       /* Free the XML document
@@ -1086,10 +1102,7 @@ create or replace package body sms_app.sms_rep_function as
    /************************************************/
    /* This procedure performs the generate routine */
    /************************************************/
-   procedure generate(par_qry_code in varchar2,
-                      par_qry_date in varchar2,
-                      par_action in varchar2,
-                      par_user in varchar2) is
+   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1150,7 +1163,7 @@ create or replace package body sms_app.sms_rep_function as
            from sms_rpt_header t01
           where t01.rhe_qry_code = par_qry_code
             and t01.rhe_qry_date = par_qry_date
-            for update;
+            for update nowait;
       rcd_report csr_report%rowtype;
 
       cursor csr_execution is
@@ -1288,6 +1301,21 @@ create or replace package body sms_app.sms_rep_function as
       var_warnings := false;
 
       /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - SMS Report Generation - Parameters('||par_qry_code||' + '||par_qry_date||')');
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('#-> Validating Parameters');
+
+      /*-*/
       /* Validate the parameters
       /*-*/
       if par_qry_code is null then
@@ -1295,9 +1323,6 @@ create or replace package body sms_app.sms_rep_function as
       end if;
       if par_qry_date is null then
          raise_application_error(-20000, 'Query date must be supplied');
-      end if;
-      if upper(par_action) != '*AUTO' and upper(par_action) != '*MANUAL' then
-         raise_application_error(-20000, 'Action must be *AUTO or *MANUAL');
       end if;
 
       /*-*/
@@ -1334,15 +1359,8 @@ create or replace package body sms_app.sms_rep_function as
       if var_found = false then
          raise_application_error(-20000, 'Report ('||par_qry_code||' / '||par_qry_date||') not found on the report header table');
       end if;
-      if par_action = '*AUTO' then
-         if rcd_report.rhe_status != '1' then
-            raise_application_error(-20000, 'Report ('||par_qry_code||' / '||par_qry_date||') must be status loaded for processing action *AUTO');
-         end if;
-      end if;
-      if par_action = '*MANUAL' then
-         if rcd_report.rhe_status = '1' then
-            raise_application_error(-20000, 'Report ('||par_qry_code||' / '||par_qry_date||') must not be status loaded for processing action *MANUAL');
-         end if;
+      if rcd_report.rhe_status != '6' then
+         raise_application_error(-20000, 'Report ('||par_qry_code||' / '||par_qry_date||') must be status executing');
       end if;
 
       /*-*/
@@ -1375,16 +1393,6 @@ create or replace package body sms_app.sms_rep_function as
       var_subject := rcd_query.que_ema_subject;
 
       /*-*/
-      /* Log start
-      /*-*/
-      lics_logging.start_log(var_log_prefix, var_log_search);
-
-      /*-*/
-      /* Begin procedure
-      /*-*/
-      lics_logging.write_log('Begin - SMS Report Generation - Parameters(' || par_qry_code || ' + ' || par_qry_date || ' + ' || par_action || ' + ' || par_user || ')');
-
-      /*-*/
       /* Log the event
       /*-*/
       lics_logging.write_log('#-> Processing SMS query - '||par_qry_code);
@@ -1413,7 +1421,7 @@ create or replace package body sms_app.sms_rep_function as
       rcd_sms_rpt_execution.rex_qry_code := rcd_report.rhe_qry_code;
       rcd_sms_rpt_execution.rex_qry_date := rcd_report.rhe_qry_date;
       rcd_sms_rpt_execution.rex_exe_seqn := rcd_execution.max_exe_seqn;
-      rcd_sms_rpt_execution.rex_exe_user := par_user;
+      rcd_sms_rpt_execution.rex_exe_user := rcd_report.rhe_upd_user;
       rcd_sms_rpt_execution.rex_exe_date := sysdate;
       rcd_sms_rpt_execution.rex_status := rcd_report.rhe_status;
       insert into sms_rpt_execution values rcd_sms_rpt_execution;
@@ -1950,9 +1958,7 @@ create or replace package body sms_app.sms_rep_function as
       /* Update the report header to processed
       /*-*/
       update sms_rpt_header
-         set rhe_upd_user = par_user,
-             rhe_upd_date = sysdate,
-             rhe_status = '2'
+         set rhe_status = '2'
        where rhe_qry_code = par_qry_code
          and rhe_qry_date = par_qry_date;
 
@@ -2012,11 +2018,6 @@ create or replace package body sms_app.sms_rep_function as
                                          'One or more errors occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
          end if;
 
-         /*-*/
-         /* Raise an exception to the caller
-         /*-*/
-         raise_application_error(-20000, '**LOGGED ERROR**');
-
       end if;
 
    /*-------------------*/
@@ -2048,9 +2049,20 @@ create or replace package body sms_app.sms_rep_function as
          end if;
 
          /*-*/
-         /* Raise an exception to the calling application
+         /* Alert and email
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - SMS_REP_FUNCTION - GENERATE - ' || var_exception);
+         if not(trim(var_alert) is null) and trim(upper(var_alert)) != '*NONE' then
+            lics_notification.send_alert(var_alert);
+         end if;
+         if not(trim(var_email) is null) and trim(upper(var_email)) != '*NONE' then
+            lics_notification.send_email(sms_parameter.system_code,
+                                         sms_parameter.system_unit,
+                                         sms_parameter.system_environment,
+                                         con_function||' - **ERROR**',
+                                         'SMS_REPORT_GENERATION',
+                                         var_email,
+                                         'A fatal error occurred during the SMS Report Generation execution - refer to web log - ' || lics_logging.callback_identifier);
+         end if;
 
    /*-------------*/
    /* End routine */

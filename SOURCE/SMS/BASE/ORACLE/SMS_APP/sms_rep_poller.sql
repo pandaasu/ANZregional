@@ -14,7 +14,7 @@ create or replace package sms_app.sms_rep_poller as
     -----------
     SMS Reporting System - Report poller
 
-    This package contain the report poller logic.
+    This package contain the report poller procedure.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -52,6 +52,7 @@ create or replace package body sms_app.sms_rep_poller as
       var_available boolean;
       var_bcst_time varchar2(256);
       var_work_time varchar2(8);
+      var_bcst_flag varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -59,8 +60,7 @@ create or replace package body sms_app.sms_rep_poller as
       cursor csr_list is
          select t01.*
            from sms_rpt_header t01
-          where t01.rhe_status = '1'
-            and t01.rhe_crt_date = to_char(sysdate,'yyyymmdd')
+          where (t01.rhe_crt_date = to_char(sysdate,'yyyymmdd') and t01.rhe_status = '1' and var_bcst_flag = 'Y') or t01.rhe_status = '5'
           order by t01.rhe_qry_date asc;
       rcd_list csr_list%rowtype;
 
@@ -94,8 +94,9 @@ create or replace package body sms_app.sms_rep_poller as
          when others then
             var_work_time := '000000';
       end;
-      if to_char(sysdate,'hh24miss') < var_work_time then
-         return;
+      var_bcst_flag := 'N';
+      if to_char(sysdate,'hh24miss') >= var_work_time then
+         var_bcst_flag := 'Y';
       end if;
 
       /*-*/
@@ -121,7 +122,7 @@ create or replace package body sms_app.sms_rep_poller as
             if csr_report%notfound then
                var_available := false;
             else
-               if rcd_report.rhe_status != '1' then
+               if rcd_report.rhe_status != '1' and rcd_report.rhe_status != '5' then
                   var_available := false;
                end if;
             end if;
@@ -151,19 +152,27 @@ create or replace package body sms_app.sms_rep_poller as
          else
 
             /*-*/
-            /* Generate the report messages
+            /* Update the report header to executing
             /*-*/
-            begin
-               sms_rep_function.generate(rcd_report.rhe_qry_code,rcd_report.rhe_qry_date,rcd_report.rhe_crt_user);
-            exception
-               when others then
-                  null;
-            end;
+            update sms_rpt_header
+               set rhe_status = '6'
+             where rhe_qry_code = rcd_report.rhe_qry_code
+               and rhe_qry_date = rcd_report.rhe_qry_date;
 
             /*-*/
             /* Commit to release row locks
             /*-*/
             commit;
+
+            /*-*/
+            /* Generate the report messages
+            /*-*/
+            begin
+               sms_rep_function.generate(rcd_report.rhe_qry_code,rcd_report.rhe_qry_date);
+            exception
+               when others then
+                  null;
+            end;
 
          end if;
 

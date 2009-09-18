@@ -19,6 +19,7 @@ create or replace package sms_app.sms_sbwsms01 as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/07   Steve Gregan   Created
+    2009/09   Steve Gregan   Removed report generation trigger
 
    *******************************************************************************/
 
@@ -204,9 +205,6 @@ create or replace package body sms_app.sms_sbwsms01 as
       rcd_sms_rpt_header.rhe_upd_user := user;
       rcd_sms_rpt_header.rhe_upd_date := sysdate;
       rcd_sms_rpt_header.rhe_status := '1';
-      if sms_gen_function.retrieve_system_value('SYSTEM_PROCESS') != '*ACTIVE' then
-          rcd_sms_rpt_header.rhe_status := '4';
-      end if;
 
       /*-*/
       /* Parse the XML input
@@ -351,21 +349,6 @@ create or replace package body sms_app.sms_sbwsms01 as
       /* Commit the database
       /*-*/
       commit;
-
-      /*-*/
-      /* Trigger the report generation when required
-      /* **notes** 1. Only the first report instance for query date combination is processed
-      /*              therefore only report status 1(loaded) is processed
-      /*-*/
-      if rcd_sms_rpt_header.rhe_status = '1' then
-         lics_trigger_loader.execute('SMS Report Message Generation',
-                                     'sms_app.sms_rep_function.generate(''' || rcd_sms_rpt_header.rhe_qry_code || ''',''' ||
-                                                                               rcd_sms_rpt_header.rhe_qry_date || ''',''*AUTO'',''' ||
-                                                                               rcd_sms_rpt_header.rhe_crt_user || ''')',
-                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_ALERT'),
-                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP'),
-                                     sms_gen_function.retrieve_system_value('REPORT_GENERATION_JOB_GROUP'));
-      end if;
 
    /*-------------------*/
    /* Exception handler */
