@@ -190,15 +190,104 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspDefine');
+         var objTabHead = document.getElementById('tabHeadList');
+         var objTabBody = document.getElementById('tabBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Query&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Date&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Broadcast Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
                document.getElementById('subDefine').innerText = objElements[i].getAttribute('STATUS');
+            } esle if (objElements[i].nodeName == 'BROADCAST') {
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doDefineCancel(\''+objElements[i].getAttribute('QRYCDE')+'\',\''+objElements[i].getAttribute('QRYDTE')+'\');">Cancel</a>';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('QRYCDE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RPTDTE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('EXESTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
             }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 4;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
          }
       }
    }
    function doDefineStop() {
       if (!processForm()) {return;}
+      if (confirm('Please confirm the system stop\r\npress OK continue (The system will be stopped)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       var objRcpStat = document.getElementById('DEF_RcpStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<SMS_REQUEST ACTION="*SYSSTOP"/>';
@@ -207,16 +296,61 @@ sub PaintFunction()%>
    }
    function doDefineStart() {
       if (!processForm()) {return;}
+      if (confirm('Please confirm the system start\r\npress OK continue (The system will be restarted)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
       var objRcpStat = document.getElementById('DEF_RcpStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<SMS_REQUEST ACTION="*SYSSTART"/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
+   function doDefineCancel(strQuery, strDate) {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the report broadcast cancel\r\npress OK continue (The report broadcast will be cancelled)\r\npress Cancel to cancel the request') == false) {
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<SMS_REQUEST ACTION="*CANRPT" QRYCDE="'+fixXML(strQuery)+'" QRYDTE="'+fixXML(strDate)+'"/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineCancel(\''+strXML+'\');',10);
+   }
    function requestDefineAccept(strXML) {
       doPostRequest('<%=strBase%>sms_sys_control_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doDefineRefresh();
+      }
+   }
+   function requestDefineCancel(strXML) {
+      doPostRequest('<%=strBase%>sms_sys_control_cancel.asp',function(strResponse) {checkDefineCancel(strResponse);},false,streamXML(strXML));
+   }
+   function checkDefineCancel(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -263,7 +397,7 @@ sub PaintFunction()%>
          <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>System Control</nobr></td>
@@ -285,6 +419,39 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineStop();">&nbsp;Stop System&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineStart();">&nbsp;Start System&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineRefresh();">&nbsp;Refresh Broadcast List&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadList">
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyList">
+                     <table class="clsTableBody" id="tabBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
                </tr>
             </table>
          </nobr></td>
