@@ -236,7 +236,7 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
                document.getElementById('subDefine').innerText = objElements[i].getAttribute('STATUS');
-            } esle if (objElements[i].nodeName == 'BROADCAST') {
+            } else if (objElements[i].nodeName == 'BROADCAST') {
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -386,6 +386,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
