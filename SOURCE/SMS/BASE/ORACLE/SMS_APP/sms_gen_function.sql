@@ -19,7 +19,7 @@ create or replace package sms_app.sms_gen_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/07   Steve Gregan   Created
-
+    2009/09   Steve Gregan   Added broadcast cancel to system control
    *******************************************************************************/
 
    /*-*/
@@ -32,6 +32,7 @@ create or replace package sms_app.sms_gen_function as
    procedure set_cfrm_data(par_confirm in varchar2);
    function retrieve_system_control return sms_xml_type pipelined;
    procedure update_system_control(par_user in varchar2);
+   procedure update_system_broadcast(par_user in varchar2);
    function retrieve_system_values return sms_xml_type pipelined;
    procedure update_system_values(par_user in varchar2);
    function retrieve_system_value(par_code in varchar2) return varchar2;
@@ -298,6 +299,15 @@ create or replace package body sms_app.sms_gen_function as
           where t01.sys_code = 'SYSTEM_PROCESS';
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_broadcast is
+         select t01.*,
+                to_char(to_date(t01.rhe_qry_date,'yyyymmddhh24miss'),'yyyy/mm/dd hh24:mi:ss') as rpt_date,
+                decode(t01.rhe_status,'1','Automatic','5','Submitted','*UNKNOWN') as exe_status
+           from sms_rpt_header t01
+          where (t01.rhe_crt_date = to_char(sysdate,'yyyymmdd') and t01.rhe_status = '1') or t01.rhe_status = '5'
+          order by t01.rhe_qry_date asc;
+      rcd_broadcast csr_broadcast%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -347,15 +357,36 @@ create or replace package body sms_app.sms_gen_function as
       end if;
 
       /*-*/
-      /* Pipe the XML data
+      /* Pipe the XML response start
       /*-*/
       pipe row(sms_xml_object('<?xml version="1.0" encoding="UTF-8"?><SMS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the XML system status data
+      /*-*/
       if rcd_retrieve.sys_value = '*ACTIVE'then
          pipe row(sms_xml_object('<SYSTEM STATUS="System processing is ACTIVE"/>'));
       end if;
       if rcd_retrieve.sys_value = '*STOPPED'then
          pipe row(sms_xml_object('<SYSTEM STATUS="System processing is STOPPED"/>'));
       end if;
+
+      /*-*/
+      /* Retrieve the broadcast list
+      /*-*/
+      open csr_broadcast;
+      loop
+         fetch csr_broadcast into rcd_broadcast;
+         if csr_broadcast%notfound then
+            exit;
+         end if;
+         pipe row(sms_xml_object('<BROADCAST QRYCDE="'||sms_to_xml(rcd_broadcast.rhe_qry_code)||'" QRYDTE="'||sms_to_xml(rcd_broadcast.rhe_qry_date)||'" RPTDTE="'||sms_to_xml(rcd_broadcast.rpt_date)||'" EXESTS="'||sms_to_xml(rcd_broadcast.exe_status)||'"/>'));
+      end loop;
+      close csr_broadcast;
+
+      /*-*/
+      /* Pipe the XML response end
+      /*-*/
       pipe row(sms_xml_object('</SMS_RESPONSE>'));
 
       /*-*/
@@ -519,6 +550,133 @@ create or replace package body sms_app.sms_gen_function as
    /* End routine */
    /*-------------*/
    end update_system_control;
+
+   /***************************************************************/
+   /* This procedure performs the update system broadcast routine */
+   /***************************************************************/
+   procedure update_system_broadcast(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_sms_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_qry_code varchar2(64);
+      var_qry_date varchar2(14);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from sms_rpt_header t01
+          where t01.rhe_qry_code = var_qry_code
+            and t01.rhe_qry_date = var_qry_date
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      sms_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('SMS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_sms_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/SMS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_sms_request,'@ACTION'));
+      var_qry_code := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@QRYCDE'));
+      var_qry_date := sms_from_xml(xslProcessor.valueOf(obj_sms_request,'@QRYDTE'));
+      if var_action != '*CANRPT' then
+         sms_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing report
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') is currently locked');
+      end;
+      if var_found = false then
+         sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') does not exist');
+      else
+         if rcd_retrieve.rhe_status != '1' and rcd_retrieve.rhe_status != '5' then
+            sms_gen_function.add_mesg_data('Report ('||var_qry_code||' - '||var_qry_date||') must be status loaded or submitted');
+         end if;
+      end if;
+      if sms_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Update the report header to cancelled
+      /*-*/
+      update sms_rpt_header
+         set rhe_upd_user = par_user,
+             rhe_upd_date = sysdate,
+             rhe_status = '4'
+       where rhe_qry_code = rcd_retrieve.rhe_qry_code
+         and rhe_qry_date = rcd_retrieve.rhe_qry_date;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_GEN_FUNCTION - UPDATE_SYSTEM_BROADCAST - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_system_broadcast;
 
    /**************************************************************/
    /* This procedure performs the retrieve system values routine */
