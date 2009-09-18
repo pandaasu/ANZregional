@@ -343,13 +343,13 @@ sub PaintFunction()%>
          cobjScreens[2].hedtxt = 'Execute Report ('+cstrExecuteCode+')';
          displayScreen('dspExecute');
          document.getElementById('EXE_RptDate').innerHTML = '';
-         document.getElementById('EXE_CrtDate').innerHTML = '';
+         document.getElementById('EXE_ExeDate').innerHTML = '';
          document.getElementById('EXE_RptStat').innerHTML = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'REPORT') {
                cstrExecuteDate = objElements[i].getAttribute('QRYDTE');
                document.getElementById('EXE_RptDate').innerHTML = objElements[i].getAttribute('RPTDTE');
-               document.getElementById('EXE_CrtDate').innerHTML = objElements[i].getAttribute('CRTDTE');
+               document.getElementById('EXE_ExeDate').innerHTML = objElements[i].getAttribute('EXEDTE');
                document.getElementById('EXE_RptStat').innerHTML = objElements[i].getAttribute('RPTSTS');
             }
          }
@@ -482,8 +482,8 @@ sub PaintFunction()%>
          <td id="EXE_RptDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Creation Date:&nbsp;</nobr></td>
-         <td id="EXE_CrtDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Execution Date:&nbsp;</nobr></td>
+         <td id="EXE_ExeDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Status:&nbsp;</nobr></td>

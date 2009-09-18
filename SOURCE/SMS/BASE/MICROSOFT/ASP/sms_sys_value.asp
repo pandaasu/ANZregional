@@ -195,12 +195,12 @@ sub PaintFunction()%>
          document.getElementById('DEF_StpPort').value = '';
          document.getElementById('DEF_RptAlrt').value = '';
          document.getElementById('DEF_RptEgrp').value = '';
-         document.getElementById('DEF_RptJgrp').value = '';
          document.getElementById('DEF_QryAlrt').value = '';
          document.getElementById('DEF_QryEgrp').value = '';
          document.getElementById('DEF_QryHDay').value = '';
          document.getElementById('DEF_AbrEgrp').value = '';
          document.getElementById('DEF_RcpEgrp').value = '';
+         document.getElementById('DEF_SmsBtim').value = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
                if (objElements[i].getAttribute('SYSCDE') == 'SMTP_TARGET') {
@@ -213,8 +213,6 @@ sub PaintFunction()%>
                   document.getElementById('DEF_RptAlrt').value = objElements[i].getAttribute('SYSVAL');
                } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_EMAIL_GROUP') {
                   document.getElementById('DEF_RptEgrp').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_JOB_GROUP') {
-                  document.getElementById('DEF_RptJgrp').value = objElements[i].getAttribute('SYSVAL');
                } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_ALERT') {
                   document.getElementById('DEF_QryAlrt').value = objElements[i].getAttribute('SYSVAL');
                } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_EMAIL_GROUP') {
@@ -225,6 +223,8 @@ sub PaintFunction()%>
                   document.getElementById('DEF_AbrEgrp').value = objElements[i].getAttribute('SYSVAL');
                } else if (objElements[i].getAttribute('SYSCDE') == 'RECIPIENT_EMAIL_GROUP') {
                   document.getElementById('DEF_RcpEgrp').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'SMS_BROADCAST_TIME') {
+                  document.getElementById('DEF_SmsBtim').value = objElements[i].getAttribute('SYSVAL');
                }
             }
          }
@@ -243,12 +243,12 @@ sub PaintFunction()%>
       strXML = strXML+'<SYSTEM SYSCDE="SMTP_PORT" SYSVAL="'+fixXML(document.getElementById('DEF_StpPort').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_RptAlrt').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptEgrp').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_JOB_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptJgrp').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_QryAlrt').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_QryEgrp').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="QUERY_HISTORY_DAYS" SYSVAL="'+fixXML(document.getElementById('DEF_QryHDay').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="ABBREVIATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_AbrEgrp').value)+'"/>';
       strXML = strXML+'<SYSTEM SYSCDE="RECIPIENT_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RcpEgrp').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="SMS_BROADCAST_TIME" SYSVAL="'+fixXML(document.getElementById('DEF_SmsBtim').value)+'"/>';
       strXML = strXML+'</SMS_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -342,12 +342,6 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Job Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RptJgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker Alert:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_QryAlrt" size="64" maxlength="128" value="" onFocus="setSelect(this);">
@@ -375,6 +369,12 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Audit Report Email Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_RcpEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMS Broadcast Time (HH24MISS):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_SmsBtim" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
