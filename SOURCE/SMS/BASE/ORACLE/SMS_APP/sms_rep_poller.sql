@@ -53,6 +53,7 @@ create or replace package body sms_app.sms_rep_poller as
       var_bcst_time varchar2(256);
       var_work_time varchar2(8);
       var_bcst_flag varchar2(1);
+      var_exe_status varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -167,8 +168,12 @@ create or replace package body sms_app.sms_rep_poller as
             /*-*/
             /* Generate the report messages
             /*-*/
+            var_exe_status := '1';
+            if rcd_report.rhe_status = '5' then
+               var_exe_status := '2';
+            end if;
             begin
-               sms_rep_function.generate(rcd_report.rhe_qry_code,rcd_report.rhe_qry_date);
+               sms_rep_function.generate(rcd_report.rhe_qry_code,rcd_report.rhe_qry_date,var_exe_status);
             exception
                when others then
                   null;

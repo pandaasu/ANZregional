@@ -35,7 +35,7 @@ create or replace package sms_app.sms_rep_function as
    function select_execution return sms_xml_type pipelined;
    function retrieve_execution return sms_xml_type pipelined;
    procedure update_execution(par_user in varchar2);
-   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2);
+   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2, par_exe_status in varchar2);
 
 end sms_rep_function;
 /
@@ -279,7 +279,7 @@ create or replace package body sms_app.sms_rep_function as
                 to_char(to_date(t01.rhe_rpt_date,'yyyymmdd'),'yyyy/mm/dd') as exe_rpt_date,
                 t02.rex_exe_user as exe_user,
                 to_char(t02.rex_exe_date,'yyyy/mm/dd hh24:mi:ss') as exe_date,
-                decode(t02.rex_status,'1','Loaded','2','Processed','3','Resent','4','Cancelled','5','Submitted','6','Executing','*UNKNOWN') as exe_status
+                decode(t02.rex_status,'1','Automatic','2','Submitted','*UNKNOWN') as exe_status
            from sms_rpt_header t01,
                 sms_rpt_execution t02
           where t01.rhe_qry_code = t02.rex_qry_code
@@ -1102,7 +1102,7 @@ create or replace package body sms_app.sms_rep_function as
    /************************************************/
    /* This procedure performs the generate routine */
    /************************************************/
-   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2) is
+   procedure generate(par_qry_code in varchar2, par_qry_date in varchar2, par_exe_status in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1117,6 +1117,7 @@ create or replace package body sms_app.sms_rep_function as
       var_found boolean;
       var_process boolean;
       var_sent boolean;
+      var_sta_text varchar2(32);
       var_smtp_target varchar2(256);
       var_smtp_host varchar2(256);
       var_smtp_port varchar2(256);
@@ -1299,6 +1300,10 @@ create or replace package body sms_app.sms_rep_function as
       var_email := sms_gen_function.retrieve_system_value('REPORT_GENERATION_EMAIL_GROUP');
       var_errors := false;
       var_warnings := false;
+      var_sta_text := '*AUTOMATIC';
+      if var_sta_text = '2' then
+         var_sta_text := '*SUBMITTED';
+      end if;
 
       /*-*/
       /* Log start
@@ -1308,7 +1313,7 @@ create or replace package body sms_app.sms_rep_function as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - SMS Report Generation - Parameters('||par_qry_code||' + '||par_qry_date||')');
+      lics_logging.write_log('Begin - SMS Report Generation - Parameters('||par_qry_code||' + '||par_qry_date||' + '||var_sta_text||')');
 
       /*-*/
       /* Log the event
@@ -1423,7 +1428,7 @@ create or replace package body sms_app.sms_rep_function as
       rcd_sms_rpt_execution.rex_exe_seqn := rcd_execution.max_exe_seqn;
       rcd_sms_rpt_execution.rex_exe_user := rcd_report.rhe_upd_user;
       rcd_sms_rpt_execution.rex_exe_date := sysdate;
-      rcd_sms_rpt_execution.rex_status := rcd_report.rhe_status;
+      rcd_sms_rpt_execution.rex_status := par_exe_status;
       insert into sms_rpt_execution values rcd_sms_rpt_execution;
 
       /*-*/
