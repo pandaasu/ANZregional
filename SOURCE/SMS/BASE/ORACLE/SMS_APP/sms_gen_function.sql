@@ -32,7 +32,7 @@ create or replace package sms_app.sms_gen_function as
    procedure set_cfrm_data(par_confirm in varchar2);
    function retrieve_system_control return sms_xml_type pipelined;
    procedure update_system_control(par_user in varchar2);
-   procedure update_system_broadcast(par_user in varchar2);
+   procedure cancel_system_control(par_user in varchar2);
    function retrieve_system_values return sms_xml_type pipelined;
    procedure update_system_values(par_user in varchar2);
    function retrieve_system_value(par_code in varchar2) return varchar2;
@@ -551,10 +551,10 @@ create or replace package body sms_app.sms_gen_function as
    /*-------------*/
    end update_system_control;
 
-   /***************************************************************/
-   /* This procedure performs the update system broadcast routine */
-   /***************************************************************/
-   procedure update_system_broadcast(par_user in varchar2) is
+   /*************************************************************/
+   /* This procedure performs the cancel system control routine */
+   /*************************************************************/
+   procedure cancel_system_control(par_user in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -671,12 +671,12 @@ create or replace package body sms_app.sms_gen_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_GEN_FUNCTION - UPDATE_SYSTEM_BROADCAST - ' || substr(SQLERRM, 1, 1536));
+         sms_gen_function.add_mesg_data('FATAL ERROR - SMS_GEN_FUNCTION - CANCEL_SYSTEM_CONTROL - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end update_system_broadcast;
+   end cancel_system_control;
 
    /**************************************************************/
    /* This procedure performs the retrieve system values routine */
