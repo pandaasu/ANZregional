@@ -14,7 +14,9 @@ IS
    2.0        01/02/2008   Jeff Phillipson    Validation upgrade changes made
    3.0        27-May-2008  Jeff Phillipson    Obsolete BOM Report procedures added to end of package
    3.2        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
-   3.3        04-Nov-2008  Chris Munn        Modify Frozen Window to cope with consecutive days off.
+   3.3        04-Nov-2008  Chris Munn         Modify Frozen Window to cope with consecutive days off.
+   3.4        03-Sep-2009  Chris Munn         Modify RETRIEVE_ALLOC_RESOURCES, allowing the SSCs to assign
+                                              work centers to all process orders within the frozen window.
 ******************************************************************************/
 
    /***********************************************************/
@@ -131,7 +133,7 @@ IS
 /* for the Factory Recipe Report
 /* has access - NO acess to this application - returns 0
 /*  general user access - PR_USER - return 1
-/*  R&D access PR_FDR_ISSR - return 2
+/*  R_D access PR_FDR_ISSR - return 2
 /*   ADMIN - PR_ADMIN - return 3
 /***********************************************************/
    FUNCTION User_Role (i_userid IN VARCHAR2)
@@ -427,7 +429,7 @@ FUNCTION GET_OFF_BLOCK_LENGTH(i_start_date IN DATE)
 
 /***********************************************************/
 /* RETRIEVE_Materials which can have a process order created
-/* this is used in the factory recipe report - R&D section
+/* this is used in the factory recipe report - R_D section
 /***********************************************************/
    PROCEDURE retrieve_matls (
       i_plant_code       IN       VARCHAR2,
@@ -520,6 +522,8 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing IS
    3.0        27-May-2008  Jeff Phillipson   Obsolete BOM Report procedures added to end of package 
    3.2        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
    3.3        04-Nov-2008  Chris Munn        Modify Frozen Window to cope with consecutive days off.
+   3.4        03-Sep-2009  Chris Munn         Modify RETRIEVE_ALLOC_RESOURCES, allowing the SSCs to assign
+                                              work centers to all process orders within the frozen window.
 ******************************************************************************/
 
    /*-*/
@@ -1130,7 +1134,7 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing IS
   /* User_Role will determine if the current user
   /* has access - NO acess to this application - returns 0
   /*  general user access - PR_USER - return 1
-  /*  R&D access PR_FDR_ISSR - return 2
+  /*  R_D access PR_FDR_ISSR - return 2
   /*   ADMIN - PR_ADMIN - return 3
   /***********************************************************/
   FUNCTION User_Role(i_userid IN VARCHAR2)  RETURN NUMBER IS
@@ -1765,7 +1769,7 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing IS
 				       			  FROM CNTL_REC t01, CNTL_REC_LCL t02
 						 		 WHERE LTRIM(t01.proc_order,'0') = t02.proc_order(+)
 								   AND ((t01.run_end_datime < SYSDATE - 2 OR t02.RUN_end_DATIME_LCL < SYSDATE  -2)
-			 						OR t01.run_start_datime >= SYSDATE + 4
+			 						OR t01.run_start_datime >= SYSDATE + 6
 									OR teco_stat = 'YES'
 									OR t01.RUN_START_DATIME = t01.RUN_END_DATIME)
 								   AND plant = i_plant_code
@@ -1808,7 +1812,7 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing IS
 				      				  FROM CNTL_REC t01, CNTL_REC_LCL t02
 						 			 WHERE LTRIM(t01.proc_order,'0') = t02.proc_order(+)
 									   AND ((t01.run_end_datime < SYSDATE - 2 OR t02.RUN_end_DATIME_LCL < SYSDATE  -2)
-			 							OR t01.run_start_datime >= SYSDATE + 4
+			 							OR t01.run_start_datime >= SYSDATE + 6
 										OR teco_stat = 'YES'
 										OR t01.RUN_START_DATIME = t01.RUN_END_DATIME)
 									   AND plant = i_plant_code
@@ -2655,7 +2659,7 @@ FUNCTION GET_FIRM(i_plant_code IN VARCHAR2)  RETURN VARCHAR2 IS
 
   /***********************************************************/
   /* RETRIEVE_Materials which can have a process order created
-  /* this is used in the factory recipe report - R&D section
+  /* this is used in the factory recipe report - R_D section
   /***********************************************************/
   PROCEDURE RETRIEVE_MATLS(i_plant_code  IN VARCHAR2,
   								  o_result OUT NUMBER,
@@ -3044,11 +3048,3 @@ END OBS_BOM_RECORDS;
 
   END Re_Timing;
 /
-
-grant execute on manu_app.re_timing to appsupport;
-grant execute on manu_app.re_timing to bthsupport;
-grant execute on manu_app.re_timing to pr_admin;
-grant execute on manu_app.re_timing to pr_app with grant option;
-grant execute on manu_app.re_timing to pr_user;
-
-create or replace public synonym re_timing for manu_app.re_timing;
