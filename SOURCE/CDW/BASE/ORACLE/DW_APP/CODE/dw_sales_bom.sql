@@ -1,6 +1,25 @@
+
+--create or replace type sales_bom_object as object
+--   (sale_material_code           varchar2(32 char),
+--    sale_buom_qty                number,
+--    sale_buom_code               varchar2(32 char),
+--    bom_sequence                 number,
+--    bom_plant_code               varchar2(32 char),
+--    fert_material_code           varchar2(32 char),
+--    fert_qty                     number,
+--    fert_uom                     varchar2(32 char),
+--    item_material_code           varchar2(32 char),
+--    item_qty                     number,
+--    item_uom                     varchar2(32 char));
+--/
+
+--create or replace type sales_bom_table as table of sales_bom_object;
+--/
+
 create or replace function dw_sales_bom(par_company_code in varchar2,
                                         par_bus_sgmnt_code in varchar2,
-                                        par_sale_yyyypp in number,
+                                        par_str_yyyymm in number,
+                                        par_end_yyyymm in number,
                                         par_material_code in varchar2) return sales_bom_table pipelined is
 
    var_material_save varchar2(32);
@@ -62,7 +81,7 @@ create or replace function dw_sales_bom(par_company_code in varchar2,
         from (select t01.matl_code,
                      t01.billed_base_uom_code,
                      sum(t01.billed_qty_base_uom) as billed_qty_base_uom
-                from dw_sales_period01 t01,
+                from dw_sales_month01 t01,
                      demand_plng_grp_sales_area_dim t02,
                      cust_sales_area_dim t03
                where t01.ship_to_cust_code = t02.cust_code(+)
@@ -75,8 +94,8 @@ create or replace function dw_sales_bom(par_company_code in varchar2,
                  and t01.hdr_sales_org_code = t03.sales_org_code(+)
                  and t01.company_code = par_company_code
                  and (par_material_code is null or t01.matl_code = par_material_code)
-                 and t01.billing_eff_yyyypp >= 200801
-                 and t01.billing_eff_yyyypp <= 200810
+                 and t01.billing_eff_yyyymm >= par_str_yyyymm
+                 and t01.billing_eff_yyyymm <= par_end_yyyymm
                  and t03.acct_assgnmnt_grp_code = '01'
                group by t01.matl_code,
                         t01.billed_base_uom_code) t01,
