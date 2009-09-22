@@ -18,6 +18,7 @@ create or replace package apodfn07_loader as
     YYYY/MM   Author             Description
     -------   ------             -----------
     2009/04   Steve Gregan       Created
+    2009/09   Steve Gregan       Modified to extend end date when less than 2000
 
    *******************************************************************************/
 
@@ -115,6 +116,11 @@ create or replace package body apodfn07_loader as
    /***********************************************/
    procedure on_data(par_record in varchar2) is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_end_date date;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -133,6 +139,10 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Retrieve field values
       /*-*/
+      var_end_date := nvl(lics_inbound_utility.get_date('END_DATE','dd/mm/yyyy'),to_date('31/12/9999','dd/mm/yyyy'));
+      if var_end_date < to_date('20000101','yyyymmdd') then
+         var_end_date := to_date('31/12/9999','dd/mm/yyyy');
+      end if;
       rcd_dmnd_sku_mapping.model_code := lics_inbound_utility.get_variable('MODEL');
       rcd_dmnd_sku_mapping.dmd_unit := lics_inbound_utility.get_variable('DMD_UNIT');
       rcd_dmnd_sku_mapping.dmd_group := lics_inbound_utility.get_variable('DMD_GROUP');
@@ -140,7 +150,7 @@ create or replace package body apodfn07_loader as
       rcd_dmnd_sku_mapping.item := lics_inbound_utility.get_variable('ITEM');
       rcd_dmnd_sku_mapping.sku_locn := lics_inbound_utility.get_variable('SKU_LOCN');
       rcd_dmnd_sku_mapping.str_date := nvl(lics_inbound_utility.get_date('STR_DATE','dd/mm/yyyy'),to_date('01/01/0001','dd/mm/yyyy'));
-      rcd_dmnd_sku_mapping.end_date := nvl(lics_inbound_utility.get_date('END_DATE','dd/mm/yyyy'),to_date('31/12/9999','dd/mm/yyyy'));
+      rcd_dmnd_sku_mapping.end_date := var_end_date;
       rcd_dmnd_sku_mapping.alloc_factor := nvl(lics_inbound_utility.get_number('ALLOC_FACTOR',null),1);
       rcd_dmnd_sku_mapping.conv_factor := nvl(lics_inbound_utility.get_number('CONV_FACTOR',null),1);
 
