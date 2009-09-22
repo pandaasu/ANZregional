@@ -69,7 +69,7 @@ create or replace package body apodfn07_loader as
       /*-*/
       /* Initialise the transaction variables
       /*-*/
-      var_trn_start := false;
+      var_trn_start := true;
       var_trn_error := false;
 
       /*-*/
