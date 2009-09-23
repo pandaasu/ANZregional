@@ -131,8 +131,7 @@ create or replace function dw_sales_bom(par_company_code in varchar2,
                                                       order by t01.bom_eff_from_date desc,
                                                                t01.bom_alternative desc) as rnkseq
                                 from bds_bom_all@ap0064p.world t01
-                               where trunc(t01.bom_eff_from_date) <= trunc(sysdate)
-                                 and t01.bom_status != '07') t01
+                               where trunc(t01.bom_eff_from_date) <= trunc(sysdate)) t01
                        where t01.rnkseq = 1
                          and t01.item_sequence != 0) t01
              connect by nocycle prior t01.item_material_code = t01.bom_material_code
