@@ -124,14 +124,16 @@ sub PaintFunction()%>
    // Load Functions //
    ////////////////////
    function loadFunction() {
-      cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
-      cobjScreens[1] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[0].hedtxt = 'Pet Prompt';
-      cobjScreens[1].hedtxt = 'Pet Maintenance';
+      cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
+      cobjScreens[1] = new clsScreen('dspPrompt','hedPrompt');
+      cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[0].hedtxt = '**LOADING**';
+      cobjScreens[1].hedtxt = 'Pet Prompt';
+      cobjScreens[2].hedtxt = 'Pet Maintenance';
       initSearch();
       initClass('Pet',function() {doDefineClaCancel();},function(intRowIndex,objValues) {doDefineClaAccept(intRowIndex,objValues);});
-      displayScreen('dspPrompt');
-      document.getElementById('PRO_PetCode').focus();
+      displayScreen('dspLoad');
+      requestPromptLoad();
    }
 
    ///////////////////////
@@ -163,8 +165,56 @@ sub PaintFunction()%>
    //////////////////////
    // Prompt Functions //
    //////////////////////
+   function requestPromptLoad() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*PMTPET"/>';
+      doPostRequest('<%=strBase%>pts_pet_config_prompt.asp',function(strResponse) {checkPromptLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkPromptLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspPrompt');
+         document.getElementById('PRO_PetCode').focus();
+         document.getElementById('PRO_PetCode').value = '';
+         var strPetType;
+         var objPetType = document.getElementById('PRO_PetType');
+         objPetType.selectedIndex = -1;
+         objPetType.options.length = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'PET_TYPE') {
+               objPetType.options[objPetType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            }
+         }
+      }
+   }
    function doPromptEnter() {
       if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_PetCode').value == '') {
+         if (document.getElementById('PRO_PetType').selectedIndex == -1 || document.getElementById('PRO_PetType').selectedIndex == 0) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Pet type must be selected for create';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       if (document.getElementById('PRO_PetCode').value == '') {
          doPromptCreate();
       } else {
@@ -187,8 +237,18 @@ sub PaintFunction()%>
    }
    function doPromptCreate() {
       if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_PetType').selectedIndex == -1 || document.getElementById('PRO_PetType').selectedIndex == 0) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Pet type must be selected for create';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var objPetType = document.getElementById('PRO_PetType');
       doActivityStart(document.body);
-      window.setTimeout('requestDefineCreate(\'*NEW\');',10);
+      window.setTimeout('requestDefineCreate(\'*NEW\',\''+objPetType.options[objPetType.selectedIndex].value+'\');',10);
    }
    function doPromptCopy() {
       if (!processForm()) {return;}
@@ -230,10 +290,10 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDPET" PETCODE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>pts_pet_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestDefineCreate(strCode) {
+   function requestDefineCreate(strCode,strType) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTPET" PETCODE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*CRTPET" PETCODE="'+fixXML(strCode)+'" PETTYPE="'+fixXML(strType)+'"/>';
       doPostRequest('<%=strBase%>pts_pet_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
@@ -262,26 +322,25 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[1].hedtxt = 'Update Pet ('+cstrDefineCode+')';
+            cobjScreens[2].hedtxt = 'Update Pet ('+cstrDefineCode+')';
          } else {
-            cobjScreens[1].hedtxt = 'Create Pet (*NEW)';
+            cobjScreens[2].hedtxt = 'Create Pet (*NEW)';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_PetCode').value = '';
+         document.getElementById('DEF_PetType').value = '';
+         document.getElementById('DEF_TypText').innerHTML = '';
          document.getElementById('DEF_PetName').value = '';
          document.getElementById('DEF_HouCode').value = '';
-         document.getElementById('DEF_HouText').innerText = '';
+         document.getElementById('DEF_HouText').innerHTML = '';
          document.getElementById('DEF_BthYear').value = '';
          document.getElementById('DEF_FedCmnt').value = '';
          document.getElementById('DEF_HthCmnt').value = '';
          var strPetStat;
-         var strPetType;
          var strDelNote;
          var objPetStat = document.getElementById('DEF_PetStat');
-         var objPetType = document.getElementById('DEF_PetType');
          var objDelNote = document.getElementById('DEF_DelNote');
          objPetStat.options.length = 0;
-         objPetType.options.length = 0;
          objDelNote.options.length = 0;
          document.getElementById('DEF_PetName').focus();
          var objClaData = document.getElementById('DEF_ClaData');
@@ -303,14 +362,15 @@ sub PaintFunction()%>
                objDelNote.options[objDelNote.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'PET') {
                document.getElementById('DEF_PetCode').value = objElements[i].getAttribute('PETCODE');
+               document.getElementById('DEF_PetType').value = objElements[i].getAttribute('PETTYPE');
+               document.getElementById('DEF_TypText').innerHTML = objElements[i].getAttribute('TYPTEXT');
                document.getElementById('DEF_PetName').value = objElements[i].getAttribute('PETNAME');
                document.getElementById('DEF_HouCode').value = objElements[i].getAttribute('HOUCODE');
-               document.getElementById('DEF_HouText').innerText = objElements[i].getAttribute('HOUTEXT');
+               document.getElementById('DEF_HouText').innerHTML = objElements[i].getAttribute('HOUTEXT');
                document.getElementById('DEF_BthYear').value = objElements[i].getAttribute('BTHYEAR');
                document.getElementById('DEF_FedCmnt').value = objElements[i].getAttribute('FEDCMNT');
                document.getElementById('DEF_HthCmnt').value = objElements[i].getAttribute('HTHCMNT');
                strPetStat = objElements[i].getAttribute('PETSTAT');
-               strPetType = objElements[i].getAttribute('PETTYPE');
                strDelNote = objElements[i].getAttribute('DELNOTE');
                cstrHouCode = objElements[i].getAttribute('HOUCODE');
             } else if (objElements[i].nodeName == 'TABLE') {
@@ -373,13 +433,6 @@ sub PaintFunction()%>
                break;
             }
          }
-         objPetType.selectedIndex = -1;
-         for (var i=0;i<objPetType.length;i++) {
-            if (objPetType.options[i].value == strPetType) {
-               objPetType.options[i].selected = true;
-               break;
-            }
-         }
          objDelNote.selectedIndex = -1;
          for (var i=0;i<objDelNote.length;i++) {
             if (objDelNote.options[i].value == strDelNote) {
@@ -398,7 +451,6 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objPetStat = document.getElementById('DEF_PetStat');
-      var objPetType = document.getElementById('DEF_PetType');
       var objDelNote = document.getElementById('DEF_DelNote');
       var objClaData = document.getElementById('DEF_ClaData');
       var objRow;
@@ -406,9 +458,9 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*DEFPET"';
       strXML = strXML+' PETCODE="'+fixXML(document.getElementById('DEF_PetCode').value)+'"';
+      strXML = strXML+' PETTYPE="'+fixXML(document.getElementById('DEF_PetType').value)+'"';
       strXML = strXML+' PETNAME="'+fixXML(document.getElementById('DEF_PetName').value.toUpperCase())+'"';
       strXML = strXML+' PETSTAT="'+fixXML(objPetStat.options[objPetStat.selectedIndex].value)+'"';
-      strXML = strXML+' PETTYPE="'+fixXML(objPetType.options[objPetType.selectedIndex].value)+'"';
       strXML = strXML+' HOUCODE="'+fixXML(document.getElementById('DEF_HouCode').value)+'"';
       strXML = strXML+' DELNOTE="'+fixXML(objDelNote.options[objDelNote.selectedIndex].value)+'"';
       strXML = strXML+' BTHYEAR="'+fixXML(document.getElementById('DEF_BthYear').value)+'"';
@@ -581,7 +633,13 @@ sub PaintFunction()%>
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
 <body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_pet_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
-   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
+   <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr>
+      <tr>
+         <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
+      </tr>
+   </table>
+   <table id="dspPrompt" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPromptEnter();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Prompt</nobr></td>
@@ -593,6 +651,12 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="PRO_PetCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="PRO_PetType"></select>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -625,6 +689,11 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Type:&nbsp;</nobr></td>
+         <td id="DEF_TypText" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
+         <input type="hidden" name="DEF_PetType" value="">
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PetName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
@@ -634,12 +703,6 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="DEF_PetStat"></select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Type:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_PetType"></select>
          </nobr></td>
       </tr>
       <tr>
