@@ -676,19 +676,6 @@ create or replace package body pts_app.pts_pty_function as
       var_selected varchar2(1);
       rcd_pts_pty_sys_field pts_pty_sys_field%rowtype;
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_child01 is
-         select t01.*
-           from pts_pet_definition t01
-          where t01.pde_pet_code in (select pcl_pet_code
-                                       from pts_pet_classification
-                                      where pcl_tab_code = rcd_pts_pty_sys_field.psf_tab_code
-                                        and pcl_fld_code = rcd_pts_pty_sys_field.psf_fld_code)
-            and t01.pde_pet_type = rcd_pts_pty_sys_field.psf_pet_type;
-      rcd_child01 csr_child01%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -732,14 +719,6 @@ create or replace package body pts_app.pts_pty_function as
       if var_selected is null or (var_selected != '0' and var_selected != '1') then
          pts_gen_function.add_mesg_data('Selected code must be 0 or 1');
       end if;
-      if var_selected = '0' then
-         open csr_child01;
-         fetch csr_child01 into rcd_child01;
-         if csr_child01%found then
-            pts_gen_function.add_mesg_data('System field is attached to pets of this pet type - unable to remove');
-         end if;
-         close csr_child01;
-      end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -755,6 +734,10 @@ create or replace package body pts_app.pts_pty_function as
                null;
          end;
       else
+         delete from pts_pet_classification
+          where pcl_tab_code = rcd_pts_pty_sys_field.psf_tab_code
+            and pcl_fld_code = rcd_pts_pty_sys_field.psf_fld_code
+            and pcl_pet_code in (select pde_pet_code from pts_pet_definition where pde_pet_type = rcd_pts_pty_sys_field.psf_pet_type);
          delete from pts_pty_sys_field
           where psf_pet_type = rcd_pts_pty_sys_field.psf_pet_type
             and psf_tab_code = rcd_pts_pty_sys_field.psf_tab_code
