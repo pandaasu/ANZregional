@@ -555,7 +555,7 @@ sub PaintFunction()%>
       var objTable = document.getElementById('DEF_ClaData');
       objRow = objTable.rows[intRow];
       var objPetType = document.getElementById('DEF_PetType');
-      var strPetType = objPetType.options[objPetType.selectedIndex].value;
+      var strPetType = objPetType.value;
       doClaUpdate(intRow,objRow.getAttribute('tabcde'),objRow.getAttribute('fldcde'),objRow.getAttribute('fldtxt'),objRow.getAttribute('inplen'),objRow.getAttribute('seltyp'),strPetType,objRow.getAttribute('valary'));
    }
    function doDefineClaCancel() {

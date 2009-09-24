@@ -572,6 +572,11 @@ sub PaintFunction()%>
    function doFldUpdAccept() {
       if (!processForm()) {return;}
       var objFldSlct = document.getElementById('FUP_FldSlct');
+      if (objFldSlct.options[objFldSlct.selectedIndex].value == '0') {
+         if (confirm('Please confirm the field deselect\r\npress OK continue (All existing field data for related pets of the pet type will be deleted)\r\npress Cancel to cancel the request') == false) {
+            return;
+         }
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDFLD"';
       strXML = strXML+' PTYCDE="'+cstrFieldTypCde+'"';
