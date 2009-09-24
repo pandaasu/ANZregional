@@ -26,6 +26,7 @@ create or replace package pts_app.pts_pet_function as
    /* Public declarations
    /*-*/
    function retrieve_list return pts_xml_type pipelined;
+   function retrieve_prompt return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    function retrieve_restore return pts_xml_type pipelined;
@@ -140,6 +141,106 @@ create or replace package body pts_app.pts_pet_function as
    /*-------------*/
    end retrieve_list;
 
+   /*******************************************************/
+   /* This procedure performs the retrieve prompt routine */
+   /*******************************************************/
+   function retrieve_prompt return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_pet_type is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_pet_type) t01
+          where t01.pty_status = 1;
+      rcd_pet_type csr_pet_type%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*PMTPET' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the pet type XML
+      /*-*/
+      pipe row(pts_xml_object('<PET_TYPE VALCDE="" VALTXT="** Create Pet Type **"/>'));
+      open csr_pet_type;
+      loop
+         fetch csr_pet_type into rcd_pet_type;
+         if csr_pet_type%notfound then
+            exit;
+         end if;
+         pipe row(pts_xml_object('<PET_TYPE VALCDE="'||rcd_pet_type.pty_code||'" VALTXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"/>'));
+      end loop;
+      close csr_pet_type;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_PROMPT - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_prompt;
+
    /*****************************************************/
    /* This procedure performs the retrieve data routine */
    /*****************************************************/
@@ -153,6 +254,7 @@ create or replace package body pts_app.pts_pet_function as
       obj_pts_request xmlDom.domNode;
       var_action varchar2(32);
       var_pet_code varchar2(32);
+      var_pet_type varchar2(32);
       var_tab_flag boolean;
       var_output varchar2(2000 char);
 
@@ -174,16 +276,16 @@ create or replace package body pts_app.pts_pet_function as
           where var_action = '*UPDPET' or val_code = 1;
       rcd_sta_code csr_sta_code%rowtype;
 
-      cursor csr_pet_type is
-         select t01.*
-           from table(pts_app.pts_gen_function.list_pet_type) t01
-          where t01.pty_status = 1;
-      rcd_pet_type csr_pet_type%rowtype;
-
       cursor csr_del_note is
          select t01.*
            from table(pts_app.pts_gen_function.list_class('*PET_DEF',5)) t01;
       rcd_del_note csr_del_note%rowtype;
+
+      cursor csr_pet_type is
+         select t01.*
+           from table(pts_app.pts_gen_function.list_pet_type) t01
+          where t01.pty_code = rcd_retrieve.pde_pet_type;
+      rcd_pet_type csr_pet_type%rowtype;
 
       cursor csr_table is
          select t01.sta_tab_code,
@@ -261,6 +363,7 @@ create or replace package body pts_app.pts_pet_function as
       obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
       var_pet_code := xslProcessor.valueOf(obj_pts_request,'@PETCODE');
+      var_pet_type := xslProcessor.valueOf(obj_pts_request,'@PETTYPE');
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDPET' and var_action != '*CRTPET' and var_action != '*CPYPET' then
          pts_gen_function.add_mesg_data('Invalid request action');
@@ -278,6 +381,8 @@ create or replace package body pts_app.pts_pet_function as
             return;
          end if;
          close csr_retrieve;
+      else
+         rcd_retrieve.pde_pet_type := pts_to_number(var_pet_type);
       end if;
 
       /*-*/
@@ -299,20 +404,6 @@ create or replace package body pts_app.pts_pet_function as
       close csr_sta_code;
 
       /*-*/
-      /* Pipe the pet type XML
-      /*-*/
-      pipe row(pts_xml_object('<PET_TYPE VALCDE="" VALTXT="** NO PET TYPE **"/>'));
-      open csr_pet_type;
-      loop
-         fetch csr_pet_type into rcd_pet_type;
-         if csr_pet_type%notfound then
-            exit;
-         end if;
-         pipe row(pts_xml_object('<PET_TYPE VALCDE="'||rcd_pet_type.pty_code||'" VALTXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"/>'));
-      end loop;
-      close csr_pet_type;
-
-      /*-*/
       /* Pipe the delete notifier XML
       /*-*/
       pipe row(pts_xml_object('<DEL_NOTE VALCDE="" VALTXT="** NO DELETE NOTIFIER **"/>'));
@@ -329,6 +420,16 @@ create or replace package body pts_app.pts_pet_function as
       end if;
 
       /*-*/
+      /* Pipe the pet type text
+      /*-*/
+      open csr_pet_type;
+      fetch csr_pet_type into rcd_pet_type;
+      if csr_pet_type%notfound then
+         rcd_pet_type.pty_text := '*UNKNOWN';
+      end if;
+      close csr_pet_type;
+
+      /*-*/
       /* Pipe the pet XML
       /*-*/
       if var_action = '*UPDPET' then
@@ -336,6 +437,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETSTAT="'||to_char(rcd_retrieve.pde_pet_status)||'"';
          var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
          var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
+         var_output := var_output||' TYPTEXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"';
          var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
          var_output := var_output||' HOUTEXT="'||pts_to_xml(rcd_retrieve.hou_text)||'"';
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
@@ -348,6 +450,7 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' PETSTAT="'||to_char(rcd_retrieve.pde_pet_status)||'"';
          var_output := var_output||' PETNAME="'||pts_to_xml(rcd_retrieve.pde_pet_name)||'"';
          var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
+         var_output := var_output||' TYPTEXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"';
          var_output := var_output||' HOUCODE="'||to_char(rcd_retrieve.pde_hou_code)||'"';
          var_output := var_output||' HOUTEXT="'||pts_to_xml(rcd_retrieve.hou_text)||'"';
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
@@ -359,7 +462,8 @@ create or replace package body pts_app.pts_pet_function as
          var_output := '<PET PETCODE="*NEW"';
          var_output := var_output||' PETSTAT="1"';
          var_output := var_output||' PETNAME=""';
-         var_output := var_output||' PETTYPE=""';
+         var_output := var_output||' PETTYPE="'||to_char(rcd_retrieve.pde_pet_type)||'"';
+         var_output := var_output||' TYPTEXT="'||pts_to_xml(rcd_pet_type.pty_text)||'"';
          var_output := var_output||' HOUCODE=""';
          var_output := var_output||' HOUTEXT="** DATA ENTRY **"';
          var_output := var_output||' BTHYEAR=""';
