@@ -435,7 +435,7 @@ insert into pts_sys_field values('*SAM_DEF',5,'Sample external recipe reference'
 insert into pts_sys_field values('*SAM_DEF',6,'Sample PLOP code','1',user,sysdate,'0','0',32,'*LOGIC','*TEXT','nvl(trim(s1.sde_plop_code),''*NULL'')<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*SAM_DEF',9,'Sample status','1',user,sysdate,'0','1',5,'*LOGIC','*LIST','nvl(s1.sde_sam_status,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*STM_DEF',1,'Selection template code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','st1.std_stm_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
-insert into pts_sys_field values('*STM_DEF',2,'Selection template text','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(stm1.std_stm_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
+insert into pts_sys_field values('*STM_DEF',2,'Selection template text','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(st1.std_stm_text,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*STM_DEF',3,'Selection template target','1',user,sysdate,'0','0',5,'*LOGIC','*LIST','nvl(st1.std_stm_target,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*STM_DEF',9,'Selection template status','1',user,sysdate,'0','0',5,'*LOGIC','*LIST','nvl(st1.std_stm_status,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',1,'Test code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','t1.tde_tes_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
