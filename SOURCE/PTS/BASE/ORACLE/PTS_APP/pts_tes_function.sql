@@ -3473,7 +3473,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*,
                 t02.tty_typ_target,
-                decode(t03.allocation_count,0,'0','1') as allocation_done
+                decode(nvl(t03.allocation_count,0),0,'0','1') as allocation_done
            from pts_tes_definition t01,
                 pts_tes_type t02,
                 (select tal_tes_code, count(*) as allocation_count from pts_tes_allocation where tal_tes_code = var_tes_code group by tal_tes_code) t03
