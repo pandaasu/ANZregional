@@ -358,4 +358,11 @@ insert into fcst_extract_type_load values('APOLLO_PET_FRESHNESS','*FCST_FRESHNES
 --TEST ONLY-- insert into fcst_extract_type_load values('APOLLO_SNACK_AFFILIATE','*FCST_AFFILIATE');
 --TEST ONLY-- insert into fcst_extract_type_load values('APOLLO_PET_AFFILIATE','*FCST_AFFILIATE');
 
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract01.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract02.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract03.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract04.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CLIO\BESPOKE\MCH\ORACLE\dw_app_procedure\dw_fcst_extract05.sql;
+
+
 
