@@ -7,12 +7,13 @@ insert into sms_system values ('SMTP_HOST','smtp.ap.mars',user,sysdate);
 insert into sms_system values ('SMTP_PORT','25',user,sysdate);
 insert into sms_system values ('REPORT_GENERATION_ALERT','*NONE',user,sysdate);
 insert into sms_system values ('REPORT_GENERATION_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
-insert into sms_system values ('REPORT_GENERATION_JOB_GROUP','DWP',user,sysdate);
+----insert into sms_system values ('REPORT_GENERATION_JOB_GROUP','DWP',user,sysdate);
 insert into sms_system values ('QUERY_CHECKER_ALERT','*NONE',user,sysdate);
 insert into sms_system values ('QUERY_CHECKER_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
 insert into sms_system values ('QUERY_HISTORY_DAYS','28',user,sysdate);
 insert into sms_system values ('ABBREVIATION_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
 insert into sms_system values ('RECIPIENT_EMAIL_GROUP','stephen.gregan@smtp.ap.mars',user,sysdate);
+insert into sms_system values ('SMS_BROADCAST_TIME','083000',user,sysdate);
 commit;
 
 --
