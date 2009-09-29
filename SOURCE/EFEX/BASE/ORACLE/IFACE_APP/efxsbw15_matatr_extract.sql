@@ -1,13 +1,13 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package efxsbw15_mat_extract as
+create or replace package efxsbw15_matatr_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : efxsbw15_mat_extract
+    Package : efxsbw15_matatr_extract
     Owner   : iface_app
 
     Description
@@ -34,13 +34,13 @@ create or replace package efxsbw15_mat_extract as
    /*-*/
    procedure execute(par_history in varchar2 default 0);
 
-end efxsbw15_mat_extract;
+end efxsbw15_matatr_extract;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body efxsbw15_mat_extract as
+create or replace package body efxsbw15_matatr_extract as
 
    /*-*/
    /* Private exceptions
@@ -73,19 +73,14 @@ create or replace package body efxsbw15_mat_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select to_char(t01.range_id) as range_id,
-                t02.required_flg as required_flg,
-                t03.item_code as item_code,
-                t03.topseller_flg as topseller_flg
-           from range t01,
-                range_item t02,
-                item t03
-          where t01.range_id = t02.range_id
-            and t02.item_id = t03.item_id(+)
-            and t01.market_id = con_market_id
-            and (t01.range_id in (select range_id from range where trunc(modified_date) >= trunc(sysdate) - var_history) or
-                 t01.range_id in (select distinct(range_id) from range_item where trunc(modified_date) >= trunc(sysdate) - var_history) or
-                 t02.item_id in (select distinct(item_id) from item where trunc(modified_date) >= trunc(sysdate) - var_history));
+         select t01.item_code as item_code,
+                t01.topseller_flg as topseller_flg,
+                to_char(nvl(t01.tdu_price,0)) as tdu_price,
+                to_char(nvl(t01.rsu_price,0)) as rsu_price,
+                to_char(t01.modified_date,'yyyymmdd') as modified_date
+           from item t01
+          where t01.market_id = con_market_id
+            and t01.item_id in (select distinct(item_id) from item where trunc(modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -105,8 +100,8 @@ create or replace package body efxsbw15_mat_extract as
       /*-*/
       /* Create outbound interface
       /*-*/
-      var_instance := lics_outbound_loader.create_interface('EFXSBW15',null,'EFEX_MAT_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
-      lics_outbound_loader.append_data('EFEX_MAT_EXTRACT');
+      var_instance := lics_outbound_loader.create_interface('EFXSBW15',null,'EFEX_MATATR_EXTRACT.DAT.'||to_char(sysdate,'yyyymmddhh24miss'));
+      lics_outbound_loader.append_data('EFEX_MATATR_EXTRACT');
 
       /*-*/
       /* Open cursor for output
@@ -122,9 +117,10 @@ create or replace package body efxsbw15_mat_extract as
          /* Append data lines when required
          /*-*/
          lics_outbound_loader.append_data('"'||replace(rcd_extract.item_code,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.range_id,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.required_flg,'"','""')||'";'||
-                                          '"'||replace(rcd_extract.topseller_flg,'"','""')||'"');
+                                          '"'||replace(rcd_extract.topseller_flg,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.tdu_price,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.rsu_price,'"','""')||'";'||
+                                          '"'||replace(rcd_extract.modified_date,'"','""')||'"');
 
       end loop;
       close csr_extract;
@@ -166,18 +162,18 @@ create or replace package body efxsbw15_mat_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXSBW15 EFEX_MAT_EXTRACT - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - EFXSBW15 EFEX_MATATR_EXTRACT - ' || var_exception);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end execute;
 
-end efxsbw15_mat_extract;
+end efxsbw15_matatr_extract;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym efxsbw15_mat_extract for iface_app.efxsbw15_mat_extract;
-grant execute on efxsbw15_mat_extract to public;
+create or replace public synonym efxsbw15_matatr_extract for iface_app.efxsbw15_matatr_extract;
+grant execute on efxsbw15_matatr_extract to public;
