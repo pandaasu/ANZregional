@@ -69,7 +69,7 @@ create table dds.dw_fcst_base
     dfn_adjmt_value                   number(16,2)         not null,
     dfn_adjmt_qty                     number(16,2)         not null)
    partition by list (fcst_identifier)
-      (partition the_rest values less than (default));
+      (partition the_rest values (default));
 
 /**/
 /* Comments
