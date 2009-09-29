@@ -1224,11 +1224,6 @@ create or replace package body pts_app.pts_map_function as
                set tde_glo_status = 4
              where tde_tes_code = rcd_header.tde_tes_code;
 
-            /*-*/
-            /* Commit the database
-            /*-*/
-            commit;
-
          end loop;
          close csr_header;
 
@@ -1267,6 +1262,11 @@ create or replace package body pts_app.pts_map_function as
             lics_outbound_loader.append_data(tbl_ani_outp(idx));
          end loop;
          lics_outbound_loader.finalise_interface;
+
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
 
          /*-*/
          /* Release the lock
