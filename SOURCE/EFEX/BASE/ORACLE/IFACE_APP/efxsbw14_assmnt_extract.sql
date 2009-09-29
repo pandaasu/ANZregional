@@ -78,9 +78,9 @@ create or replace package body efxsbw14_assmnt_extract as
                 t01.comm_title as comm_title,
                 substr(t01.comm_text,1,60) as comm_text,
                 t03.answer_text as answer_text,
-                t04.sales_territory_name_en as sales_territory_name,
-                t05.sales_area_name_en as sales_area_name,
-                t07.segment_name_en as segment_name,
+                t04.sales_territory_name as sales_territory_name,
+                t05.sales_area_name as sales_area_name,
+                t07.segment_name as segment_name,
                 decode(t07.business_unit_id,con_snack_id,'51',con_pet_id,'56','51') as division_code
            from comm t01,
                 comm_response t02,
@@ -88,19 +88,22 @@ create or replace package body efxsbw14_assmnt_extract as
                 sales_territory t04,
                 sales_area t05,
                 sales_region t06,
-                segment t07
+                segment t07,
+                users t08
           where t01.comm_id = t02.comm_id
             and t02.comm_answer_id = t03.comm_answer_id
             and t02.user_id = t04.user_id
             and t04.sales_area_id = t05.sales_area_id
             and t05.sales_region_id = t06.sales_region_id
             and t06.segment_id = t07.segment_id
+            and t02.user_id = t08.user_id
             and t01.comm_id in (select comm_id from comm where trunc(due_date) >= trunc(sysdate) - var_history)
             and t01.comm_type = 'Assessment'
             and t04.status = 'A'
             and t05.status = 'A'
             and t06.status = 'A'
             and t07.status = 'A'
+            and t08.market_id = con_market_id
          order by t01.comm_id asc;
       rcd_extract csr_extract%rowtype;
 
