@@ -92,7 +92,7 @@ create or replace package body dds_dw_partition as
    /*********************************************************************/
    /* This procedure performs the truncate table list partition routine */
    /*********************************************************************/
-   procedure truncate_list(par_table varchar2, par_partition number) is
+   procedure truncate_list(par_table varchar2, par_partition varchar2) is
 
       /*-*/
       /* Local definitions
