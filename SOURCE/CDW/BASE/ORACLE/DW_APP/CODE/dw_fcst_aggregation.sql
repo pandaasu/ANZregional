@@ -19,7 +19,7 @@ create or replace package dw_fcst_aggregation as
 
     1. PAR_COMPANY (company code) (MANDATORY)
 
-       The company for which the aggregation is to be performed. 
+       The company for which the aggregation is to be performed.
 
     **notes**
     1. A web log is produced under the search value DW_FCST_AGGREGATION where all errors are logged.
@@ -60,10 +60,21 @@ create or replace package body dw_fcst_aggregation as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure purch_base_load(par_company_code in varchar2, par_company_currcy in varchar2, par_date in date);
-   procedure order_base_load(par_company_code in varchar2, par_company_currcy in varchar2, par_date in date);
-   procedure dlvry_base_load(par_company_code in varchar2, par_company_currcy in varchar2, par_date in date);
-   procedure nzmkt_base_load(par_company_code in varchar2, par_company_currcy in varchar2, par_date in date);
+   procedure fcst_fact_brhist_load(par_company_code in varchar2, par_fcst_code in varchar2, par_cast_yyyypp in number);
+
+   /*-*/
+   /* Private constants
+   /*-*/
+   pc_fcst_dtl_typ_dfn_adj        constant varchar2(1) := '0';
+   pc_fcst_dtl_typ_base           constant varchar2(1) := '1';
+   pc_fcst_dtl_typ_aggr_mkt_act   constant varchar2(1) := '2';
+   pc_fcst_dtl_typ_lock           constant varchar2(1) := '3';
+   pc_fcst_dtl_typ_rcncl          constant varchar2(1) := '4';
+   pc_fcst_dtl_typ_auto_adj       constant varchar2(1) := '5';
+   pc_fcst_dtl_typ_override       constant varchar2(1) := '6';
+   pc_fcst_dtl_typ_mkt_act        constant varchar2(1) := '7';
+   pc_fcst_dtl_typ_data_driven    constant varchar2(1) := '8';
+   pc_fcst_dtl_typ_tgt_imapct     constant varchar2(1) := '9';
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -84,10 +95,12 @@ create or replace package body dw_fcst_aggregation as
       var_company_code company.company_code%type;
       var_company_currcy company.company_currcy%type;
       var_date date;
-      var_test date;
-      var_next date;
+      var_yyyypp number(6,0);
       var_process_date varchar2(8);
       var_process_code varchar2(32);
+      var_cast_yyyypp number(6,0);
+      var_cam1_yyyypp number(6,0);
+      var_cam2_yyyypp number(6,0);
 
       /*-*/
       /* Local constants
@@ -102,6 +115,12 @@ create or replace package body dw_fcst_aggregation as
            from company t01
           where t01.company_code = par_company;
       rcd_company csr_company%rowtype;
+
+      cursor csr_mars_date is
+         select t01.mars_period
+           from mars_date t01
+          where trunc(t01.calendar_date) = to_date(var_process_date,'yyyymmdd');
+      rcd_mars_date csr_mars_date%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -149,6 +168,28 @@ create or replace package body dw_fcst_aggregation as
       end if;
 
       /*-*/
+      /* Aggregation casting periods are always based on the previous day (converted using the company timezone)
+      /*-*/
+      open csr_mars_date;
+      fetch csr_mars_date into rcd_mars_date;
+      if csr_mars_date%notfound then
+         raise_application_error(-20000, 'Date ' || to_char(var_process_date,'yyyy/mm/dd hh24:mi:ss') || ' not found in MARS_DATE');
+      end if;
+      close csr_mars_date;
+      var_cast_yyyypp := rcd_mars_date.mars_period - 1;
+      if to_number(substr(to_char(var_cast_yyyypp,'fm000000'),5,2)) < 1 then
+         var_cast_yyyypp := var_cast_yyyypp - 88;
+      end if;
+      var_cam1_yyyypp := var_cast_yyyypp - 1;
+      if to_number(substr(to_char(var_cam1_yyyypp,'fm000000'),5,2)) < 1 then
+         var_cam1_yyyypp := var_cam1_yyyypp - 88;
+      end if;
+      var_cam2_yyyypp := var_cam1_yyyypp - 1;
+      if to_number(substr(to_char(var_cam2_yyyypp,'fm000000'),5,2)) < 1 then
+         var_cam2_yyyypp := var_cam2_yyyypp - 88;
+      end if;
+
+      /*-*/
       /* Log start
       /*-*/
       lics_logging.start_log(var_log_prefix, var_log_search);
@@ -177,10 +218,20 @@ create or replace package body dw_fcst_aggregation as
       if var_locked = true then
 
          /*-*/
-         /* PURCH_BASE load
+         /* BRM1 load
          /*-*/
          begin
-            purch_base_load(var_company_code, var_company_currcy, var_date);
+            fcst_fact_brhist_load(var_company_code, 'BRM1', var_cam1_yyyypp);
+         exception
+            when others then
+               var_errors := true;
+         end;
+
+         /*-*/
+         /* BRM2 load
+         /*-*/
+         begin
+            fcst_fact_brhist_load(var_company_code, 'BRM2', var_cam2_yyyypp);
          exception
             when others then
                var_errors := true;
@@ -287,64 +338,18 @@ create or replace package body dw_fcst_aggregation as
    /*-------------*/
    end execute;
 
-   /****************************************************************/
-   /* This procedure performs the purchase order base load routine */
-   /****************************************************************/
-   procedure purch_base_load(par_company_code in varchar2, par_company_currcy in varchar2, par_date in date) is
+   /********************************************************************/
+   /* This procedure performs the business review history load routine */
+   /********************************************************************/
+   procedure fcst_fact_brhist_load(par_company_code in varchar2, par_fcst_code in varchar2, par_cast_yyyypp in number) is
 
       /*-*/
       /* Local variables
       /*-*/
-      rcd_purch_base dw_purch_base%rowtype;
-      var_purch_max_seqn number;
-      var_purch_order_type_factor number;
-      var_gsv_value number;
-      type typ_work is table of dw_temp%rowtype index by binary_integer;
-      tbl_work typ_work;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_pur_base is
-         select nvl(max(t01.purch_order_trace_seqn),0) as max_trace_seqn
-           from dw_purch_base t01
-          where t01.company_code = par_company_code;
-      rcd_pur_base csr_pur_base%rowtype;
-
-      cursor csr_work is
-         select t01.purch_order_doc_num as doc_num,
-                t01.purch_order_doc_line_num as doc_line_num
-           from sap_sto_po_trace t01
-          where t01.company_code = par_company_code
-            and t01.trace_date <= par_date
-            and t01.trace_seqn > var_purch_max_seqn
-            and t01.purch_order_type_code = 'ZNB';
-      rcd_work csr_work%rowtype;
-
-      cursor csr_trace is
-         select t01.*,
-                t02.atwrt as mat_bus_sgmnt_code
-           from sap_sto_po_trace t01,
-                sap_cla_chr t02
-          where t01.trace_seqn in (select max(t01.trace_seqn)
-                                     from sap_sto_po_trace t01
-                                    where t01.company_code = par_company_code
-                                      and t01.trace_date <= par_date
-                                      and t01.trace_seqn > var_purch_max_seqn
-                                      and t01.purch_order_type_code = 'ZNB'
-                                    group by t01.purch_order_doc_num)
-            and t01.trace_status = '*ACTIVE'
-            and t01.matl_code = t02.objek(+)
-            and t02.obtab(+) = 'MARA'
-            and t02.klart(+) = '001'
-            and t02.atnam(+) = 'CLFFERT01';
-      rcd_trace csr_trace%rowtype;
-
-      cursor csr_purch_order_type is
-         select decode(t01.purch_order_type_sign,'-',-1,1) as purch_order_type_factor
-           from purch_order_type t01
-          where t01.purch_order_type_code = rcd_purch_base.purch_order_type_code;
-      rcd_purch_order_type csr_purch_order_type%rowtype;
+      var_fcst_identifier dw_fcst_base.fcst_identifier%type;
+      var_cast_yyyypp number;
+      var_cast_yyyy number;
+      var_cast_pp number;
 
    /*-------------*/
    /* Begin block */
@@ -354,344 +359,236 @@ create or replace package body dw_fcst_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - PURCH_BASE Load');
+      lics_logging.write_log('Begin - FCST_FACT ('||par_fcst_code||') Load - Casting period ('||to_char(par_cast_yyyypp)||')');
 
       /*-*/
-      /* PURCH_BASE maximum trace
+      /* Initialise the forecast
       /*-*/
-      var_purch_max_seqn := 0;
-      open csr_pur_base;
-      fetch csr_pur_base into rcd_pur_base;
-      if csr_pur_base%found then
-         var_purch_max_seqn := rcd_pur_base.max_trace_seqn;
-      end if;
-      close csr_pur_base;
-
-      /* Trace work list
-      /*-*/
-      tbl_work.delete;
-      open csr_work;
-      fetch csr_work bulk collect into tbl_work;
-      close csr_work;
-      delete from dw_temp;
-      forall idx in 1..tbl_work.count
-         insert into dw_temp values tbl_work(idx);
+      var_fcst_identifier := par_fcst_code||'_COM'||par_company_code;
+      var_cast_yyyypp := par_cast_yyyypp;
+      var_cast_yyyy := to_number(substr(to_char(par_cast_yyyypp,'fm000000'),1,4));
+      var_cast_pp := to_number(substr(to_char(par_cast_yyyypp,'fm000000'),5,2));
 
       /*-*/
-      /* STEP #1
-      /*
-      /* Delete any existing purchase order base rows 
-      /* **notes** 1. Delete all purchase orders that have changed within the window
-      /*              regardless of their eligibility for inclusion in this process.
-      /*           2. This may result in *DELETED trace records being reprocessed during
-      /*              the next execution of this routine where the *DELETED trace records
-      /*              have a trace sequence number greater than the last *ACTIVE trace
-      /*              record. This is because this routine uses trace records that have a
-      /*              trace sequence that is greater than the highest trace sequence on the
-      /*              related fact table and only *ACTIVE trace records are transferred to the
-      /*              fact table. These reprocessed *DELETED trace records will not actually
-      /*              perform any database activity as the fact table rows will not exist.
+      /* Truncate the required partition
+      /* **notes**
+      /* 1. Partition with data may not have new data so will always be truncated
       /*-*/
-      lics_logging.write_log('--> Deleting changed purchase order base data');
-      delete from dw_purch_base
-       where company_code = par_company_code
-         and purch_order_doc_num in (select distinct(doc_num) from dw_temp);
+      lics_logging.write_log('--> Truncating the partition - Forecast(' || var_fcst_identifier || ')');
+      dds_dw_partition.truncate_list('dw_fcst_base',var_fcst_identifier);
 
       /*-*/
-      /* STEP #2
-      /*
-      /* Load the purchase order base rows from the ODS trace data
-      /* **notes** 1. Select all purchase orders that have changed within the window
-      /*           2. Only inter-company business purchase orders (ZNB) are selected
-      /*           3. Only valid purchase orders are selected (TRACE_STATUS = *ACTIVE)
+      /* Check that a partition exists for the current forecast
       /*-*/
-      lics_logging.write_log('--> Loading new and changed purchase order base data');
-      open csr_trace;
-      loop
-         fetch csr_trace into rcd_trace;
-         if csr_trace%notfound then
-            exit;
-         end if;
-
-         /*---------------------------*/
-         /* PURCH_BASE Initialisation */
-         /*---------------------------*/
-
-         /*-*/
-         /* Initialise the purchase order base row
-         /*-*/
-         rcd_purch_base.purch_order_doc_num := rcd_trace.purch_order_doc_num;
-         rcd_purch_base.purch_order_doc_line_num := rcd_trace.purch_order_doc_line_num;
-         rcd_purch_base.purch_order_line_status := '*OPEN';
-         rcd_purch_base.purch_order_trace_seqn := rcd_trace.trace_seqn;
-         rcd_purch_base.creatn_date := rcd_trace.creatn_date;
-         rcd_purch_base.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
-         rcd_purch_base.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
-         rcd_purch_base.creatn_yyyypp := rcd_trace.creatn_yyyypp;
-         rcd_purch_base.creatn_yyyymm := rcd_trace.creatn_yyyymm;
-         rcd_purch_base.purch_order_eff_date := rcd_trace.purch_order_eff_date;
-         rcd_purch_base.purch_order_eff_yyyyppdd := rcd_trace.purch_order_eff_yyyyppdd;
-         rcd_purch_base.purch_order_eff_yyyyppw := rcd_trace.purch_order_eff_yyyyppw;
-         rcd_purch_base.purch_order_eff_yyyypp := rcd_trace.purch_order_eff_yyyypp;
-         rcd_purch_base.purch_order_eff_yyyymm := rcd_trace.purch_order_eff_yyyymm;
-         rcd_purch_base.confirmed_date := rcd_trace.confirmed_date;
-         rcd_purch_base.confirmed_yyyyppdd := rcd_trace.confirmed_yyyyppdd;
-         rcd_purch_base.confirmed_yyyyppw := rcd_trace.confirmed_yyyyppw;
-         rcd_purch_base.confirmed_yyyypp := rcd_trace.confirmed_yyyypp;
-         rcd_purch_base.confirmed_yyyymm := rcd_trace.confirmed_yyyymm;
-         rcd_purch_base.company_code := rcd_trace.company_code;
-         rcd_purch_base.sales_org_code := rcd_trace.sales_org_code;
-         rcd_purch_base.distbn_chnl_code := rcd_trace.distbn_chnl_code;
-         rcd_purch_base.division_code := rcd_trace.division_code;
-         rcd_purch_base.doc_currcy_code := rcd_trace.currcy_code;
-         rcd_purch_base.company_currcy_code := par_company_currcy;
-         rcd_purch_base.exch_rate := rcd_trace.exch_rate;
-         rcd_purch_base.purchg_company_code := rcd_trace.purchg_company_code;
-         rcd_purch_base.purch_order_type_code := rcd_trace.purch_order_type_code;
-         rcd_purch_base.purch_order_reasn_code := rcd_trace.purch_order_reasn_code;
-         rcd_purch_base.purch_order_usage_code := rcd_trace.purch_order_usage_code;
-         rcd_purch_base.vendor_code := rcd_trace.vendor_code;
-         rcd_purch_base.cust_code := rcd_trace.cust_code;
-         rcd_purch_base.matl_code := dw_trim_code(rcd_trace.matl_code);
-         rcd_purch_base.ods_matl_code := rcd_trace.matl_code;
-         rcd_purch_base.plant_code := rcd_trace.plant_code;
-         rcd_purch_base.storage_locn_code := rcd_trace.storage_locn_code;
-         rcd_purch_base.purch_order_weight_unit := rcd_trace.purch_order_weight_unit;
-         rcd_purch_base.purch_order_gross_weight := rcd_trace.purch_order_gross_weight;
-         rcd_purch_base.purch_order_net_weight := rcd_trace.purch_order_net_weight;
-         rcd_purch_base.purch_order_uom_code := rcd_trace.purch_order_uom_code;
-         rcd_purch_base.purch_order_base_uom_code := null;
-         rcd_purch_base.ord_qty := 0;
-         rcd_purch_base.ord_qty_base_uom := 0;
-         rcd_purch_base.ord_qty_gross_tonnes := 0;
-         rcd_purch_base.ord_qty_net_tonnes := 0;
-         rcd_purch_base.ord_gsv := 0;
-         rcd_purch_base.ord_gsv_xactn := 0;
-         rcd_purch_base.ord_gsv_aud := 0;
-         rcd_purch_base.ord_gsv_usd := 0;
-         rcd_purch_base.ord_gsv_eur := 0;
-         rcd_purch_base.con_qty := 0;
-         rcd_purch_base.con_qty_base_uom := 0;
-         rcd_purch_base.con_qty_gross_tonnes := 0;
-         rcd_purch_base.con_qty_net_tonnes := 0;
-         rcd_purch_base.con_gsv := 0;
-         rcd_purch_base.con_gsv_xactn := 0;
-         rcd_purch_base.con_gsv_aud := 0;
-         rcd_purch_base.con_gsv_usd := 0;
-         rcd_purch_base.con_gsv_eur := 0;
-         rcd_purch_base.del_qty := 0;
-         rcd_purch_base.del_qty_base_uom := 0;
-         rcd_purch_base.del_qty_gross_tonnes := 0;
-         rcd_purch_base.del_qty_net_tonnes := 0;
-         rcd_purch_base.del_gsv := 0;
-         rcd_purch_base.del_gsv_xactn := 0;
-         rcd_purch_base.del_gsv_aud := 0;
-         rcd_purch_base.del_gsv_usd := 0;
-         rcd_purch_base.del_gsv_eur := 0;
-         rcd_purch_base.inv_qty := 0;
-         rcd_purch_base.inv_qty_base_uom := 0;
-         rcd_purch_base.inv_qty_gross_tonnes := 0;
-         rcd_purch_base.inv_qty_net_tonnes := 0;
-         rcd_purch_base.inv_gsv := 0;
-         rcd_purch_base.inv_gsv_xactn := 0;
-         rcd_purch_base.inv_gsv_aud := 0;
-         rcd_purch_base.inv_gsv_usd := 0;
-         rcd_purch_base.inv_gsv_eur := 0;
-         rcd_purch_base.out_qty := 0;
-         rcd_purch_base.out_qty_base_uom := 0;
-         rcd_purch_base.out_qty_gross_tonnes := 0;
-         rcd_purch_base.out_qty_net_tonnes := 0;
-         rcd_purch_base.out_gsv := 0;
-         rcd_purch_base.out_gsv_xactn := 0;
-         rcd_purch_base.out_gsv_aud := 0;
-         rcd_purch_base.out_gsv_usd := 0;
-         rcd_purch_base.out_gsv_eur := 0;
-         rcd_purch_base.mfanz_icb_flag := 'N';
-         rcd_purch_base.demand_plng_grp_division_code := rcd_trace.division_code;
-         if (rcd_purch_base.sales_org_code = '149' and
-             rcd_purch_base.distbn_chnl_code = '10') then
-            if rcd_trace.mat_bus_sgmnt_code = '01' then
-               rcd_purch_base.demand_plng_grp_division_code := '55';
-            elsif rcd_trace.mat_bus_sgmnt_code = '02' then
-               rcd_purch_base.demand_plng_grp_division_code := '57';
-            elsif rcd_trace.mat_bus_sgmnt_code = '05' then
-               rcd_purch_base.demand_plng_grp_division_code := '56';
-            end if;
-         else
-            if rcd_purch_base.demand_plng_grp_division_code = '57' then
-               if rcd_trace.mat_bus_sgmnt_code = '02' then
-                  rcd_purch_base.demand_plng_grp_division_code := '57';
-               elsif rcd_trace.mat_bus_sgmnt_code = '05' then
-                  rcd_purch_base.demand_plng_grp_division_code := '56';
-               end if;
-            end if;
-         end if;
-
-         /*-*/
-         /* Retrieve the purchase order type factor
-         /*
-         /* **note**
-         /* 1. The purchase order type factor defaults to 1 for unrecognised purchase type codes
-         /*    and will therefore be loaded into the purchase base table as a positive
-         /*-*/
-         var_purch_order_type_factor := 1;
-         open csr_purch_order_type;
-         fetch csr_purch_order_type into rcd_purch_order_type;
-         if csr_purch_order_type%found then
-            var_purch_order_type_factor := rcd_purch_order_type.purch_order_type_factor;
-         end if;
-         close csr_purch_order_type;
-
-         /*-*/
-         /* Set the ICB flag
-         /*
-         /* **note**
-         /* 1. The ICB flag is set to 'Y' only when the company code is not equal
-         /*    to the purchasing company code
-         /*-*/
-         if rcd_purch_base.company_code != rcd_purch_base.purchg_company_code then
-            rcd_purch_base.mfanz_icb_flag := 'Y';
-         end if;
-
-         /*-------------------------*/
-         /* PURCH_BASE Calculations */
-         /*-------------------------*/
-
-         /*-*/
-         /* Calculate the purchase order quantity values from the material GRD data
-         /* **notes** 1. Recalculation from the material GRD data allows the base tables to be rebuilt from the ODS when GRD data errors are corrected.
-         /*           2. Ensures consistency when reducing outstanding quantity and weight from delivery and invoice.
-         /*           3. Is the only way to reduce the order quantity with the delivery quantity (different material or UOM).
-         /*-*/
-         rcd_purch_base.ord_qty := var_purch_order_type_factor * rcd_trace.purch_order_qty;
-         dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_base.ods_matl_code;
-         dw_utility.pkg_qty_fact.uom_code := rcd_purch_base.purch_order_uom_code;
-         dw_utility.pkg_qty_fact.uom_qty := rcd_purch_base.ord_qty;
-         dw_utility.calculate_quantity;
-         rcd_purch_base.purch_order_base_uom_code := dw_utility.pkg_qty_fact.base_uom_code;
-         rcd_purch_base.ord_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-         rcd_purch_base.ord_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-         rcd_purch_base.ord_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
-
-         /*-*/
-         /* Calculate the purchase order GSV values
-         /*-*/
-         rcd_purch_base.ord_gsv_xactn := round(var_purch_order_type_factor * nvl(rcd_trace.purch_order_gsv,0), 2);
-         var_gsv_value := var_purch_order_type_factor * rcd_trace.purch_order_gsv;
-         rcd_purch_base.ord_gsv := round(
-                                      ods_app.currcy_conv(
-                                         var_gsv_value,
-                                         rcd_purch_base.doc_currcy_code,
-                                         rcd_purch_base.company_currcy_code,
-                                         rcd_purch_base.creatn_date,
-                                         'USDX'), 2);
-         rcd_purch_base.ord_gsv_aud := round(
-                                          ods_app.currcy_conv(
-                                             ods_app.currcy_conv(
-                                               var_gsv_value,
-                                                rcd_purch_base.doc_currcy_code,
-                                                rcd_purch_base.company_currcy_code,
-                                                rcd_purch_base.creatn_date,
-                                                'USDX'),
-                                             rcd_purch_base.company_currcy_code,
-                                             'AUD',
-                                             rcd_purch_base.creatn_date,
-                                             'MPPR'), 2);
-         rcd_purch_base.ord_gsv_usd := round(
-                                          ods_app.currcy_conv(
-                                             ods_app.currcy_conv(
-                                                var_gsv_value,
-                                                rcd_purch_base.doc_currcy_code,
-                                                rcd_purch_base.company_currcy_code,
-                                                rcd_purch_base.creatn_date,
-                                                'USDX'),
-                                             rcd_purch_base.company_currcy_code,
-                                             'USD',
-                                             rcd_purch_base.creatn_date,
-                                             'MPPR'), 2);
-         rcd_purch_base.ord_gsv_eur := round(
-                                          ods_app.currcy_conv(
-                                             ods_app.currcy_conv(
-                                                var_gsv_value,
-                                                rcd_purch_base.doc_currcy_code,
-                                                rcd_purch_base.company_currcy_code,
-                                                rcd_purch_base.creatn_date,
-                                                'USDX'),
-                                             rcd_purch_base.company_currcy_code,
-                                             'EUR',
-                                             rcd_purch_base.creatn_date,
-                                             'MPPR'), 2);
-
-         /*-*/
-         /* Calculate the confirmed values when required
-         /*-*/
-         if not(rcd_purch_base.confirmed_date is null) then
-
-            /*-*/
-            /* Calculate the confirmed quantity values
-            /*-*/
-            rcd_purch_base.con_qty := var_purch_order_type_factor * rcd_trace.confirmed_qty;
-            dw_utility.pkg_qty_fact.ods_matl_code := rcd_purch_base.ods_matl_code;
-            dw_utility.pkg_qty_fact.uom_code := rcd_purch_base.purch_order_uom_code;
-            dw_utility.pkg_qty_fact.uom_qty := rcd_purch_base.con_qty;
-            dw_utility.calculate_quantity;
-            rcd_purch_base.con_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
-            rcd_purch_base.con_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
-            rcd_purch_base.con_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
-
-            /*-*/
-            /* Calculate the confirmed GSV values
-            /*-*/
-            if rcd_purch_base.ord_qty = 0 then
-               rcd_purch_base.con_gsv := rcd_purch_base.ord_gsv;
-               rcd_purch_base.con_gsv_xactn := rcd_purch_base.ord_gsv_xactn;
-               rcd_purch_base.con_gsv_aud := rcd_purch_base.ord_gsv_aud;
-               rcd_purch_base.con_gsv_usd := rcd_purch_base.ord_gsv_usd;
-               rcd_purch_base.con_gsv_eur := rcd_purch_base.ord_gsv_eur;
-            else
-               rcd_purch_base.con_gsv := round((rcd_purch_base.ord_gsv / rcd_purch_base.ord_qty) * rcd_purch_base.con_qty, 2);
-               rcd_purch_base.con_gsv_xactn := round((rcd_purch_base.ord_gsv_xactn / rcd_purch_base.ord_qty) * rcd_purch_base.con_qty, 2);
-               rcd_purch_base.con_gsv_aud := round((rcd_purch_base.ord_gsv_aud / rcd_purch_base.ord_qty) * rcd_purch_base.con_qty, 2);
-               rcd_purch_base.con_gsv_usd := round((rcd_purch_base.ord_gsv_usd / rcd_purch_base.ord_qty) * rcd_purch_base.con_qty, 2);
-               rcd_purch_base.con_gsv_eur := round((rcd_purch_base.ord_gsv_eur / rcd_purch_base.ord_qty) * rcd_purch_base.con_qty, 2);
-            end if;
-
-         end if;
-
-         /*---------------------*/
-         /* PURCH_BASE Creation */
-         /*---------------------*/
-
-         /*-*/
-         /* Insert the purchase base row
-         /*-*/
-         insert into dw_purch_base values rcd_purch_base;
-
-      end loop;
-      close csr_trace;
+      lics_logging.write_log('--> Check/create partition - Forecast(' || var_fcst_identifier || ')');
+      dds_dw_partition.check_create_list('dw_fcst_base',var_fcst_identifier);
 
       /*-*/
-      /* STEP #3
-      /*
-      /* Update the open purchase base row data
+      /* Build the partition for the current forecast
       /*-*/
-      lics_logging.write_log('--> Updating open purchase base data');
-      dw_alignment.purch_base_status(par_company_code);
-
-      /*-*/
-      /* STEP #4
-      /*
-      /* Remove the delivery base rows for purchase orders deleted in this procedure
-      /*-*/
-      lics_logging.write_log('--> Removing delivery base data orphaned by deleted purchase orders');
-      delete from dw_dlvry_base
-       where company_code = par_company_code
-         and (purch_order_doc_num, purch_order_doc_line_num) in (select doc_num, doc_line_num
-                                                                   from dw_temp,
-                                                                        dw_purch_base
-                                                                  where doc_num = purch_order_doc_num(+)
-                                                                    and doc_line_num = purch_order_doc_line_num(+)
-                                                                    and purch_order_doc_num is null);
+      lics_logging.write_log('--> Loading the partition - Forecast(' || var_fcst_identifier || ')');
+      insert into dw_fcst_base
+         (fcst_identifier,
+          company_code,
+          sales_org_code,
+          distbn_chnl_code,
+          division_code,
+          moe_code,
+          fcst_type_code,
+          fcst_yyyypp,
+          fcst_yyyyppw,
+          demand_plng_grp_code,
+          cntry_code,
+          region_code,
+          multi_mkt_acct_code,
+          banner_code,
+          cust_buying_grp_code,
+          acct_assgnmnt_grp_code,
+          pos_format_grpg_code,
+          distbn_route_code,
+          cust_code,
+          matl_zrep_code,
+          matl_tdu_code,
+          currcy_code,
+          fcst_value,
+          fcst_value_aud,
+          fcst_value_usd,
+          fcst_value_eur,
+          fcst_qty,
+          fcst_qty_gross_tonnes,
+          fcst_qty_net_tonnes,
+          base_value,
+          base_qty,
+          aggreg_mkt_actvty_value,
+          aggreg_mkt_actvty_qty,
+          lock_value,
+          lock_qty,
+          rcncl_value,
+          rcncl_qty,
+          auto_adjmt_value,
+          auto_adjmt_qty,
+          override_value,
+          override_qty,
+          mkt_actvty_value,
+          mkt_actvty_qty,
+          data_driven_event_value,
+          data_driven_event_qty,
+          tgt_impact_value,
+          tgt_impact_qty,
+          dfn_adjmt_value,
+          dfn_adjmt_qty)
+         select var_fcst_identifier,
+                t1.company_code,
+                t1.sales_org_code,
+                t1.distbn_chnl_code,
+                t1.division_code,
+                t1.moe_code,
+                t1.fcst_type_code,
+                t1.fcst_yyyypp,
+                t1.fcst_yyyyppw,
+                t1.demand_plng_grp_code,
+                t1.cntry_code,
+                t1.region_code,
+                t1.multi_mkt_acct_code,
+                t1.banner_code,
+                t1.cust_buying_grp_code,
+                t1.acct_assgnmnt_grp_code,
+                t1.pos_format_grpg_code,
+                t1.distbn_route_code,
+                t1.cust_code,
+                t1.matl_zrep_code,
+                t1.matl_tdu_code,
+                t1.currcy_code,
+                t1.fcst_value,
+                ods_app.currcy_conv(t1.fcst_value,
+                                    t2.company_currcy,
+                                    'AUD',
+                                    (select to_date(yyyymmdd_date,'yyyymmdd')
+                                       from mars_date
+                                      where mars_yyyyppdd = (fcst_yyyypp || '01')),
+                                    'MPPR') as fcst_value_aud,
+                ods_app.currcy_conv(t1.fcst_value,
+                                    t2.company_currcy,
+                                    'USD',
+                                    (select to_date(yyyymmdd_date,'yyyymmdd')
+                                       from mars_date
+                                       where mars_yyyyppdd = (fcst_yyyypp || '01')),
+                                    'MPPR') as fcst_value_usd,
+                ods_app.currcy_conv(t1.fcst_value,
+                                    t2.company_currcy,
+                                    'EUR',
+                                    (select to_date(yyyymmdd_date,'yyyymmdd')
+                                       from mars_date
+                                      where mars_yyyyppdd = (fcst_yyyypp || '01')),
+                                    'MPPR') as fcst_value_eur,
+                t1.fcst_qty,
+                nvl(decode(t3.gewei, 'TNE', decode(t3.brgew,0,t3.ntgew,t3.brgew),
+                                     'KGM', (decode(t3.brgew,0,t3.ntgew,t3.brgew) / 1000)*t1.fcst_qty,
+                                     'GRM', (decode(t3.brgew,0,t3.ntgew,t3.brgew) / 1000000)*t1.fcst_qty,
+                                     'MGM', (decode(t3.brgew,0,t3.ntgew,t3.brgew) / 1000000000)*t1.fcst_qty,
+                                     0),0) as fcst_qty_gross_tonnes,
+                nvl(decode(t3.gewei, 'TNE', t3.ntgew,
+                                     'KGM', (t3.ntgew / 1000)*t1.fcst_qty,
+                                     'GRM', (t3.ntgew / 1000000)*t1.fcst_qty,
+                                     'MGM', (t3.ntgew / 1000000000)*t1.fcst_qty,
+                                     0),0) as fcst_qty_net_tonnes,
+                base_value,
+                base_qty,
+                aggreg_mkt_actvty_value,
+                aggreg_mkt_actvty_qty,
+                lock_value,
+                lock_qty,
+                rcncl_value,
+                rcncl_qty,
+                auto_adjmt_value,
+                auto_adjmt_qty,
+                override_value,
+                override_qty,
+                mkt_actvty_value,
+                mkt_actvty_qty,
+                data_driven_event_value,
+                data_driven_event_qty,
+                tgt_impact_value,
+                tgt_impact_qty,
+                dfn_adjmt_value,
+                dfn_adjmt_qty
+           from (select /*+ index(b fcst_dtl_pk) */
+                        a.company_code,
+                        a.sales_org_code,
+                        a.distbn_chnl_code,
+                        a.division_code,
+                        a.moe_code,
+                        a.fcst_type_code,
+                        (b.fcst_year || lpad(b.fcst_period,2,0)) as fcst_yyyypp,
+                        null as fcst_yyyyppw,
+                        b.demand_plng_grp_code,
+                        b.cntry_code,
+                        b.region_code,
+                        b.multi_mkt_acct_code,
+                        b.banner_code,
+                        b.cust_buying_grp_code,
+                        b.acct_assgnmnt_grp_code,
+                        b.pos_format_grpg_code,
+                        b.distbn_route_code,
+                        b.cust_code,
+                        ltrim(b.matl_zrep_code, 0) as matl_zrep_code,
+                        ltrim(b.matl_tdu_code, 0) as matl_tdu_code,
+                        b.currcy_code,
+                        sum(b.fcst_value) as fcst_value,
+                        sum(b.fcst_qty) as fcst_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_base, b.fcst_value,0)) as base_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_base, b.fcst_qty,0)) as base_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_aggr_mkt_act, b.fcst_value,0)) as aggreg_mkt_actvty_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_aggr_mkt_act, b.fcst_qty,0)) as aggreg_mkt_actvty_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_lock, b.fcst_value,0)) as lock_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_lock, b.fcst_qty,0)) as lock_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_rcncl, b.fcst_value,0)) as rcncl_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_rcncl, b.fcst_qty,0)) as rcncl_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_auto_adj, b.fcst_value,0)) as auto_adjmt_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_auto_adj, b.fcst_qty,0)) as auto_adjmt_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_override, b.fcst_value,0)) as override_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_override, b.fcst_qty,0)) as override_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_mkt_act, b.fcst_value,0)) as mkt_actvty_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_mkt_act, b.fcst_qty,0)) as mkt_actvty_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_data_driven, b.fcst_value,0)) as data_driven_event_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_data_driven, b.fcst_qty,0)) as data_driven_event_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_tgt_imapct, b.fcst_value,0)) as tgt_impact_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_tgt_imapct, b.fcst_qty,0)) as tgt_impact_qty,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_dfn_adj, b.fcst_value,0)) as dfn_adjmt_value,
+                        sum(decode(b.fcst_dtl_type_code, pc_fcst_dtl_typ_dfn_adj, b.fcst_qty,0)) as dfn_adjmt_qty
+                   from fcst_hdr a,
+                        fcst_dtl b
+                  where a.fcst_hdr_code = b.fcst_hdr_code
+                    and a.company_code = par_company_code
+                    and a.fcst_type_code = 'BR'
+                    and a.casting_year = var_cast_yyyy
+                    and a.casting_period = var_cast_pp
+                    and a.valdtn_status = 'VALID'
+                    and (b.fcst_year || lpad(b.fcst_period,2,0)) > var_cast_yyyypp
+                  group by a.company_code,
+                           a.sales_org_code,
+                           a.distbn_chnl_code,
+                           a.division_code,
+                           a.moe_code,
+                           a.fcst_type_code,
+                           (b.fcst_year || lpad(b.fcst_period,2,0)),
+                           b.demand_plng_grp_code,
+                           b.cntry_code,
+                           b.region_code,
+                           b.multi_mkt_acct_code,
+                           b.banner_code,
+                           b.cust_buying_grp_code,
+                           b.acct_assgnmnt_grp_code,
+                           b.pos_format_grpg_code,
+                           b.distbn_route_code,
+                           b.cust_code,
+                           b.matl_zrep_code,
+                           b.matl_tdu_code,
+                           b.currcy_code) t1,
+                company t2,
+                sap_mat_hdr t3
+          where t1.company_code = t2.company_code
+            and t1.matl_zrep_code = ltrim(t3.matnr,'0');
 
       /*-*/
       /* Commit the database
@@ -701,7 +598,7 @@ create or replace package body dw_fcst_aggregation as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - PURCH_BASE Load');
+      lics_logging.write_log('End - DW_FCST_BASE ('||par_fcst_code||') Load');
 
    /*-------------------*/
    /* Exception handler */
@@ -722,8 +619,8 @@ create or replace package body dw_fcst_aggregation as
          /* Log error
          /*-*/
          if lics_logging.is_created = true then
-            lics_logging.write_log('**ERROR** - PURCH_BASE Load - ' || substr(SQLERRM, 1, 1024));
-            lics_logging.write_log('End - PURCH_BASE Load');
+            lics_logging.write_log('**ERROR** - DW_FCST_BASE ('||par_fcst_code||') Load - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - DW_FCST_BASE ('||par_fcst_code||') Load');
          end if;
 
          /*-*/
@@ -734,7 +631,7 @@ create or replace package body dw_fcst_aggregation as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end purch_base_load;
+   end fcst_fact_brhist_load;
 
 end dw_fcst_aggregation;
 /
