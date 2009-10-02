@@ -443,7 +443,7 @@ create or replace package body dw_fcst_aggregation as
                 t1.distbn_chnl_code,
                 t1.division_code,
                 t1.moe_code,
-                t1.fcst_type_code,
+                par_fcst_code,
                 t1.fcst_yyyypp,
                 t1.fcst_yyyyppw,
                 t1.demand_plng_grp_code,
