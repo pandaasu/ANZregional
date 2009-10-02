@@ -480,6 +480,7 @@ PROCEDURE transfer_pricelist_postbox(
   -- VARIABLE DECLARATIONS.
   v_matl_code    pds_matl.matl_code%TYPE;
   v_mfg_cost     pds_price_list.mfg_cost%TYPE := 0;
+  v_rrprice      pds_price_list.rrp%TYPE := 0;
   v_eff_date     pbprices.price1date%TYPE;
   v_sav_distbn_chnl_code pds_price_list.matl_code%TYPE;
   v_sav_matl_code pds_price_list.matl_code%TYPE;
@@ -565,7 +566,7 @@ BEGIN
 
     if v_sav_distbn_chnl_code is null or
        v_sav_distbn_chnl_code != rv_pricelist.distbn_chnl_code or
-       v_sav_matl_code != rv_pricelist.matl_code then
+       v_sav_matl_code != v_matl_code then
 
        if not(v_sav_distbn_chnl_code is null) then
 
@@ -600,6 +601,7 @@ BEGIN
                 ELSE
                    v_mfg_cost := tbl_work(idx).mfg_cost;
                 END IF;
+                v_rrprice := tbl_work(idx).rrp;
              end if;
              if idx = 2 then
                 if v_price1data = false then
@@ -644,7 +646,7 @@ BEGIN
             (
             i_pmx_cmpny_code,
             i_pmx_div_code,
-            v_matl_code,
+            v_sav_matl_code,
             v_price1,
             v_price1date,
             v_price2,
@@ -652,8 +654,8 @@ BEGIN
             v_price3,
             v_price3date,
             v_mfg_cost,
-            NVL(rv_pricelist.distbn_chnl_code,0),
-            rv_pricelist.rrp,
+            NVL(v_sav_distbn_chnl_code,0),
+            v_rrprice,
             SYSDATE, -- pbdate
             TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
             0, -- mcperc
@@ -668,7 +670,7 @@ BEGIN
     end if;
 
     v_sav_distbn_chnl_code := rv_pricelist.distbn_chnl_code;
-    v_sav_matl_code := rv_pricelist.matl_code;
+    v_sav_matl_code := v_matl_code;
 
     tbl_work(tbl_work.count+1).cmpny_code := rv_pricelist.cmpny_code;
     tbl_work(tbl_work.count).div_code := rv_pricelist.div_code;
@@ -732,6 +734,7 @@ BEGIN
            ELSE
               v_mfg_cost := tbl_work(idx).mfg_cost;
            END IF;
+           v_rrprice := tbl_work(idx).rrp;
         end if;
         if idx = 2 then
            if v_price1data = false then
@@ -776,7 +779,7 @@ BEGIN
        (
        i_pmx_cmpny_code,
        i_pmx_div_code,
-       v_matl_code,
+       v_sav_matl_code,
        v_price1,
        v_price1date,
        v_price2,
@@ -784,8 +787,8 @@ BEGIN
        v_price3,
        v_price3date,
        v_mfg_cost,
-       NVL(rv_pricelist.distbn_chnl_code,0),
-       rv_pricelist.rrp,
+       NVL(v_sav_distbn_chnl_code,0),
+       v_rrprice,
        SYSDATE, -- pbdate
        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
        0, -- mcperc
