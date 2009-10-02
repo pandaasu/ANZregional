@@ -391,12 +391,6 @@ BEGIN
           pv_log_level + 3);
     END;
 
-  -- Check whether Price List Effective Date is a future date.
-  --  IF v_eff_date > v_current_date THEN
-  --    v_valdtn_status := pc_valdtn_status_excluded;
-  --    write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'Price List Effective Date ['||rv_pricelist.eff_date||'] is a future date and is therefore excluded.');
-  --  END IF;
-
     -- Check whether List Price is null or zero.
     IF rv_pricelist.list_price IS NULL OR rv_pricelist.list_price = 0 THEN
       v_valdtn_status := pc_valdtn_status_invalid;
@@ -487,7 +481,15 @@ PROCEDURE transfer_pricelist_postbox(
   v_matl_code    pds_matl.matl_code%TYPE;
   v_mfg_cost     pds_price_list.mfg_cost%TYPE := 0;
   v_eff_date     pbprices.price1date%TYPE;
-  v_eff_flag     varchar2(1);
+  v_sav_distbn_chnl_code pds_price_list.matl_code%TYPE;
+  v_sav_matl_code pds_price_list.matl_code%TYPE;
+  v_price1data boolean;
+  v_price1 pbprices.price1%TYPE;
+  v_price1date pbprices.price1date%TYPE;
+  v_price2 pbprices.price2%TYPE;
+  v_price2date pbprices.price2date%TYPE;
+  v_price3 pbprices.price3%TYPE;
+  v_price3date pbprices.price3date%TYPE;
 
   -- EXCEPTION DECLARATIONS
   e_processing_failure EXCEPTION;
@@ -514,18 +516,19 @@ PROCEDURE transfer_pricelist_postbox(
       AND t1.cmpny_code = t2.cocode(+)
       AND t1.div_code = t2.divcode(+)
       AND LTRIM(t1.matl_code,'0') = t2.prodcode(+)
-  --    AND t1.eff_date = (SELECT MAX(t3.eff_date)
-  --                       FROM pds_price_list t3
-  --                       WHERE t1.cmpny_code = t3.cmpny_code
-  --                         AND t1.div_code = t3.div_code
-  --                         AND t1.distbn_chnl_code = t3.distbn_chnl_code
-  --                         AND t1.matl_code = t3.matl_code
-  --                         AND t3.eff_date <= (SELECT yyyymmdd_date
-  --                                             FROM mars_date
-  --                                             WHERE calendar_date = TRUNC(SYSDATE,'DD')))
       AND t1.valdtn_status = pc_valdtn_status_valid
-      AND t1.procg_status = pc_procg_status_processed;
+      AND t1.procg_status = pc_procg_status_processed
+    ORDER BY
+      t1.cmpny_code,
+      t1.div_code,
+      t1.distbn_chnl_code,
+      t1.matl_code,
+      t1.eff_date;
   rv_pricelist csr_pricelist%ROWTYPE;
+
+  -- ARRAY VARIABLES
+  type typ_work is table of csr_pricelist%ROWTYPE index by binary_integer;
+  tbl_work typ_work;
 
   -- RESULT CHECKING PROCEDURE
   PROCEDURE check_result_status IS
@@ -548,6 +551,8 @@ BEGIN
 
   -- Read through each of the Price List records to be transferred.
   write_log(pc_data_type_pricelist,'N/A',pv_log_level,'Open csr_pricelist cursor.');
+  v_sav_distbn_chnl_code := null;
+  v_sav_matl_code := null;
   OPEN csr_pricelist;
   write_log(pc_data_type_pricelist,'N/A',pv_log_level,'Looping through the csr_pricelist cursor.');
   LOOP
@@ -558,109 +563,122 @@ BEGIN
     pv_status := pds_common.format_pmx_matl_code (rv_pricelist.matl_code,v_matl_code,pv_log_level + 2,pv_result_msg);
     check_result_status;
 
-    -- If Price List Effective Date is null then use the default date, otherwise convert Price List Effective
-    -- Date to date format.
-    IF rv_pricelist.eff_date IS NULL THEN
-      v_eff_date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
-    ELSE
-      v_eff_date := TO_DATE(rv_pricelist.eff_date,'YYYYMMDD');
-    END IF;
-    v_eff_flag := 'C';
-    if trunc(v_eff_date) > trunc(sysdate) then
-       v_eff_flag := 'F';
+    if v_sav_distbn_chnl_code is null or
+       v_sav_distbn_chnl_code != rv_pricelist.distbn_chnl_code or
+       v_sav_matl_code != rv_pricelist.matl_code then
+
+       if not(v_sav_distbn_chnl_code is null) then
+
+          v_price1 := 0;
+          v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+          v_price2 := 0;
+          v_price2date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+          v_price3 := 0;
+          v_price3date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+          v_price1data := false;
+
+          for idx in 1..tbl_work.count loop
+
+             IF tbl_work(idx).eff_date IS NULL THEN
+               v_eff_date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+             ELSE
+               v_eff_date := TO_DATE(tbl_work(idx).eff_date,'YYYYMMDD');
+             END IF;
+
+             if idx = 1 then
+                v_price1 := tbl_work(idx).list_price;
+                v_price1date := v_eff_date;
+                if trunc(v_eff_date) > trunc(sysdate) then
+                   v_price1data := true;
+                   v_price1 := 0.01;
+                   v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+                   v_price2 := tbl_work(idx).list_price;
+                   v_price2date := v_eff_date;
+                end if;
+                IF tbl_work(idx).mfg_cost IS NULL OR tbl_work(idx).mfg_cost = 0 THEN
+                   v_mfg_cost := tbl_work(idx).list_price * pc_pricelist_mfg_cost_val;
+                ELSE
+                   v_mfg_cost := tbl_work(idx).mfg_cost;
+                END IF;
+             end if;
+             if idx = 2 then
+                if v_price1data = false then
+                   v_price2 := tbl_work(idx).list_price;
+                   v_price2date := v_eff_date;
+                else
+                   v_price3 := tbl_work(idx).list_price;
+                   v_price3date := v_eff_date;
+                end if;
+             end if;
+             if idx = 3 then
+                if v_price1data = false then
+                   v_price3 := tbl_work(idx).list_price;
+                   v_price3date := v_eff_date;
+                end if;
+             end if;
+
+          end loop;
+
+          -- Insert into Postbox PBPRICES table.
+          INSERT INTO pbprices
+            (
+            cocode,
+            divcode,
+            prodcode,
+            price1,
+            price1date,
+            price2,
+            price2date,
+            price3,
+            price3date,
+            stdcost,
+            list,
+            rrprice,
+            pbdate,
+            pbtime,
+            mcperc,
+            WASTEPERC,
+            CONTRCOMM
+            )
+          VALUES
+            (
+            i_pmx_cmpny_code,
+            i_pmx_div_code,
+            v_matl_code,
+            v_price1,
+            v_price1date,
+            v_price2,
+            v_price2date,
+            v_price3,
+            v_price3date,
+            v_mfg_cost,
+            NVL(rv_pricelist.distbn_chnl_code,0),
+            rv_pricelist.rrp,
+            SYSDATE, -- pbdate
+            TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
+            0, -- mcperc
+            0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
+            0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
+            );
+
+       end if;
+
+       tbl_work.delete;
+
     end if;
 
-    --Calculate the Manufacturing Cost.
-    IF rv_pricelist.mfg_cost IS NULL OR rv_pricelist.mfg_cost = 0 THEN
-      v_mfg_cost := rv_pricelist.list_price * pc_pricelist_mfg_cost_val;
-    ELSE
-      v_mfg_cost := rv_pricelist.mfg_cost;
-    END IF;
+    v_sav_distbn_chnl_code := rv_pricelist.distbn_chnl_code;
+    v_sav_matl_code := rv_pricelist.matl_code;
 
-    -- Insert into Postbox PBPRICES table.
-    IF v_eff_flag = 'C' then
-      INSERT INTO pbprices
-        (
-        cocode,
-        divcode,
-        prodcode,
-        price1,
-        price1date,
-        price2,
-        price2date,
-        price3,
-        price3date,
-        stdcost,
-        list,
-        rrprice,
-        pbdate,
-        pbtime,
-        mcperc,
-        WASTEPERC,
-        CONTRCOMM
-        )
-      VALUES
-        (
-        i_pmx_cmpny_code,
-        i_pmx_div_code,
-        v_matl_code,
-        rv_pricelist.list_price,
-        v_eff_date,
-        0, -- price2
-        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-        0, -- price3
-        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-        v_mfg_cost,
-        NVL(rv_pricelist.distbn_chnl_code,0),
-        rv_pricelist.rrp,
-        SYSDATE, -- pbdate
-        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
-        0, -- mcperc
-        0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
-        0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
-        );
-    ELSE
-      INSERT INTO pbprices
-        (
-        cocode,
-        divcode,
-        prodcode,
-        price1,
-        price1date,
-        price2,
-        price2date,
-        price3,
-        price3date,
-        stdcost,
-        list,
-        rrprice,
-        pbdate,
-        pbtime,
-        mcperc,
-        WASTEPERC,
-        CONTRCOMM
-        )
-      VALUES
-        (
-        i_pmx_cmpny_code,
-        i_pmx_div_code,
-        v_matl_code,
-        0.01,
-        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-        rv_pricelist.list_price, -- price2
-        v_eff_date,
-        0, -- price3
-        TO_DATE(pc_pricelist_default_date,'DDMMYYYY'),
-        v_mfg_cost,
-        NVL(rv_pricelist.distbn_chnl_code,0),
-        rv_pricelist.rrp,
-        SYSDATE, -- pbdate
-        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
-        0, -- mcperc
-        0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
-        0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
-        );
-    END IF;
+    tbl_work(tbl_work.count+1).cmpny_code := rv_pricelist.cmpny_code;
+    tbl_work(tbl_work.count).div_code := rv_pricelist.div_code;
+    tbl_work(tbl_work.count).distbn_chnl_code := rv_pricelist.distbn_chnl_code;
+    tbl_work(tbl_work.count).matl_code := rv_pricelist.matl_code;
+    tbl_work(tbl_work.count).eff_date := rv_pricelist.eff_date;
+    tbl_work(tbl_work.count).list_price := rv_pricelist.list_price;
+    tbl_work(tbl_work.count).mfg_cost := rv_pricelist.mfg_cost;
+    tbl_work(tbl_work.count).rrp := rv_pricelist.rrp;
+    tbl_work(tbl_work.count).pmx_matl_code := rv_pricelist.pmx_matl_code;
 
     -- Update PDS_PRICE_LIST to set procg_status = COMPLETED.
     UPDATE PDS_PRICE_LIST
@@ -677,13 +695,109 @@ BEGIN
   END LOOP;
   write_log(pc_data_type_pricelist, 'N/A', pv_log_level + 2, 'End of loop.');
 
-  -- Commit Delete of PBPRICES and insert of new data into PBPRICES table.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Commit delete and insert of PBPRICES table.');
-  COMMIT;
-
   -- Close csr_pricelist cursor.
   write_log(pc_data_type_pricelist, 'N/A', pv_log_level + 2, 'Close csr_pricelist cursor.');
   CLOSE csr_pricelist;
+
+  if not(v_sav_distbn_chnl_code is null) then
+
+     v_price1 := 0;
+     v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+     v_price2 := 0;
+     v_price2date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+     v_price3 := 0;
+     v_price3date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+     v_price1data := false;
+
+     for idx in 1..tbl_work.count loop
+
+        IF tbl_work(idx).eff_date IS NULL THEN
+          v_eff_date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+        ELSE
+          v_eff_date := TO_DATE(tbl_work(idx).eff_date,'YYYYMMDD');
+        END IF;
+
+        if idx = 1 then
+           v_price1 := tbl_work(idx).list_price;
+           v_price1date := v_eff_date;
+           if trunc(v_eff_date) > trunc(sysdate) then
+              v_price1data := true;
+              v_price1 := 0.01;
+              v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
+              v_price2 := tbl_work(idx).list_price;
+              v_price2date := v_eff_date;
+           end if;
+           IF tbl_work(idx).mfg_cost IS NULL OR tbl_work(idx).mfg_cost = 0 THEN
+              v_mfg_cost := tbl_work(idx).list_price * pc_pricelist_mfg_cost_val;
+           ELSE
+              v_mfg_cost := tbl_work(idx).mfg_cost;
+           END IF;
+        end if;
+        if idx = 2 then
+           if v_price1data = false then
+              v_price2 := tbl_work(idx).list_price;
+              v_price2date := v_eff_date;
+           else
+              v_price3 := tbl_work(idx).list_price;
+              v_price3date := v_eff_date;
+           end if;
+        end if;
+        if idx = 3 then
+           if v_price1data = false then
+              v_price3 := tbl_work(idx).list_price;
+              v_price3date := v_eff_date;
+           end if;
+        end if;
+
+     end loop;
+
+     -- Insert into Postbox PBPRICES table.
+     INSERT INTO pbprices
+       (
+       cocode,
+       divcode,
+       prodcode,
+       price1,
+       price1date,
+       price2,
+       price2date,
+       price3,
+       price3date,
+       stdcost,
+       list,
+       rrprice,
+       pbdate,
+       pbtime,
+       mcperc,
+       WASTEPERC,
+       CONTRCOMM
+       )
+     VALUES
+       (
+       i_pmx_cmpny_code,
+       i_pmx_div_code,
+       v_matl_code,
+       v_price1,
+       v_price1date,
+       v_price2,
+       v_price2date,
+       v_price3,
+       v_price3date,
+       v_mfg_cost,
+       NVL(rv_pricelist.distbn_chnl_code,0),
+       rv_pricelist.rrp,
+       SYSDATE, -- pbdate
+       TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
+       0, -- mcperc
+       0, -- WASTEPERC Added by Anna Every 04/07/2007 for new release
+       0 -- CONTRCOMM Added by Anna Every 04/07/2007 for new release
+       );
+
+  end if;
+
+  -- Commit Delete of PBPRICES and insert of new data into PBPRICES table.
+  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Commit delete and insert of PBPRICES table.');
+  COMMIT;
 
   -- Update Postbox PBPRICES table.
   write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Update Postbox PBPRICES table.');
