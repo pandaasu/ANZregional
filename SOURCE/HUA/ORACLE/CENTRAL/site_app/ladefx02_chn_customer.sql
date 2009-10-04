@@ -18,6 +18,7 @@ create or replace package ladefx02_chn_customer as
     -------   ------         -----------
     2008/08   Steve Gregan   Created
     2009/06   Steve Gregan   China sales dedication - included business unit id
+    2009/10   Steve Gregan   China sales dedication - included multiple business units
 
    *******************************************************************************/
 
@@ -143,21 +144,27 @@ create or replace package body ladefx02_chn_customer as
                         t01.division_code,
                         ltrim(t02.city_code,'0') as city_code
                    from (select t01.customer_code,
-                                max(t01.sales_org_code) as sales_org_code,
-                                max(t01.distbn_chnl_code) as distbn_chnl_code,
-                                max(t01.division_code) as division_code
+                                t01.sales_org_code,
+                                t01.distbn_chnl_code,
+                                t01.division_code
                            from bds_cust_sales_area t01
                           where t01.sales_org_code = '135'
                             and t01.distbn_chnl_code = '10'
-                          group by t01.customer_code) t01,
+                          group by t01.customer_code, t01.sales_org_code, t01.distbn_chnl_code, t01.division_code) t01,
                         (select t01.customer_code,
+                                t01.sales_org_code,
+                                t01.distbn_chnl_code,
+                                t01.division_code,
                                 max(case when t01.partner_funcn_code = 'ZA' then t01.partner_cust_code end) as city_code
                            from bds_cust_sales_area_pnrfun t01,
                                 bds_addr_customer t02
                           where t01.partner_cust_code = t02.customer_code(+)
                             and t01.partner_funcn_code = 'ZA'
-                          group by t01.customer_code) t02
-                  where t01.customer_code = t02.customer_code(+)) t06,
+                          group by t01.customer_code, t01.sales_org_code, t01.distbn_chnl_code, t01.division_code) t02
+                  where t01.customer_code = t02.customer_code(+)
+                    and t01.sales_org_code = t02.sales_org_code(+)
+                    and t01.distbn_chnl_code = t02.distbn_chnl_code(+)
+                    and t01.division_code = t02.division_code(+)) t06,
                 sales_force_geo_hier t07,
                 std_hier t08,
                 (select sap_customer_code as customer_code,
