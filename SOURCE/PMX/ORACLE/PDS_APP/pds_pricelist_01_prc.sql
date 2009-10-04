@@ -491,6 +491,8 @@ PROCEDURE transfer_pricelist_postbox(
   v_price2date pbprices.price2date%TYPE;
   v_price3 pbprices.price3%TYPE;
   v_price3date pbprices.price3date%TYPE;
+  v_prodcode pbprices.prodcode%TYPE;
+  v_list pbprices.list%TYPE;
 
   -- EXCEPTION DECLARATIONS
   e_processing_failure EXCEPTION;
@@ -564,12 +566,14 @@ BEGIN
     pv_status := pds_common.format_pmx_matl_code (rv_pricelist.matl_code,v_matl_code,pv_log_level + 2,pv_result_msg);
     check_result_status;
 
-    if v_sav_distbn_chnl_code is null or
+    if v_sav_matl_code is null or
        v_sav_distbn_chnl_code != rv_pricelist.distbn_chnl_code or
-       v_sav_matl_code != v_matl_code then
+       v_sav_matl_code != rv_pricelist.matl_code then
 
-       if not(v_sav_distbn_chnl_code is null) then
+       if tbl_work.count != 0 then
 
+          v_prodcode := null;
+          v_list := null;
           v_price1 := 0;
           v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
           v_price2 := 0;
@@ -587,6 +591,8 @@ BEGIN
              END IF;
 
              if idx = 1 then
+                v_prodcode := tbl_work(idx).matl_code;
+                v_list := tbl_work(idx).distbn_chnl_code;
                 v_price1 := tbl_work(idx).list_price;
                 v_price1date := v_eff_date;
                 if trunc(v_eff_date) > trunc(sysdate) then
@@ -646,7 +652,7 @@ BEGIN
             (
             i_pmx_cmpny_code,
             i_pmx_div_code,
-            v_sav_matl_code,
+            v_prodcode,
             v_price1,
             v_price1date,
             v_price2,
@@ -654,7 +660,7 @@ BEGIN
             v_price3,
             v_price3date,
             v_mfg_cost,
-            NVL(v_sav_distbn_chnl_code,0),
+            NVL(v_list,0),
             v_rrprice,
             SYSDATE, -- pbdate
             TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
@@ -670,12 +676,12 @@ BEGIN
     end if;
 
     v_sav_distbn_chnl_code := rv_pricelist.distbn_chnl_code;
-    v_sav_matl_code := v_matl_code;
+    v_sav_matl_code := rv_pricelist.matl_code;
 
     tbl_work(tbl_work.count+1).cmpny_code := rv_pricelist.cmpny_code;
     tbl_work(tbl_work.count).div_code := rv_pricelist.div_code;
     tbl_work(tbl_work.count).distbn_chnl_code := rv_pricelist.distbn_chnl_code;
-    tbl_work(tbl_work.count).matl_code := rv_pricelist.matl_code;
+    tbl_work(tbl_work.count).matl_code := v_matl_code;
     tbl_work(tbl_work.count).eff_date := rv_pricelist.eff_date;
     tbl_work(tbl_work.count).list_price := rv_pricelist.list_price;
     tbl_work(tbl_work.count).mfg_cost := rv_pricelist.mfg_cost;
@@ -701,8 +707,10 @@ BEGIN
   write_log(pc_data_type_pricelist, 'N/A', pv_log_level + 2, 'Close csr_pricelist cursor.');
   CLOSE csr_pricelist;
 
-  if not(v_sav_distbn_chnl_code is null) then
+  if tbl_work.count != 0 then
 
+     v_prodcode := null;
+     v_list := null;
      v_price1 := 0;
      v_price1date := TO_DATE(pc_pricelist_default_date,'DDMMYYYY');
      v_price2 := 0;
@@ -720,6 +728,8 @@ BEGIN
         END IF;
 
         if idx = 1 then
+           v_prodcode := tbl_work(idx).matl_code;
+           v_list := tbl_work(idx).distbn_chnl_code;
            v_price1 := tbl_work(idx).list_price;
            v_price1date := v_eff_date;
            if trunc(v_eff_date) > trunc(sysdate) then
@@ -779,7 +789,7 @@ BEGIN
        (
        i_pmx_cmpny_code,
        i_pmx_div_code,
-       v_sav_matl_code,
+       v_prodcode,
        v_price1,
        v_price1date,
        v_price2,
@@ -787,7 +797,7 @@ BEGIN
        v_price3,
        v_price3date,
        v_mfg_cost,
-       NVL(v_sav_distbn_chnl_code,0),
+       NVL(v_list,0),
        v_rrprice,
        SYSDATE, -- pbdate
        TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')), -- pbtime
