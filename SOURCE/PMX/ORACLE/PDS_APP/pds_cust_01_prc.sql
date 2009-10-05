@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE         pds_cust_01_prc IS
+CREATE OR REPLACE PACKAGE pds_cust_01_prc IS
 
 /*******************************************************************************
   NAME:      run_pds_cust_01_prc
@@ -111,8 +111,9 @@ PROCEDURE transfer_customer;
   1.0   10/08/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   07/02/2006 Craig Ford           Include processing for AUS PETCARE.
   1.2   14/03/2006 Craig Ford           Add processing to identify new Customers.
-                                         Insert new customers into (temp) customer table
-                                                                                 for reporting.
+                                         Insert new customers into (temp) customer table for reporting.
+  1.3   05/10/2009 Steve Gregan         Modified processing to fix hierarchy loading bug.
+
   PARAMETERS:
   Pos  Type   Format   Description                          Example
   ---- ------ -------- ------------------------------------ --------------------
@@ -157,7 +158,7 @@ PROCEDURE initiate_postbox_customer;
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   07/08/2005 Paul Berude          Created this procedure.
- Anna Every 20/11/2007 Stopped transfer of Snackfood products until issues are sorted out.  See Craig Ford.
+
   PARAMETERS:
   Pos  Type   Format   Description                          Example
   ---- ------ -------- ------------------------------------ --------------------
@@ -214,23 +215,14 @@ CREATE OR REPLACE PACKAGE BODY         pds_cust_01_prc IS
   pc_cust_maj_ref             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('maj_ref','CUST');
   pc_cust_invc                CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('invc','CUST');
   pc_cust_cust_family         CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_family','CUST');
-  pc_cust_funding             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_funding','CUST');
-  pc_cust_nat_banner          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_nat_banner','CUST');
-  pc_cust_banner              CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_banner','CUST');
   pc_cust_gl_level_1          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_1','CUST');
   pc_cust_gl_level_2          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_2','CUST');
-  pc_cust_gl_level_3          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_3','CUST');
-  pc_cust_gl_level_4          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_4','CUST');
-  pc_cust_gl_level_5          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_5','CUST');
   pc_cust_gl_level_6          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_6','CUST');
   pc_cust_not_prom            CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_prom','CUST');
   pc_cust_not_active          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_active','CUST');
   pc_cust_not_extax           CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_extax','CUST');
   pc_cust_level_1             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_1','CUST');
   pc_cust_level_2             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_2','CUST');
-  pc_cust_level_3             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_3','CUST');
-  pc_cust_level_4             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_4','CUST');
-  pc_cust_level_5             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_5','CUST');
   pc_cust_level_6             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_6','CUST');
   pc_pstbx_cust_load          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_load','PSTBX');
   pc_job_status_completed     CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('completed','JOB_STATUS');
@@ -570,7 +562,7 @@ BEGIN
     ELSIF v_last_valdtn_status = pc_valdtn_status_excluded THEN
       v_valdtn_status := pc_valdtn_status_excluded;
 
-      write_log(pc_data_type_cust,'N/A',pv_log_level + 3,'Prior Hierarchy branch node excluded, so flag next Cust node as EXCLUDED.');
+      --write_log(pc_data_type_cust,'N/A',pv_log_level + 3,'Prior Hierarchy branch node excluded, so flag next Cust node as EXCLUDED.');
     END IF;
 
     -- Store the values of the last processed record.
@@ -661,7 +653,6 @@ BEGIN
   write_log(pc_data_type_cust,'N/A',pv_log_level + 1,'transfer_customer - START.');
 
   transfer_customer_postbox (pc_cmpny_code_australia,pc_div_code_snack); -- Australia Snackfood
-  -- Anna Every 20/11/2007 Stopped transfer of Snackfood products until issues are sorted out.  See Craig Ford.
   transfer_customer_postbox (pc_cmpny_code_australia,pc_div_code_food); -- Australia Food
   transfer_customer_postbox (pc_cmpny_code_australia,pc_div_code_pet); -- Australia Pet
   transfer_customer_postbox (pc_cmpny_code_new_zealand,pc_div_code_snack); -- New Zealand Snack
@@ -685,6 +676,7 @@ PROCEDURE transfer_customer_postbox (
   -- VARIABLE DECLARATIONS
   v_pmx_cmpny_code        pds_div.pmx_cmpny_code%TYPE;
   v_pmx_div_code          pds_div.pmx_div_code%TYPE;
+  v_last_hdr_seq          pds_cust_hier_load.cust_hier_hdr_seq%TYPE := 0;
   v_last_cmpny_code       pds_cust_hier_load.cmpny_code%TYPE := ' ';
   v_last_div_code         pds_cust_hier_load.div_code%TYPE := ' ';
   v_last_cust_hier_level  pds_cust_hier.cust_hier_level%TYPE := 99; -- Note: 99 is used to initialize the variable as it does not exist as a hierarchy level.
@@ -711,6 +703,8 @@ PROCEDURE transfer_customer_postbox (
 
   -- CURSOR DECLARATIONS
   -- Retrieve validated Customers to be transferred to Postbox Schema.
+  -- Must be processed by hierarchy sequence and level as each sequence
+  -- defines a unique branch of the hierarchy tree
   CURSOR csr_customer IS
     SELECT
       cust_hier_hdr_seq,
@@ -735,8 +729,6 @@ PROCEDURE transfer_customer_postbox (
       AND procg_status = pc_procg_status_processed
     ORDER BY
       cust_hier_hdr_seq,
-      cmpny_code,
-      div_code,
       cust_hier_level
     FOR UPDATE NOWAIT;
   rv_customer csr_customer%ROWTYPE;
@@ -807,6 +799,8 @@ BEGIN
 
     -- Check whether we have already inserted this Customer into the PBCHAIN table,
     -- which only occurs for new Customers.  If so, then skip the record.
+    -- The row must still be processed so that the customer array is populated with
+    -- the correct hierarchy information
     IF (v_load_into_promax) THEN
       SELECT COUNT(*) INTO v_count
       FROM pbchain
@@ -814,19 +808,31 @@ BEGIN
         AND divcode = v_pmx_div_code
         AND kacc = TO_CHAR(rv_customer.cust_code);
       IF v_count > 0 THEN
-        -- Go to the bottom of the loop, as this Customer has already been loaded into PBCHAIN.
-        GOTO loop_end;
+         v_load_into_promax := false;
       END IF;
-
     END IF;
 
     -- Retrieve the next node from the Customer Hierarchy Branch.
-    IF v_last_cmpny_code = rv_customer.cmpny_code AND
-      v_last_div_code = rv_customer.div_code AND
-      (v_last_cust_hier_level + 1) = v_cust_hier_level THEN
-        v_parent_cust_code := v_last_parent_cust_code;
-        rcd_customer(v_cust_hier_level) := rv_customer.cust_code;
+    IF v_last_hdr_seq = rv_customer.cust_hier_hdr_seq THEN
+
+      IF (v_last_cust_hier_level + 1) != v_cust_hier_level THEN
+        -- Node is not next logical level, therefore send an e-mail and pds_log message to inform of
+        -- possible data error.
+        pv_result_msg := 'Customer Hierarchy node is not next level ' ||(v_last_cust_hier_level + 1) || ' as expected. '||
+          'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
+          'Company Code [' || rv_customer.cmpny_code || '],'||
+          'Division Code [' || rv_customer.div_code || '],'||
+          'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
+          'Customer Code [' || rv_customer.cust_code || '].';
+        write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
+        pds_utils.send_email_to_group(pc_job_type_cust_01_prc,'MFANZ Promax Customer Process 01',pv_result_msg);
+      END IF;
+
+      v_parent_cust_code := v_last_parent_cust_code;
+      rcd_customer(v_cust_hier_level) := rv_customer.cust_code;
+
     ELSE
+
       v_parent_cust_code := ' ';
 
       -- Reset the array as we have started a new Customer Hierarchy Branch.
@@ -909,19 +915,18 @@ BEGIN
 
 --Added by Anna Every 30th May, 2006, Ticket 581874 to email if this is a problem.
 
-	    pds_utils.add_validation_reason(pc_valdtn_type_cust,
-        'ACTION: Parent has changed WAS [' ||rv_exist_customer.parent_cust_code || '] now [ '|| v_parent_cust_code ||'].''CoCode [' || rv_customer.cmpny_code || '],'||'DivCode [' || rv_customer.div_code || ']',
-        pc_valdtn_severity_critical,
-        rv_customer.cust_hier_hdr_seq,
-        rv_customer.cmpny_code,
-        rv_customer.div_code,
-        rv_customer.cust_hier_level,
-        rv_customer.cust_code,
-        NULL,
-        pv_log_level + 3);
+	   pds_utils.add_validation_reason(pc_valdtn_type_cust,
+          'ACTION: Parent has changed WAS [' ||rv_exist_customer.parent_cust_code || '] now [ '|| v_parent_cust_code ||'].''CoCode [' || rv_customer.cmpny_code || '],'||'DivCode [' || rv_customer.div_code || ']',
+          pc_valdtn_severity_critical,
+          rv_customer.cust_hier_hdr_seq,
+          rv_customer.cmpny_code,
+          rv_customer.div_code,
+          rv_customer.cust_hier_level,
+          rv_customer.cust_code,
+          NULL,
+          pv_log_level + 3);
 
-
-		END IF;
+        END IF;
 
         /*
         Log (and potentially send an alert) when the Distribution Channel has changed.
@@ -1012,88 +1017,7 @@ BEGIN
     CLOSE csr_exist_customer;
 
     -- Assign all variables for the new Customer to be inserted into the PBCHAIN table.
-    IF v_load_into_promax = TRUE
-    THEN
-    if v_pmx_cmpny_code = '47' and v_pmx_div_code = '01'
-     THEN
-        IF v_cust_hier_level = pc_cust_level_1 THEN
-        v_minorref := rv_customer.cust_code;
-        v_maincode := ' ';
-        v_majorref := rv_customer.cust_code;
-        v_custlevel := pc_cust_maj_ref;
-        v_glcode := pc_cust_gl_level_1;
-        v_midref := ' ';
-        v_parentkacc := ' ';
-        v_parentperc := 0;
-        v_kaccxref := ' ';
-      ELSIF v_cust_hier_level = pc_cust_level_2 THEN
-        v_minorref := rv_customer.cust_code;
-        v_maincode := ' ';
-        v_majorref := ' ';
-        v_custlevel := pc_cust_mid_ref;
-        v_glcode := pc_cust_gl_level_2;
-        v_midref := rv_customer.cust_code;
-        v_parentkacc := ' ';
-        v_parentperc := 0;
-        v_kaccxref := ' ';
-
-      ELSIF v_cust_hier_level = pc_cust_level_3 THEN
-        v_minorref := rv_customer.cust_code;
-        v_maincode := rv_customer.cust_code;
-        v_majorref := ' ';
-        v_custlevel := pc_cust_funding;
-        v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
-        v_midref := ' ';
-        v_parentkacc := ' ';
-        v_parentperc := 0;
-        v_kaccxref := ' ';
-      ELSIF v_cust_hier_level = pc_cust_level_4 THEN
-        v_minorref := rv_customer.cust_code;
-        v_maincode := rv_customer.cust_code;
-        v_majorref := rcd_customer(1);
-        v_custlevel := 'N';
-        v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
-        v_midref := rcd_customer(2);
-        v_parentkacc := ' ';
-        v_parentperc := 0;
-        v_kaccxref := ' ';
-
-      ELSIF v_cust_hier_level = pc_cust_level_5 THEN
-        v_minorref := rcd_customer(3);
-        v_maincode := ' ';
-        v_majorref := rcd_customer(1);
-        v_custlevel := pc_cust_cust_family;
-        v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
-        v_midref := rcd_customer(2);
-        v_parentkacc := rcd_customer(1);
-        v_parentperc := 99;
-        v_kaccxref := rv_customer.cust_code;
-
-      ELSIF v_cust_hier_level = pc_cust_level_6 THEN
-        v_minorref := rcd_customer(3);
-        v_maincode := rcd_customer(4);
-        v_majorref := rcd_customer(1);
-        v_custlevel := pc_cust_invc;
-        v_glcode := pc_cust_gl_level_6;
-        v_midref := rcd_customer(2);
-        v_parentkacc := ' ';
-        v_parentperc := 0;
-        v_kaccxref := rv_customer.cust_code;
-      ELSE
-        v_minorref := rcd_customer(3);
-        v_maincode := ' ';
-        v_majorref := rcd_customer(1);
-        v_custlevel := pc_cust_cust_family;
-        v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
-        v_midref := rcd_customer(2);
-        v_parentkacc := rcd_customer(1);
-        v_parentperc := 99;
-        v_kaccxref := rv_customer.cust_code;
-      END IF;
-
-
-    ELSE
-
+    IF v_load_into_promax = TRUE THEN
 
       IF v_cust_hier_level = pc_cust_level_1 THEN
         v_minorref := rv_customer.cust_code;
@@ -1136,7 +1060,7 @@ BEGIN
         v_parentperc := 99;
         v_kaccxref := rv_customer.cust_code;
       END IF;
-    END IF;
+
       -- Check whether the existing Customer in the CHAIN table has had a name change.
       -- If so, then update the existing name of the Customer using the new name.
       -- The CHAIN table is being updated directly due to PROMAX Postbox issues.
@@ -1172,10 +1096,6 @@ BEGIN
 
           -- Close csr_check_customer_name cursor.
           CLOSE csr_check_customer_name;
-
-          -- Goto loop end.
-          write_log(pc_data_type_cust,'N/A',pv_log_level + 3,'Go to loop end.');
-          GOTO loop_end;
 
         END IF;
 
@@ -1275,8 +1195,7 @@ BEGIN
 
     END IF;
 
-    <<loop_end>>
-
+    v_last_hdr_seq := rv_customer.cust_hier_hdr_seq;
     v_last_parent_cust_code := rv_customer.cust_code;
     v_last_cmpny_code := rv_customer.cmpny_code;
     v_last_div_code := rv_customer.div_code;
