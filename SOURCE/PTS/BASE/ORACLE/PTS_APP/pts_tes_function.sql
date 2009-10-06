@@ -2491,7 +2491,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_retrieve is
          select t01.*,
                 t02.tty_typ_target,
-                decode(t03.pan_count,0,'0','1') as pan_done
+                decode(nvl(t03.pan_count,0),0,'0','1') as pan_done
            from pts_tes_definition t01,
                 pts_tes_type t02,
                 (select tpa_tes_code, count(*) as pan_count from pts_tes_panel where tpa_tes_code = var_tes_code group by tpa_tes_code) t03
