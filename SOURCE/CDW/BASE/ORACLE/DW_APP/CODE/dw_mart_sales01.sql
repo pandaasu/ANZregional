@@ -41,6 +41,7 @@ create or replace package dw_mart_sales01 as
     2009/05   Steve Gregan   Added new measures
     2009/08   Steve Gregan   Added logging
     2009/09   Steve Gregan   Added BRM1 and BRM2
+    2009/10   Steve Gregan   Added partitioning
 
    *******************************************************************************/
 
@@ -119,11 +120,18 @@ create or replace package body dw_mart_sales01 as
       rcd_header.extract_yyyypp := rcd_header.current_yyyypp;
 
       /*-*/
-      /* Clear the data mart data
+      /* Truncate the required partition
+      /* **notes**
+      /* 1. Partition with data may not have new data so will always be truncated
       /*-*/
-      lics_logging.write_log('--> Clearing the data mart');
-      delete from dw_mart_sales01_det where company_code = par_company_code;
-      commit;
+      lics_logging.write_log('--> Truncating the partition - Company(' || par_company_code || ')');
+      dds_dw_partition.truncate_list('dw_mart_sales01_det','C'||par_company_code);
+
+      /*-*/
+      /* Check that a partition exists for the current company
+      /*-*/
+      lics_logging.write_log('--> Check/create partition - Company(' || par_company_code || ')');
+      dds_dw_partition.check_create_list('dw_mart_sales01_det','C'||par_company_code,par_company_code);
 
       /*-*/
       /* Refresh the order data

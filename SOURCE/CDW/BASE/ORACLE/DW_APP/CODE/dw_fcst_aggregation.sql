@@ -381,7 +381,7 @@ create or replace package body dw_fcst_aggregation as
       /* Check that a partition exists for the current forecast
       /*-*/
       lics_logging.write_log('--> Check/create partition - Forecast(' || var_fcst_identifier || ')');
-      dds_dw_partition.check_create_list('dw_fcst_base',var_fcst_identifier);
+      dds_dw_partition.check_create_list('dw_fcst_base',var_fcst_identifier,var_fcst_identifier);
 
       /*-*/
       /* Build the partition for the current forecast
