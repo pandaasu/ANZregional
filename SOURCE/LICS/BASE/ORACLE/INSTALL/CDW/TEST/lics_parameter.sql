@@ -40,7 +40,7 @@ create or replace package lics_parameter as
    /* Public fatal parameters
    /*-*/
    fatal_opr_alert constant varchar2(256) := null;
-   fatal_ema_group constant varchar2(64) := 'mfanz.cdw.support@esosn1';
+   fatal_ema_group constant varchar2(64) := '"MFANZ CDW Support Dev"@esosn1';
 
    /*-*/
    /* Public operator parameters
