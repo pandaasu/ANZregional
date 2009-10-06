@@ -23,7 +23,7 @@ create or replace package dds_dw_partition as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure check_create_list(par_table varchar2, par_partition varchar2);
+   procedure check_create_list(par_table varchar2, par_partition varchar2, par_value varchar2);
    procedure truncate_list(par_table varchar2, par_partition varchar2);
 
 end dds_dw_partition;
@@ -43,7 +43,7 @@ create or replace package body dds_dw_partition as
    /*************************************************************************/
    /* This procedure performs the check/create table list partition routine */
    /*************************************************************************/
-   procedure check_create_list(par_table varchar2, par_partition varchar2) is
+   procedure check_create_list(par_table varchar2, par_partition varchar2, par_value varchar2) is
 
       /*-*/
       /* Local definitions
@@ -79,7 +79,7 @@ create or replace package body dds_dw_partition as
       open csr_partition;
       fetch csr_partition into rcd_partition;
       if csr_partition%notfound then
-         var_sql := 'alter table ' || var_table || ' add partition ' || var_partition || ' values (''' || par_partition || ''')';
+         var_sql := 'alter table ' || var_table || ' add partition ' || var_partition || ' values (''' || par_value || ''')';
          execute immediate var_sql;
       end if;
       close csr_partition;
