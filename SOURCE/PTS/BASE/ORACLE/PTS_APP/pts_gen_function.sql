@@ -952,6 +952,12 @@ create or replace package body pts_app.pts_gen_function as
           order by t01.pty_pet_type asc;
       rcd_pet_type csr_pet_type%rowtype;
 
+      cursor csr_tes_type is
+         select t01.*
+           from pts_tes_type t01
+          order by t01.tty_tes_type asc;
+      rcd_tes_type csr_tes_type%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1046,6 +1052,16 @@ create or replace package body pts_app.pts_gen_function as
             pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_pet_type.pty_pet_type)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_pet_type.pty_pet_type)||') '||rcd_pet_type.pty_typ_text)||'"/>'));
          end loop;
          close csr_pet_type;
+      elsif upper(rcd_field.sfi_fld_rul_type) = '*TES_TYPE' then
+         open csr_tes_type;
+         loop
+            fetch csr_tes_type into rcd_tes_type;
+            if csr_tes_type%notfound then
+               exit;
+            end if;
+            pipe row(pts_xml_object('<VALUE VALCDE="'||to_char(rcd_tes_type.tty_tes_type)||'" VALTXT="'||pts_to_xml('('||to_char(rcd_tes_type.tty_tes_type)||') '||rcd_tes_type.tty_typ_text)||'"/>'));
+         end loop;
+         close csr_tes_type;
       end if;
 
       /*-*/
