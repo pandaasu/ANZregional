@@ -1,0 +1,39 @@
+<?xml version="1.0"?> 
+<!-- --> 
+<!-- SAP Interface Configuration File --> 
+<!-- --> 
+<configuration>
+
+    <interface identifier="SAPODS01#147"
+               description="SAP to ODS Document Interface - 147"
+               class="com.isi.ods.cSapOds01"
+               SapClient="002"
+               SapUserId="apsapics"
+               SapPassword="gT1b8Ic5"
+               SapLanguage="EN"
+               SapServer="sapapb.na.mars"
+               SapSystem="02"
+               OdsConnection="jdbc:oracle:thin:@wodu003.ap.mars:1521:ap0066t"
+               OdsUserId="ods_app"
+               OdsPassword="odsgold"
+               OdsCompany="147"
+               OdsTransactions="*SALES_ORDER_DELETED,*PURCHASE_ORDER_DELETED,*DELIVERY_DELETED,*SALES_ORDER_LINE_STATUS,*DELIVERY_LINE_STATUS"
+               Logging="0"/>
+
+    <interface identifier="SAPODS01#149"
+               description="SAP to ODS Document Interface - 149"
+               class="com.isi.ods.cSapOds01"
+               SapClient="002"
+               SapUserId="apsapics"
+               SapPassword="gT1b8Ic5"
+               SapLanguage="EN"
+               SapServer="sapapb.na.mars"
+               SapSystem="02"
+               OdsConnection="jdbc:oracle:thin:@wodu003.ap.mars:1521:ap0066t"
+               OdsUserId="ods_app"
+               OdsPassword="odsgold"
+               OdsCompany="149"
+               OdsTransactions="*SALES_ORDER_DELETED,*PURCHASE_ORDER_DELETED,*DELIVERY_DELETED,*SALES_ORDER_LINE_STATUS,*DELIVERY_LINE_STATUS"
+               Logging="0"/>
+
+</configuration>
