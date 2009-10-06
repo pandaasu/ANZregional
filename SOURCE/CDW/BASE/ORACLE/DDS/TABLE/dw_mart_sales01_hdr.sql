@@ -57,7 +57,9 @@ create table dw_mart_sales01_hdr
     p23_heading varchar2(50 char) not null,
     p24_heading varchar2(50 char) not null,
     p25_heading varchar2(50 char) not null,
-    p26_heading varchar2(50 char) not null);
+    p26_heading varchar2(50 char) not null)
+   partition by list (company_code)
+      (partition the_rest values (default));
 
 /**/
 /* Comments

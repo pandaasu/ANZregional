@@ -212,7 +212,9 @@ create table dw_mart_sales01_det
     p23_fcst_value number not null,
     p24_fcst_value number not null,
     p25_fcst_value number not null,
-    p26_fcst_value number not null);
+    p26_fcst_value number not null)
+   partition by list (company_code)
+      (partition the_rest values (default));
 
 /**/
 /* Comments
