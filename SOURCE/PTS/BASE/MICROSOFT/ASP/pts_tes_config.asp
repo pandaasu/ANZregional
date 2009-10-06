@@ -866,10 +866,11 @@ sub PaintFunction()%>
             objCell.colSpan = 1;
             if (cobjQuestionDay[i].queary[j].quetyp == '1') {
                objCell.innerText = 'General Question';
+               objCell.className = 'clsLabelFB';
             } else {
                objCell.innerText = 'Sample Question';
+               objCell.className = 'clsLabelFN';
             }
-            objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(1);
             objCell.colSpan = 1;
