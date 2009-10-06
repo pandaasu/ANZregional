@@ -440,15 +440,12 @@ insert into pts_sys_field values('*STM_DEF',3,'Selection template target','1',us
 insert into pts_sys_field values('*STM_DEF',9,'Selection template status','1',user,sysdate,'0','0',5,'*LOGIC','*LIST','nvl(st1.std_stm_status,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',1,'Test code','1',user,sysdate,'0','0',15,'*LOGIC','*NUMBER','t1.tde_tes_code<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',2,'Test title','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(t1.tde_tes_title,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
+insert into pts_sys_field values('*TES_DEF',3,'Test type','1',user,sysdate,'0','0',5,'*LOGIC','*TES_TYPE','nvl(t1.tde_tes_type,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',4,'Test aim','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(t1.tde_tes_aim,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',5,'GloPal interface status','1',user,sysdate,'1','0',5,'*LOGIC','*LIST','nvl(t1.tde_glo_status,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',6,'Requestor name','1',user,sysdate,'0','0',120,'*LOGIC','*TEXT','upper(nvl(t1.tde_tes_req_name,''*NULL''))<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 insert into pts_sys_field values('*TES_DEF',9,'Test status','1',user,sysdate,'0','0',5,'*LOGIC','*LIST','nvl(t1.tde_tes_status,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 commit;
-
-
-
-insert into pts_sys_field values('*TES_DEF',3,'Test type','1',user,sysdate,'0','0',5,'*LOGIC','*LIST','nvl(t1.tde_tes_type,0)<%RULE_TEST%><%RULE_VALUE%>',null,'null');
 
 -------------------
 -- SYSTEM SELECT --
@@ -781,6 +778,8 @@ insert into pts_sys_select values('*STM_DEF',9,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*TES_DEF',1,'*SELECT_WHEN_EQUAL');
 insert into pts_sys_select values('*TES_DEF',2,'*SELECT_WHEN_LIKE');
 insert into pts_sys_select values('*TES_DEF',2,'*SELECT_WHEN_NOT_LIKE');
+insert into pts_sys_select values('*TES_DEF',3,'*SELECT_WHEN_EQUAL');
+insert into pts_sys_select values('*TES_DEF',3,'*SELECT_WHEN_NOT_EQUAL');
 insert into pts_sys_select values('*TES_DEF',4,'*SELECT_WHEN_LIKE');
 insert into pts_sys_select values('*TES_DEF',4,'*SELECT_WHEN_NOT_LIKE');
 insert into pts_sys_select values('*TES_DEF',5,'*SELECT_WHEN_EQUAL');
