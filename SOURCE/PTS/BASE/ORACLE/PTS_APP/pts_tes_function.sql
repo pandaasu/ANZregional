@@ -126,11 +126,13 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_list is
          select t01.tde_tes_code,
                 t01.tde_tes_title,
-                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*TES_DEF' and sva_fld_code = 9 and sva_val_code = t01.tde_tes_status),'*UNKNOWN') as tde_tes_status
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*TES_DEF' and sva_fld_code = 9 and sva_val_code = t01.tde_tes_status),'*UNKNOWN') as tde_tes_status,
+                t01.tde_tes_req_name as tde_tes_req_name,
+                substr(t01.tde_tes_aim,1,120) as tde_tes_aim
            from pts_tes_definition t01
           where t01.tde_tes_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*TEST',null)))
             and t01.tde_tes_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
-          order by t01.tde_tes_code asc;
+          order by t01.tde_tes_code desc;
       rcd_list csr_list%rowtype;
 
    /*-------------*/
@@ -151,7 +153,7 @@ create or replace package body pts_app.pts_tes_function as
       /* Pipe the XML start
       /*-*/
       pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
-      pipe row(pts_xml_object('<LSTCTL COLCNT="2" HED1="'||pts_to_xml('Test')||'" HED2="'||pts_to_xml('Test Status')||'"/>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="4" HED1="'||pts_to_xml('Test')||'" HED2="'||pts_to_xml('Status')||'" HED3="'||pts_to_xml('Requestor')||'" HED4="'||pts_to_xml('Aim')||'"/>'));
 
       /*-*/
       /* Retrieve the pet list and pipe the results
@@ -166,7 +168,7 @@ create or replace package body pts_app.pts_tes_function as
          end if;
          var_row_count := var_row_count + 1;
          if var_row_count <= var_pag_size then
-            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.tde_tes_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL2="'||pts_to_xml(rcd_list.tde_tes_status)||'"/>'));
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.tde_tes_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL2="'||pts_to_xml(rcd_list.tde_tes_status)||'" COL3="'||pts_to_xml(rcd_list.tde_tes_req_name)||'" COL4="'||pts_to_xml(rcd_list.tde_tes_aim)||'"/>'));
          else
             exit;
          end if;
