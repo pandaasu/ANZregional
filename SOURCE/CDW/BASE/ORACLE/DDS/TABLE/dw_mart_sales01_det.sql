@@ -214,7 +214,8 @@ create table dw_mart_sales01_det
     p25_fcst_value number not null,
     p26_fcst_value number not null)
    partition by list (company_code)
-      (partition the_rest values (default));
+      (partition C147 VALUES ('147'),
+       partition C149 VALUES ('149'));
 
 /**/
 /* Comments

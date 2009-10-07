@@ -69,7 +69,10 @@ create table dds.dw_fcst_base
     dfn_adjmt_value                   number(16,2)         not null,
     dfn_adjmt_qty                     number(16,2)         not null)
    partition by list (fcst_identifier)
-      (partition the_rest values (default));
+      (partition BRM1_COM147 VALUES ('BRM1_COM147'),
+       partition BRM1_COM149 VALUES ('BRM1_COM149'),
+       partition BRM2_COM147 VALUES ('BRM2_COM147'),
+       partition BRM2_COM149 VALUES ('BRM2_COM149'));
 
 /**/
 /* Comments
