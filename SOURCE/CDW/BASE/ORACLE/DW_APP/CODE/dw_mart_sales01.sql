@@ -1232,6 +1232,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_qty,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_qty,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_qty,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_qty,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_qty,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_qty,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_qty,
@@ -1310,6 +1312,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_gsv,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_gsv,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_gsv,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_gsv,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_gsv,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_gsv,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_gsv,
@@ -1388,6 +1392,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_ton,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_ton,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_ton,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_ton,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_ton,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_ton,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_ton,
@@ -1876,6 +1882,15 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
@@ -1977,6 +1992,15 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
@@ -2636,7 +2660,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_qty,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_qty,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_qty,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_qty,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_qty,
@@ -2676,7 +2703,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_gsv,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_gsv,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_gsv,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_gsv,
@@ -2716,7 +2746,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_ton,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_ton,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_ton,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_ton,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_ton,
@@ -2781,7 +2814,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_qty,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_qty,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_qty,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_qty,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_qty,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_qty,
@@ -2821,7 +2857,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_gsv,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_gsv,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_gsv,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_gsv,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_gsv,
@@ -2861,7 +2900,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_ton,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_ton,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_ton,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_ton,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_ton,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_ton,
@@ -3425,6 +3467,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_qty,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_qty,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_qty,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_qty,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_qty,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_qty,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_qty,
@@ -3503,6 +3547,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_gsv,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_gsv,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_gsv,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_gsv,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_gsv,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_gsv,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_gsv,
@@ -3581,6 +3627,8 @@ create or replace package body dw_mart_sales01 as
                 cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_ton,
                 cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_ton,
                 cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_ton,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_ton,
                 cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_ton,
                 p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_ton,
                 p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_ton,
@@ -4076,6 +4124,15 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
@@ -4179,6 +4236,15 @@ create or replace package body dw_mart_sales01 as
                 t01.matl_zrep_code,
                 nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
                 nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
                 nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
@@ -4842,7 +4908,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_qty,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_qty,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_qty,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_qty,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_qty,
@@ -4882,7 +4951,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_gsv,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_gsv,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_gsv,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_gsv,
@@ -4922,7 +4994,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_ton,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_ton,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
                 p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_ton,
                 p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_ton,
                 p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_ton,
@@ -4987,7 +5062,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - QTY
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_qty,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_qty,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_qty,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_qty,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_qty,
@@ -5027,7 +5105,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - GSV
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_gsv,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_gsv,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_gsv,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_gsv,
@@ -5067,7 +5148,10 @@ create or replace package body dw_mart_sales01 as
          /* Update the data mart detail - TON
          /*-*/
          update dw_mart_sales01_det
-            set p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_ton,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_ton,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
                 p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_ton,
                 p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_ton,
                 p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_ton,
@@ -5338,7 +5422,7 @@ create or replace package body dw_mart_sales01 as
          rcd_detail.cpd_op_value := 0;
          rcd_detail.cpd_rob_value := 0;
          rcd_detail.cpd_br_value := 0;
-         rcd_detail.cpd_brm2_value := 0;
+         rcd_detail.cpd_brm1_value := 0;
          rcd_detail.cpd_brm2_value := 0;
          rcd_detail.cpd_fcst_value := 0;
          rcd_detail.fpd_out_value := 0;
