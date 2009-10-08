@@ -17,6 +17,7 @@
  2008/08   Steve Gregan   Added ship to customer
  2008/10   Steve Gregan   Added PTW/PTG/LYRM1/LYRM2/P01-26FCST/P01-26BR
  2009/05   Steve Gregan   Added measures
+ 2009/10   Steve Gregan   Added last period measures
 
 *******************************************************************************/
 
@@ -47,10 +48,13 @@ create table dw_mart_sales01_det
     cpd_brm1_value number not null,
     cpd_brm2_value number not null,
     cpd_fcst_value number not null,
+    lpd_inv_value number not null,
+    lpd_br_value number not null,
     fpd_out_value number not null,
     fpd_ord_value number not null,
     fpd_inv_value number not null,
     lyr_cpd_inv_value number not null,
+    lyr_lpd_inv_value number not null,
     lyr_ytp_inv_value number not null,
     lyr_yee_inv_value number not null,
     lyrm1_yee_inv_value number not null,
@@ -244,10 +248,13 @@ comment on column dw_mart_sales01_det.cpd_br_value is 'Current period - business
 comment on column dw_mart_sales01_det.cpd_brm1_value is 'Current period - business review minus 1 value';
 comment on column dw_mart_sales01_det.cpd_brm2_value is 'Current period - business review minus 2 value';
 comment on column dw_mart_sales01_det.cpd_fcst_value is 'Current period - forecast value';
+comment on column dw_mart_sales01_det.lpd_inv_value is 'Last period - invoiced value';
+comment on column dw_mart_sales01_det.lpd_br_value is 'Last period - business review value';
 comment on column dw_mart_sales01_det.fpd_out_value is 'Future periods - outstanding value';
 comment on column dw_mart_sales01_det.fpd_ord_value is 'Future periods - order delivered value';
 comment on column dw_mart_sales01_det.fpd_inv_value is 'Future periods - invoice delivered value';
 comment on column dw_mart_sales01_det.lyr_cpd_inv_value is 'Last year - current period - invoiced value';
+comment on column dw_mart_sales01_det.lyr_lpd_inv_value is 'Last year - last period - invoiced value';
 comment on column dw_mart_sales01_det.lyr_ytp_inv_value is 'Last year - year to period - invoiced value';
 comment on column dw_mart_sales01_det.lyr_yee_inv_value is 'Last year - year end estimate - invoiced value';
 comment on column dw_mart_sales01_det.lyrm1_yee_inv_value is 'Last year minus 1 - year end estimate - invoiced value';
@@ -410,12 +417,6 @@ comment on column dw_mart_sales01_det.p23_fcst_value is 'P23 ACT/FCST value';
 comment on column dw_mart_sales01_det.p24_fcst_value is 'P24 ACT/FCST value';
 comment on column dw_mart_sales01_det.p25_fcst_value is 'P25 ACT/FCST value';
 comment on column dw_mart_sales01_det.p26_fcst_value is 'P26 ACT/FCST value';
-
-/**/
-/* Primary Key Constraint
-/**/
-alter table dw_mart_sales01_det
-   add constraint dw_mart_sales01_det_pk primary key (company_code, data_segment, matl_group, ship_to_cust_code, matl_code, acct_assgnmnt_grp_code, demand_plng_grp_code, mfanz_icb_flag, data_type);
 
 /**/
 /* Authority
