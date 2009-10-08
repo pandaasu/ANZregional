@@ -71,8 +71,12 @@ create or replace package body dw_mart_sales01 as
    procedure extract_order(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_sale(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_forecast(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_minusone(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_minustwo(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_nzmkt_sale(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_nzmkt_minusone(par_company_code in varchar2, par_data_segment in varchar2);
+   procedure extract_nzmkt_minustwo(par_company_code in varchar2, par_data_segment in varchar2);
    procedure create_detail(par_company_code in varchar2,
                            par_data_segment in varchar2,
                            par_matl_group in varchar2,
@@ -155,6 +159,20 @@ create or replace package body dw_mart_sales01 as
       commit;
 
       /*-*/
+      /* Refresh the forecast minus one data
+      /*-*/
+      lics_logging.write_log('--> Loading *MZANZ forecast minus one data');
+      extract_minusone(par_company_code, '*MFANZ');
+      commit;
+
+      /*-*/
+      /* Refresh the forecast minus two data
+      /*-*/
+      lics_logging.write_log('--> Loading *MZANZ forecast minus two data');
+      extract_minustwo(par_company_code, '*MFANZ');
+      commit;
+
+      /*-*/
       /* Refresh the NZ market sales data
       /*-*/
       lics_logging.write_log('--> Loading *NZMKT sales data');
@@ -166,6 +184,20 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       lics_logging.write_log('--> Loading *NZMKT forecast data');
       extract_nzmkt_forecast(par_company_code, '*NZMKT');
+      commit;
+
+      /*-*/
+      /* Refresh the NZ marketforecast minus one data
+      /*-*/
+      lics_logging.write_log('--> Loading *NZMKT forecast minus one data');
+      extract_nzmkt_minusone(par_company_code, '*NZMKT');
+      commit;
+
+      /*-*/
+      /* Refresh the NZ marketforecast minus two data
+      /*-*/
+      lics_logging.write_log('--> Loading *NZMKT forecast minus two data');
+      extract_nzmkt_minustwo(par_company_code, '*NZMKT');
       commit;
 
       /*-*/
@@ -923,6 +955,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_p13 number(6,0);
       var_str_yyyypp number(6,0);
       var_cpd_yyyypp number(6,0);
+      var_cm1_yyyypp number(6,0);
+      var_cm2_yyyypp number(6,0);
       var_lpd_yyyypp number(6,0);
       var_ltp_str_yyyypp number(6,0);
       var_ltp_end_yyyypp number(6,0);
@@ -1043,7 +1077,85 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_net_tonnes end),0) as p10_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as p11_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cpd_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_base_uom end),0) as m101_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_base_uom end),0) as m102_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_base_uom end),0) as m103_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_base_uom end),0) as m104_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_base_uom end),0) as m105_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_base_uom end),0) as m106_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_base_uom end),0) as m107_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_base_uom end),0) as m108_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_base_uom end),0) as m109_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_base_uom end),0) as m110_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_base_uom end),0) as m111_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_base_uom end),0) as m112_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_base_uom end),0) as m113_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_gsv_aud end),0) as m101_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_gsv_aud end),0) as m102_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_gsv_aud end),0) as m103_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_gsv_aud end),0) as m104_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_gsv_aud end),0) as m105_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_gsv_aud end),0) as m106_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_gsv_aud end),0) as m107_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_gsv_aud end),0) as m108_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_gsv_aud end),0) as m109_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_gsv_aud end),0) as m110_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_gsv_aud end),0) as m111_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_gsv_aud end),0) as m112_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_gsv_aud end),0) as m113_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_net_tonnes end),0) as m101_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_net_tonnes end),0) as m102_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_net_tonnes end),0) as m103_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_net_tonnes end),0) as m104_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_net_tonnes end),0) as m105_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_net_tonnes end),0) as m106_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_net_tonnes end),0) as m107_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_net_tonnes end),0) as m108_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_net_tonnes end),0) as m109_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_net_tonnes end),0) as m110_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as m111_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as m112_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm1_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as m113_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_base_uom end),0) as m201_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_base_uom end),0) as m202_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_base_uom end),0) as m203_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_base_uom end),0) as m204_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_base_uom end),0) as m205_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_base_uom end),0) as m206_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_base_uom end),0) as m207_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_base_uom end),0) as m208_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_base_uom end),0) as m209_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_base_uom end),0) as m210_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_base_uom end),0) as m211_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_base_uom end),0) as m212_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_base_uom end),0) as m213_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_gsv_aud end),0) as m201_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_gsv_aud end),0) as m202_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_gsv_aud end),0) as m203_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_gsv_aud end),0) as m204_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_gsv_aud end),0) as m205_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_gsv_aud end),0) as m206_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_gsv_aud end),0) as m207_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_gsv_aud end),0) as m208_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_gsv_aud end),0) as m209_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_gsv_aud end),0) as m210_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_gsv_aud end),0) as m211_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_gsv_aud end),0) as m212_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_gsv_aud end),0) as m213_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p01 then t01.billed_qty_net_tonnes end),0) as m201_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p02 then t01.billed_qty_net_tonnes end),0) as m202_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p03 then t01.billed_qty_net_tonnes end),0) as m203_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p04 then t01.billed_qty_net_tonnes end),0) as m204_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p05 then t01.billed_qty_net_tonnes end),0) as m205_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p06 then t01.billed_qty_net_tonnes end),0) as m206_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p07 then t01.billed_qty_net_tonnes end),0) as m207_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p08 then t01.billed_qty_net_tonnes end),0) as m208_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p09 then t01.billed_qty_net_tonnes end),0) as m209_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p10 then t01.billed_qty_net_tonnes end),0) as m210_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p11 then t01.billed_qty_net_tonnes end),0) as m211_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p12 then t01.billed_qty_net_tonnes end),0) as m212_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp < var_cm2_yyyypp and t01.billing_eff_yyyypp = var_cyr_p13 then t01.billed_qty_net_tonnes end),0) as m213_ton
            from dw_sales_period01 t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03,
@@ -1189,6 +1301,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_p13 := var_cyr_p13 - 100;
       var_str_yyyypp := var_lyrm2_str_yyyypp;
       var_cpd_yyyypp := var_current_yyyypp;
+      var_cm1_yyyypp := var_current_yyyypp - 1;
+      var_cm2_yyyypp := var_current_yyyypp - 2;
       var_lpd_yyyypp := var_current_yyyypp - 100;
       var_ltp_str_yyyypp := var_ytp_str_yyyypp - 100;
       var_ltp_end_yyyypp := var_ytp_end_yyyypp - 100;
@@ -1261,6 +1375,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_qty,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_qty,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_qty,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_qty,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_qty,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_qty,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_qty,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_qty,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_qty,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_qty,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_qty,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_qty,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_qty,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_qty,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_qty,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_qty,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_qty,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_qty,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_qty,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_qty,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_qty,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_qty,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_qty,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_qty,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_qty,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_qty,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_qty,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_qty,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_qty,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_qty,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_qty,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_qty,
@@ -1341,6 +1481,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_gsv,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_gsv,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_gsv,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_gsv,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_gsv,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_gsv,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_gsv,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_gsv,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_gsv,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_gsv,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_gsv,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_gsv,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_gsv,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_gsv,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_gsv,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_gsv,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_gsv,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_gsv,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_gsv,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_gsv,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_gsv,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_gsv,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_gsv,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_gsv,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_gsv,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_gsv,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_gsv,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_gsv,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_gsv,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_gsv,
@@ -1421,6 +1587,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_ton,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_ton,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_ton,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_ton,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_ton,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_ton,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_ton,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_ton,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_ton,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_ton,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_ton,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_ton,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_ton,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_ton,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_ton,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_ton,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_ton,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_ton,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_ton,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_ton,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_ton,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_ton,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_ton,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_ton,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_ton,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_ton,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_ton,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_ton,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_ton,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_ton,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_ton,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_ton,
@@ -1875,226 +2067,6 @@ create or replace package body dw_mart_sales01 as
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_03 csr_fcst_extract_03%rowtype;
-
-      cursor csr_fcst_extract_31 is
-         select t01.company_code,
-                nvl(t01.cust_code,'*NULL') as cust_code,
-                t01.matl_zrep_code,
-                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
-                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from dw_fcst_base t01,
-                matl_dim t02
-          where t01.matl_zrep_code = t02.matl_code(+)
-            and t01.company_code = par_company_code
-            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
-            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
-            and t01.fcst_type_code = 'BRM1'
-            and not(t01.acct_assgnmnt_grp_code = '03'
-                    and t01.demand_plng_grp_code = '0040010915'
-                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
-          group by t01.company_code,
-                   t01.cust_code,
-                   t01.matl_zrep_code,
-                   t01.acct_assgnmnt_grp_code,
-                   t01.demand_plng_grp_code;
-      rcd_fcst_extract_31 csr_fcst_extract_31%rowtype;
-
-      cursor csr_fcst_extract_32 is
-         select t01.company_code,
-                nvl(t01.cust_code,'*NULL') as cust_code,
-                t01.matl_zrep_code,
-                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
-                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from dw_fcst_base t01,
-                matl_dim t02
-          where t01.matl_zrep_code = t02.matl_code(+)
-            and t01.company_code = par_company_code
-            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
-            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
-            and t01.fcst_type_code = 'BRM2'
-            and not(t01.acct_assgnmnt_grp_code = '03'
-                    and t01.demand_plng_grp_code = '0040010915'
-                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
-          group by t01.company_code,
-                   t01.cust_code,
-                   t01.matl_zrep_code,
-                   t01.acct_assgnmnt_grp_code,
-                   t01.demand_plng_grp_code;
-      rcd_fcst_extract_32 csr_fcst_extract_32%rowtype;
 
       cursor csr_fcst_extract_04 is
          select t01.company_code,
@@ -2635,314 +2607,6 @@ create or replace package body dw_mart_sales01 as
       close csr_fcst_extract_03;
 
       /*-*/
-      /* Extract the BRM1 forecast values
-      /*-*/
-      open csr_fcst_extract_31;
-      loop
-         fetch csr_fcst_extract_31 into rcd_fcst_extract_31;
-         if csr_fcst_extract_31%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the data mart detail
-         /*-*/
-         create_detail(rcd_fcst_extract_31.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_31.cust_code,
-                       rcd_fcst_extract_31.matl_zrep_code,
-                       rcd_fcst_extract_31.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_31.demand_plng_grp_code,
-                       'N');
-
-         /*-*/
-         /* Update the data mart detail - QTY
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_qty,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_qty,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_qty,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_qty,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_qty,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_qty,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_qty,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_qty,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_qty,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_qty,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_qty,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_qty,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_qty,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_qty,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_qty,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_qty,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_qty,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_qty,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_qty,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_qty,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_qty,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_qty,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_qty,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_qty,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_qty,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_qty,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_qty
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
-
-         /*-*/
-         /* Update the data mart detail - GSV
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_gsv,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_gsv,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_gsv,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_gsv,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_gsv,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_gsv,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_gsv,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_gsv,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_gsv,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_gsv,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_gsv,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_gsv,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_gsv,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_gsv,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_gsv
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
-
-         /*-*/
-         /* Update the data mart detail - TON
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_ton,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_ton,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_ton,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_ton,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_ton,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_ton,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_ton,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_ton,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_ton,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_ton,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_ton,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_ton,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_ton,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_ton,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_ton,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_ton,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_ton,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_ton,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_ton,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_ton,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_ton,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_ton,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_ton,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_ton,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_ton,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_ton,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_ton
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
-
-      end loop;
-      close csr_fcst_extract_31;
-
-      /*-*/
-      /* Extract the BRM2 forecast values
-      /*-*/
-      open csr_fcst_extract_32;
-      loop
-         fetch csr_fcst_extract_32 into rcd_fcst_extract_32;
-         if csr_fcst_extract_32%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the data mart detail
-         /*-*/
-         create_detail(rcd_fcst_extract_32.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_32.cust_code,
-                       rcd_fcst_extract_32.matl_zrep_code,
-                       rcd_fcst_extract_32.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_32.demand_plng_grp_code,
-                       'N');
-
-         /*-*/
-         /* Update the data mart detail - QTY
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_qty,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_qty,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_qty,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_qty,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_qty,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_qty,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_qty,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_qty,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_qty,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_qty,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_qty,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_qty,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_qty,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_qty,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_qty,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_qty,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_qty,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_qty,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_qty,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_qty,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_qty,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_qty,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_qty,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_qty,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_qty,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_qty,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_qty,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_qty
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
-
-         /*-*/
-         /* Update the data mart detail - GSV
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_gsv,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_gsv,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_gsv,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_gsv,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_gsv,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_gsv,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_gsv,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_gsv,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_gsv,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_gsv,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_gsv,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_gsv,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_gsv,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_gsv,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_gsv,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_gsv
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
-
-         /*-*/
-         /* Update the data mart detail - TON
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_32.cur_ton,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_32.ytg_ton,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_32.nyr_ton,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_ton,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_ton,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_ton,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_ton,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_ton,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_ton,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_ton,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_ton,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_ton,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_ton,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_ton,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_ton,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_ton,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_ton,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_ton,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_ton,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_ton,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_ton,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_ton,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_ton,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_ton,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_ton,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_ton,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_ton,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_ton
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
-
-      end loop;
-      close csr_fcst_extract_32;
-
-      /*-*/
       /* Extract the FCST forecast values
       /*-*/
       open csr_fcst_extract_04;
@@ -3107,6 +2771,724 @@ create or replace package body dw_mart_sales01 as
    /*-------------*/
    end extract_forecast;
 
+   /***************************************************************/
+   /* This procedure performs the forecast minus one data routine */
+   /***************************************************************/
+   procedure extract_minusone(par_company_code in varchar2, par_data_segment in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_cyr_str_yyyypp number(6,0);
+      var_cyr_end_yyyypp number(6,0);
+      var_ytg_str_yyyypp number(6,0);
+      var_ytg_end_yyyypp number(6,0);
+      var_nyr_str_yyyypp number(6,0);
+      var_nyr_end_yyyypp number(6,0);
+      var_wyr_str_yyyypp number(6,0);
+      var_wyr_p01 number(6,0);
+      var_wyr_p02 number(6,0);
+      var_wyr_p03 number(6,0);
+      var_wyr_p04 number(6,0);
+      var_wyr_p05 number(6,0);
+      var_wyr_p06 number(6,0);
+      var_wyr_p07 number(6,0);
+      var_wyr_p08 number(6,0);
+      var_wyr_p09 number(6,0);
+      var_wyr_p10 number(6,0);
+      var_wyr_p11 number(6,0);
+      var_wyr_p12 number(6,0);
+      var_wyr_p13 number(6,0);
+      var_wyr_p14 number(6,0);
+      var_wyr_p15 number(6,0);
+      var_wyr_p16 number(6,0);
+      var_wyr_p17 number(6,0);
+      var_wyr_p18 number(6,0);
+      var_wyr_p19 number(6,0);
+      var_wyr_p20 number(6,0);
+      var_wyr_p21 number(6,0);
+      var_wyr_p22 number(6,0);
+      var_wyr_p23 number(6,0);
+      var_wyr_p24 number(6,0);
+      var_wyr_p25 number(6,0);
+      var_wyr_p26 number(6,0);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_01 is
+         select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
+                t01.matl_zrep_code,
+                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
+           from dw_fcst_base t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
+            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
+            and t01.fcst_type_code = 'BRM1'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
+          group by t01.company_code,
+                   t01.cust_code,
+                   t01.matl_zrep_code,
+                   t01.acct_assgnmnt_grp_code,
+                   t01.demand_plng_grp_code;
+      rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /*- Calculate the period filters
+      /*-*/
+      var_ytg_str_yyyypp := var_current_yyyypp - 1;
+      var_ytg_end_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 13;
+      var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
+      var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
+      if to_number(substr(to_char(var_ytg_str_yyyypp,'fm000000'),1,4)) != to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) then
+         var_ytg_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
+         var_nyr_str_yyyypp := 999999;
+         var_nyr_end_yyyypp := var_ytg_end_yyyypp;
+      end if;
+      var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
+      var_wyr_p01 := var_wyr_str_yyyypp + 1;
+      var_wyr_p02 := var_wyr_str_yyyypp + 2;
+      var_wyr_p03 := var_wyr_str_yyyypp + 3;
+      var_wyr_p04 := var_wyr_str_yyyypp + 4;
+      var_wyr_p05 := var_wyr_str_yyyypp + 5;
+      var_wyr_p06 := var_wyr_str_yyyypp + 6;
+      var_wyr_p07 := var_wyr_str_yyyypp + 7;
+      var_wyr_p08 := var_wyr_str_yyyypp + 8;
+      var_wyr_p09 := var_wyr_str_yyyypp + 9;
+      var_wyr_p10 := var_wyr_str_yyyypp + 10;
+      var_wyr_p11 := var_wyr_str_yyyypp + 11;
+      var_wyr_p12 := var_wyr_str_yyyypp + 12;
+      var_wyr_p13 := var_wyr_str_yyyypp + 13;
+      var_wyr_p14 := var_wyr_str_yyyypp + 101;
+      var_wyr_p15 := var_wyr_str_yyyypp + 102;
+      var_wyr_p16 := var_wyr_str_yyyypp + 103;
+      var_wyr_p17 := var_wyr_str_yyyypp + 104;
+      var_wyr_p18 := var_wyr_str_yyyypp + 105;
+      var_wyr_p19 := var_wyr_str_yyyypp + 106;
+      var_wyr_p20 := var_wyr_str_yyyypp + 107;
+      var_wyr_p21 := var_wyr_str_yyyypp + 108;
+      var_wyr_p22 := var_wyr_str_yyyypp + 109;
+      var_wyr_p23 := var_wyr_str_yyyypp + 110;
+      var_wyr_p24 := var_wyr_str_yyyypp + 111;
+      var_wyr_p25 := var_wyr_str_yyyypp + 112;
+      var_wyr_p26 := var_wyr_str_yyyypp + 113;
+
+      /*-*/
+      /* Extract the BRM1 forecast values
+      /*-*/
+      open csr_fcst_extract_01;
+      loop
+         fetch csr_fcst_extract_01 into rcd_fcst_extract_01;
+         if csr_fcst_extract_01%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_fcst_extract_01.cust_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
+                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_qty,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_qty,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_qty,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_qty,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_qty,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_qty,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_qty,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_qty,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_qty,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_qty,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_qty,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_qty,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_qty,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_qty,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_qty,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_qty,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_qty,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_qty,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_qty,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_qty,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_qty,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_qty,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_qty,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_qty,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_qty,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_qty,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_qty,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_qty
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_gsv,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_gsv,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_gsv,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_gsv,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_gsv,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_gsv,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_gsv,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_gsv,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_gsv,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_gsv,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_gsv,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_gsv,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_gsv,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_gsv,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_gsv,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_gsv,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_gsv,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_gsv,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_gsv,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_gsv,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_gsv,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_gsv,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_gsv,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_gsv,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_gsv,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_gsv,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_gsv
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_ton,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_ton,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_ton,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_ton,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_ton,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_ton,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_ton,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_ton,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_ton,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_ton,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_ton,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_ton,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_ton,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_ton,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_ton,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_ton,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_ton,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_ton,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_ton,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_ton,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_ton,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_ton,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_ton,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_ton,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_ton,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_ton,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_ton,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_ton
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*TON';
+
+      end loop;
+      close csr_fcst_extract_01;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end extract_minusone;
+
+   /***************************************************************/
+   /* This procedure performs the forecast minus two data routine */
+   /***************************************************************/
+   procedure extract_minustwo(par_company_code in varchar2, par_data_segment in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_cyr_str_yyyypp number(6,0);
+      var_cyr_end_yyyypp number(6,0);
+      var_ytg_str_yyyypp number(6,0);
+      var_ytg_end_yyyypp number(6,0);
+      var_nyr_str_yyyypp number(6,0);
+      var_nyr_end_yyyypp number(6,0);
+      var_wyr_str_yyyypp number(6,0);
+      var_wyr_p01 number(6,0);
+      var_wyr_p02 number(6,0);
+      var_wyr_p03 number(6,0);
+      var_wyr_p04 number(6,0);
+      var_wyr_p05 number(6,0);
+      var_wyr_p06 number(6,0);
+      var_wyr_p07 number(6,0);
+      var_wyr_p08 number(6,0);
+      var_wyr_p09 number(6,0);
+      var_wyr_p10 number(6,0);
+      var_wyr_p11 number(6,0);
+      var_wyr_p12 number(6,0);
+      var_wyr_p13 number(6,0);
+      var_wyr_p14 number(6,0);
+      var_wyr_p15 number(6,0);
+      var_wyr_p16 number(6,0);
+      var_wyr_p17 number(6,0);
+      var_wyr_p18 number(6,0);
+      var_wyr_p19 number(6,0);
+      var_wyr_p20 number(6,0);
+      var_wyr_p21 number(6,0);
+      var_wyr_p22 number(6,0);
+      var_wyr_p23 number(6,0);
+      var_wyr_p24 number(6,0);
+      var_wyr_p25 number(6,0);
+      var_wyr_p26 number(6,0);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_01 is
+         select t01.company_code,
+                nvl(t01.cust_code,'*NULL') as cust_code,
+                t01.matl_zrep_code,
+                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
+           from dw_fcst_base t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
+            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
+            and t01.fcst_type_code = 'BRM2'
+            and not(t01.acct_assgnmnt_grp_code = '03'
+                    and t01.demand_plng_grp_code = '0040010915'
+                    and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45')))
+          group by t01.company_code,
+                   t01.cust_code,
+                   t01.matl_zrep_code,
+                   t01.acct_assgnmnt_grp_code,
+                   t01.demand_plng_grp_code;
+      rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /*- Calculate the period filters
+      /*-*/
+      var_ytg_str_yyyypp := var_current_yyyypp - 2;
+      var_ytg_end_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 13;
+      var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
+      var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
+      if to_number(substr(to_char(var_ytg_str_yyyypp,'fm000000'),1,4)) != to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) then
+         var_ytg_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
+         var_nyr_str_yyyypp := 999999;
+         var_nyr_end_yyyypp := var_ytg_end_yyyypp;
+      end if;
+      var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
+      var_wyr_p01 := var_wyr_str_yyyypp + 1;
+      var_wyr_p02 := var_wyr_str_yyyypp + 2;
+      var_wyr_p03 := var_wyr_str_yyyypp + 3;
+      var_wyr_p04 := var_wyr_str_yyyypp + 4;
+      var_wyr_p05 := var_wyr_str_yyyypp + 5;
+      var_wyr_p06 := var_wyr_str_yyyypp + 6;
+      var_wyr_p07 := var_wyr_str_yyyypp + 7;
+      var_wyr_p08 := var_wyr_str_yyyypp + 8;
+      var_wyr_p09 := var_wyr_str_yyyypp + 9;
+      var_wyr_p10 := var_wyr_str_yyyypp + 10;
+      var_wyr_p11 := var_wyr_str_yyyypp + 11;
+      var_wyr_p12 := var_wyr_str_yyyypp + 12;
+      var_wyr_p13 := var_wyr_str_yyyypp + 13;
+      var_wyr_p14 := var_wyr_str_yyyypp + 101;
+      var_wyr_p15 := var_wyr_str_yyyypp + 102;
+      var_wyr_p16 := var_wyr_str_yyyypp + 103;
+      var_wyr_p17 := var_wyr_str_yyyypp + 104;
+      var_wyr_p18 := var_wyr_str_yyyypp + 105;
+      var_wyr_p19 := var_wyr_str_yyyypp + 106;
+      var_wyr_p20 := var_wyr_str_yyyypp + 107;
+      var_wyr_p21 := var_wyr_str_yyyypp + 108;
+      var_wyr_p22 := var_wyr_str_yyyypp + 109;
+      var_wyr_p23 := var_wyr_str_yyyypp + 110;
+      var_wyr_p24 := var_wyr_str_yyyypp + 111;
+      var_wyr_p25 := var_wyr_str_yyyypp + 112;
+      var_wyr_p26 := var_wyr_str_yyyypp + 113;
+
+      /*-*/
+      /* Extract the BRM2 forecast values
+      /*-*/
+      open csr_fcst_extract_01;
+      loop
+         fetch csr_fcst_extract_01 into rcd_fcst_extract_01;
+         if csr_fcst_extract_01%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
+                       '*ALL',
+                       rcd_fcst_extract_01.cust_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
+                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_qty,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_qty,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_qty,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_qty,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_qty,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_qty,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_qty,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_qty,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_qty,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_qty,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_qty,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_qty,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_qty,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_qty,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_qty,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_qty,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_qty,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_qty,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_qty,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_qty,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_qty,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_qty,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_qty,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_qty,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_qty,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_qty,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_qty,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_qty,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_qty
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_gsv,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_gsv,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_gsv,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_gsv,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_gsv,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_gsv,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_gsv,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_gsv,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_gsv,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_gsv,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_gsv,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_gsv,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_gsv,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_gsv,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_gsv,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_gsv,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_gsv,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_gsv,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_gsv,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_gsv,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_gsv,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_gsv,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_gsv,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_gsv,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_gsv,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_gsv,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_gsv,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_gsv
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_ton,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_ton,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_ton,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_ton,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_ton,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_ton,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_ton,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_ton,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_ton,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_ton,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_ton,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_ton,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_ton,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_ton,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_ton,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_ton,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_ton,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_ton,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_ton,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_ton,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_ton,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_ton,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_ton,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_ton,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_ton,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_ton,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_ton,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_ton,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_ton
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = '*ALL'
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*TON';
+
+      end loop;
+      close csr_fcst_extract_01;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end extract_minustwo;
+
    /********************************************************/
    /* This procedure performs the NZMKT sales data routine */
    /********************************************************/
@@ -3154,6 +3536,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_p13 number(6,0);
       var_str_yyyypp number(6,0);
       var_cpd_yyyypp number(6,0);
+      var_cm1_yyyypp number(6,0);
+      var_cm2_yyyypp number(6,0);
       var_lpd_yyyypp number(6,0);
       var_ltp_str_yyyypp number(6,0);
       var_ltp_end_yyyypp number(6,0);
@@ -3275,7 +3659,85 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_net_tonnes end),0) as p10_ton,
                 nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_net_tonnes end),0) as p11_ton,
                 nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as p13_ton
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cpd_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_base_uom end),0) as m101_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_base_uom end),0) as m102_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_base_uom end),0) as m103_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_base_uom end),0) as m104_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_base_uom end),0) as m105_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_base_uom end),0) as m106_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_base_uom end),0) as m107_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_base_uom end),0) as m108_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_base_uom end),0) as m109_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_base_uom end),0) as m110_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_base_uom end),0) as m111_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_base_uom end),0) as m112_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_base_uom end),0) as m113_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_gsv_aud end),0) as m101_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_gsv_aud end),0) as m102_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_gsv_aud end),0) as m103_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_gsv_aud end),0) as m104_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_gsv_aud end),0) as m105_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_gsv_aud end),0) as m106_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_gsv_aud end),0) as m107_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_gsv_aud end),0) as m108_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_gsv_aud end),0) as m109_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_gsv_aud end),0) as m110_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_gsv_aud end),0) as m111_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_gsv_aud end),0) as m112_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_gsv_aud end),0) as m113_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_net_tonnes end),0) as m101_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_net_tonnes end),0) as m102_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_net_tonnes end),0) as m103_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_net_tonnes end),0) as m104_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_net_tonnes end),0) as m105_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_net_tonnes end),0) as m106_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_net_tonnes end),0) as m107_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_net_tonnes end),0) as m108_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_net_tonnes end),0) as m109_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_net_tonnes end),0) as m110_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_net_tonnes end),0) as m111_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_net_tonnes end),0) as m112_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm1_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as m113_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_base_uom end),0) as m201_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_base_uom end),0) as m202_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_base_uom end),0) as m203_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_base_uom end),0) as m204_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_base_uom end),0) as m205_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_base_uom end),0) as m206_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_base_uom end),0) as m207_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_base_uom end),0) as m208_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_base_uom end),0) as m209_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_base_uom end),0) as m210_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_base_uom end),0) as m211_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_base_uom end),0) as m212_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_base_uom end),0) as m213_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_gsv_aud end),0) as m201_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_gsv_aud end),0) as m202_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_gsv_aud end),0) as m203_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_gsv_aud end),0) as m204_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_gsv_aud end),0) as m205_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_gsv_aud end),0) as m206_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_gsv_aud end),0) as m207_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_gsv_aud end),0) as m208_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_gsv_aud end),0) as m209_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_gsv_aud end),0) as m210_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_gsv_aud end),0) as m211_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_gsv_aud end),0) as m212_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_gsv_aud end),0) as m213_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p01 then t01.ord_qty_net_tonnes end),0) as m201_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p02 then t01.ord_qty_net_tonnes end),0) as m202_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p03 then t01.ord_qty_net_tonnes end),0) as m203_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p04 then t01.ord_qty_net_tonnes end),0) as m204_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p05 then t01.ord_qty_net_tonnes end),0) as m205_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p06 then t01.ord_qty_net_tonnes end),0) as m206_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p07 then t01.ord_qty_net_tonnes end),0) as m207_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p08 then t01.ord_qty_net_tonnes end),0) as m208_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p09 then t01.ord_qty_net_tonnes end),0) as m209_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p10 then t01.ord_qty_net_tonnes end),0) as m210_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p11 then t01.ord_qty_net_tonnes end),0) as m211_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p12 then t01.ord_qty_net_tonnes end),0) as m212_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp < var_cm2_yyyypp and t01.purch_order_eff_yyyypp = var_cyr_p13 then t01.ord_qty_net_tonnes end),0) as m213_ton
            from dw_nzmkt_base t01,
                 demand_plng_grp_sales_area_dim t02,
                 cust_sales_area_dim t03,
@@ -3424,6 +3886,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_p13 := var_cyr_p13 - 100;
       var_str_yyyypp := var_lyrm2_str_yyyypp;
       var_cpd_yyyypp := var_current_yyyypp;
+      var_cm1_yyyypp := var_current_yyyypp - 1;
+      var_cm2_yyyypp := var_current_yyyypp - 2;
       var_lpd_yyyypp := var_current_yyyypp - 100;
       var_ltp_str_yyyypp := var_ytp_str_yyyypp - 100;
       var_ltp_end_yyyypp := var_ytp_end_yyyypp - 100;
@@ -3496,6 +3960,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_qty,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_qty,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_qty,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_qty,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_qty,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_qty,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_qty,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_qty,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_qty,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_qty,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_qty,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_qty,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_qty,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_qty,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_qty,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_qty,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_qty,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_qty,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_qty,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_qty,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_qty,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_qty,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_qty,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_qty,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_qty,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_qty,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_qty,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_qty,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_qty,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_qty,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_qty,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_qty,
@@ -3576,6 +4066,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_gsv,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_gsv,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_gsv,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_gsv,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_gsv,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_gsv,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_gsv,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_gsv,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_gsv,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_gsv,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_gsv,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_gsv,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_gsv,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_gsv,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_gsv,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_gsv,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_gsv,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_gsv,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_gsv,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_gsv,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_gsv,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_gsv,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_gsv,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_gsv,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_gsv,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_gsv,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_gsv,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_gsv,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_gsv,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_gsv,
@@ -3656,6 +4172,32 @@ create or replace package body dw_mart_sales01 as
                 p11_br_value = p11_br_value + rcd_sales_extract_01.p11_ton,
                 p12_br_value = p12_br_value + rcd_sales_extract_01.p12_ton,
                 p13_br_value = p13_br_value + rcd_sales_extract_01.p13_ton,
+                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_ton,
+                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_ton,
+                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_ton,
+                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_ton,
+                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_ton,
+                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_ton,
+                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_ton,
+                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_ton,
+                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_ton,
+                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_ton,
+                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_ton,
+                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_ton,
+                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_ton,
+                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_ton,
+                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_ton,
+                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_ton,
+                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_ton,
+                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_ton,
+                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_ton,
+                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_ton,
+                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_ton,
+                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_ton,
+                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_ton,
+                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_ton,
+                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_ton,
+                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_ton,
                 p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_ton,
                 p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_ton,
                 p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_ton,
@@ -4116,230 +4658,6 @@ create or replace package body dw_mart_sales01 as
                    t01.acct_assgnmnt_grp_code,
                    t01.demand_plng_grp_code;
       rcd_fcst_extract_03 csr_fcst_extract_03%rowtype;
-
-      cursor csr_fcst_extract_31 is
-         select t01.company_code,
-                decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                nvl(t01.cust_code,'*NULL') as cust_code,
-                t01.matl_zrep_code,
-                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
-                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from dw_fcst_base t01,
-                matl_dim t02
-          where t01.matl_zrep_code = t02.matl_code(+)
-            and t01.company_code = par_company_code
-            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
-            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
-            and t01.fcst_type_code = 'BRM1'
-            and t01.acct_assgnmnt_grp_code = '03'
-            and t01.demand_plng_grp_code = '0040010915'
-            and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
-          group by t01.company_code,
-                   decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.cust_code,
-                   t01.matl_zrep_code,
-                   t01.acct_assgnmnt_grp_code,
-                   t01.demand_plng_grp_code;
-      rcd_fcst_extract_31 csr_fcst_extract_31%rowtype;
-
-      cursor csr_fcst_extract_32 is
-         select t01.company_code,
-                decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
-                nvl(t01.cust_code,'*NULL') as cust_code,
-                t01.matl_zrep_code,
-                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
-                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty end),0) as cur_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_ytg_str_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
-                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
-                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
-           from dw_fcst_base t01,
-                matl_dim t02
-          where t01.matl_zrep_code = t02.matl_code(+)
-            and t01.company_code = par_company_code
-            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
-            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
-            and t01.fcst_type_code = 'BRM2'
-            and t01.acct_assgnmnt_grp_code = '03'
-            and t01.demand_plng_grp_code = '0040010915'
-            and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
-          group by t01.company_code,
-                   decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
-                   t01.cust_code,
-                   t01.matl_zrep_code,
-                   t01.acct_assgnmnt_grp_code,
-                   t01.demand_plng_grp_code;
-      rcd_fcst_extract_32 csr_fcst_extract_32%rowtype;
 
       cursor csr_fcst_extract_04 is
          select t01.company_code,
@@ -4881,315 +5199,6 @@ create or replace package body dw_mart_sales01 as
       end loop;
       close csr_fcst_extract_03;
 
-
-      /*-*/
-      /* Extract the BRM1 forecast values
-      /*-*/
-      open csr_fcst_extract_31;
-      loop
-         fetch csr_fcst_extract_31 into rcd_fcst_extract_31;
-         if csr_fcst_extract_31%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the data mart detail
-         /*-*/
-         create_detail(rcd_fcst_extract_31.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_31.nzmkt_matl_group,
-                       rcd_fcst_extract_31.cust_code,
-                       rcd_fcst_extract_31.matl_zrep_code,
-                       rcd_fcst_extract_31.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_31.demand_plng_grp_code,
-                       'N');
-
-         /*-*/
-         /* Update the data mart detail - QTY
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_qty,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_qty,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_qty,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_qty,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_qty,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_qty,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_qty,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_qty,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_qty,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_qty,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_qty,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_qty,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_qty,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_qty,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_qty,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_qty,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_qty,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_qty,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_qty,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_qty,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_qty,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_qty,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_qty,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_qty,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_qty,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_qty,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_qty,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_qty
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_31.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
-
-         /*-*/
-         /* Update the data mart detail - GSV
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_gsv,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_gsv,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_gsv,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_gsv,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_gsv,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_gsv,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_gsv,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_gsv,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_gsv,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_gsv,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_gsv,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_gsv,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_gsv,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_gsv,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_gsv
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_31.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
-
-         /*-*/
-         /* Update the data mart detail - TON
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_31.cur_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_31.ytg_ton,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_31.nyr_ton,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_31.p01_ton,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_31.p02_ton,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_31.p03_ton,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_31.p04_ton,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_31.p05_ton,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_31.p06_ton,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_31.p07_ton,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_31.p08_ton,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_31.p09_ton,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_31.p10_ton,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_31.p11_ton,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_31.p12_ton,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_31.p13_ton,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_31.p14_ton,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_31.p15_ton,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_31.p16_ton,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_31.p17_ton,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_31.p18_ton,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_31.p19_ton,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_31.p20_ton,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_31.p21_ton,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_31.p22_ton,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_31.p23_ton,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_31.p24_ton,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_31.p25_ton,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_31.p26_ton
-          where company_code = rcd_fcst_extract_31.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_31.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_31.cust_code
-            and matl_code = rcd_fcst_extract_31.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_31.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_31.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
-
-      end loop;
-      close csr_fcst_extract_31;
-
-      /*-*/
-      /* Extract the BRM2 forecast values
-      /*-*/
-      open csr_fcst_extract_32;
-      loop
-         fetch csr_fcst_extract_32 into rcd_fcst_extract_32;
-         if csr_fcst_extract_32%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the data mart detail
-         /*-*/
-         create_detail(rcd_fcst_extract_32.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_32.nzmkt_matl_group,
-                       rcd_fcst_extract_32.cust_code,
-                       rcd_fcst_extract_32.matl_zrep_code,
-                       rcd_fcst_extract_32.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_32.demand_plng_grp_code,
-                       'N');
-
-         /*-*/
-         /* Update the data mart detail - QTY
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_qty,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_qty,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_qty,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_qty,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_qty,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_qty,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_qty,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_qty,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_qty,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_qty,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_qty,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_qty,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_qty,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_qty,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_qty,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_qty,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_qty,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_qty,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_qty,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_qty,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_qty,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_qty,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_qty,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_qty,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_qty,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_qty,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_qty,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_qty
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_32.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
-
-         /*-*/
-         /* Update the data mart detail - GSV
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_gsv,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_gsv,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_gsv,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_gsv,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_gsv,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_gsv,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_gsv,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_gsv,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_gsv,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_gsv,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_gsv,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_gsv,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_gsv,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_gsv,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_gsv
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_32.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
-
-         /*-*/
-         /* Update the data mart detail - TON
-         /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_32.cur_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_32.ytg_ton,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_32.nyr_ton,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_32.p01_ton,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_32.p02_ton,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_32.p03_ton,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_32.p04_ton,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_32.p05_ton,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_32.p06_ton,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_32.p07_ton,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_32.p08_ton,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_32.p09_ton,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_32.p10_ton,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_32.p11_ton,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_32.p12_ton,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_32.p13_ton,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_32.p14_ton,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_32.p15_ton,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_32.p16_ton,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_32.p17_ton,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_32.p18_ton,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_32.p19_ton,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_32.p20_ton,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_32.p21_ton,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_32.p22_ton,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_32.p23_ton,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_32.p24_ton,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_32.p25_ton,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_32.p26_ton
-          where company_code = rcd_fcst_extract_32.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_32.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_32.cust_code
-            and matl_code = rcd_fcst_extract_32.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_32.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_32.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
-
-      end loop;
-      close csr_fcst_extract_32;
-
       /*-*/
       /* Extract the FCST forecast values
       /*-*/
@@ -5354,6 +5363,728 @@ create or replace package body dw_mart_sales01 as
    /* End routine */
    /*-------------*/
    end extract_nzmkt_forecast;
+
+   /*********************************************************************/
+   /* This procedure performs the NZMKT forecast minus one data routine */
+   /*********************************************************************/
+   procedure extract_nzmkt_minusone(par_company_code in varchar2, par_data_segment in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_cyr_str_yyyypp number(6,0);
+      var_cyr_end_yyyypp number(6,0);
+      var_ytg_str_yyyypp number(6,0);
+      var_ytg_end_yyyypp number(6,0);
+      var_nyr_str_yyyypp number(6,0);
+      var_nyr_end_yyyypp number(6,0);
+      var_wyr_str_yyyypp number(6,0);
+      var_wyr_p01 number(6,0);
+      var_wyr_p02 number(6,0);
+      var_wyr_p03 number(6,0);
+      var_wyr_p04 number(6,0);
+      var_wyr_p05 number(6,0);
+      var_wyr_p06 number(6,0);
+      var_wyr_p07 number(6,0);
+      var_wyr_p08 number(6,0);
+      var_wyr_p09 number(6,0);
+      var_wyr_p10 number(6,0);
+      var_wyr_p11 number(6,0);
+      var_wyr_p12 number(6,0);
+      var_wyr_p13 number(6,0);
+      var_wyr_p14 number(6,0);
+      var_wyr_p15 number(6,0);
+      var_wyr_p16 number(6,0);
+      var_wyr_p17 number(6,0);
+      var_wyr_p18 number(6,0);
+      var_wyr_p19 number(6,0);
+      var_wyr_p20 number(6,0);
+      var_wyr_p21 number(6,0);
+      var_wyr_p22 number(6,0);
+      var_wyr_p23 number(6,0);
+      var_wyr_p24 number(6,0);
+      var_wyr_p25 number(6,0);
+      var_wyr_p26 number(6,0);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_01 is
+         select t01.company_code,
+                decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
+                t01.matl_zrep_code,
+                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
+           from dw_fcst_base t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
+            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
+            and t01.fcst_type_code = 'BRM1'
+            and t01.acct_assgnmnt_grp_code = '03'
+            and t01.demand_plng_grp_code = '0040010915'
+            and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
+          group by t01.company_code,
+                   decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
+                   t01.matl_zrep_code,
+                   t01.acct_assgnmnt_grp_code,
+                   t01.demand_plng_grp_code;
+      rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /*- Calculate the period filters
+      /*-*/
+      var_ytg_str_yyyypp := var_current_yyyypp - 1;
+      var_ytg_end_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 13;
+      var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
+      var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
+      if to_number(substr(to_char(var_ytg_str_yyyypp,'fm000000'),1,4)) != to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) then
+         var_ytg_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
+         var_nyr_str_yyyypp := 999999;
+         var_nyr_end_yyyypp := var_ytg_end_yyyypp;
+      end if;
+      var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
+      var_wyr_p01 := var_wyr_str_yyyypp + 1;
+      var_wyr_p02 := var_wyr_str_yyyypp + 2;
+      var_wyr_p03 := var_wyr_str_yyyypp + 3;
+      var_wyr_p04 := var_wyr_str_yyyypp + 4;
+      var_wyr_p05 := var_wyr_str_yyyypp + 5;
+      var_wyr_p06 := var_wyr_str_yyyypp + 6;
+      var_wyr_p07 := var_wyr_str_yyyypp + 7;
+      var_wyr_p08 := var_wyr_str_yyyypp + 8;
+      var_wyr_p09 := var_wyr_str_yyyypp + 9;
+      var_wyr_p10 := var_wyr_str_yyyypp + 10;
+      var_wyr_p11 := var_wyr_str_yyyypp + 11;
+      var_wyr_p12 := var_wyr_str_yyyypp + 12;
+      var_wyr_p13 := var_wyr_str_yyyypp + 13;
+      var_wyr_p14 := var_wyr_str_yyyypp + 101;
+      var_wyr_p15 := var_wyr_str_yyyypp + 102;
+      var_wyr_p16 := var_wyr_str_yyyypp + 103;
+      var_wyr_p17 := var_wyr_str_yyyypp + 104;
+      var_wyr_p18 := var_wyr_str_yyyypp + 105;
+      var_wyr_p19 := var_wyr_str_yyyypp + 106;
+      var_wyr_p20 := var_wyr_str_yyyypp + 107;
+      var_wyr_p21 := var_wyr_str_yyyypp + 108;
+      var_wyr_p22 := var_wyr_str_yyyypp + 109;
+      var_wyr_p23 := var_wyr_str_yyyypp + 110;
+      var_wyr_p24 := var_wyr_str_yyyypp + 111;
+      var_wyr_p25 := var_wyr_str_yyyypp + 112;
+      var_wyr_p26 := var_wyr_str_yyyypp + 113;
+
+      /*-*/
+      /* Extract the BRM1 forecast values
+      /*-*/
+      open csr_fcst_extract_01;
+      loop
+         fetch csr_fcst_extract_01 into rcd_fcst_extract_01;
+         if csr_fcst_extract_01%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
+                       rcd_fcst_extract_01.nzmkt_matl_group,
+                       rcd_fcst_extract_01.cust_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
+                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_qty,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_qty,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_qty,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_qty,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_qty,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_qty,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_qty,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_qty,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_qty,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_qty,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_qty,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_qty,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_qty,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_qty,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_qty,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_qty,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_qty,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_qty,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_qty,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_qty,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_qty,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_qty,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_qty,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_qty,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_qty,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_qty,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_qty,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_qty,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_qty
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_gsv,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_gsv,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_gsv,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_gsv,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_gsv,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_gsv,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_gsv,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_gsv,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_gsv,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_gsv,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_gsv,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_gsv,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_gsv,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_gsv,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_gsv,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_gsv,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_gsv,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_gsv,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_gsv,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_gsv,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_gsv,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_gsv,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_gsv,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_gsv,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_gsv,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_gsv,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_gsv,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_gsv,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_gsv
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_ton,
+                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_ton,
+                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_ton,
+                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_ton,
+                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_ton,
+                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_ton,
+                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_ton,
+                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_ton,
+                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_ton,
+                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_ton,
+                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_ton,
+                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_ton,
+                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_ton,
+                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_ton,
+                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_ton,
+                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_ton,
+                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_ton,
+                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_ton,
+                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_ton,
+                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_ton,
+                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_ton,
+                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_ton,
+                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_ton,
+                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_ton,
+                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_ton,
+                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_ton,
+                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_ton,
+                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_ton,
+                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_ton
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*TON';
+
+      end loop;
+      close csr_fcst_extract_01;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end extract_nzmkt_minusone;
+
+   /*********************************************************************/
+   /* This procedure performs the NZMKT forecast minus two data routine */
+   /*********************************************************************/
+   procedure extract_nzmkt_minustwo(par_company_code in varchar2, par_data_segment in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_cyr_str_yyyypp number(6,0);
+      var_cyr_end_yyyypp number(6,0);
+      var_ytg_str_yyyypp number(6,0);
+      var_ytg_end_yyyypp number(6,0);
+      var_nyr_str_yyyypp number(6,0);
+      var_nyr_end_yyyypp number(6,0);
+      var_wyr_str_yyyypp number(6,0);
+      var_wyr_p01 number(6,0);
+      var_wyr_p02 number(6,0);
+      var_wyr_p03 number(6,0);
+      var_wyr_p04 number(6,0);
+      var_wyr_p05 number(6,0);
+      var_wyr_p06 number(6,0);
+      var_wyr_p07 number(6,0);
+      var_wyr_p08 number(6,0);
+      var_wyr_p09 number(6,0);
+      var_wyr_p10 number(6,0);
+      var_wyr_p11 number(6,0);
+      var_wyr_p12 number(6,0);
+      var_wyr_p13 number(6,0);
+      var_wyr_p14 number(6,0);
+      var_wyr_p15 number(6,0);
+      var_wyr_p16 number(6,0);
+      var_wyr_p17 number(6,0);
+      var_wyr_p18 number(6,0);
+      var_wyr_p19 number(6,0);
+      var_wyr_p20 number(6,0);
+      var_wyr_p21 number(6,0);
+      var_wyr_p22 number(6,0);
+      var_wyr_p23 number(6,0);
+      var_wyr_p24 number(6,0);
+      var_wyr_p25 number(6,0);
+      var_wyr_p26 number(6,0);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_fcst_extract_01 is
+         select t01.company_code,
+                decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN') as nzmkt_matl_group,
+                nvl(t01.cust_code,'*NULL') as cust_code,
+                t01.matl_zrep_code,
+                nvl(t01.acct_assgnmnt_grp_code,'*NULL') as acct_assgnmnt_grp_code,
+                nvl(t01.demand_plng_grp_code,'*NULL') as demand_plng_grp_code,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty end),0) as cur_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_value_aud end),0) as cur_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_current_yyyypp then t01.fcst_qty_net_tonnes end),0) as cur_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty end),0) as ytg_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_value_aud end),0) as ytg_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp <= var_ytg_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as ytg_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty end),0) as nyr_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_value_aud end),0) as nyr_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_nyr_str_yyyypp and t01.fcst_yyyypp <= var_nyr_end_yyyypp then t01.fcst_qty_net_tonnes end),0) as nyr_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty end),0) as p01_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty end),0) as p02_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty end),0) as p03_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty end),0) as p04_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty end),0) as p05_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty end),0) as p06_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty end),0) as p07_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty end),0) as p08_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty end),0) as p09_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty end),0) as p10_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty end),0) as p11_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty end),0) as p12_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty end),0) as p13_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty end),0) as p14_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty end),0) as p15_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty end),0) as p16_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty end),0) as p17_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty end),0) as p18_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty end),0) as P19_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty end),0) as p20_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty end),0) as p21_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty end),0) as p22_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty end),0) as p23_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty end),0) as p24_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty end),0) as p25_qty,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty end),0) as p26_qty,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_value_aud end),0) as p01_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_value_aud end),0) as p02_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_value_aud end),0) as p03_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_value_aud end),0) as p04_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_value_aud end),0) as p05_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_value_aud end),0) as p06_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_value_aud end),0) as p07_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_value_aud end),0) as p08_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_value_aud end),0) as p09_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_value_aud end),0) as p10_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_value_aud end),0) as p11_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_value_aud end),0) as p12_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_value_aud end),0) as p13_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_value_aud end),0) as p14_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_value_aud end),0) as p15_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_value_aud end),0) as p16_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_value_aud end),0) as p17_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_value_aud end),0) as p18_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_value_aud end),0) as p19_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_value_aud end),0) as p20_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_value_aud end),0) as p21_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_value_aud end),0) as p22_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_value_aud end),0) as p23_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_value_aud end),0) as p24_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_value_aud end),0) as p25_gsv,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_value_aud end),0) as p26_gsv,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p01 then t01.fcst_qty_net_tonnes end),0) as p01_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p02 then t01.fcst_qty_net_tonnes end),0) as p02_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p03 then t01.fcst_qty_net_tonnes end),0) as p03_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p04 then t01.fcst_qty_net_tonnes end),0) as p04_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p05 then t01.fcst_qty_net_tonnes end),0) as p05_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p06 then t01.fcst_qty_net_tonnes end),0) as p06_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p07 then t01.fcst_qty_net_tonnes end),0) as p07_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p08 then t01.fcst_qty_net_tonnes end),0) as p08_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p09 then t01.fcst_qty_net_tonnes end),0) as p09_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p10 then t01.fcst_qty_net_tonnes end),0) as p10_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p11 then t01.fcst_qty_net_tonnes end),0) as p11_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p12 then t01.fcst_qty_net_tonnes end),0) as p12_ton,
+                nvl(sum(case when t01.fcst_yyyypp >= var_ytg_str_yyyypp and t01.fcst_yyyypp = var_wyr_p13 then t01.fcst_qty_net_tonnes end),0) as p13_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p14 then t01.fcst_qty_net_tonnes end),0) as p14_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p15 then t01.fcst_qty_net_tonnes end),0) as p15_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p16 then t01.fcst_qty_net_tonnes end),0) as p16_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p17 then t01.fcst_qty_net_tonnes end),0) as p17_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p18 then t01.fcst_qty_net_tonnes end),0) as p18_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p19 then t01.fcst_qty_net_tonnes end),0) as p19_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p20 then t01.fcst_qty_net_tonnes end),0) as p20_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p21 then t01.fcst_qty_net_tonnes end),0) as p21_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p22 then t01.fcst_qty_net_tonnes end),0) as p22_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p23 then t01.fcst_qty_net_tonnes end),0) as p23_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p24 then t01.fcst_qty_net_tonnes end),0) as p24_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p25 then t01.fcst_qty_net_tonnes end),0) as p25_ton,
+                nvl(sum(case when t01.fcst_yyyypp = var_wyr_p26 then t01.fcst_qty_net_tonnes end),0) as p26_ton
+           from dw_fcst_base t01,
+                matl_dim t02
+          where t01.matl_zrep_code = t02.matl_code(+)
+            and t01.company_code = par_company_code
+            and t01.fcst_yyyypp >= var_ytg_str_yyyypp
+            and t01.fcst_yyyypp <= var_nyr_end_yyyypp
+            and t01.fcst_type_code = 'BRM2'
+            and t01.acct_assgnmnt_grp_code = '03'
+            and t01.demand_plng_grp_code = '0040010915'
+            and (t02.bus_sgmnt_code = '05' and (t02.cnsmr_pack_frmt_code = '51' or t02.cnsmr_pack_frmt_code = '45'))
+          group by t01.company_code,
+                   decode(t02.cnsmr_pack_frmt_code,'51','DOG_ROLL','45','POUCH','UNKNOWN'),
+                   t01.cust_code,
+                   t01.matl_zrep_code,
+                   t01.acct_assgnmnt_grp_code,
+                   t01.demand_plng_grp_code;
+      rcd_fcst_extract_01 csr_fcst_extract_01%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /*- Calculate the period filters
+      /*-*/
+      var_ytg_str_yyyypp := var_current_yyyypp - 2;
+      var_ytg_end_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 13;
+      var_nyr_str_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 1;
+      var_nyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) + 1) * 100) + 13;
+      if to_number(substr(to_char(var_ytg_str_yyyypp,'fm000000'),1,4)) != to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) then
+         var_ytg_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
+         var_nyr_str_yyyypp := 999999;
+         var_nyr_end_yyyypp := var_ytg_end_yyyypp;
+      end if;
+      var_wyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
+      var_wyr_p01 := var_wyr_str_yyyypp + 1;
+      var_wyr_p02 := var_wyr_str_yyyypp + 2;
+      var_wyr_p03 := var_wyr_str_yyyypp + 3;
+      var_wyr_p04 := var_wyr_str_yyyypp + 4;
+      var_wyr_p05 := var_wyr_str_yyyypp + 5;
+      var_wyr_p06 := var_wyr_str_yyyypp + 6;
+      var_wyr_p07 := var_wyr_str_yyyypp + 7;
+      var_wyr_p08 := var_wyr_str_yyyypp + 8;
+      var_wyr_p09 := var_wyr_str_yyyypp + 9;
+      var_wyr_p10 := var_wyr_str_yyyypp + 10;
+      var_wyr_p11 := var_wyr_str_yyyypp + 11;
+      var_wyr_p12 := var_wyr_str_yyyypp + 12;
+      var_wyr_p13 := var_wyr_str_yyyypp + 13;
+      var_wyr_p14 := var_wyr_str_yyyypp + 101;
+      var_wyr_p15 := var_wyr_str_yyyypp + 102;
+      var_wyr_p16 := var_wyr_str_yyyypp + 103;
+      var_wyr_p17 := var_wyr_str_yyyypp + 104;
+      var_wyr_p18 := var_wyr_str_yyyypp + 105;
+      var_wyr_p19 := var_wyr_str_yyyypp + 106;
+      var_wyr_p20 := var_wyr_str_yyyypp + 107;
+      var_wyr_p21 := var_wyr_str_yyyypp + 108;
+      var_wyr_p22 := var_wyr_str_yyyypp + 109;
+      var_wyr_p23 := var_wyr_str_yyyypp + 110;
+      var_wyr_p24 := var_wyr_str_yyyypp + 111;
+      var_wyr_p25 := var_wyr_str_yyyypp + 112;
+      var_wyr_p26 := var_wyr_str_yyyypp + 113;
+
+      /*-*/
+      /* Extract the BRM2 forecast values
+      /*-*/
+      open csr_fcst_extract_01;
+      loop
+         fetch csr_fcst_extract_01 into rcd_fcst_extract_01;
+         if csr_fcst_extract_01%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the data mart detail
+         /*-*/
+         create_detail(rcd_fcst_extract_01.company_code,
+                       par_data_segment,
+                       rcd_fcst_extract_01.nzmkt_matl_group,
+                       rcd_fcst_extract_01.cust_code,
+                       rcd_fcst_extract_01.matl_zrep_code,
+                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                       rcd_fcst_extract_01.demand_plng_grp_code,
+                       'N');
+
+         /*-*/
+         /* Update the data mart detail - QTY
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_qty,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_qty,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_qty,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_qty,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_qty,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_qty,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_qty,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_qty,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_qty,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_qty,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_qty,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_qty,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_qty,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_qty,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_qty,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_qty,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_qty,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_qty,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_qty,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_qty,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_qty,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_qty,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_qty,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_qty,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_qty,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_qty,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_qty,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_qty,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_qty
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*QTY';
+
+         /*-*/
+         /* Update the data mart detail - GSV
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_gsv,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_gsv,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_gsv,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_gsv,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_gsv,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_gsv,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_gsv,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_gsv,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_gsv,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_gsv,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_gsv,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_gsv,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_gsv,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_gsv,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_gsv,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_gsv,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_gsv,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_gsv,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_gsv,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_gsv,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_gsv,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_gsv,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_gsv,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_gsv,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_gsv,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_gsv,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_gsv,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_gsv,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_gsv
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*GSV';
+
+         /*-*/
+         /* Update the data mart detail - TON
+         /*-*/
+         update dw_mart_sales01_det
+            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_ton,
+                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_ton,
+                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_ton,
+                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_ton,
+                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_ton,
+                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_ton,
+                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_ton,
+                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_ton,
+                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_ton,
+                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_ton,
+                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_ton,
+                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_ton,
+                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_ton,
+                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_ton,
+                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_ton,
+                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_ton,
+                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_ton,
+                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_ton,
+                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_ton,
+                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_ton,
+                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_ton,
+                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_ton,
+                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_ton,
+                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_ton,
+                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_ton,
+                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_ton,
+                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_ton,
+                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_ton,
+                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_ton
+          where company_code = rcd_fcst_extract_01.company_code
+            and data_segment = par_data_segment
+            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
+            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
+            and matl_code = rcd_fcst_extract_01.matl_zrep_code
+            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
+            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
+            and mfanz_icb_flag = 'N'
+            and data_type = '*TON';
+
+      end loop;
+      close csr_fcst_extract_01;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end extract_nzmkt_minustwo;
 
    /*****************************************************/
    /* This procedure performs the create detail routine */

@@ -178,15 +178,15 @@ create or replace package body dw_fcst_aggregation as
       close csr_mars_date;
       var_cast_yyyypp := rcd_mars_date.mars_period - 1;
       if to_number(substr(to_char(var_cast_yyyypp,'fm000000'),5,2)) < 1 then
-         var_cast_yyyypp := var_cast_yyyypp - 88;
+         var_cast_yyyypp := var_cast_yyyypp - 87;
       end if;
       var_cam1_yyyypp := var_cast_yyyypp - 1;
       if to_number(substr(to_char(var_cam1_yyyypp,'fm000000'),5,2)) < 1 then
-         var_cam1_yyyypp := var_cam1_yyyypp - 88;
+         var_cam1_yyyypp := var_cam1_yyyypp - 87;
       end if;
       var_cam2_yyyypp := var_cam1_yyyypp - 1;
       if to_number(substr(to_char(var_cam2_yyyypp,'fm000000'),5,2)) < 1 then
-         var_cam2_yyyypp := var_cam2_yyyypp - 88;
+         var_cam2_yyyypp := var_cam2_yyyypp - 87;
       end if;
 
       /*-*/
