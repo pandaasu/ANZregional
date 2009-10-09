@@ -42,6 +42,7 @@ create or replace package dw_mart_sales01 as
     2009/08   Steve Gregan   Added logging
     2009/09   Steve Gregan   Added BRM1 and BRM2
     2009/10   Steve Gregan   Added partitioning
+    2009/10   Steve Gregan   Added last period measures
 
    *******************************************************************************/
 
@@ -77,20 +78,20 @@ create or replace package body dw_mart_sales01 as
    procedure extract_nzmkt_forecast(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_nzmkt_minusone(par_company_code in varchar2, par_data_segment in varchar2);
    procedure extract_nzmkt_minustwo(par_company_code in varchar2, par_data_segment in varchar2);
-   procedure create_detail(par_company_code in varchar2,
-                           par_data_segment in varchar2,
-                           par_matl_group in varchar2,
-                           par_ship_to_cust_code in varchar2,
-                           par_matl_code in varchar2,
-                           par_acct_assgnmnt_grp_code in varchar2,
-                           par_demand_plng_grp_code in varchar2,
-                           par_mfanz_icb_flag in varchar2);
+   procedure create_work(par_company_code in varchar2,
+                         par_data_segment in varchar2,
+                         par_matl_group in varchar2,
+                         par_ship_to_cust_code in varchar2,
+                         par_matl_code in varchar2,
+                         par_acct_assgnmnt_grp_code in varchar2,
+                         par_demand_plng_grp_code in varchar2,
+                         par_mfanz_icb_flag in varchar2);
 
    /*-*/
    /* Private definitions
    /*-*/
    rcd_header dw_mart_sales01_hdr%rowtype;
-   rcd_detail dw_mart_sales01_det%rowtype;
+   rcd_work dw_mart_sales01_wrk%rowtype;
    var_current_yyyypp number(6,0);
    var_current_yyyyppw number(7,0);
    var_current_date date;
@@ -128,13 +129,17 @@ create or replace package body dw_mart_sales01 as
       /* **notes**
       /* 1. Partition with data may not have new data so will always be truncated
       /*-*/
-      lics_logging.write_log('--> Truncating the partition - Company(' || par_company_code || ')');
+      lics_logging.write_log('--> Truncating the work partition - Company(' || par_company_code || ')');
+      dds_dw_partition.truncate_list('dw_mart_sales01_wrk','C'||par_company_code);
+      lics_logging.write_log('--> Truncating the detail partition - Company(' || par_company_code || ')');
       dds_dw_partition.truncate_list('dw_mart_sales01_det','C'||par_company_code);
 
       /*-*/
       /* Check that a partition exists for the current company
       /*-*/
-      lics_logging.write_log('--> Check/create partition - Company(' || par_company_code || ')');
+      lics_logging.write_log('--> Check/create work partition - Company(' || par_company_code || ')');
+      dds_dw_partition.check_create_list('dw_mart_sales01_wrk','C'||par_company_code,par_company_code);
+      lics_logging.write_log('--> Check/create detail partition - Company(' || par_company_code || ')');
       dds_dw_partition.check_create_list('dw_mart_sales01_det','C'||par_company_code,par_company_code);
 
       /*-*/
@@ -187,17 +192,226 @@ create or replace package body dw_mart_sales01 as
       commit;
 
       /*-*/
-      /* Refresh the NZ marketforecast minus one data
+      /* Refresh the NZ market forecast minus one data
       /*-*/
       lics_logging.write_log('--> Loading *NZMKT forecast minus one data');
       extract_nzmkt_minusone(par_company_code, '*NZMKT');
       commit;
 
       /*-*/
-      /* Refresh the NZ marketforecast minus two data
+      /* Refresh the NZ market forecast minus two data
       /*-*/
       lics_logging.write_log('--> Loading *NZMKT forecast minus two data');
       extract_nzmkt_minustwo(par_company_code, '*NZMKT');
+      commit;
+
+      /*-*/
+      /* Refresh the data mart detail from the work
+      /*-*/
+      lics_logging.write_log('--> Loading detail data from the summarised work data');
+      insert into dw_mart_sales01_det
+         select company_code,
+                data_segment,
+                matl_group,
+                ship_to_cust_code,
+                matl_code,
+                acct_assgnmnt_grp_code,
+                demand_plng_grp_code,
+                mfanz_icb_flag,
+                data_type,
+                sum(nvl(cdy_ord_value,0)),
+                sum(nvl(cdy_inv_value,0)),
+                sum(nvl(ptd_inv_value,0)),
+                sum(nvl(ptw_inv_value,0)),
+                sum(nvl(ptg_fcst_value,0)),
+                sum(nvl(cpd_out_value,0)),
+                sum(nvl(cpd_ord_value,0)),
+                sum(nvl(cpd_inv_value,0)),
+                sum(nvl(cpd_op_value,0)),
+                sum(nvl(cpd_rob_value,0)),
+                sum(nvl(cpd_br_value,0)),
+                sum(nvl(cpd_brm1_value,0)),
+                sum(nvl(cpd_brm2_value,0)),
+                sum(nvl(cpd_fcst_value,0)),
+                sum(nvl(lpd_inv_value,0)),
+                sum(nvl(lpd_br_value,0)),
+                sum(nvl(fpd_out_value,0)),
+                sum(nvl(fpd_ord_value,0)),
+                sum(nvl(fpd_inv_value,0)),
+                sum(nvl(lyr_cpd_inv_value,0)),
+                sum(nvl(lyr_lpd_inv_value,0)),
+                sum(nvl(lyr_ytp_inv_value,0)),
+                sum(nvl(lyr_yee_inv_value,0)),
+                sum(nvl(lyrm1_yee_inv_value,0)),
+                sum(nvl(lyrm2_yee_inv_value,0)),
+                sum(nvl(cyr_ytp_inv_value,0)),
+                sum(nvl(cyr_mat_inv_value,0)),
+                sum(nvl(cyr_ytg_rob_value,0)),
+                sum(nvl(cyr_ytg_br_value,0)),
+                sum(nvl(cyr_ytg_fcst_value,0)),
+                sum(nvl(cyr_yee_op_value,0)),
+                sum(nvl(cyr_yee_rob_value,0)),
+                sum(nvl(cyr_yee_br_value,0)),
+                sum(nvl(cyr_yee_brm1_value,0)),
+                sum(nvl(cyr_yee_brm2_value,0)),
+                sum(nvl(cyr_yee_fcst_value,0)),
+                sum(nvl(nyr_yee_br_value,0)),
+                sum(nvl(nyr_yee_brm1_value,0)),
+                sum(nvl(nyr_yee_brm2_value,0)),
+                sum(nvl(nyr_yee_fcst_value,0)),
+                sum(nvl(p01_lyr_value,0)),
+                sum(nvl(p02_lyr_value,0)),
+                sum(nvl(p03_lyr_value,0)),
+                sum(nvl(p04_lyr_value,0)),
+                sum(nvl(p05_lyr_value,0)),
+                sum(nvl(p06_lyr_value,0)),
+                sum(nvl(p07_lyr_value,0)),
+                sum(nvl(p08_lyr_value,0)),
+                sum(nvl(p09_lyr_value,0)),
+                sum(nvl(p10_lyr_value,0)),
+                sum(nvl(p11_lyr_value,0)),
+                sum(nvl(p12_lyr_value,0)),
+                sum(nvl(p13_lyr_value,0)),
+                sum(nvl(p01_op_value,0)),
+                sum(nvl(p02_op_value,0)),
+                sum(nvl(p03_op_value,0)),
+                sum(nvl(p04_op_value,0)),
+                sum(nvl(p05_op_value,0)),
+                sum(nvl(p06_op_value,0)),
+                sum(nvl(p07_op_value,0)),
+                sum(nvl(p08_op_value,0)),
+                sum(nvl(p09_op_value,0)),
+                sum(nvl(p10_op_value,0)),
+                sum(nvl(p11_op_value,0)),
+                sum(nvl(p12_op_value,0)),
+                sum(nvl(p13_op_value,0)),
+                sum(nvl(p01_rob_value,0)),
+                sum(nvl(p02_rob_value,0)),
+                sum(nvl(p03_rob_value,0)),
+                sum(nvl(p04_rob_value,0)),
+                sum(nvl(p05_rob_value,0)),
+                sum(nvl(p06_rob_value,0)),
+                sum(nvl(p07_rob_value,0)),
+                sum(nvl(p08_rob_value,0)),
+                sum(nvl(p09_rob_value,0)),
+                sum(nvl(p10_rob_value,0)),
+                sum(nvl(p11_rob_value,0)),
+                sum(nvl(p12_rob_value,0)),
+                sum(nvl(p13_rob_value,0)),
+                sum(nvl(p01_br_value,0)),
+                sum(nvl(p02_br_value,0)),
+                sum(nvl(p03_br_value,0)),
+                sum(nvl(p04_br_value,0)),
+                sum(nvl(p05_br_value,0)),
+                sum(nvl(p06_br_value,0)),
+                sum(nvl(p07_br_value,0)),
+                sum(nvl(p08_br_value,0)),
+                sum(nvl(p09_br_value,0)),
+                sum(nvl(p10_br_value,0)),
+                sum(nvl(p11_br_value,0)),
+                sum(nvl(p12_br_value,0)),
+                sum(nvl(p13_br_value,0)),
+                sum(nvl(p14_br_value,0)),
+                sum(nvl(p15_br_value,0)),
+                sum(nvl(p16_br_value,0)),
+                sum(nvl(p17_br_value,0)),
+                sum(nvl(p18_br_value,0)),
+                sum(nvl(p19_br_value,0)),
+                sum(nvl(p20_br_value,0)),
+                sum(nvl(p21_br_value,0)),
+                sum(nvl(p22_br_value,0)),
+                sum(nvl(p23_br_value,0)),
+                sum(nvl(p24_br_value,0)),
+                sum(nvl(p25_br_value,0)),
+                sum(nvl(p26_br_value,0)),
+                sum(nvl(p01_brm1_value,0)),
+                sum(nvl(p02_brm1_value,0)),
+                sum(nvl(p03_brm1_value,0)),
+                sum(nvl(p04_brm1_value,0)),
+                sum(nvl(p05_brm1_value,0)),
+                sum(nvl(p06_brm1_value,0)),
+                sum(nvl(p07_brm1_value,0)),
+                sum(nvl(p08_brm1_value,0)),
+                sum(nvl(p09_brm1_value,0)),
+                sum(nvl(p10_brm1_value,0)),
+                sum(nvl(p11_brm1_value,0)),
+                sum(nvl(p12_brm1_value,0)),
+                sum(nvl(p13_brm1_value,0)),
+                sum(nvl(p14_brm1_value,0)),
+                sum(nvl(p15_brm1_value,0)),
+                sum(nvl(p16_brm1_value,0)),
+                sum(nvl(p17_brm1_value,0)),
+                sum(nvl(p18_brm1_value,0)),
+                sum(nvl(p19_brm1_value,0)),
+                sum(nvl(p20_brm1_value,0)),
+                sum(nvl(p21_brm1_value,0)),
+                sum(nvl(p22_brm1_value,0)),
+                sum(nvl(p23_brm1_value,0)),
+                sum(nvl(p24_brm1_value,0)),
+                sum(nvl(p25_brm1_value,0)),
+                sum(nvl(p26_brm1_value,0)),
+                sum(nvl(p01_brm2_value,0)),
+                sum(nvl(p02_brm2_value,0)),
+                sum(nvl(p03_brm2_value,0)),
+                sum(nvl(p04_brm2_value,0)),
+                sum(nvl(p05_brm2_value,0)),
+                sum(nvl(p06_brm2_value,0)),
+                sum(nvl(p07_brm2_value,0)),
+                sum(nvl(p08_brm2_value,0)),
+                sum(nvl(p09_brm2_value,0)),
+                sum(nvl(p10_brm2_value,0)),
+                sum(nvl(p11_brm2_value,0)),
+                sum(nvl(p12_brm2_value,0)),
+                sum(nvl(p13_brm2_value,0)),
+                sum(nvl(p14_brm2_value,0)),
+                sum(nvl(p15_brm2_value,0)),
+                sum(nvl(p16_brm2_value,0)),
+                sum(nvl(p17_brm2_value,0)),
+                sum(nvl(p18_brm2_value,0)),
+                sum(nvl(p19_brm2_value,0)),
+                sum(nvl(p20_brm2_value,0)),
+                sum(nvl(p21_brm2_value,0)),
+                sum(nvl(p22_brm2_value,0)),
+                sum(nvl(p23_brm2_value,0)),
+                sum(nvl(p24_brm2_value,0)),
+                sum(nvl(p25_brm2_value,0)),
+                sum(nvl(p26_brm2_value,0)),
+                sum(nvl(p01_fcst_value,0)),
+                sum(nvl(p02_fcst_value,0)),
+                sum(nvl(p03_fcst_value,0)),
+                sum(nvl(p04_fcst_value,0)),
+                sum(nvl(p05_fcst_value,0)),
+                sum(nvl(p06_fcst_value,0)),
+                sum(nvl(p07_fcst_value,0)),
+                sum(nvl(p08_fcst_value,0)),
+                sum(nvl(p09_fcst_value,0)),
+                sum(nvl(p10_fcst_value,0)),
+                sum(nvl(p11_fcst_value,0)),
+                sum(nvl(p12_fcst_value,0)),
+                sum(nvl(p13_fcst_value,0)),
+                sum(nvl(p14_fcst_value,0)),
+                sum(nvl(p15_fcst_value,0)),
+                sum(nvl(p16_fcst_value,0)),
+                sum(nvl(p17_fcst_value,0)),
+                sum(nvl(p18_fcst_value,0)),
+                sum(nvl(p19_fcst_value,0)),
+                sum(nvl(p20_fcst_value,0)),
+                sum(nvl(p21_fcst_value,0)),
+                sum(nvl(p22_fcst_value,0)),
+                sum(nvl(p23_fcst_value,0)),
+                sum(nvl(p24_fcst_value,0)),
+                sum(nvl(p25_fcst_value,0)),
+                sum(nvl(p26_fcst_value,0))
+           from dw_mart_sales01_wrk
+          group by company_code,
+                   data_segment,
+                   matl_group,
+                   ship_to_cust_code,
+                   matl_code,
+                   acct_assgnmnt_grp_code,
+                   demand_plng_grp_code,
+                   mfanz_icb_flag,
+                   data_type;
       commit;
 
       /*-*/
@@ -698,64 +912,40 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_order_extract_01.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_order_extract_01.ship_to_cust_code,
-                       rcd_order_extract_01.matl_code,
-                       rcd_order_extract_01.acct_assgnmnt_grp_code,
-                       rcd_order_extract_01.demand_plng_grp_code,
-                       rcd_order_extract_01.mfanz_icb_flag);
+         create_work(rcd_order_extract_01.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_order_extract_01.ship_to_cust_code,
+                     rcd_order_extract_01.matl_code,
+                     rcd_order_extract_01.acct_assgnmnt_grp_code,
+                     rcd_order_extract_01.demand_plng_grp_code,
+                     rcd_order_extract_01.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_ord_value = cpd_ord_value + rcd_order_extract_01.cur_qty,
-                fpd_ord_value = fpd_ord_value + rcd_order_extract_01.fut_qty
-          where company_code = rcd_order_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_01.ship_to_cust_code
-            and matl_code = rcd_order_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_ord_value := rcd_order_extract_01.cur_qty;
+         rcd_work.fpd_ord_value := rcd_order_extract_01.fut_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_ord_value = cpd_ord_value + rcd_order_extract_01.cur_gsv,
-                fpd_ord_value = fpd_ord_value + rcd_order_extract_01.fut_gsv
-          where company_code = rcd_order_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_01.ship_to_cust_code
-            and matl_code = rcd_order_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_ord_value := rcd_order_extract_01.cur_gsv;
+         rcd_work.fpd_ord_value := rcd_order_extract_01.fut_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_ord_value = cpd_ord_value + rcd_order_extract_01.cur_ton,
-                fpd_ord_value = fpd_ord_value + rcd_order_extract_01.fut_ton
-          where company_code = rcd_order_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_01.ship_to_cust_code
-            and matl_code = rcd_order_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_01.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_ord_value := rcd_order_extract_01.cur_ton;
+         rcd_work.fpd_ord_value := rcd_order_extract_01.fut_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_order_extract_01;
@@ -771,64 +961,40 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_order_extract_02.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_order_extract_02.ship_to_cust_code,
-                       rcd_order_extract_02.matl_code,
-                       rcd_order_extract_02.acct_assgnmnt_grp_code,
-                       rcd_order_extract_02.demand_plng_grp_code,
-                       rcd_order_extract_02.mfanz_icb_flag);
+         create_work(rcd_order_extract_02.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_order_extract_02.ship_to_cust_code,
+                     rcd_order_extract_02.matl_code,
+                     rcd_order_extract_02.acct_assgnmnt_grp_code,
+                     rcd_order_extract_02.demand_plng_grp_code,
+                     rcd_order_extract_02.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_qty,
-                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_qty
-          where company_code = rcd_order_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_02.ship_to_cust_code
-            and matl_code = rcd_order_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_out_value := rcd_order_extract_02.cur_qty;
+         rcd_work.fpd_out_value := rcd_order_extract_02.fut_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_gsv,
-                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_gsv
-          where company_code = rcd_order_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_02.ship_to_cust_code
-            and matl_code = rcd_order_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_out_value := rcd_order_extract_02.cur_gsv;
+         rcd_work.fpd_out_value := rcd_order_extract_02.fut_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_out_value = cpd_out_value + rcd_order_extract_02.cur_ton,
-                fpd_out_value = fpd_out_value + rcd_order_extract_02.fut_ton
-          where company_code = rcd_order_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_02.ship_to_cust_code
-            and matl_code = rcd_order_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_02.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_out_value := rcd_order_extract_02.cur_ton;
+         rcd_work.fpd_out_value := rcd_order_extract_02.fut_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_order_extract_02;
@@ -844,61 +1010,37 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_order_extract_03.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_order_extract_03.ship_to_cust_code,
-                       rcd_order_extract_03.matl_code,
-                       rcd_order_extract_03.acct_assgnmnt_grp_code,
-                       rcd_order_extract_03.demand_plng_grp_code,
-                       rcd_order_extract_03.mfanz_icb_flag);
+         create_work(rcd_order_extract_03.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_order_extract_03.ship_to_cust_code,
+                     rcd_order_extract_03.matl_code,
+                     rcd_order_extract_03.acct_assgnmnt_grp_code,
+                     rcd_order_extract_03.demand_plng_grp_code,
+                     rcd_order_extract_03.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_ord_value = cdy_ord_value + rcd_order_extract_03.cur_qty
-          where company_code = rcd_order_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_03.ship_to_cust_code
-            and matl_code = rcd_order_extract_03.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cdy_ord_value := rcd_order_extract_03.cur_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_ord_value = cdy_ord_value + rcd_order_extract_03.cur_gsv
-          where company_code = rcd_order_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_03.ship_to_cust_code
-            and matl_code = rcd_order_extract_03.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cdy_ord_value := rcd_order_extract_03.cur_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_ord_value = cdy_ord_value + rcd_order_extract_03.cur_ton
-          where company_code = rcd_order_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_order_extract_03.ship_to_cust_code
-            and matl_code = rcd_order_extract_03.matl_code
-            and acct_assgnmnt_grp_code = rcd_order_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_order_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_order_extract_03.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cdy_ord_value := rcd_order_extract_03.cur_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_order_extract_03;
@@ -1320,334 +1462,310 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_sales_extract_01.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_sales_extract_01.ship_to_cust_code,
-                       rcd_sales_extract_01.matl_code,
-                       rcd_sales_extract_01.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_01.demand_plng_grp_code,
-                       rcd_sales_extract_01.mfanz_icb_flag);
+         create_work(rcd_sales_extract_01.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_sales_extract_01.ship_to_cust_code,
+                     rcd_sales_extract_01.matl_code,
+                     rcd_sales_extract_01.acct_assgnmnt_grp_code,
+                     rcd_sales_extract_01.demand_plng_grp_code,
+                     rcd_sales_extract_01.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_qty,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_qty,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_qty,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_qty,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_qty,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_qty,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_qty,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_qty,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_qty,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_qty,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_qty,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_qty,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_qty,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_qty,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_qty,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_qty,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_qty,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_qty,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_qty,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_qty,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_qty,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_qty,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_qty,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_qty,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_qty,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_qty,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_qty,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_qty,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_qty,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_qty,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_qty,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_qty,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_qty,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_qty,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_qty,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_qty,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_qty,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_qty,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_qty,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_qty,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_qty,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_qty,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_qty,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_qty,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_qty,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_qty,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_qty,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_qty,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_qty,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_qty,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_qty,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_qty,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_qty,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_qty,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_qty,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_qty,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_qty,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_qty,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_qty,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_qty,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_qty,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_qty,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_qty,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_qty,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_qty,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_qty,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_qty,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_qty,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_qty,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_qty,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_qty,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_qty,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_qty,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_qty,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_qty,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_qty,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_qty
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_qty;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_qty;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_qty;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_qty;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_qty;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_qty;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_qty;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_qty;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_qty;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_qty;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_qty;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_qty;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_qty;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_qty;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_qty;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_qty;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_qty;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_qty;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_qty;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_qty;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_qty;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_qty;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_qty;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_qty;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_qty;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_qty;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_qty;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_qty;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_qty;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_qty;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_qty;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_qty;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_qty;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_qty;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_qty;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_qty;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_qty;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_qty;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_qty;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_qty;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_qty;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_qty;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_qty;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_qty;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_qty;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_qty;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_qty;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_gsv,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_gsv,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_gsv,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_gsv,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_gsv,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_gsv,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_gsv,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_gsv,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_gsv,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_gsv,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_gsv,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_gsv,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_gsv,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_gsv,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_gsv,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_gsv,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_gsv,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_gsv,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_gsv,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_gsv,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_gsv,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_gsv,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_gsv,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_gsv,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_gsv,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_gsv,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_gsv,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_gsv,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_gsv,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_gsv,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_gsv,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_gsv,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_gsv,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_gsv,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_gsv,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_gsv,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_gsv,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_gsv,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_gsv,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_gsv,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_gsv,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_gsv,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_gsv,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_gsv,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_gsv,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_gsv,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_gsv,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_gsv,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_gsv
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_gsv;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_gsv;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_gsv;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_gsv;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_gsv;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_gsv;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_gsv;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_gsv;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_gsv;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_gsv;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_gsv;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_gsv;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_gsv;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_gsv;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_gsv;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_gsv;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_gsv;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_gsv;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_gsv;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_gsv;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_gsv;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_gsv;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_gsv;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_gsv;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_gsv;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_gsv;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_gsv;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_gsv;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_gsv;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_gsv;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_gsv;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_gsv;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_gsv;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_gsv;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_gsv;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_gsv;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_gsv;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_gsv;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_gsv;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_gsv;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_gsv;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_gsv;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_gsv;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_gsv;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_gsv;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_gsv;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_gsv;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_ton,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_ton,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_ton,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_ton,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_ton,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_ton,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_ton,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_ton,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_ton,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_ton,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_ton,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_ton,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_ton,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_ton,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_ton,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_ton,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_ton,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_ton,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_ton,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_ton,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_ton,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_ton,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_ton,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_ton,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_ton,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_ton,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_ton,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_ton,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_ton,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_ton,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_ton,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_ton,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_ton,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_ton,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_ton,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_ton,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_ton,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_ton,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_ton,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_ton,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_ton,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_ton,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_ton,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_ton,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_ton,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_ton,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_ton,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_ton,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_ton,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_ton,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_ton,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_ton,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_ton,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_ton,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_ton,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_ton,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_ton,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_ton,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_ton,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_ton,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_ton,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_ton,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_ton,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_ton,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_ton,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_ton,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_ton,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_ton,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_ton,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_ton,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_ton,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_ton,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_ton,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_ton,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_ton,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_ton,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_ton
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_01.ship_to_cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_ton;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_ton;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_ton;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_ton;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_ton;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_ton;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_ton;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_ton;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_ton;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_ton;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_ton;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_ton;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_ton;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_ton;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_ton;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_ton;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_ton;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_ton;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_ton;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_ton;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_ton;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_ton;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_ton;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_ton;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_ton;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_ton;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_ton;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_ton;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_ton;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_ton;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_ton;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_ton;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_ton;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_ton;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_ton;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_ton;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_ton;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_ton;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_ton;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_ton;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_ton;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_ton;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_ton;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_ton;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_ton;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_ton;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_ton;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_sales_extract_01;
@@ -1663,109 +1781,85 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_sales_extract_02.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_sales_extract_02.ship_to_cust_code,
-                       rcd_sales_extract_02.matl_code,
-                       rcd_sales_extract_02.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_02.demand_plng_grp_code,
-                       rcd_sales_extract_02.mfanz_icb_flag);
+         create_work(rcd_sales_extract_02.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_sales_extract_02.ship_to_cust_code,
+                     rcd_sales_extract_02.matl_code,
+                     rcd_sales_extract_02.acct_assgnmnt_grp_code,
+                     rcd_sales_extract_02.demand_plng_grp_code,
+                     rcd_sales_extract_02.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_qty,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_qty,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_qty,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_qty
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_qty;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_qty;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_qty;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_qty;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_qty;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_qty;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_qty;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_qty;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_qty;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_qty;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_qty;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_qty;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_qty;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_gsv,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_gsv,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_gsv
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_gsv;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_gsv;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_gsv;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_gsv;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_gsv;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_gsv;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_gsv;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_gsv;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_gsv;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_gsv;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_gsv;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_gsv;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_gsv;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_ton,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_ton,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_ton,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_ton
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_sales_extract_02.ship_to_cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_ton;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_ton;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_ton;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_ton;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_ton;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_ton;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_ton;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_ton;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_ton;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_ton;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_ton;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_ton;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_ton;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_sales_extract_02;
@@ -2233,103 +2327,79 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_qty,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_qty,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_qty,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_qty,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_qty,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_qty,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_qty,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_qty,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_qty,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_qty,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_qty,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_qty,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_qty,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_qty;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_gsv,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_gsv,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_gsv,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_gsv,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_gsv,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_gsv,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_gsv,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_gsv,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_gsv,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_gsv,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_gsv,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_gsv,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_gsv,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_gsv;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_ton,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_ton,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_ton,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_ton,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_ton,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_ton,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_ton,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_ton,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_ton,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_ton,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_ton,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_ton,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_ton,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_ton;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -2345,106 +2415,82 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_02.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_02.cust_code,
-                       rcd_fcst_extract_02.matl_zrep_code,
-                       rcd_fcst_extract_02.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_02.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_02.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_02.cust_code,
+                     rcd_fcst_extract_02.matl_zrep_code,
+                     rcd_fcst_extract_02.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_02.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_qty,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_qty,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_qty,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_qty,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_qty,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_qty,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_qty,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_qty,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_qty,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_qty,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_qty,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_qty,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_qty,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_qty,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_qty,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_qty
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_qty;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_qty;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_qty;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_qty;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_qty;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_qty;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_qty;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_qty;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_qty;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_qty;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_qty;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_qty;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_qty;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_qty;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_qty;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_gsv,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_gsv,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_gsv,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_gsv,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_gsv,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_gsv,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_gsv,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_gsv,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_gsv,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_gsv,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_gsv,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_gsv,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_gsv,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_gsv,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_gsv,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_gsv
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_gsv;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_gsv;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_gsv;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_gsv;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_gsv;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_gsv;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_gsv;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_gsv;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_gsv;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_gsv;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_gsv;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_gsv;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_gsv;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_gsv;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_gsv;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_ton,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_ton,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_ton,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_ton,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_ton,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_ton,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_ton,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_ton,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_ton,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_ton,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_ton,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_ton,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_ton,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_ton,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_ton,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_ton
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_ton;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_ton;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_ton;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_ton;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_ton;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_ton;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_ton;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_ton;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_ton;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_ton;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_ton;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_ton;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_ton;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_ton;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_ton;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_02;
@@ -2460,148 +2506,124 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_03.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_03.cust_code,
-                       rcd_fcst_extract_03.matl_zrep_code,
-                       rcd_fcst_extract_03.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_03.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_03.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_03.cust_code,
+                     rcd_fcst_extract_03.matl_zrep_code,
+                     rcd_fcst_extract_03.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_03.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_qty,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_qty,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_qty,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_qty,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_qty,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_qty,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_qty,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_qty,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_qty,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_qty,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_qty,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_qty,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_qty,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_qty,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_qty,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_qty,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_qty,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_qty,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_qty,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_qty,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_qty,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_qty,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_qty,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_qty,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_qty,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_qty,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_qty,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_qty,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_qty,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_qty
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_qty;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_qty;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_qty;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_qty;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_qty;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_qty;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_qty;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_qty;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_qty;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_qty;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_qty;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_qty;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_qty;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_qty;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_qty;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_qty;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_qty;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_qty;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_qty;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_qty;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_qty;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_qty;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_qty;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_qty;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_qty;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_qty;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_qty;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_qty;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_qty;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_gsv,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_gsv,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_gsv,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_gsv,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_gsv,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_gsv,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_gsv,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_gsv,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_gsv,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_gsv,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_gsv,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_gsv,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_gsv,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_gsv,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_gsv,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_gsv,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_gsv,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_gsv,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_gsv,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_gsv,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_gsv,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_gsv,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_gsv,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_gsv,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_gsv,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_gsv,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_gsv,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_gsv,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_gsv,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_gsv
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_gsv;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_gsv;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_gsv;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_gsv;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_gsv;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_gsv;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_gsv;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_gsv;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_gsv;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_gsv;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_gsv;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_gsv;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_gsv;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_gsv;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_gsv;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_gsv;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_gsv;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_gsv;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_gsv;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_gsv;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_gsv;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_gsv;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_gsv;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_gsv;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_gsv;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_gsv;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_gsv;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_gsv;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_gsv;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_ton,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_ton,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_ton,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_ton,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_ton,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_ton,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_ton,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_ton,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_ton,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_ton,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_ton,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_ton,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_ton,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_ton,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_ton,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_ton,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_ton,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_ton,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_ton,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_ton,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_ton,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_ton,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_ton,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_ton,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_ton,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_ton,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_ton,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_ton,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_ton,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_ton
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_ton;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_ton;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_ton;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_ton;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_ton;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_ton;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_ton;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_ton;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_ton;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_ton;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_ton;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_ton;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_ton;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_ton;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_ton;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_ton;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_ton;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_ton;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_ton;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_ton;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_ton;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_ton;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_ton;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_ton;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_ton;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_ton;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_ton;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_ton;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_ton;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_03;
@@ -2617,151 +2639,127 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_04.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_04.cust_code,
-                       rcd_fcst_extract_04.matl_zrep_code,
-                       rcd_fcst_extract_04.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_04.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_04.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_04.cust_code,
+                     rcd_fcst_extract_04.matl_zrep_code,
+                     rcd_fcst_extract_04.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_04.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_qty,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_qty,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_qty,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_qty,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_qty,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_qty,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_qty,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_qty,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_qty,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_qty,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_qty,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_qty,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_qty,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_qty,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_qty,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_qty,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_qty,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_qty
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_qty;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_qty;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_qty;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_qty;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_qty;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_qty;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_qty;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_qty;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_qty;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_qty;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_qty;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_qty;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_qty;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_qty;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_qty;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_qty;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_qty;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_qty;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_qty;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_qty;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_qty;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_qty;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_qty;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_qty;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_qty;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_qty;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_qty;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_qty;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_qty;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_gsv,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_gsv,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_gsv,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_gsv,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_gsv,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_gsv,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_gsv,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_gsv,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_gsv,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_gsv,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_gsv,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_gsv,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_gsv,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_gsv,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_gsv,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_gsv,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_gsv
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_gsv;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_gsv;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_gsv;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_gsv;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_gsv;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_gsv;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_gsv;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_gsv;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_gsv;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_gsv;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_gsv;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_gsv;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_gsv;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_gsv;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_gsv;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_gsv;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_gsv;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_gsv;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_gsv;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_gsv;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_gsv;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_gsv;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_gsv;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_gsv;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_gsv;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_gsv;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_gsv;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_gsv;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_gsv;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_ton,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_ton,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_ton,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_ton,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_ton,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_ton,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_ton,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_ton,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_ton,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_ton,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_ton,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_ton,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_ton,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_ton,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_ton,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_ton,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_ton,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_ton
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_ton;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_ton;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_ton;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_ton;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_ton;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_ton;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_ton;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_ton;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_ton;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_ton;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_ton;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_ton;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_ton;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_ton;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_ton;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_ton;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_ton;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_ton;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_ton;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_ton;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_ton;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_ton;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_ton;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_ton;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_ton;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_ton;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_ton;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_ton;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_ton;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_04;
@@ -2982,145 +2980,121 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_qty,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_qty,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_qty,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_qty,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_qty,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_qty,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_qty,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_qty,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_qty,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_qty,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_qty,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_qty,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_qty,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_qty,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_qty,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_qty,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_qty,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_qty,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_qty,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_qty,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_qty,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_qty,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_qty,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_qty,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_qty,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_qty,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_qty,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_qty;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_qty;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_qty;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_qty;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_qty;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_qty;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_qty;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_qty;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_qty;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_qty;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_qty;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_qty;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_qty;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_qty;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_qty;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_gsv,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_gsv,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_gsv,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_gsv,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_gsv,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_gsv,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_gsv,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_gsv,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_gsv,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_gsv,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_gsv,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_gsv,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_gsv,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_gsv,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_gsv;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_gsv;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_gsv;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_gsv;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_gsv;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_gsv;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_gsv;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_gsv;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_gsv;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_gsv;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_gsv;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_gsv;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_gsv;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_gsv;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_gsv;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_ton,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_ton,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_ton,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_ton,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_ton,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_ton,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_ton,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_ton,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_ton,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_ton,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_ton,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_ton,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_ton,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_ton,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_ton,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_ton,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_ton,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_ton,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_ton,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_ton,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_ton,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_ton,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_ton,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_ton,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_ton,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_ton,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_ton,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_ton;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_ton;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_ton;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_ton;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_ton;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_ton;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_ton;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_ton;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_ton;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_ton;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_ton;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_ton;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_ton;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_ton;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_ton;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -3341,145 +3315,121 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       '*ALL',
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     '*ALL',
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_qty,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_qty,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_qty,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_qty,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_qty,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_qty,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_qty,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_qty,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_qty,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_qty,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_qty,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_qty,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_qty,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_qty,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_qty,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_qty,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_qty,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_qty,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_qty,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_qty,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_qty,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_qty,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_qty,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_qty,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_qty,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_qty,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_qty,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_qty;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_qty;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_qty;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_qty;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_qty;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_qty;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_qty;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_qty;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_qty;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_qty;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_qty;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_qty;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_qty;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_qty;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_qty;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_gsv,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_gsv,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_gsv,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_gsv,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_gsv,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_gsv,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_gsv,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_gsv,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_gsv,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_gsv,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_gsv,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_gsv,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_gsv,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_gsv,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_gsv;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_gsv;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_gsv;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_gsv;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_gsv;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_gsv;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_gsv;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_gsv;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_gsv;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_gsv;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_gsv;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_gsv;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_gsv;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_gsv;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_gsv;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_ton,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_ton,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_ton,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_ton,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_ton,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_ton,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_ton,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_ton,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_ton,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_ton,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_ton,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_ton,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_ton,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_ton,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_ton,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_ton,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_ton,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_ton,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_ton,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_ton,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_ton,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_ton,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_ton,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_ton,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_ton,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_ton,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_ton,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = '*ALL'
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_ton;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_ton;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_ton;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_ton;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_ton;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_ton;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_ton;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_ton;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_ton;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_ton;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_ton;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_ton;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_ton;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_ton;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_ton;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -3905,334 +3855,310 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_sales_extract_01.company_code,
-                       par_data_segment,
-                       rcd_sales_extract_01.nzmkt_matl_group,
-                       rcd_sales_extract_01.cust_code,
-                       rcd_sales_extract_01.matl_code,
-                       rcd_sales_extract_01.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_01.demand_plng_grp_code,
-                       rcd_sales_extract_01.mfanz_icb_flag);
+         create_work(rcd_sales_extract_01.company_code,
+                     par_data_segment,
+                     rcd_sales_extract_01.nzmkt_matl_group,
+                     rcd_sales_extract_01.cust_code,
+                     rcd_sales_extract_01.matl_code,
+                     rcd_sales_extract_01.acct_assgnmnt_grp_code,
+                     rcd_sales_extract_01.demand_plng_grp_code,
+                     rcd_sales_extract_01.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_qty,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_qty,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_qty,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_qty,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_qty,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_qty,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_qty,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_qty,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_qty,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_qty,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_qty,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_qty,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_qty,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_qty,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_qty,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_qty,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_qty,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_qty,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_qty,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_qty,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_qty,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_qty,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_qty,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_qty,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_qty,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_qty,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_qty,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_qty,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_qty,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_qty,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_qty,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_qty,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_qty,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_qty,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_qty,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_qty,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_qty,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_qty,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_qty,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_qty,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_qty,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_qty,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_qty,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_qty,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_qty,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_qty,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_qty,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_qty,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_qty,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_qty,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_qty,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_qty,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_qty,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_qty,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_qty,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_qty,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_qty,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_qty,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_qty,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_qty,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_qty,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_qty,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_qty,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_qty,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_qty,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_qty,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_qty,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_qty,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_qty,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_qty,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_qty,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_qty,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_qty,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_qty,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_qty,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_qty,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_qty
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_01.cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_qty;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_qty;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_qty;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_qty;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_qty;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_qty;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_qty;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_qty;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_qty;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_qty;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_qty;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_qty;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_qty;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_qty;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_qty;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_qty;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_qty;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_qty;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_qty;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_qty;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_qty;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_qty;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_qty;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_qty;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_qty;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_qty;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_qty;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_qty;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_qty;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_qty;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_qty;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_qty;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_qty;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_qty;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_qty;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_qty;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_qty;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_qty;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_qty;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_qty;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_qty;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_qty;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_qty;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_qty;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_qty;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_qty;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_qty;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_qty;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_qty;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_qty;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_qty;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_qty;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_qty;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_qty;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_qty;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_qty;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_qty;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_qty;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_qty;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_qty;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_gsv,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_gsv,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_gsv,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_gsv,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_gsv,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_gsv,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_gsv,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_gsv,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_gsv,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_gsv,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_gsv,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_gsv,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_gsv,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_gsv,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_gsv,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_gsv,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_gsv,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_gsv,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_gsv,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_gsv,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_gsv,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_gsv,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_gsv,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_gsv,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_gsv,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_gsv,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_gsv,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_gsv,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_gsv,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_gsv,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_gsv,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_gsv,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_gsv,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_gsv,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_gsv,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_gsv,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_gsv,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_gsv,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_gsv,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_gsv,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_gsv,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_gsv,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_gsv,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_gsv,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_gsv,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_gsv,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_gsv,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_gsv,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_gsv
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_01.cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_gsv;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_gsv;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_gsv;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_gsv;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_gsv;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_gsv;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_gsv;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_gsv;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_gsv;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_gsv;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_gsv;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_gsv;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_gsv;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_gsv;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_gsv;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_gsv;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_gsv;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_gsv;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_gsv;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_gsv;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_gsv;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_gsv;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_gsv;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_gsv;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_gsv;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_gsv;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_gsv;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_gsv;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_gsv;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_gsv;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_gsv;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_gsv;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_gsv;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_gsv;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_gsv;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_gsv;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_gsv;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_gsv;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_gsv;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_gsv;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_gsv;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_gsv;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_gsv;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_gsv;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_gsv;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_gsv;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_gsv;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_gsv;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_gsv;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_gsv;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_gsv;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_gsv;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_gsv;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_gsv;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_gsv;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_gsv;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_gsv;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_gsv;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_gsv;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_gsv;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set lyr_cpd_inv_value = lyr_cpd_inv_value + rcd_sales_extract_01.lst_ton,
-                ptd_inv_value = ptd_inv_value + rcd_sales_extract_01.cur_ton,
-                cpd_inv_value = cpd_inv_value + rcd_sales_extract_01.cur_ton,
-                fpd_inv_value = fpd_inv_value + rcd_sales_extract_01.fut_ton,
-                lyr_yee_inv_value = lyr_yee_inv_value + rcd_sales_extract_01.lyr_ton,
-                lyrm1_yee_inv_value = lyrm1_yee_inv_value + rcd_sales_extract_01.lyrm1_ton,
-                lyrm2_yee_inv_value = lyrm2_yee_inv_value + rcd_sales_extract_01.lyrm2_ton,
-                lyr_ytp_inv_value = lyr_ytp_inv_value + rcd_sales_extract_01.ltp_ton,
-                cyr_ytp_inv_value = cyr_ytp_inv_value + rcd_sales_extract_01.ytp_ton,
-                cyr_mat_inv_value = cyr_mat_inv_value + rcd_sales_extract_01.mat_ton,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_sales_extract_01.ytp_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_01.ytp_ton,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_01.p01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_01.p02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_01.p03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_01.p04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_01.p05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_01.p06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_01.p07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_01.p08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_01.p09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_01.p10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_01.p11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_01.p12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_01.p13_ton,
-                p01_br_value = p01_br_value + rcd_sales_extract_01.p01_ton,
-                p02_br_value = p02_br_value + rcd_sales_extract_01.p02_ton,
-                p03_br_value = p03_br_value + rcd_sales_extract_01.p03_ton,
-                p04_br_value = p04_br_value + rcd_sales_extract_01.p04_ton,
-                p05_br_value = p05_br_value + rcd_sales_extract_01.p05_ton,
-                p06_br_value = p06_br_value + rcd_sales_extract_01.p06_ton,
-                p07_br_value = p07_br_value + rcd_sales_extract_01.p07_ton,
-                p08_br_value = p08_br_value + rcd_sales_extract_01.p08_ton,
-                p09_br_value = p09_br_value + rcd_sales_extract_01.p09_ton,
-                p10_br_value = p10_br_value + rcd_sales_extract_01.p10_ton,
-                p11_br_value = p11_br_value + rcd_sales_extract_01.p11_ton,
-                p12_br_value = p12_br_value + rcd_sales_extract_01.p12_ton,
-                p13_br_value = p13_br_value + rcd_sales_extract_01.p13_ton,
-                p01_brm1_value = p01_brm1_value + rcd_sales_extract_01.m101_ton,
-                p02_brm1_value = p02_brm1_value + rcd_sales_extract_01.m102_ton,
-                p03_brm1_value = p03_brm1_value + rcd_sales_extract_01.m103_ton,
-                p04_brm1_value = p04_brm1_value + rcd_sales_extract_01.m104_ton,
-                p05_brm1_value = p05_brm1_value + rcd_sales_extract_01.m105_ton,
-                p06_brm1_value = p06_brm1_value + rcd_sales_extract_01.m106_ton,
-                p07_brm1_value = p07_brm1_value + rcd_sales_extract_01.m107_ton,
-                p08_brm1_value = p08_brm1_value + rcd_sales_extract_01.m108_ton,
-                p09_brm1_value = p09_brm1_value + rcd_sales_extract_01.m109_ton,
-                p10_brm1_value = p10_brm1_value + rcd_sales_extract_01.m110_ton,
-                p11_brm1_value = p11_brm1_value + rcd_sales_extract_01.m111_ton,
-                p12_brm1_value = p12_brm1_value + rcd_sales_extract_01.m112_ton,
-                p13_brm1_value = p13_brm1_value + rcd_sales_extract_01.m113_ton,
-                p01_brm2_value = p01_brm2_value + rcd_sales_extract_01.m201_ton,
-                p02_brm2_value = p02_brm2_value + rcd_sales_extract_01.m202_ton,
-                p03_brm2_value = p03_brm2_value + rcd_sales_extract_01.m203_ton,
-                p04_brm2_value = p04_brm2_value + rcd_sales_extract_01.m204_ton,
-                p05_brm2_value = p05_brm2_value + rcd_sales_extract_01.m205_ton,
-                p06_brm2_value = p06_brm2_value + rcd_sales_extract_01.m206_ton,
-                p07_brm2_value = p07_brm2_value + rcd_sales_extract_01.m207_ton,
-                p08_brm2_value = p08_brm2_value + rcd_sales_extract_01.m208_ton,
-                p09_brm2_value = p09_brm2_value + rcd_sales_extract_01.m209_ton,
-                p10_brm2_value = p10_brm2_value + rcd_sales_extract_01.m210_ton,
-                p11_brm2_value = p11_brm2_value + rcd_sales_extract_01.m211_ton,
-                p12_brm2_value = p12_brm2_value + rcd_sales_extract_01.m212_ton,
-                p13_brm2_value = p13_brm2_value + rcd_sales_extract_01.m213_ton,
-                p01_rob_value = p01_rob_value + rcd_sales_extract_01.p01_ton,
-                p02_rob_value = p02_rob_value + rcd_sales_extract_01.p02_ton,
-                p03_rob_value = p03_rob_value + rcd_sales_extract_01.p03_ton,
-                p04_rob_value = p04_rob_value + rcd_sales_extract_01.p04_ton,
-                p05_rob_value = p05_rob_value + rcd_sales_extract_01.p05_ton,
-                p06_rob_value = p06_rob_value + rcd_sales_extract_01.p06_ton,
-                p07_rob_value = p07_rob_value + rcd_sales_extract_01.p07_ton,
-                p08_rob_value = p08_rob_value + rcd_sales_extract_01.p08_ton,
-                p09_rob_value = p09_rob_value + rcd_sales_extract_01.p09_ton,
-                p10_rob_value = p10_rob_value + rcd_sales_extract_01.p10_ton,
-                p11_rob_value = p11_rob_value + rcd_sales_extract_01.p11_ton,
-                p12_rob_value = p12_rob_value + rcd_sales_extract_01.p12_ton,
-                p13_rob_value = p13_rob_value + rcd_sales_extract_01.p13_ton,
-                p01_lyr_value = p01_lyr_value + rcd_sales_extract_01.l01_ton,
-                p02_lyr_value = p02_lyr_value + rcd_sales_extract_01.l02_ton,
-                p03_lyr_value = p03_lyr_value + rcd_sales_extract_01.l03_ton,
-                p04_lyr_value = p04_lyr_value + rcd_sales_extract_01.l04_ton,
-                p05_lyr_value = p05_lyr_value + rcd_sales_extract_01.l05_ton,
-                p06_lyr_value = p06_lyr_value + rcd_sales_extract_01.l06_ton,
-                p07_lyr_value = p07_lyr_value + rcd_sales_extract_01.l07_ton,
-                p08_lyr_value = p08_lyr_value + rcd_sales_extract_01.l08_ton,
-                p09_lyr_value = p09_lyr_value + rcd_sales_extract_01.l09_ton,
-                p10_lyr_value = p10_lyr_value + rcd_sales_extract_01.l10_ton,
-                p11_lyr_value = p11_lyr_value + rcd_sales_extract_01.l11_ton,
-                p12_lyr_value = p12_lyr_value + rcd_sales_extract_01.l12_ton,
-                p13_lyr_value = p13_lyr_value + rcd_sales_extract_01.l13_ton
-          where company_code = rcd_sales_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_01.cust_code
-            and matl_code = rcd_sales_extract_01.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_01.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.lyr_cpd_inv_value := rcd_sales_extract_01.lst_ton;
+         rcd_work.ptd_inv_value := rcd_sales_extract_01.cur_ton;
+         rcd_work.cpd_inv_value := rcd_sales_extract_01.cur_ton;
+         rcd_work.fpd_inv_value := rcd_sales_extract_01.fut_ton;
+         rcd_work.lyr_yee_inv_value := rcd_sales_extract_01.lyr_ton;
+         rcd_work.lyrm1_yee_inv_value := rcd_sales_extract_01.lyrm1_ton;
+         rcd_work.lyrm2_yee_inv_value := rcd_sales_extract_01.lyrm2_ton;
+         rcd_work.lyr_ytp_inv_value := rcd_sales_extract_01.ltp_ton;
+         rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_ton;
+         rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_fcst_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_fcst_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_fcst_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_fcst_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_fcst_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_fcst_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_fcst_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_fcst_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_fcst_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_fcst_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_fcst_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_br_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_br_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_br_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_br_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_br_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_br_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_br_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_br_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_br_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_br_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_br_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_br_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_br_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_brm1_value := rcd_sales_extract_01.m101_ton;
+         rcd_work.p02_brm1_value := rcd_sales_extract_01.m102_ton;
+         rcd_work.p03_brm1_value := rcd_sales_extract_01.m103_ton;
+         rcd_work.p04_brm1_value := rcd_sales_extract_01.m104_ton;
+         rcd_work.p05_brm1_value := rcd_sales_extract_01.m105_ton;
+         rcd_work.p06_brm1_value := rcd_sales_extract_01.m106_ton;
+         rcd_work.p07_brm1_value := rcd_sales_extract_01.m107_ton;
+         rcd_work.p08_brm1_value := rcd_sales_extract_01.m108_ton;
+         rcd_work.p09_brm1_value := rcd_sales_extract_01.m109_ton;
+         rcd_work.p10_brm1_value := rcd_sales_extract_01.m110_ton;
+         rcd_work.p11_brm1_value := rcd_sales_extract_01.m111_ton;
+         rcd_work.p12_brm1_value := rcd_sales_extract_01.m112_ton;
+         rcd_work.p13_brm1_value := rcd_sales_extract_01.m113_ton;
+         rcd_work.p01_brm2_value := rcd_sales_extract_01.m201_ton;
+         rcd_work.p02_brm2_value := rcd_sales_extract_01.m202_ton;
+         rcd_work.p03_brm2_value := rcd_sales_extract_01.m203_ton;
+         rcd_work.p04_brm2_value := rcd_sales_extract_01.m204_ton;
+         rcd_work.p05_brm2_value := rcd_sales_extract_01.m205_ton;
+         rcd_work.p06_brm2_value := rcd_sales_extract_01.m206_ton;
+         rcd_work.p07_brm2_value := rcd_sales_extract_01.m207_ton;
+         rcd_work.p08_brm2_value := rcd_sales_extract_01.m208_ton;
+         rcd_work.p09_brm2_value := rcd_sales_extract_01.m209_ton;
+         rcd_work.p10_brm2_value := rcd_sales_extract_01.m210_ton;
+         rcd_work.p11_brm2_value := rcd_sales_extract_01.m211_ton;
+         rcd_work.p12_brm2_value := rcd_sales_extract_01.m212_ton;
+         rcd_work.p13_brm2_value := rcd_sales_extract_01.m213_ton;
+         rcd_work.p01_rob_value := rcd_sales_extract_01.p01_ton;
+         rcd_work.p02_rob_value := rcd_sales_extract_01.p02_ton;
+         rcd_work.p03_rob_value := rcd_sales_extract_01.p03_ton;
+         rcd_work.p04_rob_value := rcd_sales_extract_01.p04_ton;
+         rcd_work.p05_rob_value := rcd_sales_extract_01.p05_ton;
+         rcd_work.p06_rob_value := rcd_sales_extract_01.p06_ton;
+         rcd_work.p07_rob_value := rcd_sales_extract_01.p07_ton;
+         rcd_work.p08_rob_value := rcd_sales_extract_01.p08_ton;
+         rcd_work.p09_rob_value := rcd_sales_extract_01.p09_ton;
+         rcd_work.p10_rob_value := rcd_sales_extract_01.p10_ton;
+         rcd_work.p11_rob_value := rcd_sales_extract_01.p11_ton;
+         rcd_work.p12_rob_value := rcd_sales_extract_01.p12_ton;
+         rcd_work.p13_rob_value := rcd_sales_extract_01.p13_ton;
+         rcd_work.p01_lyr_value := rcd_sales_extract_01.l01_ton;
+         rcd_work.p02_lyr_value := rcd_sales_extract_01.l02_ton;
+         rcd_work.p03_lyr_value := rcd_sales_extract_01.l03_ton;
+         rcd_work.p04_lyr_value := rcd_sales_extract_01.l04_ton;
+         rcd_work.p05_lyr_value := rcd_sales_extract_01.l05_ton;
+         rcd_work.p06_lyr_value := rcd_sales_extract_01.l06_ton;
+         rcd_work.p07_lyr_value := rcd_sales_extract_01.l07_ton;
+         rcd_work.p08_lyr_value := rcd_sales_extract_01.l08_ton;
+         rcd_work.p09_lyr_value := rcd_sales_extract_01.l09_ton;
+         rcd_work.p10_lyr_value := rcd_sales_extract_01.l10_ton;
+         rcd_work.p11_lyr_value := rcd_sales_extract_01.l11_ton;
+         rcd_work.p12_lyr_value := rcd_sales_extract_01.l12_ton;
+         rcd_work.p13_lyr_value := rcd_sales_extract_01.l13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_sales_extract_01;
@@ -4248,109 +4174,85 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_sales_extract_02.company_code,
-                       par_data_segment,
-                       rcd_sales_extract_02.nzmkt_matl_group,
-                       rcd_sales_extract_02.cust_code,
-                       rcd_sales_extract_02.matl_code,
-                       rcd_sales_extract_02.acct_assgnmnt_grp_code,
-                       rcd_sales_extract_02.demand_plng_grp_code,
-                       rcd_sales_extract_02.mfanz_icb_flag);
+         create_work(rcd_sales_extract_02.company_code,
+                     par_data_segment,
+                     rcd_sales_extract_02.nzmkt_matl_group,
+                     rcd_sales_extract_02.cust_code,
+                     rcd_sales_extract_02.matl_code,
+                     rcd_sales_extract_02.acct_assgnmnt_grp_code,
+                     rcd_sales_extract_02.demand_plng_grp_code,
+                     rcd_sales_extract_02.mfanz_icb_flag);
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_qty,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_qty,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_qty,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_qty
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_02.cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_qty;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_qty;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_qty;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_qty;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_qty;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_qty;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_qty;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_qty;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_qty;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_qty;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_qty;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_qty;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_qty;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_qty;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_gsv,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_gsv,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_gsv
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_02.cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_gsv;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_gsv;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_gsv;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_gsv;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_gsv;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_gsv;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_gsv;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_gsv;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_gsv;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_gsv;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_gsv;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_gsv;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_gsv;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_gsv;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cdy_inv_value = cdy_inv_value + rcd_sales_extract_02.cur_ton,
-                ptw_inv_value = ptw_inv_value + rcd_sales_extract_02.ptw_ton,
-                cpd_fcst_value = cpd_fcst_value + rcd_sales_extract_02.ptw_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_sales_extract_02.ptw_ton,
-                p01_fcst_value = p01_fcst_value + rcd_sales_extract_02.w01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_sales_extract_02.w02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_sales_extract_02.w03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_sales_extract_02.w04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_sales_extract_02.w05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_sales_extract_02.w06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_sales_extract_02.w07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_sales_extract_02.w08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_sales_extract_02.w09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_sales_extract_02.w10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_sales_extract_02.w11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_sales_extract_02.w12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_sales_extract_02.w13_ton
-          where company_code = rcd_sales_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_sales_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_sales_extract_02.cust_code
-            and matl_code = rcd_sales_extract_02.matl_code
-            and acct_assgnmnt_grp_code = rcd_sales_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_sales_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = rcd_sales_extract_02.mfanz_icb_flag
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cdy_inv_value := rcd_sales_extract_02.cur_ton;
+         rcd_work.ptw_inv_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.cpd_fcst_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_sales_extract_02.ptw_ton;
+         rcd_work.p01_fcst_value := rcd_sales_extract_02.w01_ton;
+         rcd_work.p02_fcst_value := rcd_sales_extract_02.w02_ton;
+         rcd_work.p03_fcst_value := rcd_sales_extract_02.w03_ton;
+         rcd_work.p04_fcst_value := rcd_sales_extract_02.w04_ton;
+         rcd_work.p05_fcst_value := rcd_sales_extract_02.w05_ton;
+         rcd_work.p06_fcst_value := rcd_sales_extract_02.w06_ton;
+         rcd_work.p07_fcst_value := rcd_sales_extract_02.w07_ton;
+         rcd_work.p08_fcst_value := rcd_sales_extract_02.w08_ton;
+         rcd_work.p09_fcst_value := rcd_sales_extract_02.w09_ton;
+         rcd_work.p10_fcst_value := rcd_sales_extract_02.w10_ton;
+         rcd_work.p11_fcst_value := rcd_sales_extract_02.w11_ton;
+         rcd_work.p12_fcst_value := rcd_sales_extract_02.w12_ton;
+         rcd_work.p13_fcst_value := rcd_sales_extract_02.w13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_sales_extract_02;
@@ -4826,103 +4728,79 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_01.nzmkt_matl_group,
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_01.nzmkt_matl_group,
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_qty,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_qty,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_qty,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_qty,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_qty,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_qty,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_qty,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_qty,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_qty,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_qty,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_qty,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_qty,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_qty,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_qty;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_gsv,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_gsv,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_gsv,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_gsv,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_gsv,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_gsv,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_gsv,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_gsv,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_gsv,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_gsv,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_gsv,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_gsv,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_gsv,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_gsv;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_op_value = cpd_op_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_op_value = cyr_yee_op_value + rcd_fcst_extract_01.yee_ton,
-                p01_op_value = p01_br_value + rcd_fcst_extract_01.p01_ton,
-                p02_op_value = p02_op_value + rcd_fcst_extract_01.p02_ton,
-                p03_op_value = p03_op_value + rcd_fcst_extract_01.p03_ton,
-                p04_op_value = p04_op_value + rcd_fcst_extract_01.p04_ton,
-                p05_op_value = p05_op_value + rcd_fcst_extract_01.p05_ton,
-                p06_op_value = p06_op_value + rcd_fcst_extract_01.p06_ton,
-                p07_op_value = p07_op_value + rcd_fcst_extract_01.p07_ton,
-                p08_op_value = p08_op_value + rcd_fcst_extract_01.p08_ton,
-                p09_op_value = p09_op_value + rcd_fcst_extract_01.p09_ton,
-                p10_op_value = p10_op_value + rcd_fcst_extract_01.p10_ton,
-                p11_op_value = p11_op_value + rcd_fcst_extract_01.p11_ton,
-                p12_op_value = p12_op_value + rcd_fcst_extract_01.p12_ton,
-                p13_op_value = p13_op_value + rcd_fcst_extract_01.p13_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_op_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_op_value := rcd_fcst_extract_01.yee_ton;
+         rcd_work.p01_op_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_op_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_op_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_op_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_op_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_op_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_op_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_op_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_op_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_op_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_op_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_op_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_op_value := rcd_fcst_extract_01.p13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -4938,106 +4816,82 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_02.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_02.nzmkt_matl_group,
-                       rcd_fcst_extract_02.cust_code,
-                       rcd_fcst_extract_02.matl_zrep_code,
-                       rcd_fcst_extract_02.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_02.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_02.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_02.nzmkt_matl_group,
+                     rcd_fcst_extract_02.cust_code,
+                     rcd_fcst_extract_02.matl_zrep_code,
+                     rcd_fcst_extract_02.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_02.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_qty,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_qty,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_qty,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_qty,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_qty,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_qty,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_qty,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_qty,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_qty,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_qty,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_qty,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_qty,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_qty,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_qty,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_qty,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_qty
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_qty;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_qty;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_qty;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_qty;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_qty;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_qty;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_qty;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_qty;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_qty;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_qty;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_qty;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_qty;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_qty;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_qty;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_qty;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_gsv,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_gsv,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_gsv,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_gsv,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_gsv,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_gsv,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_gsv,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_gsv,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_gsv,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_gsv,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_gsv,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_gsv,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_gsv,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_gsv,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_gsv,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_gsv
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_gsv;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_gsv;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_gsv;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_gsv;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_gsv;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_gsv;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_gsv;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_gsv;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_gsv;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_gsv;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_gsv;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_gsv;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_gsv;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_gsv;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_gsv;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_rob_value = cpd_rob_value + rcd_fcst_extract_02.cur_ton,
-                cyr_ytg_rob_value = cyr_ytg_rob_value + rcd_fcst_extract_02.ytg_ton,
-                cyr_yee_rob_value = cyr_yee_rob_value + rcd_fcst_extract_02.ytg_ton,
-                p01_rob_value = p01_rob_value + rcd_fcst_extract_02.p01_ton,
-                p02_rob_value = p02_rob_value + rcd_fcst_extract_02.p02_ton,
-                p03_rob_value = p03_rob_value + rcd_fcst_extract_02.p03_ton,
-                p04_rob_value = p04_rob_value + rcd_fcst_extract_02.p04_ton,
-                p05_rob_value = p05_rob_value + rcd_fcst_extract_02.p05_ton,
-                p06_rob_value = p06_rob_value + rcd_fcst_extract_02.p06_ton,
-                p07_rob_value = p07_rob_value + rcd_fcst_extract_02.p07_ton,
-                p08_rob_value = p08_rob_value + rcd_fcst_extract_02.p08_ton,
-                p09_rob_value = p09_rob_value + rcd_fcst_extract_02.p09_ton,
-                p10_rob_value = p10_rob_value + rcd_fcst_extract_02.p10_ton,
-                p11_rob_value = p11_rob_value + rcd_fcst_extract_02.p11_ton,
-                p12_rob_value = p12_rob_value + rcd_fcst_extract_02.p12_ton,
-                p13_rob_value = p13_rob_value + rcd_fcst_extract_02.p13_ton
-          where company_code = rcd_fcst_extract_02.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_02.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_02.cust_code
-            and matl_code = rcd_fcst_extract_02.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_02.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_02.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_rob_value := rcd_fcst_extract_02.cur_ton;
+         rcd_work.cyr_ytg_rob_value := rcd_fcst_extract_02.ytg_ton;
+         rcd_work.cyr_yee_rob_value := rcd_fcst_extract_02.ytg_ton;
+         rcd_work.p01_rob_value := rcd_fcst_extract_02.p01_ton;
+         rcd_work.p02_rob_value := rcd_fcst_extract_02.p02_ton;
+         rcd_work.p03_rob_value := rcd_fcst_extract_02.p03_ton;
+         rcd_work.p04_rob_value := rcd_fcst_extract_02.p04_ton;
+         rcd_work.p05_rob_value := rcd_fcst_extract_02.p05_ton;
+         rcd_work.p06_rob_value := rcd_fcst_extract_02.p06_ton;
+         rcd_work.p07_rob_value := rcd_fcst_extract_02.p07_ton;
+         rcd_work.p08_rob_value := rcd_fcst_extract_02.p08_ton;
+         rcd_work.p09_rob_value := rcd_fcst_extract_02.p09_ton;
+         rcd_work.p10_rob_value := rcd_fcst_extract_02.p10_ton;
+         rcd_work.p11_rob_value := rcd_fcst_extract_02.p11_ton;
+         rcd_work.p12_rob_value := rcd_fcst_extract_02.p12_ton;
+         rcd_work.p13_rob_value := rcd_fcst_extract_02.p13_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_02;
@@ -5053,148 +4907,124 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_03.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_03.nzmkt_matl_group,
-                       rcd_fcst_extract_03.cust_code,
-                       rcd_fcst_extract_03.matl_zrep_code,
-                       rcd_fcst_extract_03.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_03.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_03.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_03.nzmkt_matl_group,
+                     rcd_fcst_extract_03.cust_code,
+                     rcd_fcst_extract_03.matl_zrep_code,
+                     rcd_fcst_extract_03.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_03.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_qty,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_qty,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_qty,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_qty,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_qty,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_qty,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_qty,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_qty,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_qty,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_qty,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_qty,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_qty,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_qty,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_qty,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_qty,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_qty,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_qty,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_qty,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_qty,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_qty,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_qty,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_qty,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_qty,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_qty,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_qty,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_qty,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_qty,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_qty,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_qty,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_qty
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_qty;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_qty;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_qty;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_qty;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_qty;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_qty;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_qty;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_qty;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_qty;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_qty;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_qty;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_qty;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_qty;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_qty;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_qty;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_qty;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_qty;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_qty;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_qty;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_qty;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_qty;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_qty;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_qty;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_qty;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_qty;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_qty;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_qty;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_qty;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_qty;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_gsv,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_gsv,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_gsv,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_gsv,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_gsv,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_gsv,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_gsv,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_gsv,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_gsv,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_gsv,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_gsv,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_gsv,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_gsv,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_gsv,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_gsv,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_gsv,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_gsv,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_gsv,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_gsv,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_gsv,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_gsv,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_gsv,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_gsv,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_gsv,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_gsv,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_gsv,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_gsv,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_gsv,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_gsv,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_gsv
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_gsv;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_gsv;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_gsv;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_gsv;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_gsv;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_gsv;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_gsv;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_gsv;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_gsv;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_gsv;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_gsv;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_gsv;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_gsv;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_gsv;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_gsv;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_gsv;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_gsv;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_gsv;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_gsv;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_gsv;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_gsv;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_gsv;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_gsv;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_gsv;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_gsv;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_gsv;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_gsv;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_gsv;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_gsv;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_br_value = cpd_br_value + rcd_fcst_extract_03.cur_ton,
-                cyr_ytg_br_value = cyr_ytg_br_value + rcd_fcst_extract_03.ytg_ton,
-                cyr_yee_br_value = cyr_yee_br_value + rcd_fcst_extract_03.ytg_ton,
-                nyr_yee_br_value = nyr_yee_br_value + rcd_fcst_extract_03.nyr_ton,
-                p01_br_value = p01_br_value + rcd_fcst_extract_03.p01_ton,
-                p02_br_value = p02_br_value + rcd_fcst_extract_03.p02_ton,
-                p03_br_value = p03_br_value + rcd_fcst_extract_03.p03_ton,
-                p04_br_value = p04_br_value + rcd_fcst_extract_03.p04_ton,
-                p05_br_value = p05_br_value + rcd_fcst_extract_03.p05_ton,
-                p06_br_value = p06_br_value + rcd_fcst_extract_03.p06_ton,
-                p07_br_value = p07_br_value + rcd_fcst_extract_03.p07_ton,
-                p08_br_value = p08_br_value + rcd_fcst_extract_03.p08_ton,
-                p09_br_value = p09_br_value + rcd_fcst_extract_03.p09_ton,
-                p10_br_value = p10_br_value + rcd_fcst_extract_03.p10_ton,
-                p11_br_value = p11_br_value + rcd_fcst_extract_03.p11_ton,
-                p12_br_value = p12_br_value + rcd_fcst_extract_03.p12_ton,
-                p13_br_value = p13_br_value + rcd_fcst_extract_03.p13_ton,
-                p14_br_value = p14_br_value + rcd_fcst_extract_03.p14_ton,
-                p15_br_value = p15_br_value + rcd_fcst_extract_03.p15_ton,
-                p16_br_value = p16_br_value + rcd_fcst_extract_03.p16_ton,
-                p17_br_value = p17_br_value + rcd_fcst_extract_03.p17_ton,
-                p18_br_value = p18_br_value + rcd_fcst_extract_03.p18_ton,
-                p19_br_value = p19_br_value + rcd_fcst_extract_03.p19_ton,
-                p20_br_value = p20_br_value + rcd_fcst_extract_03.p20_ton,
-                p21_br_value = p21_br_value + rcd_fcst_extract_03.p21_ton,
-                p22_br_value = p22_br_value + rcd_fcst_extract_03.p22_ton,
-                p23_br_value = p23_br_value + rcd_fcst_extract_03.p23_ton,
-                p24_br_value = p24_br_value + rcd_fcst_extract_03.p24_ton,
-                p25_br_value = p25_br_value + rcd_fcst_extract_03.p25_ton,
-                p26_br_value = p26_br_value + rcd_fcst_extract_03.p26_ton
-          where company_code = rcd_fcst_extract_03.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_03.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_03.cust_code
-            and matl_code = rcd_fcst_extract_03.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_03.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_03.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_br_value := rcd_fcst_extract_03.cur_ton;
+         rcd_work.cyr_ytg_br_value := rcd_fcst_extract_03.ytg_ton;
+         rcd_work.cyr_yee_br_value := rcd_fcst_extract_03.ytg_ton;
+         rcd_work.nyr_yee_br_value := rcd_fcst_extract_03.nyr_ton;
+         rcd_work.p01_br_value := rcd_fcst_extract_03.p01_ton;
+         rcd_work.p02_br_value := rcd_fcst_extract_03.p02_ton;
+         rcd_work.p03_br_value := rcd_fcst_extract_03.p03_ton;
+         rcd_work.p04_br_value := rcd_fcst_extract_03.p04_ton;
+         rcd_work.p05_br_value := rcd_fcst_extract_03.p05_ton;
+         rcd_work.p06_br_value := rcd_fcst_extract_03.p06_ton;
+         rcd_work.p07_br_value := rcd_fcst_extract_03.p07_ton;
+         rcd_work.p08_br_value := rcd_fcst_extract_03.p08_ton;
+         rcd_work.p09_br_value := rcd_fcst_extract_03.p09_ton;
+         rcd_work.p10_br_value := rcd_fcst_extract_03.p10_ton;
+         rcd_work.p11_br_value := rcd_fcst_extract_03.p11_ton;
+         rcd_work.p12_br_value := rcd_fcst_extract_03.p12_ton;
+         rcd_work.p13_br_value := rcd_fcst_extract_03.p13_ton;
+         rcd_work.p14_br_value := rcd_fcst_extract_03.p14_ton;
+         rcd_work.p15_br_value := rcd_fcst_extract_03.p15_ton;
+         rcd_work.p16_br_value := rcd_fcst_extract_03.p16_ton;
+         rcd_work.p17_br_value := rcd_fcst_extract_03.p17_ton;
+         rcd_work.p18_br_value := rcd_fcst_extract_03.p18_ton;
+         rcd_work.p19_br_value := rcd_fcst_extract_03.p19_ton;
+         rcd_work.p20_br_value := rcd_fcst_extract_03.p20_ton;
+         rcd_work.p21_br_value := rcd_fcst_extract_03.p21_ton;
+         rcd_work.p22_br_value := rcd_fcst_extract_03.p22_ton;
+         rcd_work.p23_br_value := rcd_fcst_extract_03.p23_ton;
+         rcd_work.p24_br_value := rcd_fcst_extract_03.p24_ton;
+         rcd_work.p25_br_value := rcd_fcst_extract_03.p25_ton;
+         rcd_work.p26_br_value := rcd_fcst_extract_03.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_03;
@@ -5210,151 +5040,127 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_04.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_04.nzmkt_matl_group,
-                       rcd_fcst_extract_04.cust_code,
-                       rcd_fcst_extract_04.matl_zrep_code,
-                       rcd_fcst_extract_04.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_04.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_04.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_04.nzmkt_matl_group,
+                     rcd_fcst_extract_04.cust_code,
+                     rcd_fcst_extract_04.matl_zrep_code,
+                     rcd_fcst_extract_04.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_04.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_qty,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_qty,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_qty,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_qty,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_qty,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_qty,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_qty,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_qty,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_qty,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_qty,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_qty,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_qty,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_qty,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_qty,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_qty,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_qty,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_qty,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_qty,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_qty,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_qty,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_qty,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_qty,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_qty,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_qty,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_qty,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_qty,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_qty,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_qty,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_qty,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_qty,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_qty
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_qty;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_qty;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_qty;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_qty;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_qty;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_qty;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_qty;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_qty;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_qty;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_qty;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_qty;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_qty;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_qty;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_qty;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_qty;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_qty;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_qty;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_qty;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_qty;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_qty;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_qty;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_qty;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_qty;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_qty;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_qty;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_qty;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_qty;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_qty;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_qty;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_qty;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_gsv,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_gsv,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_gsv,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_gsv,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_gsv,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_gsv,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_gsv,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_gsv,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_gsv,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_gsv,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_gsv,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_gsv,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_gsv,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_gsv,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_gsv,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_gsv,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_gsv,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_gsv,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_gsv,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_gsv,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_gsv,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_gsv,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_gsv,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_gsv,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_gsv,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_gsv,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_gsv,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_gsv,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_gsv,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_gsv,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_gsv
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_gsv;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_gsv;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_gsv;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_gsv;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_gsv;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_gsv;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_gsv;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_gsv;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_gsv;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_gsv;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_gsv;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_gsv;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_gsv;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_gsv;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_gsv;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_gsv;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_gsv;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_gsv;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_gsv;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_gsv;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_gsv;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_gsv;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_gsv;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_gsv;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_gsv;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_gsv;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_gsv;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_gsv;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_gsv;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_gsv;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set ptg_fcst_value = ptg_fcst_value + rcd_fcst_extract_04.ptg_ton,
-                cpd_fcst_value = cpd_fcst_value + rcd_fcst_extract_04.ptg_ton,
-                cyr_ytg_fcst_value = cyr_ytg_fcst_value + rcd_fcst_extract_04.ytg_ton,
-                cyr_yee_fcst_value = cyr_yee_fcst_value + rcd_fcst_extract_04.ytg_ton,
-                nyr_yee_fcst_value = nyr_yee_fcst_value + rcd_fcst_extract_04.nyr_ton,
-                p01_fcst_value = p01_fcst_value + rcd_fcst_extract_04.p01_ton,
-                p02_fcst_value = p02_fcst_value + rcd_fcst_extract_04.p02_ton,
-                p03_fcst_value = p03_fcst_value + rcd_fcst_extract_04.p03_ton,
-                p04_fcst_value = p04_fcst_value + rcd_fcst_extract_04.p04_ton,
-                p05_fcst_value = p05_fcst_value + rcd_fcst_extract_04.p05_ton,
-                p06_fcst_value = p06_fcst_value + rcd_fcst_extract_04.p06_ton,
-                p07_fcst_value = p07_fcst_value + rcd_fcst_extract_04.p07_ton,
-                p08_fcst_value = p08_fcst_value + rcd_fcst_extract_04.p08_ton,
-                p09_fcst_value = p09_fcst_value + rcd_fcst_extract_04.p09_ton,
-                p10_fcst_value = p10_fcst_value + rcd_fcst_extract_04.p10_ton,
-                p11_fcst_value = p11_fcst_value + rcd_fcst_extract_04.p11_ton,
-                p12_fcst_value = p12_fcst_value + rcd_fcst_extract_04.p12_ton,
-                p13_fcst_value = p13_fcst_value + rcd_fcst_extract_04.p13_ton,
-                p14_fcst_value = p14_fcst_value + rcd_fcst_extract_04.p14_ton,
-                p15_fcst_value = p15_fcst_value + rcd_fcst_extract_04.p15_ton,
-                p16_fcst_value = p16_fcst_value + rcd_fcst_extract_04.p16_ton,
-                p17_fcst_value = p17_fcst_value + rcd_fcst_extract_04.p17_ton,
-                p18_fcst_value = p18_fcst_value + rcd_fcst_extract_04.p18_ton,
-                p19_fcst_value = p19_fcst_value + rcd_fcst_extract_04.p19_ton,
-                p20_fcst_value = p20_fcst_value + rcd_fcst_extract_04.p20_ton,
-                p21_fcst_value = p21_fcst_value + rcd_fcst_extract_04.p21_ton,
-                p22_fcst_value = p22_fcst_value + rcd_fcst_extract_04.p22_ton,
-                p23_fcst_value = p23_fcst_value + rcd_fcst_extract_04.p23_ton,
-                p24_fcst_value = p24_fcst_value + rcd_fcst_extract_04.p24_ton,
-                p25_fcst_value = p25_fcst_value + rcd_fcst_extract_04.p25_ton,
-                p26_fcst_value = p26_fcst_value + rcd_fcst_extract_04.p26_ton
-          where company_code = rcd_fcst_extract_04.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_04.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_04.cust_code
-            and matl_code = rcd_fcst_extract_04.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_04.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_04.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.ptg_fcst_value := rcd_fcst_extract_04.ptg_ton;
+         rcd_work.cpd_fcst_value := rcd_fcst_extract_04.ptg_ton;
+         rcd_work.cyr_ytg_fcst_value := rcd_fcst_extract_04.ytg_ton;
+         rcd_work.cyr_yee_fcst_value := rcd_fcst_extract_04.ytg_ton;
+         rcd_work.nyr_yee_fcst_value := rcd_fcst_extract_04.nyr_ton;
+         rcd_work.p01_fcst_value := rcd_fcst_extract_04.p01_ton;
+         rcd_work.p02_fcst_value := rcd_fcst_extract_04.p02_ton;
+         rcd_work.p03_fcst_value := rcd_fcst_extract_04.p03_ton;
+         rcd_work.p04_fcst_value := rcd_fcst_extract_04.p04_ton;
+         rcd_work.p05_fcst_value := rcd_fcst_extract_04.p05_ton;
+         rcd_work.p06_fcst_value := rcd_fcst_extract_04.p06_ton;
+         rcd_work.p07_fcst_value := rcd_fcst_extract_04.p07_ton;
+         rcd_work.p08_fcst_value := rcd_fcst_extract_04.p08_ton;
+         rcd_work.p09_fcst_value := rcd_fcst_extract_04.p09_ton;
+         rcd_work.p10_fcst_value := rcd_fcst_extract_04.p10_ton;
+         rcd_work.p11_fcst_value := rcd_fcst_extract_04.p11_ton;
+         rcd_work.p12_fcst_value := rcd_fcst_extract_04.p12_ton;
+         rcd_work.p13_fcst_value := rcd_fcst_extract_04.p13_ton;
+         rcd_work.p14_fcst_value := rcd_fcst_extract_04.p14_ton;
+         rcd_work.p15_fcst_value := rcd_fcst_extract_04.p15_ton;
+         rcd_work.p16_fcst_value := rcd_fcst_extract_04.p16_ton;
+         rcd_work.p17_fcst_value := rcd_fcst_extract_04.p17_ton;
+         rcd_work.p18_fcst_value := rcd_fcst_extract_04.p18_ton;
+         rcd_work.p19_fcst_value := rcd_fcst_extract_04.p19_ton;
+         rcd_work.p20_fcst_value := rcd_fcst_extract_04.p20_ton;
+         rcd_work.p21_fcst_value := rcd_fcst_extract_04.p21_ton;
+         rcd_work.p22_fcst_value := rcd_fcst_extract_04.p22_ton;
+         rcd_work.p23_fcst_value := rcd_fcst_extract_04.p23_ton;
+         rcd_work.p24_fcst_value := rcd_fcst_extract_04.p24_ton;
+         rcd_work.p25_fcst_value := rcd_fcst_extract_04.p25_ton;
+         rcd_work.p26_fcst_value := rcd_fcst_extract_04.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_04;
@@ -5577,145 +5383,121 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_01.nzmkt_matl_group,
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_01.nzmkt_matl_group,
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_qty,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_qty,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_qty,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_qty,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_qty,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_qty,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_qty,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_qty,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_qty,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_qty,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_qty,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_qty,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_qty,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_qty,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_qty,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_qty,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_qty,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_qty,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_qty,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_qty,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_qty,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_qty,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_qty,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_qty,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_qty,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_qty,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_qty,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_qty;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_qty;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_qty;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_qty;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_qty;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_qty;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_qty;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_qty;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_qty;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_qty;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_qty;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_qty;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_qty;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_qty;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_qty;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_gsv,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_gsv,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_gsv,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_gsv,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_gsv,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_gsv,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_gsv,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_gsv,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_gsv,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_gsv,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_gsv,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_gsv,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_gsv,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_gsv,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_gsv,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_gsv,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_gsv,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_gsv,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_gsv,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_gsv,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_gsv,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_gsv,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_gsv,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_gsv,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_gsv,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_gsv,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_gsv,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_gsv;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_gsv;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_gsv;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_gsv;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_gsv;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_gsv;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_gsv;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_gsv;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_gsv;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_gsv;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_gsv;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_gsv;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_gsv;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_gsv;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_gsv;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm1_value = cpd_brm1_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_brm1_value = cyr_yee_brm1_value + rcd_fcst_extract_01.ytg_ton,
-                nyr_yee_brm1_value = nyr_yee_brm1_value + rcd_fcst_extract_01.nyr_ton,
-                p01_brm1_value = p01_brm1_value + rcd_fcst_extract_01.p01_ton,
-                p02_brm1_value = p02_brm1_value + rcd_fcst_extract_01.p02_ton,
-                p03_brm1_value = p03_brm1_value + rcd_fcst_extract_01.p03_ton,
-                p04_brm1_value = p04_brm1_value + rcd_fcst_extract_01.p04_ton,
-                p05_brm1_value = p05_brm1_value + rcd_fcst_extract_01.p05_ton,
-                p06_brm1_value = p06_brm1_value + rcd_fcst_extract_01.p06_ton,
-                p07_brm1_value = p07_brm1_value + rcd_fcst_extract_01.p07_ton,
-                p08_brm1_value = p08_brm1_value + rcd_fcst_extract_01.p08_ton,
-                p09_brm1_value = p09_brm1_value + rcd_fcst_extract_01.p09_ton,
-                p10_brm1_value = p10_brm1_value + rcd_fcst_extract_01.p10_ton,
-                p11_brm1_value = p11_brm1_value + rcd_fcst_extract_01.p11_ton,
-                p12_brm1_value = p12_brm1_value + rcd_fcst_extract_01.p12_ton,
-                p13_brm1_value = p13_brm1_value + rcd_fcst_extract_01.p13_ton,
-                p14_brm1_value = p14_brm1_value + rcd_fcst_extract_01.p14_ton,
-                p15_brm1_value = p15_brm1_value + rcd_fcst_extract_01.p15_ton,
-                p16_brm1_value = p16_brm1_value + rcd_fcst_extract_01.p16_ton,
-                p17_brm1_value = p17_brm1_value + rcd_fcst_extract_01.p17_ton,
-                p18_brm1_value = p18_brm1_value + rcd_fcst_extract_01.p18_ton,
-                p19_brm1_value = p19_brm1_value + rcd_fcst_extract_01.p19_ton,
-                p20_brm1_value = p20_brm1_value + rcd_fcst_extract_01.p20_ton,
-                p21_brm1_value = p21_brm1_value + rcd_fcst_extract_01.p21_ton,
-                p22_brm1_value = p22_brm1_value + rcd_fcst_extract_01.p22_ton,
-                p23_brm1_value = p23_brm1_value + rcd_fcst_extract_01.p23_ton,
-                p24_brm1_value = p24_brm1_value + rcd_fcst_extract_01.p24_ton,
-                p25_brm1_value = p25_brm1_value + rcd_fcst_extract_01.p25_ton,
-                p26_brm1_value = p26_brm1_value + rcd_fcst_extract_01.p26_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_brm1_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_fcst_extract_01.ytg_ton;
+         rcd_work.nyr_yee_brm1_value := rcd_fcst_extract_01.nyr_ton;
+         rcd_work.p01_brm1_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_brm1_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_brm1_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_brm1_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_brm1_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_brm1_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_brm1_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_brm1_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_brm1_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_brm1_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_brm1_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_brm1_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_brm1_value := rcd_fcst_extract_01.p13_ton;
+         rcd_work.p14_brm1_value := rcd_fcst_extract_01.p14_ton;
+         rcd_work.p15_brm1_value := rcd_fcst_extract_01.p15_ton;
+         rcd_work.p16_brm1_value := rcd_fcst_extract_01.p16_ton;
+         rcd_work.p17_brm1_value := rcd_fcst_extract_01.p17_ton;
+         rcd_work.p18_brm1_value := rcd_fcst_extract_01.p18_ton;
+         rcd_work.p19_brm1_value := rcd_fcst_extract_01.p19_ton;
+         rcd_work.p20_brm1_value := rcd_fcst_extract_01.p20_ton;
+         rcd_work.p21_brm1_value := rcd_fcst_extract_01.p21_ton;
+         rcd_work.p22_brm1_value := rcd_fcst_extract_01.p22_ton;
+         rcd_work.p23_brm1_value := rcd_fcst_extract_01.p23_ton;
+         rcd_work.p24_brm1_value := rcd_fcst_extract_01.p24_ton;
+         rcd_work.p25_brm1_value := rcd_fcst_extract_01.p25_ton;
+         rcd_work.p26_brm1_value := rcd_fcst_extract_01.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -5938,145 +5720,121 @@ create or replace package body dw_mart_sales01 as
          end if;
 
          /*-*/
-         /* Create the data mart detail
+         /* Create the data mart work
          /*-*/
-         create_detail(rcd_fcst_extract_01.company_code,
-                       par_data_segment,
-                       rcd_fcst_extract_01.nzmkt_matl_group,
-                       rcd_fcst_extract_01.cust_code,
-                       rcd_fcst_extract_01.matl_zrep_code,
-                       rcd_fcst_extract_01.acct_assgnmnt_grp_code,
-                       rcd_fcst_extract_01.demand_plng_grp_code,
-                       'N');
+         create_work(rcd_fcst_extract_01.company_code,
+                     par_data_segment,
+                     rcd_fcst_extract_01.nzmkt_matl_group,
+                     rcd_fcst_extract_01.cust_code,
+                     rcd_fcst_extract_01.matl_zrep_code,
+                     rcd_fcst_extract_01.acct_assgnmnt_grp_code,
+                     rcd_fcst_extract_01.demand_plng_grp_code,
+                     'N');
 
          /*-*/
-         /* Update the data mart detail - QTY
+         /* Insert the data mart work - QTY
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_qty,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_qty,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_qty,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_qty,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_qty,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_qty,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_qty,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_qty,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_qty,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_qty,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_qty,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_qty,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_qty,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_qty,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_qty,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_qty,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_qty,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_qty,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_qty,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_qty,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_qty,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_qty,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_qty,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_qty,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_qty,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_qty,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_qty,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_qty,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_qty
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*QTY';
+         rcd_work.data_type := '*QTY';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_qty;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_qty;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_qty;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_qty;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_qty;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_qty;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_qty;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_qty;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_qty;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_qty;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_qty;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_qty;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_qty;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_qty;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_qty;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_qty;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_qty;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_qty;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_qty;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_qty;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_qty;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_qty;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_qty;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_qty;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_qty;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_qty;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_qty;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_qty;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - GSV
+         /* Insert the data mart work - GSV
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_gsv,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_gsv,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_gsv,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_gsv,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_gsv,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_gsv,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_gsv,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_gsv,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_gsv,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_gsv,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_gsv,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_gsv,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_gsv,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_gsv,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_gsv,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_gsv,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_gsv,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_gsv,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_gsv,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_gsv,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_gsv,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_gsv,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_gsv,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_gsv,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_gsv,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_gsv,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_gsv,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_gsv,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_gsv
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*GSV';
+         rcd_work.data_type := '*GSV';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_gsv;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_gsv;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_gsv;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_gsv;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_gsv;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_gsv;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_gsv;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_gsv;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_gsv;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_gsv;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_gsv;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_gsv;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_gsv;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_gsv;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_gsv;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_gsv;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_gsv;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_gsv;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_gsv;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_gsv;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_gsv;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_gsv;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_gsv;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_gsv;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_gsv;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_gsv;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_gsv;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_gsv;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
          /*-*/
-         /* Update the data mart detail - TON
+         /* Insert the data mart work - TON
          /*-*/
-         update dw_mart_sales01_det
-            set cpd_brm2_value = cpd_brm2_value + rcd_fcst_extract_01.cur_ton,
-                cyr_yee_brm2_value = cyr_yee_brm2_value + rcd_fcst_extract_01.ytg_ton,
-                nyr_yee_brm2_value = nyr_yee_brm2_value + rcd_fcst_extract_01.nyr_ton,
-                p01_brm2_value = p01_brm2_value + rcd_fcst_extract_01.p01_ton,
-                p02_brm2_value = p02_brm2_value + rcd_fcst_extract_01.p02_ton,
-                p03_brm2_value = p03_brm2_value + rcd_fcst_extract_01.p03_ton,
-                p04_brm2_value = p04_brm2_value + rcd_fcst_extract_01.p04_ton,
-                p05_brm2_value = p05_brm2_value + rcd_fcst_extract_01.p05_ton,
-                p06_brm2_value = p06_brm2_value + rcd_fcst_extract_01.p06_ton,
-                p07_brm2_value = p07_brm2_value + rcd_fcst_extract_01.p07_ton,
-                p08_brm2_value = p08_brm2_value + rcd_fcst_extract_01.p08_ton,
-                p09_brm2_value = p09_brm2_value + rcd_fcst_extract_01.p09_ton,
-                p10_brm2_value = p10_brm2_value + rcd_fcst_extract_01.p10_ton,
-                p11_brm2_value = p11_brm2_value + rcd_fcst_extract_01.p11_ton,
-                p12_brm2_value = p12_brm2_value + rcd_fcst_extract_01.p12_ton,
-                p13_brm2_value = p13_brm2_value + rcd_fcst_extract_01.p13_ton,
-                p14_brm2_value = p14_brm2_value + rcd_fcst_extract_01.p14_ton,
-                p15_brm2_value = p15_brm2_value + rcd_fcst_extract_01.p15_ton,
-                p16_brm2_value = p16_brm2_value + rcd_fcst_extract_01.p16_ton,
-                p17_brm2_value = p17_brm2_value + rcd_fcst_extract_01.p17_ton,
-                p18_brm2_value = p18_brm2_value + rcd_fcst_extract_01.p18_ton,
-                p19_brm2_value = p19_brm2_value + rcd_fcst_extract_01.p19_ton,
-                p20_brm2_value = p20_brm2_value + rcd_fcst_extract_01.p20_ton,
-                p21_brm2_value = p21_brm2_value + rcd_fcst_extract_01.p21_ton,
-                p22_brm2_value = p22_brm2_value + rcd_fcst_extract_01.p22_ton,
-                p23_brm2_value = p23_brm2_value + rcd_fcst_extract_01.p23_ton,
-                p24_brm2_value = p24_brm2_value + rcd_fcst_extract_01.p24_ton,
-                p25_brm2_value = p25_brm2_value + rcd_fcst_extract_01.p25_ton,
-                p26_brm2_value = p26_brm2_value + rcd_fcst_extract_01.p26_ton
-          where company_code = rcd_fcst_extract_01.company_code
-            and data_segment = par_data_segment
-            and matl_group = rcd_fcst_extract_01.nzmkt_matl_group
-            and ship_to_cust_code = rcd_fcst_extract_01.cust_code
-            and matl_code = rcd_fcst_extract_01.matl_zrep_code
-            and acct_assgnmnt_grp_code = rcd_fcst_extract_01.acct_assgnmnt_grp_code
-            and demand_plng_grp_code = rcd_fcst_extract_01.demand_plng_grp_code
-            and mfanz_icb_flag = 'N'
-            and data_type = '*TON';
+         rcd_work.data_type := '*TON';
+         rcd_work.cpd_brm2_value := rcd_fcst_extract_01.cur_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_fcst_extract_01.ytg_ton;
+         rcd_work.nyr_yee_brm2_value := rcd_fcst_extract_01.nyr_ton;
+         rcd_work.p01_brm2_value := rcd_fcst_extract_01.p01_ton;
+         rcd_work.p02_brm2_value := rcd_fcst_extract_01.p02_ton;
+         rcd_work.p03_brm2_value := rcd_fcst_extract_01.p03_ton;
+         rcd_work.p04_brm2_value := rcd_fcst_extract_01.p04_ton;
+         rcd_work.p05_brm2_value := rcd_fcst_extract_01.p05_ton;
+         rcd_work.p06_brm2_value := rcd_fcst_extract_01.p06_ton;
+         rcd_work.p07_brm2_value := rcd_fcst_extract_01.p07_ton;
+         rcd_work.p08_brm2_value := rcd_fcst_extract_01.p08_ton;
+         rcd_work.p09_brm2_value := rcd_fcst_extract_01.p09_ton;
+         rcd_work.p10_brm2_value := rcd_fcst_extract_01.p10_ton;
+         rcd_work.p11_brm2_value := rcd_fcst_extract_01.p11_ton;
+         rcd_work.p12_brm2_value := rcd_fcst_extract_01.p12_ton;
+         rcd_work.p13_brm2_value := rcd_fcst_extract_01.p13_ton;
+         rcd_work.p14_brm2_value := rcd_fcst_extract_01.p14_ton;
+         rcd_work.p15_brm2_value := rcd_fcst_extract_01.p15_ton;
+         rcd_work.p16_brm2_value := rcd_fcst_extract_01.p16_ton;
+         rcd_work.p17_brm2_value := rcd_fcst_extract_01.p17_ton;
+         rcd_work.p18_brm2_value := rcd_fcst_extract_01.p18_ton;
+         rcd_work.p19_brm2_value := rcd_fcst_extract_01.p19_ton;
+         rcd_work.p20_brm2_value := rcd_fcst_extract_01.p20_ton;
+         rcd_work.p21_brm2_value := rcd_fcst_extract_01.p21_ton;
+         rcd_work.p22_brm2_value := rcd_fcst_extract_01.p22_ton;
+         rcd_work.p23_brm2_value := rcd_fcst_extract_01.p23_ton;
+         rcd_work.p24_brm2_value := rcd_fcst_extract_01.p24_ton;
+         rcd_work.p25_brm2_value := rcd_fcst_extract_01.p25_ton;
+         rcd_work.p26_brm2_value := rcd_fcst_extract_01.p26_ton;
+         insert into dw_mart_sales01_wrk values rcd_work;
 
       end loop;
       close csr_fcst_extract_01;
@@ -6086,37 +5844,17 @@ create or replace package body dw_mart_sales01 as
    /*-------------*/
    end extract_nzmkt_minustwo;
 
-   /*****************************************************/
-   /* This procedure performs the create detail routine */
-   /*****************************************************/
-   procedure create_detail(par_company_code in varchar2,
-                           par_data_segment in varchar2,
-                           par_matl_group in varchar2,
-                           par_ship_to_cust_code in varchar2,
-                           par_matl_code in varchar2,
-                           par_acct_assgnmnt_grp_code in varchar2,
-                           par_demand_plng_grp_code in varchar2,
-                           par_mfanz_icb_flag in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_work varchar2(1 char);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_data is
-         select 'x'
-           from dw_mart_sales01_det t01
-          where t01.company_code = par_company_code
-            and t01.data_segment = par_data_segment
-            and t01.matl_group = par_matl_group
-            and t01.ship_to_cust_code = par_ship_to_cust_code
-            and t01.matl_code = par_matl_code
-            and t01.acct_assgnmnt_grp_code = par_acct_assgnmnt_grp_code
-            and t01.demand_plng_grp_code = par_demand_plng_grp_code
-            and t01.mfanz_icb_flag = par_mfanz_icb_flag;
+   /***************************************************/
+   /* This procedure performs the create work routine */
+   /***************************************************/
+   procedure create_work(par_company_code in varchar2,
+                         par_data_segment in varchar2,
+                         par_matl_group in varchar2,
+                         par_ship_to_cust_code in varchar2,
+                         par_matl_code in varchar2,
+                         par_acct_assgnmnt_grp_code in varchar2,
+                         par_demand_plng_grp_code in varchar2,
+                         par_mfanz_icb_flag in varchar2) is
 
    /*-------------*/
    /* Begin block */
@@ -6124,230 +5862,205 @@ create or replace package body dw_mart_sales01 as
    begin
 
       /*-*/
-      /* Create a new detail rows when required
+      /* Initialise the record
       /*-*/
-      open csr_data;
-      fetch csr_data into var_work;
-      if csr_data%notfound then
-
-         /*-*/
-         /* Initialise the record
-         /*-*/
-         rcd_detail.company_code := par_company_code;
-         rcd_detail.data_segment := par_data_segment;
-         rcd_detail.matl_group := par_matl_group;
-         rcd_detail.ship_to_cust_code := par_ship_to_cust_code;
-         rcd_detail.matl_code := par_matl_code;
-         rcd_detail.acct_assgnmnt_grp_code := par_acct_assgnmnt_grp_code;
-         rcd_detail.demand_plng_grp_code := par_demand_plng_grp_code;
-         rcd_detail.mfanz_icb_flag := par_mfanz_icb_flag;
-         rcd_detail.data_type := null;
-         rcd_detail.cdy_ord_value := 0;
-         rcd_detail.cdy_inv_value := 0;
-         rcd_detail.ptd_inv_value := 0;
-         rcd_detail.ptw_inv_value := 0;
-         rcd_detail.ptg_fcst_value := 0;
-         rcd_detail.cpd_out_value := 0;
-         rcd_detail.cpd_ord_value := 0;
-         rcd_detail.cpd_inv_value := 0;
-         rcd_detail.cpd_op_value := 0;
-         rcd_detail.cpd_rob_value := 0;
-         rcd_detail.cpd_br_value := 0;
-         rcd_detail.cpd_brm1_value := 0;
-         rcd_detail.cpd_brm2_value := 0;
-         rcd_detail.cpd_fcst_value := 0;
-         rcd_detail.fpd_out_value := 0;
-         rcd_detail.fpd_ord_value := 0;
-         rcd_detail.fpd_inv_value := 0;
-         rcd_detail.lyr_cpd_inv_value := 0;
-         rcd_detail.lyr_ytp_inv_value := 0;
-         rcd_detail.lyr_yee_inv_value := 0;
-         rcd_detail.lyrm1_yee_inv_value := 0;
-         rcd_detail.lyrm2_yee_inv_value := 0;
-         rcd_detail.cyr_ytp_inv_value := 0;
-         rcd_detail.cyr_mat_inv_value := 0;
-         rcd_detail.cyr_ytg_rob_value := 0;
-         rcd_detail.cyr_ytg_br_value := 0;
-         rcd_detail.cyr_ytg_fcst_value := 0;
-         rcd_detail.cyr_yee_op_value := 0;
-         rcd_detail.cyr_yee_rob_value := 0;
-         rcd_detail.cyr_yee_br_value := 0;
-         rcd_detail.cyr_yee_brm1_value := 0;
-         rcd_detail.cyr_yee_brm2_value := 0;
-         rcd_detail.cyr_yee_fcst_value := 0;
-         rcd_detail.nyr_yee_br_value := 0;
-         rcd_detail.nyr_yee_brm1_value := 0;
-         rcd_detail.nyr_yee_brm2_value := 0;
-         rcd_detail.nyr_yee_fcst_value := 0;
-         rcd_detail.p01_lyr_value := 0;
-         rcd_detail.p02_lyr_value := 0;
-         rcd_detail.p03_lyr_value := 0;
-         rcd_detail.p04_lyr_value := 0;
-         rcd_detail.p05_lyr_value := 0;
-         rcd_detail.p06_lyr_value := 0;
-         rcd_detail.p07_lyr_value := 0;
-         rcd_detail.p08_lyr_value := 0;
-         rcd_detail.p09_lyr_value := 0;
-         rcd_detail.p10_lyr_value := 0;
-         rcd_detail.p11_lyr_value := 0;
-         rcd_detail.p12_lyr_value := 0;
-         rcd_detail.p13_lyr_value := 0;
-         rcd_detail.p01_op_value := 0;
-         rcd_detail.p02_op_value := 0;
-         rcd_detail.p03_op_value := 0;
-         rcd_detail.p04_op_value := 0;
-         rcd_detail.p05_op_value := 0;
-         rcd_detail.p06_op_value := 0;
-         rcd_detail.p07_op_value := 0;
-         rcd_detail.p08_op_value := 0;
-         rcd_detail.p09_op_value := 0;
-         rcd_detail.p10_op_value := 0;
-         rcd_detail.p11_op_value := 0;
-         rcd_detail.p12_op_value := 0;
-         rcd_detail.p13_op_value := 0;
-         rcd_detail.p01_rob_value := 0;
-         rcd_detail.p02_rob_value := 0;
-         rcd_detail.p03_rob_value := 0;
-         rcd_detail.p04_rob_value := 0;
-         rcd_detail.p05_rob_value := 0;
-         rcd_detail.p06_rob_value := 0;
-         rcd_detail.p07_rob_value := 0;
-         rcd_detail.p08_rob_value := 0;
-         rcd_detail.p09_rob_value := 0;
-         rcd_detail.p10_rob_value := 0;
-         rcd_detail.p11_rob_value := 0;
-         rcd_detail.p12_rob_value := 0;
-         rcd_detail.p13_rob_value := 0;
-         rcd_detail.p01_br_value := 0;
-         rcd_detail.p02_br_value := 0;
-         rcd_detail.p03_br_value := 0;
-         rcd_detail.p04_br_value := 0;
-         rcd_detail.p05_br_value := 0;
-         rcd_detail.p06_br_value := 0;
-         rcd_detail.p07_br_value := 0;
-         rcd_detail.p08_br_value := 0;
-         rcd_detail.p09_br_value := 0;
-         rcd_detail.p10_br_value := 0;
-         rcd_detail.p11_br_value := 0;
-         rcd_detail.p12_br_value := 0;
-         rcd_detail.p13_br_value := 0;
-         rcd_detail.p14_br_value := 0;
-         rcd_detail.p15_br_value := 0;
-         rcd_detail.p16_br_value := 0;
-         rcd_detail.p17_br_value := 0;
-         rcd_detail.p18_br_value := 0;
-         rcd_detail.p19_br_value := 0;
-         rcd_detail.p20_br_value := 0;
-         rcd_detail.p21_br_value := 0;
-         rcd_detail.p22_br_value := 0;
-         rcd_detail.p23_br_value := 0;
-         rcd_detail.p24_br_value := 0;
-         rcd_detail.p25_br_value := 0;
-         rcd_detail.p26_br_value := 0;
-         rcd_detail.p01_brm1_value := 0;
-         rcd_detail.p02_brm1_value := 0;
-         rcd_detail.p03_brm1_value := 0;
-         rcd_detail.p04_brm1_value := 0;
-         rcd_detail.p05_brm1_value := 0;
-         rcd_detail.p06_brm1_value := 0;
-         rcd_detail.p07_brm1_value := 0;
-         rcd_detail.p08_brm1_value := 0;
-         rcd_detail.p09_brm1_value := 0;
-         rcd_detail.p10_brm1_value := 0;
-         rcd_detail.p11_brm1_value := 0;
-         rcd_detail.p12_brm1_value := 0;
-         rcd_detail.p13_brm1_value := 0;
-         rcd_detail.p14_brm1_value := 0;
-         rcd_detail.p15_brm1_value := 0;
-         rcd_detail.p16_brm1_value := 0;
-         rcd_detail.p17_brm1_value := 0;
-         rcd_detail.p18_brm1_value := 0;
-         rcd_detail.p19_brm1_value := 0;
-         rcd_detail.p20_brm1_value := 0;
-         rcd_detail.p21_brm1_value := 0;
-         rcd_detail.p22_brm1_value := 0;
-         rcd_detail.p23_brm1_value := 0;
-         rcd_detail.p24_brm1_value := 0;
-         rcd_detail.p25_brm1_value := 0;
-         rcd_detail.p26_brm1_value := 0;
-         rcd_detail.p01_brm2_value := 0;
-         rcd_detail.p02_brm2_value := 0;
-         rcd_detail.p03_brm2_value := 0;
-         rcd_detail.p04_brm2_value := 0;
-         rcd_detail.p05_brm2_value := 0;
-         rcd_detail.p06_brm2_value := 0;
-         rcd_detail.p07_brm2_value := 0;
-         rcd_detail.p08_brm2_value := 0;
-         rcd_detail.p09_brm2_value := 0;
-         rcd_detail.p10_brm2_value := 0;
-         rcd_detail.p11_brm2_value := 0;
-         rcd_detail.p12_brm2_value := 0;
-         rcd_detail.p13_brm2_value := 0;
-         rcd_detail.p14_brm2_value := 0;
-         rcd_detail.p15_brm2_value := 0;
-         rcd_detail.p16_brm2_value := 0;
-         rcd_detail.p17_brm2_value := 0;
-         rcd_detail.p18_brm2_value := 0;
-         rcd_detail.p19_brm2_value := 0;
-         rcd_detail.p20_brm2_value := 0;
-         rcd_detail.p21_brm2_value := 0;
-         rcd_detail.p22_brm2_value := 0;
-         rcd_detail.p23_brm2_value := 0;
-         rcd_detail.p24_brm2_value := 0;
-         rcd_detail.p25_brm2_value := 0;
-         rcd_detail.p26_brm2_value := 0;
-         rcd_detail.p01_fcst_value := 0;
-         rcd_detail.p02_fcst_value := 0;
-         rcd_detail.p03_fcst_value := 0;
-         rcd_detail.p04_fcst_value := 0;
-         rcd_detail.p05_fcst_value := 0;
-         rcd_detail.p06_fcst_value := 0;
-         rcd_detail.p07_fcst_value := 0;
-         rcd_detail.p08_fcst_value := 0;
-         rcd_detail.p09_fcst_value := 0;
-         rcd_detail.p10_fcst_value := 0;
-         rcd_detail.p11_fcst_value := 0;
-         rcd_detail.p12_fcst_value := 0;
-         rcd_detail.p13_fcst_value := 0;
-         rcd_detail.p14_fcst_value := 0;
-         rcd_detail.p15_fcst_value := 0;
-         rcd_detail.p16_fcst_value := 0;
-         rcd_detail.p17_fcst_value := 0;
-         rcd_detail.p18_fcst_value := 0;
-         rcd_detail.p19_fcst_value := 0;
-         rcd_detail.p20_fcst_value := 0;
-         rcd_detail.p21_fcst_value := 0;
-         rcd_detail.p22_fcst_value := 0;
-         rcd_detail.p23_fcst_value := 0;
-         rcd_detail.p24_fcst_value := 0;
-         rcd_detail.p25_fcst_value := 0;
-         rcd_detail.p26_fcst_value := 0;
-
-         /*-*/
-         /* Data type QTY
-         /*-*/
-         rcd_detail.data_type := '*QTY';
-         insert into dw_mart_sales01_det values rcd_detail;
-
-         /*-*/
-         /* Data type GSV
-         /*-*/
-         rcd_detail.data_type := '*GSV';
-         insert into dw_mart_sales01_det values rcd_detail;
-
-         /*-*/
-         /* Data type TON
-         /*-*/
-         rcd_detail.data_type := '*TON';
-         insert into dw_mart_sales01_det values rcd_detail;
-
-      end if;
-      close csr_data;
+      rcd_work.company_code := par_company_code;
+      rcd_work.data_segment := par_data_segment;
+      rcd_work.matl_group := par_matl_group;
+      rcd_work.ship_to_cust_code := par_ship_to_cust_code;
+      rcd_work.matl_code := par_matl_code;
+      rcd_work.acct_assgnmnt_grp_code := par_acct_assgnmnt_grp_code;
+      rcd_work.demand_plng_grp_code := par_demand_plng_grp_code;
+      rcd_work.mfanz_icb_flag := par_mfanz_icb_flag;
+      rcd_work.data_type := null;
+      rcd_work.cdy_ord_value := 0;
+      rcd_work.cdy_inv_value := 0;
+      rcd_work.ptd_inv_value := 0;
+      rcd_work.ptw_inv_value := 0;
+      rcd_work.ptg_fcst_value := 0;
+      rcd_work.cpd_out_value := 0;
+      rcd_work.cpd_ord_value := 0;
+      rcd_work.cpd_inv_value := 0;
+      rcd_work.cpd_op_value := 0;
+      rcd_work.cpd_rob_value := 0;
+      rcd_work.cpd_br_value := 0;
+      rcd_work.cpd_brm1_value := 0;
+      rcd_work.cpd_brm2_value := 0;
+      rcd_work.cpd_fcst_value := 0;
+      rcd_work.lpd_inv_value := 0;
+      rcd_work.lpd_br_value := 0;
+      rcd_work.fpd_out_value := 0;
+      rcd_work.fpd_ord_value := 0;
+      rcd_work.fpd_inv_value := 0;
+      rcd_work.lyr_cpd_inv_value := 0;
+      rcd_work.lyr_lpd_inv_value := 0;
+      rcd_work.lyr_ytp_inv_value := 0;
+      rcd_work.lyr_yee_inv_value := 0;
+      rcd_work.lyrm1_yee_inv_value := 0;
+      rcd_work.lyrm2_yee_inv_value := 0;
+      rcd_work.cyr_ytp_inv_value := 0;
+      rcd_work.cyr_mat_inv_value := 0;
+      rcd_work.cyr_ytg_rob_value := 0;
+      rcd_work.cyr_ytg_br_value := 0;
+      rcd_work.cyr_ytg_fcst_value := 0;
+      rcd_work.cyr_yee_op_value := 0;
+      rcd_work.cyr_yee_rob_value := 0;
+      rcd_work.cyr_yee_br_value := 0;
+      rcd_work.cyr_yee_brm1_value := 0;
+      rcd_work.cyr_yee_brm2_value := 0;
+      rcd_work.cyr_yee_fcst_value := 0;
+      rcd_work.nyr_yee_br_value := 0;
+      rcd_work.nyr_yee_brm1_value := 0;
+      rcd_work.nyr_yee_brm2_value := 0;
+      rcd_work.nyr_yee_fcst_value := 0;
+      rcd_work.p01_lyr_value := 0;
+      rcd_work.p02_lyr_value := 0;
+      rcd_work.p03_lyr_value := 0;
+      rcd_work.p04_lyr_value := 0;
+      rcd_work.p05_lyr_value := 0;
+      rcd_work.p06_lyr_value := 0;
+      rcd_work.p07_lyr_value := 0;
+      rcd_work.p08_lyr_value := 0;
+      rcd_work.p09_lyr_value := 0;
+      rcd_work.p10_lyr_value := 0;
+      rcd_work.p11_lyr_value := 0;
+      rcd_work.p12_lyr_value := 0;
+      rcd_work.p13_lyr_value := 0;
+      rcd_work.p01_op_value := 0;
+      rcd_work.p02_op_value := 0;
+      rcd_work.p03_op_value := 0;
+      rcd_work.p04_op_value := 0;
+      rcd_work.p05_op_value := 0;
+      rcd_work.p06_op_value := 0;
+      rcd_work.p07_op_value := 0;
+      rcd_work.p08_op_value := 0;
+      rcd_work.p09_op_value := 0;
+      rcd_work.p10_op_value := 0;
+      rcd_work.p11_op_value := 0;
+      rcd_work.p12_op_value := 0;
+      rcd_work.p13_op_value := 0;
+      rcd_work.p01_rob_value := 0;
+      rcd_work.p02_rob_value := 0;
+      rcd_work.p03_rob_value := 0;
+      rcd_work.p04_rob_value := 0;
+      rcd_work.p05_rob_value := 0;
+      rcd_work.p06_rob_value := 0;
+      rcd_work.p07_rob_value := 0;
+      rcd_work.p08_rob_value := 0;
+      rcd_work.p09_rob_value := 0;
+      rcd_work.p10_rob_value := 0;
+      rcd_work.p11_rob_value := 0;
+      rcd_work.p12_rob_value := 0;
+      rcd_work.p13_rob_value := 0;
+      rcd_work.p01_br_value := 0;
+      rcd_work.p02_br_value := 0;
+      rcd_work.p03_br_value := 0;
+      rcd_work.p04_br_value := 0;
+      rcd_work.p05_br_value := 0;
+      rcd_work.p06_br_value := 0;
+      rcd_work.p07_br_value := 0;
+      rcd_work.p08_br_value := 0;
+      rcd_work.p09_br_value := 0;
+      rcd_work.p10_br_value := 0;
+      rcd_work.p11_br_value := 0;
+      rcd_work.p12_br_value := 0;
+      rcd_work.p13_br_value := 0;
+      rcd_work.p14_br_value := 0;
+      rcd_work.p15_br_value := 0;
+      rcd_work.p16_br_value := 0;
+      rcd_work.p17_br_value := 0;
+      rcd_work.p18_br_value := 0;
+      rcd_work.p19_br_value := 0;
+      rcd_work.p20_br_value := 0;
+      rcd_work.p21_br_value := 0;
+      rcd_work.p22_br_value := 0;
+      rcd_work.p23_br_value := 0;
+      rcd_work.p24_br_value := 0;
+      rcd_work.p25_br_value := 0;
+      rcd_work.p26_br_value := 0;
+      rcd_work.p01_brm1_value := 0;
+      rcd_work.p02_brm1_value := 0;
+      rcd_work.p03_brm1_value := 0;
+      rcd_work.p04_brm1_value := 0;
+      rcd_work.p05_brm1_value := 0;
+      rcd_work.p06_brm1_value := 0;
+      rcd_work.p07_brm1_value := 0;
+      rcd_work.p08_brm1_value := 0;
+      rcd_work.p09_brm1_value := 0;
+      rcd_work.p10_brm1_value := 0;
+      rcd_work.p11_brm1_value := 0;
+      rcd_work.p12_brm1_value := 0;
+      rcd_work.p13_brm1_value := 0;
+      rcd_work.p14_brm1_value := 0;
+      rcd_work.p15_brm1_value := 0;
+      rcd_work.p16_brm1_value := 0;
+      rcd_work.p17_brm1_value := 0;
+      rcd_work.p18_brm1_value := 0;
+      rcd_work.p19_brm1_value := 0;
+      rcd_work.p20_brm1_value := 0;
+      rcd_work.p21_brm1_value := 0;
+      rcd_work.p22_brm1_value := 0;
+      rcd_work.p23_brm1_value := 0;
+      rcd_work.p24_brm1_value := 0;
+      rcd_work.p25_brm1_value := 0;
+      rcd_work.p26_brm1_value := 0;
+      rcd_work.p01_brm2_value := 0;
+      rcd_work.p02_brm2_value := 0;
+      rcd_work.p03_brm2_value := 0;
+      rcd_work.p04_brm2_value := 0;
+      rcd_work.p05_brm2_value := 0;
+      rcd_work.p06_brm2_value := 0;
+      rcd_work.p07_brm2_value := 0;
+      rcd_work.p08_brm2_value := 0;
+      rcd_work.p09_brm2_value := 0;
+      rcd_work.p10_brm2_value := 0;
+      rcd_work.p11_brm2_value := 0;
+      rcd_work.p12_brm2_value := 0;
+      rcd_work.p13_brm2_value := 0;
+      rcd_work.p14_brm2_value := 0;
+      rcd_work.p15_brm2_value := 0;
+      rcd_work.p16_brm2_value := 0;
+      rcd_work.p17_brm2_value := 0;
+      rcd_work.p18_brm2_value := 0;
+      rcd_work.p19_brm2_value := 0;
+      rcd_work.p20_brm2_value := 0;
+      rcd_work.p21_brm2_value := 0;
+      rcd_work.p22_brm2_value := 0;
+      rcd_work.p23_brm2_value := 0;
+      rcd_work.p24_brm2_value := 0;
+      rcd_work.p25_brm2_value := 0;
+      rcd_work.p26_brm2_value := 0;
+      rcd_work.p01_fcst_value := 0;
+      rcd_work.p02_fcst_value := 0;
+      rcd_work.p03_fcst_value := 0;
+      rcd_work.p04_fcst_value := 0;
+      rcd_work.p05_fcst_value := 0;
+      rcd_work.p06_fcst_value := 0;
+      rcd_work.p07_fcst_value := 0;
+      rcd_work.p08_fcst_value := 0;
+      rcd_work.p09_fcst_value := 0;
+      rcd_work.p10_fcst_value := 0;
+      rcd_work.p11_fcst_value := 0;
+      rcd_work.p12_fcst_value := 0;
+      rcd_work.p13_fcst_value := 0;
+      rcd_work.p14_fcst_value := 0;
+      rcd_work.p15_fcst_value := 0;
+      rcd_work.p16_fcst_value := 0;
+      rcd_work.p17_fcst_value := 0;
+      rcd_work.p18_fcst_value := 0;
+      rcd_work.p19_fcst_value := 0;
+      rcd_work.p20_fcst_value := 0;
+      rcd_work.p21_fcst_value := 0;
+      rcd_work.p22_fcst_value := 0;
+      rcd_work.p23_fcst_value := 0;
+      rcd_work.p24_fcst_value := 0;
+      rcd_work.p25_fcst_value := 0;
+      rcd_work.p26_fcst_value := 0;
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end create_detail;
+   end create_work;
 
 end dw_mart_sales01;
 /
