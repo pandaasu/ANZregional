@@ -434,6 +434,11 @@ create or replace package body dw_mart_sales01 as
       /*-*/
       commit;
 
+      /*-*/
+      /* Truncate the work partition
+      /*-*/
+      dds_dw_partition.truncate_list('dw_mart_sales01_wrk','C'||par_company_code);
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
