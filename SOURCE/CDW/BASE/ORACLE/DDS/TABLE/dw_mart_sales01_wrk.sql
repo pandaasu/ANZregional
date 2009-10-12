@@ -41,10 +41,10 @@ create table dw_mart_sales01_wrk
     cpd_rob_value number null,
     cpd_br_value number null,
     cpd_brm1_value number null,
+    lpd_brm1_value number null,
     cpd_brm2_value number null,
     cpd_fcst_value number null,
     lpd_inv_value number null,
-    lpd_br_value number null,
     fpd_out_value number null,
     fpd_ord_value number null,
     fpd_inv_value number null,
@@ -241,10 +241,10 @@ comment on column dw_mart_sales01_wrk.cpd_op_value is 'Current period - operatin
 comment on column dw_mart_sales01_wrk.cpd_rob_value is 'Current period - review of business value';
 comment on column dw_mart_sales01_wrk.cpd_br_value is 'Current period - business review value';
 comment on column dw_mart_sales01_wrk.cpd_brm1_value is 'Current period - business review minus 1 value';
+comment on column dw_mart_sales01_wrk.lpd_brm1_value is 'Last period - business review minus 1 value';
 comment on column dw_mart_sales01_wrk.cpd_brm2_value is 'Current period - business review minus 2 value';
 comment on column dw_mart_sales01_wrk.cpd_fcst_value is 'Current period - forecast value';
 comment on column dw_mart_sales01_wrk.lpd_inv_value is 'Last period - invoiced value';
-comment on column dw_mart_sales01_wrk.lpd_br_value is 'Last period - business review value';
 comment on column dw_mart_sales01_wrk.fpd_out_value is 'Future periods - outstanding value';
 comment on column dw_mart_sales01_wrk.fpd_ord_value is 'Future periods - order delivered value';
 comment on column dw_mart_sales01_wrk.fpd_inv_value is 'Future periods - invoice delivered value';
