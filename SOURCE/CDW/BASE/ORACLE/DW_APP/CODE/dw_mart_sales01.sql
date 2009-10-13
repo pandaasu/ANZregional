@@ -400,6 +400,7 @@ create or replace package body dw_mart_sales01 as
                 sum(nvl(p25_fcst_value,0)),
                 sum(nvl(p26_fcst_value,0))
            from dw_mart_sales01_wrk
+          where company_code = par_company_code
           group by company_code,
                    data_segment,
                    matl_group,
@@ -453,7 +454,7 @@ create or replace package body dw_mart_sales01 as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - DW_SALES_02_MART - REFRESH - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - DW_SALES_01_MART - REFRESH - ' || var_exception);
 
    /*-------------*/
    /* End routine */
