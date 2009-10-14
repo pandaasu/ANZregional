@@ -105,6 +105,25 @@ create or replace package body dw_mart_sales01 as
       /* Local definitions
       /*-*/
       var_exception varchar2(4000);
+      var_str_flag boolean;
+      rcd_data dw_mart_sales01_det%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_work is
+         select t01.*
+           from dw_mart_sales01_wrk t01
+          where t01.company_code = par_company_code
+          order by t01.company_code,
+                   t01.data_segment,
+                   t01.matl_group,
+                   t01.ship_to_cust_code,
+                   t01.matl_code,
+                   t01.acct_assgnmnt_grp_code,
+                   t01.demand_plng_grp_code,
+                   t01.mfanz_icb_flag,
+                   t01.data_type;
 
    /*-------------*/
    /* Begin block */
@@ -206,210 +225,426 @@ create or replace package body dw_mart_sales01 as
       /* Refresh the data mart detail from the work
       /*-*/
       lics_logging.write_log('--> Loading detail data from the summarised work data');
-      insert into dw_mart_sales01_det
-         select company_code,
-                data_segment,
-                matl_group,
-                ship_to_cust_code,
-                matl_code,
-                acct_assgnmnt_grp_code,
-                demand_plng_grp_code,
-                mfanz_icb_flag,
-                data_type,
-                sum(nvl(cdy_ord_value,0)),
-                sum(nvl(cdy_inv_value,0)),
-                sum(nvl(ptd_inv_value,0)),
-                sum(nvl(ptw_inv_value,0)),
-                sum(nvl(ptg_fcst_value,0)),
-                sum(nvl(cpd_out_value,0)),
-                sum(nvl(cpd_ord_value,0)),
-                sum(nvl(cpd_inv_value,0)),
-                sum(nvl(cpd_op_value,0)),
-                sum(nvl(cpd_rob_value,0)),
-                sum(nvl(cpd_br_value,0)),
-                sum(nvl(cpd_brm1_value,0)),
-                sum(nvl(lpd_brm1_value,0)),
-                sum(nvl(cpd_brm2_value,0)),
-                sum(nvl(cpd_fcst_value,0)),
-                sum(nvl(lpd_inv_value,0)),
-                sum(nvl(fpd_out_value,0)),
-                sum(nvl(fpd_ord_value,0)),
-                sum(nvl(fpd_inv_value,0)),
-                sum(nvl(lyr_cpd_inv_value,0)),
-                sum(nvl(lyr_lpd_inv_value,0)),
-                sum(nvl(lyr_ytp_inv_value,0)),
-                sum(nvl(lyr_yee_inv_value,0)),
-                sum(nvl(lyrm1_yee_inv_value,0)),
-                sum(nvl(lyrm2_yee_inv_value,0)),
-                sum(nvl(cyr_ytp_inv_value,0)),
-                sum(nvl(cyr_mat_inv_value,0)),
-                sum(nvl(cyr_ytg_rob_value,0)),
-                sum(nvl(cyr_ytg_br_value,0)),
-                sum(nvl(cyr_ytg_fcst_value,0)),
-                sum(nvl(cyr_yee_op_value,0)),
-                sum(nvl(cyr_yee_rob_value,0)),
-                sum(nvl(cyr_yee_br_value,0)),
-                sum(nvl(cyr_yee_brm1_value,0)),
-                sum(nvl(cyr_yee_brm2_value,0)),
-                sum(nvl(cyr_yee_fcst_value,0)),
-                sum(nvl(nyr_yee_br_value,0)),
-                sum(nvl(nyr_yee_brm1_value,0)),
-                sum(nvl(nyr_yee_brm2_value,0)),
-                sum(nvl(nyr_yee_fcst_value,0)),
-                sum(nvl(p01_lyr_value,0)),
-                sum(nvl(p02_lyr_value,0)),
-                sum(nvl(p03_lyr_value,0)),
-                sum(nvl(p04_lyr_value,0)),
-                sum(nvl(p05_lyr_value,0)),
-                sum(nvl(p06_lyr_value,0)),
-                sum(nvl(p07_lyr_value,0)),
-                sum(nvl(p08_lyr_value,0)),
-                sum(nvl(p09_lyr_value,0)),
-                sum(nvl(p10_lyr_value,0)),
-                sum(nvl(p11_lyr_value,0)),
-                sum(nvl(p12_lyr_value,0)),
-                sum(nvl(p13_lyr_value,0)),
-                sum(nvl(p01_op_value,0)),
-                sum(nvl(p02_op_value,0)),
-                sum(nvl(p03_op_value,0)),
-                sum(nvl(p04_op_value,0)),
-                sum(nvl(p05_op_value,0)),
-                sum(nvl(p06_op_value,0)),
-                sum(nvl(p07_op_value,0)),
-                sum(nvl(p08_op_value,0)),
-                sum(nvl(p09_op_value,0)),
-                sum(nvl(p10_op_value,0)),
-                sum(nvl(p11_op_value,0)),
-                sum(nvl(p12_op_value,0)),
-                sum(nvl(p13_op_value,0)),
-                sum(nvl(p01_rob_value,0)),
-                sum(nvl(p02_rob_value,0)),
-                sum(nvl(p03_rob_value,0)),
-                sum(nvl(p04_rob_value,0)),
-                sum(nvl(p05_rob_value,0)),
-                sum(nvl(p06_rob_value,0)),
-                sum(nvl(p07_rob_value,0)),
-                sum(nvl(p08_rob_value,0)),
-                sum(nvl(p09_rob_value,0)),
-                sum(nvl(p10_rob_value,0)),
-                sum(nvl(p11_rob_value,0)),
-                sum(nvl(p12_rob_value,0)),
-                sum(nvl(p13_rob_value,0)),
-                sum(nvl(p01_br_value,0)),
-                sum(nvl(p02_br_value,0)),
-                sum(nvl(p03_br_value,0)),
-                sum(nvl(p04_br_value,0)),
-                sum(nvl(p05_br_value,0)),
-                sum(nvl(p06_br_value,0)),
-                sum(nvl(p07_br_value,0)),
-                sum(nvl(p08_br_value,0)),
-                sum(nvl(p09_br_value,0)),
-                sum(nvl(p10_br_value,0)),
-                sum(nvl(p11_br_value,0)),
-                sum(nvl(p12_br_value,0)),
-                sum(nvl(p13_br_value,0)),
-                sum(nvl(p14_br_value,0)),
-                sum(nvl(p15_br_value,0)),
-                sum(nvl(p16_br_value,0)),
-                sum(nvl(p17_br_value,0)),
-                sum(nvl(p18_br_value,0)),
-                sum(nvl(p19_br_value,0)),
-                sum(nvl(p20_br_value,0)),
-                sum(nvl(p21_br_value,0)),
-                sum(nvl(p22_br_value,0)),
-                sum(nvl(p23_br_value,0)),
-                sum(nvl(p24_br_value,0)),
-                sum(nvl(p25_br_value,0)),
-                sum(nvl(p26_br_value,0)),
-                sum(nvl(p01_brm1_value,0)),
-                sum(nvl(p02_brm1_value,0)),
-                sum(nvl(p03_brm1_value,0)),
-                sum(nvl(p04_brm1_value,0)),
-                sum(nvl(p05_brm1_value,0)),
-                sum(nvl(p06_brm1_value,0)),
-                sum(nvl(p07_brm1_value,0)),
-                sum(nvl(p08_brm1_value,0)),
-                sum(nvl(p09_brm1_value,0)),
-                sum(nvl(p10_brm1_value,0)),
-                sum(nvl(p11_brm1_value,0)),
-                sum(nvl(p12_brm1_value,0)),
-                sum(nvl(p13_brm1_value,0)),
-                sum(nvl(p14_brm1_value,0)),
-                sum(nvl(p15_brm1_value,0)),
-                sum(nvl(p16_brm1_value,0)),
-                sum(nvl(p17_brm1_value,0)),
-                sum(nvl(p18_brm1_value,0)),
-                sum(nvl(p19_brm1_value,0)),
-                sum(nvl(p20_brm1_value,0)),
-                sum(nvl(p21_brm1_value,0)),
-                sum(nvl(p22_brm1_value,0)),
-                sum(nvl(p23_brm1_value,0)),
-                sum(nvl(p24_brm1_value,0)),
-                sum(nvl(p25_brm1_value,0)),
-                sum(nvl(p26_brm1_value,0)),
-                sum(nvl(p01_brm2_value,0)),
-                sum(nvl(p02_brm2_value,0)),
-                sum(nvl(p03_brm2_value,0)),
-                sum(nvl(p04_brm2_value,0)),
-                sum(nvl(p05_brm2_value,0)),
-                sum(nvl(p06_brm2_value,0)),
-                sum(nvl(p07_brm2_value,0)),
-                sum(nvl(p08_brm2_value,0)),
-                sum(nvl(p09_brm2_value,0)),
-                sum(nvl(p10_brm2_value,0)),
-                sum(nvl(p11_brm2_value,0)),
-                sum(nvl(p12_brm2_value,0)),
-                sum(nvl(p13_brm2_value,0)),
-                sum(nvl(p14_brm2_value,0)),
-                sum(nvl(p15_brm2_value,0)),
-                sum(nvl(p16_brm2_value,0)),
-                sum(nvl(p17_brm2_value,0)),
-                sum(nvl(p18_brm2_value,0)),
-                sum(nvl(p19_brm2_value,0)),
-                sum(nvl(p20_brm2_value,0)),
-                sum(nvl(p21_brm2_value,0)),
-                sum(nvl(p22_brm2_value,0)),
-                sum(nvl(p23_brm2_value,0)),
-                sum(nvl(p24_brm2_value,0)),
-                sum(nvl(p25_brm2_value,0)),
-                sum(nvl(p26_brm2_value,0)),
-                sum(nvl(p01_fcst_value,0)),
-                sum(nvl(p02_fcst_value,0)),
-                sum(nvl(p03_fcst_value,0)),
-                sum(nvl(p04_fcst_value,0)),
-                sum(nvl(p05_fcst_value,0)),
-                sum(nvl(p06_fcst_value,0)),
-                sum(nvl(p07_fcst_value,0)),
-                sum(nvl(p08_fcst_value,0)),
-                sum(nvl(p09_fcst_value,0)),
-                sum(nvl(p10_fcst_value,0)),
-                sum(nvl(p11_fcst_value,0)),
-                sum(nvl(p12_fcst_value,0)),
-                sum(nvl(p13_fcst_value,0)),
-                sum(nvl(p14_fcst_value,0)),
-                sum(nvl(p15_fcst_value,0)),
-                sum(nvl(p16_fcst_value,0)),
-                sum(nvl(p17_fcst_value,0)),
-                sum(nvl(p18_fcst_value,0)),
-                sum(nvl(p19_fcst_value,0)),
-                sum(nvl(p20_fcst_value,0)),
-                sum(nvl(p21_fcst_value,0)),
-                sum(nvl(p22_fcst_value,0)),
-                sum(nvl(p23_fcst_value,0)),
-                sum(nvl(p24_fcst_value,0)),
-                sum(nvl(p25_fcst_value,0)),
-                sum(nvl(p26_fcst_value,0))
-           from dw_mart_sales01_wrk
-          where company_code = par_company_code
-          group by company_code,
-                   data_segment,
-                   matl_group,
-                   ship_to_cust_code,
-                   matl_code,
-                   acct_assgnmnt_grp_code,
-                   demand_plng_grp_code,
-                   mfanz_icb_flag,
-                   data_type;
+      var_str_flag := true;
+      open csr_work;
+      loop
+         fetch csr_work into rcd_work;
+         if csr_work%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* First row or change of keys
+         /*-*/
+         if var_str_flag = true or
+            rcd_work.company_code != rcd_data.company_code or
+            rcd_work.data_segment != rcd_data.data_segment or
+            rcd_work.matl_group != rcd_data.matl_group or
+            rcd_work.ship_to_cust_code != rcd_data.ship_to_cust_code or
+            rcd_work.matl_code != rcd_data.matl_code or
+            rcd_work.acct_assgnmnt_grp_code != rcd_data.acct_assgnmnt_grp_code or
+            rcd_work.demand_plng_grp_code != rcd_data.demand_plng_grp_code or
+            rcd_work.mfanz_icb_flag != rcd_data.mfanz_icb_flag or
+            rcd_work.data_type != rcd_data.data_type then
+
+            /*-*/
+            /* Insert the detail row when required
+            /*-*/
+            if var_str_flag = false then
+               insert into dw_mart_sales01_det values rcd_data;
+            end if;
+
+            /*-*/
+            /* Clear the accumulators
+            /*-*/
+            rcd_data.cdy_ord_value := 0;
+            rcd_data.cdy_inv_value := 0;
+            rcd_data.ptd_inv_value := 0;
+            rcd_data.ptw_inv_value := 0;
+            rcd_data.ptg_fcst_value := 0;
+            rcd_data.cpd_out_value := 0;
+            rcd_data.cpd_ord_value := 0;
+            rcd_data.cpd_inv_value := 0;
+            rcd_data.cpd_op_value := 0;
+            rcd_data.cpd_rob_value := 0;
+            rcd_data.cpd_br_value := 0;
+            rcd_data.cpd_brm1_value := 0;
+            rcd_data.lpd_brm1_value := 0;
+            rcd_data.cpd_brm2_value := 0;
+            rcd_data.cpd_fcst_value := 0;
+            rcd_data.lpd_inv_value := 0;
+            rcd_data.fpd_out_value := 0;
+            rcd_data.fpd_ord_value := 0;
+            rcd_data.fpd_inv_value := 0;
+            rcd_data.lyr_cpd_inv_value := 0;
+            rcd_data.lyr_lpd_inv_value := 0;
+            rcd_data.lyr_ytp_inv_value := 0;
+            rcd_data.lyr_yee_inv_value := 0;
+            rcd_data.lyrm1_yee_inv_value := 0;
+            rcd_data.lyrm2_yee_inv_value := 0;
+            rcd_data.cyr_ytp_inv_value := 0;
+            rcd_data.cyr_mat_inv_value := 0;
+            rcd_data.cyr_ytg_rob_value := 0;
+            rcd_data.cyr_ytg_br_value := 0;
+            rcd_data.cyr_ytg_fcst_value := 0;
+            rcd_data.cyr_yee_op_value := 0;
+            rcd_data.cyr_yee_rob_value := 0;
+            rcd_data.cyr_yee_br_value := 0;
+            rcd_data.cyr_yee_brm1_value := 0;
+            rcd_data.cyr_yee_brm2_value := 0;
+            rcd_data.cyr_yee_fcst_value := 0;
+            rcd_data.nyr_yee_br_value := 0;
+            rcd_data.nyr_yee_brm1_value := 0;
+            rcd_data.nyr_yee_brm2_value := 0;
+            rcd_data.nyr_yee_fcst_value := 0;
+            rcd_data.p01_lyr_value := 0;
+            rcd_data.p02_lyr_value := 0;
+            rcd_data.p03_lyr_value := 0;
+            rcd_data.p04_lyr_value := 0;
+            rcd_data.p05_lyr_value := 0;
+            rcd_data.p06_lyr_value := 0;
+            rcd_data.p07_lyr_value := 0;
+            rcd_data.p08_lyr_value := 0;
+            rcd_data.p09_lyr_value := 0;
+            rcd_data.p10_lyr_value := 0;
+            rcd_data.p11_lyr_value := 0;
+            rcd_data.p12_lyr_value := 0;
+            rcd_data.p13_lyr_value := 0;
+            rcd_data.p01_op_value := 0;
+            rcd_data.p02_op_value := 0;
+            rcd_data.p03_op_value := 0;
+            rcd_data.p04_op_value := 0;
+            rcd_data.p05_op_value := 0;
+            rcd_data.p06_op_value := 0;
+            rcd_data.p07_op_value := 0;
+            rcd_data.p08_op_value := 0;
+            rcd_data.p09_op_value := 0;
+            rcd_data.p10_op_value := 0;
+            rcd_data.p11_op_value := 0;
+            rcd_data.p12_op_value := 0;
+            rcd_data.p13_op_value := 0;
+            rcd_data.p01_rob_value := 0;
+            rcd_data.p02_rob_value := 0;
+            rcd_data.p03_rob_value := 0;
+            rcd_data.p04_rob_value := 0;
+            rcd_data.p05_rob_value := 0;
+            rcd_data.p06_rob_value := 0;
+            rcd_data.p07_rob_value := 0;
+            rcd_data.p08_rob_value := 0;
+            rcd_data.p09_rob_value := 0;
+            rcd_data.p10_rob_value := 0;
+            rcd_data.p11_rob_value := 0;
+            rcd_data.p12_rob_value := 0;
+            rcd_data.p13_rob_value := 0;
+            rcd_data.p01_br_value := 0;
+            rcd_data.p02_br_value := 0;
+            rcd_data.p03_br_value := 0;
+            rcd_data.p04_br_value := 0;
+            rcd_data.p05_br_value := 0;
+            rcd_data.p06_br_value := 0;
+            rcd_data.p07_br_value := 0;
+            rcd_data.p08_br_value := 0;
+            rcd_data.p09_br_value := 0;
+            rcd_data.p10_br_value := 0;
+            rcd_data.p11_br_value := 0;
+            rcd_data.p12_br_value := 0;
+            rcd_data.p13_br_value := 0;
+            rcd_data.p14_br_value := 0;
+            rcd_data.p15_br_value := 0;
+            rcd_data.p16_br_value := 0;
+            rcd_data.p17_br_value := 0;
+            rcd_data.p18_br_value := 0;
+            rcd_data.p19_br_value := 0;
+            rcd_data.p20_br_value := 0;
+            rcd_data.p21_br_value := 0;
+            rcd_data.p22_br_value := 0;
+            rcd_data.p23_br_value := 0;
+            rcd_data.p24_br_value := 0;
+            rcd_data.p25_br_value := 0;
+            rcd_data.p26_br_value := 0;
+            rcd_data.p01_brm1_value := 0;
+            rcd_data.p02_brm1_value := 0;
+            rcd_data.p03_brm1_value := 0;
+            rcd_data.p04_brm1_value := 0;
+            rcd_data.p05_brm1_value := 0;
+            rcd_data.p06_brm1_value := 0;
+            rcd_data.p07_brm1_value := 0;
+            rcd_data.p08_brm1_value := 0;
+            rcd_data.p09_brm1_value := 0;
+            rcd_data.p10_brm1_value := 0;
+            rcd_data.p11_brm1_value := 0;
+            rcd_data.p12_brm1_value := 0;
+            rcd_data.p13_brm1_value := 0;
+            rcd_data.p14_brm1_value := 0;
+            rcd_data.p15_brm1_value := 0;
+            rcd_data.p16_brm1_value := 0;
+            rcd_data.p17_brm1_value := 0;
+            rcd_data.p18_brm1_value := 0;
+            rcd_data.p19_brm1_value := 0;
+            rcd_data.p20_brm1_value := 0;
+            rcd_data.p21_brm1_value := 0;
+            rcd_data.p22_brm1_value := 0;
+            rcd_data.p23_brm1_value := 0;
+            rcd_data.p24_brm1_value := 0;
+            rcd_data.p25_brm1_value := 0;
+            rcd_data.p26_brm1_value := 0;
+            rcd_data.p01_brm2_value := 0;
+            rcd_data.p02_brm2_value := 0;
+            rcd_data.p03_brm2_value := 0;
+            rcd_data.p04_brm2_value := 0;
+            rcd_data.p05_brm2_value := 0;
+            rcd_data.p06_brm2_value := 0;
+            rcd_data.p07_brm2_value := 0;
+            rcd_data.p08_brm2_value := 0;
+            rcd_data.p09_brm2_value := 0;
+            rcd_data.p10_brm2_value := 0;
+            rcd_data.p11_brm2_value := 0;
+            rcd_data.p12_brm2_value := 0;
+            rcd_data.p13_brm2_value := 0;
+            rcd_data.p14_brm2_value := 0;
+            rcd_data.p15_brm2_value := 0;
+            rcd_data.p16_brm2_value := 0;
+            rcd_data.p17_brm2_value := 0;
+            rcd_data.p18_brm2_value := 0;
+            rcd_data.p19_brm2_value := 0;
+            rcd_data.p20_brm2_value := 0;
+            rcd_data.p21_brm2_value := 0;
+            rcd_data.p22_brm2_value := 0;
+            rcd_data.p23_brm2_value := 0;
+            rcd_data.p24_brm2_value := 0;
+            rcd_data.p25_brm2_value := 0;
+            rcd_data.p26_brm2_value := 0;
+            rcd_data.p01_fcst_value := 0;
+            rcd_data.p02_fcst_value := 0;
+            rcd_data.p03_fcst_value := 0;
+            rcd_data.p04_fcst_value := 0;
+            rcd_data.p05_fcst_value := 0;
+            rcd_data.p06_fcst_value := 0;
+            rcd_data.p07_fcst_value := 0;
+            rcd_data.p08_fcst_value := 0;
+            rcd_data.p09_fcst_value := 0;
+            rcd_data.p10_fcst_value := 0;
+            rcd_data.p11_fcst_value := 0;
+            rcd_data.p12_fcst_value := 0;
+            rcd_data.p13_fcst_value := 0;
+            rcd_data.p14_fcst_value := 0;
+            rcd_data.p15_fcst_value := 0;
+            rcd_data.p16_fcst_value := 0;
+            rcd_data.p17_fcst_value := 0;
+            rcd_data.p18_fcst_value := 0;
+            rcd_data.p19_fcst_value := 0;
+            rcd_data.p20_fcst_value := 0;
+            rcd_data.p21_fcst_value := 0;
+            rcd_data.p22_fcst_value := 0;
+            rcd_data.p23_fcst_value := 0;
+            rcd_data.p24_fcst_value := 0;
+            rcd_data.p25_fcst_value := 0;
+            rcd_data.p26_fcst_value := 0;
+
+         end if;
+
+         /*-*/
+         /* Set and accumulate the detail values
+         /*-*/
+         var_str_flag := false;
+         rcd_data.company_code := rcd_work.company_code;
+         rcd_data.data_segment := rcd_work.data_segment;
+         rcd_data.matl_group := rcd_work.matl_group;
+         rcd_data.ship_to_cust_code := rcd_work.ship_to_cust_code;
+         rcd_data.matl_code := rcd_work.matl_code;
+         rcd_data.acct_assgnmnt_grp_code := rcd_work.acct_assgnmnt_grp_code;
+         rcd_data.demand_plng_grp_code := rcd_work.demand_plng_grp_code;
+         rcd_data.mfanz_icb_flag := rcd_work.mfanz_icb_flag;
+         rcd_data.data_type := rcd_work.data_type;
+         rcd_data.cdy_ord_value := rcd_data.cdy_ord_value + rcd_work.cdy_ord_value;
+         rcd_data.cdy_inv_value := rcd_data.cdy_inv_value + rcd_work.cdy_inv_value;
+         rcd_data.ptd_inv_value := rcd_data.ptd_inv_value + rcd_work.ptd_inv_value;
+         rcd_data.ptw_inv_value := rcd_data.ptw_inv_value + rcd_work.ptw_inv_value;
+         rcd_data.ptg_fcst_value := rcd_data.ptg_fcst_value + rcd_work.ptg_fcst_value;
+         rcd_data.cpd_out_value := rcd_data.cpd_out_value + rcd_work.cpd_out_value;
+         rcd_data.cpd_ord_value := rcd_data.cpd_ord_value + rcd_work.cpd_ord_value;
+         rcd_data.cpd_inv_value := rcd_data.cpd_inv_value + rcd_work.cpd_inv_value;
+         rcd_data.cpd_op_value := rcd_data.cpd_op_value + rcd_work.cpd_op_value;
+         rcd_data.cpd_rob_value := rcd_data.cpd_rob_value + rcd_work.cpd_rob_value;
+         rcd_data.cpd_br_value := rcd_data.cpd_br_value + rcd_work.cpd_br_value;
+         rcd_data.cpd_brm1_value := rcd_data.cpd_brm1_value + rcd_work.cpd_brm1_value;
+         rcd_data.lpd_brm1_value := rcd_data.lpd_brm1_value + rcd_work.lpd_brm1_value;
+         rcd_data.cpd_brm2_value := rcd_data.cpd_brm2_value + rcd_work.cpd_brm2_value;
+         rcd_data.cpd_fcst_value := rcd_data.cpd_fcst_value + rcd_work.cpd_fcst_value;
+         rcd_data.lpd_inv_value := rcd_data.lpd_inv_value + rcd_work.lpd_inv_value;
+         rcd_data.fpd_out_value := rcd_data.fpd_out_value + rcd_work.fpd_out_value;
+         rcd_data.fpd_ord_value := rcd_data.fpd_ord_value + rcd_work.fpd_ord_value;
+         rcd_data.fpd_inv_value := rcd_data.fpd_inv_value + rcd_work.fpd_inv_value;
+         rcd_data.lyr_cpd_inv_value := rcd_data.lyr_cpd_inv_value + rcd_work.lyr_cpd_inv_value;
+         rcd_data.lyr_lpd_inv_value := rcd_data.lyr_lpd_inv_value + rcd_work.lyr_lpd_inv_value;
+         rcd_data.lyr_ytp_inv_value := rcd_data.lyr_ytp_inv_value + rcd_work.lyr_ytp_inv_value;
+         rcd_data.lyr_yee_inv_value := rcd_data.lyr_yee_inv_value + rcd_work.lyr_yee_inv_value;
+         rcd_data.lyrm1_yee_inv_value := rcd_data.lyrm1_yee_inv_value + rcd_work.lyrm1_yee_inv_value;
+         rcd_data.lyrm2_yee_inv_value := rcd_data.lyrm2_yee_inv_value + rcd_work.lyrm2_yee_inv_value;
+         rcd_data.cyr_ytp_inv_value := rcd_data.cyr_ytp_inv_value + rcd_work.cyr_ytp_inv_value;
+         rcd_data.cyr_mat_inv_value := rcd_data.cyr_mat_inv_value + rcd_work.cyr_mat_inv_value;
+         rcd_data.cyr_ytg_rob_value := rcd_data.cyr_ytg_rob_value + rcd_work.cyr_ytg_rob_value;
+         rcd_data.cyr_ytg_br_value := rcd_data.cyr_ytg_br_value + rcd_work.cyr_ytg_br_value;
+         rcd_data.cyr_ytg_fcst_value := rcd_data.cyr_ytg_fcst_value + rcd_work.cyr_ytg_fcst_value;
+         rcd_data.cyr_yee_op_value := rcd_data.cyr_yee_op_value + rcd_work.cyr_yee_op_value;
+         rcd_data.cyr_yee_rob_value := rcd_data.cyr_yee_rob_value + rcd_work.cyr_yee_rob_value;
+         rcd_data.cyr_yee_br_value := rcd_data.cyr_yee_br_value + rcd_work.cyr_yee_br_value;
+         rcd_data.cyr_yee_brm1_value := rcd_data.cyr_yee_brm1_value + rcd_work.cyr_yee_brm1_value;
+         rcd_data.cyr_yee_brm2_value := rcd_data.cyr_yee_brm2_value + rcd_work.cyr_yee_brm2_value;
+         rcd_data.cyr_yee_fcst_value := rcd_data.cyr_yee_fcst_value + rcd_work.cyr_yee_fcst_value;
+         rcd_data.nyr_yee_br_value := rcd_data.nyr_yee_br_value + rcd_work.nyr_yee_br_value;
+         rcd_data.nyr_yee_brm1_value := rcd_data.nyr_yee_brm1_value + rcd_work.nyr_yee_brm1_value;
+         rcd_data.nyr_yee_brm2_value := rcd_data.nyr_yee_brm2_value + rcd_work.nyr_yee_brm2_value;
+         rcd_data.nyr_yee_fcst_value := rcd_data.nyr_yee_fcst_value + rcd_work.nyr_yee_fcst_value;
+         rcd_data.p01_lyr_value := rcd_data.p01_lyr_value + rcd_work.p01_lyr_value;
+         rcd_data.p02_lyr_value := rcd_data.p02_lyr_value + rcd_work.p02_lyr_value;
+         rcd_data.p03_lyr_value := rcd_data.p03_lyr_value + rcd_work.p03_lyr_value;
+         rcd_data.p04_lyr_value := rcd_data.p04_lyr_value + rcd_work.p04_lyr_value;
+         rcd_data.p05_lyr_value := rcd_data.p05_lyr_value + rcd_work.p05_lyr_value;
+         rcd_data.p06_lyr_value := rcd_data.p06_lyr_value + rcd_work.p06_lyr_value;
+         rcd_data.p07_lyr_value := rcd_data.p07_lyr_value + rcd_work.p07_lyr_value;
+         rcd_data.p08_lyr_value := rcd_data.p08_lyr_value + rcd_work.p08_lyr_value;
+         rcd_data.p09_lyr_value := rcd_data.p09_lyr_value + rcd_work.p09_lyr_value;
+         rcd_data.p10_lyr_value := rcd_data.p10_lyr_value + rcd_work.p10_lyr_value;
+         rcd_data.p11_lyr_value := rcd_data.p11_lyr_value + rcd_work.p11_lyr_value;
+         rcd_data.p12_lyr_value := rcd_data.p12_lyr_value + rcd_work.p12_lyr_value;
+         rcd_data.p13_lyr_value := rcd_data.p13_lyr_value + rcd_work.p13_lyr_value;
+         rcd_data.p01_op_value := rcd_data.p01_op_value + rcd_work.p01_op_value;
+         rcd_data.p02_op_value := rcd_data.p02_op_value + rcd_work.p02_op_value;
+         rcd_data.p03_op_value := rcd_data.p03_op_value + rcd_work.p03_op_value;
+         rcd_data.p04_op_value := rcd_data.p04_op_value + rcd_work.p04_op_value;
+         rcd_data.p05_op_value := rcd_data.p05_op_value + rcd_work.p05_op_value;
+         rcd_data.p06_op_value := rcd_data.p06_op_value + rcd_work.p06_op_value;
+         rcd_data.p07_op_value := rcd_data.p07_op_value + rcd_work.p07_op_value;
+         rcd_data.p08_op_value := rcd_data.p08_op_value + rcd_work.p08_op_value;
+         rcd_data.p09_op_value := rcd_data.p09_op_value + rcd_work.p09_op_value;
+         rcd_data.p10_op_value := rcd_data.p10_op_value + rcd_work.p10_op_value;
+         rcd_data.p11_op_value := rcd_data.p11_op_value + rcd_work.p11_op_value;
+         rcd_data.p12_op_value := rcd_data.p12_op_value + rcd_work.p12_op_value;
+         rcd_data.p13_op_value := rcd_data.p13_op_value + rcd_work.p13_op_value;
+         rcd_data.p01_rob_value := rcd_data.p01_rob_value + rcd_work.p01_rob_value;
+         rcd_data.p02_rob_value := rcd_data.p02_rob_value + rcd_work.p02_rob_value;
+         rcd_data.p03_rob_value := rcd_data.p03_rob_value + rcd_work.p03_rob_value;
+         rcd_data.p04_rob_value := rcd_data.p04_rob_value + rcd_work.p04_rob_value;
+         rcd_data.p05_rob_value := rcd_data.p05_rob_value + rcd_work.p05_rob_value;
+         rcd_data.p06_rob_value := rcd_data.p06_rob_value + rcd_work.p06_rob_value;
+         rcd_data.p07_rob_value := rcd_data.p07_rob_value + rcd_work.p07_rob_value;
+         rcd_data.p08_rob_value := rcd_data.p08_rob_value + rcd_work.p08_rob_value;
+         rcd_data.p09_rob_value := rcd_data.p09_rob_value + rcd_work.p09_rob_value;
+         rcd_data.p10_rob_value := rcd_data.p10_rob_value + rcd_work.p10_rob_value;
+         rcd_data.p11_rob_value := rcd_data.p11_rob_value + rcd_work.p11_rob_value;
+         rcd_data.p12_rob_value := rcd_data.p12_rob_value + rcd_work.p12_rob_value;
+         rcd_data.p13_rob_value := rcd_data.p13_rob_value + rcd_work.p13_rob_value;
+         rcd_data.p01_br_value := rcd_data.p01_br_value + rcd_work.p01_br_value;
+         rcd_data.p02_br_value := rcd_data.p02_br_value + rcd_work.p02_br_value;
+         rcd_data.p03_br_value := rcd_data.p03_br_value + rcd_work.p03_br_value;
+         rcd_data.p04_br_value := rcd_data.p04_br_value + rcd_work.p04_br_value;
+         rcd_data.p05_br_value := rcd_data.p05_br_value + rcd_work.p05_br_value;
+         rcd_data.p06_br_value := rcd_data.p06_br_value + rcd_work.p06_br_value;
+         rcd_data.p07_br_value := rcd_data.p07_br_value + rcd_work.p07_br_value;
+         rcd_data.p08_br_value := rcd_data.p08_br_value + rcd_work.p08_br_value;
+         rcd_data.p09_br_value := rcd_data.p09_br_value + rcd_work.p09_br_value;
+         rcd_data.p10_br_value := rcd_data.p10_br_value + rcd_work.p10_br_value;
+         rcd_data.p11_br_value := rcd_data.p11_br_value + rcd_work.p11_br_value;
+         rcd_data.p12_br_value := rcd_data.p12_br_value + rcd_work.p12_br_value;
+         rcd_data.p13_br_value := rcd_data.p13_br_value + rcd_work.p13_br_value;
+         rcd_data.p14_br_value := rcd_data.p14_br_value + rcd_work.p14_br_value;
+         rcd_data.p15_br_value := rcd_data.p15_br_value + rcd_work.p15_br_value;
+         rcd_data.p16_br_value := rcd_data.p16_br_value + rcd_work.p16_br_value;
+         rcd_data.p17_br_value := rcd_data.p17_br_value + rcd_work.p17_br_value;
+         rcd_data.p18_br_value := rcd_data.p18_br_value + rcd_work.p18_br_value;
+         rcd_data.p19_br_value := rcd_data.p19_br_value + rcd_work.p19_br_value;
+         rcd_data.p20_br_value := rcd_data.p20_br_value + rcd_work.p20_br_value;
+         rcd_data.p21_br_value := rcd_data.p21_br_value + rcd_work.p21_br_value;
+         rcd_data.p22_br_value := rcd_data.p22_br_value + rcd_work.p22_br_value;
+         rcd_data.p23_br_value := rcd_data.p23_br_value + rcd_work.p23_br_value;
+         rcd_data.p24_br_value := rcd_data.p24_br_value + rcd_work.p24_br_value;
+         rcd_data.p25_br_value := rcd_data.p25_br_value + rcd_work.p25_br_value;
+         rcd_data.p26_br_value := rcd_data.p26_br_value + rcd_work.p26_br_value;
+         rcd_data.p01_brm1_value := rcd_data.p01_brm1_value + rcd_work.p01_brm1_value;
+         rcd_data.p02_brm1_value := rcd_data.p02_brm1_value + rcd_work.p02_brm1_value;
+         rcd_data.p03_brm1_value := rcd_data.p03_brm1_value + rcd_work.p03_brm1_value;
+         rcd_data.p04_brm1_value := rcd_data.p04_brm1_value + rcd_work.p04_brm1_value;
+         rcd_data.p05_brm1_value := rcd_data.p05_brm1_value + rcd_work.p05_brm1_value;
+         rcd_data.p06_brm1_value := rcd_data.p06_brm1_value + rcd_work.p06_brm1_value;
+         rcd_data.p07_brm1_value := rcd_data.p07_brm1_value + rcd_work.p07_brm1_value;
+         rcd_data.p08_brm1_value := rcd_data.p08_brm1_value + rcd_work.p08_brm1_value;
+         rcd_data.p09_brm1_value := rcd_data.p09_brm1_value + rcd_work.p09_brm1_value;
+         rcd_data.p10_brm1_value := rcd_data.p10_brm1_value + rcd_work.p10_brm1_value;
+         rcd_data.p11_brm1_value := rcd_data.p11_brm1_value + rcd_work.p11_brm1_value;
+         rcd_data.p12_brm1_value := rcd_data.p12_brm1_value + rcd_work.p12_brm1_value;
+         rcd_data.p13_brm1_value := rcd_data.p13_brm1_value + rcd_work.p13_brm1_value;
+         rcd_data.p14_brm1_value := rcd_data.p14_brm1_value + rcd_work.p14_brm1_value;
+         rcd_data.p15_brm1_value := rcd_data.p15_brm1_value + rcd_work.p15_brm1_value;
+         rcd_data.p16_brm1_value := rcd_data.p16_brm1_value + rcd_work.p16_brm1_value;
+         rcd_data.p17_brm1_value := rcd_data.p17_brm1_value + rcd_work.p17_brm1_value;
+         rcd_data.p18_brm1_value := rcd_data.p18_brm1_value + rcd_work.p18_brm1_value;
+         rcd_data.p19_brm1_value := rcd_data.p19_brm1_value + rcd_work.p19_brm1_value;
+         rcd_data.p20_brm1_value := rcd_data.p20_brm1_value + rcd_work.p20_brm1_value;
+         rcd_data.p21_brm1_value := rcd_data.p21_brm1_value + rcd_work.p21_brm1_value;
+         rcd_data.p22_brm1_value := rcd_data.p22_brm1_value + rcd_work.p22_brm1_value;
+         rcd_data.p23_brm1_value := rcd_data.p23_brm1_value + rcd_work.p23_brm1_value;
+         rcd_data.p24_brm1_value := rcd_data.p24_brm1_value + rcd_work.p24_brm1_value;
+         rcd_data.p25_brm1_value := rcd_data.p25_brm1_value + rcd_work.p25_brm1_value;
+         rcd_data.p26_brm1_value := rcd_data.p26_brm1_value + rcd_work.p26_brm1_value;
+         rcd_data.p01_brm2_value := rcd_data.p01_brm2_value + rcd_work.p01_brm2_value;
+         rcd_data.p02_brm2_value := rcd_data.p02_brm2_value + rcd_work.p02_brm2_value;
+         rcd_data.p03_brm2_value := rcd_data.p03_brm2_value + rcd_work.p03_brm2_value;
+         rcd_data.p04_brm2_value := rcd_data.p04_brm2_value + rcd_work.p04_brm2_value;
+         rcd_data.p05_brm2_value := rcd_data.p05_brm2_value + rcd_work.p05_brm2_value;
+         rcd_data.p06_brm2_value := rcd_data.p06_brm2_value + rcd_work.p06_brm2_value;
+         rcd_data.p07_brm2_value := rcd_data.p07_brm2_value + rcd_work.p07_brm2_value;
+         rcd_data.p08_brm2_value := rcd_data.p08_brm2_value + rcd_work.p08_brm2_value;
+         rcd_data.p09_brm2_value := rcd_data.p09_brm2_value + rcd_work.p09_brm2_value;
+         rcd_data.p10_brm2_value := rcd_data.p10_brm2_value + rcd_work.p10_brm2_value;
+         rcd_data.p11_brm2_value := rcd_data.p11_brm2_value + rcd_work.p11_brm2_value;
+         rcd_data.p12_brm2_value := rcd_data.p12_brm2_value + rcd_work.p12_brm2_value;
+         rcd_data.p13_brm2_value := rcd_data.p13_brm2_value + rcd_work.p13_brm2_value;
+         rcd_data.p14_brm2_value := rcd_data.p14_brm2_value + rcd_work.p14_brm2_value;
+         rcd_data.p15_brm2_value := rcd_data.p15_brm2_value + rcd_work.p15_brm2_value;
+         rcd_data.p16_brm2_value := rcd_data.p16_brm2_value + rcd_work.p16_brm2_value;
+         rcd_data.p17_brm2_value := rcd_data.p17_brm2_value + rcd_work.p17_brm2_value;
+         rcd_data.p18_brm2_value := rcd_data.p18_brm2_value + rcd_work.p18_brm2_value;
+         rcd_data.p19_brm2_value := rcd_data.p19_brm2_value + rcd_work.p19_brm2_value;
+         rcd_data.p20_brm2_value := rcd_data.p20_brm2_value + rcd_work.p20_brm2_value;
+         rcd_data.p21_brm2_value := rcd_data.p21_brm2_value + rcd_work.p21_brm2_value;
+         rcd_data.p22_brm2_value := rcd_data.p22_brm2_value + rcd_work.p22_brm2_value;
+         rcd_data.p23_brm2_value := rcd_data.p23_brm2_value + rcd_work.p23_brm2_value;
+         rcd_data.p24_brm2_value := rcd_data.p24_brm2_value + rcd_work.p24_brm2_value;
+         rcd_data.p25_brm2_value := rcd_data.p25_brm2_value + rcd_work.p25_brm2_value;
+         rcd_data.p26_brm2_value := rcd_data.p26_brm2_value + rcd_work.p26_brm2_value;
+         rcd_data.p01_fcst_value := rcd_data.p01_fcst_value + rcd_work.p01_fcst_value;
+         rcd_data.p02_fcst_value := rcd_data.p02_fcst_value + rcd_work.p02_fcst_value;
+         rcd_data.p03_fcst_value := rcd_data.p03_fcst_value + rcd_work.p03_fcst_value;
+         rcd_data.p04_fcst_value := rcd_data.p04_fcst_value + rcd_work.p04_fcst_value;
+         rcd_data.p05_fcst_value := rcd_data.p05_fcst_value + rcd_work.p05_fcst_value;
+         rcd_data.p06_fcst_value := rcd_data.p06_fcst_value + rcd_work.p06_fcst_value;
+         rcd_data.p07_fcst_value := rcd_data.p07_fcst_value + rcd_work.p07_fcst_value;
+         rcd_data.p08_fcst_value := rcd_data.p08_fcst_value + rcd_work.p08_fcst_value;
+         rcd_data.p09_fcst_value := rcd_data.p09_fcst_value + rcd_work.p09_fcst_value;
+         rcd_data.p10_fcst_value := rcd_data.p10_fcst_value + rcd_work.p10_fcst_value;
+         rcd_data.p11_fcst_value := rcd_data.p11_fcst_value + rcd_work.p11_fcst_value;
+         rcd_data.p12_fcst_value := rcd_data.p12_fcst_value + rcd_work.p12_fcst_value;
+         rcd_data.p13_fcst_value := rcd_data.p13_fcst_value + rcd_work.p13_fcst_value;
+         rcd_data.p14_fcst_value := rcd_data.p14_fcst_value + rcd_work.p14_fcst_value;
+         rcd_data.p15_fcst_value := rcd_data.p15_fcst_value + rcd_work.p15_fcst_value;
+         rcd_data.p16_fcst_value := rcd_data.p16_fcst_value + rcd_work.p16_fcst_value;
+         rcd_data.p17_fcst_value := rcd_data.p17_fcst_value + rcd_work.p17_fcst_value;
+         rcd_data.p18_fcst_value := rcd_data.p18_fcst_value + rcd_work.p18_fcst_value;
+         rcd_data.p19_fcst_value := rcd_data.p19_fcst_value + rcd_work.p19_fcst_value;
+         rcd_data.p20_fcst_value := rcd_data.p20_fcst_value + rcd_work.p20_fcst_value;
+         rcd_data.p21_fcst_value := rcd_data.p21_fcst_value + rcd_work.p21_fcst_value;
+         rcd_data.p22_fcst_value := rcd_data.p22_fcst_value + rcd_work.p22_fcst_value;
+         rcd_data.p23_fcst_value := rcd_data.p23_fcst_value + rcd_work.p23_fcst_value;
+         rcd_data.p24_fcst_value := rcd_data.p24_fcst_value + rcd_work.p24_fcst_value;
+         rcd_data.p25_fcst_value := rcd_data.p25_fcst_value + rcd_work.p25_fcst_value;
+         rcd_data.p26_fcst_value := rcd_data.p26_fcst_value + rcd_work.p26_fcst_value;
+
+      end loop;
+      close csr_work;
+      if var_str_flag = false then
+         insert into dw_mart_sales01_det values rcd_data;
+      end if;
       commit;
 
       /*-*/
