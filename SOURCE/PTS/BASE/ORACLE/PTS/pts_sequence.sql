@@ -20,7 +20,7 @@
 /**/
 create sequence pts_hou_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -28,7 +28,7 @@ create sequence pts_hou_sequence
 
 create sequence pts_pet_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -36,7 +36,7 @@ create sequence pts_pet_sequence
 
 create sequence pts_sam_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -44,7 +44,7 @@ create sequence pts_sam_sequence
 
 create sequence pts_que_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -52,7 +52,7 @@ create sequence pts_que_sequence
 
 create sequence pts_stm_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -60,7 +60,7 @@ create sequence pts_stm_sequence
 
 create sequence pts_pty_sequence
    increment by 1
-   start with 9
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -68,7 +68,7 @@ create sequence pts_pty_sequence
 
 create sequence pts_int_sequence
    increment by 1
-   start with 25
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
@@ -76,7 +76,7 @@ create sequence pts_int_sequence
 
 create sequence pts_tes_sequence
    increment by 1
-   start with 100001
+   start with 1
    maxvalue 999999999999999
    minvalue 1
    nocycle
