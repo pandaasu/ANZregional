@@ -1,4 +1,4 @@
-create or replace package lics_time as
+CREATE OR REPLACE package LICS_APP.lics_time as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -22,7 +22,7 @@ create or replace package lics_time as
 
                 Mars day to be executed - can be *MARS01 to *MARS28
 
-       <HOUR> : Hour of day to execute in 24 hour time. 
+       <HOUR> : Hour of day to execute in 24 hour time.
                 e.g. 01:30am = 1.5, 08:00pm = 20, 07:15am = 7.25
 
        <TO TIMEZONE>   : OPTIONAL - timezone to return next date for (timezone must exist in V$TIMEZONE_NAMES)
@@ -35,7 +35,7 @@ create or replace package lics_time as
 
        Example Use : lics_time.schedule_next('*ALL',7)  -- return date every day of week at 7am for database timezone
                      lics_time.schedule_next('*ALL',7,'Asia/Hong_Kong') -- return date every day of week at 7am for Hong Kong timezone
-                     lics_time.schedule_next('*ALL',7,'Asia/Hong_Kong','US/Central') -- return date every day of week at 7am, 
+                     lics_time.schedule_next('*ALL',7,'Asia/Hong_Kong','US/Central') -- return date every day of week at 7am,
                                                                                         converting from US Central to Hong Kong timezone
 
 
@@ -54,30 +54,31 @@ create or replace package lics_time as
        Example Use : lics_time.get_tz_tim(sysdate, 'Asia/Hong_Kong')  -- return date in Hong Kong at sysdate of database timezone
                      lics_time.get_tz_tim(sysdate, 'Asia/Hong_Kong','US/Central')  -- return date in Hong Kong at sysdate of US/Central timezone
 
- YYYY/MM   Author               Description
- -------   ------               -----------
- 2006/07   Linden Glen          Created
- 2006/12   Steve Gregan         Added Mars day selection
- 2007/09   Steve Gregan         Added week day selection
- 2008/06   Steve Gregan         Fixed timezone conversion
+ YYYY/MM   Author               Version     Description
+ -------   ------               -------     -----------
+ 2006/07   Linden Glen          1.0         Created
+ 2006/12   Steve Gregan         1.1         Added Mars day selection
+ 2007/09   Steve Gregan         1.2         Added week day selection
+ 2008/06   Steve Gregan         1.3         Fixed timezone conversion
+ 2009/10   Ben Halicki          1.4         Fixed WEEKDAY scheduling issue
 
 *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   function schedule_next(par_day in varchar2, 
-                          par_hour in number, 
-                          par_to_timezone in varchar2 default null, 
+   function schedule_next(par_day in varchar2,
+                          par_hour in number,
+                          par_to_timezone in varchar2 default null,
                           par_from_timezone in varchar2 default null) return date;
-   function get_tz_time(par_date in date, 
-                        par_to_timezone in varchar2 default null, 
+   function get_tz_time(par_date in date,
+                        par_to_timezone in varchar2 default null,
                         par_from_timezone in varchar2 default null) return date;
 
 end lics_time;
 /
 
-create or replace package body lics_time as
+CREATE OR REPLACE package body LICS_APP.lics_time as
 
    /*-*/
    /* Private exceptions
@@ -88,9 +89,9 @@ create or replace package body lics_time as
    /***********************************************************/
    /* SCHEDULE_NEXT Function : Returns date of next occurance */
    /***********************************************************/
-   function schedule_next(par_day in varchar2, 
-                          par_hour in number, 
-                          par_to_timezone in varchar2 default null, 
+   function schedule_next(par_day in varchar2,
+                          par_hour in number,
+                          par_to_timezone in varchar2 default null,
                           par_from_timezone in varchar2 default null) return date is
 
       /*-*/
@@ -119,7 +120,7 @@ create or replace package body lics_time as
 
       /*-*/
       /* Validate parameters
-      /*-*/      
+      /*-*/
       case par_day
          when '*ALL' then var_day := '*ALL';
          when '*MON' then var_day := 'MONDAY';
@@ -168,7 +169,7 @@ create or replace package body lics_time as
 
       /*-*/
       /* Determine next date of next execution
-      /*-*/    
+      /*-*/
       if (par_day = '*ALL' or
           par_day = '*MON' or
           par_day = '*TUE' or
@@ -191,11 +192,11 @@ create or replace package body lics_time as
       elsif par_day = '*WEEKDAY' then
          var_date_01 := trunc(sysdate);
          var_date_02 := trunc(sysdate+1);
-         if (trim(to_char(var_date_01,'D')) = '1' or
+         if (trim(to_char(var_date_01,'D')) = '6' or
              trim(to_char(var_date_01,'D')) = '7') then
             var_date_01 := trunc(next_day(sysdate,'MONDAY'));
          end if;
-         if (trim(to_char(var_date_02,'D')) = '1' or
+         if (trim(to_char(var_date_02,'D')) = '6' or
              trim(to_char(var_date_02,'D')) = '7') then
             var_date_02 := trunc(next_day(sysdate,'MONDAY'));
          end if;
@@ -216,7 +217,7 @@ create or replace package body lics_time as
 
       /*-*/
       /* Determine next date of next execution
-      /*-*/    
+      /*-*/
       var_next_exec := get_tz_time(trunc(var_date_01)+numtodsinterval(par_hour,'HOUR'),par_to_timezone,par_from_timezone);
       if var_next_exec <= sysdate then
          var_next_exec := get_tz_time(trunc(var_date_02)+numtodsinterval(par_hour,'HOUR'),par_to_timezone,par_from_timezone);
@@ -235,8 +236,8 @@ create or replace package body lics_time as
    /**********************************/
    /* GET_TZ_TIME : Returns the time */
    /**********************************/
-   function get_tz_time(par_date in date, 
-                        par_to_timezone in varchar2 default null, 
+   function get_tz_time(par_date in date,
+                        par_to_timezone in varchar2 default null,
                         par_from_timezone in varchar2 default null) return date is
 
 
@@ -246,7 +247,7 @@ create or replace package body lics_time as
       cursor csr_timezone(par_tz varchar2) is
          select 'x'
          from V$TIMEZONE_NAMES
-         where tzname = par_tz; 
+         where tzname = par_tz;
       rec_timezone csr_timezone%rowtype;
 
       cursor csr_convert_tz is
@@ -262,7 +263,7 @@ create or replace package body lics_time as
 
       /*-*/
       /* Validate parameters
-      /*-*/      
+      /*-*/
       if (par_to_timezone is not null) then
          open csr_timezone(par_to_timezone);
          fetch csr_timezone into rec_timezone;
@@ -283,11 +284,11 @@ create or replace package body lics_time as
 
       /*-*/
       /* Determine date in timezone specified (converting from timezone if specified)
-      /*-*/    
+      /*-*/
       open csr_convert_tz;
       fetch csr_convert_tz into rec_convert_tz;
       if (csr_convert_tz%notfound) then
-         raise_application_error(-20000, 'Error occured retrieving timezone date conversion - ' || SQLERRM);   
+         raise_application_error(-20000, 'Error occured retrieving timezone date conversion - ' || SQLERRM);
       end if;
       close csr_convert_tz;
 
@@ -303,6 +304,3 @@ create or replace package body lics_time as
 
 end lics_time;
 /
-
-create or replace public synonym lics_time for lics_app.lics_time;
-grant execute on lics_time to public;
