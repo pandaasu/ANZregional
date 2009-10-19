@@ -86,6 +86,7 @@ PROCEDURE promotion_reference_flattening(
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   04/04/2007 Kris Lee           Created this procedure.
+    2.0   20/10/2009 Steve Gregan         Added new customer fields.
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -109,7 +110,7 @@ FUNCTION pmx_cust_flattening(
     REVISIONS:
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
-    1.0   04/04/2007 Kris Lee           Created this procedure.
+    1.0   04/04/2007 Kris Lee             Created this procedure.
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -1215,7 +1216,22 @@ FUNCTION pmx_cust_flattening(
         pmx_cust_name,
         cust_code,
         prmtbl_flag,
-        acct_mgr_key
+        acct_mgr_key,
+        major_ref_code,
+        major_ref_desc,
+        mid_ref_code,
+        mid_ref_desc,
+        minor_ref_code,
+        minor_ref_desc,
+        main_code,
+        main_name,
+        cust_level,
+        parent_cust_code,
+        parent_cust_desc,
+        parent_gl_cust_code,
+        parent_gl_cust_desc,
+        gl_code,
+        distbn_chnl_code
       FROM
         pmx_cust_dim
       MINUS
@@ -1225,7 +1241,22 @@ FUNCTION pmx_cust_flattening(
         cust_name as pmx_cust_name,
         cust_code,
         prom_flag as prmtbl_flag,
-        acct_mgr_key
+        acct_mgr_key,
+        major_ref_code,
+        major_ref_desc,
+        mid_ref_code,
+        mid_ref_desc,
+        minor_ref_code,
+        minor_ref_desc,
+        main_code,
+        main_name,
+        cust_level,
+        parent_cust_code,
+        parent_cust_desc,
+        parent_gl_cust_code,
+        parent_gl_cust_desc,
+        gl_code,
+        distbn_chnl_code
       FROM
         pmx_cust;
 
@@ -1277,7 +1308,22 @@ FUNCTION pmx_cust_flattening(
              cust_name as pmx_cust_name,
              cust_code,
              prom_flag as prmtbl_flag,
-             acct_mgr_key
+             acct_mgr_key,
+             major_ref_code,
+             major_ref_desc,
+             mid_ref_code,
+             mid_ref_desc,
+             minor_ref_code,
+             minor_ref_desc,
+             main_code,
+             main_name,
+             cust_level,
+             parent_cust_code,
+             parent_cust_desc,
+             parent_gl_cust_code,
+             parent_gl_cust_desc,
+             gl_code,
+             distbn_chnl_code
            FROM
              pmx_cust
            MINUS
@@ -1287,7 +1333,22 @@ FUNCTION pmx_cust_flattening(
              pmx_cust_name,
              cust_code,
              prmtbl_flag,
-             acct_mgr_key
+             acct_mgr_key,
+             major_ref_code,
+             major_ref_desc,
+             mid_ref_code,
+             mid_ref_desc,
+             minor_ref_code,
+             minor_ref_desc,
+             main_code,
+             main_name,
+             cust_level,
+             parent_cust_code,
+             parent_cust_desc,
+             parent_gl_cust_code,
+             parent_gl_cust_desc,
+             gl_code,
+             distbn_chnl_code
            FROM
              pmx_cust_dim ) t2
           ON (t1.company_code = t2.company_code
@@ -1297,7 +1358,22 @@ FUNCTION pmx_cust_flattening(
       UPDATE SET
         t1.pmx_cust_name = t2.pmx_cust_name,
         t1.prmtbl_flag = t2.prmtbl_flag,
-        t1.acct_mgr_key = t2.acct_mgr_key
+        t1.acct_mgr_key = t2.acct_mgr_key,
+        t1.major_ref_code = t2.major_ref_code,
+        t1.major_ref_desc = t2.major_ref_desc,
+        t1.mid_ref_code = t2.mid_ref_code,
+        t1.mid_ref_desc = t2.mid_ref_desc,
+        t1.minor_ref_code = t2.minor_ref_code,
+        t1.minor_ref_desc = t2.minor_ref_desc,
+        t1.main_code = t2.main_code,
+        t1.main_name = t2.main_name,
+        t1.cust_level = t2.cust_level,
+        t1.parent_cust_code = t2.parent_cust_code,
+        t1.parent_cust_desc = t2.parent_cust_desc,
+        t1.parent_gl_cust_code = t2.parent_gl_cust_code,
+        t1.parent_gl_cust_desc = t2.parent_gl_cust_desc,
+        t1.gl_code = t2.gl_code,
+        t1.distbn_chnl_code = t2.distbn_chnl_code
     WHEN NOT MATCHED THEN
       INSERT
         (t1.company_code,
@@ -1305,14 +1381,44 @@ FUNCTION pmx_cust_flattening(
          t1.cust_code,
          t1.pmx_cust_name,
          t1.prmtbl_flag,
-         t1.acct_mgr_key)
+         t1.acct_mgr_key,
+         t1.major_ref_code,
+         t1.major_ref_desc,
+         t1.mid_ref_code,
+         t1.mid_ref_desc,
+         t1.minor_ref_code,
+         t1.minor_ref_desc,
+         t1.main_code,
+         t1.main_name,
+         t1.cust_level,
+         t1.parent_cust_code,
+         t1.parent_cust_desc,
+         t1.parent_gl_cust_code,
+         t1.parent_gl_cust_desc,
+         t1.gl_code,
+         t1.distbn_chnl_code)
       VALUES
         (t2.company_code,
          t2.division_code,
          t2.cust_code,
          t2.pmx_cust_name,
          t2.prmtbl_flag,
-         t2.acct_mgr_key);
+         t2.acct_mgr_key,
+         t2.major_ref_code,
+         t2.major_ref_desc,
+         t2.mid_ref_code,
+         t2.mid_ref_desc,
+         t2.minor_ref_code,
+         t2.minor_ref_desc,
+         t2.main_code,
+         t2.main_name,
+         t2.cust_level,
+         t2.parent_cust_code,
+         t2.parent_cust_desc,
+         t2.parent_gl_cust_code,
+         t2.parent_gl_cust_desc,
+         t2.gl_code,
+         t2.distbn_chnl_code);
 
     v_upd_count := SQL%ROWCOUNT;
 
