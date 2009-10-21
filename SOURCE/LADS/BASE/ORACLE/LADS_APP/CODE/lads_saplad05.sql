@@ -1,6 +1,8 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
+CREATE OR REPLACE package LADS_APP.lads_saplad05 as
+
+/****************************************************************************************************/
+/* Package Definition 						                                                        */
+/****************************************************************************************************/
 /**
  System  : lads
  Package : lads_saplad05
@@ -11,16 +13,11 @@
  -----------
  Local Atlas Data Store - saplad05 - Inbound SAP Factory BOM Interface
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2009/02   Steve Gregan   Created
-
-*******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lads_saplad05 as
+ YYYY/MM   Author         Version   Description
+ -------   ------         -------   -----------
+ 2009/02   Steve Gregan   1.0       Created
+ 2009/10   Ben Halicki    1.1       Modified to mark manually deleted BOM alternatives with status '4'
+*****************************************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -35,7 +32,7 @@ end lads_saplad05;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lads_saplad05 as
+CREATE OR REPLACE package body LADS_APP.lads_saplad05 as
 
    /*-*/
    /* Private exceptions
@@ -220,12 +217,7 @@ create or replace package body lads_saplad05 as
          /* Clear the temporary table
          /*-*/
          delete from lads_bom_tmp;
-
-         /*-*/
-         /* Delete any redundant BOM headers
-         /*-*/
-         update lads_bom_hdr set lads_status = '4' where idoc_timestamp != rcd_lads_control.idoc_timestamp;
-         
+        
          /*-*/
          /* Commit the IDOC transaction
          /*-*/
@@ -401,7 +393,7 @@ create or replace package body lads_saplad05 as
       values
          (rcd_lads_bom_tmp.tab_name,
           rcd_lads_bom_tmp.tab_data);
-
+          
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -499,9 +491,53 @@ create or replace package body lads_saplad05 as
       /*-*/
       /* Clear the BOM data
       /*-*/
-      delete from lads_bom_det;
-      delete from lads_bom_hdr;
+      
+    -- set all deleted boms to status 4
+     update lads_bom_hdr
+     set lads_status = '4'
+     where (matnr, werks, stlal) in
+     (
+        select 
+            t01.matnr, 
+            t01.werks, 
+            t01.stlal
+        from   
+        (
+            select 
+                ltrim (matnr, '0') as matnr, 
+                werks, 
+                stlal
+            from
+                lads_bom_hdr
+        ) t01,
+        (
+            select
+                rtrim (ltrim (substr (tab_data, 11, 18), '0')) as matnr,
+                substr (tab_data, 29, 4) as werks,
+                ltrim (substr (tab_data, 9, 2), '0') as stlal
+            from
+                lads_bom_tmp
+            where
+                tab_name = 'MAST'
+        ) t02
+        where
+            t01.matnr = t02.matnr(+)
+            and t01.stlal = t02.stlal(+)
+            and t01.werks = t02.werks(+)
+            and t02.matnr is null
+            and t02.stlal is null
+            and t02.werks is null
+      );  
 
+       -- purge all detail rows with status 1 (exists in new SAP extract)
+      delete from lads_bom_det where (matnr, werks, stlal) in 
+      (
+        select matnr, werks, stlal from lads_bom_hdr where lads_status='1'
+      );
+       
+       -- purge all header rows with status 1 (exists in new SAP extract) 
+      delete from lads_bom_hdr where lads_status='1';
+       
       /*-*/
       /* Retrieve the BOM data
       /*-*/
