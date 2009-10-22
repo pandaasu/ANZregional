@@ -1,0 +1,2289 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<meta name=ProgId content=Excel.Sheet>
+<meta name=Generator content="Microsoft Excel 10">
+<link rel=File-List href="Household_Report_Sample.xls_files/filelist.xml">
+<link rel=Edit-Time-Data href="Household_Report_Sample.xls_files/editdata.mso">
+<link rel=OLE-Object-Data href="Household_Report_Sample.xls_files/oledata.mso">
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:LastAuthor> </o:LastAuthor>
+  <o:Created>2009-10-22T07:11:28Z</o:Created>
+  <o:LastSaved>2009-10-22T07:11:28Z</o:LastSaved>
+  <o:Version>10.2625</o:Version>
+ </o:DocumentProperties>
+ <o:OfficeDocumentSettings>
+  <o:DownloadComponents/>
+  <o:LocationOfComponents HRef="file:///D:\"/>
+ </o:OfficeDocumentSettings>
+</xml><![endif]-->
+<style>
+<!--table
+	{mso-displayed-decimal-separator:"\.";
+	mso-displayed-thousand-separator:"\,";}
+@page
+	{margin:1.0in .75in 1.0in .75in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;}
+tr
+	{mso-height-source:auto;}
+col
+	{mso-width-source:auto;}
+br
+	{mso-data-placement:same-cell;}
+.style0
+	{mso-number-format:General;
+	text-align:general;
+	vertical-align:bottom;
+	white-space:nowrap;
+	mso-rotate:0;
+	mso-background-source:auto;
+	mso-pattern:auto;
+	color:windowtext;
+	font-size:10.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Arial;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:none;
+	mso-protection:locked visible;
+	mso-style-name:Normal;
+	mso-style-id:0;}
+td
+	{mso-style-parent:style0;
+	padding-top:1px;
+	padding-right:1px;
+	padding-left:1px;
+	mso-ignore:padding;
+	color:windowtext;
+	font-size:10.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Arial;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-number-format:General;
+	text-align:general;
+	vertical-align:bottom;
+	border:none;
+	mso-background-source:auto;
+	mso-pattern:auto;
+	mso-protection:locked visible;
+	white-space:nowrap;
+	mso-rotate:0;}
+.xl24
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border:.5pt solid black;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl25
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border:.5pt solid black;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl26
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border:.5pt solid black;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl27
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:.5pt solid black;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl28
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl29
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:.5pt solid black;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl30
+	{mso-style-parent:style0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:.5pt solid black;
+	white-space:normal;}
+.xl31
+	{mso-style-parent:style0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	white-space:normal;}
+.xl32
+	{mso-style-parent:style0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:.5pt solid black;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	white-space:normal;}
+.xl33
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:.5pt solid black;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl34
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl35
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:.5pt solid black;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:#CCFFCC;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl36
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:.5pt solid black;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl37
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl38
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:left;
+	border-top:.5pt solid black;
+	border-right:.5pt solid black;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl39
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:.5pt solid black;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl40
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:none;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+.xl41
+	{mso-style-parent:style0;
+	color:black;
+	font-size:8.0pt;
+	font-weight:700;
+	font-family:Arial, sans-serif;
+	mso-font-charset:0;
+	text-align:center;
+	border-top:.5pt solid black;
+	border-right:.5pt solid black;
+	border-bottom:.5pt solid black;
+	border-left:none;
+	background:white;
+	mso-pattern:auto none;
+	white-space:normal;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>Household Report 2 </x:Name>
+    <x:WorksheetOptions>
+     <x:Print>
+      <x:ValidPrinterInfo/>
+      <x:HorizontalResolution>200</x:HorizontalResolution>
+      <x:VerticalResolution>200</x:VerticalResolution>
+      <x:NumberofCopies>0</x:NumberofCopies>
+     </x:Print>
+     <x:Selected/>
+     <x:DoNotDisplayGridlines/>
+     <x:Panes>
+      <x:Pane>
+       <x:Number>3</x:Number>
+       <x:RangeSelection>$A$1:$G$1</x:RangeSelection>
+      </x:Pane>
+     </x:Panes>
+     <x:ProtectContents>False</x:ProtectContents>
+     <x:ProtectObjects>False</x:ProtectObjects>
+     <x:ProtectScenarios>False</x:ProtectScenarios>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+  <x:WindowHeight>11250</x:WindowHeight>
+  <x:WindowWidth>20955</x:WindowWidth>
+  <x:WindowTopX>240</x:WindowTopX>
+  <x:WindowTopY>30</x:WindowTopY>
+  <x:ProtectStructure>False</x:ProtectStructure>
+  <x:ProtectWindows>False</x:ProtectWindows>
+ </x:ExcelWorkbook>
+</xml><![endif]-->
+</head>
+
+<body link=blue vlink=purple>
+
+<table x:str border=0 cellpadding=0 cellspacing=0 width=442 style='border-collapse:
+ collapse;table-layout:fixed;width:333pt'>
+ <col width=66 style='mso-width-source:userset;mso-width-alt:2413;width:50pt'>
+ <col width=43 style='mso-width-source:userset;mso-width-alt:1572;width:32pt'>
+ <col width=130 style='mso-width-source:userset;mso-width-alt:4754;width:98pt'>
+ <col width=37 style='mso-width-source:userset;mso-width-alt:1353;width:28pt'>
+ <col width=43 style='mso-width-source:userset;mso-width-alt:1572;width:32pt'>
+ <col width=62 style='mso-width-source:userset;mso-width-alt:2267;width:47pt'>
+ <col width=61 style='mso-width-source:userset;mso-width-alt:2230;width:46pt'>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl27 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>Area - (118) Albury 8 SDP EAST - Household
+  Register</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>13</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS PARKER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  5352</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>27 BANKSIA STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>WEST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>122667</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>BILLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>131548</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SAM</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147517</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>RABBITS</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Rabbit</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147518</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>RINGNECKS</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Bird</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147519</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>GALAH</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Bird</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147520</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JACK</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147521</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MOLLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>18</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS PARKER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  8857</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>32 GRANDVIEW TERRACE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>126646</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JEANIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>370</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS SIMMS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  1930</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>484 HANEL STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147185</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SUZIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>555</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MONICA O'CONNOR</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  5442</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>483 HANEL STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>139454</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>HUMPHREY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>144813</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JIMMY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147484</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>BASIL</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>783</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS ELIZABETH BARNES</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  6587</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>896 CLINTON AVENUE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>WEST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>127778</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>PIRATE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>60629</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MR J WEBSTER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  6597</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>329 CHAMBERS ST</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>145922</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SAM</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>61314</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS R DODD</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  8272</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>17 DOOGAN PLACE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>WEST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147946</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>DASH</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Large</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>149222</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>WILLOW</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>61699</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS N CLANCY</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  3191</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>142 BORELLA RD</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>148553</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SALSA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Toy</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>62099</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS A. BRIGGS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  3674</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>244 BUTT STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>145858</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SAMSON</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147892</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>BUDGIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Bird</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>63845</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>SHARON SELFE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041
+  4764</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>10 SUNRISE TERRACE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl39 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>NO PETS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>64100</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MRS E WILSON</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041
+  1196</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>279 BIMBADEEN AVE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>128392</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MISTY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147500</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>COCKATIELS</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Bird</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147501</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>HOLLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>64570</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>JANICE UNGER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  6484</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>507B COWPER STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>123504</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>RUDIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Toy</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>134817</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>NARLA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>134818</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SNOWBALL</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>69370</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>JUDY BYGRAVE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  7005</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>746 JONES STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>129525</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JESS</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>69799</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ROBERT &amp; CARLA WELDON</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  8529</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>335 DONOVAN STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>131044</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SPIKE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>69840</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>SANDRA REILLY</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041-4548</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>527 WILCOX STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>131231</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MAX</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>69932</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>CHRIS JONES</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041
+  2550</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>235 WIRRAWAY STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>131556</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MAX</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Large</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>70199</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>MS JULIE UNGER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  6484</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>507A COWPER STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>132027</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>RIPLEY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>132028</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JEMMA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>132030</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>PENELOPE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>136756</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SALLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Toy</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>144810</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>OLLIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>144811</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>LILLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>148378</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>HARRY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>71940</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>TONY BROOKS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  8184</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>10 CHELSEA COURT</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>WEST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Suspended</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>136514</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>JESS*******na**************</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Toy</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Suspended</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>71952</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>TIM SHIPARD</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041
+  2045</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>36 GRANDVIEW TERRACE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>136527</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SOXY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>136724</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SHIVA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Large</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>72376</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>SHARON INGLIS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6041
+  6701</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>55 GRANDVIEW TERRACE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl39 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>NO PETS</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>73144</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>CAROL WUEBBEN</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6023
+  1144</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>419 FLEMING STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>SOUTH ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>140421</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MOLLY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Toy</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74651</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>DAPHNE CLARKSON</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  4639</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>590 SCHUBACH STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147082</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>MINIE</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147983</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>BARNY</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74657</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>HELEN WOOLLEY</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6023
+  6680</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>20 JARRAH COURT</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>On Test</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147133</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>RABBIT</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Rabbit</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147134</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>BAXTER</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147135</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>GINGER
+  FLUFF</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Cat</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74678</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>JUDITH WINTER</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  2776</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>170 EASTERN CIRCUIT</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>147328</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SASHA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74775</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>KATH BOURKE</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>6021
+  5797</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>234 WALSH STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>EAST ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>149121</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>PRINCESS</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74817</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>IRENE RAGITSCH</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'
+  x:num>417276867</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>1/ 481 LAMPORT CRESCENT</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>149341</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>KIMBA</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Small</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td colspan=7 height=17 class=xl30 width=442 style='border-right:.5pt solid black;
+  height:12.75pt;width:333pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl24 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>Household</td>
+  <td colspan=5 class=xl33 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Contact Name/Address</td>
+  <td class=xl24 width=61 style='border-top:none;border-left:none;width:46pt'>Phone</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt' x:num>74840</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>RACHEL WALTON</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'
+  x:num>417230518</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>571 ATKINS STREET</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>SOUTH ALBURY 2640</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td colspan=5 class=xl36 width=315 style='border-right:.5pt solid black;
+  border-left:none;width:237pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl26 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Pet</td>
+  <td class=xl26 width=130 style='border-top:none;border-left:none;width:98pt'>Name</td>
+  <td class=xl26 width=37 style='border-top:none;border-left:none;width:28pt'>Type</td>
+  <td class=xl26 width=43 style='border-top:none;border-left:none;width:32pt'>Size</td>
+  <td class=xl26 width=62 style='border-top:none;border-left:none;width:47pt'>Status</td>
+  <td class=xl26 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <tr height=17 style='height:12.75pt'>
+  <td height=17 class=xl25 width=66 style='height:12.75pt;border-top:none;
+  width:50pt'>&nbsp;</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'
+  x:num>149443</td>
+  <td class=xl25 width=130 style='border-top:none;border-left:none;width:98pt'>SOUL</td>
+  <td class=xl25 width=37 style='border-top:none;border-left:none;width:28pt'>Dog</td>
+  <td class=xl25 width=43 style='border-top:none;border-left:none;width:32pt'>Medium</td>
+  <td class=xl25 width=62 style='border-top:none;border-left:none;width:47pt'>Available</td>
+  <td class=xl25 width=61 style='border-top:none;border-left:none;width:46pt'>&nbsp;</td>
+ </tr>
+ <![if supportMisalignedColumns]>
+ <tr height=0 style='display:none'>
+  <td width=66 style='width:50pt'></td>
+  <td width=43 style='width:32pt'></td>
+  <td width=130 style='width:98pt'></td>
+  <td width=37 style='width:28pt'></td>
+  <td width=43 style='width:32pt'></td>
+  <td width=62 style='width:47pt'></td>
+  <td width=61 style='width:46pt'></td>
+ </tr>
+ <![endif]>
+</table>
+
+</body>
+
+</html>

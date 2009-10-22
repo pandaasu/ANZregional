@@ -1,0 +1,721 @@
+Test,Pet,Sample,Sequence,Day,Offered Qty,Q1080,Q1081,Q1082,Q1083,Q1266,Weight Eaten,% Eaten,Area,Pet Type,Pet breed,Pet size
+4388,123130,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Doberman,Large
+4388,123130,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Doberman,Large
+4388,123130,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Doberman,Large
+4388,123130,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Doberman,Large
+4388,124868,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Silky Terrier,Small
+4388,124868,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Silky Terrier,Small
+4388,124868,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Silky Terrier,Small
+4388,124868,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Silky Terrier,Small
+4388,127673,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Terrier,Small
+4388,127673,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Terrier,Small
+4388,127673,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Terrier,Small
+4388,127673,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Australian Terrier,Small
+4388,131241,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Dachshund,Small
+4388,131241,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Dachshund,Small
+4388,131241,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Dachshund,Small
+4388,131241,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Dachshund,Small
+4388,139953,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Beagle,Medium
+4388,139953,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Beagle,Medium
+4388,139953,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Beagle,Medium
+4388,139953,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Beagle,Medium
+4388,141431,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Small,Medium
+4388,141431,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Small,Medium
+4388,141431,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Small,Medium
+4388,141431,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Small,Medium
+4388,143350,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,143350,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,143350,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,143350,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,143925,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Shih Tzu,Toy
+4388,143925,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Shih Tzu,Toy
+4388,143925,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Shih Tzu,Toy
+4388,143925,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Shih Tzu,Toy
+4388,144225,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Labrador,Large
+4388,144225,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Labrador,Large
+4388,144225,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Labrador,Large
+4388,144225,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Labrador,Large
+4388,145986,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,145986,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,145986,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,145986,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,147192,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,147192,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,147192,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,147192,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,148518,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,148518,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,148518,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,148518,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Jack Russel,Small
+4388,148527,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Medium,Medium
+4388,148527,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Medium,Medium
+4388,148527,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Medium,Medium
+4388,148527,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Other - Medium,Medium
+4388,148859,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Alsation / German Sheperd,Large
+4388,148859,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Alsation / German Sheperd,Large
+4388,148859,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Alsation / German Sheperd,Large
+4388,148859,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Alsation / German Sheperd,Large
+4388,149331,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Aust Kelpie,Medium
+4388,149331,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Aust Kelpie,Medium
+4388,149331,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Aust Kelpie,Medium
+4388,149331,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Aust Kelpie,Medium
+4388,149348,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,149348,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,149348,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,149348,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 6 SDP NTH,Dog,Bull Terrier Staffordshire,Medium
+4388,123504,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Chihuahua,Toy
+4388,123504,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Chihuahua,Toy
+4388,123504,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Chihuahua,Toy
+4388,123504,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Chihuahua,Toy
+4388,127778,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Terrier,Small
+4388,127778,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Terrier,Small
+4388,127778,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Terrier,Small
+4388,127778,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Terrier,Small
+4388,129525,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,129525,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,129525,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,129525,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,131044,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Australian Silky Terrier,Small
+4388,131044,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Australian Silky Terrier,Small
+4388,131044,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Australian Silky Terrier,Small
+4388,131044,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Australian Silky Terrier,Small
+4388,131556,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Large
+4388,131556,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Large
+4388,131556,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Large
+4388,131556,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Large
+4388,136724,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Large,Large
+4388,136724,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Large,Large
+4388,136724,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Large,Large
+4388,136724,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Large,Large
+4388,136756,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Fox Terrier,Toy
+4388,136756,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Fox Terrier,Toy
+4388,136756,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Fox Terrier,Toy
+4388,136756,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Fox Terrier,Toy
+4388,139454,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Aust Kelpie,Medium
+4388,139454,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Aust Kelpie,Medium
+4388,139454,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Aust Kelpie,Medium
+4388,139454,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Aust Kelpie,Medium
+4388,145858,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Medium,Medium
+4388,145858,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Medium,Medium
+4388,145858,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Medium,Medium
+4388,145858,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Other - Medium,Medium
+4388,145922,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,145922,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,145922,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,145922,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,147328,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,147328,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,147328,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,147328,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,147501,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147501,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147501,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147501,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147520,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147520,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147520,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,147520,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Jack Russel,Small
+4388,149121,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Small
+4388,149121,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Small
+4388,149121,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Small
+4388,149121,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,,Small
+4388,149341,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,149341,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,149341,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,149341,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Maltese Terrier,Small
+4388,149443,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Bull Terrier Staffordshire,Medium
+4388,149443,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Bull Terrier Staffordshire,Medium
+4388,149443,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Bull Terrier Staffordshire,Medium
+4388,149443,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Albury 8 SDP EAST,Dog,Bull Terrier Staffordshire,Medium
+4388,122999,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,122999,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,122999,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,122999,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,126604,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Small
+4388,126604,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Small
+4388,126604,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Small
+4388,126604,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Small
+4388,128024,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Toy
+4388,128024,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Toy
+4388,128024,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Toy
+4388,128024,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,,Toy
+4388,128265,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,128265,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,128265,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,128265,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,130862,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,130862,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,130862,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,130862,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,135670,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Labrador,Large
+4388,135670,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Labrador,Large
+4388,135670,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Labrador,Large
+4388,135670,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Labrador,Large
+4388,135673,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Toy,Toy
+4388,135673,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Toy,Toy
+4388,135673,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Toy,Toy
+4388,135673,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Toy,Toy
+4388,141241,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Large,Large
+4388,141241,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Large,Large
+4388,141241,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Large,Large
+4388,141241,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Large,Large
+4388,141267,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Medium,Medium
+4388,141267,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Medium,Medium
+4388,141267,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Medium,Medium
+4388,141267,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Medium,Medium
+4388,141406,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Great Dane,Large
+4388,141406,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Great Dane,Large
+4388,141406,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Great Dane,Large
+4388,141406,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Great Dane,Large
+4388,142977,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,142977,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,142977,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,142977,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Aust Cattle Dog,Medium
+4388,146413,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,146413,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,146413,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,146413,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,147660,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Small,Small
+4388,147660,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Small,Small
+4388,147660,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Small,Small
+4388,147660,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Other - Small,Small
+4388,148506,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,148506,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,148506,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,148506,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Jack Russel,Small
+4388,148927,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,148927,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,148927,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,148927,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,148941,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Dalmation,Medium
+4388,148941,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Dalmation,Medium
+4388,148941,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Dalmation,Medium
+4388,148941,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Dalmation,Medium
+4388,149130,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,149130,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,149130,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,149130,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wagga Wagga 6 SDP Wendy,Dog,Shih Tzu,Small
+4388,124341,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,124341,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,124341,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,124341,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,125557,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,125557,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,125557,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,125557,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Toy
+4388,127738,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Jack Russel,Small
+4388,127738,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Jack Russel,Small
+4388,127738,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Jack Russel,Small
+4388,127738,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Jack Russel,Small
+4388,136764,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,136764,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,136764,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,136764,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,140818,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Small
+4388,140818,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Small
+4388,140818,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Small
+4388,140818,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Small
+4388,140821,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Boxer,Medium
+4388,140821,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Boxer,Medium
+4388,140821,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Boxer,Medium
+4388,140821,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Boxer,Medium
+4388,141734,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Medium
+4388,141734,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Medium
+4388,141734,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Medium
+4388,141734,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Fox Terrier,Medium
+4388,145926,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel King Charles,Medium
+4388,145926,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel King Charles,Medium
+4388,145926,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel King Charles,Medium
+4388,145926,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel King Charles,Medium
+4388,146376,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,146376,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,146376,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,146376,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,146653,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Large
+4388,146653,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Large
+4388,146653,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Large
+4388,146653,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Large
+4388,147123,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel Cocker,Medium
+4388,147123,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel Cocker,Medium
+4388,147123,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel Cocker,Medium
+4388,147123,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Spaniel Cocker,Medium
+4388,147548,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,147548,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,147548,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,147548,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Labrador,Large
+4388,148061,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,148061,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,148061,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,148061,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Maltese Terrier,Small
+4388,149338,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Medium
+4388,149338,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Medium
+4388,149338,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Medium
+4388,149338,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,Retriever,Medium
+4388,149448,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,,Medium
+4388,149448,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,,Medium
+4388,149448,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,,Medium
+4388,149448,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 4 SDP Ros,Dog,,Medium
+4388,125393,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,125393,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,125393,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,125393,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,130791,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,130791,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,130791,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,130791,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,137696,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Retriever,Medium
+4388,137696,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Retriever,Medium
+4388,137696,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Retriever,Medium
+4388,137696,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Retriever,Medium
+4388,137905,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,137905,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,137905,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,137905,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,139809,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,139809,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,139809,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,139809,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,140317,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Terrier,Medium
+4388,140317,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Terrier,Medium
+4388,140317,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Terrier,Medium
+4388,140317,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Terrier,Medium
+4388,142227,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,142227,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,142227,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,142227,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Medium
+4388,142605,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Large
+4388,142605,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Large
+4388,142605,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Large
+4388,142605,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Border Collie,Large
+4388,142833,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Miniature),Small
+4388,142833,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Miniature),Small
+4388,142833,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Miniature),Small
+4388,142833,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Miniature),Small
+4388,143794,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Toy
+4388,143794,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Toy
+4388,143794,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Toy
+4388,143794,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Toy
+4388,144055,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,144055,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,144055,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,144055,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,144296,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Alsation / German Sheperd,Large
+4388,144296,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Alsation / German Sheperd,Large
+4388,144296,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Alsation / German Sheperd,Large
+4388,144296,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Alsation / German Sheperd,Large
+4388,145021,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Toy),Toy
+4388,145021,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Toy),Toy
+4388,145021,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Toy),Toy
+4388,145021,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Poodle (Toy),Toy
+4388,145618,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,145618,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,145618,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,145618,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Australian Terrier,Small
+4388,145622,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Maltese Terrier,Small
+4388,145622,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Maltese Terrier,Small
+4388,145622,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Maltese Terrier,Small
+4388,145622,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Maltese Terrier,Small
+4388,146640,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,146640,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,146640,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,146640,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Bull Terrier Staffordshire,Medium
+4388,147089,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,147089,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,147089,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,147089,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Jack Russel,Small
+4388,147169,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,German Pointer,Medium
+4388,147169,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,German Pointer,Medium
+4388,147169,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,German Pointer,Medium
+4388,147169,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,German Pointer,Medium
+4388,147234,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Medium
+4388,147234,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Medium
+4388,147234,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Medium
+4388,147234,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Spaniel Cocker,Medium
+4388,148312,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,148312,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,148312,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,148312,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,149122,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,149122,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,149122,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,149122,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Shih Tzu,Small
+4388,149203,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Papillon,Small
+4388,149203,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Papillon,Small
+4388,149203,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Papillon,Small
+4388,149203,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 6 SDP Jean,Dog,Papillon,Small
+4388,6274,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Jack Russel,Toy
+4388,6274,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Jack Russel,Toy
+4388,6274,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Jack Russel,Toy
+4388,6274,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Jack Russel,Toy
+4388,113138,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Chihuahua,Small
+4388,113138,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Chihuahua,Small
+4388,113138,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Chihuahua,Small
+4388,113138,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Chihuahua,Small
+4388,123474,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Australian Silky Terrier,Small
+4388,123474,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Australian Silky Terrier,Small
+4388,123474,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Australian Silky Terrier,Small
+4388,123474,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Australian Silky Terrier,Small
+4388,127341,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,127341,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,127341,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,127341,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,128542,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,128542,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,128542,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,128542,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,133638,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Fox Terrier,Toy
+4388,133638,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Fox Terrier,Toy
+4388,133638,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Fox Terrier,Toy
+4388,133638,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Fox Terrier,Toy
+4388,136261,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Collie,Large
+4388,136261,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Collie,Large
+4388,136261,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Collie,Large
+4388,136261,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Collie,Large
+4388,136900,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,136900,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,136900,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,136900,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,137645,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Greyhound/Whippet,Large
+4388,137645,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Greyhound/Whippet,Large
+4388,137645,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Greyhound/Whippet,Large
+4388,137645,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Greyhound/Whippet,Large
+4388,140625,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Pomeranium,Small
+4388,140625,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Pomeranium,Small
+4388,140625,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Pomeranium,Small
+4388,140625,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Pomeranium,Small
+4388,141181,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Aust Kelpie,Medium
+4388,141181,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Aust Kelpie,Medium
+4388,141181,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Aust Kelpie,Medium
+4388,141181,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Aust Kelpie,Medium
+4388,141212,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,141212,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,141212,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,141212,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,,Medium
+4388,141702,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Other - Medium,Medium
+4388,141702,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Other - Medium,Medium
+4388,141702,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Other - Medium,Medium
+4388,141702,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Other - Medium,Medium
+4388,143951,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Shih Tzu,Toy
+4388,143951,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Shih Tzu,Toy
+4388,143951,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Shih Tzu,Toy
+4388,143951,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Shih Tzu,Toy
+4388,145625,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Retriever,Large
+4388,145625,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Retriever,Large
+4388,145625,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Retriever,Large
+4388,145625,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Retriever,Large
+4388,146828,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,146828,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,146828,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,146828,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Toy
+4388,147335,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Small
+4388,147335,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Small
+4388,147335,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Small
+4388,147335,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Maltese Terrier,Small
+4388,147934,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,147934,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,147934,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,147934,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wodonga 8 SDP Jenny,Dog,Border Collie,Medium
+4388,121790,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Kelpie,Medium
+4388,121790,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Kelpie,Medium
+4388,121790,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Kelpie,Medium
+4388,121790,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Kelpie,Medium
+4388,132061,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Cattle Dog,Large
+4388,132061,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Cattle Dog,Large
+4388,132061,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Cattle Dog,Large
+4388,132061,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Aust Cattle Dog,Large
+4388,133750,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Other - Small,Small
+4388,133750,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Other - Small,Small
+4388,133750,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Other - Small,Small
+4388,133750,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Other - Small,Small
+4388,137395,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Small
+4388,137395,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Small
+4388,137395,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Small
+4388,137395,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Small
+4388,137413,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,137413,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,137413,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,137413,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,140369,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,140369,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,140369,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,140369,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,141328,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Chihuahua,Toy
+4388,141328,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Chihuahua,Toy
+4388,141328,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Chihuahua,Toy
+4388,141328,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Chihuahua,Toy
+4388,142261,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,West Highland White Terrier,Small
+4388,142261,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,West Highland White Terrier,Small
+4388,142261,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,West Highland White Terrier,Small
+4388,142261,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,West Highland White Terrier,Small
+4388,145342,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,145342,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,145342,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,145342,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,145355,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Border Collie,Large
+4388,145355,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Border Collie,Large
+4388,145355,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Border Collie,Large
+4388,145355,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Border Collie,Large
+4388,146637,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,146637,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,146637,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,146637,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,147250,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,147250,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,147250,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,147250,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,147718,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,147718,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,147718,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,147718,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,147771,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,147771,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,147771,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,147771,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Maltese Terrier,Toy
+4388,148143,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Siberian Husky,Large
+4388,148143,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Siberian Husky,Large
+4388,148143,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Siberian Husky,Large
+4388,148143,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Siberian Husky,Large
+4388,148410,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,,Medium
+4388,148410,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,,Medium
+4388,148410,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,,Medium
+4388,148410,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,,Medium
+4388,148720,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,148720,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,148720,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,148720,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Shih Tzu,Small
+4388,149310,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,149310,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,149310,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,149310,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Jack Russel,Small
+4388,149373,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Bull Terrier Staffordshire,Medium
+4388,149373,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Bull Terrier Staffordshire,Medium
+4388,149373,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Bull Terrier Staffordshire,Medium
+4388,149373,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Bull Terrier Staffordshire,Medium
+4388,149385,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,149385,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,149385,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,149385,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 6 SDP Dianne,Dog,Pomeranium,Toy
+4388,123995,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Siberian Husky,Large
+4388,123995,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Siberian Husky,Large
+4388,123995,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Siberian Husky,Large
+4388,123995,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Siberian Husky,Large
+4388,129314,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,129314,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,129314,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,129314,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,136483,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Small,Small
+4388,136483,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Small,Small
+4388,136483,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Small,Small
+4388,136483,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Small,Small
+4388,137060,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Australian Silky Terrier,Toy
+4388,137060,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Australian Silky Terrier,Toy
+4388,137060,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Australian Silky Terrier,Toy
+4388,137060,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Australian Silky Terrier,Toy
+4388,140415,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Maltese Terrier,Small
+4388,140415,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Maltese Terrier,Small
+4388,140415,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Maltese Terrier,Small
+4388,140415,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Maltese Terrier,Small
+4388,140570,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Terrier,Small
+4388,140570,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Terrier,Small
+4388,140570,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Terrier,Small
+4388,140570,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Terrier,Small
+4388,142532,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Labrador,Large
+4388,142532,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Labrador,Large
+4388,142532,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Labrador,Large
+4388,142532,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Labrador,Large
+4388,143998,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Aust Cattle Dog,Medium
+4388,143998,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Aust Cattle Dog,Medium
+4388,143998,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Aust Cattle Dog,Medium
+4388,143998,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Aust Cattle Dog,Medium
+4388,145819,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,,Large
+4388,145819,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,,Large
+4388,145819,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,,Large
+4388,145819,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,,Large
+4388,146459,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Medium,Small
+4388,146459,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Medium,Small
+4388,146459,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Medium,Small
+4388,146459,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Medium,Small
+4388,146460,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,146460,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,146460,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,146460,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,146464,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Toy,Toy
+4388,146464,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Toy,Toy
+4388,146464,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Toy,Toy
+4388,146464,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Other - Toy,Toy
+4388,147255,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Fox Terrier,Toy
+4388,147255,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Fox Terrier,Toy
+4388,147255,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Fox Terrier,Toy
+4388,147255,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Fox Terrier,Toy
+4388,147256,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,147256,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,147256,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,147256,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Jack Russel,Small
+4388,148200,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Alsation / German Sheperd,Large
+4388,148200,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Alsation / German Sheperd,Large
+4388,148200,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Alsation / German Sheperd,Large
+4388,148200,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Wangaratta 8 SDP Joan,Dog,Alsation / German Sheperd,Large
+4388,123146,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,123146,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,123146,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,123146,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,125564,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Medium,Medium
+4388,125564,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Medium,Medium
+4388,125564,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Medium,Medium
+4388,125564,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Medium,Medium
+4388,133777,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Fox Terrier,Small
+4388,133777,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Fox Terrier,Small
+4388,133777,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Fox Terrier,Small
+4388,133777,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Fox Terrier,Small
+4388,135498,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,135498,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,135498,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,135498,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,135802,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Small,Small
+4388,135802,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Small,Small
+4388,135802,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Small,Small
+4388,135802,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Other - Small,Small
+4388,136123,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,136123,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,136123,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,136123,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,139238,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Australian Terrier,Small
+4388,139238,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Australian Terrier,Small
+4388,139238,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Australian Terrier,Small
+4388,139238,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Australian Terrier,Small
+4388,144465,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,,Medium
+4388,144465,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,,Medium
+4388,144465,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,,Medium
+4388,144465,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,,Medium
+4388,146457,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,146457,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,146457,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,146457,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Jack Russel,Small
+4388,148589,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,148589,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,148589,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,148589,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Bendigo 8 SDP,Dog,Shih Tzu,Small
+4388,127841,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,127841,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,127841,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,127841,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,129624,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,129624,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,129624,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,129624,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,129727,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,129727,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,129727,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,129727,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,139430,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,139430,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,139430,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,139430,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Other - Medium,Medium
+4388,140557,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Pomeranium,Toy
+4388,140557,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Pomeranium,Toy
+4388,140557,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Pomeranium,Toy
+4388,140557,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Pomeranium,Toy
+4388,145018,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Fox Terrier,Small
+4388,145018,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Fox Terrier,Small
+4388,145018,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Fox Terrier,Small
+4388,145018,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Fox Terrier,Small
+4388,149050,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,149050,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,149050,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,149050,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Jack Russel,Small
+4388,149150,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Small
+4388,149150,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Small
+4388,149150,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Small
+4388,149150,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Small
+4388,149151,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Toy
+4388,149151,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Toy
+4388,149151,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Toy
+4388,149151,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Maltese Terrier,Toy
+4388,149393,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,149393,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,149393,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,149393,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Boxer,Medium
+4388,149454,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Spaniel King Charles,Toy
+4388,149454,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Spaniel King Charles,Toy
+4388,149454,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Spaniel King Charles,Toy
+4388,149454,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Spaniel King Charles,Toy
+4388,149455,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Poodle (Miniature),Small
+4388,149455,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Poodle (Miniature),Small
+4388,149455,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Poodle (Miniature),Small
+4388,149455,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Poodle (Miniature),Small
+4388,149460,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Shih Tzu,Small
+4388,149460,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Shih Tzu,Small
+4388,149460,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Shih Tzu,Small
+4388,149460,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 6 SDP Judy,Dog,Shih Tzu,Small
+4388,120233,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Terrier,Small
+4388,120233,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Terrier,Small
+4388,120233,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Terrier,Small
+4388,120233,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Terrier,Small
+4388,126518,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,126518,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,126518,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,126518,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,127957,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Medium,Medium
+4388,127957,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Medium,Medium
+4388,127957,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Medium,Medium
+4388,127957,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Medium,Medium
+4388,131478,TR1,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,131478,TR2,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,131478,TR2,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,131478,TR1,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,135734,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Toy
+4388,135734,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Toy
+4388,135734,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Toy
+4388,135734,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Toy
+4388,136668,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Alsation / German Sheperd,Large
+4388,136668,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Alsation / German Sheperd,Large
+4388,136668,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Alsation / German Sheperd,Large
+4388,136668,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Alsation / German Sheperd,Large
+4388,141447,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,141447,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,141447,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,141447,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,142727,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Border Collie,Medium
+4388,142727,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Border Collie,Medium
+4388,142727,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Border Collie,Medium
+4388,142727,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Border Collie,Medium
+4388,142930,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,142930,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,142930,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,142930,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Jack Russel,Small
+4388,145158,TR1,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Chihuahua,Toy
+4388,145158,TR2,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Chihuahua,Toy
+4388,145158,TR2,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Chihuahua,Toy
+4388,145158,TR1,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Chihuahua,Toy
+4388,146477,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Large,Large
+4388,146477,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Large,Large
+4388,146477,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Large,Large
+4388,146477,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Other - Large,Large
+4388,148511,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,148511,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,148511,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,148511,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Pomeranium,Toy
+4388,148779,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Bull Terrier Staffordshire,Medium
+4388,148779,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Bull Terrier Staffordshire,Medium
+4388,148779,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Bull Terrier Staffordshire,Medium
+4388,148779,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Bull Terrier Staffordshire,Medium
+4388,149198,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Beagle,Medium
+4388,149198,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Beagle,Medium
+4388,149198,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Beagle,Medium
+4388,149198,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Beagle,Medium
+4388,149261,TR1,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149261,TR2,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149261,TR2,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149261,TR1,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149456,TR2,1,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149456,TR1,2,1,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149456,TR1,1,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149456,TR2,2,2,3,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Labrador,Large
+4388,149458,TR2,1,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,149458,TR1,2,1,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,149458,TR1,1,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,149458,TR2,2,2,2,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Spaniel Cocker,Medium
+4388,149459,TR2,1,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Maltese Terrier,Small
+4388,149459,TR1,2,1,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Maltese Terrier,Small
+4388,149459,TR1,1,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Maltese Terrier,Small
+4388,149459,TR2,2,2,1,n/a,n/a,n/a,n/a,n/a,n/a,n/a,Ballarat 8 SDP Julie,Dog,Maltese Terrier,Small
