@@ -35,7 +35,7 @@ comment on column pts.pts_que_response.qre_res_text is 'Question response text';
 /* Primary Key Constraint
 /**/
 alter table pts.pts_que_response
-   add constraint pts_que_response_pk primary key (qre_que_code, qre_res_seqn);
+   add constraint pts_que_response_pk primary key (qre_que_code, qre_res_code);
 
 /**/
 /* Authority

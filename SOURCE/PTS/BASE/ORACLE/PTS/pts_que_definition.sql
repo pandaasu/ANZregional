@@ -53,7 +53,7 @@ alter table pts.pts_que_definition
 /* Indexes
 /**/
 create index pts_que_definition_ix01 on pts.pts_que_definition
-   (qde_que_group, qde_que_code);
+   (qde_que_type, qde_que_code);
 
 /**/
 /* Authority
