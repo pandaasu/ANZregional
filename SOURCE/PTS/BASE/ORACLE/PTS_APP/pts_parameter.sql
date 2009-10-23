@@ -27,7 +27,7 @@ create or replace package pts_app.pts_parameter as
    /*-*/
    system_code constant varchar2(10) := 'PTS';
    system_unit constant varchar2(10) := 'WODONGA';
-   system_environment constant varchar2(20) := 'TEST';
+   system_environment constant varchar2(20) := 'PROD';
 
 end pts_parameter;
 /  
