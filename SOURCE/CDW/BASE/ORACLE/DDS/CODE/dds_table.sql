@@ -17,6 +17,7 @@ create or replace package dds_table as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2007/08   Steve Gregan   Created
+    2009/10   Steve Gregan   Added analyse table and index routines
 
    *******************************************************************************/
 
@@ -24,6 +25,7 @@ create or replace package dds_table as
    /* Public declarations
    /*-*/
    procedure truncate(par_table in varchar2);
+   procedure analyze_table(par_table in varchar2);
 
 end dds_table;
 /
@@ -52,6 +54,30 @@ create or replace package body dds_table as
    /* End routine */
    /*-------------*/
    end truncate;
+
+   /*****************************************************/
+   /* This procedure performs the analyze table routine */
+   /*****************************************************/
+   procedure analyze_table(par_table in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Analyse table statistics
+      /*-*/
+      dbms_stats.gather_table_stats(tabname => par_table,
+                                    ownname => 'DDS',
+                                    estimate_percent => dbms_stats.auto_sample_size,
+                                    method_opt => 'FOR ALL COLUMNS SIZE AUTO',
+                                    cascade => true);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end analyze_table;
 
 end dds_table;
 /
