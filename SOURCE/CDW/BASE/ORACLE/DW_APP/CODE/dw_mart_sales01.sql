@@ -1298,6 +1298,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_end_yyyypp number(6,0);
       var_ytp_str_yyyypp number(6,0);
       var_ytp_end_yyyypp number(6,0);
+      var_ym1_end_yyyypp number(6,0);
+      var_ym2_end_yyyypp number(6,0);
       var_mat_str_yyyypp number(6,0);
       var_mat_end_yyyypp number(6,0);
       var_cyr_str_yyyypp number(6,0);
@@ -1378,6 +1380,12 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ytp_end_yyyypp then t01.billed_qty_base_uom end),0) as ytp_qty,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ytp_end_yyyypp then t01.billed_gsv_aud end),0) as ytp_gsv,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ytp_end_yyyypp then t01.billed_qty_net_tonnes end),0) as ytp_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym1_end_yyyypp then t01.billed_qty_base_uom end),0) as ym1_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym1_end_yyyypp then t01.billed_gsv_aud end),0) as ym1_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym1_end_yyyypp then t01.billed_qty_net_tonnes end),0) as ym1_ton,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym2_end_yyyypp then t01.billed_qty_base_uom end),0) as ym2_qty,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym2_end_yyyypp then t01.billed_gsv_aud end),0) as ym2_gsv,
+                nvl(sum(case when t01.billing_eff_yyyypp >= var_ytp_str_yyyypp and t01.billing_eff_yyyypp <= var_ym2_end_yyyypp then t01.billed_qty_net_tonnes end),0) as ym2_ton,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_qty_base_uom end),0) as mat_qty,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_gsv_aud end),0) as mat_gsv,
                 nvl(sum(case when t01.billing_eff_yyyypp >= var_mat_str_yyyypp and t01.billing_eff_yyyypp <= var_mat_end_yyyypp then t01.billed_qty_net_tonnes end),0) as mat_ton,
@@ -1651,6 +1659,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) - 1) * 100) + 13;
       var_ytp_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
       var_ytp_end_yyyypp := var_current_yyyypp - 1;
+      var_ym1_end_yyyypp := var_current_yyyypp - 2;
+      var_ym2_end_yyyypp := var_current_yyyypp - 3;
       var_mat_str_yyyypp := var_current_yyyypp - 100;
       var_mat_end_yyyypp := var_current_yyyypp - 1;
       var_cyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
@@ -1736,8 +1746,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_qty;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_qty;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_qty;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_qty;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_qty;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_qty;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_qty;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_qty;
@@ -1836,8 +1846,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_gsv;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_gsv;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_gsv;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_gsv;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_gsv;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_gsv;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_gsv;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_gsv;
@@ -1936,8 +1946,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_ton;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_ton;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_ton;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_ton;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_ton;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_ton;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_ton;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_ton;
@@ -3712,6 +3722,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_end_yyyypp number(6,0);
       var_ytp_str_yyyypp number(6,0);
       var_ytp_end_yyyypp number(6,0);
+      var_ym1_end_yyyypp number(6,0);
+      var_ym2_end_yyyypp number(6,0);
       var_mat_str_yyyypp number(6,0);
       var_mat_end_yyyypp number(6,0);
       var_cyr_str_yyyypp number(6,0);
@@ -3793,6 +3805,12 @@ create or replace package body dw_mart_sales01 as
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytp_end_yyyypp then t01.ord_qty_base_uom end),0) as ytp_qty,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytp_end_yyyypp then t01.ord_gsv_aud end),0) as ytp_gsv,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ytp_end_yyyypp then t01.ord_qty_net_tonnes end),0) as ytp_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym1_end_yyyypp then t01.ord_qty_base_uom end),0) as ym1_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym1_end_yyyypp then t01.ord_gsv_aud end),0) as ym1_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym1_end_yyyypp then t01.ord_qty_net_tonnes end),0) as ym1_ton,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym2_end_yyyypp then t01.ord_qty_base_uom end),0) as ym2_qty,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym2_end_yyyypp then t01.ord_gsv_aud end),0) as ym2_gsv,
+                nvl(sum(case when t01.purch_order_eff_yyyypp >= var_ytp_str_yyyypp and t01.purch_order_eff_yyyypp <= var_ym2_end_yyyypp then t01.ord_qty_net_tonnes end),0) as ym2_ton,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_qty_base_uom end),0) as mat_qty,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_gsv_aud end),0) as mat_gsv,
                 nvl(sum(case when t01.purch_order_eff_yyyypp >= var_mat_str_yyyypp and t01.purch_order_eff_yyyypp <= var_mat_end_yyyypp then t01.ord_qty_net_tonnes end),0) as mat_ton,
@@ -4069,6 +4087,8 @@ create or replace package body dw_mart_sales01 as
       var_lyr_end_yyyypp := ((to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) - 1) * 100) + 13;
       var_ytp_str_yyyypp := (to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100) + 1;
       var_ytp_end_yyyypp := var_current_yyyypp - 1;
+      var_ym1_end_yyyypp := var_current_yyyypp - 2;
+      var_ym2_end_yyyypp := var_current_yyyypp - 3;
       var_mat_str_yyyypp := var_current_yyyypp - 100;
       var_mat_end_yyyypp := var_current_yyyypp - 1;
       var_cyr_str_yyyypp := to_number(substr(to_char(var_current_yyyypp,'fm000000'),1,4)) * 100;
@@ -4154,8 +4174,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_qty;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_qty;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_qty;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_qty;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_qty;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_qty;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_qty;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_qty;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_qty;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_qty;
@@ -4254,8 +4274,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_gsv;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_gsv;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_gsv;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_gsv;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_gsv;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_gsv;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_gsv;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_gsv;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_gsv;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_gsv;
@@ -4354,8 +4374,8 @@ create or replace package body dw_mart_sales01 as
          rcd_work.cyr_ytp_inv_value := rcd_sales_extract_01.ytp_ton;
          rcd_work.cyr_mat_inv_value := rcd_sales_extract_01.mat_ton;
          rcd_work.cyr_yee_br_value := rcd_sales_extract_01.ytp_ton;
-         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ytp_ton;
-         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ytp_ton;
+         rcd_work.cyr_yee_brm1_value := rcd_sales_extract_01.ym1_ton;
+         rcd_work.cyr_yee_brm2_value := rcd_sales_extract_01.ym2_ton;
          rcd_work.cyr_yee_fcst_value := rcd_sales_extract_01.ytp_ton;
          rcd_work.p01_fcst_value := rcd_sales_extract_01.p01_ton;
          rcd_work.p02_fcst_value := rcd_sales_extract_01.p02_ton;
