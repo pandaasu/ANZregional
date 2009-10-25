@@ -48,6 +48,7 @@ create or replace package dw_flattening as
     2008/02   Linden Glen        Removed un-needed flattening calls - leaving only MATL_DIM
     2008/02   Jonathan Girling   Modified the Local constants
     2008/02   Jonathan Girling   Modified email notification for VENUS environment
+    2009/10   Steve Gregan       Modified to include the table statistics gathering
 
    *******************************************************************************/
 
@@ -172,6 +173,7 @@ create or replace package body dw_flattening as
          /*-*/
          /* Execute the flattening procedures (dimension)
          /* **note** 1. There is NO dependancy OR sequence
+         /*          2. Attempt to analyze the table statistics on completion
          /*-*/
          if upper(par_table) = '*ALL' or upper(par_table) = 'MATL_DIM' then
             begin
@@ -180,14 +182,18 @@ create or replace package body dw_flattening as
                when others then
                   var_errors := true;
             end;
+            if var_errors = false then
+               begin
+                  lics_logging.write_log('Begin gathering statistics for table ' || upper(par_table));
+                  dds.dds_table.analyze_table('MATL_DIM');
+                  lics_logging.write_log('End gathering statistics for table ' || upper(par_table));
+               exception
+                  when others then
+                     lics_logging.write_log('**ERROR** - ' || upper(par_table) || ' gathering statistics - ' || substr(SQLERRM, 1, 1024));
+                     var_errors := true;
+               end;
+            end if;
          end if;
-
-         /*-*/
-         /* Execute the flattening procedures (hierarchy)
-         /* **note** 1. There is NO dependancy OR sequence
-         /*          2. Data is ALWAYS replaced
-         /*-*/
- 
 
          /*-*/
          /* Release the lock on the GRD flattening
