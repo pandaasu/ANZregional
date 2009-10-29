@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE           "ODS_PMXODS02" as
+CREATE OR REPLACE PACKAGE ODS_PMXODS02 as
 /*********************************************************************************
   NAME:      ODS_PMXODS02
   PURPOSE:   This package is called by LICS to load the PMXODS02 accruals file
@@ -23,7 +23,7 @@ end ods_pmxods02;
 /
 
 
-CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
+CREATE OR REPLACE PACKAGE BODY ODS_PMXODS02 as
 
    /*-*/
    /* Private exceptions
@@ -36,6 +36,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
    /*-*/
    procedure complete_transaction;
    procedure process_record_ctl(par_record in varchar2);
+   procedure process_record_hdr(par_record in varchar2);
    procedure process_record_dtl(par_record in varchar2);
 
    /*-*/
@@ -44,8 +45,8 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
    var_trn_start boolean;
    var_trn_ignore boolean;
    var_trn_error boolean;
-   var_company_code rcd_pmx_cust.company_code%type;
-   var_division_code rcd_pmx_cust.division_code%type;
+   var_company_code pmx_cust.company_code%type;
+   var_division_code pmx_cust.division_code%type;
    rcd_pmx_cust pmx_cust%rowtype;
    rcd_ods_control ods_definition.idoc_control;
 
@@ -176,6 +177,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
       /*-*/
       /* Local definitions
       /*-*/
+      var_email_group varchar2(128);
       var_errflg boolean;
 
       /*-*/
@@ -183,9 +185,9 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
       /*-*/
       cursor csr_pmx_cust is
          select t01.*,
-                t02.majorref_custlevel,
-                t03.midref_custlevel,
-                t04.minorref_custlevel
+                t02.cust_level as majorref_custlevel,
+                t03.cust_level as midref_custlevel,
+                t04.cust_level as minorref_custlevel
            from pmx_cust t01,
                 pmx_cust t02,
                 pmx_cust t03,
@@ -201,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
             and t01.minor_ref_code = t04.cust_code(+)
             and t01.company_code = var_company_code
             and t01.division_code = var_division_code
-          order by cust_code asc;
+          order by t01.cust_code asc;
       rcd_pmx_cust csr_pmx_cust%rowtype;
 
    /*-------------*/
@@ -227,7 +229,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
       /*-*/
       /* Validate the interface data when required
       /*-*/
-      var_email_group := lics_setting_configuration.retrieve_setting('PMX_CUST_EMAIL_GROUP', var_company_code||var_division_code),
+      var_email_group := lics_setting_configuration.retrieve_setting('PMX_CUST_EMAIL_GROUP', var_company_code||var_division_code);
       if not(var_email_group is null) and var_email_group != '*NONE' then
 
          /*-*/
@@ -247,7 +249,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
          /*-*/
          /* Create the email file and output the header data
          /*-*/
-         lics_mailer.create_part('PMX_VENUS_CUST_WARNING'.xls');
+         lics_mailer.create_part('PMX_VENUS_CUST_WARNING.xls');
          lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
          lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
          lics_mailer.append_data('<tr>');
@@ -274,8 +276,8 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
             /*-*/
             /* Validate the customer
             /*-*/
-            if rcd_pmx_cust.custlevel = 'JR' then
-               if rcd_pmx_cust.promoted != 'F' then
+            if rcd_pmx_cust.cust_level = 'JR' then
+               if rcd_pmx_cust.prom_flag != 'F' then
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
                end if;
@@ -283,8 +285,8 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref code is not itself and is therefore invalid.</td></tr>');
                end if;
-            elsif rcd_pmx_cust.custlevel = 'MD' then
-               if rcd_pmx_cust.promoted != 'F' then
+            elsif rcd_pmx_cust.cust_level = 'MD' then
+               if rcd_pmx_cust.prom_flag != 'F' then
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
                end if;
@@ -292,7 +294,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref code is not itself and is therefore invalid.</td></tr>');
                end if;
-            elsif rcd_pmx_cust.custlevel = 'F' then
+            elsif rcd_pmx_cust.cust_level = 'F' then
                if rcd_pmx_cust.majorref_custlevel != 'JR' then
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
@@ -301,7 +303,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref Customer ['||rcd_pmx_cust.mid_ref_code||'] is not a mid ref customer and is therefore invalid.</td></tr>');
                end if;
-            elsif rcd_pmx_cust.custlevel = 'I' then
+            elsif rcd_pmx_cust.cust_level = 'I' then
                if rcd_pmx_cust.majorref_custlevel != 'JR' then
                   var_errflg := true;
                   lics_mailer.append_data('<tr><td align=left>Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
@@ -528,7 +530,6 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
           mid_ref_code,
           minor_ref_code,
           main_code,
-          main_name,
           cust_level,
           parent_cust_code,
           parent_gl_cust_code,
@@ -537,20 +538,20 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_PMXODS02" as
         )
         values
           (rcd_pmx_cust.company_code,
-          rcd_pmx_cust.division_code,
-          rcd_pmx_cust.cust_name,
-          rcd_pmx_cust.cust_code,
-          rcd_pmx_cust.prom_flag,
-          rcd_pmx_cust.acct_mgr_key,
-          rcd_pmx_cust.major_ref_code,
-          rcd_pmx_cust.mid_ref_code,
-          rcd_pmx_cust.minor_ref_code,
-          rcd_pmx_cust.main_code,
-          rcd_pmx_cust.cust_level,
-          rcd_pmx_cust.parent_cust_code,
-          rcd_pmx_cust.parent_gl_cust_code,
-          rcd_pmx_cust.gl_code,
-          rcd_pmx_cust.distbn_chnl_code
+           rcd_pmx_cust.division_code,
+           rcd_pmx_cust.cust_name,
+           rcd_pmx_cust.cust_code,
+           rcd_pmx_cust.prom_flag,
+           rcd_pmx_cust.acct_mgr_key,
+           rcd_pmx_cust.major_ref_code,
+           rcd_pmx_cust.mid_ref_code,
+           rcd_pmx_cust.minor_ref_code,
+           rcd_pmx_cust.main_code,
+           rcd_pmx_cust.cust_level,
+           rcd_pmx_cust.parent_cust_code,
+           rcd_pmx_cust.parent_gl_cust_code,
+           rcd_pmx_cust.gl_code,
+           rcd_pmx_cust.distbn_chnl_code
         );
       exception
       when dup_val_on_index then
