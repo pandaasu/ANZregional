@@ -8,7 +8,7 @@ CREATE OR REPLACE PACKAGE pmx_cdw_cust_int IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   29/01/2007 Cynthia Ennis        Created this procedure.
-  2.0   19/10/2009 Steve Gregan         Added create log.
+  2.0   20/10/2009 Steve Gregan         Added create log.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example

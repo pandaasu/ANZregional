@@ -16,7 +16,8 @@ CREATE OR REPLACE PACKAGE pmx_cdw_cust_prc IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   30/01/2007 Cynthia Ennis        Created this procedure.
-  1.1   03/06/2009 Anna Every           Changed call to lics_outbound_loader
+  1.2   19/10/2009 Steve Gregan         Added create log
+                                        Modified extract to include additional data
 
 ********************************************************************************/
 PROCEDURE run_pmx_cdw_cust_prc;
@@ -88,210 +89,6 @@ CREATE OR REPLACE PACKAGE BODY         pmx_cdw_cust_prc IS
       AND div_code = i_pmx_div_code;
   END;
 
-
-
-
-PROCEDURE validate_customer IS
-
-BEGIN
-
-  -- Start validate_pds_pricelist procedure.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 1,'validate_pds_pricelist - START.');
-
-  -- Execute the validate Price List procedure for all company / divisions.
-  -- The procedure validates data within the PDS schema.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_australia,pc_div_code_snack); -- Australia Snackfood.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_australia,pc_div_code_food); -- Australia Food.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_australia,pc_div_code_pet); -- Australia Pet.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_new_zealand,pc_div_code_snack); -- New Zealand Snack.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_new_zealand,pc_div_code_food); -- New Zealand Food.
-  validate_pds_pricelist_atlas (pc_pmx_cmpny_code_new_zealand,pc_div_code_pet); -- New Zealand Pet.
-
-  -- Trigger the pds_pricelist_01_rep procedure.
-  write_log(pc_data_type_pricelist, 'N/A', pv_log_level, 'Trigger the PDS_PRICELIST_01_REP procedure.');
-  lics_trigger_loader.execute('MFANZ Promax Price List 01 Report',
-                              'pds_app.pds_pricelist_01_rep.run_pds_pricelist_01_rep',
-                              lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT','PDS_PRICELIST_01_REP'),
-                              lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP','PDS_PRICELIST_01_REP'),
-                              lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP','PDS_PRICELIST_01_REP'));
-
-  -- End validate_pds_pricelist procedure.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 1,'validate_pds_pricelist - END.');
-
-END validate_customer;
-
-
-PROCEDURE validate_customer_cdw(
-  i_pmx_cmpny_code VARCHAR2,
-  i_pmx_div_code VARCHAR2) IS
-
-  -- VARIABLE DECLARATIONS
-  v_valdtn_status    pds_price_list.valdtn_status%TYPE; -- Record status.
-  v_eff_date         pbprices.price1date%TYPE;
-  v_current_date     DATE DEFAULT TRUNC(SYSDATE,'DD');
-
-  -- Retrieve all unchecked Price List records to be validated.
-  CURSOR csr_pricelist IS
-    SELECT
-      t1.cmpny_code,
-      t1.div_code,
-      t1.distbn_chnl_code,
-      t1.matl_code,
-      t1.eff_date,
-      t1.list_price,
-      t1.mfg_cost,
-      t1.rrp
-    FROM
-      pds_price_list t1
-    WHERE
-      t1.cmpny_code = i_pmx_cmpny_code
-      AND t1.div_code = i_pmx_div_code
-      AND t1.valdtn_status = pc_valdtn_status_unchecked
-      AND t1.procg_status = pc_procg_status_loaded
-    FOR UPDATE NOWAIT;
-  rv_pricelist csr_pricelist%ROWTYPE;
-
-BEGIN
-
-  -- Start validate_pds_pricelist_atlas procedure.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'validate_pds_pricelist_atlas - START.');
-
-  -- Clear validation table of records if they exist.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Clear validation table of Pricelist records if they exist.');
-  pds_utils.clear_validation_reason(pc_valdtn_type_pricelist,i_pmx_cmpny_code,i_pmx_div_code,NULL,NULL,NULL,NULL,pv_log_level + 2);
-
-  -- Reading through each of the Price List records to be validated.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Open csr_pricelist cursor.');
-  OPEN csr_pricelist;
-
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Looping through the csr_pricelist cursor.');
-  LOOP
-    FETCH csr_pricelist INTO rv_pricelist;
-    EXIT WHEN csr_pricelist%NOTFOUND;
-
-    v_valdtn_status := pc_valdtn_status_valid;
-
-    -- Check that Price List Material Code exists in the Promax PRODUCTS table.
-    pv_status := pds_exist.exist_matl_code(i_pmx_cmpny_code,i_pmx_div_code,rv_pricelist.matl_code,
-    pv_log_level + 3,pv_result_msg);
-
-    IF pv_status <> constants.success THEN
-      v_valdtn_status := pc_valdtn_status_excluded;
-
-      write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,('Price List Material Code ['
-        || rv_pricelist.matl_code || '] does not exist in the Promax PRODUCTS Table, therefore set to EXCLUDED'));
-
-    END IF;
-
-    -- Check that Distribution Channel Code exists in the Promax LISTDESC table.
-    pv_status := pds_exist.exist_distbn_chnl_code(i_pmx_cmpny_code,i_pmx_div_code,
-    rv_pricelist.distbn_chnl_code,pv_log_level + 3,pv_result_msg);
-
-    IF pv_status <> constants.success THEN
-      v_valdtn_status := pc_valdtn_status_invalid;
-
-      write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'Distribution Channel Code ['||rv_pricelist.distbn_chnl_code||'] does not exist in the LISTDESC table and is therefore invalid.');
-
-      -- Add an entry into the validation reason tables.
-      pds_utils.add_validation_reason(pc_valdtn_type_pricelist,
-        'Distbn Chnl ['||rv_pricelist.distbn_chnl_code||'] does not exist in the LISTDESC table.',
-        pc_valdtn_severity_critical,
-        rv_pricelist.cmpny_code,
-        rv_pricelist.div_code,
-        rv_pricelist.distbn_chnl_code,
-        rv_pricelist.matl_code,
-        rv_pricelist.eff_date,
-        NULL,
-        pv_log_level + 3);
-    END IF;
-
-    -- Check that Price List Effective Date is a valid date.
-    BEGIN
-      v_eff_date := TO_DATE(rv_pricelist.eff_date,'YYYYMMDD');
-    EXCEPTION
-      WHEN OTHERS THEN
-        v_valdtn_status := pc_valdtn_status_invalid;
-
-        write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'Price List Effective Date ['||rv_pricelist.eff_date||'] is not a valid date.');
-
-        -- Add an entry into the validation reason tables.
-        pds_utils.add_validation_reason(pc_valdtn_type_pricelist,
-          'Price List Effective Date is not a valid date.',
-          pc_valdtn_severity_critical,
-          rv_pricelist.cmpny_code,
-          rv_pricelist.div_code,
-          rv_pricelist.distbn_chnl_code,
-          rv_pricelist.matl_code,
-          rv_pricelist.eff_date,
-          NULL,
-          pv_log_level + 3);
-    END;
-
-    -- Check whether List Price is null or zero.
-    IF rv_pricelist.list_price IS NULL OR rv_pricelist.list_price = 0 THEN
-      v_valdtn_status := pc_valdtn_status_invalid;
-
-      write_log(pc_data_type_pricelist,'N/A',pv_log_level + 3,'List Price does not exist or has a value of zero.');
-
-      -- Add an entry into the validation reason tables.
-      pds_utils.add_validation_reason(pc_valdtn_type_pricelist,
-        'List Price does not exist or has a value of zero.',
-        pc_valdtn_severity_critical,
-        rv_pricelist.cmpny_code,
-        rv_pricelist.div_code,
-        rv_pricelist.distbn_chnl_code,
-        rv_pricelist.matl_code,
-        rv_pricelist.eff_date,
-        NULL,
-        pv_log_level + 3);
-    END IF;
-
-    -- Update PDS_PRICE_LIST table with the validation status.
-    UPDATE pds_price_list
-    SET valdtn_status = v_valdtn_status,
-      procg_status = pc_procg_status_processed
-    WHERE CURRENT OF csr_pricelist;
-
-  END LOOP;
-  write_log(pc_data_type_pricelist, 'N/A', pv_log_level + 2, 'End of loop.');
-
-  -- Commit changes to pds_price_list table.
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'Commiting changes to table PDS_PRICE_LIST.');
-  COMMIT;
-
-  -- Close csr_pricelist cursor.
-  write_log(pc_data_type_pricelist, 'N/A', pv_log_level + 2, 'Close csr_pricelist cursor.');
-  CLOSE csr_pricelist;
-
-  write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,'validate_pds_pricelist_atlas - END.');
-
-EXCEPTION
-
-  -- Send warning message via e-mail and pds_log.
-  WHEN OTHERS THEN
-    pv_result_msg :=
-      utils.create_failure_msg('PDS_PRICELIST_01_PRC.VALIDATE_PDS_PRICELIST_ATLAS:',
-      'Unexpected Exception - validate_pricelist_atlas aborted.') ||
-      utils.create_params_str('Promax Company Code',i_pmx_cmpny_code,
-        'Promax Division Code',i_pmx_div_code) ||
-      utils.create_sql_err_msg();
-    write_log(pc_data_type_pricelist,'N/A',pv_log_level + 2,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_pricelist_01_prc,'MFANZ Promax Pricelist Process 01',
-      pv_result_msg);
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_pricelist_01_prc,'N/A');
-    END IF;
-
-END validate_customer_cdw;
-
-
-
-
-
-
-
   PROCEDURE interface_customer_cdw(
     i_pmx_cmpny_code VARCHAR2,
     i_pmx_div_code VARCHAR2) IS
@@ -303,6 +100,7 @@ END validate_customer_cdw;
 
     -- VARIABLE DECLARATIONS
     v_ctl              VARCHAR2(4000);
+    v_hdr              VARCHAR2(4000);
     v_instance         VARCHAR2(8) := '0';
     v_item_count       BINARY_INTEGER := 0;
     v_prev_start       pds_cntl.cntl_value%TYPE;
@@ -320,20 +118,29 @@ END validate_customer_cdw;
       SELECT
         pd.cmpny_code,
         pd.div_code,
-        cocode,
-        divcode,
-        kacc,
-        chain,
-        promoted,
-        accmgrkey
+        c.cocode,
+        c.divcode,
+        c.kacc,
+        c.chain,
+        c.promoted,
+        c.accmgrkey,
+        c.majorref,
+        c.midref,
+        c.minorref,
+        c.maincode,
+        c.custlevel,
+        c.parentkacc,
+        c.kaccxref,
+        c.glcode,
+        c.channelkey
       FROM
         promax.chain c,
         pds_div pd
       WHERE c.cocode = pd.pmx_cmpny_code
         AND c.divcode = pd.pmx_div_code
-        AND cocode = i_pmx_cmpny_code
-        AND divcode = i_pmx_div_code
-        AND recchg > v_prev_start_date;
+        AND c.cocode = i_pmx_cmpny_code
+        AND c.divcode = i_pmx_div_code
+        AND c.recchg > v_prev_start_date;
       rv_customer csr_customer%ROWTYPE;
 
     PROCEDURE release_data_from_array(rcd_customer IN OUT tbl_customer) IS
@@ -386,14 +193,15 @@ END validate_customer_cdw;
     write_log(pc_data_type_customer, 'N/A', pv_log_level + 2, 'Looping through csr_customer cursor.');
     FOR rv_customer IN csr_customer
     LOOP
-
----------------------------
----- DO VALIDATION
----- if fail then wrote error and bypass
----- always send what is currently valid
----------------------------
-
       v_item_count := v_item_count + 1;
+
+      -- Writing Customer header record.
+      if v_item_count = 1 then
+        write_log(pc_data_type_customer, 'N/A', pv_log_level + 3, 'Processing Customer Header record.');
+        v_hdr := 'HDR' || rv_customer.cmpny_code || rv_customer.div_code;
+        lics_outbound_loader.append_data(v_hdr);
+      end if;
+
       -- Now perform the output Customer Code conversion.
       -- Customer codes have leading zeroes if they are numeric, otherwise the
       -- field is left justified with spaces padding (on the right). The width returned
@@ -401,13 +209,22 @@ END validate_customer_cdw;
       pv_status := pds_common.format_cust_code(rv_customer.kacc, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
 
       rcd_customer(v_item_count) :=
-           'DTL'
+         'DTL'
         || rv_customer.cmpny_code   -- Company Code
         || rv_customer.div_code   -- Division Code
         || RPAD(rv_customer.chain, 30)   -- Name
         || LPAD(v_sap_cust_code, 10, '0')   -- Customer Code
         || rv_customer.promoted   -- Promoted Flag
-        || RPAD(rv_customer.accmgrkey, 30);   -- Account Manager Key
+        || RPAD(rv_customer.accmgrkey, 38)   -- Account Manager Key
+        || LPAD(nvl(rv_customer.majorref, rpad(' ',10)), 10, '0')
+        || LPAD(nvl(rv_customer.midref, rpad(' ',10)), 10, '0')
+        || LPAD(nvl(rv_customer.minorref, rpad(' ',10)), 10, '0')
+        || LPAD(nvl(rv_customer.maincode, rpad(' ',10)), 10, '0')
+        || RPAD(rv_customer.custlevel,2)
+        || LPAD(nvl(rv_customer.parentkacc, rpad(' ',10)), 10, '0')
+        || LPAD(nvl(rv_customer.kaccxref, rpad(' ',10)), 10, '0')
+        || RPAD(rv_customer.glcode, 15)
+        || RPAD(nvl(rv_customer.channelkey,' '), 38);
 
       -- Avoid using excessive amounts of memory for the array by flushing to file regularly,
       -- releasing the memory as we go.
@@ -435,6 +252,7 @@ END validate_customer_cdw;
     -- Log summary details.
     write_log(pc_data_type_customer, 'N/A', pv_log_level + 2, 'Total number of customer records processed: ' || v_item_count || '.');
     write_log(pc_data_type_customer, 'N/A', pv_log_level + 2, 'interface_customer_cdw - END.');
+
   EXCEPTION
     -- Send warning message via E-mail and pds_log.
     -- Exception trap: when any exceptions occur the IS_CREATED method should be tested.
@@ -457,6 +275,7 @@ END validate_customer_cdw;
         -- Send alert message via Tivoli if running in production.
         pds_utils.send_tivoli_alert(pc_alert_level_minor, pv_result_msg, pc_job_type_pmx_cdw_cust_prc, 'N/A');
       END IF;
+      pds_utils.end_log;
   END interface_customer_cdw;
 
   PROCEDURE interface_customer IS
@@ -480,6 +299,7 @@ END validate_customer_cdw;
 
   PROCEDURE run_pmx_cdw_cust_prc IS
   BEGIN
+    pds_utils.create_log;
     write_log(pc_data_type_customer, 'N/A', pv_log_level, 'run_pmx_cdw_cust_prc - START.');
     interface_customer();
 
@@ -493,7 +313,7 @@ END validate_customer_cdw;
                                 );
 
     write_log(pc_data_type_customer, 'N/A', pv_log_level, 'run_pmx_cdw_cust_prc - END.');
-
+    pds_utils.end_log;
   EXCEPTION
     -- Send warning message via e-mail and pds_log.
     WHEN OTHERS THEN
