@@ -115,7 +115,7 @@ create or replace package body dw_flattening as
       /*-*/
       /* Initialise the log/lock variables
       /*-*/
-      var_log_prefix := 'CLIO - DW_FLATTENING';
+      var_log_prefix := 'VENUS - DW_FLATTENING';
       var_log_search := 'DW_FLATTENING';
       var_loc_string := 'DW_FLATTENING';
       var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
@@ -151,7 +151,7 @@ create or replace package body dw_flattening as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - GRD Flattening - Parameters(' || upper(par_action) || ' + ' || upper(par_table) || ')');
+      lics_logging.write_log('Begin - Venus Flattening - Parameters(' || upper(par_action) || ' + ' || upper(par_table) || ')');
 
       /*-*/
       /* Request the lock on the GRD flattening
@@ -205,7 +205,7 @@ create or replace package body dw_flattening as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - GRD Flattening');
+      lics_logging.write_log('End - Venus Flattening');
 
       /*-*/
       /* Log end
@@ -271,7 +271,7 @@ create or replace package body dw_flattening as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - CLIO - DW_FLATTENING - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - VENUS - DW_FLATTENING - ' || var_exception);
 
    /*-------------*/
    /* End routine */
