@@ -253,14 +253,14 @@ CREATE OR REPLACE PACKAGE BODY ODS_PMXODS02 as
          lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
          lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
          lics_mailer.append_data('<tr>');
-         lics_mailer.append_data('<td align=center colspan=1 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Promax to Venus Customer Interface Warnings - Company('||var_company_code||') Division('||var_division_code||')</td>');
+         lics_mailer.append_data('<td align=center colspan=1 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;white-space:nowrap;">Promax to Venus Customer Interface Warnings - Company('||var_company_code||') Division('||var_division_code||')</td>');
          lics_mailer.append_data('</tr>');
 
          /*-*/
          /* Output the heading
          /*-*/
          lics_mailer.append_data('<tr><td></td></tr>');
-         lics_mailer.append_data('<tr><td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Warning Message</td></tr>');
+         lics_mailer.append_data('<tr><td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;white-space:nowrap;">Warning Message</td></tr>');
 
          /*-*/
          /* Retrieve the customer data for the company and division
@@ -279,42 +279,42 @@ CREATE OR REPLACE PACKAGE BODY ODS_PMXODS02 as
             if rcd_pmx_cust.cust_level = 'JR' then
                if rcd_pmx_cust.prom_flag != 'F' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
                end if;
                if rcd_pmx_cust.major_ref_code != rcd_pmx_cust.cust_code then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref code is not itself and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Major Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref code is not itself and is therefore invalid.</td></tr>');
                end if;
             elsif rcd_pmx_cust.cust_level = 'MD' then
                if rcd_pmx_cust.prom_flag != 'F' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] promoted flag is not F and is therefore invalid.</td></tr>');
                end if;
                if rcd_pmx_cust.mid_ref_code != rcd_pmx_cust.cust_code then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref code is not itself and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Mid Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref code is not itself and is therefore invalid.</td></tr>');
                end if;
             elsif rcd_pmx_cust.cust_level = 'F' then
                if rcd_pmx_cust.majorref_custlevel != 'JR' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
                end if;
                if rcd_pmx_cust.midref_custlevel != 'MD' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref Customer ['||rcd_pmx_cust.mid_ref_code||'] is not a mid ref customer and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Minor Ref Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref Customer ['||rcd_pmx_cust.mid_ref_code||'] is not a mid ref customer and is therefore invalid.</td></tr>');
                end if;
             elsif rcd_pmx_cust.cust_level = 'I' then
                if rcd_pmx_cust.majorref_custlevel != 'JR' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Major Ref Customer ['||rcd_pmx_cust.major_ref_code||'] is not a major ref customer and is therefore invalid.</td></tr>');
                end if;
                if rcd_pmx_cust.midref_custlevel != 'MD' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref Customer ['||rcd_pmx_cust.mid_ref_code||'] is not a mid ref customer and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Mid Ref Customer ['||rcd_pmx_cust.mid_ref_code||'] is not a mid ref customer and is therefore invalid.</td></tr>');
                end if;
                if rcd_pmx_cust.minorref_custlevel != 'F' then
                   var_errflg := true;
-                  lics_mailer.append_data('<tr><td align=left>Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Minor Ref Customer ['||rcd_pmx_cust.minor_ref_code||'] is not a minor ref customer and is therefore invalid.</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left style="white-space:nowrap;">Invoice Customer Code ['||rcd_pmx_cust.cust_code||'] Minor Ref Customer ['||rcd_pmx_cust.minor_ref_code||'] is not a minor ref customer and is therefore invalid.</td></tr>');
                end if;
             end if;
          end loop;
