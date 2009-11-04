@@ -15,6 +15,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2005/06   Steve Gregan   Added group
+ 2009/11   Steve Gregan   Added log data
 
 *******************************************************************************/
 
@@ -28,7 +29,8 @@ create table lics_triggered
     tri_procedure                varchar2(512 char)              not null,
     tri_timestamp                date                            not null,
     tri_opr_alert                varchar2(256 char)              null,
-    tri_ema_group                varchar2(64 char)               null);
+    tri_ema_group                varchar2(64 char)               null,
+    tri_log_data                 varchar2(512 char)              null);
 
 /**/
 /* Comments
@@ -41,6 +43,7 @@ comment on column lics_triggered.tri_procedure is 'Triggered - execution procedu
 comment on column lics_triggered.tri_timestamp is 'Triggered - creation time';
 comment on column lics_triggered.tri_opr_alert is 'Triggered - operator alert message';
 comment on column lics_triggered.tri_ema_group is 'Triggered - email group';
+comment on column lics_triggered.tri_log_data is 'Triggered - log data';
 
 /**/
 /* Primary Key Constraint
