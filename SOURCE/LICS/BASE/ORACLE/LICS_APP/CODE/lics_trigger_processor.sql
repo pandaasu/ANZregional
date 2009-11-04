@@ -21,6 +21,7 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2005/06   Steve Gregan   Added group to lics_triggered table
+ 2009/11   Steve Gregan   Added log data to lics_triggered table
 
 *******************************************************************************/
 
@@ -142,7 +143,8 @@ create or replace package body lics_trigger_processor as
                 t01.tri_procedure,
                 t01.tri_timestamp,
                 t01.tri_ema_group,
-                t01.tri_opr_alert
+                t01.tri_opr_alert,
+                t01.tri_log_data
            from lics_triggered t01
           where t01.tri_sequence = var_sequence
                 for update nowait;
@@ -284,7 +286,7 @@ create or replace package body lics_trigger_processor as
                                                 var_execution,
                                                 lics_constant.type_procedure,
                                                 var_group,
-                                                '(' || rcd_lics_triggered_02.tri_function || ') ' || rcd_lics_triggered_02.tri_procedure,
+                                                '(' || rcd_lics_triggered_02.tri_function || ') ' || nvl(rcd_lics_triggered_02.tri_log_data,rcd_lics_triggered_02.tri_procedure),
                                                 null,
                                                 null,
                                                 null,
@@ -294,7 +296,7 @@ create or replace package body lics_trigger_processor as
                                               var_execution,
                                               lics_constant.type_procedure,
                                               var_group,
-                                              '(' || rcd_lics_triggered_02.tri_function || ') ' || rcd_lics_triggered_02.tri_procedure,
+                                              '(' || rcd_lics_triggered_02.tri_function || ') ' || nvl(rcd_lics_triggered_02.tri_log_data,rcd_lics_triggered_02.tri_procedure),
                                               null,
                                               null,
                                               null,
