@@ -159,12 +159,23 @@ public final class cSapVds02 implements iSapDualInterface {
       } else {
          strFilter = new String[]{"LAEDA >= '" + strGlobalMARADateRange + "'","AND (" + strGlobalMARAFilter + ")"};
       }
+      ArrayList objGlobalMATNR = new ArrayList();
       try {
-         objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
-         objSapSingleQuery.execute("MARA", "MARA", "MATNR", strFilter,0,0);
-         objMATNR = objSapSingleQuery.getResultSet().getOrConditionsArray("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'",500);
-         if (strLogging.equals("1")) {
-            System.out.println("Global change list count: " + objSapSingleQuery.getResultSet().getRowCount("MARA"));
+         int intRowSkips = 0;
+         int intRowCount = 500;
+         boolean bolRead = true;
+         while (bolRead) {
+            objSapSingleQuery = new cSapSingleQuery(objSapConnection01);
+            objSapSingleQuery.execute("MARA", "MARA", "MATNR", strFilter, intRowSkips, intRowCount);
+            objGlobalMATNR = objSapSingleQuery.getResultSet().getMergedArray(objGlobalMATNR, "MARA", "MATNR");
+            if (strLogging.equals("1")) {
+               System.out.println("Global change list count: " + objSapSingleQuery.getResultSet().getRowCount("MARA"));
+            }
+            if (objSapSingleQuery.getResultSet().getRowCount() < intRowCount) {
+               bolRead = false;
+            } else {
+               intRowSkips = intRowSkips + intRowCount;
+            }
          }
       } catch(Exception objException) {
          throw new Exception("SAPVDS02 - Global MARA query failed - " + objException.getMessage());
@@ -178,8 +189,14 @@ public final class cSapVds02 implements iSapDualInterface {
       // Perform logging when required
       //
       if (strLogging.equals("1")) {
+         System.out.println("Global change list count: " + objGlobalMATNR.size());
          System.out.println("End Global change list retrieval: " + Calendar.getInstance().getTime());
       }
+      
+      //
+      // Set the material array from the Global data
+      //
+      objMATNR = cSapUtility.getOrConditionsArray(objGlobalMATNR,"MATNR = '<KEYVALUE></KEYVALUE>'",500);
       
       //////////////////////////////////////////////////////////////////////
       // Step 2 - Check the material change list with the timezone server //
