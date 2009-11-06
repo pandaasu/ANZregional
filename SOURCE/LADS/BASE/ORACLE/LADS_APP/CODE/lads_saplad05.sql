@@ -1,7 +1,7 @@
 CREATE OR REPLACE package LADS_APP.lads_saplad05 as
 
 /****************************************************************************************************/
-/* Package Definition 						                                                        */
+/* Package Definition                                                                                 */
 /****************************************************************************************************/
 /**
  System  : lads
@@ -17,6 +17,9 @@ CREATE OR REPLACE package LADS_APP.lads_saplad05 as
  -------   ------         -------   -----------
  2009/02   Steve Gregan   1.0       Created
  2009/10   Ben Halicki    1.1       Modified to mark manually deleted BOM alternatives with status '4'
+ 2009/11   Ben Halicki    1.2       Fixed LADS_BOM_HDR/DET loading issue - if BOM recreated in SAP
+                                    which already exists in LADS_BOM_HDR/DET as status 4, duplicate primary
+                                    key exception was thrown.
 *****************************************************************************************************/
 
    /*-*/
@@ -29,9 +32,6 @@ CREATE OR REPLACE package LADS_APP.lads_saplad05 as
 end lads_saplad05;
 /
 
-/****************/
-/* Package Body */
-/****************/
 CREATE OR REPLACE package body LADS_APP.lads_saplad05 as
 
    /*-*/
@@ -597,8 +597,27 @@ CREATE OR REPLACE package body LADS_APP.lads_saplad05 as
             rcd_lads_bom_hdr.lads_date := sysdate;
             rcd_lads_bom_hdr.lads_status := '1';
             rcd_lads_bom_hdr.lads_flattened := '0'; 
-            insert into lads_bom_hdr values rcd_lads_bom_hdr;
-            rcd_lads_bom_det.detseq := 0;
+            
+            BEGIN
+                insert into lads_bom_hdr values rcd_lads_bom_hdr;
+                rcd_lads_bom_det.detseq := 0;
+            EXCEPTION
+                WHEN dup_val_on_index then
+                    -- BOM already exists, flagged as status 4 (previously deleted)
+                    delete from lads_bom_hdr where 
+                        matnr = rcd_lads_bom_hdr.matnr
+                        and stlal = rcd_lads_bom_hdr.stlal
+                        and werks = rcd_lads_bom_hdr.werks;
+                                        
+                    delete from lads_bom_det where
+                        matnr = rcd_lads_bom_hdr.matnr
+                        and stlal = rcd_lads_bom_hdr.stlal
+                        and werks = rcd_lads_bom_hdr.werks;
+                    
+                    insert into lads_bom_hdr values rcd_lads_bom_hdr;
+                    rcd_lads_bom_det.detseq:=0;
+            END;
+                   
          end if;
 
          /*-*/
