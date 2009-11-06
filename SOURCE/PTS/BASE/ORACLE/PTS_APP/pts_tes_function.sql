@@ -514,6 +514,12 @@ create or replace package body pts_app.pts_tes_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_copy is
+         select t01.*
+           from pts_tes_definition t01
+          where t01.tde_tes_code = var_cpy_code;
+      rcd_copy csr_copy%rowtype;
+
       cursor csr_company is
          select t01.*
            from pts_com_definition t01
@@ -809,6 +815,21 @@ create or replace package body pts_app.pts_tes_function as
       if pts_gen_function.get_mesg_count != 0 then
          rollback;
          return;
+      end if;
+
+      /*-*/
+      /* Copy the test weight data when required
+      /*-*/
+      if not(var_cpy_code is null) then
+         open csr_copy;
+         fetch csr_copy into rcd_copy;
+         if csr_copy%found then
+            rcd_pts_tes_definition.tde_wgt_que_calc := rcd_copy.tde_wgt_que_calc;
+            rcd_pts_tes_definition.tde_wgt_que_bowl := rcd_copy.tde_wgt_que_bowl;
+            rcd_pts_tes_definition.tde_wgt_que_offer := rcd_copy.tde_wgt_que_offer;
+            rcd_pts_tes_definition.tde_wgt_que_remain := rcd_copy.tde_wgt_que_remain;
+         end if;
+         close csr_copy;
       end if;
 
       /*-*/
