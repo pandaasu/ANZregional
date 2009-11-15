@@ -4725,6 +4725,7 @@ create or replace package body pts_app.pts_tes_function as
             and t01.tpa_tes_code = rcd_retrieve.tde_tes_code
           order by t01.tpa_geo_zone asc,
                    t01.tpa_pan_status asc,
+                   t01.tpa_hou_code asc,
                    t01.tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
