@@ -17,6 +17,8 @@ IS
    3.3        04-Nov-2008  Chris Munn         Modify Frozen Window to cope with consecutive days off.
    3.4        03-Sep-2009  Chris Munn         Modify RETRIEVE_ALLOC_RESOURCES, allowing the SSCs to assign
                                               work centers to all process orders within the frozen window.
+   3.5        21-Oct-2009  Chris Munn         Add ability for SSCs to maintain the list of days off in the
+                                              DAYS_OFF table.
 ******************************************************************************/
 
    /***********************************************************/
@@ -502,6 +504,52 @@ FUNCTION GET_OFF_BLOCK_LENGTH(i_start_date IN DATE)
                             o_result_msg   OUT VARCHAR2,
                             cur_OUT        IN OUT RETURN_REF_CURSOR);
                             
+  /**************************************************************************************
+    The RETRIEVE_DAYS_OFF procedure retrieves all the entries from the DAYS_OFF table
+    in the Plant databases' MANU schema. These entries denote days at the Bathurst
+    plant where an SSC is not rostered on.
+  ***************************************************************************************/
+
+  PROCEDURE RETRIEVE_DAYS_OFF(i_plant_code  IN VARCHAR2,
+                             o_result OUT NUMBER,
+                             o_result_msg OUT VARCHAR2,
+                             o_days_off OUT Re_Timing_Common.RETURN_REF_CURSOR);                  
+
+  /*******************************************************************************************
+    The PROCESS_DAYS_OFF procedure is executed when the user clicks the OK button in the
+    SSC Rostered Days Off Maintenance form within the Re-Timing Tool. This procedure is called
+    for every entry that has been updated, added or deleted.
+  ********************************************************************************************/
+  
+  PROCEDURE PROCESS_DAYS_OFF(i_day_off IN DATE, 
+                           i_reason IN VARCHAR2,
+                           i_status IN CHAR,
+                           i_user_id IN VARCHAR2);
+  
+  /********************************************************************************************
+    The INSERT_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever a new
+    SSC Rostered Day Off has been added. This inserts the new record in the DAYS_OFF table.
+  *********************************************************************************************/
+
+  PROCEDURE INSERT_DAY_OFF(i_day_off IN DATE,
+                         i_reason IN VARCHAR2,
+                         i_user_id IN VARCHAR2);
+
+  /********************************************************************************************
+    The UPDATE_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever an
+    SSC Rostered Day Off has been modified. This updates the record in the DAYS_OFF table.
+  *********************************************************************************************/
+                         
+  PROCEDURE UPDATE_DAY_OFF(i_day_off IN DATE,
+                         i_reason IN VARCHAR2,
+                         i_user_id IN VARCHAR2);
+                         
+  /********************************************************************************************
+    The DELETE_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever an
+    SSC Rostered Day Off has been deleted. This removes the record from the DAYS_OFF table.
+  *********************************************************************************************/
+
+  PROCEDURE DELETE_DAY_OFF(i_day_OFF IN DATE);                        
                             
                             
 END Re_Timing;
@@ -524,6 +572,8 @@ CREATE OR REPLACE PACKAGE BODY Re_Timing IS
    3.3        04-Nov-2008  Chris Munn        Modify Frozen Window to cope with consecutive days off.
    3.4        03-Sep-2009  Chris Munn         Modify RETRIEVE_ALLOC_RESOURCES, allowing the SSCs to assign
                                               work centers to all process orders within the frozen window.
+   3.5        21-Oct-2009  Chris Munn         Add ability for SSCs to maintain the list of days off in the
+                                              DAYS_OFF table.                                              
 ******************************************************************************/
 
    /*-*/
@@ -3044,6 +3094,122 @@ EXCEPTION
         SELECT * FROM dual WHERE 1=0;
 END OBS_BOM_RECORDS;
 
+/**************************************************************************************
+  The RETRIEVE_DAYS_OFF procedure retrieves all the entries from the DAYS_OFF table
+  in the Plant databases' MANU schema. These entries denote days at the Bathurst
+  plant where an SSC is not rostered on.
+***************************************************************************************/
+
+PROCEDURE RETRIEVE_DAYS_OFF(i_plant_code  IN VARCHAR2,
+                             o_result OUT NUMBER,
+                             o_result_msg OUT VARCHAR2,
+                             o_days_off OUT Re_Timing_Common.RETURN_REF_CURSOR) IS
+BEGIN
+
+    --Retrieve all the entries from the DAYS_OFF table.
+    OPEN o_days_off FOR
+        SELECT to_char(day_off, 'DD/MM/YYYY'), reason
+        FROM days_off
+        ORDER BY day_off desc;
+
+EXCEPTION
+    --Ignore the exception generated when no data is returned.
+    WHEN NO_DATA_FOUND THEN
+      NULL;  
+    --Notify the user that an error has occurred.
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20000, 'RE_TIMING - RETRIEVE_DAYS_OFF procedure failed' || CHR(13)
+                                     || 'Oracle error ' || SUBSTR(SQLERRM, 1, 512)); 
+END RETRIEVE_DAYS_OFF;
+
+/*******************************************************************************************
+  The PROCESS_DAYS_OFF procedure is executed when the user clicks the OK button in the
+  SSC Rostered Days Off Maintenance form within the Re-Timing Tool. This procedure is called
+  for every entry that has been updated, added or deleted.
+********************************************************************************************/
+
+PROCEDURE PROCESS_DAYS_OFF(i_day_off IN DATE, 
+                           i_reason IN VARCHAR2,
+                           i_status IN CHAR,
+                           i_user_id IN VARCHAR2) IS
+BEGIN
+
+        CASE i_status 
+            --If a new record has been added
+            WHEN 'A' THEN
+                INSERT_DAY_OFF(i_day_off, i_reason, i_user_id);
+            --If a record has been modified.
+            WHEN 'M' THEN
+                UPDATE_DAY_OFF(i_day_off, i_reason, i_user_id);
+            --If a record has been deleted.
+            WHEN 'D' THEN
+                DELETE_DAY_OFF(i_day_off);
+        END CASE;
+
+END PROCESS_DAYS_OFF;
+
+/********************************************************************************************
+  The INSERT_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever a new
+  SSC Rostered Day Off has been added. This inserts the new record in the DAYS_OFF table.
+*********************************************************************************************/
+
+PROCEDURE INSERT_DAY_OFF(i_day_OFF IN DATE,
+                         i_reason IN VARCHAR2,
+                         i_user_id IN VARCHAR2) IS
+BEGIN
+
+    --Insert the new record into the DAYS_OFF table.
+    INSERT INTO DAYS_OFF(day_off, reason, last_update_time, last_update_user)
+      VALUES(i_day_off, i_reason, sysdate, i_user_id);
+
+EXCEPTION
+    --Notify the user that an error has occurred.
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20000, 'RE_TIMING - INSERT_DAY_OFF procedure failed' || CHR(13)
+                                     || 'Oracle error ' || SUBSTR(SQLERRM, 1, 512)); 
+END INSERT_DAY_OFF;
+
+/********************************************************************************************
+  The UPDATE_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever an
+  SSC Rostered Day Off has been modified. This updates the record in the DAYS_OFF table.
+*********************************************************************************************/
+
+PROCEDURE UPDATE_DAY_OFF(i_day_OFF IN DATE,
+                         i_reason IN VARCHAR2,
+                         i_user_id IN VARCHAR2) IS
+BEGIN
+
+    --Update the corresponding day off in the DAYS_OFF table.
+    UPDATE DAYS_OFF
+      SET reason = i_reason,
+        last_update_time = sysdate,
+        last_update_user = i_user_id
+      WHERE day_off = i_day_off;
+
+EXCEPTION
+    --Notify the user that an error has occurred.
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20000, 'RE_TIMING - UPDATE_DAY_OFF procedure failed' || CHR(13)
+                                     || 'Oracle error ' || SUBSTR(SQLERRM, 1, 512)); 
+END UPDATE_DAY_OFF;
+
+/********************************************************************************************
+  The DELETE_DAY_OFF procedure is called by the PROCESS_DAYS_OFF method whenever an
+  SSC Rostered Day Off has been deleted. This removes the record from the DAYS_OFF table.
+*********************************************************************************************/
+
+PROCEDURE DELETE_DAY_OFF(i_day_OFF IN DATE) IS
+BEGIN    
+    DELETE FROM DAYS_OFF
+      WHERE day_off = i_day_off;
+
+EXCEPTION
+    --Notify the user that an error has occurred.
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20000, 'RE_TIMING - DELETE_DAY_OFF procedure failed' || CHR(13)
+                                     || 'Oracle error ' || SUBSTR(SQLERRM, 1, 512)); 
+      
+END DELETE_DAY_OFF;
 
 
   END Re_Timing;
