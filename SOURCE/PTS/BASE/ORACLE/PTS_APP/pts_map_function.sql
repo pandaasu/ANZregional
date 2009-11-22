@@ -1230,38 +1230,46 @@ create or replace package body pts_app.pts_map_function as
          /*-*/
          /* Create the header interface
          /*-*/
-         var_instance := lics_outbound_loader.create_interface('PTSGPL01',null,'TESTDEF_'||var_source||'.txt');
-         for idx in 1..tbl_hdr_outp.count loop
-            lics_outbound_loader.append_data(tbl_hdr_outp(idx));
-         end loop;
-         lics_outbound_loader.finalise_interface;
+         if tbl_hdr_outp.count > 0 then
+            var_instance := lics_outbound_loader.create_interface('PTSGPL01',null,'TESTDEF_'||var_source||'.txt');
+            for idx in 1..tbl_hdr_outp.count loop
+               lics_outbound_loader.append_data(tbl_hdr_outp(idx));
+            end loop;
+            lics_outbound_loader.finalise_interface;
+         end if;
 
          /*-*/
          /* Create the detail interface
          /*-*/
-         var_instance := lics_outbound_loader.create_interface('PTSGPL02',null,'TESTDETL_'||var_source||'.txt');
-         for idx in 1..tbl_det_outp.count loop
-            lics_outbound_loader.append_data(tbl_det_outp(idx));
-         end loop;
-         lics_outbound_loader.finalise_interface;
+         if tbl_det_outp.count > 0 then
+            var_instance := lics_outbound_loader.create_interface('PTSGPL02',null,'TESTDETL_'||var_source||'.txt');
+            for idx in 1..tbl_det_outp.count loop
+               lics_outbound_loader.append_data(tbl_det_outp(idx));
+            end loop;
+            lics_outbound_loader.finalise_interface;
+         end if;
 
          /*-*/
          /* Create the environment interface
          /*-*/
-         var_instance := lics_outbound_loader.create_interface('PTSGPL03',null,'ENVRNT_'||var_source||'.txt');
-         for idx in 1..tbl_env_outp.count loop
-            lics_outbound_loader.append_data(tbl_env_outp(idx));
-         end loop;
-         lics_outbound_loader.finalise_interface;
+         if tbl_env_outp.count > 0 then
+            var_instance := lics_outbound_loader.create_interface('PTSGPL03',null,'ENVRNT_'||var_source||'.txt');
+            for idx in 1..tbl_env_outp.count loop
+               lics_outbound_loader.append_data(tbl_env_outp(idx));
+            end loop;
+            lics_outbound_loader.finalise_interface;
+         end if;
 
          /*-*/
          /* Create the animal interface
          /*-*/
-         var_instance := lics_outbound_loader.create_interface('PTSGPL04',null,'ANML_'||var_source||'.txt');
-         for idx in 1..tbl_ani_outp.count loop
-            lics_outbound_loader.append_data(tbl_ani_outp(idx));
-         end loop;
-         lics_outbound_loader.finalise_interface;
+         if tbl_ani_outp.count > 0 then
+            var_instance := lics_outbound_loader.create_interface('PTSGPL04',null,'ANML_'||var_source||'.txt');
+            for idx in 1..tbl_ani_outp.count loop
+               lics_outbound_loader.append_data(tbl_ani_outp(idx));
+            end loop;
+            lics_outbound_loader.finalise_interface;
+         end if;
 
          /*-*/
          /* Commit the database
