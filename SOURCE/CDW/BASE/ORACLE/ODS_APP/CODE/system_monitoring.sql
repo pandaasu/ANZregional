@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE           "SYSTEM_MONITORING" AS
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   06/07/2004 Gerald Arnold        Created this procedure.
-    1.1   24/11/2007 Kris Lee             Add ODS_EFEX_VALIDATION_CHECK call to this 
+    1.1   24/11/2007 Kris Lee             Add ODS_EFEX_VALIDATION_CHECK call to this
                                           procedure.
 
     PARAMETERS:
@@ -285,8 +285,8 @@ CREATE OR REPLACE PACKAGE           "SYSTEM_MONITORING" AS
     i_log_level    IN ods.log.log_level%TYPE DEFAULT 0
     );
 
-END system_monitoring; 
- 
+END system_monitoring;
+
 /
 
 
@@ -2098,7 +2098,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
     CURSOR csr_accruals IS
       SELECT
         A.item_code_1, -- Refence Table
-        A.item_code_2 || DECODE(A.item_code_3, NULL, '', ' / ' || A.item_code_3) || DECODE(A.item_code_4, NULL, '', ' / ' || NVL(A.item_code_4, '')) as table_key, 
+        A.item_code_2 || DECODE(A.item_code_3, NULL, '', ' / ' || A.item_code_3) || DECODE(A.item_code_4, NULL, '', ' / ' || NVL(A.item_code_4, '')) as table_key,
         B.valdtn_reasn_dtl_msg AS message,
         B.valdtn_reasn_dtl_svrty AS severity
       FROM
@@ -2246,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
           error_table(v_count).rec_type := 'ACCRUALS';
           error_table(v_count).code     := RPAD(rv_accruals.item_code_1, 14)  || ' ' || -- refence table
                                            RPAD(rv_accruals.table_key, 21)  || ' ' || -- table key
-                                           TRIM(rv_accruals.message);  
+                                           TRIM(rv_accruals.message);
 
           v_count := v_count + 1;
           FETCH csr_accruals INTO rv_accruals;
@@ -2304,7 +2304,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                                            LPAD(rv_promotions.item_code_2, 8)  || '   ' || -- Division Code
                                            LPAD(rv_promotions.item_code_3, 11) || '   ' || -- Promotion Number
                                            LPAD(rv_promotions.severity, 8)     || '   ' ||
-                                           TRIM(rv_promotions.message);  
+                                           TRIM(rv_promotions.message);
 
           v_count := v_count + 1;
           FETCH csr_promotions INTO rv_promotions;
@@ -2363,7 +2363,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                                            LPAD(rv_claims.item_code_2, 8)  || '   ' || -- Division Code
                                            LPAD(rv_claims.item_code_3, 11) || '   ' || -- Registry Key
                                            LPAD(rv_claims.severity, 8)     || '   ' ||
-                                           TRIM(rv_claims.message);  
+                                           TRIM(rv_claims.message);
 
           v_count := v_count + 1;
           FETCH csr_claims INTO rv_claims;
@@ -3640,7 +3640,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
           error_table(v_count).code     := LPAD(rv_dcs_order.item_code_1, 10)  || '   ' || -- Company Code
                                            LPAD(rv_dcs_order.item_code_2, 16) || '   ' || -- Order DOC Number
                                            LPAD(rv_dcs_order.item_code_3, 17) || '           ' || -- Order DOC Line Number
-                                           TRIM(rv_dcs_order.message);  
+                                           TRIM(rv_dcs_order.message);
 
           v_count := v_count + 1;
           FETCH csr_dcs_order INTO rv_dcs_order;
@@ -3778,7 +3778,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
     v_last_type              VARCHAR2(30) := ' ';
     add_line                 BOOLEAN      := true;
     v_prev_valdtn_type_code  ods.valdtn_type.valdtn_type_code%TYPE := -1;
-    v_efex_start_code        ods.valdtn_type.valdtn_type_code%TYPE := 30;  
+    v_efex_start_code        ods.valdtn_type.valdtn_type_code%TYPE := 30;
     v_efex_end_code          ods.valdtn_type.valdtn_type_code%TYPE := 57;
     v_count_pet              PLS_INTEGER  := 1;
     v_count_snack            PLS_INTEGER  := 1;
@@ -3798,69 +3798,69 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
     -- CURSOR DECLARATIONS
 
     CURSOR csr_efex_ref_error_pet IS
-     SELECT 
+     SELECT
        t1.valdtn_type_code,
        t3.valdtn_type_desc,  -- as the error table description
-       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key, 
+       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key,
        t2.valdtn_reasn_dtl_msg as message,
        t1.item_code_6  -- determine whether validate in bulk
-     FROM   
+     FROM
        valdtn_reasn_hdr t1,
        valdtn_reasn_dtl t2,
        valdtn_type t3
-     WHERE  
+     WHERE
        t1.valdtn_reasn_hdr_code = t2.valdtn_reasn_hdr_code
        AND t1.valdtn_type_code = t3.valdtn_type_code
-       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type 
-       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_pet)  -- item_code_1 stores the business unit id 
+       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type
+       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_pet)  -- item_code_1 stores the business unit id
      ORDER BY
-       t1.valdtn_type_code,  
+       t1.valdtn_type_code,
        item_code_2,
        item_code_3,
        item_code_4;
     rv_efex_ref_error_pet csr_efex_ref_error_pet%ROWTYPE;
 
     CURSOR csr_efex_ref_error_snack IS
-     SELECT 
+     SELECT
        t1.valdtn_type_code,
        t3.valdtn_type_desc,  -- as the error table description
-       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key, 
+       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key,
        t2.valdtn_reasn_dtl_msg as message,
        t1.item_code_6  -- determine whether validate in bulk
-     FROM   
+     FROM
        valdtn_reasn_hdr t1,
        valdtn_reasn_dtl t2,
        valdtn_type t3
-     WHERE  
+     WHERE
        t1.valdtn_reasn_hdr_code = t2.valdtn_reasn_hdr_code
        AND t1.valdtn_type_code = t3.valdtn_type_code
-       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type 
-       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_snack)  -- item_code_1 stores the business unit id 
+       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type
+       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_snack)  -- item_code_1 stores the business unit id
      ORDER BY
-       t1.valdtn_type_code,  
+       t1.valdtn_type_code,
        item_code_2,
        item_code_3,
        item_code_4;
     rv_efex_ref_error_snack csr_efex_ref_error_snack%ROWTYPE;
 
     CURSOR csr_efex_ref_error_food IS
-     SELECT 
+     SELECT
        t1.valdtn_type_code,
        t3.valdtn_type_desc,  -- as the error table description
-       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key, 
+       t1.item_code_2 || DECODE(t1.item_code_3, NULL, '', ' - ' || t1.item_code_3) || DECODE(t1.item_code_4, NULL, '', ' - ' || NVL(t1.item_code_4, '')) as table_key,
        t2.valdtn_reasn_dtl_msg as message,
        t1.item_code_6  -- determine whether validate in bulk
-     FROM   
+     FROM
        valdtn_reasn_hdr t1,
        valdtn_reasn_dtl t2,
        valdtn_type t3
-     WHERE  
+     WHERE
        t1.valdtn_reasn_hdr_code = t2.valdtn_reasn_hdr_code
        AND t1.valdtn_type_code = t3.valdtn_type_code
-       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type 
-       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_food)  -- item_code_1 stores the business unit id 
+       AND t1.valdtn_type_code BETWEEN 30 AND 57  -- reference data start and end of efex validation type
+       AND t1.item_code_1 IN (-1,ods_constants.efex_bus_unit_food)  -- item_code_1 stores the business unit id
      ORDER BY
-       t1.valdtn_type_code,  
+       t1.valdtn_type_code,
        item_code_2,
        item_code_3,
        item_code_4;
@@ -3940,7 +3940,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
              v_prev_valdtn_type_code := rv_efex_ref_error_snack.valdtn_type_code;
           END IF;
 
-          -- Each error line. 
+          -- Each error line.
           error_table_snack(v_count_snack).rec_type := rv_efex_ref_error_snack.valdtn_type_code;
           error_table_snack(v_count_snack).code     := rv_efex_ref_error_snack.table_key || '   ||   ' ||
                                                        TRIM(rv_efex_ref_error_snack.message);
@@ -3970,7 +3970,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
         END IF;
     END;
 
-    -- Petcare data. 
+    -- Petcare data.
     BEGIN
       v_prev_valdtn_type_code := -1;
 
@@ -3985,12 +3985,12 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
              -- log the validation type
              utils.ods_log(v_job_type_pet, v_data_type, v_sort_field, v_log_level, 'Checking Petcare ' || rv_efex_ref_error_pet.valdtn_type_desc  );
 
-             -- eFEX table name line. 
+             -- eFEX table name line.
              error_table_pet(v_count_pet).rec_type := rv_efex_ref_error_pet.valdtn_type_code;
              error_table_pet(v_count_pet).code := rv_efex_ref_error_pet.valdtn_type_desc;
              v_count_pet := v_count_pet + 1;
 
-             -- Error table heading line. 
+             -- Error table heading line.
              error_table_pet(v_count_pet).rec_type := rv_efex_ref_error_pet.valdtn_type_code;
              IF rv_efex_ref_error_pet.item_code_6 = 'BULK' THEN
                  error_table_pet(v_count_pet).code := 'Ref Table - Key || Error Message';
@@ -4002,7 +4002,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
              v_prev_valdtn_type_code := rv_efex_ref_error_pet.valdtn_type_code;
           END IF;
 
-          -- Each error line. 
+          -- Each error line.
           error_table_pet(v_count_pet).rec_type := rv_efex_ref_error_pet.valdtn_type_code;
           error_table_pet(v_count_pet).code     := rv_efex_ref_error_pet.table_key || '   ||   ' ||
                                                    TRIM(rv_efex_ref_error_pet.message);
@@ -4032,7 +4032,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
         END IF;
     END;
 
-    -- Food data. 
+    -- Food data.
     BEGIN
       v_prev_valdtn_type_code := -1;
 
@@ -4047,12 +4047,12 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
              -- log the validation type
              utils.ods_log(v_job_type_food, v_data_type, v_sort_field, v_log_level, 'Checking food ' || rv_efex_ref_error_food.valdtn_type_desc  );
 
-             -- eFEX table name line. 
+             -- eFEX table name line.
              error_table_food(v_count_food).rec_type := rv_efex_ref_error_food.valdtn_type_code;
              error_table_food(v_count_food).code := rv_efex_ref_error_food.valdtn_type_desc;
              v_count_food := v_count_food + 1;
 
-             -- Error table heading line. 
+             -- Error table heading line.
              error_table_food(v_count_food).rec_type := rv_efex_ref_error_food.valdtn_type_code;
              IF rv_efex_ref_error_food.item_code_6 = 'BULK' THEN
                  error_table_food(v_count_food).code := 'Ref Table - Key || Error Message';
@@ -4064,7 +4064,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
              v_prev_valdtn_type_code := rv_efex_ref_error_food.valdtn_type_code;
           END IF;
 
-          -- Each error line. 
+          -- Each error line.
           error_table_food(v_count_food).rec_type := rv_efex_ref_error_food.valdtn_type_code;
           error_table_food(v_count_food).code     := rv_efex_ref_error_food.table_key || '   ||   ' ||
                                                    TRIM(rv_efex_ref_error_food.message);
@@ -4094,7 +4094,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
         END IF;
     END;
 
-    -- Handling Petcare email 
+    -- Handling Petcare email
     utils.ods_log(v_job_type_pet, v_data_type, v_sort_field, v_log_level, 'Checking for Invalid EFEX Petcare Validation error Items.');
     v_count_all := error_table_pet.COUNT;
     IF (v_count_all > 0) THEN
@@ -4132,7 +4132,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                 v_count_all  := 0;
                 add_line := true;
               END IF;
-   
+
               IF (add_line) THEN
                  utils.append_to_long_email(error_table_pet(i).code);
                  v_count_all := v_count_all + 1;
@@ -4202,7 +4202,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                 utils.append_to_long_email(error_table_snack(i).code);
                 v_count_all := v_count_all + 1;
               END IF;
-   
+
               IF (v_count_all > 400 AND add_line = true) THEN
                 utils.append_to_long_email(' ', v_log_level + 1);
                 utils.append_to_long_email(' ', v_log_level + 1);
@@ -4210,7 +4210,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                 add_line := false;
               END IF;
 
-    
+
             END LOOP;
         END IF;
 
@@ -4268,7 +4268,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                 utils.append_to_long_email(error_table_food(i).code);
                 v_count_all := v_count_all + 1;
               END IF;
-   
+
               IF (v_count_all > 400 AND add_line = true) THEN
                 utils.append_to_long_email(' ', v_log_level + 1);
                 utils.append_to_long_email(' ', v_log_level + 1);
@@ -4276,7 +4276,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                 add_line := false;
               END IF;
 
-    
+
             END LOOP;
         END IF;
 
@@ -4300,7 +4300,7 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
                     v_data_type,
                     'ERROR',
                     0,
-                    '!!!ERROR!!! - FATAL ERROR FOR ODS_EFEX_VALIDATION_CHECK. Line - ' || v_count_all || 
+                    '!!!ERROR!!! - FATAL ERROR FOR ODS_EFEX_VALIDATION_CHECK. Line - ' || v_count_all ||
                     ' ERROR MESSAGE: ' || SUBSTR(SQLERRM, 1, 512));
 
       utils.send_email_to_group(ods_constants.job_type_monitor,
@@ -4313,5 +4313,5 @@ CREATE OR REPLACE PACKAGE BODY           "SYSTEM_MONITORING" AS
 
   END ods_efex_validation_checks;
 
-END system_monitoring; 
+END system_monitoring;
 /
