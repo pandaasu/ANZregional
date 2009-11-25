@@ -6743,8 +6743,6 @@ create or replace package body pts_app.pts_tes_function as
             if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
                if var_wrk_count = var_mon_count then
                   var_wrk_count := 0;
-                  var_sam_cod1 := null;
-                  var_sam_cod2 := null;
                   tbl_mktcde.delete;
                end if;
             end if;
