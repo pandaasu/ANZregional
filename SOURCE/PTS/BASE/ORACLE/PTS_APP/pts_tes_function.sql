@@ -6180,6 +6180,9 @@ create or replace package body pts_app.pts_tes_function as
       obj_res_list xmlDom.domNodeList;
       obj_res_node xmlDom.domNode;
       var_action varchar2(32);
+      var_sam_count number;
+      var_mon_count number;
+      var_wrk_count number;
       var_tes_code number;
       var_pan_code number;
       var_day_code number;
@@ -6228,6 +6231,12 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_type t01
           where t01.tty_tes_type = rcd_retrieve.tde_tes_type;
       rcd_target csr_target%rowtype;
+
+      cursor csr_count is
+         select count(*) as sam_count
+           from pts_tes_sample t01
+          where t01.tsa_tes_code = var_tes_code;
+      rcd_count csr_count%rowtype;
 
       cursor csr_panel is
          select t01.*
@@ -6379,6 +6388,23 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test sample count
+      /*-*/
+      var_mon_count := 1;
+      var_sam_count := 0;
+      open csr_count;
+      fetch csr_count into rcd_count;
+      if csr_count%found then
+         var_sam_count := rcd_count.sam_count;
+      end if;
+      close csr_count;
+      if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
+         if var_sam_count != 0 then
+            var_mon_count := rcd_retrieve.tde_tes_day_count / var_sam_count;
+         end if;
+      end if;
+
+      /*-*/
       /* Update the test definition
       /*-*/
       update pts_tes_definition
@@ -6498,6 +6524,7 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       tbl_mktcde.delete;
       var_day_code := null;
+      var_wrk_count := 0;
       obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/RESP');
       for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
          obj_res_node := xmlDom.item(obj_res_list,idx);
@@ -6529,13 +6556,14 @@ create or replace package body pts_app.pts_tes_function as
             var_day_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@DAYCDE'));
             var_sam_cod1 := null;
             var_sam_cod2 := null;
-            if rcd_retrieve.tde_tes_sam_count = 2 then
+            var_wrk_count := var_wrk_count + 1;
+            if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                tbl_mktcde.delete;
             end if;
             var_mkt_code := upper(trim(xslProcessor.valueOf(obj_res_node,'@MKTCD1')));
             if var_mkt_code is null then
                var_seq_numb := var_day_code;
-               if rcd_retrieve.tde_tes_sam_count = 2 then
+               if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                   var_seq_numb := 1;
                end if;
                var_exists := false;
@@ -6559,11 +6587,22 @@ create or replace package body pts_app.pts_tes_function as
                         exit;
                      end if;
                   end loop;
-                  if var_exists = true then
-                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') already used');
-                     var_message := true;
+                  if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
+                     if tbl_mktcde.count != 0 then
+                        if var_exists = false then
+                           pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') must be the same for each day in the sample group');
+                           var_message := true;
+                        end if;
+                     else
+                        tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
+                     end if;
                   else
-                     tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
+                     if var_exists = true then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') already used');
+                        var_message := true;
+                     else
+                        tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
+                     end if;
                   end if;
                end if;
             else
@@ -6574,24 +6613,45 @@ create or replace package body pts_app.pts_tes_function as
                      exit;
                   end if;
                end loop;
-               if var_exists = true then
-                  pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') already used');
-                  var_message := true;
+               if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
+                  if tbl_mktcde.count != 0 then
+                     if var_exists = false then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') must be the same for each day in the sample group');
+                        var_message := true;
+                     end if;
+                  else
+                     tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
+                     open csr_sample;
+                     fetch csr_sample into rcd_sample;
+                     if csr_sample%notfound then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
+                        var_message := true;
+                     else
+                        var_sam_cod1 := rcd_sample.tsa_sam_code;
+                        var_seq_numb := var_day_code;
+                     end if;
+                     close csr_sample;
+                  end if;
                else
-                  tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
-                  open csr_sample;
-                  fetch csr_sample into rcd_sample;
-                  if csr_sample%notfound then
-                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
+                  if var_exists = true then
+                     pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') already used');
                      var_message := true;
                   else
-                     var_sam_cod1 := rcd_sample.tsa_sam_code;
-                     var_seq_numb := var_day_code;
-                     if rcd_retrieve.tde_tes_sam_count = 2 then
-                        var_seq_numb := 1;
+                     tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
+                     open csr_sample;
+                     fetch csr_sample into rcd_sample;
+                     if csr_sample%notfound then
+                        pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') does not exist for this test');
+                        var_message := true;
+                     else
+                        var_sam_cod1 := rcd_sample.tsa_sam_code;
+                        var_seq_numb := var_day_code;
+                        if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
+                           var_seq_numb := 1;
+                        end if;
                      end if;
+                     close csr_sample;
                   end if;
-                  close csr_sample;
                end if;
             end if;
             if var_message = false then
@@ -6602,11 +6662,11 @@ create or replace package body pts_app.pts_tes_function as
                rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
                insert into pts_tes_allocation values rcd_pts_tes_allocation;
             end if;
-            if rcd_retrieve.tde_tes_sam_count = 2 then
+            if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                var_mkt_code := upper(trim(xslProcessor.valueOf(obj_res_node,'@MKTCD2')));
                if var_mkt_code is null then
                   var_seq_numb := var_day_code;
-                  if rcd_retrieve.tde_tes_sam_count = 2 then
+                  if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                      var_seq_numb := 2;
                   end if;
                   var_exists := false;
@@ -6658,7 +6718,7 @@ create or replace package body pts_app.pts_tes_function as
                      else
                         var_sam_cod2 := rcd_sample.tsa_sam_code;
                         var_seq_numb := var_day_code;
-                        if rcd_retrieve.tde_tes_sam_count = 2 then
+                        if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                            var_seq_numb := 2;
                         end if;
                      end if;
@@ -6672,6 +6732,12 @@ create or replace package body pts_app.pts_tes_function as
                   rcd_pts_tes_allocation.tal_sam_code := var_sam_cod2;
                   rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
                   insert into pts_tes_allocation values rcd_pts_tes_allocation;
+               end if;
+            end if;
+            if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
+               if var_wrk_count = var_mon_count then
+                  var_wrk_count := 0;
+                  tbl_mktcde.delete;
                end if;
             end if;
          end if;
