@@ -6524,6 +6524,8 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       tbl_mktcde.delete;
       var_day_code := null;
+      var_sam_cod1 := null;
+      var_sam_cod2 := null;
       var_wrk_count := 0;
       obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/RESP');
       for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
@@ -6554,9 +6556,12 @@ create or replace package body pts_app.pts_tes_function as
             end if;
             var_message := false;
             var_day_code := pts_to_number(xslProcessor.valueOf(obj_res_node,'@DAYCDE'));
-            var_sam_cod1 := null;
-            var_sam_cod2 := null;
-            var_wrk_count := var_wrk_count + 1;
+            if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
+               var_wrk_count := var_wrk_count + 1;
+            else
+               var_sam_cod1 := null;
+               var_sam_cod2 := null;
+            end if;
             if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                tbl_mktcde.delete;
             end if;
@@ -6619,6 +6624,7 @@ create or replace package body pts_app.pts_tes_function as
                         pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') must be the same for each day in the sample group');
                         var_message := true;
                      end if;
+                     var_seq_numb := var_day_code;
                   else
                      tbl_mktcde(tbl_mktcde.count+1) := var_mkt_code;
                      open csr_sample;
@@ -6737,6 +6743,8 @@ create or replace package body pts_app.pts_tes_function as
             if upper(rcd_target.tty_alc_proc) = 'MONOTONY' then
                if var_wrk_count = var_mon_count then
                   var_wrk_count := 0;
+                  var_sam_cod1 := null;
+                  var_sam_cod2 := null;
                   tbl_mktcde.delete;
                end if;
             end if;
