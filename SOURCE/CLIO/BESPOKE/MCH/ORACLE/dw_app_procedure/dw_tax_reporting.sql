@@ -43,6 +43,9 @@ create or replace package dw_tax_reporting as
     2008/05   Steve Gregan   Changed gold tax report formatting
     2008/05   Steve Gregan   Changed stock transfer report to only select goods issued deliveries
     2008/05   Steve Gregan   Changed gold tax report to only select goods issued deliveries
+    2008/10   Steve Gregan   Added purchase order and delivery to the sample pricing report
+    2008/11   Steve Gregan   Added goods issued date to the sample pricing report
+    2009/19   Steve Gregan   Fixed sample pricing report for sales division split
 
    *******************************************************************************/
 
@@ -60,7 +63,9 @@ create or replace package dw_tax_reporting as
    function sample_pricing(par_del_plant in varchar2,
                            par_pddate_01 in varchar2,
                            par_pddate_02 in varchar2,
-                           par_ord_type in varchar2) return dw_tax_reporting_table pipelined;
+                           par_ord_type in varchar2,
+                           par_gidate_01 in varchar2,
+                           par_gidate_02 in varchar2) return dw_tax_reporting_table pipelined;
 
    function gold_tax_file(par_tax_01 in varchar2,
                           par_tax_02 in varchar2,
@@ -545,7 +550,9 @@ create or replace package body dw_tax_reporting as
    function sample_pricing(par_del_plant in varchar2,
                            par_pddate_01 in varchar2,
                            par_pddate_02 in varchar2,
-                           par_ord_type in varchar2) return dw_tax_reporting_table pipelined is
+                           par_ord_type in varchar2,
+                           par_gidate_01 in varchar2,
+                           par_gidate_02 in varchar2) return dw_tax_reporting_table pipelined is
 
       /*-*/
       /* Local definitions
@@ -559,6 +566,8 @@ create or replace package body dw_tax_reporting as
       var_pddate_01 varchar2(256 char);
       var_pddate_02 varchar2(256 char);
       var_ord_type varchar2(256 char);
+      var_gidate_01 varchar2(256 char);
+      var_gidate_02 varchar2(256 char);
       type typ_record is record(qry_region varchar2(256 char),
                                 qry_cluster varchar2(256 char),
                                 qry_area varchar2(256 char),
@@ -569,6 +578,8 @@ create or replace package body dw_tax_reporting as
                                 qry_del_plant_desc varchar2(256 char),
                                 qry_ord_type varchar2(256 char),
                                 qry_ord_number varchar2(256 char),
+                                qry_po_number varchar2(256 char),
+                                qry_del_number varchar2(256 char),
                                 qry_matl_code varchar2(256 char),
                                 qry_matl_desc varchar2(256 char),
                                 qry_brand_desc varchar2(256 char),
@@ -625,22 +636,49 @@ create or replace package body dw_tax_reporting as
       end loop;
       var_ord_type := substr(par_ord_type,var_fidx,(var_tidx-var_fidx)+1);
       var_ord_type := replace(var_ord_type,',',''',''');
+      /*-*/
+      var_gidate_01 := par_gidate_01;
+      var_gidate_02 := par_gidate_02;
 
       /*-*/
       /* Load the query statement
       /*-*/
-      var_query := 'select *
+      var_query := 'select t02.qry_region,
+                           t02.qry_cluster,
+                           t02.qry_area,
+                           t02.qry_sale_city,
+                           t01.qry_cust_code,
+                           t01.qry_cust_desc,
+                           t01.qry_del_plant_code,
+                           t01.qry_del_plant_desc,
+                           t01.qry_ord_type,
+                           t01.qry_ord_number,
+                           t01.qry_po_number,
+                           t01.qry_del_number,
+                           t01.qry_matl_code,
+                           t01.qry_matl_desc,
+                           t01.qry_brand_desc,
+                           t01.qry_pod_qty,
+                           t01.qry_ord_uom,
+                           t01.qry_pod_base_qty,
+                           t01.qry_dsp_price,
+                           t01.qry_dsp_value,
+                           t01.qry_tax_rate,
+                           t01.qry_internal_order,
+                           t01.qry_cost_center
                       from (select /*+ ordered */
-                                   t03.cust_name_en_level_2 as qry_region,
-                                   t03.cust_name_en_level_3 as qry_cluster,
-                                   t03.cust_name_en_level_4 as qry_area,
-                                   t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
+                                   lads_trim_code(t08.kunn2) as sap_hier_cust_code,
+                                   t01.sap_sales_hdr_sales_org_code as sap_sales_org_code,
+                                   t01.sap_sales_hdr_distbn_chnl_code as sap_distbn_chnl_code,
+                                   t01.sap_sales_hdr_division_code as sap_division_code,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
                                    t09.customer_desc as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
                                    t01.ord_doc_num as qry_ord_number,
+                                   t01.purch_order_num as qry_po_number,
+                                   t01.del_doc_num as qry_del_number,
                                    t01.sap_material_code as qry_matl_code,
                                    t04.material_desc_en as qry_matl_desc,
                                    t04.brand_flag_desc as qry_brand_desc,
@@ -658,7 +696,6 @@ create or replace package body dw_tax_reporting as
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
                                    lads_sal_ord_irf t021,
-                                   sales_force_geo_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
                                    (select lads_trim_code(matnr) sap_material_code, 
@@ -695,11 +732,9 @@ create or replace package body dw_tax_reporting as
                                      where (t01.address_version = ''I'' or t01.address_version = ''*NONE'')
                                      group by t01.customer_code) t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
-                               and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
-                               and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
+                               <PDDATE>and (trunc(t01.del_date) >= trunc(to_date(''<GIDATE01>'', ''yyyymmdd'')) and trunc(t01.del_date) <= trunc(to_date(''<GIDATE02>'', ''yyyymmdd'')))
                                and t01.sap_sales_hdr_sales_org_code = ''135''
                                and t01.sap_sales_hdr_distbn_chnl_code = ''10''
-                               and t01.sap_sales_hdr_division_code = ''51''
                                and t01.sap_order_type_code in (''<ORDTYPE>'')
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
@@ -715,21 +750,22 @@ create or replace package body dw_tax_reporting as
                                and (t01.pod_date <= t07.valid_to or t07.valid_to is null)
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
-                               and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
-                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code
                                and t04.sap_material_type_code = ''FERT''
                              union all
                             select /*+ ordered */
-                                   t03.cust_name_en_level_2 as qry_region,
-                                   t03.cust_name_en_level_3 as qry_cluster,
-                                   t03.cust_name_en_level_4 as qry_area,
-                                   t03.sap_cust_code_level_5||'' ''||t03.cust_name_en_level_5 as qry_sale_city,
+                                   lads_trim_code(t08.kunn2) as sap_hier_cust_code,
+                                   t01.sap_sales_hdr_sales_org_code as sap_sales_org_code,
+                                   t01.sap_sales_hdr_distbn_chnl_code as sap_distbn_chnl_code,
+                                   t01.sap_sales_hdr_division_code as sap_division_code,
                                    t01.sap_sold_to_cust_code as qry_cust_code,
                                    t09.customer_desc as qry_cust_desc,
                                    t01.sap_plant_code as qry_del_plant_code,
                                    t05.plant_desc as qry_del_plant_desc,
                                    t01.sap_order_type_code as qry_ord_type,
                                    t01.ord_doc_num as qry_ord_number,
+                                   t01.purch_order_num as qry_po_number,
+                                   t01.del_doc_num as qry_del_number,
                                    t01.sap_material_code as qry_matl_code,
                                    t04.material_desc_en as qry_matl_desc,
                                    t04.brand_flag_desc as qry_brand_desc,
@@ -747,7 +783,6 @@ create or replace package body dw_tax_reporting as
                               from order_fact t01,
                                    lads_sal_ord_gen t02,
                                    lads_sal_ord_irf t021,
-                                   sales_force_geo_hier t03,
                                    material_dim t04,
                                    plant_dim t05,
                                    (select lads_trim_code(matnr) sap_material_code, 
@@ -765,11 +800,9 @@ create or replace package body dw_tax_reporting as
                                      where (t01.address_version = ''I'' or t01.address_version = ''*NONE'')
                                      group by t01.customer_code) t09
                              where t01.sap_plant_code in (''<DELPLANT>'')
-                               and trunc(t01.pod_date) >= trunc(to_date(''<PDDATE01>'', ''yyyymmdd''))
-                               and trunc(t01.pod_date) <= trunc(to_date(''<PDDATE02>'', ''yyyymmdd''))
+                               <PDDATE>and (trunc(t01.del_date) >= trunc(to_date(''<GIDATE01>'', ''yyyymmdd'')) and trunc(t01.del_date) <= trunc(to_date(''<GIDATE02>'', ''yyyymmdd'')))
                                and t01.sap_sales_hdr_sales_org_code = ''135''
                                and t01.sap_sales_hdr_distbn_chnl_code = ''10'' 
-                               and t01.sap_sales_hdr_division_code = ''51''
                                and t01.sap_order_type_code in (''<ORDTYPE>'')
                                and t01.ord_doc_num = t02.belnr
                                and t01.ord_doc_line_num = t02.posex
@@ -782,8 +815,7 @@ create or replace package body dw_tax_reporting as
                                and t01.sap_material_code = t06.sap_material_code(+)
                                and ''00''||t01.sap_sold_to_cust_code = t08.kunnr(+)
                                and ''ZA'' = t08.parvw(+)
-                               and lads_trim_code(t08.kunn2) = t03.sap_hier_cust_code(+)
-                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code(+)
+                               and ''00''||t01.sap_sold_to_cust_code = t09.customer_code
                                and t04.sap_material_type_code = ''FERT''
                                and not exists (select t12.kbetr
                                                  from lads_prc_lst_hdr t11,
@@ -800,11 +832,29 @@ create or replace package body dw_tax_reporting as
                                                   and t11.matnr is not null
                                                   and t01.sap_material_code = lads_trim_code(t11.matnr)
                                                   and (t01.pod_date >= lads_to_date(t11.datab,''yyyymmdd'') or lads_to_date(t11.datab,''yyyymmdd'') is null)
-                                                  and (t01.pod_date <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null)))';
+                                                  and (t01.pod_date <= lads_to_date(t11.datbi,''yyyymmdd'') or lads_to_date(t11.datbi,''yyyymmdd'') is null))) t01,
+                           (select t01.sap_hier_cust_code,
+                                   t01.sap_sales_org_code,
+                                   t01.sap_distbn_chnl_code,
+                                   t01.sap_division_code,
+                                   t01.cust_name_en_level_2 as qry_region,
+                                   t01.cust_name_en_level_3 as qry_cluster,
+                                   t01.cust_name_en_level_4 as qry_area,
+                                   t01.sap_cust_code_level_5||'' ''||t01.cust_name_en_level_5 as qry_sale_city
+                              from sales_force_geo_hier t01) t02
+                     where t01.sap_hier_cust_code = t02.sap_hier_cust_code
+                       and t01.sap_sales_org_code = t02.sap_sales_org_code
+                       and t01.sap_distbn_chnl_code = t02.sap_distbn_chnl_code
+                       and t01.sap_division_code = t02.sap_division_code';
       var_query := replace(var_query,'<DELPLANT>',var_del_plant);
-      var_query := replace(var_query,'<PDDATE01>',var_pddate_01);
-      var_query := replace(var_query,'<PDDATE02>',var_pddate_02);
       var_query := replace(var_query,'<ORDTYPE>',var_ord_type);
+      var_query := replace(var_query,'<GIDATE01>',var_gidate_01);
+      var_query := replace(var_query,'<GIDATE02>',var_gidate_02);
+      if (not(var_pddate_01 is null) and not(var_pddate_02 is null)) then
+         var_query := replace(var_query,'<PDDATE>','and (trunc(t01.pod_date) >= trunc(to_date(''' || var_pddate_01 || ''', ''yyyymmdd'')) and trunc(t01.pod_date) <= trunc(to_date(''' || var_pddate_02 || ''', ''yyyymmdd''))) ');
+      else
+         var_query := replace(var_query,'<PDDATE>','');
+      end if;
 
       /*-*/
       /* Retrieve the report data in to the array
@@ -820,19 +870,22 @@ create or replace package body dw_tax_reporting as
       /*-*/
       pipe row('<table border=1 cellpadding="0" cellspacing="0">');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selections</td>');
+      pipe row('<td align=center colspan=23 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Selections</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21>Delivery Plants: '||par_del_plant||'</td>');
+      pipe row('<td align=center colspan=23>Delivery Plants: '||par_del_plant||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21>POD Date Range: '||par_pddate_01||' to '||par_pddate_02||'</td>');
+      pipe row('<td align=center colspan=23>POD Date Range: '||nvl(par_pddate_01,'*ALL')||' to '||nvl(par_pddate_02,'*ALL')||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21>Order Types: '||par_ord_type||'</td>');
+      pipe row('<td align=center colspan=23>Order Types: '||par_ord_type||'</td>');
       pipe row('</tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21></td>');
+      pipe row('<td align=center colspan=23>Good Issued Date Range: '||par_gidate_01||' to '||par_gidate_02||'</td>');
+      pipe row('</tr>');
+      pipe row('<tr>');
+      pipe row('<td align=center colspan=23></td>');
       pipe row('</tr>');
 
       /*-*/
@@ -840,7 +893,7 @@ create or replace package body dw_tax_reporting as
       /*-*/
       pipe row('<table border=1 cellpadding="0" cellspacing="0">');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=21 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sample Pricing Tax Report</td>');
+      pipe row('<td align=center colspan=23 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:10pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sample Pricing Tax Report</td>');
       pipe row('</tr>');
       pipe row('<tr>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Region</td>');
@@ -853,6 +906,8 @@ create or replace package body dw_tax_reporting as
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant Description</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Order Type</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Sales Order</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PO Number</td>');
+      pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Delivery Number</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Description</td>');
       pipe row('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Brand</td>');
@@ -895,6 +950,8 @@ create or replace package body dw_tax_reporting as
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_del_plant_desc||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_type||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_ord_number||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_po_number||'</td>';
+         var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_del_number||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_code||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_matl_desc||'</td>';
          var_wrk_string := var_wrk_string||'<td align=left>'||tbl_report(idx).qry_brand_desc||'</td>';
