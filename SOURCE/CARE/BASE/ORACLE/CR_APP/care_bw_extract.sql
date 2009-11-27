@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package care_bw_extract as
+CREATE OR REPLACE package CR_APP.care_bw_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -28,11 +25,12 @@ create or replace package care_bw_extract as
        *LAST extracts consumer response data for the previous three periods.
        YYYYPP extracts consumer response data for the requested period.
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2008/11   Steve Gregan   Created
-    2009/02   Trevor Keon    Changed output files to be a constant name
-
+    YYYY/MM   Author         			 Version    Description
+    -------   ------         			 -------    -----------
+    2008/11   Steve Gregan   			 1.0        Created
+    2009/02   Trevor Keon    			 1.1        Changed output files to be a constant name
+    2009/11   Ben Halicki / Carol Guo    1.2        Modified extract to include 'Contacts/Multiplier constant for BW interfaces'
+    
    *******************************************************************************/
 
    /*-*/
@@ -43,10 +41,8 @@ create or replace package care_bw_extract as
 end care_bw_extract;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body care_bw_extract as
+
+CREATE OR REPLACE package body CR_APP.care_bw_extract as
 
    /*-*/
    /* Private exceptions
@@ -138,7 +134,8 @@ create or replace package body care_bw_extract as
                 nvl(t66.bw_code, '**ERROR** - Severity id BW XREF not found for ('||t04.keyword||')') as severity_id, 
                 to_char(t01.opened_date, 'yyyymmdd') as creation_date, 
                 substr(t05.verbatim_1, 1, 60) as verbatim, 
-                substr(t03.level_five_desc, 1, 60) as reason_text
+                substr(t03.level_five_desc, 1, 60) as reason_text,
+                1 as contacts
            from incident t01, 
                 keyword_1 t02,
                 keyword_2 t03, 
@@ -163,6 +160,7 @@ create or replace package body care_bw_extract as
             and t01.opened_date >= rcd_period.salestart
             and t01.opened_date <= rcd_period.salesend
             and t03.level_three not in ('FOLLUP', 'NA')
+            and t01.extra_keyword_5 <> 'DSR'
           order by t01.opened_date asc;
       rcd_extract csr_extract%rowtype;
 
@@ -292,6 +290,7 @@ create or replace package body care_bw_extract as
                   tbl_email(tbl_email.count+1) := '<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||rcd_extract.creation_date||'</td>';
                   tbl_email(tbl_email.count+1) := '<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||rcd_extract.verbatim||'</td>';
                   tbl_email(tbl_email.count+1) := '<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||rcd_extract.reason_text||'</td>';
+                  tbl_email(tbl_email.count+1) := '<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||rcd_extract.contacts||'</td>';
                   tbl_email(tbl_email.count+1) := '</tr>';
                end if;
 
@@ -317,7 +316,8 @@ create or replace package body care_bw_extract as
                   var_output := var_output||rcd_period.period||';';
                   var_output := var_output|| '"'||replace(rcd_extract.creation_date,'"','""')||'";';
                   var_output := var_output|| '"'||replace(rcd_extract.verbatim,'"','""')||'";';
-                  var_output := var_output|| '"'||replace(rcd_extract.reason_text,'"','""')||'"';
+                  var_output := var_output|| '"'||replace(rcd_extract.reason_text,'"','""')||'";';
+                  var_output := var_output|| rcd_extract.contacts;
                   tbl_output(tbl_output.count+1) := var_output;
                end if;
 
@@ -349,7 +349,7 @@ create or replace package body care_bw_extract as
                   /*-*/
                   /* Append the interface records
                   /*-*/
-                  lics_outbound_loader.append_data('TRANS_ID;SALES_ORG;PROD_ID_GRD;BUS_SEG;MKT_SEG;BRAND_FLAG;SUPP_SEG;PACK_FORMAT;PROD_CAT;FACTORY_MOE;REASON_L1;REASON_L2;REASON_L3;SEVERITY_ID;YEAR;PERIOD;CREATION_DATE;VERBATIM;REASON_TEXT');
+                  lics_outbound_loader.append_data('TRANS_ID;SALES_ORG;PROD_ID_GRD;BUS_SEG;MKT_SEG;BRAND_FLAG;SUPP_SEG;PACK_FORMAT;PROD_CAT;FACTORY_MOE;REASON_L1;REASON_L2;REASON_L3;SEVERITY_ID;YEAR;PERIOD;CREATION_DATE;VERBATIM;REASON_TEXT;CONTACTS');
                   for idx in 1..tbl_output.count loop
                      lics_outbound_loader.append_data(tbl_output(idx));
                   end loop;
@@ -406,7 +406,7 @@ create or replace package body care_bw_extract as
             /* Create the error email when required
             /*-*/
             else
-
+      
                /*-*/
                /* Log event
                /*-*/
@@ -433,13 +433,14 @@ create or replace package body care_bw_extract as
                lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
                lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
                lics_mailer.append_data('<tr>');
-               lics_mailer.append_data('<td align=center colspan=19 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Consumer Response Interface (Care to SAP BW) - Error Report - '||rcd_period.yyyy_pp||'</td>');
+               lics_mailer.append_data('<td align=center colspan=20 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Consumer Response Interface (Care to SAP BW) - Error Report - '||rcd_period.yyyy_pp||'</td>');
                lics_mailer.append_data('</tr>');
 
                /*-*/
                /* Output the header
                /*-*/
                lics_mailer.append_data('<tr>');
+               lics_mailer.append_data('<td></td>');
                lics_mailer.append_data('<td></td>');
                lics_mailer.append_data('<td></td>');
                lics_mailer.append_data('<td></td>');
@@ -480,6 +481,7 @@ create or replace package body care_bw_extract as
                lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Creation Date</td>');
                lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Verbatim</td>');
                lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Reason Text</td>');
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Contacts</td>');
                lics_mailer.append_data('</tr>');
 
                /*-*/
