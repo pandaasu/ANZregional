@@ -114,6 +114,7 @@ PROCEDURE transfer_pricelist;
   ----- ---------- -------------------- ----------------------------------------
   1.0   19/08/2005 Ann-Marie Ingeme     Created this procedure.
   1.1   02/02/2006 Craig Ford           Updated to include Aus PETCARE.
+  2.0   20/08/2009 Steve Gregan         Include multiple price logic
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
