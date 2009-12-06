@@ -86,7 +86,6 @@ PROCEDURE promotion_reference_flattening(
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   04/04/2007 Kris Lee           Created this procedure.
-    2.0   20/10/2009 Steve Gregan         Added new customer fields.
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -110,7 +109,7 @@ FUNCTION pmx_cust_flattening(
     REVISIONS:
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
-    1.0   04/04/2007 Kris Lee             Created this procedure.
+    1.0   04/04/2007 Kris Lee           Created this procedure.
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -270,12 +269,13 @@ FUNCTION pmx_prom_type_flattening(
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
-  1.0   17/04/2007 Kris Lee           Created this function.
-  1.1   01/04/2008 Kris Lee           Move the promotion reference flattening
+  1.0   17/04/2007 Kris Lee             Created this function.
+  1.1   01/04/2008 Kris Lee             Move the promotion reference flattening
                                         from ods_to_dds_flattening package to
                                          here
-  1.2   16/10/2008 Steve Gregan       Redeveloped the function to process claims
-                                      and phased values correctly
+  1.2   16/10/2008 Steve Gregan         Redeveloped the function to process claims
+                                        and phased values correctly
+  2.0   17/11/2009 Steve Gregan         Changed aggregation to reaggregate from point in time
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -310,7 +310,7 @@ FUNCTION prom_fact_aggregation (
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
-  1.0   30/04/2007 Kris Lee           Created this function.
+  1.0   30/04/2007 Kris Lee             Created this function.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -1216,73 +1216,20 @@ FUNCTION pmx_cust_flattening(
         pmx_cust_name,
         cust_code,
         prmtbl_flag,
-        acct_mgr_key,
-        major_ref_code,
-        major_ref_desc,
-        mid_ref_code,
-        mid_ref_desc,
-        minor_ref_code,
-        minor_ref_desc,
-        main_code,
-        main_name,
-        cust_level,
-        parent_cust_code,
-        parent_cust_desc,
-        parent_gl_cust_code,
-        parent_gl_cust_desc,
-        gl_code,
-        distbn_chnl_code
+        acct_mgr_key
       FROM
         pmx_cust_dim
       MINUS
       SELECT
-        t01.company_code,
-        t01.division_code,
-        t01.cust_name as pmx_cust_name,
-        t01.cust_code,
-        t01.prom_flag as prmtbl_flag,
-        t01.acct_mgr_key,
-        t01.major_ref_code,
-        t02.cust_name as major_ref_desc,
-        t01.mid_ref_code,
-        t03.cust_name as mid_ref_desc,
-        t01.minor_ref_code,
-        t04.cust_name as minor_ref_desc,
-        t01.main_code,
-        t05.cust_name as main_name,
-        t01.cust_level,
-        t01.parent_cust_code,
-        t06.cust_name as parent_cust_desc,
-        t01.parent_gl_cust_code,
-        t07.cust_name as parent_gl_cust_desc,
-        t01.gl_code,
-        t01.distbn_chnl_code
+        company_code,
+        division_code,
+        cust_name as pmx_cust_name,
+        cust_code,
+        prom_flag as prmtbl_flag,
+        acct_mgr_key
       FROM
-        pmx_cust t01,
-        pmx_cust t02,
-        pmx_cust t03,
-        pmx_cust t04,
-        pmx_cust t05,
-        pmx_cust t06,
-        pmx_cust t07
-      WHERE t01.company_code = t02.company_code(+)
-        AND t01.division_code = t02.division_code(+)
-        AND t01.major_ref_code = t02.cust_code(+)
-        AND t01.company_code = t03.company_code(+)
-        AND t01.division_code = t03.division_code(+)
-        AND t01.mid_ref_code = t03.cust_code(+)
-        AND t01.company_code = t04.company_code(+)
-        AND t01.division_code = t04.division_code(+)
-        AND t01.minor_ref_code = t04.cust_code(+)
-        AND t01.company_code = t05.company_code(+)
-        AND t01.division_code = t05.division_code(+)
-        AND t01.main_code = t05.cust_code(+)
-        AND t01.company_code = t06.company_code(+)
-        AND t01.division_code = t06.division_code(+)
-        AND t01.parent_cust_code = t06.cust_code(+)
-        AND t01.company_code = t07.company_code(+)
-        AND t01.division_code = t07.division_code(+)
-        AND t01.parent_gl_cust_code = t07.cust_code(+);
+        pmx_cust;
+
     rv_dim_minus_pmx_cust csr_dim_minus_pmx_cust%ROWTYPE;
 
   BEGIN
@@ -1321,57 +1268,19 @@ FUNCTION pmx_cust_flattening(
 
     write_log(v_data_type, v_sort_field,v_log_level + 1, v_upd_count || ' records deleted from DIM table');
 
+
     -- Add these changes to the pmx_cust_dim table
     MERGE INTO
       pmx_cust_dim t1
     USING (SELECT
-             t01.company_code,
-             t01.division_code,
-             t01.cust_name as pmx_cust_name,
-             t01.cust_code,
-             t01.prom_flag as prmtbl_flag,
-             t01.acct_mgr_key,
-             t01.major_ref_code,
-             t02.cust_name as major_ref_desc,
-             t01.mid_ref_code,
-             t03.cust_name as mid_ref_desc,
-             t01.minor_ref_code,
-             t04.cust_name as minor_ref_desc,
-             t01.main_code,
-             t05.cust_name as main_name,
-             t01.cust_level,
-             t01.parent_cust_code,
-             t06.cust_name as parent_cust_desc,
-             t01.parent_gl_cust_code,
-             t07.cust_name as parent_gl_cust_desc,
-             t01.gl_code,
-             t01.distbn_chnl_code
+             company_code,
+             division_code,
+             cust_name as pmx_cust_name,
+             cust_code,
+             prom_flag as prmtbl_flag,
+             acct_mgr_key
            FROM
-             pmx_cust t01,
-             pmx_cust t02,
-             pmx_cust t03,
-             pmx_cust t04,
-             pmx_cust t05,
-             pmx_cust t06,
-             pmx_cust t07
-           WHERE t01.company_code = t02.company_code(+)
-             AND t01.division_code = t02.division_code(+)
-             AND t01.major_ref_code = t02.cust_code(+)
-             AND t01.company_code = t03.company_code(+)
-             AND t01.division_code = t03.division_code(+)
-             AND t01.mid_ref_code = t03.cust_code(+)
-             AND t01.company_code = t04.company_code(+)
-             AND t01.division_code = t04.division_code(+)
-             AND t01.minor_ref_code = t04.cust_code(+)
-             AND t01.company_code = t05.company_code(+)
-             AND t01.division_code = t05.division_code(+)
-             AND t01.main_code = t05.cust_code(+)
-             AND t01.company_code = t06.company_code(+)
-             AND t01.division_code = t06.division_code(+)
-             AND t01.parent_cust_code = t06.cust_code(+)
-             AND t01.company_code = t07.company_code(+)
-             AND t01.division_code = t07.division_code(+)
-             AND t01.parent_gl_cust_code = t07.cust_code(+)
+             pmx_cust
            MINUS
            SELECT
              company_code,
@@ -1379,24 +1288,9 @@ FUNCTION pmx_cust_flattening(
              pmx_cust_name,
              cust_code,
              prmtbl_flag,
-             acct_mgr_key,
-             major_ref_code,
-             major_ref_desc,
-             mid_ref_code,
-             mid_ref_desc,
-             minor_ref_code,
-             minor_ref_desc,
-             main_code,
-             main_name,
-             cust_level,
-             parent_cust_code,
-             parent_cust_desc,
-             parent_gl_cust_code,
-             parent_gl_cust_desc,
-             gl_code,
-             distbn_chnl_code
+             acct_mgr_key
            FROM
-             pmx_cust_dim) t2
+             pmx_cust_dim ) t2
           ON (t1.company_code = t2.company_code
               AND t1.division_code = t2.division_code
               AND t1.cust_code = t2.cust_code)
@@ -1404,22 +1298,7 @@ FUNCTION pmx_cust_flattening(
       UPDATE SET
         t1.pmx_cust_name = t2.pmx_cust_name,
         t1.prmtbl_flag = t2.prmtbl_flag,
-        t1.acct_mgr_key = t2.acct_mgr_key,
-        t1.major_ref_code = t2.major_ref_code,
-        t1.major_ref_desc = t2.major_ref_desc,
-        t1.mid_ref_code = t2.mid_ref_code,
-        t1.mid_ref_desc = t2.mid_ref_desc,
-        t1.minor_ref_code = t2.minor_ref_code,
-        t1.minor_ref_desc = t2.minor_ref_desc,
-        t1.main_code = t2.main_code,
-        t1.main_name = t2.main_name,
-        t1.cust_level = t2.cust_level,
-        t1.parent_cust_code = t2.parent_cust_code,
-        t1.parent_cust_desc = t2.parent_cust_desc,
-        t1.parent_gl_cust_code = t2.parent_gl_cust_code,
-        t1.parent_gl_cust_desc = t2.parent_gl_cust_desc,
-        t1.gl_code = t2.gl_code,
-        t1.distbn_chnl_code = t2.distbn_chnl_code
+        t1.acct_mgr_key = t2.acct_mgr_key
     WHEN NOT MATCHED THEN
       INSERT
         (t1.company_code,
@@ -1427,44 +1306,14 @@ FUNCTION pmx_cust_flattening(
          t1.cust_code,
          t1.pmx_cust_name,
          t1.prmtbl_flag,
-         t1.acct_mgr_key,
-         t1.major_ref_code,
-         t1.major_ref_desc,
-         t1.mid_ref_code,
-         t1.mid_ref_desc,
-         t1.minor_ref_code,
-         t1.minor_ref_desc,
-         t1.main_code,
-         t1.main_name,
-         t1.cust_level,
-         t1.parent_cust_code,
-         t1.parent_cust_desc,
-         t1.parent_gl_cust_code,
-         t1.parent_gl_cust_desc,
-         t1.gl_code,
-         t1.distbn_chnl_code)
+         t1.acct_mgr_key)
       VALUES
         (t2.company_code,
          t2.division_code,
          t2.cust_code,
          t2.pmx_cust_name,
          t2.prmtbl_flag,
-         t2.acct_mgr_key,
-         t2.major_ref_code,
-         t2.major_ref_desc,
-         t2.mid_ref_code,
-         t2.mid_ref_desc,
-         t2.minor_ref_code,
-         t2.minor_ref_desc,
-         t2.main_code,
-         t2.main_name,
-         t2.cust_level,
-         t2.parent_cust_code,
-         t2.parent_cust_desc,
-         t2.parent_gl_cust_code,
-         t2.parent_gl_cust_desc,
-         t2.gl_code,
-         t2.distbn_chnl_code);
+         t2.acct_mgr_key);
 
     v_upd_count := SQL%ROWCOUNT;
 
@@ -2413,55 +2262,67 @@ FUNCTION prom_fact_aggregation (
   -- Outer loop cursor promotions header.
   CURSOR csr_prom_hdr IS
     SELECT
-      company_code,
-      division_code,
-      prom_num,
-      cust_code,
+      t1.company_code,
+      t1.division_code,
+      t1.prom_num,
+      t1.cust_code,
       DECODE (t1.company_code,'147','AUD','NZD') as currcy_code,
-      prom_type_key,
-      prom_type_class,
-      prom_stat_code,
-      prom_attrb,
-      case1_fund_code,
-      case2_fund_code,
-      coop1_fund_code,
-      coop2_fund_code,
-      coop3_fund_code,
-      coup1_fund_code,
-      coup2_fund_code,
-      scan1_fund_code,
-      whse1_fund_code,
-      case1_pay_mthd,
-      case2_pay_mthd,
-      sell_start,
-      sell_end,
-      buy_start,
-      buy_end,
-      split,
-      split_end,
-      prom_chng_date,
-      prom_hdr_load_date,
+      t1.prom_type_key,
+      t1.prom_type_class,
+      t1.prom_stat_code,
+      t1.prom_attrb,
+      t1.case1_fund_code,
+      t1.case2_fund_code,
+      t1.coop1_fund_code,
+      t1.coop2_fund_code,
+      t1.coop3_fund_code,
+      t1.coup1_fund_code,
+      t1.coup2_fund_code,
+      t1.scan1_fund_code,
+      t1.whse1_fund_code,
+      t1.case1_pay_mthd,
+      t1.case2_pay_mthd,
+      t1.sell_start,
+      t1.sell_end,
+      t1.buy_start,
+      t1.buy_end,
+      t1.split,
+      t1.split_end,
+      t1.prom_chng_date,
+      t1.prom_hdr_load_date,
       t2.mars_period as buy_start_yyyypp,
       t2.mars_year as buy_start_yyyy,
       t2.mars_week_of_period as buy_start_week_of_period,
       t3.mars_period as sell_start_yyyypp,
       t4.mars_period as eff_start_yyyypp,
       t4.mars_year as eff_start_yyyy,
-      cust_prom_type,
-      prom_comnt
+      t1.cust_prom_type,
+      t1.prom_comnt
     FROM
       pmx_prom_hdr t1,
       mars_date_dim t2,
       mars_date_dim t3,
-      mars_date_dim t4
-   WHERE
-      company_code = i_company_code
-      AND prom_hdr_lupdt > v_cntl_str_date
-      AND prom_hdr_lupdt <= v_cntl_end_date
-      AND valdtn_status = v_valdtn_status
+      mars_date_dim t4,
+      (select company_code,
+              division_code,
+              prom_num,
+              min(prom_chng_date) as prom_chng_date
+         from pmx_prom_hdr
+        where company_code = i_company_code
+          and prom_hdr_lupdt > v_cntl_str_date
+          and prom_hdr_lupdt <= v_cntl_end_date
+          and valdtn_status = v_valdtn_status
+        group by company_code,
+                 division_code,
+                 prom_num) t5
+   WHERE t1.company_code = i_company_code
       AND t1.buy_start = t2.calendar_date(+)
       AND t1.sell_start = t3.calendar_date(+)
       AND t1.prom_chng_date = t4.calendar_date(+)
+      AND t1.company_code = t5.company_code
+      AND t1.division_code = t5.division_code
+      AND t1.prom_num = t5.prom_num
+      AND t1.prom_chng_date >= t5.prom_chng_date
     ORDER BY company_code, division_code, prom_num, prom_chng_date;
     rv_prom_hdr csr_prom_hdr%ROWTYPE;
 
