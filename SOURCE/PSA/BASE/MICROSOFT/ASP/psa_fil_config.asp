@@ -364,11 +364,13 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Filler ('+cstrDefineCode+')';
+            cobjScreens[2].hedtxt = 'Update Filler';
             document.getElementById('addDefine').style.display = 'none';
+            document.getElementById('updDefine').style.display = 'block';
          } else {
             cobjScreens[2].hedtxt = 'Create Filler';
             document.getElementById('addDefine').style.display = 'block';
+            document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_FilCode').value = '';
@@ -377,7 +379,11 @@ sub PaintFunction()%>
          var objFilStat = document.getElementById('DEF_FilStat');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'FILLER') {
-               document.getElementById('DEF_FilCode').value = objElements[i].getAttribute('FILCDE');
+               if (cstrDefineMode == '*UPD') {
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('FILCDE')+'</p>';
+               } else {
+                  document.getElementById('DEF_FilCode').value = objElements[i].getAttribute('FILCDE');
+               }
                document.getElementById('DEF_FilName').value = objElements[i].getAttribute('FILNAM');
                strFilStat = objElements[i].getAttribute('FILSTS');
             }
@@ -530,6 +536,10 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FilCode" size="3" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr id="updDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Filler Code:&nbsp;</nobr></td>
+         <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Filler Name:&nbsp;</nobr></td>

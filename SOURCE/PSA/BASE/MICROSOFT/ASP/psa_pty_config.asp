@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_PRD_CONFIG")
+   strReturn = GetSecurityCheck("PSA_PTY_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -364,14 +364,16 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Production Type ('+cstrDefineCode+')';
+            cobjScreens[2].hedtxt = 'Update Production Type';
             document.getElementById('addDefine').style.display = 'none';
+            document.getElementById('updDefine').style.display = 'block';
          } else {
             cobjScreens[2].hedtxt = 'Create Production Type';
             document.getElementById('addDefine').style.display = 'block';
+            document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_PrdCode').value = '';
+         document.getElementById('DEF_PrdType').value = '';
          document.getElementById('DEF_PrdName').value = '';
          var strPrdStat = '';
          var objPrdStat = document.getElementById('DEF_PrdStat');
@@ -382,7 +384,11 @@ sub PaintFunction()%>
          var strPrdCreu = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PRDTYPE') {
-               document.getElementById('DEF_PrdCode').value = objElements[i].getAttribute('PRDTYP');
+               if (cstrDefineMode == '*UPD') {
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('PRDTYP')+'</p>';
+               } else {
+                  document.getElementById('DEF_PrdType').value = objElements[i].getAttribute('PRDTYP');
+               }
                document.getElementById('DEF_PrdName').value = objElements[i].getAttribute('PRDNAM');
                strPrdStat = objElements[i].getAttribute('PRDSTS');
                strPrdMatu = objElements[i].getAttribute('MATUSG');
@@ -442,7 +448,7 @@ sub PaintFunction()%>
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_PrdName').focus();
          } else {
-            document.getElementById('DEF_PrdCode').focus();
+            document.getElementById('DEF_PrdType').focus();
          }
       }
    }
@@ -480,7 +486,7 @@ sub PaintFunction()%>
          strXML = strXML+' PRDTYP="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' PRDTYP="'+fixXML(document.getElementById('DEF_PrdCode').value)+'"';
+         strXML = strXML+' PRDTYP="'+fixXML(document.getElementById('DEF_PrdType').value)+'"';
       }
       strXML = strXML+' PRDNAM="'+fixXML(document.getElementById('DEF_PrdName').value)+'"';
       if (objPrdStat.selectedIndex == -1) {
@@ -608,8 +614,12 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PrdCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PrdType" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr id="updDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Production Type Code:&nbsp;</nobr></td>
+         <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Name:&nbsp;</nobr></td>
