@@ -55,8 +55,8 @@ create or replace package body psa_app.psa_fil_function as
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
-      var_str_code varchar2(64);
-      var_end_code varchar2(64);
+      var_str_code varchar2(32);
+      var_end_code varchar2(32);
       var_output varchar2(2000 char);
       var_pag_size number;
 

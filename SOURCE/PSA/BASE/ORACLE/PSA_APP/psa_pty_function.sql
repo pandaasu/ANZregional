@@ -55,8 +55,8 @@ create or replace package body psa_app.psa_pty_function as
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
-      var_str_code varchar2(64);
-      var_end_code varchar2(64);
+      var_str_code varchar2(32);
+      var_end_code varchar2(32);
       var_output varchar2(2000 char);
       var_pag_size number;
 
@@ -149,7 +149,7 @@ create or replace package body psa_app.psa_pty_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW PRDTYP="'||to_char(tbl_list(idx).pty_prd_type)||'" PRDNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PRDSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -158,14 +158,14 @@ create or replace package body psa_app.psa_pty_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW PRDTYP="'||to_char(tbl_list(idx).pty_prd_type)||'" PRDNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PRDSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW PRDTYP="'||to_char(tbl_list(idx).pty_prd_type)||'" PRDNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PRDSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -175,14 +175,14 @@ create or replace package body psa_app.psa_pty_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW PRDTYP="'||to_char(tbl_list(idx).pty_prd_type)||'" PRDNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PRDSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW PRDTYP="'||to_char(tbl_list(idx).pty_prd_type)||'" PRDNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PRDSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
             end loop;
          end if;
       end if;
@@ -265,7 +265,7 @@ create or replace package body psa_app.psa_pty_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PRDTYP')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -302,9 +302,9 @@ create or replace package body psa_app.psa_pty_function as
       /* Pipe the production type XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<PRDTYPE PTYCDE="'||psa_to_xml(rcd_retrieve.pty_prd_type||' - (Last updated by '||rcd_retrieve.pty_upd_user||' on '||to_char(rcd_retrieve.pty_upd_date,'yyyy/mm/dd')||')')||'"';
-         var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
-         var_output := var_output||' PTYSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
+         var_output := '<PRDTYPE PRDTYP="'||psa_to_xml(rcd_retrieve.pty_prd_type||' - (Last updated by '||rcd_retrieve.pty_upd_user||' on '||to_char(rcd_retrieve.pty_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := var_output||' PRDNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
+         var_output := var_output||' PRDSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
          var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.pty_prd_mat_usage)||'"';
          var_output := var_output||' LINUSG="'||psa_to_xml(rcd_retrieve.pty_prd_lin_usage)||'"';
          var_output := var_output||' RUNUSG="'||psa_to_xml(rcd_retrieve.pty_prd_run_usage)||'"';
@@ -312,9 +312,9 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<PRDTYPE PTYCDE=""';
-         var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
-         var_output := var_output||' PTYSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
+         var_output := '<PRDTYPE PRDTYP=""';
+         var_output := var_output||' PRDNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
+         var_output := var_output||' PRDSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
          var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.pty_prd_mat_usage)||'"';
          var_output := var_output||' LINUSG="'||psa_to_xml(rcd_retrieve.pty_prd_lin_usage)||'"';
          var_output := var_output||' RUNUSG="'||psa_to_xml(rcd_retrieve.pty_prd_run_usage)||'"';
@@ -322,9 +322,9 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<PRDTYPE PTYCDE=""';
-         var_output := var_output||' PTYNAM=""';
-         var_output := var_output||' PTYSTS="1"';
+         var_output := '<PRDTYPE PRDTYP=""';
+         var_output := var_output||' PRDNAM=""';
+         var_output := var_output||' PRDSTS="1"';
          var_output := var_output||' MATUSG="0"';
          var_output := var_output||' LINUSG="0"';
          var_output := var_output||' RUNUSG="0"';
@@ -414,9 +414,9 @@ create or replace package body psa_app.psa_pty_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_prd_type.pty_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
-      rcd_psa_prd_type.pty_prd_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYNAM'));
-      rcd_psa_prd_type.pty_prd_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYSTS'));
+      rcd_psa_prd_type.pty_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PRDTYP')));
+      rcd_psa_prd_type.pty_prd_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PRDNAM'));
+      rcd_psa_prd_type.pty_prd_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PRDSTS'));
       rcd_psa_prd_type.pty_prd_mat_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATUSG'));
       rcd_psa_prd_type.pty_prd_lin_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINUSG'));
       rcd_psa_prd_type.pty_prd_run_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNUSG'));
