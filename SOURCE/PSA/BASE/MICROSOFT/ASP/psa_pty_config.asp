@@ -5,7 +5,7 @@
 '// System  : PSA (Production Scheduling Application)            //
 '// Script  : psa_pty_config.asp                                 //
 '// Author  : Steve Gregan                                       //
-'// Date    : July 2009                                          //
+'// Date    : December 2009                                      //
 '// Text    : This script implements the production type         //
 '//           configuration functionality                        //
 '//////////////////////////////////////////////////////////////////
@@ -608,7 +608,7 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PtyCode" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_PtyCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -625,6 +625,7 @@ sub PaintFunction()%>
                <option value="1">Active
             </select>
          </nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Material Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
@@ -660,8 +661,6 @@ sub PaintFunction()%>
             <input type="radio" name="DEF_PtyCreu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
-      </tr>
-
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

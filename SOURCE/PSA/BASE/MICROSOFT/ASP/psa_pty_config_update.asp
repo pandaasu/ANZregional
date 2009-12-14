@@ -5,7 +5,7 @@
 '// System  : PSA (Production Scheduling Application)            //
 '// Script  : psa_pty_config_update.asp                          //
 '// Author  : Steve Gregan                                       //
-'// Date    : July 2009                                          //
+'// Date    : December 2009                                      //
 '// Text    : This script implements the production type         //
 '//           configuration update functionality                 //
 '//////////////////////////////////////////////////////////////////
