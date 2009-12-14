@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_PTY_CONFIG")
+   strReturn = GetSecurityCheck("PSA_PRD_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -269,32 +269,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('PTYCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('PRDTYP');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('PTYCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('PRDTYP');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PTYCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PTYCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PRDTYP')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PRDTYP')+'\');">Copy</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PTYCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDTYP')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PTYNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PTYSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -329,19 +329,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" PTYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" PRDTYP="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_pty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" PTYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" PRDTYP="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_pty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" PTYCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" PRDTYP="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_pty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -371,128 +371,128 @@ sub PaintFunction()%>
             document.getElementById('addDefine').style.display = 'block';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_PtyCode').value = '';
-         document.getElementById('DEF_PtyName').value = '';
-         var strPtyStat = '';
-         var objPtyStat = document.getElementById('DEF_PtyStat');
-         var strPtyMatu = '0';
-         var strPtyLinu = '0';
-         var strPtyRunu = '0';
-         var strPtyResu = '0';
-         var strPtyCreu = '0';
+         document.getElementById('DEF_PrdCode').value = '';
+         document.getElementById('DEF_PrdName').value = '';
+         var strPrdStat = '';
+         var objPrdStat = document.getElementById('DEF_PrdStat');
+         var strPrdMatu = '0';
+         var strPrdLinu = '0';
+         var strPrdRunu = '0';
+         var strPrdResu = '0';
+         var strPrdCreu = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PRDTYPE') {
-               document.getElementById('DEF_PtyCode').value = objElements[i].getAttribute('PTYCDE');
-               document.getElementById('DEF_PtyName').value = objElements[i].getAttribute('PTYNAM');
-               strPtyStat = objElements[i].getAttribute('PTYSTS');
-               strPtyMatu = objElements[i].getAttribute('MATUSG');
-               strPtyLinu = objElements[i].getAttribute('LINUSG');
-               strPtyRunu = objElements[i].getAttribute('RUNUSG');
-               strPtyResu = objElements[i].getAttribute('RESUSG');
-               strPtyCreu = objElements[i].getAttribute('CREUSG');
+               document.getElementById('DEF_PrdCode').value = objElements[i].getAttribute('PRDTYP');
+               document.getElementById('DEF_PrdName').value = objElements[i].getAttribute('PRDNAM');
+               strPrdStat = objElements[i].getAttribute('PRDSTS');
+               strPrdMatu = objElements[i].getAttribute('MATUSG');
+               strPrdLinu = objElements[i].getAttribute('LINUSG');
+               strPrdRunu = objElements[i].getAttribute('RUNUSG');
+               strPrdResu = objElements[i].getAttribute('RESUSG');
+               strPrdCreu = objElements[i].getAttribute('CREUSG');
             }
          }
-         objPtyStat.selectedIndex = -1;
-         for (var i=0;i<objPtyStat.length;i++) {
-            if (objPtyStat.options[i].value == strPtyStat) {
-               objPtyStat.options[i].selected = true;
+         objPrdStat.selectedIndex = -1;
+         for (var i=0;i<objPrdStat.length;i++) {
+            if (objPrdStat.options[i].value == strPrdStat) {
+               objPrdStat.options[i].selected = true;
                break;
             }
          }
-         var objPtyMatu = document.getElementsByName('DEF_PtyMatu');
-         var objPtyLinu = document.getElementsByName('DEF_PtyLinu');
-         var objPtyRunu = document.getElementsByName('DEF_PtyRunu');
-         var objPtyResu = document.getElementsByName('DEF_PtyResu');
-         var objPtyCreu = document.getElementsByName('DEF_PtyCreu');
-         if (strPtyMatu == '1') {
-            objPtyMatu[0].checked = false;
-            objPtyMatu[1].checked = true;
+         var objPrdMatu = document.getElementsByName('DEF_PrdMatu');
+         var objPrdLinu = document.getElementsByName('DEF_PrdLinu');
+         var objPrdRunu = document.getElementsByName('DEF_PrdRunu');
+         var objPrdResu = document.getElementsByName('DEF_PrdResu');
+         var objPrdCreu = document.getElementsByName('DEF_PrdCreu');
+         if (strPrdMatu == '1') {
+            objPrdMatu[0].checked = false;
+            objPrdMatu[1].checked = true;
          } else {
-            objPtyMatu[0].checked = true;
-            objPtyMatu[1].checked = false;
+            objPrdMatu[0].checked = true;
+            objPrdMatu[1].checked = false;
          }
-         if (strPtyLinu == '1') {
-            objPtyLinu[0].checked = false;
-            objPtyLinu[1].checked = true;
+         if (strPrdLinu == '1') {
+            objPrdLinu[0].checked = false;
+            objPrdLinu[1].checked = true;
          } else {
-            objPtyLinu[0].checked = true;
-            objPtyLinu[1].checked = false;
+            objPrdLinu[0].checked = true;
+            objPrdLinu[1].checked = false;
          }
-         if (strPtyRunu == '1') {
-            objPtyRunu[0].checked = false;
-            objPtyRunu[1].checked = true;
+         if (strPrdRunu == '1') {
+            objPrdRunu[0].checked = false;
+            objPrdRunu[1].checked = true;
          } else {
-            objPtyRunu[0].checked = true;
-            objPtyRunu[1].checked = false;
+            objPrdRunu[0].checked = true;
+            objPrdRunu[1].checked = false;
          }
-         if (strPtyResu == '1') {
-            objPtyResu[0].checked = false;
-            objPtyResu[1].checked = true;
+         if (strPrdResu == '1') {
+            objPrdResu[0].checked = false;
+            objPrdResu[1].checked = true;
          } else {
-            objPtyResu[0].checked = true;
-            objPtyResu[1].checked = false;
+            objPrdResu[0].checked = true;
+            objPrdResu[1].checked = false;
          }
-         if (strPtyCreu == '1') {
-            objPtyCreu[0].checked = false;
-            objPtyCreu[1].checked = true;
+         if (strPrdCreu == '1') {
+            objPrdCreu[0].checked = false;
+            objPrdCreu[1].checked = true;
          } else {
-            objPtyCreu[0].checked = true;
-            objPtyCreu[1].checked = false;
+            objPrdCreu[0].checked = true;
+            objPrdCreu[1].checked = false;
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_PtyName').focus();
+            document.getElementById('DEF_PrdName').focus();
          } else {
-            document.getElementById('DEF_PtyCode').focus();
+            document.getElementById('DEF_PrdCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objPtyStat = document.getElementById('DEF_PtyStat');
-      var objPtyMatu = document.getElementsByName('DEF_PtyMatu');
-      var objPtyLinu = document.getElementsByName('DEF_PtyLinu');
-      var objPtyRunu = document.getElementsByName('DEF_PtyRunu');
-      var objPtyResu = document.getElementsByName('DEF_PtyResu');
-      var objPtyCreu = document.getElementsByName('DEF_PtyCreu');
-      var strPtyMatu = '0';
-      var strPtyLinu = '0';
-      var strPtyRunu = '0';
-      var strPtyResu = '0';
-      var strPtyCreu = '0';
-      if (objPtyMatu[1].checked == true) {
-         strPtyMatu = '1';
+      var objPrdStat = document.getElementById('DEF_PrdStat');
+      var objPrdMatu = document.getElementsByName('DEF_PrdMatu');
+      var objPrdLinu = document.getElementsByName('DEF_PrdLinu');
+      var objPrdRunu = document.getElementsByName('DEF_PrdRunu');
+      var objPrdResu = document.getElementsByName('DEF_PrdResu');
+      var objPrdCreu = document.getElementsByName('DEF_PrdCreu');
+      var strPrdMatu = '0';
+      var strPrdLinu = '0';
+      var strPrdRunu = '0';
+      var strPrdResu = '0';
+      var strPrdCreu = '0';
+      if (objPrdMatu[1].checked == true) {
+         strPrdMatu = '1';
       }
-      if (objPtyLinu[1].checked == true) {
-         strPtyLinu = '1';
+      if (objPrdLinu[1].checked == true) {
+         strPrdLinu = '1';
       }
-      if (objPtyRunu[1].checked == true) {
-         strPtyRunu = '1';
+      if (objPrdRunu[1].checked == true) {
+         strPrdRunu = '1';
       }
-      if (objPtyResu[1].checked == true) {
-         strPtyResu = '1';
+      if (objPrdResu[1].checked == true) {
+         strPrdResu = '1';
       }
-      if (objPtyCreu[1].checked == true) {
-         strPtyCreu = '1';
+      if (objPrdCreu[1].checked == true) {
+         strPrdCreu = '1';
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' PTYCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+' PRDTYP="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' PTYCDE="'+fixXML(document.getElementById('DEF_PtyCode').value)+'"';
+         strXML = strXML+' PRDTYP="'+fixXML(document.getElementById('DEF_PrdCode').value)+'"';
       }
-      strXML = strXML+' PTYNAM="'+fixXML(document.getElementById('DEF_PtyName').value)+'"';
-      if (objPtyStat.selectedIndex == -1) {
-         strXML = strXML+' PTYSTS=""';
+      strXML = strXML+' PRDNAM="'+fixXML(document.getElementById('DEF_PrdName').value)+'"';
+      if (objPrdStat.selectedIndex == -1) {
+         strXML = strXML+' PRDSTS=""';
       } else {
-         strXML = strXML+' PTYSTS="'+fixXML(objPtyStat.options[objPtyStat.selectedIndex].value)+'"';
+         strXML = strXML+' PRDSTS="'+fixXML(objPrdStat.options[objPrdStat.selectedIndex].value)+'"';
       }
-      strXML = strXML+' MATUSG="'+fixXML(strPtyMatu)+'"';
-      strXML = strXML+' LINUSG="'+fixXML(strPtyLinu)+'"';
-      strXML = strXML+' RUNUSG="'+fixXML(strPtyRunu)+'"';
-      strXML = strXML+' RESUSG="'+fixXML(strPtyResu)+'"';
-      strXML = strXML+' CREUSG="'+fixXML(strPtyCreu)+'"';
+      strXML = strXML+' MATUSG="'+fixXML(strPrdMatu)+'"';
+      strXML = strXML+' LINUSG="'+fixXML(strPrdLinu)+'"';
+      strXML = strXML+' RUNUSG="'+fixXML(strPrdRunu)+'"';
+      strXML = strXML+' RESUSG="'+fixXML(strPrdResu)+'"';
+      strXML = strXML+' CREUSG="'+fixXML(strPrdCreu)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -608,19 +608,19 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PtyCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PrdCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PtyName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_PrdName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_PtyStat">
+            <select class="clsInputBN" id="DEF_PrdStat">
                <option value="0">Inactive
                <option value="1">Active
             </select>
@@ -629,36 +629,36 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Material Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
-            <input type="radio" name="DEF_PtyMatu" value="0">No&nbsp;
-            <input type="radio" name="DEF_PtyMatu" value="1">Yes&nbsp;
+            <input type="radio" name="DEF_PrdMatu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdMatu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Line Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
-            <input type="radio" name="DEF_PtyLinu" value="0">No&nbsp;
-            <input type="radio" name="DEF_PtyLinu" value="1">Yes&nbsp;
+            <input type="radio" name="DEF_PrdLinu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdLinu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Run Rate Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
-            <input type="radio" name="DEF_PtyRunu" value="0">No&nbsp;
-            <input type="radio" name="DEF_PtyRunu" value="1">Yes&nbsp;
+            <input type="radio" name="DEF_PrdRunu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdRunu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Resource Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
-            <input type="radio" name="DEF_PtyResu" value="0">No&nbsp;
-            <input type="radio" name="DEF_PtyResu" value="1">Yes&nbsp;
+            <input type="radio" name="DEF_PrdResu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdResu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Crew Model Usage:&nbsp;</nobr></td>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
-            <input type="radio" name="DEF_PtyCreu" value="0">No&nbsp;
-            <input type="radio" name="DEF_PtyCreu" value="1">Yes&nbsp;
+            <input type="radio" name="DEF_PrdCreu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdCreu" value="1">Yes&nbsp;
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
