@@ -79,8 +79,8 @@ create or replace package body psa_app.psa_pty_function as
                         t01.pty_prd_name,
                         decode(t01.pty_prd_status,'0','Inactive','1','Active','*UNKNOWN') as pty_prd_status
                    from psa_prd_type t01
-                  where (var_action = '*NXTPTY' and (var_end_code is null or t01.pty_prd_type > var_end_code)) or
-                        (var_action = '*PRVPTY')
+                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.pty_prd_type > var_end_code)) or
+                        (var_action = '*PRVDEF')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -90,8 +90,8 @@ create or replace package body psa_app.psa_pty_function as
                         t01.pty_prd_name,
                         decode(t01.pty_prd_status,'0','Inactive','1','Active','*UNKNOWN') as pty_prd_status
                    from psa_prd_type t01
-                  where (var_action = '*PRVPTY' and (var_str_code is null or t01.pty_prd_type < var_str_code)) or
-                        (var_action = '*NXTPTY')
+                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.pty_prd_type < var_str_code)) or
+                        (var_action = '*NXTDEF')
                   order by t01.pty_prd_type desc) t01
           where rownum <= var_pag_size;
 
@@ -127,7 +127,7 @@ create or replace package body psa_app.psa_pty_function as
       var_str_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE'));
       var_end_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE'));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*SELPTY' and var_action != '*PRVPTY' and var_action != '*NXTPTY' then
+      if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -143,7 +143,7 @@ create or replace package body psa_app.psa_pty_function as
       /* Retrieve the production type list and pipe the results
       /*-*/
       var_pag_size := 20;
-      if var_action = '*SELPTY' then
+      if var_action = '*SELDEF' then
          tbl_list.delete;
          open csr_slct;
          fetch csr_slct bulk collect into tbl_list;
@@ -151,7 +151,7 @@ create or replace package body psa_app.psa_pty_function as
          for idx in 1..tbl_list.count loop
             pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
          end loop;
-      elsif var_action = '*NXTPTY' then
+      elsif var_action = '*NXTDEF' then
          tbl_list.delete;
          open csr_next;
          fetch csr_next bulk collect into tbl_list;
@@ -168,7 +168,7 @@ create or replace package body psa_app.psa_pty_function as
                pipe row(psa_xml_object('<LSTROW PTYCDE="'||to_char(tbl_list(idx).pty_prd_type)||'" PTYNAM="'||psa_to_xml(tbl_list(idx).pty_prd_name)||'" PTYSTS="'||psa_to_xml(tbl_list(idx).pty_prd_status)||'"/>'));
             end loop;
          end if;
-      elsif var_action = '*PRVPTY' then
+      elsif var_action = '*PRVDEF' then
          tbl_list.delete;
          open csr_prev;
          fetch csr_prev bulk collect into tbl_list;
@@ -267,7 +267,7 @@ create or replace package body psa_app.psa_pty_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDPTY' and var_action != '*CRTPTY' and var_action != '*CPYPTY' then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -277,7 +277,7 @@ create or replace package body psa_app.psa_pty_function as
       /*-*/
       /* Retrieve the existing production type when required
       /*-*/
-      if var_action = '*UPDPTY' or var_action = '*CPYPTY' then
+      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
          var_found := false;
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
@@ -301,7 +301,7 @@ create or replace package body psa_app.psa_pty_function as
       /*-*/
       /* Pipe the production type XML
       /*-*/
-      if var_action = '*UPDPTY' then
+      if var_action = '*UPDDEF' then
          var_output := '<PRDTYPE PTYCDE="'||psa_to_xml(rcd_retrieve.pty_prd_type||' - (Last updated by '||rcd_retrieve.pty_upd_user||' on '||to_char(rcd_retrieve.pty_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
          var_output := var_output||' PTYSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
@@ -311,7 +311,7 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' RESUSG="'||psa_to_xml(rcd_retrieve.pty_prd_res_usage)||'"';
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CPYPTY' then
+      elsif var_action = '*CPYDEF' then
          var_output := '<PRDTYPE PTYCDE=""';
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
          var_output := var_output||' PTYSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
@@ -321,7 +321,7 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' RESUSG="'||psa_to_xml(rcd_retrieve.pty_prd_res_usage)||'"';
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CRTPTY' then
+      elsif var_action = '*CRTDEF' then
          var_output := '<PRDTYPE PTYCDE=""';
          var_output := var_output||' PTYNAM=""';
          var_output := var_output||' PTYSTS="1"';
@@ -408,7 +408,7 @@ create or replace package body psa_app.psa_pty_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*UPDPTY' and var_action != '*CRTPTY' then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -465,7 +465,7 @@ create or replace package body psa_app.psa_pty_function as
       /*-*/
       /* Process the production type definition
       /*-*/
-      if var_action = '*UPDPTY' then
+      if var_action = '*UPDDEF' then
          var_confirm := 'updated';
          var_found := false;
          begin
@@ -496,7 +496,7 @@ create or replace package body psa_app.psa_pty_function as
                    pty_upd_date = rcd_psa_prd_type.pty_upd_date
              where pty_prd_type = rcd_psa_prd_type.pty_prd_type;
          end if;
-      elsif var_action = '*CRTPTY' then
+      elsif var_action = '*CRTDEF' then
          var_confirm := 'created';
          begin
             insert into psa_prd_type values rcd_psa_prd_type;
