@@ -124,8 +124,8 @@ create or replace package body psa_app.psa_pty_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_str_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE'));
-      var_end_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE'));
+      var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
+      var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -265,7 +265,7 @@ create or replace package body psa_app.psa_pty_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -414,7 +414,7 @@ create or replace package body psa_app.psa_pty_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_prd_type.pty_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      rcd_psa_prd_type.pty_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       rcd_psa_prd_type.pty_prd_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYNAM'));
       rcd_psa_prd_type.pty_prd_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYSTS'));
       rcd_psa_prd_type.pty_prd_mat_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATUSG'));

@@ -124,8 +124,8 @@ create or replace package body psa_app.psa_fil_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_str_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE'));
-      var_end_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE'));
+      var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
+      var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -265,7 +265,7 @@ create or replace package body psa_app.psa_fil_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_fil_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE'));
+      var_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -399,7 +399,7 @@ create or replace package body psa_app.psa_fil_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_fil_defn.fde_fil_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE'));
+      rcd_psa_fil_defn.fde_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE')));
       rcd_psa_fil_defn.fde_fil_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILNAM'));
       rcd_psa_fil_defn.fde_fil_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILSTS'));
       rcd_psa_fil_defn.fde_upd_user := upper(par_user);
