@@ -406,9 +406,9 @@ create or replace package body psa_app.psa_shf_function as
          return;
       end if;
       rcd_psa_shift.shi_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFCDE')));
-      rcd_psa_shift.shi_shf_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTR'));
-      rcd_psa_shift.shi_shf_start := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFDUR'));
-      rcd_psa_shift.shi_shf_duration := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTS'));
+      rcd_psa_shift.shi_shf_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFNAM'));
+      rcd_psa_shift.shi_shf_start := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTR'));
+      rcd_psa_shift.shi_shf_duration := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFDUR'));
       rcd_psa_shift.shi_shf_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTS'));
       rcd_psa_shift.shi_upd_user := upper(par_user);
       rcd_psa_shift.shi_upd_date := sysdate;
