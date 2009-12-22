@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ladefx91_nz_item as
+create or replace package site_app.ladefx91_nz_item as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -17,7 +17,7 @@ create or replace package ladefx91_nz_item as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/11   Steve Gregan   Created
-                           
+
    *******************************************************************************/
 
    /*-*/
@@ -31,7 +31,7 @@ end ladefx91_nz_item;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ladefx91_nz_item as
+create or replace package body site_app.ladefx91_nz_item as
 
    /*-*/
    /* Private exceptions
@@ -42,7 +42,7 @@ create or replace package body ladefx91_nz_item as
    /*-*/
    /* Private constants
    /*-*/
-   con_market_id constant number := 4;
+   con_market_id constant number := 5;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -60,178 +60,245 @@ create or replace package body ladefx91_nz_item as
       /* Local cursors
       /*-*/
       cursor csr_item_master is
-         select ltrim(t01.matnr,'0') as item_code,
-                t01.maktx as item_name,
-                ltrim(t01.zzrepmatnr,'0') as item_zrep_code,
-                t02.rsu_ean11 as rsu_ean_code,
-                0 as cases_layer,
-                0 as layers_pallet,
-                t02.mcu_count as mcu_per_tdu,
-                t02.rsu_count as units_case,
-                t02.tdu_meinh as unit_measure,
-                round(nvl(t03.list_price,0),2) as price1,
-                0 as price2,
-                0 as price3,
-                0 as price4,
-                1 as min_ord_qty,
-                1 as order_multiples,
-                t01.brand_flag_desc as brand,
-                t01.brand_sub_flag_desc as sub_brand,
-                to_char(nvl(t01.ntgew,0))||' '||t01.gewei as pack_size,
-                t01.cnsmr_pack_frmt_desc as pack_type,
-                t01.bus_sgmnt_desc as item_category,
-                decode(t01.item_status,' ','A','X','X') as item_status
+         select ltrim(bmh.sap_material_code, '0') as item_code,
+                bmh.bds_material_desc_en as item_name,
+                rpt.rsu_ean as rsu_ean_code,
+                rpt.mcu_ean as mcu_ean_code,
+                rpt.tdu_ean as tdu_ean_code,
+                pi.cases_layer,
+                pi.layers_pallet,
+                rpt.units_case as units_case,
+                DECODE (rpt.mcu_per_tdu, NULL, 1, rpt.mcu_per_tdu) as mcu_per_tdu,
+                rpt.tdu_uom as unit_measure,
+                pr.zrep_list_price as tdu_price,
+                pr.zrep_rrp as rrp_price,
+                0 as mcu_price,
+                0 as rsu_price,
+                ' ' order_by,
+                1 min_order_qty,
+                1 order_multiples,
+                c.brand,
+                c.sub_brand,
+                c.product_category,
+                c.market_category,
+                c.market_subcategory,
+                c.market_subcategory_group,
+                mbsa.item_status,
+                rpt.tdu_name,
+                rpt.mcu_name,
+                rpt.rsu_name
            from
-                --
-                -- Material information
-                --
-                (select t01.matnr as matnr,
-                        max(t01.ean11) as ean11,
-                        max(t01.meins) as meins,
-                        max(t01.ntgew) as ntgew,
-                        max(t01.gewei) as gewei,
-                        max(t01.zzrepmatnr) as zzrepmatnr,
-                        max(decode(t02.maktx,null,decode(t03.maktx,null,'*UNKNOWN',t03.maktx),t02.maktx)) as maktx,
-                        max(nvl(t05.bus_sgmnt_desc,'*UNKNOWN')) as bus_sgmnt_desc,
-                        max(nvl(t06.brand_flag_desc,'*UNKNOWN')) as brand_flag_desc,
-                        max(nvl(t07.brand_sub_flag_desc,'*UNKNOWN')) as brand_sub_flag_desc,
-                        max(nvl(t08.prdct_pack_size_desc,'*UNKNOWN')) as prdct_pack_size_desc,
-                        max(nvl(t09.cnsmr_pack_frmt_desc,'*UNKNOWN')) as cnsmr_pack_frmt_desc,
-                        max(decode(t10.vmsta,'20',' ','99','X')) as item_status
-                   from lads_mat_hdr t01,
-                        (select t01.matnr,
-                                max(t01.maktx) as maktx
-                           from lads_mat_mkt t01
-                          where t01.spras_iso = 'ZH'
-                          group by t01.matnr) t02,
-                        (select t01.matnr,
-                                max(t01.maktx) as maktx
-                           from lads_mat_mkt t01
-                          where t01.spras_iso = 'EN'
-                          group by t01.matnr) t03,
-                        (select t31.objek as matnr,
-                                nvl(max(case when t32.atnam = 'CLFFERT01' then t32.atwrt end),'00') as sap_bus_sgmnt_code,
-                                nvl(max(case when t32.atnam = 'CLFFERT03' then t32.atwrt end),'000') as sap_brand_flag_code,
-                                nvl(max(case when t32.atnam = 'CLFFERT04' then t32.atwrt end),'000') as sap_brand_sub_flag_code,
-                                nvl(max(case when t32.atnam = 'CLFFERT14' then t32.atwrt end),'000') as sap_prdct_pack_size_code,
-                                nvl(max(case when t32.atnam = 'CLFFERT25' then t32.atwrt end),'000') as sap_cnsmr_pack_frmt_code
-                           from lads_cla_hdr t31,
-                                lads_cla_chr t32
-                          where t31.obtab = 'MARA'
-                            and t31.klart = '001'
-                            and t31.obtab = t32.obtab(+)
-                            and t31.klart = t32.klart(+)
-                            and t31.objek = t32.objek(+)
-                          group by t31.objek) t04,
-                        (select substr(t01.z_data,4,2) as sap_bus_sgmnt_code,
-                                substr(t01.z_data,18,30) as bus_sgmnt_desc
-                           from lads_ref_dat t01
-                          where t01.z_tabname = '/MARS/MD_CHC001') t05,
-                        (select substr(t01.z_data,4,3) as sap_brand_flag_code,
-                                substr(t01.z_data,19,30) as brand_flag_desc
-                           from lads_ref_dat t01
-                          where t01.z_tabname = '/MARS/MD_CHC003') t06,
-                        (select substr(t01.z_data,4,3) as sap_brand_sub_flag_code,
-                                substr(t01.z_data,19,30) as brand_sub_flag_desc
-                           from lads_ref_dat t01
-                          where t01.z_tabname = '/MARS/MD_CHC004') t07,
-                        (select substr(t01.z_data,4,3) as sap_prdct_pack_size_code,
-                                substr(t01.z_data,19,30) as prdct_pack_size_desc
-                           from lads_ref_dat t01
-                          where t01.z_tabname = '/MARS/MD_CHC014') t08,
-                        (select substr(t01.z_data,4,2) as sap_cnsmr_pack_frmt_code,
-                                substr(t01.z_data,18,30) as cnsmr_pack_frmt_desc
-                           from lads_ref_dat t01
-                          where t01.z_tabname = '/MARS/MD_CHC025') t09,
-                        (select t01.matnr as matnr,
-                                t01.vmstd as vmstd,
-                                t01.vmsta as vmsta
-                           from (select t01.matnr as matnr,
-                                        t01.sadseq as sadseq,
-                                        t01.vmstd as vmstd,
-                                        t01.vmsta as vmsta,
-                                        rank() over (partition by t01.matnr order by t01.vmstd desc, t01.sadseq desc) as rnkseq
-                                   from lads_mat_sad t01
-                                  where t01.vkorg = '135'
-                                    and t01.vtweg = '10'
-                                    and t01.lvorm is null
-                                    and (t01.vmsta = '20' or t01.vmsta = '99')
-                                    and decode(t01.vmstd,null,'19000101','00000000','19000101',t01.vmstd) <= to_char(sysdate,'yyyymmdd')) t01
-                          where t01.rnkseq = 1) t10
-                  where t01.matnr = t02.matnr(+)
-                    and t01.matnr = t03.matnr(+)
-                    and t01.matnr = t04.matnr(+)
-                    and t04.sap_bus_sgmnt_code = t05.sap_bus_sgmnt_code(+)
-                    and t04.sap_brand_flag_code = t06.sap_brand_flag_code(+)
-                    and t04.sap_brand_sub_flag_code = t07.sap_brand_sub_flag_code(+)
-                    and t04.sap_prdct_pack_size_code = t08.sap_prdct_pack_size_code(+)
-                    and t04.sap_cnsmr_pack_frmt_code = t09.sap_cnsmr_pack_frmt_code(+)
-                    and t01.matnr = t10.matnr
-                    and t01.mtart = 'FERT'
-                    and t01.zzistdu = 'X'
-                    and t01.lvorm is null
-                    and t01.lads_status = '1'
-                  group by t01.matnr) t01,
-                --
-                -- Material TDU/UOM information
-                --
-                (select t01.matnr as matnr,
-                        t01.meinh as tdu_meinh,
-                        t03.ean11 as rsu_ean11,
-                        1 as tdu_count,
-                        nvl(t02.umren * round(1/(1/t01.umrez)*t01.umren,1),1) as mcu_count,
-                        nvl(t03.umren * round(1/(1/t01.umrez)*t01.umren,1),1) as rsu_count
-                   from lads_mat_uom t01,
-                        (select t01.matnr,
-                                t01.umrez,
-                                t01.umren
-                           from lads_mat_uom t01
-                          where t01.meinh = 'SB') t02,
-                        (select t01.matnr,
-                                t01.umrez,
-                                t01.umren,
-                                t01.ean11
-                           from lads_mat_uom t01
-                          where t01.meinh = 'PCE') t03
-                  where t01.matnr = t02.matnr(+)
-                    and t01.matnr = t03.matnr(+)
-                    and t01.meinh = 'CS') t02,
-                --
-                -- Material pricing information
-                --
-               (select t01.matnr as matnr,
-                       t01.kmein as kmein,
-                       t01.kbetr/t01.kpein as list_price
-                  from (select t01.*
-                          from (select t01.vakey,
-                                       t01.kotabnr,
-                                       t01.kschl,
-                                       t01.vkorg,
-                                       t01.vtweg,
-                                       t01.spart,
-                                       t01.datab,
-                                       t01.datbi,
-                                       t01.matnr,
-                                       t02.kbetr,
-                                       t02.konwa,
-                                       t02.kpein,
-                                       t02.kmein,
-                                       rank() over (partition by t01.matnr order by t01.datab desc, t01.datbi asc) as rnkseq
-                                  from lads_prc_lst_hdr t01,
-                                       lads_prc_lst_det t02
-                                 where t01.vakey = t02.vakey
-                                   and t01.kschl = t02.kschl
-                                   and t01.datab = t02.datab
-                                   and t01.knumh = t02.knumh
-                                   and t01.kschl = 'PR00'
-                                   and t01.vkorg = '135'
-                                   and (t01.vtweg is null or t01.vtweg = '10')
-                                   and decode(t01.datab,null,'19000101','00000000','19000101',t01.datab) <= to_char(sysdate,'yyyymmdd')
-                                   and decode(t01.datbi,null,'19000101','00000000','19000101',t01.datbi) >= to_char(sysdate,'yyyymmdd')
-                                   and t02.kmein = 'CS') t01
-                         where t01.rnkseq = 1) t01) t03
-          where t01.matnr = t02.matnr
-            and t01.matnr = t03.matnr(+);
+------------------------rpt: RSU EAN Code---------------------------------------------------------------
+          (SELECT zrep.zrep_material_code,            --for EFEX_ITEM view where clause
+                  zrep.tdu_material_code,
+                  rt.tdu_uom,                         --for EFEX_ITEM view column
+                  rt.rsu_ean,                         --for EFEX_ITEM view column
+                  rt.tdu_ean,                         --for EFEX_ITEM view column
+                  rt.units_case,                      --for EFEX_ITEM view column
+                  mt.mcu_ean,                         --for EFEX_ITEM view column
+                  mt.mcu_per_tdu,                     --for EFEX_ITEM view column
+                  zrep.tdu_name,                      --for EFEX_ITEM view column
+                  mcu.mcu_name,                       --for EFEX_ITEM view column
+                  rsu.rsu_name                        --for EFEX_ITEM view column
+             FROM
+                  ----------------------zrep over BDS--------------------------------
+                  (SELECT bmds.sales_organisation AS sales_org,
+                          DECODE (bmds.sold_to_code,'*NONE', NULL,bmds.sold_to_code ) AS cust_code,
+                          bmds.zrep_material_code,
+                          bmds.tdu_material_code,
+                          bmt.text AS tdu_name
+                     FROM bds_material_dtrmntn_sysdate bmds,
+                          bds_material_text_en bmt
+                    WHERE bmds.zrep_material_code = bmt.sap_material_code
+                      AND bmds.sales_organisation = '149'
+                      AND bmds.sold_to_code = '*NONE'
+                      AND bmds.dstrbtn_channel = '*NONE'
+                      AND bmt.sales_organisation = 149
+                      AND bmt.dstrbtn_channel = 99) zrep,
+                  ----------------------END zrep over BDS----------------------------
+                  ----------------------mt: mcu per tdu over BDS---------------------
+                  (SELECT parent_material_code AS tdu_matl_code,
+                          child_material_code AS mcu_matl_code,
+                          child_ian AS mcu_ean,
+                          child_per_parent AS mcu_per_tdu
+                     FROM bds_material_bom_sysdate
+                    WHERE parent_tdu_flag = 'X'
+                      AND parent_material_type = 'FERT'
+                      AND bom_plant = '*NONE'
+                      AND bom_alternative = 1
+                      AND bom_status IN (1, 7)
+                      AND bom_usage = 1
+                      AND child_material_type = 'FERT'
+                      AND child_mcu_flag = 'X') mt,
+                  ---------------------mt: end mcu per tdu over BDS-----------------
+                  ----------------------mtz: mcu per tdu over BDS zrep--------------
+                  (SELECT parent_material_code AS tdu_matl_code,
+                          child_material_code AS mcu_matl_code
+                     FROM bds_material_bom_sysdate
+                    WHERE parent_tdu_flag = 'X'
+                      AND parent_material_type = 'ZREP'
+                      AND bom_plant = '*NONE'
+                      AND bom_alternative = 1
+                      AND bom_status IN (1, 7)
+                      AND bom_usage = 1
+                      AND child_material_type = 'ZREP'
+                      AND child_mcu_flag = 'X') mtz,
+                  ---------------------mtz: end mcu per tdu over BDS zrep-------------
+                  ---------------------mcu: material view over BDS------------------
+                  (SELECT mcubmh.sap_material_code AS matl_code,
+                          bmt.text AS mcu_name
+                     FROM bds_material_hdr mcubmh,
+                          bds_material_text_en bmt
+                    WHERE mcubmh.sap_material_code = bmt.sap_material_code
+                      AND mcubmh.bds_lads_status = '1'
+                      AND mcubmh.material_type = 'ZREP'
+                      AND mcubmh.mars_merchandising_unit_flag = 'X'--is an MCU
+                      AND mcubmh.deletion_flag IS NULL
+                      AND bmt.sales_organisation = 149
+                      AND bmt.dstrbtn_channel = 99) mcu,
+                  ---------------------mcu: END material view over BDS--------------
+                  ----------------------rt: rsu per tdu over BDS---------------------
+                  (SELECT parent_material_code AS tdu_matl_code,
+                          parent_base_uom AS tdu_uom,
+                          child_material_code AS rsu_matl_code,
+                          child_ian AS rsu_ean,
+                          parent_ian AS tdu_ean,
+                          child_per_parent AS units_case
+                     FROM bds_material_bom_sysdate
+                    WHERE parent_tdu_flag = 'X'
+                      AND parent_material_type = 'FERT'
+                      AND bom_plant = '*NONE'
+                      AND bom_alternative = 1
+                      AND bom_status IN (1, 7)
+                      AND bom_usage = 5
+                      AND child_material_type = 'FERT'
+                      AND child_rsu_flag = 'X') rt,
+                  ---------------------rt: end rsu per tdu over BDS-----------------
+                  ----------------------rtz: rsu per tdu over BDS---------------------
+                  (SELECT parent_material_code AS tdu_matl_code,
+                          parent_base_uom AS tdu_uom,
+                          child_material_code AS rsu_matl_code
+                     FROM bds_material_bom_sysdate
+                    WHERE parent_tdu_flag = 'X'
+                      AND parent_material_type = 'ZREP'
+                      AND bom_plant = '*NONE'
+                      AND bom_alternative = 1
+                      AND bom_status IN (1, 7)
+                      AND bom_usage = 5
+                      AND child_material_type = 'ZREP'
+                      AND child_rsu_flag = 'X') rtz,
+                  ---------------------rtz: end rsu per tdu over BDS-----------------
+                  ---------------------rsu: material view over BDS------------------
+                  (SELECT rsubmh.sap_material_code AS matl_code,
+                          bmt.text AS rsu_name
+                     FROM bds_material_hdr rsubmh,
+                          bds_material_text_en bmt
+                    WHERE rsubmh.sap_material_code = bmt.sap_material_code
+                      AND rsubmh.bds_lads_status = '1'
+                      AND rsubmh.material_type = 'ZREP'
+                      AND rsubmh.mars_retail_sales_unit_flag = 'X' --is an RSU
+                      AND rsubmh.deletion_flag IS NULL
+                      AND bmt.sales_organisation = 149
+                      AND bmt.dstrbtn_channel = 99) rsu
+            ---------------------rsu: END material view over BDS--------------
+           WHERE  zrep.tdu_material_code = mt.tdu_matl_code(+)
+              AND zrep.tdu_material_code = rt.tdu_matl_code
+              AND zrep.zrep_material_code = mtz.tdu_matl_code(+)
+              AND zrep.zrep_material_code = rtz.tdu_matl_code(+)
+              AND mtz.mcu_matl_code = mcu.matl_code(+)
+              AND rtz.rsu_matl_code = rsu.matl_code(+)) rpt,
+------------------------rpt: End RSU EAN Code---------------------------------------------------------*/
+          bds_material_hdr bmh,
+------------------------c: MFANZ FG Material Classification---------------------------------------------
+          (SELECT sap_material_code, sap_brand_flag_lng_dsc AS brand,
+                  sap_brand_sub_flag_lng_dsc AS sub_brand,
+                  sap_prdct_ctgry_lng_dsc AS product_category,
+                  sap_size_lng_dsc AS pack_size,
+                  sap_cnsmr_pack_frmt_lng_dsc AS pack_type,
+                  sap_trad_unit_config_sht_dsc AS pack_format,
+                  sap_bus_sgmnt_lng_dsc AS bus_segment,
+                  sap_mrkt_ctgry_desc AS market_category,
+                  sap_mrkt_sub_ctgry_desc AS market_subcategory,
+                  sap_mrkt_sub_ctgry_grp_desc AS market_subcategory_group
+             FROM bds_material_classfctn_en
+            WHERE material_type IN ('ZREP')) c,
+ -----------------------c: END MFANZ FG Material Classification-----------------------------------------
+------------------------pi: Packaging Instructions------------------------------------------------------
+          (SELECT sap_material_code AS matl_code, --for EFEX_ITEM View WHERE clause
+                  rounding_qty AS cases_layer, --for EFEX_ITEM View column
+                  target_qty / (DECODE (rounding_qty, 0, 1, rounding_qty)) AS layers_pallet --for EFEX_ITEM View column
+           FROM   bds_material_pkg_instr_sysdate
+            WHERE sales_organisation IN ('149') -- 149 - NZ
+          ) pi,
+------------------------pi: End Packaging Instructions------------------------------------------------*/
+------------------------mbsa: MFANZ Material By Sales Area----------------------------------------------
+          (SELECT DISTINCT sap_material_code AS matl_code, --for EFEX ITEM View WHERE clause
+                           MIN (delivering_plant) AS delivering_plant,--Get the first delivering plant record
+                           DECODE (MIN (dstrbtn_chain_status), '20', 'A', 'X' ) AS item_status --get the first record
+                      FROM bds_material_dstrbtn_chain
+                     WHERE sales_organisation IN ('149') --NZ
+                       AND dstrbtn_channel <> '99' --Exclude 99 Exports
+                       AND dstrbtn_chain_delete_indctr IS NULL
+                  GROUP BY sap_material_code) mbsa,
+------------------------pr: Material Pricing Information------------------------------------------------
+          (SELECT m.sap_material_code,
+                  ROUND (lp.zrep_list_price, 4) AS zrep_list_price, --List Price
+                  ROUND (rrp.zrep_rrp, 4) AS zrep_rrp --Recommended Retail Price
+             FROM bds_material_hdr m,
+                  -----------------lp: ZREP List Price----------------------------
+                  (SELECT SUBSTR (vrbl_key, 5, 18) AS matl_code,
+                          rate_qty_or_pcntg AS zrep_list_price
+                     FROM (SELECT t1.vakey AS vrbl_key,
+                                  t1.datab AS valid_from_date,
+                                  t1.datbi AS valid_to_date,
+                                  t1.kotabnr AS cndtn_table,
+                                  t2.kschl AS cndtn_type,
+                                  t2.kbetr AS rate_qty_or_pcntg
+                             FROM lads_prc_lst_hdr t1, lads_prc_lst_det t2
+                            WHERE t1.vakey = t2.vakey
+                              AND t1.kschl = t2.kschl
+                              AND t1.datab = t2.datab
+                              AND t1.knumh = t2.knumh
+                              AND t2.loevm_ko IS NULL)
+                    WHERE cndtn_table = '812'       --Sales_Org/Material level
+                      AND cndtn_type = 'ZN00'                     --List Price
+                      AND SUBSTR (vrbl_key, 1, 3) = '149'          --NZ
+                      AND valid_from_date <= TO_CHAR (SYSDATE, 'yyyymmdd')
+                      AND valid_to_date >= TO_CHAR (SYSDATE, 'yyyymmdd')) lp,
+                  -----------------lp: END ZREP List Price------------------------
+                  -----------------rrp: ZREP Recommended Retail Price-----------
+                  (SELECT SUBSTR (vrbl_key, 5, 18) AS matl_code,
+                          rate_qty_or_pcntg AS zrep_rrp
+                     FROM (SELECT t1.vakey AS vrbl_key,
+                                  t1.datab AS valid_from_date,
+                                  t1.datbi AS valid_to_date,
+                                  t1.kotabnr AS cndtn_table,
+                                  t2.kschl AS cndtn_type,
+                                  t2.kbetr AS rate_qty_or_pcntg
+                             FROM lads_prc_lst_hdr t1, lads_prc_lst_det t2
+                            WHERE t1.vakey = t2.vakey
+                              AND t1.kschl = t2.kschl
+                              AND t1.datab = t2.datab
+                              AND t1.knumh = t2.knumh
+                              AND t2.loevm_ko IS NULL)
+                    WHERE cndtn_table = '599'       --Sales_Org/Material level
+                      AND cndtn_type = 'ZRSP'       --Recommended Retail Price
+                      AND SUBSTR (vrbl_key, 1, 3) = '149'          --NZ
+                      AND valid_from_date <= TO_CHAR (SYSDATE, 'yyyymmdd')
+                      AND valid_to_date >= TO_CHAR (SYSDATE, 'yyyymmdd')) rrp
+            -----------------rrp: END ZREP Recommended Retail Price---------
+           WHERE  m.sap_material_code = lp.matl_code
+              AND m.sap_material_code = rrp.matl_code(+)
+              AND m.material_type = 'ZREP'
+              AND m.mars_traded_unit_flag = 'X') pr
+------------------------pr: END Material Pricing Information------------------------------------------------
+    WHERE bmh.material_type = 'ZREP'
+      AND bmh.mars_traded_unit_flag = 'X'
+      AND bmh.sap_material_code = c.sap_material_code
+      AND rpt.tdu_material_code = mbsa.matl_code
+      AND bmh.sap_material_code = rpt.zrep_material_code
+      AND bmh.sap_material_code = pr.sap_material_code
+      AND rpt.tdu_material_code = pi.matl_code(+);
       rcd_item_master csr_item_master%rowtype;
 
    /*-------------*/
@@ -268,27 +335,33 @@ create or replace package body ladefx91_nz_item as
          /*-*/
          lics_outbound_loader.append_data('HDR' ||
                                           to_char(nvl(con_market_id,0))||rpad(' ',10-length(to_char(nvl(con_market_id,0))),' ') ||
-                                          nvl(rcd_item_master.item_code,' ')||rpad(' ',18-length(nvl(rcd_item_master.item_code,' ')),' ') ||
-                                          nvl(rcd_item_master.item_name,' ')||rpad(' ',40-length(nvl(rcd_item_master.item_name,' ')),' ') ||
-                                          nvl(rcd_item_master.item_zrep_code,' ')||rpad(' ',18-length(nvl(rcd_item_master.item_zrep_code,' ')),' ') ||
-                                          nvl(rcd_item_master.rsu_ean_code,' ')||rpad(' ',18-length(nvl(rcd_item_master.rsu_ean_code,' ')),' ') ||
+                                          nvl(rcd_item_master.item_code,' ')||rpad(' ',50-length(nvl(rcd_item_master.item_code,' ')),' ') ||
+                                          nvl(rcd_item_master.item_name,' ')||rpad(' ',50-length(nvl(rcd_item_master.item_name,' ')),' ') ||
+                                          nvl(rcd_item_master.rsu_ean_code,' ')||rpad(' ',50-length(nvl(rcd_item_master.rsu_ean_code,' ')),' ') ||
+                                          nvl(rcd_item_master.mcu_ean_code,' ')||rpad(' ',50-length(nvl(rcd_item_master.mcu_ean_code,' ')),' ') ||
+                                          nvl(rcd_item_master.tdu_ean_code,' ')||rpad(' ',50-length(nvl(rcd_item_master.tdu_ean_code,' ')),' ') ||
                                           to_char(nvl(rcd_item_master.cases_layer,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.cases_layer,0))),' ') ||
                                           to_char(nvl(rcd_item_master.layers_pallet,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.layers_pallet,0))),' ') ||
-                                          to_char(nvl(rcd_item_master.mcu_per_tdu,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.mcu_per_tdu,0))),' ') ||
                                           to_char(nvl(rcd_item_master.units_case,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.units_case,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.mcu_per_tdu,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.mcu_per_tdu,0))),' ') ||
                                           nvl(rcd_item_master.unit_measure,' ')||rpad(' ',3-length(nvl(rcd_item_master.unit_measure,' ')),' ') ||
-                                          to_char(nvl(rcd_item_master.price1,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.price1,0))),' ') ||
-                                          to_char(nvl(rcd_item_master.price2,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.price2,0))),' ') ||
-                                          to_char(nvl(rcd_item_master.price3,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.price3,0))),' ') ||
-                                          to_char(nvl(rcd_item_master.price4,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.price4,0))),' ') ||
-                                          to_char(nvl(rcd_item_master.min_ord_qty,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.min_ord_qty,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.tdu_price,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.tdu_price,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.rrp_price,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.rrp_price,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.mcu_price,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.mcu_price,0))),' ') ||
+                                          to_char(nvl(rcd_item_master.rsu_price,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.rsu_price,0))),' ') ||
+                                          nvl(rcd_item_master.order_by,' ')||rpad(' ',1-length(nvl(rcd_item_master.order_by,' ')),' ') ||
+                                          to_char(nvl(rcd_item_master.min_order_qty,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.min_order_qty,0))),' ') ||
                                           to_char(nvl(rcd_item_master.order_multiples,0))||rpad(' ',20-length(to_char(nvl(rcd_item_master.order_multiples,0))),' ') ||
-                                          nvl(rcd_item_master.brand,' ')||rpad(' ',30-length(nvl(rcd_item_master.brand,' ')),' ') ||
-                                          nvl(rcd_item_master.sub_brand,' ')||rpad(' ',30-length(nvl(rcd_item_master.sub_brand,' ')),' ') || 
-                                          nvl(rcd_item_master.pack_size,' ')||rpad(' ',30-length(nvl(rcd_item_master.pack_size,' ')),' ') ||
-                                          nvl(rcd_item_master.pack_type,' ')||rpad(' ',30-length(nvl(rcd_item_master.pack_type,' ')),' ') ||
-                                          nvl(rcd_item_master.item_category,' ')||rpad(' ',30-length(nvl(rcd_item_master.item_category,' ')),' ') ||
-                                          nvl(rcd_item_master.item_status,' ')||rpad(' ',1-length(nvl(rcd_item_master.item_status,' ')),' '));
+                                          nvl(rcd_item_master.brand,' ')||rpad(' ',50-length(nvl(rcd_item_master.brand,' ')),' ') ||
+                                          nvl(rcd_item_master.sub_brand,' ')||rpad(' ',50-length(nvl(rcd_item_master.sub_brand,' ')),' ') ||
+                                          nvl(rcd_item_master.product_category,' ')||rpad(' ',50-length(nvl(rcd_item_master.product_category,' ')),' ') ||
+                                          nvl(rcd_item_master.market_category,' ')||rpad(' ',30-length(nvl(rcd_item_master.market_category,' ')),' ') ||
+                                          nvl(rcd_item_master.market_subcategory,' ')||rpad(' ',30-length(nvl(rcd_item_master.market_subcategory,' ')),' ') ||
+                                          nvl(rcd_item_master.market_subcategory_group,' ')||rpad(' ',30-length(nvl(rcd_item_master.market_subcategory_group,' ')),' ') ||
+                                          nvl(rcd_item_master.item_status,' ')||rpad(' ',1-length(nvl(rcd_item_master.item_status,' ')),' ') ||
+                                          nvl(rcd_item_master.tdu_name,' ')||rpad(' ',200-length(nvl(rcd_item_master.tdu_name,' ')),' ') ||
+                                          nvl(rcd_item_master.mcu_name,' ')||rpad(' ',200-length(nvl(rcd_item_master.mcu_name,' ')),' ') ||
+                                          nvl(rcd_item_master.rsu_name,' ')||rpad(' ',200-length(nvl(rcd_item_master.rsu_name,' ')),' '));
 
       end loop;
       close csr_item_master;
