@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ladefx91_loader as
+create or replace package iface_app.ladefx91_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -33,7 +33,7 @@ end ladefx91_loader;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ladefx91_loader as
+create or replace package body iface_app.ladefx91_loader as
 
    /*-*/
    /* Private exceptions
@@ -51,7 +51,7 @@ create or replace package body ladefx91_loader as
    /*-*/
    /* Private constants
    /*-*/
-   con_market_id constant number := 4;
+   con_market_id constant number := 5;
 
    /*-*/
    /* Private definitions
@@ -87,27 +87,33 @@ create or replace package body ladefx91_loader as
       /*-*/
       lics_inbound_utility.set_definition('HDR','IFACE_HDR',3);
       lics_inbound_utility.set_definition('HDR','MARKET_ID',10);
-      lics_inbound_utility.set_definition('HDR','ITEM_CODE',18);
-      lics_inbound_utility.set_definition('HDR','ITEM_NAME',40);
-      lics_inbound_utility.set_definition('HDR','ITEM_ZREP_CODE',18);
-      lics_inbound_utility.set_definition('HDR','RSU_EAN_CODE',18);
+      lics_inbound_utility.set_definition('HDR','ITEM_CODE',50);
+      lics_inbound_utility.set_definition('HDR','ITEM_NAME',50);
+      lics_inbound_utility.set_definition('HDR','RSU_EAN_CODE',50);
+      lics_inbound_utility.set_definition('HDR','MCU_EAN_CODE',50);
+      lics_inbound_utility.set_definition('HDR','TDU_EAN_CODE',50);
       lics_inbound_utility.set_definition('HDR','CASES_LAYER',20);
       lics_inbound_utility.set_definition('HDR','LAYERS_PALLET',20);
-      lics_inbound_utility.set_definition('HDR','MCU_PER_TDU',20);
       lics_inbound_utility.set_definition('HDR','UNITS_CASE',20);
+      lics_inbound_utility.set_definition('HDR','MCU_PER_TDU',20);
       lics_inbound_utility.set_definition('HDR','UNIT_MEASURE',3);
-      lics_inbound_utility.set_definition('HDR','PRICE1',20);
-      lics_inbound_utility.set_definition('HDR','PRICE2',20);
-      lics_inbound_utility.set_definition('HDR','PRICE3',20);
-      lics_inbound_utility.set_definition('HDR','PRICE4',20);
-      lics_inbound_utility.set_definition('HDR','MIN_ORD_QTY',20);
+      lics_inbound_utility.set_definition('HDR','TDU_PRICE',20);
+      lics_inbound_utility.set_definition('HDR','RRP_PRICE',20);
+      lics_inbound_utility.set_definition('HDR','MCU_PRICE',20);
+      lics_inbound_utility.set_definition('HDR','RSU_PRICE',20);
+      lics_inbound_utility.set_definition('HDR','ORDER_BY',1);
+      lics_inbound_utility.set_definition('HDR','MIN_ORDER_QTY',20);
       lics_inbound_utility.set_definition('HDR','ORDER_MULTIPLES',20);
-      lics_inbound_utility.set_definition('HDR','BRAND',30);
-      lics_inbound_utility.set_definition('HDR','SUB_BRAND',30);
-      lics_inbound_utility.set_definition('HDR','PACK_SIZE',30);
-      lics_inbound_utility.set_definition('HDR','PACK_TYPE',30);
-      lics_inbound_utility.set_definition('HDR','ITEM_CATEGORY',30);
-      lics_inbound_utility.set_definition('HDR','ITEM_STATUS',1);  
+      lics_inbound_utility.set_definition('HDR','BRAND',50);
+      lics_inbound_utility.set_definition('HDR','SUB_BRAND',50);
+      lics_inbound_utility.set_definition('HDR','PRODUCT_CATEGORY',50);
+      lics_inbound_utility.set_definition('HDR','MARKET_CATEGORY',30);
+      lics_inbound_utility.set_definition('HDR','MARKET_SUBCATEGORY',30);
+      lics_inbound_utility.set_definition('HDR','MARKET_SUBCATEGORY_GROUP',30);
+      lics_inbound_utility.set_definition('HDR','ITEM_STATUS',1); 
+      lics_inbound_utility.set_definition('HDR','TDU_NAME',200);
+      lics_inbound_utility.set_definition('HDR','MCU_NAME',200);
+      lics_inbound_utility.set_definition('HDR','RSU_NAME',200);
 
       /*-*/
       /* Clear the IFACE item table for the New Zealand market
@@ -273,6 +279,8 @@ create or replace package body ladefx91_loader as
       rcd_iface_item.item_code := lics_inbound_utility.get_variable('ITEM_CODE');
       rcd_iface_item.item_name := substrb(lics_inbound_utility.get_variable('ITEM_NAME'),1,50);
       rcd_iface_item.rsu_ean_code := lics_inbound_utility.get_variable('RSU_EAN_CODE');
+      rcd_iface_item.mcu_ean_code := lics_inbound_utility.get_variable('MCU_EAN_CODE');
+      rcd_iface_item.tdu_ean_code := lics_inbound_utility.get_variable('TDU_EAN_CODE');
       if lics_inbound_utility.get_number('CASES_LAYER',null) > 9999 then
          rcd_iface_item.cases_layer := 9999;
       else
@@ -283,21 +291,22 @@ create or replace package body ladefx91_loader as
       else
          rcd_iface_item.layers_pallet := lics_inbound_utility.get_number('LAYERS_PALLET',null);
       end if;
-      if lics_inbound_utility.get_number('MCU_PER_TDU',null) > 9999 then
-         rcd_iface_item.mcu_per_tdu := 9999;
-      else
-         rcd_iface_item.mcu_per_tdu := lics_inbound_utility.get_number('MCU_PER_TDU',null);
-      end if;
       if lics_inbound_utility.get_number('UNITS_CASE',null) > 9999 then
          rcd_iface_item.units_case := 9999;
       else
          rcd_iface_item.units_case := lics_inbound_utility.get_number('UNITS_CASE',null);
       end if;
+      if lics_inbound_utility.get_number('MCU_PER_TDU',null) > 9999 then
+         rcd_iface_item.mcu_per_tdu := 9999;
+      else
+         rcd_iface_item.mcu_per_tdu := lics_inbound_utility.get_number('MCU_PER_TDU',null);
+      end if;
       rcd_iface_item.unit_measure := lics_inbound_utility.get_variable('UNIT_MEASURE');
-      rcd_iface_item.price1 := lics_inbound_utility.get_number('PRICE1',null);
-      rcd_iface_item.price2 := lics_inbound_utility.get_number('PRICE2',null);
-      rcd_iface_item.price3 := lics_inbound_utility.get_number('PRICE3',null);
-      rcd_iface_item.price4 := lics_inbound_utility.get_number('PRICE4',null);
+      rcd_iface_item.price1 := lics_inbound_utility.get_number('TDU_PRICE',null);
+      rcd_iface_item.price2 := lics_inbound_utility.get_number('RRP_PRICE',null);
+      rcd_iface_item.price3 := lics_inbound_utility.get_number('MCU_PRICE',null);
+      rcd_iface_item.price4 := lics_inbound_utility.get_number('RSU_PRICE',null);
+      rcd_iface_item.order_by := lics_inbound_utility.get_variable('ORDER_BY');
       if lics_inbound_utility.get_number('MIN_ORD_QTY',null) > 9999 then
          rcd_iface_item.min_order_qty := 9999;
       else
@@ -310,10 +319,14 @@ create or replace package body ladefx91_loader as
       end if;
       rcd_iface_item.brand := lics_inbound_utility.get_variable('BRAND');
       rcd_iface_item.sub_brand := lics_inbound_utility.get_variable('SUB_BRAND');
-      rcd_iface_item.item_category := lics_inbound_utility.get_variable('ITEM_CATEGORY');
-      rcd_iface_item.pack_size := lics_inbound_utility.get_variable('PACK_SIZE');
-      rcd_iface_item.pack_type := lics_inbound_utility.get_variable('PACK_TYPE');
+      rcd_iface_item.product_category := lics_inbound_utility.get_variable('PRODUCT_CATEGORY');
+      rcd_iface_item.market_category := lics_inbound_utility.get_variable('MARKET_CATEGORY');
+      rcd_iface_item.market_subcategory := lics_inbound_utility.get_variable('MARKET_SUBCATEGORY');
+      rcd_iface_item.market_subcategory_group := lics_inbound_utility.get_variable('MARKET_SUBCATEGORY_GROUP');
       rcd_iface_item.item_status := lics_inbound_utility.get_variable('ITEM_STATUS');
+      rcd_iface_item.item_tdu_name := lics_inbound_utility.get_variable('TDU_NAME');
+      rcd_iface_item.item_mcu_name := lics_inbound_utility.get_variable('MCU_NAME');
+      rcd_iface_item.item_rsu_name := lics_inbound_utility.get_variable('RSU_NAME');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -350,45 +363,59 @@ create or replace package body ladefx91_loader as
           item_code,
           item_name,
           rsu_ean_code,
+          mcu_ean_code,
+          tdu_ean_code,
           cases_layer,
           layers_pallet,
-          mcu_per_tdu,
-          units_case,
+          units_case,
+          mcu_per_tdu,
           unit_measure,
           price1,
           price2,
           price3,
           price4,
+          order_by,
           min_order_qty,
           order_multiples,
           brand,
           sub_brand,
-          item_category,
-          pack_size,
-          pack_type,
-          item_status)
+          product_category,
+          market_category,
+          market_subcategory,
+          market_subcategory_group,
+          item_status,
+          item_tdu_name,
+          item_mcu_name,
+          item_rsu_name)
       values
          (rcd_iface_item.market_id,
           rcd_iface_item.item_code,
           rcd_iface_item.item_name,
           rcd_iface_item.rsu_ean_code,
+          rcd_iface_item.mcu_ean_code,
+          rcd_iface_item.tdu_ean_code,
           rcd_iface_item.cases_layer,
           rcd_iface_item.layers_pallet,
-          rcd_iface_item.mcu_per_tdu,
           rcd_iface_item.units_case,
+          rcd_iface_item.mcu_per_tdu,
           rcd_iface_item.unit_measure,
           rcd_iface_item.price1,
           rcd_iface_item.price2,
           rcd_iface_item.price3,
           rcd_iface_item.price4,
+          rcd_iface_item.order_by,
           rcd_iface_item.min_order_qty,
           rcd_iface_item.order_multiples,
           rcd_iface_item.brand,
           rcd_iface_item.sub_brand,
-          rcd_iface_item.item_category,
-          rcd_iface_item.pack_size,
-          rcd_iface_item.pack_type,
-          rcd_iface_item.item_status);
+          rcd_iface_item.product_category,
+          rcd_iface_item.market_category,
+          rcd_iface_item.market_subcategory,
+          rcd_iface_item.market_subcategory_group,
+          rcd_iface_item.item_status,
+          rcd_iface_item.item_tdu_name,
+          rcd_iface_item.item_mcu_name,
+          rcd_iface_item.item_rsu_name);
 
    /*-------------*/
    /* End routine */

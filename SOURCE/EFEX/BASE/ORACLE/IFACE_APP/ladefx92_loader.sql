@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ladefx92_loader as
+create or replace package iface_app.ladefx92_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -33,7 +33,7 @@ end ladefx92_loader;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ladefx92_loader as
+create or replace package body iface_app.ladefx92_loader as
 
    /*-*/
    /* Private exceptions
