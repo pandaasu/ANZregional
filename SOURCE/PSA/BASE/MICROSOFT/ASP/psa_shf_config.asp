@@ -170,6 +170,14 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
    }
+   function doSelectDelete(strCode) {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected shift will be deleted)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestDelete(\''+strCode+'\');',10);
+   }
    function doSelectCopy(strCode) {
       if (!processForm()) {return;}
       doActivityStart(document.body);
@@ -276,7 +284,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SHFCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SHFCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SHFCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('SHFCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SHFCDE')+'\');">Copy</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -318,6 +326,45 @@ sub PaintFunction()%>
          }
          objSelCode.value = cstrSelectStrCode;
          objSelCode.focus();
+      }
+   }
+
+   //////////////////////
+   // Delete Functions //
+   //////////////////////
+   var cstrDeleteCode;
+   function requestDelete(strCode) {
+      cstrDeleteCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SHFCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_shf_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+   }
+   function checkDelete(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doSelectRefresh();
       }
    }
 
