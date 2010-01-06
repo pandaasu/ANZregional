@@ -435,12 +435,27 @@ create or replace package body psa_app.psa_shf_function as
       if rcd_psa_shf_defn.sde_shf_start is null then
          psa_gen_function.add_mesg_data('Shift start time must be supplied');
       else
-         if rcd_psa_shf_defn.sde_shf_start < 0 or rcd_psa_shf_defn.sde_shf_start > 2359 then
-            psa_gen_function.add_mesg_data('Shift start time must in the range 00:00 to 23:59');
+         if rcd_psa_shf_defn.sde_shf_start < 0 or rcd_psa_shf_defn.sde_shf_start > 2345 then
+            psa_gen_function.add_mesg_data('Shift start time must supplied and in the range 00:00 to 23:45');
+         else
+            if substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),1,2) < '00' or
+               substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),1,2) > '23' then
+               psa_gen_function.add_mesg_data('Shift start time hour must in the range 00 to 23');
+            end if;
+            if substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),3,2) != '00' and
+               substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),3,2) != '15' and
+               substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),3,2) != '30' and
+               substr(to_char(rcd_psa_shf_defn.sde_shf_start,'fm0000'),3,2) != '45' then
+               psa_gen_function.add_mesg_data('Shift start time minutes must be 00, 15, 30 or 45');
+            end if;
          end if;
       end if;
       if rcd_psa_shf_defn.sde_shf_duration is null or rcd_psa_shf_defn.sde_shf_duration = 0 then
          psa_gen_function.add_mesg_data('Shift duration minutes must be supplied');
+      else
+         if mod(rcd_psa_shf_defn.sde_shf_duration,15) != 0 then
+            psa_gen_function.add_mesg_data('Shift duration minutes must be a multiple of 15 minute periods');
+         end if;
       end if;
       if rcd_psa_shf_defn.sde_shf_status is null or (rcd_psa_shf_defn.sde_shf_status != '0' and rcd_psa_shf_defn.sde_shf_status != '1') then
          psa_gen_function.add_mesg_data('Shift status must be (0)inactive or (1)active');

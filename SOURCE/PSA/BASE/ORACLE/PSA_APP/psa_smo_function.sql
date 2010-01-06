@@ -343,10 +343,10 @@ create or replace package body psa_app.psa_smo_function as
       open csr_smo_shift;
       loop
          fetch csr_smo_shift into rcd_smo_shift;
-         if csr_shift%notfound then
+         if csr_smo_shift%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<SMOSHF SHFCDE="'||psa_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
+         pipe row(psa_xml_object('<SMOSHF SHFCDE="'||psa_to_xml(rcd_smo_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_smo_shift.sde_shf_code||') '||rcd_smo_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_smo_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_smo_shift.sde_shf_duration)||'"/>'));
       end loop;
       close csr_smo_shift;
 
