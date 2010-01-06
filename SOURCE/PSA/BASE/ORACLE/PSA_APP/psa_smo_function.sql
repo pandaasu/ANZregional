@@ -346,7 +346,7 @@ create or replace package body psa_app.psa_smo_function as
          if csr_shift%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<SMOSHF SHFCDE="'||sms_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
+         pipe row(psa_xml_object('<SMOSHF SHFCDE="'||psa_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
       end loop;
       close csr_smo_shift;
 
@@ -359,7 +359,7 @@ create or replace package body psa_app.psa_smo_function as
          if csr_shift%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<SHFDFN SHFCDE="'||sms_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
+         pipe row(psa_xml_object('<SHFDFN SHFCDE="'||psa_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
       end loop;
       close csr_shift;
 
@@ -426,7 +426,7 @@ create or replace package body psa_app.psa_smo_function as
       cursor csr_shift is
          select t01.*
            from psa_shf_defn t01
-          where t01.sde_shf_code = var_code;
+          where t01.sde_shf_code = var_shf_code;
       rcd_shift csr_shift%rowtype;
 
    /*-------------*/
@@ -494,7 +494,7 @@ create or replace package body psa_app.psa_smo_function as
          if csr_shift%notfound then
             psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') does not exist');
          else
-            if rcd_shift.shd_shf_status != '1' then
+            if rcd_shift.sde_shf_status != '1' then
                psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') status must be (1)active');
             end if;
          end if;
