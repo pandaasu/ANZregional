@@ -453,6 +453,9 @@ create or replace package body psa_app.psa_shf_function as
       if rcd_psa_shf_defn.sde_shf_duration is null or rcd_psa_shf_defn.sde_shf_duration = 0 then
          psa_gen_function.add_mesg_data('Shift duration minutes must be supplied');
       else
+         if rcd_psa_shf_defn.sde_shf_duration > 1440 then
+            psa_gen_function.add_mesg_data('Shift duration minutes maximum 1440 minutes (24 hours) has been exceeded');
+         end if;
          if mod(rcd_psa_shf_defn.sde_shf_duration,15) != 0 then
             psa_gen_function.add_mesg_data('Shift duration minutes must be a multiple of 15 minute periods');
          end if;
