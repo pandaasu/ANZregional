@@ -171,6 +171,14 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
    }
+   function doSelectDelete(strCode) {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected shift model will be deleted)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestDelete(\''+strCode+'\');',10);
+   }
    function doSelectCopy(strCode) {
       if (!processForm()) {return;}
       doActivityStart(document.body);
@@ -244,7 +252,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Shift&nbsp;';
+         objCell.innerHTML = '&nbsp;Shift Model&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -277,7 +285,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SMOCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SMOCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SMOCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('SMOCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SMOCDE')+'\');">Copy</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -323,12 +331,55 @@ sub PaintFunction()%>
    }
 
    //////////////////////
+   // Delete Functions //
+   //////////////////////
+   var cstrDeleteCode;
+   function requestDelete(strCode) {
+      cstrDeleteCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SMOCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_smo_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+   }
+   function checkDelete(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doSelectRefresh();
+      }
+   }
+
+   //////////////////////
    // Define Functions //
    //////////////////////
    var cobjBar0 = new Image();
    var cobjBar1 = new Image();
+   var cobjBarS = new Image();
+   var cobjBarE = new Image();
    cobjBar0.src = 'barBof.png';
    cobjBar1.src = 'barBon.png';
+   cobjBarS.src = 'barBbe.png';
+   cobjBarE.src = 'barBen.png';
    var cstrDefineMode;
    var cstrDefineCode;
    function requestDefineUpdate(strCode) {
@@ -369,11 +420,15 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Shift';
+            cobjScreens[2].hedtxt = 'Update Shift Model';
+            document.getElementById('addDefine').style.display = 'none';
+            document.getElementById('updDefine').style.display = 'block';
+         } else if (cstrDefineMode == '*DLT') {
+            cobjScreens[2].hedtxt = 'Delete Shift Model';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[2].hedtxt = 'Create Shift';
+            cobjScreens[2].hedtxt = 'Create Shift Model';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
@@ -382,17 +437,29 @@ sub PaintFunction()%>
          document.getElementById('DEF_SmoName').value = '';
          var strSmoStat = '';
          var objSmoStat = document.getElementById('DEF_SmoStat');
+         var objShfValu = document.getElementById('DEF_ShfValu');
+         var objShfList = document.getElementById('DEF_ShfList');
+         objShfValu.options.length = 0;
+         objShfList.options.length = 0;
+         objShfValu.selectedIndex = -1;
+         objShfList.selectedIndex = -1;
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'SHIFT') {
+            if (objElements[i].nodeName == 'SMODFN') {
                if (cstrDefineMode == '*UPD') {
                   document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('SMOCDE')+'</p>';
                } else {
                   document.getElementById('DEF_SmoCode').value = objElements[i].getAttribute('SMOCDE');
                }
                document.getElementById('DEF_SmoName').value = objElements[i].getAttribute('SMONAM');
-               document.getElementById('DEF_SmoStrt').value = objElements[i].getAttribute('SMOSTR');
-               document.getElementById('DEF_SmoDura').value = objElements[i].getAttribute('SMODUR');
                strSmoStat = objElements[i].getAttribute('SMOSTS');
+            } else if (objElements[i].nodeName == 'SMOSHF') {
+               objShfValu.options[objShfValu.options.length] = new Option(objElements[i].getAttribute('SHFNAM'),objElements[i].getAttribute('SHFCDE'));
+               objShfValu.options[objShfValu.options.length-1].setAttribute('strtim',objElements[i].getAttribute('SHFSTR'));
+               objShfValu.options[objShfValu.options.length-1].setAttribute('durmin',objElements[i].getAttribute('SHFDUR'));
+            } else if (objElements[i].nodeName == 'SHFDFN') {
+               objShfList.options[objShfList.options.length] = new Option(objElements[i].getAttribute('SHFNAM'),objElements[i].getAttribute('SHFCDE'));
+               objShfList.options[objShfList.options.length-1].setAttribute('strtim',objElements[i].getAttribute('SHFSTR'));
+               objShfList.options[objShfList.options.length-1].setAttribute('durmin',objElements[i].getAttribute('SHFDUR'));
             }
          }
          objSmoStat.selectedIndex = -1;
@@ -412,6 +479,23 @@ sub PaintFunction()%>
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
+      var objSelCode = document.getElementById('DEF_ShfValu');
+      var intStrTim = 0;
+      var intDurMin = 0;
+      var intBarCnt = 0;
+      var intBarIdx = 0;
+      for (var i=0;i<objShfValu.options.length;i++) {
+         intStrTim = objShfValu[i].getAttribute('strtim');
+         intDurMin = objShfValu[i].getAttribute('durmin');
+         intBarCnt = (intDurMin / 60) * 4;
+         if (i == 0) {
+            intBarIdx = (Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4;
+         }
+         if ((intBarIdx + intBarCnt) > 673) {
+            alert('The weekly shift cycle has been exceeded - the last ('+(objShfValu.options.length-i)+') shift(s) have not been used');
+            break;
+         }
+      }
       var objSmoStat = document.getElementById('DEF_SmoStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
@@ -422,14 +506,16 @@ sub PaintFunction()%>
          strXML = strXML+' SMOCDE="'+fixXML(document.getElementById('DEF_SmoCode').value)+'"';
       }
       strXML = strXML+' SMONAM="'+fixXML(document.getElementById('DEF_SmoName').value)+'"';
-      strXML = strXML+' SMOSTR="'+fixXML(document.getElementById('DEF_SmoStrt').value)+'"';
-      strXML = strXML+' SMODUR="'+fixXML(document.getElementById('DEF_SmoDura').value)+'"';
       if (objSmoStat.selectedIndex == -1) {
          strXML = strXML+' SMOSTS=""';
       } else {
          strXML = strXML+' SMOSTS="'+fixXML(objSmoStat.options[objSmoStat.selectedIndex].value)+'"';
       }
-      strXML = strXML+'/>';
+      strXML = strXML+'>';
+      for (var i=0;i<objShfValu.options.length;i++) {
+         strXML = strXML+'<SMOSHF SHFCDE="'+fixXML(objShfValu[i].value)+'"/>';
+      }
+      strXML = strXML+'</PSA_REQUEST>'
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -582,64 +668,71 @@ sub PaintFunction()%>
       doDefinePaint();
    }
    function doDefinePaint() {
-      var objSelCode = document.getElementById('DEF_SelCode');
+      var objShfValu = document.getElementById('DEF_ShfValu');
       for (var i=1;i<=672;i++) {
-         document.getElementById('DEF_B'+i).src = cobjBarBof;
+         document.getElementById('DEF_B'+i).src = cobjBar0.src;
       }
       var intStrTim = 0;
       var intDurMin = 0;
       var intBarCnt = 0;
       var intBarIdx = 0;
-      for (var i=0;i<objSelCode.options.length;i++) {
-         intStrTim = objSelCode[i].getAttribute('strtim');
-         intDurMin = objSelCode[i].getAttribute('durmin');
+      for (var i=0;i<objShfValu.options.length;i++) {
+         intStrTim = objShfValu[i].getAttribute('strtim');
+         intDurMin = objShfValu[i].getAttribute('durmin');
          intBarCnt = (intDurMin / 60) * 4;
          if (i == 0) {
             intBarIdx = (Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4;
          }
          if ((intBarIdx + intBarCnt) > 673) {
-            alert('The weekly shift cycle has been exceeded - the last ('+(objSelCode.options.length-i)+') shift(s) have not been used');
+            alert('The weekly shift cycle has been exceeded - the last ('+(objShfValu.options.length-i)+') shift(s) have not been used');
+            break;
          }
          for (var j=1;j<=intBarCnt;j++) {
-            document.getElementById('DEF_B'+intBarIdx).src = cobjBarBon;
+            if (j == 1) {
+               document.getElementById('DEF_B'+intBarIdx).src = cobjBarS.src;
+            } else if (j == intBarCnt) {
+               document.getElementById('DEF_B'+intBarIdx).src = cobjBarE.src;
+            } else {
+               document.getElementById('DEF_B'+intBarIdx).src = cobjBar1.src;
+            }
             intBarIdx++;
          }
       }
    }
    function selectShiftCodes() {
-      var objShiCode = document.getElementById('DEF_ShiCode');
-      var objSelCode = document.getElementById('DEF_SelCode');
-      for (var i=0;i<objShiCode.options.length;i++) {
-         if (objShiCode.options[i].selected == true) {
-            objSelCode.options[objSelCode.options.length] = new Option(objShiCode[i].text,objShiCode[i].value);
+      var objShfList = document.getElementById('DEF_ShfList');
+      var objShfValu = document.getElementById('DEF_ShfValu');
+      for (var i=0;i<objShfList.options.length;i++) {
+         if (objShfList.options[i].selected == true) {
+            objShfValu.options[objShfValu.options.length] = new Option(objShfList[i].text,objShfList[i].value);
          }
       }
       doDefinePaint();
    }
    function removeShiftCodes() {
-      var objSelCode = document.getElementById('DEF_SelCode');
+      var objShfValu = document.getElementById('DEF_ShfValu');
       var objYarra = new Array();
       var intYindx = 0;
-      for (var i=0;i<objSelCode.options.length;i++) {
-         if (objSelCode.options[i].selected == false) {
-            objYarra[intYindx] = objSelCode[i];
+      for (var i=0;i<objShfValu.options.length;i++) {
+         if (objShfValu.options[i].selected == false) {
+            objYarra[intYindx] = objShfValu[i];
             intYindx++;
          }
       }
-      objSelCode.options.length = 0;
-      objSelCode.selectedIndex = -1;
+      objShfValu.options.length = 0;
+      objShfValu.selectedIndex = -1;
       for (var i=0;i<objYarra.length;i++) {
-         objSelCode.options[i] = objYarra[i];
+         objShfValu.options[i] = objYarra[i];
       }
       doDefinePaint();
    }
    function upShiftCode() {
       var intIndex;
       var intSelect;
-      var objSelCode = document.getElementById('DEF_SelCode');
+      var objShfValu = document.getElementById('DEF_ShfValu');
       intSelect = 0;
-      for (var i=0;i<objSelCode.options.length;i++) {
-         if (objSelCode.options[i].selected == true) {
+      for (var i=0;i<objShfValu.options.length;i++) {
+         if (objShfValu.options[i].selected == true) {
             intSelect++;
             intIndex = i;
          }
@@ -651,35 +744,35 @@ sub PaintFunction()%>
       if (intSelect == 1 && intIndex > 0) {
          var objYarra = new Array();
          var intYindx = 0;
-         for (var i=0;i<objSelCode.options.length;i++) {
+         for (var i=0;i<objShfValu.options.length;i++) {
             if (i == intIndex-1) {
                objYarra[intYindx] = objList[intIndex];
                intYindx++;
             } else if (i == intIndex) {
-               objYarra[intYindx] = objSelCode[intIndex-1];
+               objYarra[intYindx] = objShfValu[intIndex-1];
                intYindx++;
             } else {
-               objYarra[intYindx] = objSelCode[i];
+               objYarra[intYindx] = objShfValu[i];
                intYindx++;
             }
          }
-         objSelCode.options.length = 0;
-         objSelCode.selectedIndex = -1;
+         objShfValu.options.length = 0;
+         objShfValu.selectedIndex = -1;
          for (var i=0;i<objYarra.length;i++) {
-            objSelCode.options[i] = objYarra[i];
+            objShfValu.options[i] = objYarra[i];
          }
-         objSelCode.options[intIndex-1].selected = true;
-         objSelCode.options[intIndex].selected = false;
+         objShfValu.options[intIndex-1].selected = true;
+         objShfValu.options[intIndex].selected = false;
       }
       doDefinePaint();
    }
    function downShiftCode() {
       var intIndex;
       var intSelect;
-      var objSelCode = document.getElementById('DEF_SelCode');
+      var objShfValu = document.getElementById('DEF_ShfValu');
       intSelect = 0;
-      for (var i=0;i<objSelCode.options.length;i++) {
-         if (objSelCode.options[i].selected == true) {
+      for (var i=0;i<objShfValu.options.length;i++) {
+         if (objShfValu.options[i].selected == true) {
             intSelect++;
             intIndex = i;
          }
@@ -688,28 +781,28 @@ sub PaintFunction()%>
          alert('Only one shift can be selected to move down');
          return;
       }
-      if (intSelect == 1 && intIndex < objSelCode.options.length-1) {
+      if (intSelect == 1 && intIndex < objShfValu.options.length-1) {
          var objYarra = new Array();
          var intYindx = 0;
-         for (var i=0;iobjSelCode.options.length;i++) {
+         for (var i=0;iobjShfValu.options.length;i++) {
             if (i == intIndex+1) {
-               objYarra[intYindx] = objSelCode[intIndex];
+               objYarra[intYindx] = objShfValu[intIndex];
                intYindx++;
             } else if (i == intIndex) {
-               objYarra[intYindx] = objSelCode[intIndex+1];
+               objYarra[intYindx] = objShfValu[intIndex+1];
                intYindx++;
             } else {
-               objYarra[intYindx] = objSelCode[i];
+               objYarra[intYindx] = objShfValu[i];
                intYindx++;
             }
          }
-         objSelCode.options.length = 0;
-         objSelCode.selectedIndex = -1;
+         objShfValu.options.length = 0;
+         objShfValu.selectedIndex = -1;
          for (var i=0;i<objYarra.length;i++) {
-            objSelCode.options[i] = objYarra[i];
+            objShfValu.options[i] = objYarra[i];
          }
-         objSelCode.options[intIndex+1].selected = true;
-         objSelCode.options[intIndex].selected = false;
+         objShfValu.options[intIndex+1].selected = true;
+         objShfValu.options[intIndex].selected = false;
       }
       doDefinePaint();
    }
@@ -824,7 +917,7 @@ sub PaintFunction()%>
                         </tr>
                         <tr>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="DEF_ShiCode" name="DEF_ShiCode" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="DEF_ShfList" name="DEF_ShfList" style="width:300px" multiple size=20></select>
                            </nobr></td>
                            <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
                               <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
@@ -835,7 +928,7 @@ sub PaintFunction()%>
                               </table>
                            </nobr></td>
                            <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="DEF_SelCode" name="DEF_SelCode" style="width:300px" multiple size=20></select>
+                              <select class="clsInputBN" id="DEF_ShfValu" name="DEF_ShfValu" style="width:300px" multiple size=20></select>
                            </nobr></td>
 
                            <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>

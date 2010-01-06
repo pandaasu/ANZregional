@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_smo_config_delete.asp                          //
+'// Script  : psa_shf_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the shift                   //
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_SMO_CONFIG")
+   strReturn = GetSecurityCheck("PSA_SHF_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the shift model delete
+   '// Perform the shift delete
    '//
-   call objProcedure.Execute("psa_app.psa_smo_function.delete_data")
+   call objProcedure.Execute("psa_app.psa_shf_function.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if
