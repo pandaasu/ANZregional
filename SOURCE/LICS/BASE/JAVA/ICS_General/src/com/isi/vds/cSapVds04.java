@@ -86,7 +86,12 @@ public final class cSapVds04 implements iSapDualInterface {
          intRoll = 0;
       }
       if (intRoll != 0) {
+         long lngThisTime = objCalendar.getTimeInMillis();
          objCalendar.roll(Calendar.DAY_OF_YEAR, intRoll);
+         long lngNextTime = objCalendar.getTimeInMillis();
+         if (lngNextTime > lngThisTime) {
+            objCalendar.roll(Calendar.YEAR, -1);
+         }
       }
       DecimalFormat objDecimalFormat = new DecimalFormat();
       objDecimalFormat.setGroupingSize(0);
