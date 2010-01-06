@@ -459,7 +459,7 @@ create or replace package body psa_app.psa_shf_function as
          open csr_shift_model;
          fetch csr_shift_model into rcd_shift_model;
          if csr_shift_model%found then
-            psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') is currently attached to one or more shift models - unable to inactivate');
+            psa_gen_function.add_mesg_data('Shift code ('||rcd_psa_shf_defn.sde_shf_code||') is currently attached to one or more shift models - unable to inactivate');
          end if;
          close csr_shift_model;
          if psa_gen_function.get_mesg_count != 0 then
