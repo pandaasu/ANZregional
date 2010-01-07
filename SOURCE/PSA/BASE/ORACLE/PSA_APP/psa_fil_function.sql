@@ -28,6 +28,7 @@ create or replace package psa_app.psa_fil_function as
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
+   procedure delete_data;
 
 end psa_fil_function;
 /
@@ -509,6 +510,98 @@ create or replace package body psa_app.psa_fil_function as
    /* End routine */
    /*-------------*/
    end update_data;
+
+   /***************************************************/
+   /* This procedure performs the delete data routine */
+   /***************************************************/
+   procedure delete_data is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_confirm varchar2(32);
+      var_found boolean;
+      var_fil_code varchar2(32);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      if var_action != '*DLTDEF' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Process the filter definition
+      /*-*/
+      var_confirm := 'deleted';
+      delete from psa_fil_defn where fde_fil_code = var_fil_code;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      psa_gen_function.set_cfrm_data('Filter ('||var_fil_code||') successfully '||var_confirm);
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_FIL_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end delete_data;
 
 end psa_fil_function;
 /
