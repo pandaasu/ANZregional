@@ -338,7 +338,7 @@ create or replace package body psa_app.psa_res_function as
          if csr_prdtype%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_prdtype.pty_prd_type)||'" SHFNAM="'||psa_to_xml('('||rcd_prdtype.pty_prd_type||') '||rcd_prdtype.pty_prd_name)||'"/>'));
+         pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_prdtype.pty_prd_type)||'" PTYNAM="'||psa_to_xml('('||rcd_prdtype.pty_prd_type||') '||rcd_prdtype.pty_prd_name)||'"/>'));
       end loop;
       close csr_prdtype;
 
