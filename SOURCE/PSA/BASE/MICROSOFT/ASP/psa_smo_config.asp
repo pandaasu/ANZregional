@@ -439,10 +439,12 @@ sub PaintFunction()%>
          var objSmoStat = document.getElementById('DEF_SmoStat');
          var objShfValu = document.getElementById('DEF_ShfValu');
          var objShfList = document.getElementById('DEF_ShfList');
-         objShfValu.options.length = 0;
          objShfList.options.length = 0;
-         objShfValu.selectedIndex = -1;
-         objShfList.selectedIndex = -1;
+         for (var i=objShfValu.rows.length-1;i>=0;i--) {
+            objShfValu.deleteRow(i);
+         }
+         var objRow;
+         var objCell;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SMODFN') {
                if (cstrDefineMode == '*UPD') {
@@ -453,9 +455,20 @@ sub PaintFunction()%>
                document.getElementById('DEF_SmoName').value = objElements[i].getAttribute('SMONAM');
                strSmoStat = objElements[i].getAttribute('SMOSTS');
             } else if (objElements[i].nodeName == 'SMOSHF') {
-               objShfValu.options[objShfValu.options.length] = new Option(objElements[i].getAttribute('SHFNAM'),objElements[i].getAttribute('SHFCDE'));
-               objShfValu.options[objShfValu.options.length-1].setAttribute('strtim',objElements[i].getAttribute('SHFSTR'));
-               objShfValu.options[objShfValu.options.length-1].setAttribute('durmin',objElements[i].getAttribute('SHFDUR'));
+               objRow = objShfValu.insertRow(-1);
+               objRow.setAttribute('shfcod',objElements[i].getAttribute('SHFCDE'));
+               objRow.setAttribute('strtim',objElements[i].getAttribute('SHFSTR'));
+               objRow.setAttribute('durmin',objElements[i].getAttribute('SHFDUR'));
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'center';
+               objCell.innerHTML = '<p>'+objElements[i].getAttribute('SHFNAM')+'</p>';
+               objCell.className = 'clsLabelBN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell.style.fontSize = '8pt';
+               objCell.style.border = '#c0c0c0 1px solid';
+               objCell.style.padding = '1px';
             } else if (objElements[i].nodeName == 'SHFDFN') {
                objShfList.options[objShfList.options.length] = new Option(objElements[i].getAttribute('SHFNAM'),objElements[i].getAttribute('SHFCDE'));
                objShfList.options[objShfList.options.length-1].setAttribute('strtim',objElements[i].getAttribute('SHFSTR'));
@@ -469,6 +482,10 @@ sub PaintFunction()%>
                break;
             }
          }
+         objShfList.selectedIndex = -1;
+         if (objShfList.length != 0) {
+            objShfList.selectedIndex = 0;
+         }
          doDefineLoad();
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_SmoName').focus();
@@ -479,23 +496,12 @@ sub PaintFunction()%>
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objSelCode = document.getElementById('DEF_ShfValu');
+      var objShfValu = document.getElementById('DEF_ShfValu');
       var intStrTim = 0;
       var intDurMin = 0;
       var intBarCnt = 0;
       var intBarIdx = 0;
-      for (var i=0;i<objShfValu.options.length;i++) {
-         intStrTim = objShfValu[i].getAttribute('strtim');
-         intDurMin = objShfValu[i].getAttribute('durmin');
-         intBarCnt = (intDurMin / 60) * 4;
-         if (i == 0) {
-            intBarIdx = (Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4;
-         }
-         if ((intBarIdx + intBarCnt) > 673) {
-            alert('The weekly shift cycle has been exceeded - the last ('+(objShfValu.options.length-i)+') shift(s) have not been used');
-            break;
-         }
-      }
+      var objRow;
       var objSmoStat = document.getElementById('DEF_SmoStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
@@ -512,8 +518,9 @@ sub PaintFunction()%>
          strXML = strXML+' SMOSTS="'+fixXML(objSmoStat.options[objSmoStat.selectedIndex].value)+'"';
       }
       strXML = strXML+'>';
-      for (var i=0;i<objShfValu.options.length;i++) {
-         strXML = strXML+'<SMOSHF SHFCDE="'+fixXML(objShfValu[i].value)+'"/>';
+      for (var i=0;i<objShfValu.rows.length;i++) {
+         objRow = objShfValu.rows[i];
+         strXML = strXML+'<SMOSHF SHFCDE="'+fixXML(objRow.getAttribute('shfcod'))+'"/>';
       }
       strXML = strXML+'</PSA_REQUEST>'
       doActivityStart(document.body);
@@ -564,6 +571,7 @@ sub PaintFunction()%>
       document.getElementById('DEF_D05').style.width = intWidth;
       document.getElementById('DEF_D06').style.width = intWidth;
       document.getElementById('DEF_D07').style.width = intWidth;
+      document.getElementById('DEF_D08').style.width = intWidth;
       var intBarIdx = 0;
       var objTabShift = document.getElementById('DEF_DspTable');
       var objRow;
@@ -586,19 +594,20 @@ sub PaintFunction()%>
          objCell.align = 'center';
          objCell.vAlign = 'center';
          objCell.innerHTML = strTime;
-         objCell.className = 'clsLabelBB';
+         objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
+         objCell.style.fontSize = '8pt';
          objCell.style.border = '#c0c0c0 1px solid';
          objCell.style.padding = '1px';
-
-         for (var j=1;j<=7;j++) {
-            intBarIdx++;
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 1;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
             objCell.className = 'clsLabelBN';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
             objCell.style.borderTop = '#c0c0c0 1px solid';
             objCell.style.borderRight = '#c0c0c0 1px solid';
             objCell.style.paddingTop = '1px';
@@ -606,86 +615,90 @@ sub PaintFunction()%>
             objImage.id = 'DEF_B'+intBarIdx;
             objImage.src = cobjBar0.src;
             objImage.align = 'absmiddle';
-            objImage.style.height = '5px';
+            objImage.style.height = '4px';
             objImage.style.width = '16px';
             objCell.appendChild(objImage);
          }
          objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=7;j++) {
-            intBarIdx++;
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 2;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
             objCell.className = 'clsLabelBN';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
             objCell.style.borderRight = '#c0c0c0 1px solid';
             objImage = document.createElement('img');
             objImage.id = 'DEF_B'+intBarIdx;
             objImage.src = cobjBar0.src;
             objImage.align = 'absmiddle';
-            objImage.style.height = '5px';
+            objImage.style.height = '4px';
             objImage.style.width = '16px';
             objCell.appendChild(objImage);
          }
          objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=7;j++) {
-            intBarIdx++;
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 3;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
             objCell.className = 'clsLabelBN';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
             objCell.style.borderRight = '#c0c0c0 1px solid';
             objImage = document.createElement('img');
             objImage.id = 'DEF_B'+intBarIdx;
             objImage.src = cobjBar0.src;
             objImage.align = 'absmiddle';
-            objImage.style.height = '5px';
+            objImage.style.height = '4px';
             objImage.style.width = '16px';
             objCell.appendChild(objImage);
          }
          objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=7;j++) {
-            intBarIdx++;
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 4;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
             objCell.className = 'clsLabelBN';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
             objCell.style.borderRight = '#c0c0c0 1px solid';
             objImage = document.createElement('img');
             objImage.id = 'DEF_B'+intBarIdx;
             objImage.src = cobjBar0.src;
             objImage.align = 'absmiddle';
-            objImage.style.height = '5px';
+            objImage.style.height = '4px';
             objImage.style.width = '16px';
             objCell.appendChild(objImage);
          }
       }
+      document.getElementById('DEF_ShfScrl').style.height = objTabShift.offsetHeight;
       doDefinePaint();
    }
    function doDefinePaint() {
       var objShfValu = document.getElementById('DEF_ShfValu');
-      for (var i=1;i<=672;i++) {
+      for (var i=1;i<=768;i++) {
          document.getElementById('DEF_B'+i).src = cobjBar0.src;
       }
       var intStrTim = 0;
       var intDurMin = 0;
       var intBarCnt = 0;
       var intBarIdx = 0;
-      for (var i=0;i<objShfValu.options.length;i++) {
-         intStrTim = objShfValu[i].getAttribute('strtim');
-         intDurMin = objShfValu[i].getAttribute('durmin');
+      var intBarStr = 0;
+      var objRow;
+      for (var i=0;i<objShfValu.rows.length;i++) {
+         objRow = objShfValu.rows[i];
+         intStrTim = objRow.getAttribute('strtim');
+         intDurMin = objRow.getAttribute('durmin');
          intBarCnt = (intDurMin / 60) * 4;
          if (i == 0) {
-            intBarIdx = (Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4;
-         }
-         if ((intBarIdx + intBarCnt) > 673) {
-            alert('The weekly shift cycle has been exceeded - the last ('+(objShfValu.options.length-i)+') shift(s) have not been used');
-            break;
+            intBarStr = ((Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4) + 1;
+            intBarIdx = intBarStr;
          }
          for (var j=1;j<=intBarCnt;j++) {
             if (j == 1) {
@@ -699,112 +712,76 @@ sub PaintFunction()%>
          }
       }
    }
-   function selectShiftCodes() {
+   function selectShiftCode() {
       var objShfList = document.getElementById('DEF_ShfList');
       var objShfValu = document.getElementById('DEF_ShfValu');
-      for (var i=0;i<objShfList.options.length;i++) {
-         if (objShfList.options[i].selected == true) {
-            objShfValu.options[objShfValu.options.length] = new Option(objShfList[i].text,objShfList[i].value);
-         }
-      }
-      doDefinePaint();
-   }
-   function removeShiftCodes() {
-      var objShfValu = document.getElementById('DEF_ShfValu');
-      var objYarra = new Array();
-      var intYindx = 0;
-      for (var i=0;i<objShfValu.options.length;i++) {
-         if (objShfValu.options[i].selected == false) {
-            objYarra[intYindx] = objShfValu[i];
-            intYindx++;
-         }
-      }
-      objShfValu.options.length = 0;
-      objShfValu.selectedIndex = -1;
-      for (var i=0;i<objYarra.length;i++) {
-         objShfValu.options[i] = objYarra[i];
-      }
-      doDefinePaint();
-   }
-   function upShiftCode() {
-      var intIndex;
-      var intSelect;
-      var objShfValu = document.getElementById('DEF_ShfValu');
-      intSelect = 0;
-      for (var i=0;i<objShfValu.options.length;i++) {
-         if (objShfValu.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
-      }
-      if (intSelect > 1) {
-         alert('Only one shift can be selected to move up');
+      if (objShfList.selectedIndex == -1) {
+         alert('Shift must be selected');
          return;
       }
-      if (intSelect == 1 && intIndex > 0) {
-         var objYarra = new Array();
-         var intYindx = 0;
-         for (var i=0;i<objShfValu.options.length;i++) {
-            if (i == intIndex-1) {
-               objYarra[intYindx] = objList[intIndex];
-               intYindx++;
-            } else if (i == intIndex) {
-               objYarra[intYindx] = objShfValu[intIndex-1];
-               intYindx++;
-            } else {
-               objYarra[intYindx] = objShfValu[i];
-               intYindx++;
+      var intStrTim = 0;
+      var intStrHor = 0;
+      var intStrMin = 0;
+      var intDurMin = 0;
+      var intNxtTim = 0;
+      var intBarCnt = 0;
+      var intTotCnt = 0;
+      var objRow;
+      if (objShfValu.rows.length != 0) {
+         for (var i=0;i<objShfValu.rows.length;i++) {
+            objRow = objShfValu.rows[i];
+            intStrTim = objRow.getAttribute('strtim');
+            intDurMin = objRow.getAttribute('durmin');
+            intStrHor = Math.floor(intStrTim / 100);
+            intStrMin = intStrTim % 100;
+            intBarCnt = (intDurMin / 60) * 4;
+            intTotCnt = intTotCnt + intBarCnt;
+            for (var j=1;j<=intBarCnt;j++) {
+               intStrMin = intStrMin + 15;
+               if (intStrMin == 60) {
+                  intStrHor++;
+                  intStrMin = 0;
+                  if (intStrHor == 24) {
+                     intStrHor = 0;
+                  }
+               }
             }
+            intNxtTim = (intStrHor * 100) + intStrMin;
          }
-         objShfValu.options.length = 0;
-         objShfValu.selectedIndex = -1;
-         for (var i=0;i<objYarra.length;i++) {
-            objShfValu.options[i] = objYarra[i];
+         intStrTim = objShfList[objShfList.selectedIndex].getAttribute('strtim');
+         intDurMin = objShfList[objShfList.selectedIndex].getAttribute('durmin');
+         intTotCnt = intTotCnt + (intDurMin / 60) * 4;
+         if (intStrTim != intNxtTim) {
+            alert('The selected shift ('+objShfList[objShfList.selectedIndex].text+') does not align with the previous shift');
+            return;
          }
-         objShfValu.options[intIndex-1].selected = true;
-         objShfValu.options[intIndex].selected = false;
+         if (intTotCnt > 672) {
+            alert('The weekly shift cycle of 7 days (24 hours) has been exceeded - unable to select shift');
+            return;
+         }
       }
+      objRow = objShfValu.insertRow(-1);
+      objRow.setAttribute('shfcod',objShfList[objShfList.selectedIndex].value);
+      objRow.setAttribute('strtim',objShfList[objShfList.selectedIndex].getAttribute('strtim'));
+      objRow.setAttribute('durmin',objShfList[objShfList.selectedIndex].getAttribute('durmin'));
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'left';
+      objCell.vAlign = 'center';
+      objCell.innerHTML = '<p>'+objShfList[objShfList.selectedIndex].text+'</p>';
+      objCell.className = 'clsLabelBN';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.style.fontSize = '8pt';
+      objCell.style.border = '#c0c0c0 1px solid';
+      objCell.style.padding = '1px';
       doDefinePaint();
    }
-   function downShiftCode() {
-      var intIndex;
-      var intSelect;
+   function removeShiftCode() {
       var objShfValu = document.getElementById('DEF_ShfValu');
-      intSelect = 0;
-      for (var i=0;i<objShfValu.options.length;i++) {
-         if (objShfValu.options[i].selected == true) {
-            intSelect++;
-            intIndex = i;
-         }
+      if (objShfValu.rows.length != 0) {
+         objShfValu.deleteRow(objShfValu.rows.length-1);
+         doDefinePaint();
       }
-      if (intSelect > 1) {
-         alert('Only one shift can be selected to move down');
-         return;
-      }
-      if (intSelect == 1 && intIndex < objShfValu.options.length-1) {
-         var objYarra = new Array();
-         var intYindx = 0;
-         for (var i=0;iobjShfValu.options.length;i++) {
-            if (i == intIndex+1) {
-               objYarra[intYindx] = objShfValu[intIndex];
-               intYindx++;
-            } else if (i == intIndex) {
-               objYarra[intYindx] = objShfValu[intIndex+1];
-               intYindx++;
-            } else {
-               objYarra[intYindx] = objShfValu[i];
-               intYindx++;
-            }
-         }
-         objShfValu.options.length = 0;
-         objShfValu.selectedIndex = -1;
-         for (var i=0;i<objYarra.length;i++) {
-            objShfValu.options[i] = objYarra[i];
-         }
-         objShfValu.options[intIndex+1].selected = true;
-         objShfValu.options[intIndex].selected = false;
-      }
-      doDefinePaint();
    }
 
 // -->
@@ -903,64 +880,48 @@ sub PaintFunction()%>
             </select>
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+            <table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=4>
+                  <td class="clsLabelBN" align=right valign=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="DEF_ShfList" name="DEF_ShfList"></select>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+                     <table class="clsGrid02" align=left valign=top cols=1 cellpadding="0" cellspacing="0">
                         <tr>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Shifts&nbsp;</nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Shifts&nbsp;</nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                        </tr>
-                        <tr>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="DEF_ShfList" name="DEF_ShfList" style="width:300px" multiple size=20></select>
-                           </nobr></td>
-                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
-                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
-                                 <tr>
-                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removeShiftCodes();"></nobr></td>
-                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectShiftCodes();"></nobr></td>
-                                 </tr>
+                           <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
+                              <table class="clsTable01" align=left cols=2 cellpadding="0" cellspacing="0">
+                                 <td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="selectShiftCode();">&nbsp;Add Shift&nbsp;</a></nobr></td>
+                                 <td align=right colspan=1 nowrap><nobr><a class="clsButton" onClick="removeShiftCode();">&nbsp;Remove Shift&nbsp;</a></nobr></td>
                               </table>
                            </nobr></td>
-                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
-                              <select class="clsInputBN" id="DEF_ShfValu" name="DEF_ShfValu" style="width:300px" multiple size=20></select>
-                           </nobr></td>
-
-                           <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr>
-                              <table class="clsTable01" width=100% align=center cols=1 cellpadding="0" cellspacing="0">
-                                 <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_uoff.gif" align=absmiddle onClick="upShiftCode();"></nobr></td></tr>
-                                 <tr><td align=center colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_doff.gif" align=absmiddle onClick="downShiftCode();"></nobr></td></tr>
-                              </table>
-                           </nobr></td>
-
                         </tr>
                      </table>
                   </nobr></td>
                </tr>
-            </table>
-         </nobr></td>
-      </tr>
-      </table></nobr></td></tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-            <table id="DEF_DspTable" class="clsPanel" style="border-collapse:collapse;border:#40414c 2px solid;" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBB" style="border:#c0c0c0 1px solid;" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td id="DEF_D01" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Sunday</nobr></td>
-                  <td id="DEF_D02" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Monday</nobr></td>
-                  <td id="DEF_D03" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Tuesday</nobr></td>
-                  <td id="DEF_D04" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Wednesday</nobr></td>
-                  <td id="DEF_D05" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Thursday</nobr></td>
-                  <td id="DEF_D06" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Friday</nobr></td>
-                  <td id="DEF_D07" class="clsLabelBB" style="border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Saturday</nobr></td>
+                  <td class="clsLabelBN" align=right valign=top colspan=1 nowrap><nobr>
+                     <div id="DEF_ShfScrl" class="clsScroll01" style="overflow:scroll;background-color:#a4a4a4;border:#40414c 2px solid;width:100%">
+                     <table id="DEF_ShfValu" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0"></table>
+                     </div>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=left valign=top colspan=1 nowrap><nobr>
+                     <table id="DEF_DspTable" class="clsPanel" style="background-color:#a4a4a4;border-collapse:collapse;border:#40414c 2px solid;" align=left cols=9 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td id="DEF_D01" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Sunday</nobr></td>
+                           <td id="DEF_D02" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Monday</nobr></td>
+                           <td id="DEF_D03" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Tuesday</nobr></td>
+                           <td id="DEF_D04" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Wednesday</nobr></td>
+                           <td id="DEF_D05" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Thursday</nobr></td>
+                           <td id="DEF_D06" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Friday</nobr></td>
+                           <td id="DEF_D07" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Saturday</nobr></td>
+                           <td id="DEF_D08" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Sunday</nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
                </tr>
             </table>
          </nobr></td>
