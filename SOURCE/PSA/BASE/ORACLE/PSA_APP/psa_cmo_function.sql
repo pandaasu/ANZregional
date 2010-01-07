@@ -1,20 +1,20 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package psa_app.psa_smo_function as
+create or replace package psa_app.psa_cmo_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : psa_smo_function
+    Package : psa_cmo_function
     Owner   : psa_app
 
     Description
     -----------
-    Production Scheduling Application - Shift Model Function
+    Production Scheduling Application - Crew Model Function
 
-    This package contain the shift model functions and procedures.
+    This package contain the crew model functions and procedures.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -30,13 +30,13 @@ create or replace package psa_app.psa_smo_function as
    procedure update_data(par_user in varchar2);
    procedure delete_data;
 
-end psa_smo_function;
+end psa_cmo_function;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body psa_app.psa_smo_function as
+create or replace package body psa_app.psa_cmo_function as
 
    /*-*/
    /* Private exceptions
@@ -66,34 +66,34 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       cursor csr_slct is
          select t01.*
-           from (select t01.smd_smo_code,
-                        t01.smd_smo_name,
-                        decode(t01.smd_smo_status,'0','Inactive','1','Active','*UNKNOWN') as smd_smo_status
-                   from psa_smo_defn t01
-                  where (var_str_code is null or t01.smd_smo_code >= var_str_code)
-                  order by t01.smd_smo_code asc) t01
+           from (select t01.cmd_cmo_code,
+                        t01.cmd_cmo_name,
+                        decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
+                   from psa_cmo_defn t01
+                  where (var_str_code is null or t01.cmd_cmo_code >= var_str_code)
+                  order by t01.cmd_cmo_code asc) t01
           where rownum <= var_pag_size;
 
       cursor csr_next is
          select t01.*
-           from (select t01.smd_smo_code,
-                        t01.smd_smo_name,
-                        decode(t01.smd_smo_status,'0','Inactive','1','Active','*UNKNOWN') as smd_smo_status
-                   from psa_smo_defn t01
-                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.smd_smo_code > var_end_code)) or
+           from (select t01.cmd_cmo_code,
+                        t01.cmd_cmo_name,
+                        decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
+                   from psa_cmo_defn t01
+                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.cmd_cmo_code > var_end_code)) or
                         (var_action = '*PRVDEF')
-                  order by t01.smd_smo_code asc) t01
+                  order by t01.cmd_cmo_code asc) t01
           where rownum <= var_pag_size;
 
       cursor csr_prev is
          select t01.*
-           from (select t01.smd_smo_code,
-                        t01.smd_smo_name,
-                        decode(t01.smd_smo_status,'0','Inactive','1','Active','*UNKNOWN') as smd_smo_status
-                   from psa_smo_defn t01
-                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.smd_smo_code < var_str_code)) or
+           from (select t01.cmd_cmo_code,
+                        t01.cmd_cmo_name,
+                        decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
+                   from psa_cmo_defn t01
+                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.cmd_cmo_code < var_str_code)) or
                         (var_action = '*NXTDEF')
-                  order by t01.smd_smo_code desc) t01
+                  order by t01.cmd_cmo_code desc) t01
           where rownum <= var_pag_size;
 
       /*-*/
@@ -141,7 +141,7 @@ create or replace package body psa_app.psa_smo_function as
       pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
 
       /*-*/
-      /* Retrieve the shift model list and pipe the results
+      /* Retrieve the crew model list and pipe the results
       /*-*/
       var_pag_size := 20;
       if var_action = '*SELDEF' then
@@ -150,7 +150,7 @@ create or replace package body psa_app.psa_smo_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW SMOCDE="'||to_char(tbl_list(idx).smd_smo_code)||'" SMONAM="'||psa_to_xml(tbl_list(idx).smd_smo_name)||'" SMOSTS="'||psa_to_xml(tbl_list(idx).smd_smo_status)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW CMOCDE="'||to_char(tbl_list(idx).cmd_cmo_code)||'" CMONAM="'||psa_to_xml(tbl_list(idx).cmd_cmo_name)||'" CMOSTS="'||psa_to_xml(tbl_list(idx).cmd_cmo_status)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -159,14 +159,14 @@ create or replace package body psa_app.psa_smo_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW SMOCDE="'||to_char(tbl_list(idx).smd_smo_code)||'" SMONAM="'||psa_to_xml(tbl_list(idx).smd_smo_name)||'" SMOSTS="'||psa_to_xml(tbl_list(idx).smd_smo_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW CMOCDE="'||to_char(tbl_list(idx).cmd_cmo_code)||'" CMONAM="'||psa_to_xml(tbl_list(idx).cmd_cmo_name)||'" CMOSTS="'||psa_to_xml(tbl_list(idx).cmd_cmo_status)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW SMOCDE="'||to_char(tbl_list(idx).smd_smo_code)||'" SMONAM="'||psa_to_xml(tbl_list(idx).smd_smo_name)||'" SMOSTS="'||psa_to_xml(tbl_list(idx).smd_smo_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW CMOCDE="'||to_char(tbl_list(idx).cmd_cmo_code)||'" CMONAM="'||psa_to_xml(tbl_list(idx).cmd_cmo_name)||'" CMOSTS="'||psa_to_xml(tbl_list(idx).cmd_cmo_status)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -176,14 +176,14 @@ create or replace package body psa_app.psa_smo_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW SMOCDE="'||to_char(tbl_list(idx).smd_smo_code)||'" SMONAM="'||psa_to_xml(tbl_list(idx).smd_smo_name)||'" SMOSTS="'||psa_to_xml(tbl_list(idx).smd_smo_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW CMOCDE="'||to_char(tbl_list(idx).cmd_cmo_code)||'" CMONAM="'||psa_to_xml(tbl_list(idx).cmd_cmo_name)||'" CMOSTS="'||psa_to_xml(tbl_list(idx).cmd_cmo_status)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW SMOCDE="'||to_char(tbl_list(idx).smd_smo_code)||'" SMONAM="'||psa_to_xml(tbl_list(idx).smd_smo_name)||'" SMOSTS="'||psa_to_xml(tbl_list(idx).smd_smo_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW CMOCDE="'||to_char(tbl_list(idx).cmd_cmo_code)||'" CMONAM="'||psa_to_xml(tbl_list(idx).cmd_cmo_name)||'" CMOSTS="'||psa_to_xml(tbl_list(idx).cmd_cmo_status)||'"/>'));
             end loop;
          end if;
       end if;
@@ -211,7 +211,7 @@ create or replace package body psa_app.psa_smo_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_SMO_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_CMO_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -231,7 +231,7 @@ create or replace package body psa_app.psa_smo_function as
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
       var_found boolean;
-      var_smo_code varchar2(32);
+      var_cmo_code varchar2(32);
       var_output varchar2(2000 char);
 
       /*-*/
@@ -239,27 +239,34 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*
-           from psa_smo_defn t01
-          where t01.smd_smo_code = var_smo_code;
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_code = var_cmo_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_smo_shift is
+      cursor csr_cmo_resource is
          select t01.*,
                 t02.*
-           from psa_smo_shift t01,
-                psa_shf_defn t02
-          where t01.sms_shf_code = t02.sde_shf_code
-            and t01.sms_smo_code = rcd_retrieve.smd_smo_code
-            and t02.sde_shf_status = '1'
-          order by t01.sms_smo_seqn asc;
-      rcd_smo_shift csr_smo_shift%rowtype;
+           from psa_cmo_resource t01,
+                psa_res_defn t02
+          where t01.cmr_res_code = t02.rde_res_code
+            and t01.cmr_cmo_code = rcd_retrieve.cmd_cmo_code
+            and t02.rde_res_status = '1'
+          order by t01.cmr_cmo_code asc;
+      rcd_cmo_resource csr_cmo_resource%rowtype;
 
-      cursor csr_shift is
+      cursor csr_resource is
          select t01.*
-           from psa_shf_defn t01
-          where t01.sde_shf_status = '1'
-          order by t01.sde_shf_code asc;
-      rcd_shift csr_shift%rowtype;
+           from psa_res_defn t01
+          where t01.rde_res_status = '1'
+          order by t01.rde_res_code asc;
+      rcd_resource csr_resource%rowtype;
+
+      cursor csr_prdtype is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_cre_usage = '1'
+          order by t01.pty_prd_type asc;
+      rcd_prdtype csr_prdtype%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -284,7 +291,7 @@ create or replace package body psa_app.psa_smo_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMOCDE')));
+      var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -294,7 +301,7 @@ create or replace package body psa_app.psa_smo_function as
       end if;
 
       /*-*/
-      /* Retrieve the existing shift model when required
+      /* Retrieve the existing crew model when required
       /*-*/
       if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
          var_found := false;
@@ -305,7 +312,7 @@ create or replace package body psa_app.psa_smo_function as
          end if;
          close csr_retrieve;
          if var_found = false then
-            psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') does not exist');
+            psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') does not exist');
          end if;
          if psa_gen_function.get_mesg_count != 0 then
             return;
@@ -318,50 +325,53 @@ create or replace package body psa_app.psa_smo_function as
       pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
 
       /*-*/
-      /* Pipe the shift model XML
+      /* Pipe the crew model XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<SMODFN SMOCDE="'||psa_to_xml(rcd_retrieve.smd_smo_code||' - (Last updated by '||rcd_retrieve.smd_upd_user||' on '||to_char(rcd_retrieve.smd_upd_date,'yyyy/mm/dd')||')')||'"';
-         var_output := var_output||' SMONAM="'||psa_to_xml(rcd_retrieve.smd_smo_name)||'"';
-         var_output := var_output||' SMOSTS="'||psa_to_xml(rcd_retrieve.smd_smo_status)||'"/>';
+         var_output := '<CMODFN CMOCDE="'||psa_to_xml(rcd_retrieve.cmd_cmo_code||' - (Last updated by '||rcd_retrieve.cmd_upd_user||' on '||to_char(rcd_retrieve.cmd_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := var_output||' CMONAM="'||psa_to_xml(rcd_retrieve.cmd_cmo_name)||'"';
+         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"';
+         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.cmd_prd_type)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<SMODFN SMOCDE=""';
-         var_output := var_output||' SMONAM="'||psa_to_xml(rcd_retrieve.smd_smo_name)||'"';
-         var_output := var_output||' SMOSTS="'||psa_to_xml(rcd_retrieve.smd_smo_status)||'"/>';
+         var_output := '<CMODFN CMOCDE=""';
+         var_output := var_output||' CMONAM="'||psa_to_xml(rcd_retrieve.cmd_cmo_name)||'"';
+         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"';
+         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.cmd_prd_type)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<SMODFN SMOCDE=""';
-         var_output := var_output||' SMONAM=""';
-         var_output := var_output||' SMOSTS="1"/>';
+         var_output := '<CMODFN CMOCDE=""';
+         var_output := var_output||' CMONAM=""';
+         var_output := var_output||' CMOSTS="1";
+         var_output := var_output||' PTYCDE=""/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
       /*-*/
-      /* Pipe the model shift data XML
+      /* Pipe the model resource data XML
       /*-*/
-      open csr_smo_shift;
+      open csr_cmo_resource;
       loop
-         fetch csr_smo_shift into rcd_smo_shift;
-         if csr_smo_shift%notfound then
+         fetch csr_cmo_resource into rcd_cmo_resource;
+         if csr_cmo_resource%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<SMOSHF SHFCDE="'||psa_to_xml(rcd_smo_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_smo_shift.sde_shf_code||') '||rcd_smo_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_smo_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_smo_shift.sde_shf_duration)||'"/>'));
+         pipe row(psa_xml_object('<CMORES RESCDE="'||psa_to_xml(rcd_cmo_resource.rde_res_code)||'" RESNAM="'||psa_to_xml('('||rcd_cmo_resource.rde_res_code||') '||rcd_cmo_resource.rde_res_name)||'"/>'));
       end loop;
-      close csr_smo_shift;
+      close csr_cmo_resource;
 
       /*-*/
-      /* Pipe the shift data XML
+      /* Pipe the resource data XML
       /*-*/
-      open csr_shift;
+      open csr_resource;
       loop
-         fetch csr_shift into rcd_shift;
-         if csr_shift%notfound then
+         fetch csr_resource into rcd_resource;
+         if csr_resource%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<SHFDFN SHFCDE="'||psa_to_xml(rcd_shift.sde_shf_code)||'" SHFNAM="'||psa_to_xml('('||rcd_shift.sde_shf_code||') '||rcd_shift.sde_shf_name)||'" SHFSTR="'||to_char(rcd_shift.sde_shf_start)||'" SHFDUR="'||to_char(rcd_shift.sde_shf_duration)||'"/>'));
+         pipe row(psa_xml_object('<RESDFN RESCDE="'||psa_to_xml(rcd_resource.rde_res_code)||'" RESNAM="'||psa_to_xml('('||rcd_resource.rde_res_code||') '||rcd_resource.rde_res_name)||'"/>'));
       end loop;
-      close csr_shift;
+      close csr_resource;
 
       /*-*/
       /* Pipe the XML end
@@ -386,7 +396,7 @@ create or replace package body psa_app.psa_smo_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_SMO_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_CMO_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -404,30 +414,36 @@ create or replace package body psa_app.psa_smo_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
-      obj_shf_list xmlDom.domNodeList;
-      obj_shf_node xmlDom.domNode;
+      obj_res_list xmlDom.domNodeList;
+      obj_res_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
-      var_shf_code varchar2(32);
-      rcd_psa_smo_defn psa_smo_defn%rowtype;
-      rcd_psa_smo_shift psa_smo_shift%rowtype;
+      var_res_code varchar2(32);
+      rcd_psa_cmo_defn psa_cmo_defn%rowtype;
+      rcd_psa_cmo_resource psa_cmo_resource%rowtype;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
          select t01.*
-           from psa_smo_defn t01
-          where t01.smd_smo_code = rcd_psa_smo_defn.smd_smo_code
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_code = rcd_psa_cmo_defn.cmd_cmo_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_shift is
+      cursor csr_resource is
          select t01.*
-           from psa_shf_defn t01
-          where t01.sde_shf_code = var_shf_code;
-      rcd_shift csr_shift%rowtype;
+           from psa_res_defn t01
+          where t01.rde_res_code = var_res_code;
+      rcd_resource csr_resource%rowtype;
+
+      cursor csr_prdtype is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_type = rcd_psa_cmo_defn.cmd_prd_type;
+      rcd_prdtype csr_prdtype%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -454,11 +470,12 @@ create or replace package body psa_app.psa_smo_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_smo_defn.smd_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMOCDE')));
-      rcd_psa_smo_defn.smd_smo_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMONAM'));
-      rcd_psa_smo_defn.smd_smo_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMOSTS'));
-      rcd_psa_smo_defn.smd_upd_user := upper(par_user);
-      rcd_psa_smo_defn.smd_upd_date := sysdate;
+      rcd_psa_cmo_defn.cmd_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE')));
+      rcd_psa_cmo_defn.cmd_cmo_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMONAM'));
+      rcd_psa_cmo_defn.cmd_cmo_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOSTS'));
+      rcd_psa_cmo_defn.cmd_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      rcd_psa_cmo_defn.cmd_upd_user := upper(par_user);
+      rcd_psa_cmo_defn.cmd_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -466,16 +483,16 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       /* Validate the input
       /*-*/
-      if rcd_psa_smo_defn.smd_smo_code is null then
-         psa_gen_function.add_mesg_data('Shift model code must be supplied');
+      if rcd_psa_cmo_defn.cmd_cmo_code is null then
+         psa_gen_function.add_mesg_data('Crew model code must be supplied');
       end if;
-      if rcd_psa_smo_defn.smd_smo_name is null then
-         psa_gen_function.add_mesg_data('Shift model name must be supplied');
+      if rcd_psa_cmo_defn.cmd_cmo_name is null then
+         psa_gen_function.add_mesg_data('Crew model name must be supplied');
       end if;
-      if rcd_psa_smo_defn.smd_smo_status is null or (rcd_psa_smo_defn.smd_smo_status != '0' and rcd_psa_smo_defn.smd_smo_status != '1') then
-         psa_gen_function.add_mesg_data('Shift model status must be (0)inactive or (1)active');
+      if rcd_psa_cmo_defn.cmd_cmo_status is null or (rcd_psa_cmo_defn.cmd_cmo_status != '0' and rcd_psa_cmo_defn.cmd_cmo_status != '1') then
+         psa_gen_function.add_mesg_data('Crew model status must be (0)inactive or (1)active');
       end if;
-      if rcd_psa_smo_defn.smd_upd_user is null then
+      if rcd_psa_cmo_defn.cmd_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -483,29 +500,46 @@ create or replace package body psa_app.psa_smo_function as
       end if;
 
       /*-*/
+      /* Validate the parent relationships
+      /*-*/
+      open csr_prdtype;
+      fetch csr_prdtype into rcd_prdtype;
+      if csr_prdtype%notfound then
+         psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') does not exist');
+      else
+         if rcd_prdtype.pty_prd_status != '1' then
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') status must be (1)active for and active resource');
+         end if;
+         if rcd_psa_cmo_defn.cmd_res_status = '1' and rcd_prdtype.pty_prd_cre_usage != '1' then
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') must be flagged for crew usage');
+         end if;
+      end if;
+      close csr_prdtype;
+
+      /*-*/
       /* Validate the relationships
       /*-*/
-      obj_shf_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/SMOSHF');
-      for idx in 0..xmlDom.getLength(obj_shf_list)-1 loop
-         obj_shf_node := xmlDom.item(obj_shf_list,idx);
-         var_shf_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE'));
-         open csr_shift;
-         fetch csr_shift into rcd_shift;
-         if csr_shift%notfound then
-            psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') does not exist');
+      obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/CMORES');
+      for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
+         obj_res_node := xmlDom.item(obj_res_list,idx);
+         var_res_code := psa_from_xml(xslProcessor.valueOf(obj_res_node,'@RESCDE'));
+         open csr_resource;
+         fetch csr_resource into rcd_resource;
+         if csr_resource%notfound then
+            psa_gen_function.add_mesg_data('Resource code ('||var_res_code||') does not exist');
          else
-            if rcd_shift.sde_shf_status != '1' then
-               psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') status must be (1)active');
+            if rcd_resource.rde_res_status != '1' then
+               psa_gen_function.add_mesg_data('Resource code ('||var_res_code||') status must be (1)active');
             end if;
          end if;
-         close csr_shift;
+         close csr_resource;
       end loop;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
       /*-*/
-      /* Process the shift model definition
+      /* Process the crew model definition
       /*-*/
       if var_action = '*UPDDEF' then
          var_confirm := 'updated';
@@ -520,27 +554,27 @@ create or replace package body psa_app.psa_smo_function as
          exception
             when others then
                var_found := true;
-               psa_gen_function.add_mesg_data('Shift model code ('||rcd_psa_smo_defn.smd_smo_code||') is currently locked');
+               psa_gen_function.add_mesg_data('Crew model code ('||rcd_psa_cmo_defn.cmd_cmo_code||') is currently locked');
          end;
          if var_found = false then
-            psa_gen_function.add_mesg_data('Shift model code ('||rcd_psa_smo_defn.smd_smo_code||') does not exist');
+            psa_gen_function.add_mesg_data('Crew model code ('||rcd_psa_cmo_defn.cmd_cmo_code||') does not exist');
          end if;
          if psa_gen_function.get_mesg_count = 0 then
-            update psa_smo_defn
-               set smd_smo_name = rcd_psa_smo_defn.smd_smo_name,
-                   smd_smo_status = rcd_psa_smo_defn.smd_smo_status,
-                   smd_upd_user = rcd_psa_smo_defn.smd_upd_user,
-                   smd_upd_date = rcd_psa_smo_defn.smd_upd_date
-             where smd_smo_code = rcd_psa_smo_defn.smd_smo_code;
-            delete from psa_smo_shift where sms_smo_code = rcd_psa_smo_defn.smd_smo_code;
+            update psa_cmo_defn
+               set cmd_cmo_name = rcd_psa_cmo_defn.cmd_cmo_name,
+                   cmd_cmo_status = rcd_psa_cmo_defn.cmd_cmo_status,
+                   cmd_upd_user = rcd_psa_cmo_defn.cmd_upd_user,
+                   cmd_upd_date = rcd_psa_cmo_defn.cmd_upd_date
+             where cmd_cmo_code = rcd_psa_cmo_defn.cmd_cmo_code;
+            delete from psa_cmo_resource where cmr_cmo_code = rcd_psa_cmo_defn.cmd_cmo_code;
          end if;
       elsif var_action = '*CRTDEF' then
          var_confirm := 'created';
          begin
-            insert into psa_smo_defn values rcd_psa_smo_defn;
+            insert into psa_cmo_defn values rcd_psa_cmo_defn;
          exception
             when dup_val_on_index then
-               psa_gen_function.add_mesg_data('Shift model code ('||rcd_psa_smo_defn.smd_smo_code||') already exists - unable to create');
+               psa_gen_function.add_mesg_data('Crew model code ('||rcd_psa_cmo_defn.cmd_cmo_code||') already exists - unable to create');
          end;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -549,15 +583,15 @@ create or replace package body psa_app.psa_smo_function as
       end if;
 
       /*-*/
-      /* Retrieve and insert the shift model shift data
+      /* Retrieve and insert the crew model crew data
       /*-*/
-      rcd_psa_smo_shift.sms_smo_code := rcd_psa_smo_defn.smd_smo_code;
-      obj_shf_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/SMOSHF');
-      for idx in 0..xmlDom.getLength(obj_shf_list)-1 loop
-         obj_shf_node := xmlDom.item(obj_shf_list,idx);
-         rcd_psa_smo_shift.sms_smo_seqn := idx + 1;
-         rcd_psa_smo_shift.sms_shf_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE'));
-         insert into psa_smo_shift values rcd_psa_smo_shift;
+      rcd_psa_cmo_resource.cmr_cmo_code := rcd_psa_cmo_defn.cmd_cmo_code;
+      obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/CMORES');
+      for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
+         obj_res_node := xmlDom.item(obj_res_list,idx);
+     --    rcd_psa_cmo_resource.cmr_cmo_seqn := idx + 1;
+         rcd_psa_cmo_resource.cmr_res_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@RESCDE'));
+         insert into psa_cmo_resource values rcd_psa_cmo_resource;
       end loop;
 
       /*-*/
@@ -573,7 +607,7 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       /* Send the confirm message
       /*-*/
-      psa_gen_function.set_cfrm_data('Shift model ('||rcd_psa_smo_defn.smd_smo_code||') successfully '||var_confirm);
+      psa_gen_function.set_cfrm_data('Crew model ('||rcd_psa_cmo_defn.cmd_cmo_code||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
@@ -593,7 +627,7 @@ create or replace package body psa_app.psa_smo_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_SMO_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_CMO_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -614,7 +648,7 @@ create or replace package body psa_app.psa_smo_function as
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
-      var_smo_code varchar2(32);
+      var_cmo_code varchar2(32);
 
       /*-*/
       /* Local cursors
@@ -646,7 +680,7 @@ create or replace package body psa_app.psa_smo_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      var_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMOCDE')));
+      var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE')));
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -657,11 +691,11 @@ create or replace package body psa_app.psa_smo_function as
       -- must not be used
 
       /*-*/
-      /* Process the shift model definition
+      /* Process the crew model definition
       /*-*/
       var_confirm := 'deleted';
-      delete from psa_smo_shift where sms_smo_code = var_smo_code;
-      delete from psa_smo_defn where smd_smo_code = var_smo_code;
+      delete from psa_cmo_resource where cmr_cmo_code = var_cmo_code;
+      delete from psa_cmo_defn where cmd_cmo_code = var_cmo_code;
 
       /*-*/
       /* Free the XML document
@@ -676,7 +710,7 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       /* Send the confirm message
       /*-*/
-      psa_gen_function.set_cfrm_data('Shift model ('||var_smo_code||') successfully '||var_confirm);
+      psa_gen_function.set_cfrm_data('Crew model ('||var_cmo_code||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
@@ -696,18 +730,18 @@ create or replace package body psa_app.psa_smo_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_SMO_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_CMO_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end delete_data;
 
-end psa_smo_function;
+end psa_cmo_function;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym psa_smo_function for psa_app.psa_smo_function;
-grant execute on psa_app.psa_smo_function to public;
+create or replace public synonym psa_cmo_function for psa_app.psa_cmo_function;
+grant execute on psa_app.psa_cmo_function to public;
