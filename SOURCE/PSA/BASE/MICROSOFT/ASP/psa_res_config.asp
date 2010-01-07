@@ -172,7 +172,7 @@ sub PaintFunction()%>
    }
    function doSelectDelete(strCode) {
       if (!processForm()) {return;}
-      if (confirm('Please confirm the deletion\r\npress OK continue (the selected shift will be deleted)\r\npress Cancel to cancel and return') == false) {
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected resource will be deleted)\r\npress Cancel to cancel and return') == false) {
          return;
       }
       doActivityStart(document.body);
