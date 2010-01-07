@@ -470,8 +470,7 @@ create or replace package body psa_app.psa_res_function as
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_res_defn.rde_prd_type||') status must be (1)active for and active resource');
          end if;
          if rcd_psa_res_defn.rde_res_status = '1' and rcd_prdtype.pty_prd_res_usage != '1' then
-               psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_res_defn.rde_prd_type||') must be flagged for resource usage');
-            end if;
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_res_defn.rde_prd_type||') must be flagged for resource usage');
          end if;
       end if;
       close csr_prdtype;
