@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_shf_config.asp                                 //
+'// Script  : psa_res_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the shift                   //
+'// Text    : This script implements the resource                //
 '//           configuration functionality                        //
 '//////////////////////////////////////////////////////////////////
 
@@ -30,8 +30,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "psa_shf_config.asp"
-   strHeading = "Shift Maintenance"
+   strTarget = "psa_res_config.asp"
+   strHeading = "Resource Maintenance"
 
    '//
    '// Get the base string
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_SHF_CONFIG")
+   strReturn = GetSecurityCheck("PSA_RES_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -128,8 +128,8 @@ sub PaintFunction()%>
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Shift Selection';
-      cobjScreens[2].hedtxt = 'Shift Maintenance';
+      cobjScreens[1].hedtxt = 'Resource Selection';
+      cobjScreens[2].hedtxt = 'Resource Maintenance';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -206,7 +206,7 @@ sub PaintFunction()%>
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_shf_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_res_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
       doActivityStop();
@@ -251,7 +251,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Shift&nbsp;';
+         objCell.innerHTML = '&nbsp;Resource&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -277,32 +277,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('SHFCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('RESCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('SHFCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('RESCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SHFCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('SHFCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SHFCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('RESCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('RESCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('RESCDE')+'\');">Copy</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SHFCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RESCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SHFNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RESNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SHFSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('RESSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -335,8 +335,8 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SHFCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_shf_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" RESCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_res_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
       doActivityStop();
@@ -376,20 +376,20 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" SHFCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_shf_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" RESCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_res_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" SHFCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_shf_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" RESCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_res_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" SHFCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_shf_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" RESCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_res_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -411,71 +411,85 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Shift';
+            cobjScreens[2].hedtxt = 'Update Resource';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[2].hedtxt = 'Create Shift';
+            cobjScreens[2].hedtxt = 'Create Resource';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_ShfCode').value = '';
-         document.getElementById('DEF_ShfName').value = '';
-         var strShfStat = '';
-         var objShfStat = document.getElementById('DEF_ShfStat');
+         document.getElementById('DEF_ResCode').value = '';
+         document.getElementById('DEF_ResName').value = '';
+         var strResStat = '';
+         var strPrdType = '';
+         var objResStat = document.getElementById('DEF_ResStat');
+         var objPrdType = document.getElementById('DEF_PrdType');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'SHIFT') {
+            if (objElements[i].nodeName == 'RESDFN') {
                if (cstrDefineMode == '*UPD') {
-                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('SHFCDE')+'</p>';
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('RESCDE')+'</p>';
                } else {
-                  document.getElementById('DEF_ShfCode').value = objElements[i].getAttribute('SHFCDE');
+                  document.getElementById('DEF_ResCode').value = objElements[i].getAttribute('RESCDE');
                }
-               document.getElementById('DEF_ShfName').value = objElements[i].getAttribute('SHFNAM');
-               document.getElementById('DEF_ShfStrt').value = objElements[i].getAttribute('SHFSTR');
-               document.getElementById('DEF_ShfDura').value = objElements[i].getAttribute('SHFDUR');
-               strShfStat = objElements[i].getAttribute('SHFSTS');
+               document.getElementById('DEF_ResName').value = objElements[i].getAttribute('RESNAM');
+               strResStat = objElements[i].getAttribute('RESSTS');
+               strPrdType = objElements[i].getAttribute('PTYCDE');
+            } else if (objElements[i].nodeName == 'PTYDFN') {
+               objPrdType.options[objPrdType.options.length] = new Option(objElements[i].getAttribute('PTYNAM'),objElements[i].getAttribute('PTYCDE'));
             }
          }
-         objShfStat.selectedIndex = -1;
-         for (var i=0;i<objShfStat.length;i++) {
-            if (objShfStat.options[i].value == strShfStat) {
-               objShfStat.options[i].selected = true;
+         objResStat.selectedIndex = -1;
+         for (var i=0;i<objResStat.length;i++) {
+            if (objResStat.options[i].value == strResStat) {
+               objResStat.options[i].selected = true;
+               break;
+            }
+         }
+         objPrdType.selectedIndex = -1;
+         for (var i=0;i<objPrdType.length;i++) {
+            if (objPrdType.options[i].value == strPrdType) {
+               objPrdType.options[i].selected = true;
                break;
             }
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_ShfName').focus();
+            document.getElementById('DEF_ResName').focus();
          } else {
-            document.getElementById('DEF_ShfCode').focus();
+            document.getElementById('DEF_ResCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objShfStat = document.getElementById('DEF_ShfStat');
+      var objResStat = document.getElementById('DEF_ResStat');
+      var objPrdType = document.getElementById('DEF_PrdType');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' SHFCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+' RESCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' SHFCDE="'+fixXML(document.getElementById('DEF_ShfCode').value)+'"';
+         strXML = strXML+' RESCDE="'+fixXML(document.getElementById('DEF_ResCode').value)+'"';
       }
-      strXML = strXML+' SHFNAM="'+fixXML(document.getElementById('DEF_ShfName').value)+'"';
-      strXML = strXML+' SHFSTR="'+fixXML(document.getElementById('DEF_ShfStrt').value)+'"';
-      strXML = strXML+' SHFDUR="'+fixXML(document.getElementById('DEF_ShfDura').value)+'"';
-      if (objShfStat.selectedIndex == -1) {
-         strXML = strXML+' SHFSTS=""';
+      strXML = strXML+' RESNAM="'+fixXML(document.getElementById('DEF_ResName').value)+'"';
+      if (objResStat.selectedIndex == -1) {
+         strXML = strXML+' RESSTS=""';
       } else {
-         strXML = strXML+' SHFSTS="'+fixXML(objShfStat.options[objShfStat.selectedIndex].value)+'"';
+         strXML = strXML+' RESSTS="'+fixXML(objResStat.options[objResStat.selectedIndex].value)+'"';
+      }
+      if (objPrdType.selectedIndex == -1) {
+         strXML = strXML+' PTYCDE=""';
+      } else {
+         strXML = strXML+' PTYCDE="'+fixXML(objPrdType.options[objPrdType.selectedIndex].value)+'"';
       }
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_shf_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_res_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -523,7 +537,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_shf_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_res_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -533,7 +547,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Shift Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Resource Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -577,45 +591,40 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Shift Define</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Resource Define</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Resource Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_ShfCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_ResCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr id="updDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Shift Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Resource Code:&nbsp;</nobr></td>
          <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Resource Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ShfName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_ResName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Start Time (HHMI):&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Resource Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ShfStrt" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Duration (minutes):&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ShfDura" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Status:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_ShfStat">
+            <select class="clsInputBN" id="DEF_ResStat">
                <option value="0">Inactive
                <option value="1">Active
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_PrdType">
             </select>
          </nobr></td>
       </tr>
