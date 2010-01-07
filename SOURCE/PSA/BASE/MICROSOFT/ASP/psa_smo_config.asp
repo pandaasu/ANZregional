@@ -903,12 +903,12 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBN" align=right valign=top colspan=1 nowrap><nobr>
-                     <div id="DEF_ShfScrl" class="clsScroll01" style="overflow:scroll;background-color:#a4a4a4;border:#40414c 2px solid;width:100%">
-                     <table id="DEF_ShfValu" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0"></table>
+                     <div id="DEF_ShfScrl" class="clsScroll01" style="overflow:scroll;background-color:#b4b4b4;border:#40414c 2px solid;width:100%">
+                     <table id="DEF_ShfValu" class="clsPanel" style="background-color:#e7e7e7;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0"></table>
                      </div>
                   </nobr></td>
                   <td class="clsLabelBN" align=left valign=top colspan=1 nowrap><nobr>
-                     <table id="DEF_DspTable" class="clsPanel" style="background-color:#a4a4a4;border-collapse:collapse;border:#40414c 2px solid;" align=left cols=9 cellpadding="0" cellspacing="0">
+                     <table id="DEF_DspTable" class="clsPanel" style="background-color:#b4b4b4;border-collapse:collapse;border:#40414c 2px solid;" align=left cols=9 cellpadding="0" cellspacing="0">
                         <tr>
                            <td class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                            <td id="DEF_D01" class="clsLabelHB" style="font-size:8pt;border:#c0c0c0 1px solid;padding:1px;" align=center colspan=1 nowrap><nobr>Sunday</nobr></td>
