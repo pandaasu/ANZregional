@@ -6,7 +6,7 @@
 '// Script  : psa_smo_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the shift                   //
+'// Text    : This script implements the shift model             //
 '//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 

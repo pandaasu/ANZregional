@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_smo_config_update.asp                          //
+'// Script  : psa_cmo_config_retrieve.asp                        //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the shift model             //
-'//           configuration update functionality                 //
+'// Text    : This script implements the crew model              //
+'//           configuration retrieve functionality               //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_SMO_CONFIG")
+   strReturn = GetSecurityCheck("PSA_CMO_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,18 +78,19 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the shift model update
-   '//
-   call objProcedure.Execute("psa_app.psa_smo_function.update_data('" & GetUser() & "')")
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-
-   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the crew model definition
+   '//
+   strStatement = "select xml_text from table(psa_app.psa_cmo_function.retrieve_data)"
+   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
 
    '//
    '// Retrieve any messages
@@ -111,6 +112,11 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
+      if objSelection.ListCount("MESSAGE") = 0 then
+         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
+            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+         next
+      end if
    end if
 
 end sub%>

@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_smo_config_update.asp                          //
+'// Script  : psa_cmo_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the shift model             //
-'//           configuration update functionality                 //
+'//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_SMO_CONFIG")
+   strReturn = GetSecurityCheck("PSA_CMO_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the shift model update
+   '// Perform the crew model delete
    '//
-   call objProcedure.Execute("psa_app.psa_smo_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("psa_app.psa_cmo_function.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if
