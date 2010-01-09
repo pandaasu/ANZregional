@@ -76,10 +76,10 @@ create or replace package body psa_app.psa_pty_function as
                    from psa_prd_type t01
                   where (var_str_code is null or t01.pty_prd_type >= var_str_code)
                     and (var_mat_flag is null or pty_prd_mat_usage = '1')
-                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
-                    and (var_run_flag is null or pty_prd_mat_usage = '1')
-                    and (var_res_flag is null or pty_prd_mat_usage = '1')
-                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_lin_usage = '1')
+                    and (var_run_flag is null or pty_prd_run_usage = '1')
+                    and (var_res_flag is null or pty_prd_res_usage = '1')
+                    and (var_cre_flag is null or pty_prd_cre_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -92,10 +92,10 @@ create or replace package body psa_app.psa_pty_function as
                   where ((var_action = '*NXTDEF' and (var_end_code is null or t01.pty_prd_type > var_end_code)) or
                          (var_action = '*PRVDEF'))
                     and (var_mat_flag is null or pty_prd_mat_usage = '1')
-                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
-                    and (var_run_flag is null or pty_prd_mat_usage = '1')
-                    and (var_res_flag is null or pty_prd_mat_usage = '1')
-                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_lin_usage = '1')
+                    and (var_run_flag is null or pty_prd_run_usage = '1')
+                    and (var_res_flag is null or pty_prd_res_usage = '1')
+                    and (var_cre_flag is null or pty_prd_cre_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -108,10 +108,10 @@ create or replace package body psa_app.psa_pty_function as
                   where ((var_action = '*PRVDEF' and (var_str_code is null or t01.pty_prd_type < var_str_code)) or
                          (var_action = '*NXTDEF'))
                     and (var_mat_flag is null or pty_prd_mat_usage = '1')
-                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
-                    and (var_run_flag is null or pty_prd_mat_usage = '1')
-                    and (var_res_flag is null or pty_prd_mat_usage = '1')
-                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_lin_usage = '1')
+                    and (var_run_flag is null or pty_prd_run_usage = '1')
+                    and (var_res_flag is null or pty_prd_res_usage = '1')
+                    and (var_cre_flag is null or pty_prd_cre_usage = '1')
                   order by t01.pty_prd_type desc) t01
           where rownum <= var_pag_size;
 
