@@ -125,13 +125,15 @@ sub PaintFunction()%>
    ////////////////////
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
-      cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
-      cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[1] = new clsScreen('dspType','hedType');
+      cobjScreens[2] = new clsScreen('dspSelect','hedSelect');
+      cobjScreens[3] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Resource Selection';
-      cobjScreens[2].hedtxt = 'Resource Maintenance';
+      cobjScreens[1].hedtxt = 'Production Type Selection';
+      cobjScreens[2].hedtxt = 'Resource Selection';
+      cobjScreens[3].hedtxt = 'Resource Maintenance';
       displayScreen('dspLoad');
-      doSelectRefresh();
+      doTypeRefresh();
    }
 
    ///////////////////////
@@ -157,6 +159,161 @@ sub PaintFunction()%>
             objScreen.style.display = 'none';
             objHeading.innerText = cobjScreens[i].hedtxt;
          }
+      }
+   }
+
+   ////////////////////
+   // Type Functions //
+   ////////////////////
+   var cstrTypeStrCode;
+   var cstrTypeEndCode;
+   var cstrTypeCode = '';
+   var cstrTypeName = '';
+   function doTypeSelect(strCode,strName) {
+      if (!processForm()) {return;}
+      cstrTypeCode = strCode;
+      cstrTypeName = '('+strCode+') '+strName;
+      document.getElementById('SEL_SelCode').value = '';
+      doSelectRefresh();
+   }
+   function doTypeRefresh() {
+      if (!processForm()) {return;}
+      cstrTypeStrCode = document.getElementById('TYP_SelCode').value;
+      doActivityStart(document.body);
+      window.setTimeout('requestTypeList(\'*SELDEF\');',10);
+   }
+   function doTypePrevious() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestTypeList(\'*PRVDEF\');',10);
+   }
+   function doTypeNext() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestTypeList(\'*NXTDEF\');',10);
+   }
+   function requestTypeList(strAction) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" RESFLG="1" STRCDE="'+cstrTypeStrCode+'" ENDCDE="'+cstrTypeEndCode+'"/>';
+      doPostRequest('<%=strBase%>psa_res_config_type.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+   }
+   function checkTypeList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspSelect');
+         var objSelCode = document.getElementById('TYP_SelCode');
+         var objTabHead = document.getElementById('tabHeadType');
+         var objTabBody = document.getElementById('tabBodyType');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Type&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Name&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         cstrTypeStrCode = '';
+         cstrTypeEndCode = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTROW') {
+               if (cstrTypeStrCode == '') {
+                  cstrTypeStrCode = objElements[i].getAttribute('PRDTYP');
+               }
+               cstrTypeEndCode = objElements[i].getAttribute('PRDTYP');
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeSelect(\''+objElements[i].getAttribute('PRDTYP')+'\',\''+objElements[i].getAttribute('PRDNAM')+'\');">Select</a>&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDTYP')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDNAM')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 4;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadType','BodyType','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('HeadType','BodyType','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
+         }
+         objSelCode.value = cstrTypeStrCode;
+         objSelCode.focus();
       }
    }
 
@@ -205,7 +362,7 @@ sub PaintFunction()%>
       window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
    }
    function requestSelectList(strAction) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
       doPostRequest('<%=strBase%>psa_res_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
@@ -228,6 +385,7 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspSelect');
+         document.getElementById('subSelect').innerHTML = '<p>'+cstrTypeName+'</p>';
          var objSelCode = document.getElementById('SEL_SelCode');
          var objTabHead = document.getElementById('tabHeadList');
          var objTabBody = document.getElementById('tabBodyList');
@@ -411,21 +569,20 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Resource';
+            cobjScreens[3].hedtxt = 'Update Resource';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[2].hedtxt = 'Create Resource';
+            cobjScreens[3].hedtxt = 'Create Resource';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
+         document.getElementById('subDefine').innerHTML = '<p>'+cstrTypeName+'</p>';
          document.getElementById('DEF_ResCode').value = '';
          document.getElementById('DEF_ResName').value = '';
          var strResStat = '';
-         var strPrdType = '';
          var objResStat = document.getElementById('DEF_ResStat');
-         var objPrdType = document.getElementById('DEF_PrdType');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'RESDFN') {
                if (cstrDefineMode == '*UPD') {
@@ -435,22 +592,12 @@ sub PaintFunction()%>
                }
                document.getElementById('DEF_ResName').value = objElements[i].getAttribute('RESNAM');
                strResStat = objElements[i].getAttribute('RESSTS');
-               strPrdType = objElements[i].getAttribute('PTYCDE');
-            } else if (objElements[i].nodeName == 'PTYDFN') {
-               objPrdType.options[objPrdType.options.length] = new Option(objElements[i].getAttribute('PTYNAM'),objElements[i].getAttribute('PTYCDE'));
             }
          }
          objResStat.selectedIndex = -1;
          for (var i=0;i<objResStat.length;i++) {
             if (objResStat.options[i].value == strResStat) {
                objResStat.options[i].selected = true;
-               break;
-            }
-         }
-         objPrdType.selectedIndex = -1;
-         for (var i=0;i<objPrdType.length;i++) {
-            if (objPrdType.options[i].value == strPrdType) {
-               objPrdType.options[i].selected = true;
                break;
             }
          }
@@ -464,7 +611,6 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objResStat = document.getElementById('DEF_ResStat');
-      var objPrdType = document.getElementById('DEF_PrdType');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
@@ -479,11 +625,7 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' RESSTS="'+fixXML(objResStat.options[objResStat.selectedIndex].value)+'"';
       }
-      if (objPrdType.selectedIndex == -1) {
-         strXML = strXML+' PTYCDE=""';
-      } else {
-         strXML = strXML+' PTYCDE="'+fixXML(objPrdType.options[objPrdType.selectedIndex].value)+'"';
-      }
+      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -544,10 +686,56 @@ sub PaintFunction()%>
          <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
       </tr>
    </table>
+   <table id="dspType" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedType" class="clsFunction" align=center colspan=2 nowrap><nobr>Production Type Selection</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="TYP_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadType">
+                     <table class="clsTableHead" id="tabHeadType" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyType">
+                     <table class="clsTableBody" id="tabBodyType" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Resource Selection</nobr></td>
+      </tr>
+      <tr>
+         <td id="subSelect" class="clsLabelBB" align="center" valign="center" colspan="2" nowrap><nobr></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -594,6 +782,9 @@ sub PaintFunction()%>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Resource Define</nobr></td>
       </tr>
       <tr>
+         <td id="subDefine" class="clsLabelBB" align="center" valign="center" colspan="2" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
@@ -618,13 +809,6 @@ sub PaintFunction()%>
             <select class="clsInputBN" id="DEF_ResStat">
                <option value="0">Inactive
                <option value="1">Active
-            </select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Type:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_PrdType">
             </select>
          </nobr></td>
       </tr>
