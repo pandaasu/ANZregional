@@ -56,6 +56,7 @@ create or replace package body psa_app.psa_res_function as
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
+      var_prd_type varchar2(32);
       var_str_code varchar2(32);
       var_end_code varchar2(32);
       var_output varchar2(2000 char);
@@ -71,6 +72,7 @@ create or replace package body psa_app.psa_res_function as
                         decode(t01.rde_res_status,'0','Inactive','1','Active','*UNKNOWN') as rde_res_status
                    from psa_res_defn t01
                   where (var_str_code is null or t01.rde_res_code >= var_str_code)
+                    and t01.rde_prd_type = var_prd_type
                   order by t01.rde_res_code asc) t01
           where rownum <= var_pag_size;
 
@@ -80,8 +82,9 @@ create or replace package body psa_app.psa_res_function as
                         t01.rde_res_name,
                         decode(t01.rde_res_status,'0','Inactive','1','Active','*UNKNOWN') as rde_res_status
                    from psa_res_defn t01
-                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.rde_res_code > var_end_code)) or
-                        (var_action = '*PRVDEF')
+                  where ((var_action = '*NXTDEF' and (var_end_code is null or t01.rde_res_code > var_end_code)) or
+                         (var_action = '*PRVDEF'))
+                    and t01.rde_prd_type = var_prd_type
                   order by t01.rde_res_code asc) t01
           where rownum <= var_pag_size;
 
@@ -91,8 +94,9 @@ create or replace package body psa_app.psa_res_function as
                         t01.rde_res_name,
                         decode(t01.rde_res_status,'0','Inactive','1','Active','*UNKNOWN') as rde_res_status
                    from psa_res_defn t01
-                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.rde_res_code < var_str_code)) or
-                        (var_action = '*NXTDEF')
+                  where ((var_action = '*PRVDEF' and (var_str_code is null or t01.rde_res_code < var_str_code)) or
+                         (var_action = '*NXTDEF'))
+                    and t01.rde_prd_type = var_prd_type
                   order by t01.rde_res_code desc) t01
           where rownum <= var_pag_size;
 
@@ -125,6 +129,7 @@ create or replace package body psa_app.psa_res_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
       var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
@@ -243,13 +248,6 @@ create or replace package body psa_app.psa_res_function as
           where t01.rde_res_code = var_res_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_prdtype is
-         select t01.*
-           from psa_prd_type t01
-          where t01.pty_prd_res_usage = '1'
-          order by t01.pty_prd_type asc;
-      rcd_prdtype csr_prdtype%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -312,35 +310,19 @@ create or replace package body psa_app.psa_res_function as
       if var_action = '*UPDDEF' then
          var_output := '<RESDFN RESCDE="'||psa_to_xml(rcd_retrieve.rde_res_code||' - (Last updated by '||rcd_retrieve.rde_upd_user||' on '||to_char(rcd_retrieve.rde_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' RESNAM="'||psa_to_xml(rcd_retrieve.rde_res_name)||'"';
-         var_output := var_output||' RESSTS="'||psa_to_xml(rcd_retrieve.rde_res_status)||'"';
-         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.rde_prd_type)||'"/>';
+         var_output := var_output||' RESSTS="'||psa_to_xml(rcd_retrieve.rde_res_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<RESDFN RESCDE=""';
          var_output := var_output||' RESNAM="'||psa_to_xml(rcd_retrieve.rde_res_name)||'"';
-         var_output := var_output||' RESSTS="'||psa_to_xml(rcd_retrieve.rde_res_status)||'"';
-         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.rde_prd_type)||'"/>';
+         var_output := var_output||' RESSTS="'||psa_to_xml(rcd_retrieve.rde_res_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<RESDFN RESCDE=""';
          var_output := var_output||' RESNAM=""';
-         var_output := var_output||' RESSTS="1"';
-         var_output := var_output||' PTYCDE=""/>';
+         var_output := var_output||' RESSTS="1"/>';
          pipe row(psa_xml_object(var_output));
       end if;
-
-      /*-*/
-      /* Pipe the production type data XML
-      /*-*/
-      open csr_prdtype;
-      loop
-         fetch csr_prdtype into rcd_prdtype;
-         if csr_prdtype%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_prdtype.pty_prd_type)||'" PTYNAM="'||psa_to_xml('('||rcd_prdtype.pty_prd_type||') '||rcd_prdtype.pty_prd_name)||'"/>'));
-      end loop;
-      close csr_prdtype;
 
       /*-*/
       /* Pipe the XML end
@@ -466,7 +448,7 @@ create or replace package body psa_app.psa_res_function as
       if csr_prdtype%notfound then
          psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_res_defn.rde_prd_type||') does not exist');
       else
-         if rcd_prdtype.pty_prd_status != '1' then
+         if rcd_psa_res_defn.rde_res_status = '1' and rcd_prdtype.pty_prd_status != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_res_defn.rde_prd_type||') status must be (1)active for and active resource');
          end if;
          if rcd_psa_res_defn.rde_res_status = '1' and rcd_prdtype.pty_prd_res_usage != '1' then
@@ -500,7 +482,6 @@ create or replace package body psa_app.psa_res_function as
             update psa_res_defn
                set rde_res_name = rcd_psa_res_defn.rde_res_name,
                    rde_res_status = rcd_psa_res_defn.rde_res_status,
-                   rde_prd_type = rcd_psa_res_defn.rde_prd_type,
                    rde_upd_user = rcd_psa_res_defn.rde_upd_user,
                    rde_upd_date = rcd_psa_res_defn.rde_upd_date
              where rde_res_code = rcd_psa_res_defn.rde_res_code;
