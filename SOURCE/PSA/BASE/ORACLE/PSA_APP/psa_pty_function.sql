@@ -57,6 +57,11 @@ create or replace package body psa_app.psa_pty_function as
       var_action varchar2(32);
       var_str_code varchar2(32);
       var_end_code varchar2(32);
+      var_mat_flag varchar2(1);
+      var_lin_flag varchar2(1);
+      var_run_flag varchar2(1);
+      var_res_flag varchar2(1);
+      var_cre_flag varchar2(1);
       var_output varchar2(2000 char);
       var_pag_size number;
 
@@ -70,6 +75,11 @@ create or replace package body psa_app.psa_pty_function as
                         decode(t01.pty_prd_status,'0','Inactive','1','Active','*UNKNOWN') as pty_prd_status
                    from psa_prd_type t01
                   where (var_str_code is null or t01.pty_prd_type >= var_str_code)
+                    and (var_mat_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
+                    and (var_run_flag is null or pty_prd_mat_usage = '1')
+                    and (var_res_flag is null or pty_prd_mat_usage = '1')
+                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -79,8 +89,13 @@ create or replace package body psa_app.psa_pty_function as
                         t01.pty_prd_name,
                         decode(t01.pty_prd_status,'0','Inactive','1','Active','*UNKNOWN') as pty_prd_status
                    from psa_prd_type t01
-                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.pty_prd_type > var_end_code)) or
-                        (var_action = '*PRVDEF')
+                  where ((var_action = '*NXTDEF' and (var_end_code is null or t01.pty_prd_type > var_end_code)) or
+                         (var_action = '*PRVDEF'))
+                    and (var_mat_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
+                    and (var_run_flag is null or pty_prd_mat_usage = '1')
+                    and (var_res_flag is null or pty_prd_mat_usage = '1')
+                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -90,8 +105,13 @@ create or replace package body psa_app.psa_pty_function as
                         t01.pty_prd_name,
                         decode(t01.pty_prd_status,'0','Inactive','1','Active','*UNKNOWN') as pty_prd_status
                    from psa_prd_type t01
-                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.pty_prd_type < var_str_code)) or
-                        (var_action = '*NXTDEF')
+                  where ((var_action = '*PRVDEF' and (var_str_code is null or t01.pty_prd_type < var_str_code)) or
+                         (var_action = '*NXTDEF'))
+                    and (var_mat_flag is null or pty_prd_mat_usage = '1')
+                    and (var_lin_flag is null or pty_prd_mat_usage = '1')
+                    and (var_run_flag is null or pty_prd_mat_usage = '1')
+                    and (var_res_flag is null or pty_prd_mat_usage = '1')
+                    and (var_cre_flag is null or pty_prd_mat_usage = '1')
                   order by t01.pty_prd_type desc) t01
           where rownum <= var_pag_size;
 
@@ -126,6 +146,11 @@ create or replace package body psa_app.psa_pty_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
       var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
+      var_mat_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATFLG')));
+      var_lin_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINFLG')));
+      var_run_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNFLG')));
+      var_res_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESFLG')));
+      var_cre_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CREFLG')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
