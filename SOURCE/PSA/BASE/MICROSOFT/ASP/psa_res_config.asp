@@ -194,7 +194,7 @@ sub PaintFunction()%>
    }
    function requestTypeList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" RESFLG="1" STRCDE="'+cstrTypeStrCode+'" ENDCDE="'+cstrTypeEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_res_config_type.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_res_config_type.asp',function(strResponse) {checkTypeList(strResponse);},false,streamXML(strXML));
    }
    function checkTypeList(strResponse) {
       doActivityStop();
@@ -215,7 +215,7 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspSelect');
+         displayScreen('dspType');
          var objSelCode = document.getElementById('TYP_SelCode');
          var objTabHead = document.getElementById('tabHeadType');
          var objTabBody = document.getElementById('tabBodyType');
@@ -360,6 +360,9 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       doActivityStart(document.body);
       window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
+   }
+   function doSelectBack() {
+      displayScreen('dspType');
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
@@ -743,8 +746,9 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
