@@ -130,8 +130,8 @@ create or replace package body psa_app.psa_rra_function as
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
-      var_str_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE'));
-      var_end_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE'));
+      var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
+      var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -271,7 +271,7 @@ create or replace package body psa_app.psa_rra_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      var_rra_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRACDE'));
+      var_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRACDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -308,23 +308,23 @@ create or replace package body psa_app.psa_rra_function as
       /* Pipe the run rate XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<RRACDEE RRACDE="'||psa_to_xml(rcd_retrieve.rrd_rra_code||' - (Last updated by '||rcd_retrieve.rrd_upd_user||' on '||to_char(rcd_retrieve.rrd_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<RRADFN RRACDE="'||psa_to_xml(rcd_retrieve.rrd_rra_code||' - (Last updated by '||rcd_retrieve.rrd_upd_user||' on '||to_char(rcd_retrieve.rrd_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' RRANAM="'||psa_to_xml(rcd_retrieve.rrd_rra_name)||'"';
          var_output := var_output||' RRAUNT="'||to_char(rcd_retrieve.rrd_rra_units)||'"';
-         var_output := var_output||' RRAEFF="'||to_char(rcd_retrieve.rrd_rra_efficiency,'fm990,00')||'"';
-         var_output := var_output||' RRAWAS="'||to_char(rcd_retrieve.rrd_rra_wastage,'fm990,00')||'"';
+         var_output := var_output||' RRAEFF="'||to_char(rcd_retrieve.rrd_rra_efficiency,'fm990.00')||'"';
+         var_output := var_output||' RRAWAS="'||to_char(rcd_retrieve.rrd_rra_wastage,'fm990.00')||'"';
          var_output := var_output||' RRASTS="'||psa_to_xml(rcd_retrieve.rrd_rra_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<RRACDEE RRACDE=""';
+         var_output := '<RRADFN RRACDE=""';
          var_output := var_output||' RRANAM="'||psa_to_xml(rcd_retrieve.rrd_rra_name)||'"';
          var_output := var_output||' RRAUNT="'||to_char(rcd_retrieve.rrd_rra_units)||'"';
-         var_output := var_output||' RRAEFF="'||to_char(rcd_retrieve.rrd_rra_efficiency,'fm990,00')||'"';
-         var_output := var_output||' RRAWAS="'||to_char(rcd_retrieve.rrd_rra_wastage,'fm990,00')||'"';
+         var_output := var_output||' RRAEFF="'||to_char(rcd_retrieve.rrd_rra_efficiency,'fm990.00')||'"';
+         var_output := var_output||' RRAWAS="'||to_char(rcd_retrieve.rrd_rra_wastage,'fm990.00')||'"';
          var_output := var_output||' RRASTS="'||psa_to_xml(rcd_retrieve.rrd_rra_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<RRACDEE RRACDE=""';
+         var_output := '<RRADFN RRACDE=""';
          var_output := var_output||' RRANAM=""';
          var_output := var_output||' RRAUNT="0"';
          var_output := var_output||' RRAEFF="100.00"';
@@ -420,13 +420,13 @@ create or replace package body psa_app.psa_rra_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_rra_defn.rrd_rra_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRACDE'));
+      rcd_psa_rra_defn.rrd_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRACDE')));
       rcd_psa_rra_defn.rrd_rra_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRANAM'));
       rcd_psa_rra_defn.rrd_rra_units := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@RRAUNT'));
       rcd_psa_rra_defn.rrd_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@RRAEFF'));
       rcd_psa_rra_defn.rrd_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@RRAWAS'));
       rcd_psa_rra_defn.rrd_rra_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRASTS'));
-      rcd_psa_rra_defn.rrd_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      rcd_psa_rra_defn.rrd_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       rcd_psa_rra_defn.rrd_upd_user := upper(par_user);
       rcd_psa_rra_defn.rrd_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then

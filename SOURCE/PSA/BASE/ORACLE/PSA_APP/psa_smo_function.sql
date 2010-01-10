@@ -488,7 +488,7 @@ create or replace package body psa_app.psa_smo_function as
       obj_shf_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/SMOSHF');
       for idx in 0..xmlDom.getLength(obj_shf_list)-1 loop
          obj_shf_node := xmlDom.item(obj_shf_list,idx);
-         var_shf_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE'));
+         var_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
          open csr_shift;
          fetch csr_shift into rcd_shift;
          if csr_shift%notfound then
@@ -556,7 +556,7 @@ create or replace package body psa_app.psa_smo_function as
       for idx in 0..xmlDom.getLength(obj_shf_list)-1 loop
          obj_shf_node := xmlDom.item(obj_shf_list,idx);
          rcd_psa_smo_shift.sms_smo_seqn := idx + 1;
-         rcd_psa_smo_shift.sms_shf_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE'));
+         rcd_psa_smo_shift.sms_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
          insert into psa_smo_shift values rcd_psa_smo_shift;
       end loop;
 

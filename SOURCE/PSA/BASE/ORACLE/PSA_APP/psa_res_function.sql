@@ -414,7 +414,7 @@ create or replace package body psa_app.psa_res_function as
       rcd_psa_res_defn.rde_res_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESCDE')));
       rcd_psa_res_defn.rde_res_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESNAM'));
       rcd_psa_res_defn.rde_res_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESSTS'));
-      rcd_psa_res_defn.rde_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      rcd_psa_res_defn.rde_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       rcd_psa_res_defn.rde_upd_user := upper(par_user);
       rcd_psa_res_defn.rde_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
