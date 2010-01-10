@@ -146,11 +146,11 @@ create or replace package body psa_app.psa_pty_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
       var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
-      var_mat_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATFLG')));
-      var_lin_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINFLG')));
-      var_run_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNFLG')));
-      var_res_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESFLG')));
-      var_cre_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CREFLG')));
+      var_mat_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATFLG'));
+      var_lin_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINFLG'));
+      var_run_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNFLG'));
+      var_res_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESFLG'));
+      var_cre_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CREFLG'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
