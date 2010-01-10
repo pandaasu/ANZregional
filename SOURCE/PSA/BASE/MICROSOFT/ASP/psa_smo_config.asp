@@ -496,13 +496,9 @@ sub PaintFunction()%>
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objShfValu = document.getElementById('DEF_ShfValu');
-      var intStrTim = 0;
-      var intDurMin = 0;
-      var intBarCnt = 0;
-      var intBarIdx = 0;
-      var objRow;
       var objSmoStat = document.getElementById('DEF_SmoStat');
+      var objShfValu = document.getElementById('DEF_ShfValu');
+      var objRow;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
