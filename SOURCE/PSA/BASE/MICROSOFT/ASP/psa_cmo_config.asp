@@ -362,6 +362,9 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
    }
+   function doSelectBack() {
+      displayScreen('dspType');
+   }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
       doPostRequest('<%=strBase%>psa_cmo_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
@@ -535,19 +538,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" CMOCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" PTYCDE="'+cstrTypeCode+'" CMOCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_cmo_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" CMOCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" PTYCDE="'+cstrTypeCode+'" CMOCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_cmo_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" CMOCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" PTYCDE="'+cstrTypeCode+'" CMOCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_cmo_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -607,7 +610,7 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'right';
                objCell.vAlign = 'center';
-               objCell.innerHTML = '<p>'+objElements[i].getAttribute('RESNAM')+'</p>';
+               objCell.innerHTML = '<p>&nbsp;'+objElements[i].getAttribute('RESNAM')+':&nbsp;</p>';
                objCell.className = 'clsLabelBB';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -858,7 +861,10 @@ sub PaintFunction()%>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align="center" valign="center" colspan="2" nowrap><nobr>Crew Model Resource Requirements</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelHB" align="center" valign="center" colspan="2" nowrap><nobr>Crew Model Resource Requirements</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBN" align=center valign=top colspan=2 nowrap><nobr>
