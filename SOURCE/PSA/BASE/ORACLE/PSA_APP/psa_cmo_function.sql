@@ -236,6 +236,7 @@ create or replace package body psa_app.psa_cmo_function as
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
       var_found boolean;
+      var_prd_type varchar2(32);
       var_cmo_code varchar2(32);
       var_output varchar2(2000 char);
 
@@ -255,6 +256,8 @@ create or replace package body psa_app.psa_cmo_function as
                 psa_cmo_resource t02
           where t01.rde_res_code = t02.cmr_res_code(+)
             and rcd_retrieve.cmd_cmo_code = t02.cmr_cmo_code(+)
+            and t01.rde_prd_type = t02.cmr_cmo_code(+)
+            and t01.rde_prd_type = var_prd_type
             and t01.rde_res_status = '1'
           order by t01.rde_res_name asc;
       rcd_resource csr_resource%rowtype;
@@ -282,6 +285,7 @@ create or replace package body psa_app.psa_cmo_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
