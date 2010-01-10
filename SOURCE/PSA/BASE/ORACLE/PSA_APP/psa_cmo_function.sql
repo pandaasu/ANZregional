@@ -256,7 +256,6 @@ create or replace package body psa_app.psa_cmo_function as
                 psa_cmo_resource t02
           where t01.rde_res_code = t02.cmr_res_code(+)
             and rcd_retrieve.cmd_cmo_code = t02.cmr_cmo_code(+)
-            and t01.rde_prd_type = t02.cmr_cmo_code(+)
             and t01.rde_prd_type = var_prd_type
             and t01.rde_res_status = '1'
           order by t01.rde_res_name asc;
