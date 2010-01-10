@@ -56,6 +56,7 @@ create or replace package body psa_app.psa_cmo_function as
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
+      var_prd_type varchar2(32);
       var_str_code varchar2(32);
       var_end_code varchar2(32);
       var_output varchar2(2000 char);
@@ -71,6 +72,7 @@ create or replace package body psa_app.psa_cmo_function as
                         decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
                    from psa_cmo_defn t01
                   where (var_str_code is null or t01.cmd_cmo_code >= var_str_code)
+                    and t01.cmd_prd_type = var_prd_type
                   order by t01.cmd_cmo_code asc) t01
           where rownum <= var_pag_size;
 
@@ -80,8 +82,9 @@ create or replace package body psa_app.psa_cmo_function as
                         t01.cmd_cmo_name,
                         decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
                    from psa_cmo_defn t01
-                  where (var_action = '*NXTDEF' and (var_end_code is null or t01.cmd_cmo_code > var_end_code)) or
-                        (var_action = '*PRVDEF')
+                  where ((var_action = '*NXTDEF' and (var_end_code is null or t01.cmd_cmo_code > var_end_code)) or
+                         (var_action = '*PRVDEF'))
+                    and t01.cmd_prd_type = var_prd_type
                   order by t01.cmd_cmo_code asc) t01
           where rownum <= var_pag_size;
 
@@ -91,8 +94,9 @@ create or replace package body psa_app.psa_cmo_function as
                         t01.cmd_cmo_name,
                         decode(t01.cmd_cmo_status,'0','Inactive','1','Active','*UNKNOWN') as cmd_cmo_status
                    from psa_cmo_defn t01
-                  where (var_action = '*PRVDEF' and (var_str_code is null or t01.cmd_cmo_code < var_str_code)) or
-                        (var_action = '*NXTDEF')
+                  where ((var_action = '*PRVDEF' and (var_str_code is null or t01.cmd_cmo_code < var_str_code)) or
+                         (var_action = '*NXTDEF'))
+                    and t01.cmd_prd_type = var_prd_type
                   order by t01.cmd_cmo_code desc) t01
           where rownum <= var_pag_size;
 
@@ -125,6 +129,7 @@ create or replace package body psa_app.psa_cmo_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
       var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
@@ -243,30 +248,16 @@ create or replace package body psa_app.psa_cmo_function as
           where t01.cmd_cmo_code = var_cmo_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_cmo_resource is
-         select t01.*,
-                t02.*
-           from psa_cmo_resource t01,
-                psa_res_defn t02
-          where t01.cmr_res_code = t02.rde_res_code
-            and t01.cmr_cmo_code = rcd_retrieve.cmd_cmo_code
-            and t02.rde_res_status = '1'
-          order by t01.cmr_cmo_code asc;
-      rcd_cmo_resource csr_cmo_resource%rowtype;
-
       cursor csr_resource is
-         select t01.*
-           from psa_res_defn t01
-          where t01.rde_res_status = '1'
-          order by t01.rde_res_code asc;
+         select t01.*,
+                nvl(t02.cmr_res_qnty,0) as cmr_res_qnty
+           from psa_res_defn t01,
+                psa_cmo_resource t02
+          where t01.rde_res_code = t02.cmr_res_code(+)
+            and rcd_retrieve.cmd_cmo_code = t02.cmr_cmo_code(+)
+            and t01.rde_res_status = '1'
+          order by t01.rde_res_name asc;
       rcd_resource csr_resource%rowtype;
-
-      cursor csr_prdtype is
-         select t01.*
-           from psa_prd_type t01
-          where t01.pty_prd_cre_usage = '1'
-          order by t01.pty_prd_type asc;
-      rcd_prdtype csr_prdtype%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -330,38 +321,22 @@ create or replace package body psa_app.psa_cmo_function as
       if var_action = '*UPDDEF' then
          var_output := '<CMODFN CMOCDE="'||psa_to_xml(rcd_retrieve.cmd_cmo_code||' - (Last updated by '||rcd_retrieve.cmd_upd_user||' on '||to_char(rcd_retrieve.cmd_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' CMONAM="'||psa_to_xml(rcd_retrieve.cmd_cmo_name)||'"';
-         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"';
-         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.cmd_prd_type)||'"/>';
+         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<CMODFN CMOCDE=""';
          var_output := var_output||' CMONAM="'||psa_to_xml(rcd_retrieve.cmd_cmo_name)||'"';
-         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"';
-         var_output := var_output||' PTYCDE="'||psa_to_xml(rcd_retrieve.cmd_prd_type)||'"/>';
+         var_output := var_output||' CMOSTS="'||psa_to_xml(rcd_retrieve.cmd_cmo_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<CMODFN CMOCDE=""';
          var_output := var_output||' CMONAM=""';
-         var_output := var_output||' CMOSTS="1";
-         var_output := var_output||' PTYCDE=""/>';
+         var_output := var_output||' CMOSTS="1"/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
       /*-*/
       /* Pipe the model resource data XML
-      /*-*/
-      open csr_cmo_resource;
-      loop
-         fetch csr_cmo_resource into rcd_cmo_resource;
-         if csr_cmo_resource%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<CMORES RESCDE="'||psa_to_xml(rcd_cmo_resource.rde_res_code)||'" RESNAM="'||psa_to_xml('('||rcd_cmo_resource.rde_res_code||') '||rcd_cmo_resource.rde_res_name)||'"/>'));
-      end loop;
-      close csr_cmo_resource;
-
-      /*-*/
-      /* Pipe the resource data XML
       /*-*/
       open csr_resource;
       loop
@@ -369,7 +344,7 @@ create or replace package body psa_app.psa_cmo_function as
          if csr_resource%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<RESDFN RESCDE="'||psa_to_xml(rcd_resource.rde_res_code)||'" RESNAM="'||psa_to_xml('('||rcd_resource.rde_res_code||') '||rcd_resource.rde_res_name)||'"/>'));
+         pipe row(psa_xml_object('<CMORES RESCDE="'||psa_to_xml(rcd_resource.rde_res_code)||'" RESNAM="'||psa_to_xml('('||rcd_resource.rde_res_code||') '||rcd_resource.rde_res_name)||'" RESQTY="'||to_char(rcd_resource.cmr_res_qnty)||'"/>'));
       end loop;
       close csr_resource;
 
@@ -473,7 +448,7 @@ create or replace package body psa_app.psa_cmo_function as
       rcd_psa_cmo_defn.cmd_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE')));
       rcd_psa_cmo_defn.cmd_cmo_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMONAM'));
       rcd_psa_cmo_defn.cmd_cmo_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOSTS'));
-      rcd_psa_cmo_defn.cmd_prd_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      rcd_psa_cmo_defn.cmd_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       rcd_psa_cmo_defn.cmd_upd_user := upper(par_user);
       rcd_psa_cmo_defn.cmd_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
@@ -507,14 +482,17 @@ create or replace package body psa_app.psa_cmo_function as
       if csr_prdtype%notfound then
          psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') does not exist');
       else
-         if rcd_prdtype.pty_prd_status != '1' then
-            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') status must be (1)active for and active resource');
+         if rcd_psa_cmo_defn.cmd_cmo_status = '1' and rcd_prdtype.pty_prd_status != '1' then
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') status must be (1)active for and active crew model');
          end if;
-         if rcd_psa_cmo_defn.cmd_res_status = '1' and rcd_prdtype.pty_prd_cre_usage != '1' then
+         if rcd_psa_cmo_defn.cmd_cmo_status = '1' and rcd_prdtype.pty_prd_cre_usage != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') must be flagged for crew usage');
          end if;
       end if;
       close csr_prdtype;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Validate the relationships
@@ -522,7 +500,7 @@ create or replace package body psa_app.psa_cmo_function as
       obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/CMORES');
       for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
          obj_res_node := xmlDom.item(obj_res_list,idx);
-         var_res_code := psa_from_xml(xslProcessor.valueOf(obj_res_node,'@RESCDE'));
+         var_res_code := upper(psa_from_xml(xslProcessor.valueOf(obj_res_node,'@RESCDE')));
          open csr_resource;
          fetch csr_resource into rcd_resource;
          if csr_resource%notfound then
@@ -589,9 +567,11 @@ create or replace package body psa_app.psa_cmo_function as
       obj_res_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/CMORES');
       for idx in 0..xmlDom.getLength(obj_res_list)-1 loop
          obj_res_node := xmlDom.item(obj_res_list,idx);
-     --    rcd_psa_cmo_resource.cmr_cmo_seqn := idx + 1;
-         rcd_psa_cmo_resource.cmr_res_code := psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@RESCDE'));
-         insert into psa_cmo_resource values rcd_psa_cmo_resource;
+         if nvl(psa_to_number(xslProcessor.valueOf(obj_res_node,'@RESQTY')),0) > 0 then
+            rcd_psa_cmo_resource.cmr_res_code := upper(psa_from_xml(xslProcessor.valueOf(obj_res_node,'@RESCDE')));
+            rcd_psa_cmo_resource.cmr_res_qnty := psa_to_number(xslProcessor.valueOf(obj_res_node,'@RESQTY'));
+            insert into psa_cmo_resource values rcd_psa_cmo_resource;
+         end if;
       end loop;
 
       /*-*/

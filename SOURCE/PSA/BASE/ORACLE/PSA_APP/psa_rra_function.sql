@@ -477,6 +477,9 @@ create or replace package body psa_app.psa_rra_function as
          end if;
       end if;
       close csr_prdtype;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Process the run rate definition
@@ -506,7 +509,6 @@ create or replace package body psa_app.psa_rra_function as
                    rrd_rra_efficiency = rcd_psa_rra_defn.rrd_rra_efficiency,
                    rrd_rra_wastage = rcd_psa_rra_defn.rrd_rra_wastage,
                    rrd_rra_status = rcd_psa_rra_defn.rrd_rra_status,
-                   rrd_prd_type = rcd_psa_rra_defn.rrd_prd_type,
                    rrd_upd_user = rcd_psa_rra_defn.rrd_upd_user,
                    rrd_upd_date = rcd_psa_rra_defn.rrd_upd_date
              where rrd_rra_code = rcd_psa_rra_defn.rrd_rra_code;

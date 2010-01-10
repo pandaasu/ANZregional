@@ -456,6 +456,9 @@ create or replace package body psa_app.psa_res_function as
          end if;
       end if;
       close csr_prdtype;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Process the resource definition
