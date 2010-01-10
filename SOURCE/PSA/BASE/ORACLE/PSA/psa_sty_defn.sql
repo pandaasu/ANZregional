@@ -21,7 +21,7 @@
 create table psa.psa_sty_defn
    (std_sty_code                    varchar2(32)                  not null,
     std_sty_name                    varchar2(120 char)            not null,
-    std_sty_event                   vachar2(10)                   not null,
+    std_sty_event                   varchar2(10)                  not null,
     std_sty_status                  varchar2(1)                   not null,
     std_upd_user                    varchar2(30)                  not null,
     std_upd_date                    date                          not null);
