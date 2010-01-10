@@ -194,14 +194,14 @@ sub PaintFunction()%>
    }
    function requestTypeList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" RUNFLG="1" STRCDE="'+cstrTypeStrCode+'" ENDCDE="'+cstrTypeEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_type.asp',function(strResponse) {checkTypeList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_type.asp',function(strRraponse) {checkTypeList(strRraponse);},false,streamXML(strXML));
    }
-   function checkTypeList(strResponse) {
+   function checkTypeList(strRraponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
+      if (strRraponse.substring(0,3) != '*OK') {
+         alert(strRraponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -366,14 +366,14 @@ sub PaintFunction()%>
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_select.asp',function(strRraponse) {checkSelectList(strRraponse);},false,streamXML(strXML));
    }
-   function checkSelectList(strResponse) {
+   function checkSelectList(strRraponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
+      if (strRraponse.substring(0,3) != '*OK') {
+         alert(strRraponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -497,15 +497,15 @@ sub PaintFunction()%>
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_delete.asp',function(strRraponse) {checkDelete(strRraponse);},false,streamXML(strXML));
    }
-   function checkDelete(strResponse) {
+   function checkDelete(strRraponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
+      if (strRraponse.substring(0,3) != '*OK') {
+         alert(strRraponse);
       } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (strRraponse.length > 3) {
+            var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
             if (objDocument == null) {return;}
             var strMessage = '';
             var objElements = objDocument.documentElement.childNodes;
@@ -538,26 +538,26 @@ sub PaintFunction()%>
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
    }
-   function checkDefineLoad(strResponse) {
+   function checkDefineLoad(strRraponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
+      if (strRraponse.substring(0,3) != '*OK') {
+         alert(strRraponse);
       } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -582,60 +582,60 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('subDefine').innerHTML = '<p>'+cstrTypeName+'</p>';
-         document.getElementById('DEF_ResCode').value = '';
-         document.getElementById('DEF_ResName').value = '';
-         document.getElementById('DEF_ResUnit').value = '';
-         document.getElementById('DEF_ResEffy').value = '';
-         document.getElementById('DEF_ResWast').value = '';
-         var strResStat = '';
-         var objResStat = document.getElementById('DEF_ResStat');
+         document.getElementById('DEF_RraCode').value = '';
+         document.getElementById('DEF_RraName').value = '';
+         document.getElementById('DEF_RraUnit').value = '';
+         document.getElementById('DEF_RraEffy').value = '';
+         document.getElementById('DEF_RraWast').value = '';
+         var strRraStat = '';
+         var objRraStat = document.getElementById('DEF_RraStat');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'RRADFN') {
                if (cstrDefineMode == '*UPD') {
                   document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('RRACDE')+'</p>';
                } else {
-                  document.getElementById('DEF_ResCode').value = objElements[i].getAttribute('RRACDE');
+                  document.getElementById('DEF_RraCode').value = objElements[i].getAttribute('RRACDE');
                }
-               document.getElementById('DEF_ResName').value = objElements[i].getAttribute('RRANAM');
-               document.getElementById('DEF_ResUnit').value = objElements[i].getAttribute('RRAUNT');
-               document.getElementById('DEF_ResEffy').value = objElements[i].getAttribute('RRAEFF');
-               document.getElementById('DEF_ResWast').value = objElements[i].getAttribute('RRAWAS');
-               strResStat = objElements[i].getAttribute('RRASTS');
+               document.getElementById('DEF_RraName').value = objElements[i].getAttribute('RRANAM');
+               document.getElementById('DEF_RraUnit').value = objElements[i].getAttribute('RRAUNT');
+               document.getElementById('DEF_RraEffy').value = objElements[i].getAttribute('RRAEFF');
+               document.getElementById('DEF_RraWast').value = objElements[i].getAttribute('RRAWAS');
+               strRraStat = objElements[i].getAttribute('RRASTS');
             }
          }
-         objResStat.selectedIndex = -1;
-         for (var i=0;i<objResStat.length;i++) {
-            if (objResStat.options[i].value == strResStat) {
-               objResStat.options[i].selected = true;
+         objRraStat.selectedIndex = -1;
+         for (var i=0;i<objRraStat.length;i++) {
+            if (objRraStat.options[i].value == strRraStat) {
+               objRraStat.options[i].selected = true;
                break;
             }
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_ResName').focus();
+            document.getElementById('DEF_RraName').focus();
          } else {
-            document.getElementById('DEF_ResCode').focus();
+            document.getElementById('DEF_RraCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objResStat = document.getElementById('DEF_ResStat');
+      var objRraStat = document.getElementById('DEF_RraStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
          strXML = strXML+' RRACDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' RRACDE="'+fixXML(document.getElementById('DEF_ResCode').value)+'"';
+         strXML = strXML+' RRACDE="'+fixXML(document.getElementById('DEF_RraCode').value)+'"';
       }
-      strXML = strXML+' RRANAM="'+fixXML(document.getElementById('DEF_ResName').value)+'"';
-      strXML = strXML+' RRAUNT="'+fixXML(document.getElementById('DEF_ResUnit').value)+'"';
-      strXML = strXML+' RRAEFF="'+fixXML(document.getElementById('DEF_ResEffy').value)+'"';
-      strXML = strXML+' RRAWAS="'+fixXML(document.getElementById('DEF_ResWast').value)+'"';
-      if (objResStat.selectedIndex == -1) {
+      strXML = strXML+' RRANAM="'+fixXML(document.getElementById('DEF_RraName').value)+'"';
+      strXML = strXML+' RRAUNT="'+fixXML(document.getElementById('DEF_RraUnit').value)+'"';
+      strXML = strXML+' RRAEFF="'+fixXML(document.getElementById('DEF_RraEffy').value)+'"';
+      strXML = strXML+' RRAWAS="'+fixXML(document.getElementById('DEF_RraWast').value)+'"';
+      if (objRraStat.selectedIndex == -1) {
          strXML = strXML+' RRASTS=""';
       } else {
-         strXML = strXML+' RRASTS="'+fixXML(objResStat.options[objResStat.selectedIndex].value)+'"';
+         strXML = strXML+' RRASTS="'+fixXML(objRraStat.options[objRraStat.selectedIndex].value)+'"';
       }
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+'/>';
@@ -643,15 +643,15 @@ sub PaintFunction()%>
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_rra_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_update.asp',function(strRraponse) {checkDefineAccept(strRraponse);},false,streamXML(strXML));
    }
-   function checkDefineAccept(strResponse) {
+   function checkDefineAccept(strRraponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
+      if (strRraponse.substring(0,3) != '*OK') {
+         alert(strRraponse);
       } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (strRraponse.length > 3) {
+            var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
             if (objDocument == null) {return;}
             var strMessage = '';
             var objElements = objDocument.documentElement.childNodes;
@@ -819,7 +819,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Units:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RraEffy" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
