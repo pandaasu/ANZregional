@@ -194,14 +194,14 @@ sub PaintFunction()%>
    }
    function requestTypeList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" RUNFLG="1" STRCDE="'+cstrTypeStrCode+'" ENDCDE="'+cstrTypeEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_type.asp',function(strRraponse) {checkTypeList(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_type.asp',function(strResponse) {checkTypeList(strResponse);},false,streamXML(strXML));
    }
-   function checkTypeList(strRraponse) {
+   function checkTypeList(strResponse) {
       doActivityStop();
-      if (strRraponse.substring(0,3) != '*OK') {
-         alert(strRraponse);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
       } else {
-         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -366,14 +366,14 @@ sub PaintFunction()%>
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_select.asp',function(strRraponse) {checkSelectList(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
-   function checkSelectList(strRraponse) {
+   function checkSelectList(strResponse) {
       doActivityStop();
-      if (strRraponse.substring(0,3) != '*OK') {
-         alert(strRraponse);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
       } else {
-         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -497,15 +497,15 @@ sub PaintFunction()%>
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_delete.asp',function(strRraponse) {checkDelete(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
-   function checkDelete(strRraponse) {
+   function checkDelete(strResponse) {
       doActivityStop();
-      if (strRraponse.substring(0,3) != '*OK') {
-         alert(strRraponse);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
       } else {
-         if (strRraponse.length > 3) {
-            var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
             if (objDocument == null) {return;}
             var strMessage = '';
             var objElements = objDocument.documentElement.childNodes;
@@ -538,26 +538,26 @@ sub PaintFunction()%>
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" RRACDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strRraponse) {checkDefineLoad(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
-   function checkDefineLoad(strRraponse) {
+   function checkDefineLoad(strResponse) {
       doActivityStop();
-      if (strRraponse.substring(0,3) != '*OK') {
-         alert(strRraponse);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
       } else {
-         var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
          var objElements = objDocument.documentElement.childNodes;
@@ -643,15 +643,15 @@ sub PaintFunction()%>
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_rra_config_update.asp',function(strRraponse) {checkDefineAccept(strRraponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_rra_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
-   function checkDefineAccept(strRraponse) {
+   function checkDefineAccept(strResponse) {
       doActivityStop();
-      if (strRraponse.substring(0,3) != '*OK') {
-         alert(strRraponse);
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
       } else {
-         if (strRraponse.length > 3) {
-            var objDocument = loadXML(strRraponse.substring(3,strRraponse.length));
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
             if (objDocument == null) {return;}
             var strMessage = '';
             var objElements = objDocument.documentElement.childNodes;
@@ -711,10 +711,10 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="TYP_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
             </table>
          </nobr></td>
