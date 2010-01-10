@@ -6,7 +6,7 @@
 '// Script  : psa_cmo_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the shift model             //
+'// Text    : This script implements the crew model              //
 '//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 
