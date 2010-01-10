@@ -864,11 +864,17 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelHB" align="center" valign="center" colspan="2" nowrap><nobr>Crew Model Resource Requirements</nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBN" align=center valign=top colspan=2 nowrap><nobr>
-            <table id="DEF_ResData" class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0"></table>
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=2>
+               <tr>
+                  <td class="clsLabelHB" align="center" valign="center" colspan="2" nowrap><nobr>Crew Model Resource Requirements</nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center valign=top colspan=2 nowrap><nobr>
+                     <table id="DEF_ResData" class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0"></table>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
       <tr>
