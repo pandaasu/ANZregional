@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_sty_config_retrieve.asp                        //
+'// Script  : psa_sac_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the schedule type           //
-'//           configuration retrieve functionality               //
+'// Text    : This script implements the schedule activity       //
+'//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_STY_CONFIG")
+   strReturn = GetSecurityCheck("PSA_SAC_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,19 +78,18 @@ sub ProcessRequest()
    next
 
    '//
+   '// Perform the schedule activity delete
+   '//
+   call objProcedure.Execute("psa_app.psa_sac_function.delete_data")
+   if strReturn <> "*OK" then
+      exit sub
+   end if
+
+   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
-
-   '//
-   '// Retrieve the schedule type definition
-   '//
-   strStatement = "select xml_text from table(psa_app.psa_sty_function.retrieve_data)"
-   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
-   if strReturn <> "*OK" then
-      exit sub
-   end if
 
    '//
    '// Retrieve any messages
@@ -112,11 +111,6 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
-      if objSelection.ListCount("MESSAGE") = 0 then
-         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
-            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
-         next
-      end if
    end if
 
 end sub%>

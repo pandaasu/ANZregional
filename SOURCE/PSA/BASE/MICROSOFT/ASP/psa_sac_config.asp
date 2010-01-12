@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_sty_config.asp                                 //
+'// Script  : psa_sac_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the schedule type           //
+'// Text    : This script implements the schedule activity       //
 '//           configuration functionality                        //
 '//////////////////////////////////////////////////////////////////
 
@@ -30,8 +30,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "psa_sty_config.asp"
-   strHeading = "Schedule Type Maintenance"
+   strTarget = "psa_sac_config.asp"
+   strHeading = "Schedule Activity Maintenance"
 
    '//
    '// Get the base string
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_STY_CONFIG")
+   strReturn = GetSecurityCheck("PSA_SAC_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -128,8 +128,8 @@ sub PaintFunction()%>
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Schedule Type Selection';
-      cobjScreens[2].hedtxt = 'Schedule Type Maintenance';
+      cobjScreens[1].hedtxt = 'Schedule Activity Selection';
+      cobjScreens[2].hedtxt = 'Schedule Activity Maintenance';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -172,7 +172,7 @@ sub PaintFunction()%>
    }
    function doSelectDelete(strCode) {
       if (!processForm()) {return;}
-      if (confirm('Please confirm the deletion\r\npress OK continue (the selected schedule type will be deleted)\r\npress Cancel to cancel and return') == false) {
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected schedule activity will be deleted)\r\npress Cancel to cancel and return') == false) {
          return;
       }
       doActivityStart(document.body);
@@ -206,7 +206,7 @@ sub PaintFunction()%>
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_sty_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_sac_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
       doActivityStop();
@@ -251,7 +251,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Schedule Type&nbsp;';
+         objCell.innerHTML = '&nbsp;Schedule Activity&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -277,32 +277,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('STYCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('SACCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('STYCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('SACCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('STYCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('STYCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('STYCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('SACCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('SACCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('SACCDE')+'\');">Copy</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('STYCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SACCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('STYNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SACNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('STYSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SACSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -335,8 +335,8 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" STYCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_sty_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SACCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_sac_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
       doActivityStop();
@@ -376,20 +376,20 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" STYCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_sty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" SACCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_sac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" STYCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_sty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" SACCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_sac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" STYCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_sty_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" SACCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_sac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -411,71 +411,83 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Schedule Type';
+            cobjScreens[2].hedtxt = 'Update Schedule Activity';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[2].hedtxt = 'Create Schedule Type';
+            cobjScreens[2].hedtxt = 'Create Schedule Activity';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_StyCode').value = '';
-         document.getElementById('DEF_StyName').value = '';
-         var strStyStat = '';
-         var objStyStat = document.getElementById('DEF_StyStat');
+         document.getElementById('DEF_SacCode').value = '';
+         document.getElementById('DEF_SacName').value = '';
+         var strSacType = '';
+         var strSacStat = '';
+         var objSacType = document.getElementById('DEF_SacType');
+         var objSacStat = document.getElementById('DEF_SacStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'STYDFN') {
+            if (objElements[i].nodeName == 'SACDFN') {
                if (cstrDefineMode == '*UPD') {
-                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('STYCDE')+'</p>';
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('SACCDE')+'</p>';
                } else {
-                  document.getElementById('DEF_StyCode').value = objElements[i].getAttribute('STYCDE');
+                  document.getElementById('DEF_SacCode').value = objElements[i].getAttribute('SACCDE');
                }
-               document.getElementById('DEF_StyName').value = objElements[i].getAttribute('STYNAM');
-               document.getElementById('DEF_StyStrt').value = objElements[i].getAttribute('STYSTR');
-               document.getElementById('DEF_StyDura').value = objElements[i].getAttribute('STYDUR');
-               strStyStat = objElements[i].getAttribute('STYSTS');
+               document.getElementById('DEF_SacName').value = objElements[i].getAttribute('SACNAM');
+               strSacType = objElements[i].getAttribute('SACTYP');
+               strSacStat = objElements[i].getAttribute('SACSTS');
             }
          }
-         objStyStat.selectedIndex = -1;
-         for (var i=0;i<objStyStat.length;i++) {
-            if (objStyStat.options[i].value == strStyStat) {
-               objStyStat.options[i].selected = true;
+         objSacType.selectedIndex = -1;
+         for (var i=0;i<objSacType.length;i++) {
+            if (objSacType.options[i].value == strSacType) {
+               objSacType.options[i].selected = true;
+               break;
+            }
+         }
+         objSacStat.selectedIndex = -1;
+         for (var i=0;i<objSacStat.length;i++) {
+            if (objSacStat.options[i].value == strSacStat) {
+               objSacStat.options[i].selected = true;
                break;
             }
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_StyName').focus();
+            document.getElementById('DEF_SacName').focus();
          } else {
-            document.getElementById('DEF_StyCode').focus();
+            document.getElementById('DEF_SacCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objStyStat = document.getElementById('DEF_StyStat');
+      var objSacType = document.getElementById('DEF_SacType');
+      var objSacStat = document.getElementById('DEF_SacStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' STYCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+' SACCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' STYCDE="'+fixXML(document.getElementById('DEF_StyCode').value)+'"';
+         strXML = strXML+' SACCDE="'+fixXML(document.getElementById('DEF_SacCode').value)+'"';
       }
-      strXML = strXML+' STYNAM="'+fixXML(document.getElementById('DEF_StyName').value)+'"';
-      strXML = strXML+' STYSTR="'+fixXML(document.getElementById('DEF_StyStrt').value)+'"';
-      strXML = strXML+' STYDUR="'+fixXML(document.getElementById('DEF_StyDura').value)+'"';
-      if (objStyStat.selectedIndex == -1) {
-         strXML = strXML+' STYSTS=""';
+      strXML = strXML+' SACNAM="'+fixXML(document.getElementById('DEF_SacName').value)+'"';
+      if (objSacType.selectedIndex == -1) {
+         strXML = strXML+' SACTYP=""';
       } else {
-         strXML = strXML+' STYSTS="'+fixXML(objStyStat.options[objStyStat.selectedIndex].value)+'"';
+         strXML = strXML+' SACTYP="'+fixXML(objSacType.options[objSacType.selectedIndex].value)+'"';
+      }
+      if (objSacStat.selectedIndex == -1) {
+         strXML = strXML+' SACSTS=""';
+      } else {
+         strXML = strXML+' SACSTS="'+fixXML(objSacStat.options[objSacStat.selectedIndex].value)+'"';
       }
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_sty_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_sac_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -523,7 +535,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_sty_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_sac_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -533,7 +545,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Schedule Type Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Schedule Activity Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -577,43 +589,40 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Schedule Type Define</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Schedule Activity Define</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Type Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Activity Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_StyCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_SacCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr id="updDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Schedule Type Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Schedule Activity Code:&nbsp;</nobr></td>
          <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Type Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Activity Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StyName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_SacName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Type Start Time (HHMI):&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Activity Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StyStrt" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <select class="clsInputBN" id="DEF_SacType">
+               <option value="*PROD">Production
+               <option value="*TIME">Time
+            </select>
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Type Duration (minutes):&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Activity Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StyDura" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Type Status:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_StyStat">
+            <select class="clsInputBN" id="DEF_SacStat">
                <option value="0">Inactive
                <option value="1">Active
             </select>
