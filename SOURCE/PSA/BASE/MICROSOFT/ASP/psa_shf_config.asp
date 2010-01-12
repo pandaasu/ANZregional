@@ -425,7 +425,7 @@ sub PaintFunction()%>
          var strShfStat = '';
          var objShfStat = document.getElementById('DEF_ShfStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'SHIFT') {
+            if (objElements[i].nodeName == 'SHFDFN') {
                if (cstrDefineMode == '*UPD') {
                   document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('SHFCDE')+'</p>';
                } else {

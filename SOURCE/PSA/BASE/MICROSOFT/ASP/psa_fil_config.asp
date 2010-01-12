@@ -425,7 +425,7 @@ sub PaintFunction()%>
          var strFilStat = '';
          var objFilStat = document.getElementById('DEF_FilStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'FILLER') {
+            if (objElements[i].nodeName == 'FILDFN') {
                if (cstrDefineMode == '*UPD') {
                   document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('FILCDE')+'</p>';
                } else {

@@ -383,7 +383,7 @@ sub PaintFunction()%>
          var strPrdResu = '0';
          var strPrdCreu = '0';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'PRDTYPE') {
+            if (objElements[i].nodeName == 'PTYDFN') {
                if (cstrDefineMode == '*UPD') {
                   document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('PRDTYP')+'</p>';
                } else {
