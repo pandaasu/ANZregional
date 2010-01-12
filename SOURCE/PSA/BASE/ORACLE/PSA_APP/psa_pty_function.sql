@@ -327,7 +327,7 @@ create or replace package body psa_app.psa_pty_function as
       /* Pipe the production type XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<PRDTYPE PRDTYP="'||psa_to_xml(rcd_retrieve.pty_prd_type||' - (Last updated by '||rcd_retrieve.pty_upd_user||' on '||to_char(rcd_retrieve.pty_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<PTYDFN PRDTYP="'||psa_to_xml(rcd_retrieve.pty_prd_type||' - (Last updated by '||rcd_retrieve.pty_upd_user||' on '||to_char(rcd_retrieve.pty_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' PRDNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
          var_output := var_output||' PRDSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
          var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.pty_prd_mat_usage)||'"';
@@ -337,7 +337,7 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<PRDTYPE PRDTYP=""';
+         var_output := '<PTYDFN PRDTYP=""';
          var_output := var_output||' PRDNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"';
          var_output := var_output||' PRDSTS="'||psa_to_xml(rcd_retrieve.pty_prd_status)||'"';
          var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.pty_prd_mat_usage)||'"';
@@ -347,7 +347,7 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<PRDTYPE PRDTYP=""';
+         var_output := '<PTYDFN PRDTYP=""';
          var_output := var_output||' PRDNAM=""';
          var_output := var_output||' PRDSTS="1"';
          var_output := var_output||' MATUSG="0"';

@@ -303,17 +303,17 @@ create or replace package body psa_app.psa_fil_function as
       /* Pipe the filler XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<FILLER FILCDE="'||psa_to_xml(rcd_retrieve.fde_fil_code||' - (Last updated by '||rcd_retrieve.fde_upd_user||' on '||to_char(rcd_retrieve.fde_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<FILDFN FILCDE="'||psa_to_xml(rcd_retrieve.fde_fil_code||' - (Last updated by '||rcd_retrieve.fde_upd_user||' on '||to_char(rcd_retrieve.fde_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' FILNAM="'||psa_to_xml(rcd_retrieve.fde_fil_name)||'"';
          var_output := var_output||' FILSTS="'||psa_to_xml(rcd_retrieve.fde_fil_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<FILLER FILCDE=""';
+         var_output := '<FILDFN FILCDE=""';
          var_output := var_output||' FILNAM="'||psa_to_xml(rcd_retrieve.fde_fil_name)||'"';
          var_output := var_output||' FILSTS="'||psa_to_xml(rcd_retrieve.fde_fil_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<FILLER FILCDE=""';
+         var_output := '<FILDFN FILCDE=""';
          var_output := var_output||' FILNAM=""';
          var_output := var_output||' FILSTS="1"/>';
          pipe row(psa_xml_object(var_output));

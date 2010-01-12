@@ -303,21 +303,21 @@ create or replace package body psa_app.psa_shf_function as
       /* Pipe the shift XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<SHIFT SHFCDE="'||psa_to_xml(rcd_retrieve.sde_shf_code||' - (Last updated by '||rcd_retrieve.sde_upd_user||' on '||to_char(rcd_retrieve.sde_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<SHFDFN SHFCDE="'||psa_to_xml(rcd_retrieve.sde_shf_code||' - (Last updated by '||rcd_retrieve.sde_upd_user||' on '||to_char(rcd_retrieve.sde_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' SHFNAM="'||psa_to_xml(rcd_retrieve.sde_shf_name)||'"';
          var_output := var_output||' SHFSTR="'||to_char(rcd_retrieve.sde_shf_start,'fm9990')||'"';
          var_output := var_output||' SHFDUR="'||to_char(rcd_retrieve.sde_shf_duration)||'"';
          var_output := var_output||' SHFSTS="'||psa_to_xml(rcd_retrieve.sde_shf_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
-         var_output := '<SHIFT SHFCDE=""';
+         var_output := '<SHFDFN SHFCDE=""';
          var_output := var_output||' SHFNAM="'||psa_to_xml(rcd_retrieve.sde_shf_name)||'"';
          var_output := var_output||' SHFSTR="'||to_char(rcd_retrieve.sde_shf_start,'fm9990')||'"';
          var_output := var_output||' SHFDUR="'||to_char(rcd_retrieve.sde_shf_duration)||'"';
          var_output := var_output||' SHFSTS="'||psa_to_xml(rcd_retrieve.sde_shf_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
-         var_output := '<SHIFT SHFCDE=""';
+         var_output := '<SHFDFN SHFCDE=""';
          var_output := var_output||' SHFNAM=""';
          var_output := var_output||' SHFSTR="0"';
          var_output := var_output||' SHFDUR="0"';
@@ -414,8 +414,8 @@ create or replace package body psa_app.psa_shf_function as
       end if;
       rcd_psa_shf_defn.sde_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFCDE')));
       rcd_psa_shf_defn.sde_shf_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFNAM'));
-      rcd_psa_shf_defn.sde_shf_start := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTR'));
-      rcd_psa_shf_defn.sde_shf_duration := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFDUR'));
+      rcd_psa_shf_defn.sde_shf_start := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@SHFSTR'));
+      rcd_psa_shf_defn.sde_shf_duration := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@SHFDUR'));
       rcd_psa_shf_defn.sde_shf_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SHFSTS'));
       rcd_psa_shf_defn.sde_upd_user := upper(par_user);
       rcd_psa_shf_defn.sde_upd_date := sysdate;
