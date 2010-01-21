@@ -113,7 +113,7 @@ create or replace package body vds_utility as
             /*-*/
             var_sav_query := rcd_vds_meta.vme_query;
             var_sav_table := rcd_vds_meta.vme_table;
-            var_view_name := var_sav_query || '_' || var_sav_table;
+            var_view_name := var_sav_query || '_' || replace(var_sav_table,'/',null);
             var_columns := false;
 
             /*-*/
