@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_lin_config_con_delete.asp                      //
+'// Script  : psa_cfg_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the line                    //
+'// Text    : This script implements the line configuration      //
 '//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_LIN_CONFIG")
+   strReturn = GetSecurityCheck("PSA_CFG_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the line configuration delete
    '//
-   call objProcedure.Execute("psa_app.psa_lin_function.delete_config")
+   call objProcedure.Execute("psa_app.psa_cfg_function.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if

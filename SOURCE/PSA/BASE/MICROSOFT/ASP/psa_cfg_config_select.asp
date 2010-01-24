@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_lin_config_con_select.asp                      //
+'// Script  : psa_cfg_config_select.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the resource                //
+'// Text    : This script implements the line configuration      //
 '//           configuration select functionality                 //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_LIN_CONFIG")
+   strReturn = GetSecurityCheck("PSA_CFG_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the line configuration selection
    '//
-   strStatement = "select xml_text from table(psa_app.psa_lin_function.select_config)"
+   strStatement = "select xml_text from table(psa_app.psa_cfg_function.select_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
