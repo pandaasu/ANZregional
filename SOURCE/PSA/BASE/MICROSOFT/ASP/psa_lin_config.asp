@@ -584,6 +584,7 @@ sub PaintFunction()%>
          document.getElementById('subDefine').innerHTML = '<p>'+cstrTypeName+'</p>';
          document.getElementById('DEF_LinCode').value = '';
          document.getElementById('DEF_LinName').value = '';
+         document.getElementById('DEF_LinWast').value = '';
          var strLinStat = '';
          var objLinStat = document.getElementById('DEF_LinStat');
          for (var i=0;i<objElements.length;i++) {
@@ -594,6 +595,7 @@ sub PaintFunction()%>
                   document.getElementById('DEF_LinCode').value = objElements[i].getAttribute('LINCDE');
                }
                document.getElementById('DEF_LinName').value = objElements[i].getAttribute('LINNAM');
+               document.getElementById('DEF_LinWast').value = objElements[i].getAttribute('LINWAS');
                strLinStat = objElements[i].getAttribute('LINSTS');
             }
          }
@@ -623,6 +625,7 @@ sub PaintFunction()%>
          strXML = strXML+' LINCDE="'+fixXML(document.getElementById('DEF_LinCode').value)+'"';
       }
       strXML = strXML+' LINNAM="'+fixXML(document.getElementById('DEF_LinName').value)+'"';
+      strXML = strXML+' LINWAS="'+fixXML(document.getElementById('DEF_LinWast').value)+'"';
       if (objLinStat.selectedIndex == -1) {
          strXML = strXML+' LINSTS=""';
       } else {
@@ -670,6 +673,7 @@ sub PaintFunction()%>
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
    }
+
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -805,6 +809,12 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_LinName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Default Wastage %:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_LinWast" size="6" maxlength="6" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,2,false);">
          </nobr></td>
       </tr>
       <tr>
