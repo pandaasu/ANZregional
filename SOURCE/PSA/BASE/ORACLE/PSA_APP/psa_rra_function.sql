@@ -470,9 +470,9 @@ create or replace package body psa_app.psa_rra_function as
          psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_rra_defn.rrd_prd_type||') does not exist');
       else
          if rcd_psa_rra_defn.rrd_rra_status = '1' and rcd_prdtype.pty_prd_status != '1' then
-            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_rra_defn.rrd_prd_type||') status must be (1)active for and active run rate');
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_rra_defn.rrd_prd_type||') status must be (1)active for an active run rate');
          end if;
-         if rcd_psa_rra_defn.rrd_rra_status = '1' and rcd_prdtype.pty_prd_run_usage != '1' then
+         if rcd_prdtype.pty_prd_run_usage != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_rra_defn.rrd_prd_type||') must be flagged for run rate usage');
          end if;
       end if;

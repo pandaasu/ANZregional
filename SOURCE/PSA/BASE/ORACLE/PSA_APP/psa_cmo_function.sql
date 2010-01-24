@@ -488,7 +488,7 @@ create or replace package body psa_app.psa_cmo_function as
          if rcd_psa_cmo_defn.cmd_cmo_status = '1' and rcd_prdtype.pty_prd_status != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') status must be (1)active for and active crew model');
          end if;
-         if rcd_psa_cmo_defn.cmd_cmo_status = '1' and rcd_prdtype.pty_prd_cre_usage != '1' then
+         if rcd_prdtype.pty_prd_cre_usage != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_cmo_defn.cmd_prd_type||') must be flagged for crew usage');
          end if;
       end if;
