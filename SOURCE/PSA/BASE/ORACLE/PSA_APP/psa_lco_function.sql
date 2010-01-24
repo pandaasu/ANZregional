@@ -45,9 +45,9 @@ create or replace package body psa_app.psa_lco_function as
    pragma exception_init(application_exception, -20000);
 
    /***************************************************/
-   /* This procedure performs the select data routine */
+   /* This procedure performs the select list routine */
    /***************************************************/
-   function select_data return psa_xml_type pipelined is
+   function select_list return psa_xml_type pipelined is
 
       /*-*/
       /* Local definitions
@@ -57,18 +57,48 @@ create or replace package body psa_app.psa_lco_function as
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
       var_lin_code varchar2(32);
+      var_str_code varchar2(32);
+      var_end_code varchar2(32);
       var_output varchar2(2000 char);
+      var_pag_size number;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_slct is
-         select t01.lco_con_code,
-                t01.lco_con_name,
-                decode(t01.lco_con_status,'0','Inactive','1','Active','*UNKNOWN') as lco_con_status
-           from psa_lin_config t01
-          where t01.lco_lin_code = var_lin_code
-          order by t01.lco_con_code;
+         select t01.*
+           from (select t01.lco_con_code,
+                        t01.lco_con_name,
+                        decode(t01.lco_con_status,'0','Inactive','1','Active','*UNKNOWN') as lco_con_status
+                   from psa_lin_config t01
+                  where (var_str_code is null or t01.lco_con_code >= var_str_code)
+                    and t01.lco_lin_code = var_lin_code
+                  order by t01.lco_con_code asc) t01
+          where rownum <= var_pag_size;
+
+      cursor csr_next is
+         select t01.*
+           from (select t01.lco_con_code,
+                        t01.lco_con_name,
+                        decode(t01.lco_con_status,'0','Inactive','1','Active','*UNKNOWN') as lco_con_status
+                   from psa_lin_config t01
+                  where ((var_action = '*NXTDEF' and (var_end_code is null or t01.lco_con_code > var_end_code)) or
+                         (var_action = '*PRVDEF'))
+                    and t01.lco_lin_code = var_lin_code
+                  order by t01.lco_con_code asc) t01
+          where rownum <= var_pag_size;
+
+      cursor csr_prev is
+         select t01.*
+           from (select t01.lco_con_code,
+                        t01.lco_con_name,
+                        decode(t01.lco_con_status,'0','Inactive','1','Active','*UNKNOWN') as lco_con_status
+                   from psa_lin_config t01
+                  where ((var_action = '*PRVDEF' and (var_str_code is null or t01.lco_con_code < var_str_code)) or
+                         (var_action = '*NXTDEF'))
+                    and t01.lco_lin_code = var_lin_code
+                  order by t01.lco_con_code desc) t01
+          where rownum <= var_pag_size;
 
       /*-*/
       /* Local arrays
@@ -100,8 +130,10 @@ create or replace package body psa_app.psa_lco_function as
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
+      var_str_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STRCDE')));
+      var_end_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ENDCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*SELDEF' then
+      if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -116,13 +148,50 @@ create or replace package body psa_app.psa_lco_function as
       /*-*/
       /* Retrieve the line configuration list and pipe the results
       /*-*/
-      tbl_list.delete;
-      open csr_slct;
-      fetch csr_slct bulk collect into tbl_list;
-      close csr_slct;
-      for idx in 1..tbl_list.count loop
-         pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
-      end loop;
+      var_pag_size := 20;
+      if var_action = '*SELDEF' then
+         tbl_list.delete;
+         open csr_slct;
+         fetch csr_slct bulk collect into tbl_list;
+         close csr_slct;
+         for idx in 1..tbl_list.count loop
+            pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
+         end loop;
+      elsif var_action = '*NXTDEF' then
+         tbl_list.delete;
+         open csr_next;
+         fetch csr_next bulk collect into tbl_list;
+         close csr_next;
+         if tbl_list.count = var_pag_size then
+            for idx in 1..tbl_list.count loop
+               pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
+            end loop;
+         else
+            open csr_prev;
+            fetch csr_prev bulk collect into tbl_list;
+            close csr_prev;
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
+            end loop;
+         end if;
+      elsif var_action = '*PRVDEF' then
+         tbl_list.delete;
+         open csr_prev;
+         fetch csr_prev bulk collect into tbl_list;
+         close csr_prev;
+         if tbl_list.count = var_pag_size then
+            for idx in reverse 1..tbl_list.count loop
+               pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
+            end loop;
+         else
+            open csr_next;
+            fetch csr_next bulk collect into tbl_list;
+            close csr_next;
+            for idx in 1..tbl_list.count loop
+               pipe row(psa_xml_object('<LSTROW CONCDE="'||to_char(tbl_list(idx).lco_con_code)||'" CONNAM="'||psa_to_xml(tbl_list(idx).lco_con_name)||'" CONSTS="'||psa_to_xml(tbl_list(idx).lco_con_status)||'"/>'));
+            end loop;
+         end if;
+      end if;
 
       /*-*/
       /* Pipe the XML end
@@ -147,12 +216,12 @@ create or replace package body psa_app.psa_lco_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_LCO_FUNCTION - SELECT_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_LCO_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end select_data;
+   end select_list;
 
    /*****************************************************/
    /* This procedure performs the retrieve data routine */
