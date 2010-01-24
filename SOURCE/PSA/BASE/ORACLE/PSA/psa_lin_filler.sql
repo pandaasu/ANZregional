@@ -28,8 +28,8 @@ create table psa.psa_lin_filler
 /**/
 comment on table psa.psa_lin_filler is 'Production line Configuration Filler Table';
 comment on column psa.psa_lin_filler.lfi_lin_code is 'Line code';
-comment on column psa.psa_lin_filler_lfi_con_code is 'Line configuration code';
-comment on column psa.psa_lin_filler_lfi_fil_code is 'Filler code';
+comment on column psa.psa_lin_filler.lfi_con_code is 'Line configuration code';
+comment on column psa.psa_lin_filler.lfi_fil_code is 'Filler code';
 
 /**/
 /* Primary Key Constraint

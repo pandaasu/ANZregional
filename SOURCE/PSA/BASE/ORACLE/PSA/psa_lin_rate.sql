@@ -28,8 +28,8 @@ create table psa.psa_lin_rate
 /**/
 comment on table psa.psa_lin_rate is 'Production line Configuration Run Rate Table';
 comment on column psa.psa_lin_rate.lra_lin_code is 'Line code';
-comment on column psa.psa_lin_rate_lra_con_code is 'Line configuration code';
-comment on column psa.psa_lin_rate_lra_rra_code is 'Run rate code';
+comment on column psa.psa_lin_rate.lra_con_code is 'Line configuration code';
+comment on column psa.psa_lin_rate.lra_rra_code is 'Run rate code';
 
 /**/
 /* Primary Key Constraint
