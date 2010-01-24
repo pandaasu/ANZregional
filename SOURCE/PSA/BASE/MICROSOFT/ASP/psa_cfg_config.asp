@@ -30,7 +30,7 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "psa_cfg_config.asp"
+   strTarget = "psa_lco_config.asp"
    strHeading = "Line Configuration Maintenance"
 
    '//
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_CFG_CONFIG")
+   strReturn = GetSecurityCheck("PSA_LCO_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
