@@ -388,7 +388,7 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspSelect');
-         document.getElementById('subSelect').innerHTML = '<p>'+cstrTypeName+'</p>';
+         document.getElementById('subSelect').innerHTML = '<p>Production Type: '+cstrTypeName+'</p>';
          var objSelCode = document.getElementById('SEL_SelCode');
          var objTabHead = document.getElementById('tabHeadList');
          var objTabBody = document.getElementById('tabBodyList');
@@ -581,10 +581,12 @@ sub PaintFunction()%>
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('subDefine').innerHTML = '<p>'+cstrTypeName+'</p>';
+         document.getElementById('subDefine').innerHTML = '<p>Production Type: '+cstrTypeName+'</p>';
          document.getElementById('DEF_LinCode').value = '';
          document.getElementById('DEF_LinName').value = '';
          document.getElementById('DEF_LinWast').value = '';
+         var strLinEvnt = '';
+         var objLinEvnt = document.getElementById('DEF_LinEvnt');
          var strLinStat = '';
          var objLinStat = document.getElementById('DEF_LinStat');
          for (var i=0;i<objElements.length;i++) {
@@ -596,7 +598,15 @@ sub PaintFunction()%>
                }
                document.getElementById('DEF_LinName').value = objElements[i].getAttribute('LINNAM');
                document.getElementById('DEF_LinWast').value = objElements[i].getAttribute('LINWAS');
+               strLinEvnt = objElements[i].getAttribute('LINEVT');
                strLinStat = objElements[i].getAttribute('LINSTS');
+            }
+         }
+         objLinEvnt.selectedIndex = -1;
+         for (var i=0;i<objLinEvnt.length;i++) {
+            if (objLinEvnt.options[i].value == strLinEvnt) {
+               objLinEvnt.options[i].selected = true;
+               break;
             }
          }
          objLinStat.selectedIndex = -1;
@@ -615,6 +625,7 @@ sub PaintFunction()%>
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
+      var objLinEvnt = document.getElementById('DEF_LinEvnt');
       var objLinStat = document.getElementById('DEF_LinStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
@@ -626,6 +637,11 @@ sub PaintFunction()%>
       }
       strXML = strXML+' LINNAM="'+fixXML(document.getElementById('DEF_LinName').value)+'"';
       strXML = strXML+' LINWAS="'+fixXML(document.getElementById('DEF_LinWast').value)+'"';
+      if (objLinEvnt.selectedIndex == -1) {
+         strXML = strXML+' LINEVT=""';
+      } else {
+         strXML = strXML+' LINEVT="'+fixXML(objLinEvnt.options[objLinEvnt.selectedIndex].value)+'"';
+      }
       if (objLinStat.selectedIndex == -1) {
          strXML = strXML+' LINSTS=""';
       } else {
@@ -815,6 +831,15 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Default Wastage %:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_LinWast" size="6" maxlength="6" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,2,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Auto Generate Product Change Events:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_LinEvnt">
+               <option value="0">No
+               <option value="1">Yes
+            </select>
          </nobr></td>
       </tr>
       <tr>

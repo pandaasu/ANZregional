@@ -388,7 +388,7 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspSelect');
-         document.getElementById('subSelect').innerHTML = '<p>'+cstrTypeName+'</p>';
+         document.getElementById('subSelect').innerHTML = '<p>Line: '+cstrTypeName+'</p>';
          var objSelCode = document.getElementById('SEL_SelCode');
          var objTabHead = document.getElementById('tabHeadList');
          var objTabBody = document.getElementById('tabBodyList');
@@ -581,7 +581,7 @@ sub PaintFunction()%>
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('subDefine').innerHTML = '<p>'+cstrTypeName+'</p>';
+         document.getElementById('subDefine').innerHTML = '<p>Line: '+cstrTypeName+'</p>';
          document.getElementById('DEF_LinCode').value = '';
          document.getElementById('DEF_LinName').value = '';
          document.getElementById('DEF_LinWast').value = '';
