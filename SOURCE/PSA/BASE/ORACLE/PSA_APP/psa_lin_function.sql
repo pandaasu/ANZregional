@@ -69,10 +69,11 @@ create or replace package body psa_app.psa_lin_function as
          select t01.*
            from (select t01.lde_lin_code,
                         t01.lde_lin_name,
-                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status
+                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status,
+                        t01.lde_prd_type
                    from psa_lin_defn t01
                   where (var_str_code is null or t01.lde_lin_code >= var_str_code)
-                    and t01.lde_prd_type = var_prd_type
+                    and (var_prd_type is null or t01.lde_prd_type = var_prd_type)
                   order by t01.lde_lin_code asc) t01
           where rownum <= var_pag_size;
 
@@ -80,11 +81,12 @@ create or replace package body psa_app.psa_lin_function as
          select t01.*
            from (select t01.lde_lin_code,
                         t01.lde_lin_name,
-                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status
+                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status,
+                        t01.lde_prd_type
                    from psa_lin_defn t01
                   where ((var_action = '*NXTDEF' and (var_end_code is null or t01.lde_lin_code > var_end_code)) or
                          (var_action = '*PRVDEF'))
-                    and t01.lde_prd_type = var_prd_type
+                    and (var_prd_type is null or t01.lde_prd_type = var_prd_type)
                   order by t01.lde_lin_code asc) t01
           where rownum <= var_pag_size;
 
@@ -92,11 +94,12 @@ create or replace package body psa_app.psa_lin_function as
          select t01.*
            from (select t01.lde_lin_code,
                         t01.lde_lin_name,
-                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status
+                        decode(t01.lde_lin_status,'0','Inactive','1','Active','*UNKNOWN') as lde_lin_status,
+                        t01.lde_prd_type
                    from psa_lin_defn t01
                   where ((var_action = '*PRVDEF' and (var_str_code is null or t01.lde_lin_code < var_str_code)) or
                          (var_action = '*NXTDEF'))
-                    and t01.lde_prd_type = var_prd_type
+                    and (var_prd_type is null or t01.lde_prd_type = var_prd_type)
                   order by t01.lde_lin_code desc) t01
           where rownum <= var_pag_size;
 
@@ -155,7 +158,7 @@ create or replace package body psa_app.psa_lin_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'" PTYCDE="'||psa_to_xml(tbl_list(idx).lde_prd_type)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -164,14 +167,14 @@ create or replace package body psa_app.psa_lin_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'" PTYCDE="'||psa_to_xml(tbl_list(idx).lde_prd_type)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'" PTYCDE="'||psa_to_xml(tbl_list(idx).lde_prd_type)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -181,14 +184,14 @@ create or replace package body psa_app.psa_lin_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'" PTYCDE="'||psa_to_xml(tbl_list(idx).lde_prd_type)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW LINCDE="'||to_char(tbl_list(idx).lde_lin_code)||'" LINNAM="'||psa_to_xml(tbl_list(idx).lde_lin_name)||'" LINSTS="'||psa_to_xml(tbl_list(idx).lde_lin_status)||'" PTYCDE="'||psa_to_xml(tbl_list(idx).lde_prd_type)||'"/>'));
             end loop;
          end if;
       end if;
