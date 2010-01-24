@@ -6,7 +6,7 @@
 '// Script  : psa_lin_config_select.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
-'// Text    : This script implements the resource                //
+'// Text    : This script implements the line                    //
 '//           configuration select functionality                 //
 '//////////////////////////////////////////////////////////////////
 
