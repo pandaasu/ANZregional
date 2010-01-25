@@ -172,7 +172,7 @@ sub PaintFunction()%>
    function doLineSelect(strCode,strName) {
       if (!processForm()) {return;}
       cstrLineCode = strCode;
-      cstrLineeName = '('+strCode+') '+strName;
+      cstrLineName = '('+strCode+') '+strName;
       document.getElementById('SEL_SelCode').value = '';
       doSelectRefresh();
    }
@@ -586,6 +586,10 @@ sub PaintFunction()%>
          document.getElementById('DEF_ConName').value = '';
          var strConStat = '';
          var objConStat = document.getElementById('DEF_ConStat');
+         var objRraList = document.getElementById('DEF_RraList');
+         var objRraSlct = document.getElementById('DEF_RraSlct');
+         var objFilList = document.getElementById('DEF_FilList');
+         var objFilSlct = document.getElementById('DEF_FilSlct');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LCODFN') {
                if (cstrDefineMode == '*UPD') {
@@ -595,6 +599,14 @@ sub PaintFunction()%>
                }
                document.getElementById('DEF_ConName').value = objElements[i].getAttribute('CONNAM');
                strConStat = objElements[i].getAttribute('CONSTS');
+            } else if (objElements[i].nodeName == 'RRADFN') {
+               objRraList.options[objRraList.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
+            } else if (objElements[i].nodeName == 'LCORRA') {
+               objRraSlct.options[objRraList.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
+            } else if (objElements[i].nodeName == 'FILDFN') {
+               objFilList.options[objFilList.options.length] = new Option(objElements[i].getAttribute('FILNAM'),objElements[i].getAttribute('FILCDE'));
+            } else if (objElements[i].nodeName == 'LCOFIL') {
+               objFilSlct.options[objFilSlct.options.length] = new Option(objElements[i].getAttribute('FILNAM'),objElements[i].getAttribute('FILCDE'));
             }
          }
          objConStat.selectedIndex = -1;
@@ -604,6 +616,10 @@ sub PaintFunction()%>
                break;
             }
          }
+         objRraList.selectedIndex = -1;
+         objRraSlct.selectedIndex = -1;
+         objFilList.selectedIndex = -1;
+         objFilSlct.selectedIndex = -1;
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_ConName').focus();
          } else {
@@ -614,6 +630,8 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objConStat = document.getElementById('DEF_ConStat');
+      var objRraSlct = document.getElementById('DEF_RraSlct');
+      var objFilSlct = document.getElementById('DEF_FilSlct');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
@@ -630,7 +648,14 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' CONSTS="'+fixXML(objConStat.options[objConStat.selectedIndex].value)+'"';
       }
-      strXML = strXML+'/>';
+      strXML = strXML+'>'
+      for (var i=0;i<objRraSlct.options.length;i++) {
+         strXML = strXML+'<LCORRA RRACDE="'+fixXML(objRraSlct[i].value)+'"/>';
+      }
+      for (var i=0;i<objFilSlct.options.length;i++) {
+         strXML = strXML+'<LCOFIL FILCDE="'+fixXML(objFilSlct[i].value)+'"/>';
+      }
+      strXML = strXML+'</PSA_REQUEST>'
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -670,6 +695,118 @@ sub PaintFunction()%>
       if (checkChange() == false) {return;}
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
+   }
+   function doDefineSelectRate(objList, objSlct) {
+      var objList = document.getElementById('DEF_RraList');
+      var objSlct = document.getElementById('DEF_RraSlct');
+      var bolFound;
+      for (var i=0;i<objList.options.length;i++) {
+         if (objList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objSlct.options.length;j++) {
+               if (objList[i].value == objSlct[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objSlct.options[objSlct.options.length] = new Option(objList[i].text,objList[i].value);
+            }
+         }
+      }
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         objYarra[intYindx] = objSlct[i];
+         intYindx++;
+      }
+      objYarra.sort(doDefineSortRate);
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+      objList.selectedIndex = -1;
+   }
+   function doDefineRemoveRate(objSlct) {
+      var objSlct = document.getElementById('DEF_RraSlct');
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         if (objSlct.options[i].selected == false) {
+            objYarra[intYindx] = objSlct[i];
+            intYindx++;
+         }
+      }
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+   }
+   function doDefineSortRate(obj01, obj02) {
+      if (obj01.value < obj02.value) {
+         return -1;
+      } else if (obj01.value > obj02.value) {
+         return 1;
+      }
+      return 0;
+   }
+   function doDefineSelectFiller(objList, objSlct) {
+      var objList = document.getElementById('DEF_FilList');
+      var objSlct = document.getElementById('DEF_FilSlct');
+      var bolFound;
+      for (var i=0;i<objList.options.length;i++) {
+         if (objList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objSlct.options.length;j++) {
+               if (objList[i].value == objSlct[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objSlct.options[objSlct.options.length] = new Option(objList[i].text,objList[i].value);
+            }
+         }
+      }
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         objYarra[intYindx] = objSlct[i];
+         intYindx++;
+      }
+      objYarra.sort(doDefineSortFiller);
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+      objList.selectedIndex = -1;
+   }
+   function doDefineRemoveFiller(objSlct) {
+      var objSlct = document.getElementById('DEF_FilSlct');
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         if (objSlct.options[i].selected == false) {
+            objYarra[intYindx] = objSlct[i];
+            intYindx++;
+         }
+      }
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+   }
+   function doDefineSortFiller(obj01, obj02) {
+      if (obj01.value < obj02.value) {
+         return -1;
+      } else if (obj01.value > obj02.value) {
+         return 1;
+      }
+      return 0;
    }
 
 // -->
@@ -819,6 +956,81 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+                        <tr>
+                           <td class="clsLabelHB" align=center colspan=3 nowrap><nobr>&nbsp;Line Configuration Run Rates&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Run Rates&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Run Rates&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_RraList" name="DEF_RraList" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="doDefineRemoveRate();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="doDefineSelectRate();"></nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_RraSlct" name="DEF_RraSlct" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+                        <tr>
+                           <td class="clsLabelHB" align=center colspan=3 nowrap><nobr>&nbsp;Line Configuration Fillers&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Fillers&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Fillers&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_FilList" name="DEF_FilList" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="doDefineRemoveFiller();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="doDefineSelectFiller();"></nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_FilSlct" name="DEF_FilSlct" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
