@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the line configuration selection
    '//
-   strStatement = "select xml_text from table(psa_app.psa_lco_function.select_data)"
+   strStatement = "select xml_text from table(psa_app.psa_lco_function.select_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
