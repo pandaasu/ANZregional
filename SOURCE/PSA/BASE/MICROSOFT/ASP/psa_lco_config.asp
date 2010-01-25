@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_cfg_config.asp                                 //
+'// Script  : psa_lco_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the line configuration      //
@@ -125,15 +125,15 @@ sub PaintFunction()%>
    ////////////////////
    function loadFunction() {
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
-      cobjScreens[1] = new clsScreen('dspType','hedType');
+      cobjScreens[1] = new clsScreen('dspLine','hedLine');
       cobjScreens[2] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[3] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Production Type Selection';
-      cobjScreens[2].hedtxt = 'Line Selection';
-      cobjScreens[3].hedtxt = 'Line Maintenance';
+      cobjScreens[1].hedtxt = 'Line Selection';
+      cobjScreens[2].hedtxt = 'Line Configuration Selection';
+      cobjScreens[3].hedtxt = 'Line Configuration Maintenance';
       displayScreen('dspLoad');
-      doTypeRefresh();
+      doLineRefresh();
    }
 
    ///////////////////////
@@ -163,40 +163,40 @@ sub PaintFunction()%>
    }
 
    ////////////////////
-   // Type Functions //
+   // Line Functions //
    ////////////////////
-   var cstrTypeStrCode;
-   var cstrTypeEndCode;
-   var cstrTypeCode = '';
-   var cstrTypeName = '';
-   function doTypeSelect(strCode,strName) {
+   var cstrLineStrCode;
+   var cstrLineEndCode;
+   var cstrLineCode = '';
+   var cstrLineName = '';
+   function doLineSelect(strCode,strName) {
       if (!processForm()) {return;}
-      cstrTypeCode = strCode;
-      cstrTypeName = '('+strCode+') '+strName;
+      cstrLineCode = strCode;
+      cstrLineeName = '('+strCode+') '+strName;
       document.getElementById('SEL_SelCode').value = '';
       doSelectRefresh();
    }
-   function doTypeRefresh() {
+   function doLineRefresh() {
       if (!processForm()) {return;}
-      cstrTypeStrCode = document.getElementById('TYP_SelCode').value;
+      cstrLineStrCode = document.getElementById('LIN_SelCode').value;
       doActivityStart(document.body);
-      window.setTimeout('requestTypeList(\'*SELDEF\');',10);
+      window.setTimeout('requestLineList(\'*SELDEF\');',10);
    }
-   function doTypePrevious() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestTypeList(\'*PRVDEF\');',10);
-   }
-   function doTypeNext() {
+   function doLinePrevious() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestTypeList(\'*NXTDEF\');',10);
+      window.setTimeout('requestLineList(\'*PRVDEF\');',10);
    }
-   function requestTypeList(strAction) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" LINFLG="1" STRCDE="'+cstrTypeStrCode+'" ENDCDE="'+cstrTypeEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_type.asp',function(strResponse) {checkTypeList(strResponse);},false,streamXML(strXML));
+   function doLineNext() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestLineList(\'*NXTDEF\');',10);
    }
-   function checkTypeList(strResponse) {
+   function requestLineList(strAction) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrLineStrCode+'" ENDCDE="'+cstrLineEndCode+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_line.asp',function(strResponse) {checkLineList(strResponse);},false,streamXML(strXML));
+   }
+   function checkLineList(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -215,183 +215,10 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspType');
-         var objSelCode = document.getElementById('TYP_SelCode');
-         var objTabHead = document.getElementById('tabHeadType');
-         var objTabBody = document.getElementById('tabBodyType');
-         objTabHead.style.tableLayout = 'auto';
-         objTabBody.style.tableLayout = 'auto';
-         var objRow;
-         var objCell;
-         for (var i=objTabHead.rows.length-1;i>=0;i--) {
-            objTabHead.deleteRow(i);
-         }
-         for (var i=objTabBody.rows.length-1;i>=0;i--) {
-            objTabBody.deleteRow(i);
-         }
-         objRow = objTabHead.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Action&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Type&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Name&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Status&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         cstrTypeStrCode = '';
-         cstrTypeEndCode = '';
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'LSTROW') {
-               if (cstrTypeStrCode == '') {
-                  cstrTypeStrCode = objElements[i].getAttribute('PRDTYP');
-               }
-               cstrTypeEndCode = objElements[i].getAttribute('PRDTYP');
-               objRow = objTabBody.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeSelect(\''+objElements[i].getAttribute('PRDTYP')+'\',\''+objElements[i].getAttribute('PRDNAM')+'\');">Select</a>&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDTYP')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDNAM')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PRDSTS')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-            }
-         }
-         if (objTabBody.rows.length == 0) {
-            objRow = objTabBody.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 4;
-            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
-            objCell.className = 'clsLabelFB';
-            objCell.style.whiteSpace = 'nowrap';
-            setScrollable('HeadType','BodyType','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
-            objTabHead.style.tableLayout = 'auto';
-            objTabBody.style.tableLayout = 'auto';
-         } else {
-            setScrollable('HeadType','BodyType','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
-            objTabHead.style.tableLayout = 'fixed';
-            objTabBody.style.tableLayout = 'fixed';
-         }
-         objSelCode.value = cstrTypeStrCode;
-         objSelCode.focus();
-      }
-   }
-
-   //////////////////////
-   // Select Functions //
-   //////////////////////
-   var cstrSelectStrCode;
-   var cstrSelectEndCode;
-   function doSelectUpdate(strCode) {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
-   }
-   function doSelectDelete(strCode) {
-      if (!processForm()) {return;}
-      if (confirm('Please confirm the deletion\r\npress OK continue (the selected line will be deleted)\r\npress Cancel to cancel and return') == false) {
-         return;
-      }
-      doActivityStart(document.body);
-      window.setTimeout('requestDelete(\''+strCode+'\');',10);
-   }
-   function doSelectCopy(strCode) {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCopy(\''+strCode+'\');',10);
-   }
-   function doSelectCreate() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCreate(\'*NEW\');',10);
-   }
-   function doSelectRefresh() {
-      if (!processForm()) {return;}
-      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
-      doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*SELDEF\');',10);
-   }
-   function doSelectPrevious() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*PRVDEF\');',10);
-   }
-   function doSelectNext() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
-   }
-   function doSelectBack() {
-      displayScreen('dspType');
-   }
-   function requestSelectList(strAction) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PTYCDE="'+cstrTypeCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
-   }
-   function checkSelectList(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-            }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
-         }
-         displayScreen('dspSelect');
-         document.getElementById('subSelect').innerHTML = '<p>Line: '+cstrTypeName+'</p>';
-         var objSelCode = document.getElementById('SEL_SelCode');
-         var objTabHead = document.getElementById('tabHeadList');
-         var objTabBody = document.getElementById('tabBodyList');
+         displayScreen('dspLine');
+         var objSelCode = document.getElementById('LIN_SelCode');
+         var objTabHead = document.getElementById('tabHeadLine');
+         var objTabBody = document.getElementById('tabBodyLine');
          objTabHead.style.tableLayout = 'auto';
          objTabBody.style.tableLayout = 'auto';
          var objRow;
@@ -433,19 +260,19 @@ sub PaintFunction()%>
          objCell.innerHTML = '&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
-         cstrSelectStrCode = '';
-         cstrSelectEndCode = '';
+         cstrLineStrCode = '';
+         cstrLineEndCode = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
-               if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('LINCDE');
+               if (cstrLineStrCode == '') {
+                  cstrLineStrCode = objElements[i].getAttribute('LINCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('LINCDE');
+               cstrLineEndCode = objElements[i].getAttribute('LINCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('LINCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('LINCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('LINCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doLineSelect(\''+objElements[i].getAttribute('LINCDE')+'\',\''+objElements[i].getAttribute('LINNAM')+'\');">Select</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -464,6 +291,179 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LINSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 4;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadLine','BodyLine','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('HeadLine','BodyLine','horizontal');
+            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
+         }
+         objSelCode.value = cstrLineStrCode;
+         objSelCode.focus();
+      }
+   }
+
+   //////////////////////
+   // Select Functions //
+   //////////////////////
+   var cstrSelectStrCode;
+   var cstrSelectEndCode;
+   function doSelectUpdate(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineUpdate(\''+strCode+'\');',10);
+   }
+   function doSelectDelete(strCode) {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected line configuration will be deleted)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestDelete(\''+strCode+'\');',10);
+   }
+   function doSelectCopy(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineCopy(\''+strCode+'\');',10);
+   }
+   function doSelectCreate() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineCreate(\'*NEW\');',10);
+   }
+   function doSelectRefresh() {
+      if (!processForm()) {return;}
+      cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
+      doActivityStart(document.body);
+      window.setTimeout('requestSelectList(\'*SELDEF\');',10);
+   }
+   function doSelectPrevious() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestSelectList(\'*PRVDEF\');',10);
+   }
+   function doSelectNext() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
+   }
+   function doSelectBack() {
+      displayScreen('dspLine');
+   }
+   function requestSelectList(strAction) {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" LINCDE="'+cstrLineCode+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+   }
+   function checkSelectList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspSelect');
+         document.getElementById('subSelect').innerHTML = '<p>Line: '+cstrLineName+'</p>';
+         var objSelCode = document.getElementById('SEL_SelCode');
+         var objTabHead = document.getElementById('tabHeadList');
+         var objTabBody = document.getElementById('tabBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Configuration&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Name&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         cstrSelectStrCode = '';
+         cstrSelectEndCode = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTROW') {
+               if (cstrSelectStrCode == '') {
+                  cstrSelectStrCode = objElements[i].getAttribute('CONCDE');
+               }
+               cstrSelectEndCode = objElements[i].getAttribute('CONCDE');
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('CONCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('CONCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('CONCDE')+'\');">Copy</a>&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('CONCDE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('CONNAM')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('CONSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -496,8 +496,8 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" LINCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" LINCDE="'+fixXML(cstrLineCode)+'" CONCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
       doActivityStop();
@@ -537,20 +537,20 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" LINCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" LINCDE="'+fixXML(cstrLineCode)+'" CONCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" LINCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" LINCDE="'+fixXML(cstrLineCode)+'" CONCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" LINCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_lin_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" LINCDE="'+fixXML(cstrLineCode)+'" CONCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_lco_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -572,72 +572,70 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[3].hedtxt = 'Update Line';
+            cobjScreens[3].hedtxt = 'Update Line Configuration';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[3].hedtxt = 'Create Line';
+            cobjScreens[3].hedtxt = 'Create Line Configuration';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('subDefine').innerHTML = '<p>Line: '+cstrTypeName+'</p>';
-         document.getElementById('DEF_LinCode').value = '';
-         document.getElementById('DEF_LinName').value = '';
-         document.getElementById('DEF_LinWast').value = '';
-         var strLinStat = '';
-         var objLinStat = document.getElementById('DEF_LinStat');
+         document.getElementById('subDefine').innerHTML = '<p>Line: '+cstrLineName+'</p>';
+         document.getElementById('DEF_ConCode').value = '';
+         document.getElementById('DEF_ConName').value = '';
+         var strConStat = '';
+         var objConStat = document.getElementById('DEF_ConStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'LINDFN') {
+            if (objElements[i].nodeName == 'LCODFN') {
                if (cstrDefineMode == '*UPD') {
-                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('LINCDE')+'</p>';
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('CONCDE')+'</p>';
                } else {
-                  document.getElementById('DEF_LinCode').value = objElements[i].getAttribute('LINCDE');
+                  document.getElementById('DEF_ConCode').value = objElements[i].getAttribute('CONCDE');
                }
-               document.getElementById('DEF_LinName').value = objElements[i].getAttribute('LINNAM');
-               document.getElementById('DEF_LinWast').value = objElements[i].getAttribute('LINWAS');
-               strLinStat = objElements[i].getAttribute('LINSTS');
+               document.getElementById('DEF_ConName').value = objElements[i].getAttribute('CONNAM');
+               strConStat = objElements[i].getAttribute('CONSTS');
             }
          }
-         objLinStat.selectedIndex = -1;
-         for (var i=0;i<objLinStat.length;i++) {
-            if (objLinStat.options[i].value == strLinStat) {
-               objLinStat.options[i].selected = true;
+         objConStat.selectedIndex = -1;
+         for (var i=0;i<objConStat.length;i++) {
+            if (objConStat.options[i].value == strConStat) {
+               objConStat.options[i].selected = true;
                break;
             }
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_LinName').focus();
+            document.getElementById('DEF_ConName').focus();
          } else {
-            document.getElementById('DEF_LinCode').focus();
+            document.getElementById('DEF_ConCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objLinStat = document.getElementById('DEF_LinStat');
+      var objConStat = document.getElementById('DEF_ConStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' LINCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+' LINCDE="'+fixXML(cstrLineCode)+'"';
+         strXML = strXML+' CONCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' LINCDE="'+fixXML(document.getElementById('DEF_LinCode').value)+'"';
+         strXML = strXML+' LINCDE="'+fixXML(cstrLineCode)+'"';
+         strXML = strXML+' CONCDE="'+fixXML(document.getElementById('DEF_ConCode').value)+'"';
       }
-      strXML = strXML+' LINNAM="'+fixXML(document.getElementById('DEF_LinName').value)+'"';
-      strXML = strXML+' LINWAS="'+fixXML(document.getElementById('DEF_LinWast').value)+'"';
-      if (objLinStat.selectedIndex == -1) {
-         strXML = strXML+' LINSTS=""';
+      strXML = strXML+' CONNAM="'+fixXML(document.getElementById('DEF_ConName').value)+'"';
+      if (objConStat.selectedIndex == -1) {
+         strXML = strXML+' CONSTS=""';
       } else {
-         strXML = strXML+' LINSTS="'+fixXML(objLinStat.options[objLinStat.selectedIndex].value)+'"';
+         strXML = strXML+' CONSTS="'+fixXML(objConStat.options[objConStat.selectedIndex].value)+'"';
       }
-      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_lin_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_lco_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -686,17 +684,17 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_lin_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_lco_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
          <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
       </tr>
    </table>
-   <table id="dspType" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspLine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedType" class="clsFunction" align=center colspan=2 nowrap><nobr>Production Type Selection</nobr></td>
+         <td id="hedLine" class="clsFunction" align=center colspan=2 nowrap><nobr>Line Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -707,7 +705,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="TYP_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="LIN_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
@@ -719,16 +717,16 @@ sub PaintFunction()%>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conHeadType">
-                     <table class="clsTableHead" id="tabHeadType" align=left cols=1 cellpadding="0" cellspacing="1">
+                     <div class="clsFixed" id="conHeadLine">
+                     <table class="clsTableHead" id="tabHeadLine" align=left cols=1 cellpadding="0" cellspacing="1">
                      </table>
                      </div>
                   </nobr></td>
                </tr>
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conBodyType">
-                     <table class="clsTableBody" id="tabBodyType" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsScroll" id="conBodyLine">
+                     <table class="clsTableBody" id="tabBodyLine" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
@@ -739,7 +737,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Line Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Line Configuration Selection</nobr></td>
       </tr>
       <tr>
          <td id="subSelect" class="clsLabelBB" align="center" valign="center" colspan="2" nowrap><nobr></nobr></td>
@@ -787,7 +785,7 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Line Define</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Line Configuration Define</nobr></td>
       </tr>
       <tr>
          <td id="subDefine" class="clsLabelBB" align="center" valign="center" colspan="2" nowrap><nobr></nobr></td>
@@ -796,31 +794,25 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Configuration Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_LinCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_ConCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr id="updDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Line Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Line Configuration Code:&nbsp;</nobr></td>
          <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Configuration Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LinName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_ConName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Default Wastage %:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Configuration Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_LinWast" size="6" maxlength="6" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,2,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Line Status:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_LinStat">
+            <select class="clsInputBN" id="DEF_ConStat">
                <option value="0">Inactive
                <option value="1">Active
             </select>

@@ -3,7 +3,7 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_cfg_config_update.asp                          //
+'// Script  : psa_lco_config_update.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the line configuration      //
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_CFG_CONFIG")
+   strReturn = GetSecurityCheck("PSA_LCO_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the line configuration update
    '//
-   call objProcedure.Execute("psa_app.psa_cfg_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("psa_app.psa_lco_function.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if
