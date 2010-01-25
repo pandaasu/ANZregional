@@ -590,6 +590,10 @@ sub PaintFunction()%>
          var objRraSlct = document.getElementById('DEF_RraSlct');
          var objFilList = document.getElementById('DEF_FilList');
          var objFilSlct = document.getElementById('DEF_FilSlct');
+         objRraList.options.length = 0;
+         objRraSlct.options.length = 0;
+         objFilList.options.length = 0;
+         objFilSlct.options.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LCODFN') {
                if (cstrDefineMode == '*UPD') {
