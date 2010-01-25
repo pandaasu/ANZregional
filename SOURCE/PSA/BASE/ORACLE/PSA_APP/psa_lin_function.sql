@@ -314,18 +314,21 @@ create or replace package body psa_app.psa_lin_function as
          var_output := '<LINDFN LINCDE="'||psa_to_xml(rcd_retrieve.lde_lin_code||' - (Last updated by '||rcd_retrieve.lde_upd_user||' on '||to_char(rcd_retrieve.lde_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
+         var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
          var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
+         var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
          var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM=""';
          var_output := var_output||' LINWAS="0.00"';
+         var_output := var_output||' LINEVT="0"';
          var_output := var_output||' LINSTS="1"/>';
          pipe row(psa_xml_object(var_output));
       end if;
@@ -420,6 +423,7 @@ create or replace package body psa_app.psa_lin_function as
       rcd_psa_lin_defn.lde_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
       rcd_psa_lin_defn.lde_lin_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINNAM'));
       rcd_psa_lin_defn.lde_lin_wastage := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@LINWAS'));
+      rcd_psa_lin_defn.lde_lin_events := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINEVT'));
       rcd_psa_lin_defn.lde_lin_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINSTS'));
       rcd_psa_lin_defn.lde_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       rcd_psa_lin_defn.lde_upd_user := upper(par_user);
@@ -439,6 +443,9 @@ create or replace package body psa_app.psa_lin_function as
       end if;
       if rcd_psa_lin_defn.lde_lin_wastage is null or (rcd_psa_lin_defn.lde_lin_wastage < 1 or rcd_psa_lin_defn.lde_lin_wastage > 100) then
          psa_gen_function.add_mesg_data('Line wastage must be in range 1 to 100');
+      end if;
+      if rcd_psa_lin_defn.lde_lin_events is null or (rcd_psa_lin_defn.lde_lin_events != '0' and rcd_psa_lin_defn.lde_lin_events != '1') then
+         psa_gen_function.add_mesg_data('Line auto generate product change events must be (0)no or (1)yes');
       end if;
       if rcd_psa_lin_defn.lde_lin_status is null or (rcd_psa_lin_defn.lde_lin_status != '0' and rcd_psa_lin_defn.lde_lin_status != '1') then
          psa_gen_function.add_mesg_data('Line status must be (0)inactive or (1)active');
@@ -495,6 +502,7 @@ create or replace package body psa_app.psa_lin_function as
             update psa_lin_defn
                set lde_lin_name = rcd_psa_lin_defn.lde_lin_name,
                    lde_lin_wastage = rcd_psa_lin_defn.lde_lin_wastage,
+                   lde_lin_events = rcd_psa_lin_defn.lde_lin_events,
                    lde_lin_status = rcd_psa_lin_defn.lde_lin_status,
                    lde_upd_user = rcd_psa_lin_defn.lde_upd_user,
                    lde_upd_date = rcd_psa_lin_defn.lde_upd_date
