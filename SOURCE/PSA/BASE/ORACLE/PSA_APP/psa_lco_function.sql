@@ -243,6 +243,12 @@ create or replace package body psa_app.psa_lco_function as
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_line is
+         select t01.*
+           from psa_lin_defn t01
+          where t01.lde_lin_code = var_lin_code;
+      rcd_line csr_line%rowtype;
+
       cursor csr_retrieve is
          select t01.*
            from psa_lin_config t01
@@ -258,6 +264,7 @@ create or replace package body psa_app.psa_lco_function as
           where t01.lra_rra_code = t02.rrd_rra_code
             and t01.lra_lin_code = rcd_retrieve.lco_lin_code
             and t01.lra_con_code = rcd_retrieve.lco_con_code
+            and t02.rrd_prd_type = rcd_line.lde_prd_type
             and t02.rrd_rra_status = '1'
           order by t01.lra_rra_code asc;
       rcd_lco_rate csr_lco_rate%rowtype;
@@ -265,7 +272,8 @@ create or replace package body psa_app.psa_lco_function as
       cursor csr_rate is
          select t01.*
            from psa_rra_defn t01
-          where t01.rrd_rra_status = '1'
+          where t01.rrd_prd_type = rcd_line.lde_prd_type
+            and t01.rrd_rra_status = '1'
           order by t01.rrd_rra_code asc;
       rcd_rate csr_rate%rowtype;
 
@@ -322,6 +330,23 @@ create or replace package body psa_app.psa_lco_function as
       end if;
 
       /*-*/
+      /* Retrieve the line
+      /*-*/
+      var_found := false;
+      open csr_line;
+      fetch csr_line into rcd_line;
+      if csr_line%found then
+         var_found := true;
+      end if;
+      close csr_line;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Line ('||var_lin_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Retrieve the existing line configuration when required
       /*-*/
       if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
@@ -351,17 +376,20 @@ create or replace package body psa_app.psa_lco_function as
       if var_action = '*UPDDEF' then
          var_output := '<LCODFN CONCDE="'||psa_to_xml(rcd_retrieve.lco_lin_code||' - (Last updated by '||rcd_retrieve.lco_upd_user||' on '||to_char(rcd_retrieve.lco_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' CONNAM="'||psa_to_xml(rcd_retrieve.lco_con_name)||'"';
-         var_output := var_output||' CONSTS="'||psa_to_xml(rcd_retrieve.lco_con_status)||'"/>';
+         var_output := var_output||' CONSTS="'||psa_to_xml(rcd_retrieve.lco_con_status)||'"';
+         var_output := var_output||' PTYCDE="'||psa_to_xml(upper(rcd_line.lde_prd_type))||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<LCODFN CONCDE=""';
          var_output := var_output||' CONNAM="'||psa_to_xml(rcd_retrieve.lco_con_name)||'"';
-         var_output := var_output||' CONSTS="'||psa_to_xml(rcd_retrieve.lco_con_status)||'"/>';
+         var_output := var_output||' CONSTS="'||psa_to_xml(rcd_retrieve.lco_con_status)||'"';
+         var_output := var_output||' PTYCDE="'||psa_to_xml(upper(rcd_line.lde_prd_type))||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<LCODFN CONCDE=""';
          var_output := var_output||' CONNAM=""';
-         var_output := var_output||' CONSTS="1"/>';
+         var_output := var_output||' CONSTS="1"';
+         var_output := var_output||' PTYCDE="'||psa_to_xml(upper(rcd_line.lde_prd_type))||'"/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
@@ -392,30 +420,37 @@ create or replace package body psa_app.psa_lco_function as
       close csr_rate;
 
       /*-*/
-      /* Pipe the line configuration filler data XML
+      /* Retrieve the filler data for production type *FILL only
       /*-*/
-      open csr_lco_filler;
-      loop
-         fetch csr_lco_filler into rcd_lco_filler;
-         if csr_lco_filler%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<LCOFIL FILCDE="'||psa_to_xml(rcd_lco_filler.fde_fil_code)||'" FILNAM="'||psa_to_xml('('||rcd_lco_filler.fde_fil_code||') '||rcd_lco_filler.fde_fil_name)||'"/>'));
-      end loop;
-      close csr_lco_filler;
+      if upper(rcd_line.lde_prd_type) = '*FILL' then
 
-      /*-*/
-      /* Pipe the filler data XML
-      /*-*/
-      open csr_filler;
-      loop
-         fetch csr_filler into rcd_filler;
-         if csr_filler%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<FILDFN FILCDE="'||psa_to_xml(rcd_filler.fde_fil_code)||'" FILNAM="'||psa_to_xml('('||rcd_filler.fde_fil_code||') '||rcd_filler.fde_fil_name)||'"/>'));
-      end loop;
-      close csr_filler;
+         /*-*/
+         /* Pipe the line configuration filler data XML
+         /*-*/
+         open csr_lco_filler;
+         loop
+            fetch csr_lco_filler into rcd_lco_filler;
+            if csr_lco_filler%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<LCOFIL FILCDE="'||psa_to_xml(rcd_lco_filler.fde_fil_code)||'" FILNAM="'||psa_to_xml('('||rcd_lco_filler.fde_fil_code||') '||rcd_lco_filler.fde_fil_name)||'"/>'));
+         end loop;
+         close csr_lco_filler;
+
+         /*-*/
+         /* Pipe the filler data XML
+         /*-*/
+         open csr_filler;
+         loop
+            fetch csr_filler into rcd_filler;
+            if csr_filler%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<FILDFN FILCDE="'||psa_to_xml(rcd_filler.fde_fil_code)||'" FILNAM="'||psa_to_xml('('||rcd_filler.fde_fil_code||') '||rcd_filler.fde_fil_name)||'"/>'));
+         end loop;
+         close csr_filler;
+
+      end if;
 
       /*-*/
       /* Pipe the XML end
@@ -579,27 +614,32 @@ create or replace package body psa_app.psa_lco_function as
          if csr_rate%notfound then
             psa_gen_function.add_mesg_data('Run rate code ('||var_rra_code||') does not exist');
          else
+            if rcd_rate.rrd_prd_type != rcd_line.lde_prd_type then
+               psa_gen_function.add_mesg_data('Run rate code ('||var_rra_code||') production type must match the parent line production type');
+            end if;
             if rcd_rate.rrd_rra_status != '1' then
                psa_gen_function.add_mesg_data('Run rate code ('||var_rra_code||') status must be (1)active');
             end if;
          end if;
          close csr_rate;
       end loop;
-      obj_fil_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LCOFIL');
-      for idx in 0..xmlDom.getLength(obj_fil_list)-1 loop
-         obj_fil_node := xmlDom.item(obj_fil_list,idx);
-         var_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_fil_node,'@FILCDE')));
-         open csr_filler;
-         fetch csr_filler into rcd_filler;
-         if csr_filler%notfound then
-            psa_gen_function.add_mesg_data('Filler code ('||var_fil_code||') does not exist');
-         else
-            if rcd_filler.fde_fil_status != '1' then
-               psa_gen_function.add_mesg_data('Filler code ('||var_fil_code||') status must be (1)active');
+      if upper(rcd_line.lde_prd_type) = '*FILL' then
+         obj_fil_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LCOFIL');
+         for idx in 0..xmlDom.getLength(obj_fil_list)-1 loop
+            obj_fil_node := xmlDom.item(obj_fil_list,idx);
+            var_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_fil_node,'@FILCDE')));
+            open csr_filler;
+            fetch csr_filler into rcd_filler;
+            if csr_filler%notfound then
+               psa_gen_function.add_mesg_data('Filler code ('||var_fil_code||') does not exist');
+            else
+               if rcd_filler.fde_fil_status != '1' then
+                  psa_gen_function.add_mesg_data('Filler code ('||var_fil_code||') status must be (1)active');
+               end if;
             end if;
-         end if;
-         close csr_filler;
-      end loop;
+            close csr_filler;
+         end loop;
+      end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -667,16 +707,18 @@ create or replace package body psa_app.psa_lco_function as
       end loop;
 
       /*-*/
-      /* Retrieve and insert the line configuration filler data
+      /* Retrieve and insert the line configuration filler data when required
       /*-*/
-      rcd_psa_lin_filler.lfi_lin_code := rcd_psa_lin_config.lco_lin_code;
-      rcd_psa_lin_filler.lfi_con_code := rcd_psa_lin_config.lco_con_code;
-      obj_fil_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LCOFIL');
-      for idx in 0..xmlDom.getLength(obj_fil_list)-1 loop
-         obj_fil_node := xmlDom.item(obj_fil_list,idx);
-         rcd_psa_lin_filler.lfi_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_fil_node,'@FILCDE')));
-         insert into psa_lin_filler values rcd_psa_lin_filler;
-      end loop;
+      if upper(rcd_line.lde_prd_type) = '*FILL' then
+         rcd_psa_lin_filler.lfi_lin_code := rcd_psa_lin_config.lco_lin_code;
+         rcd_psa_lin_filler.lfi_con_code := rcd_psa_lin_config.lco_con_code;
+         obj_fil_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LCOFIL');
+         for idx in 0..xmlDom.getLength(obj_fil_list)-1 loop
+            obj_fil_node := xmlDom.item(obj_fil_list,idx);
+            rcd_psa_lin_filler.lfi_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_fil_node,'@FILCDE')));
+            insert into psa_lin_filler values rcd_psa_lin_filler;
+         end loop;
+      end if;
 
       /*-*/
       /* Free the XML document
