@@ -340,24 +340,21 @@ create or replace package body psa_app.psa_lin_function as
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
-         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
-         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM=""';
          var_output := var_output||' LINWAS="0.00"';
          var_output := var_output||' LINEVT="0"';
-         var_output := var_output||' LINSTS="1"';
-         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
+         var_output := var_output||' LINSTS="1"/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
