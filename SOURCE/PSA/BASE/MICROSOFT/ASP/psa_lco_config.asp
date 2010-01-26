@@ -534,6 +534,7 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
+   var cstrDefineFill;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -594,6 +595,7 @@ sub PaintFunction()%>
          objRraSlct.options.length = 0;
          objFilList.options.length = 0;
          objFilSlct.options.length = 0;
+         cstrDefineFill = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LCODFN') {
                if (cstrDefineMode == '*UPD') {
@@ -603,6 +605,7 @@ sub PaintFunction()%>
                }
                document.getElementById('DEF_ConName').value = objElements[i].getAttribute('CONNAM');
                strConStat = objElements[i].getAttribute('CONSTS');
+               cstrDefineFill = objElements[i].getAttribute('CONFIL');
             } else if (objElements[i].nodeName == 'RRADFN') {
                objRraList.options[objRraList.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
             } else if (objElements[i].nodeName == 'LCORRA') {
@@ -624,6 +627,11 @@ sub PaintFunction()%>
          objRraSlct.selectedIndex = -1;
          objFilList.selectedIndex = -1;
          objFilSlct.selectedIndex = -1;
+         if (cstrDefineFIll == '1') {
+            document.getElementById('filDefine').style.display = 'block';
+         } else {
+            document.getElementById('filDefine').style.display = 'none';
+         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_ConName').focus();
          } else {
@@ -656,8 +664,10 @@ sub PaintFunction()%>
       for (var i=0;i<objRraSlct.options.length;i++) {
          strXML = strXML+'<LCORRA RRACDE="'+fixXML(objRraSlct[i].value)+'"/>';
       }
-      for (var i=0;i<objFilSlct.options.length;i++) {
-         strXML = strXML+'<LCOFIL FILCDE="'+fixXML(objFilSlct[i].value)+'"/>';
+      if (cstrDefineFill == '1') {
+         for (var i=0;i<objFilSlct.options.length;i++) {
+            strXML = strXML+'<LCOFIL FILCDE="'+fixXML(objFilSlct[i].value)+'"/>';
+         }
       }
       strXML = strXML+'</PSA_REQUEST>'
       doActivityStart(document.body);
@@ -999,7 +1009,7 @@ sub PaintFunction()%>
             </table>
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="filDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
                <tr>
