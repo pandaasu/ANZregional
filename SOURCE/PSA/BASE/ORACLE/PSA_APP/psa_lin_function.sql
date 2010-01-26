@@ -239,12 +239,19 @@ create or replace package body psa_app.psa_lin_function as
       obj_psa_request xmlDom.domNode;
       var_action varchar2(32);
       var_found boolean;
+      var_prd_type varchar2(32);
       var_lin_code varchar2(32);
       var_output varchar2(2000 char);
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_prdtype is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_type = var_prd_type;
+      rcd_prdtype csr_prdtype%rowtype;
+
       cursor csr_retrieve is
          select t01.*
            from psa_lin_defn t01
@@ -274,10 +281,28 @@ create or replace package body psa_app.psa_lin_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
       var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the type
+      /*-*/
+      var_found := false;
+      open csr_prdtype;
+      fetch csr_prdtype into rcd_prdtype;
+      if csr_prdtype%found then
+         var_found := true;
+      end if;
+      close csr_prdtype;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production type ('||var_prd_type||') does not exist');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
@@ -315,21 +340,24 @@ create or replace package body psa_app.psa_lin_function as
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
+         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
+         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM=""';
          var_output := var_output||' LINWAS="0.00"';
          var_output := var_output||' LINEVT="0"';
-         var_output := var_output||' LINSTS="1"/>';
+         var_output := var_output||' LINSTS="1"';
+         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_prdtype.pty_prd_lin_wastage)||'"/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
@@ -466,10 +494,19 @@ create or replace package body psa_app.psa_lin_function as
          psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_lin_defn.lde_prd_type||') does not exist');
       else
          if rcd_psa_lin_defn.lde_lin_status = '1' and rcd_prdtype.pty_prd_status != '1' then
-            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_lin_defn.lde_prd_type||') status must be (1)active for an active line');
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_lin_defn.lde_prd_type||') status must be active for an active line');
          end if;
          if rcd_prdtype.pty_prd_lin_usage != '1' then
             psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_lin_defn.lde_prd_type||') must be flagged for line usage');
+         end if;
+         if rcd_prdtype.pty_prd_lin_wastage = '1' then
+            if rcd_psa_lin_defn.lde_lin_wastage < 0 or rcd_psa_lin_defn.lde_lin_wastage > 100 then
+               psa_gen_function.add_mesg_data('Line wastage must be in range 0 to 100');
+            end if;
+         else
+            if rcd_psa_lin_defn.lde_lin_wastage != 0 then
+               psa_gen_function.add_mesg_data('Line wastage must be 0');
+            end if;
          end if;
       end if;
       close csr_prdtype;
