@@ -377,7 +377,7 @@ create or replace package body psa_app.psa_lco_function as
       /* Pipe the line XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<LCODFN CONCDE="'||psa_to_xml(rcd_retrieve.lco_lin_code||' - (Last updated by '||rcd_retrieve.lco_upd_user||' on '||to_char(rcd_retrieve.lco_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<LCODFN CONCDE="'||psa_to_xml(rcd_retrieve.lco_con_code||' - (Last updated by '||rcd_retrieve.lco_upd_user||' on '||to_char(rcd_retrieve.lco_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' CONNAM="'||psa_to_xml(rcd_retrieve.lco_con_name)||'"';
          var_output := var_output||' CONSTS="'||psa_to_xml(rcd_retrieve.lco_con_status)||'"';
          var_output := var_output||' CONFIL="'||psa_to_xml(rcd_line.pty_prd_lin_filler)||'"/>';
