@@ -514,7 +514,7 @@ sub PaintFunction()%>
       var objPrdRunu = document.getElementsByName('DEF_PrdRunu');
       var objPrdResu = document.getElementsByName('DEF_PrdResu');
       var objPrdCreu = document.getElementsByName('DEF_PrdCreu');
-      var objPrdACtu = document.getElementsByName('DEF_PrdActu');
+      var objPrdActu = document.getElementsByName('DEF_PrdActu');
       var objPrdLinw = document.getElementsByName('DEF_PrdLinw');
       var objPrdLinf = document.getElementsByName('DEF_PrdLinf');
       var objPrdRune = document.getElementsByName('DEF_PrdRune');
