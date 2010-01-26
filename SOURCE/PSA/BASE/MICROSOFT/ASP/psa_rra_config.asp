@@ -602,7 +602,7 @@ sub PaintFunction()%>
                document.getElementById('DEF_RraEffy').value = objElements[i].getAttribute('RRAEFF');
                document.getElementById('DEF_RraWast').value = objElements[i].getAttribute('RRAWAS');
                strRraStat = objElements[i].getAttribute('RRASTS');
-               document.getElementById('DEF_UntText').innerHTML = '&nbsp;<p>'+objElements[i].getAttribute('UNTTXT')+'</p>';
+               document.getElementById('DEF_UntText').innerHTML = '&nbsp;'+objElements[i].getAttribute('UNTTXT');
             }
          }
          objRraStat.selectedIndex = -1;
@@ -821,8 +821,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Units:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
-            <font id="DEF_UntText" class="clsLabelBB"></font>
+            <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);"><font id="DEF_UntText" class="clsLabelBB"></font>
          </nobr></td>
       </tr>
       <tr>
