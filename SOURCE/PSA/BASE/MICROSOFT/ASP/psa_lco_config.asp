@@ -627,7 +627,7 @@ sub PaintFunction()%>
          objRraSlct.selectedIndex = -1;
          objFilList.selectedIndex = -1;
          objFilSlct.selectedIndex = -1;
-         if (cstrDefineFIll == '1') {
+         if (cstrDefineFill == '1') {
             document.getElementById('filDefine').style.display = 'block';
          } else {
             document.getElementById('filDefine').style.display = 'none';
