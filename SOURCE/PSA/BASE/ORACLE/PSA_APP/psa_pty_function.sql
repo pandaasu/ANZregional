@@ -62,6 +62,7 @@ create or replace package body psa_app.psa_pty_function as
       var_run_flag varchar2(1);
       var_res_flag varchar2(1);
       var_cre_flag varchar2(1);
+      var_act_flag varchar2(1);
       var_output varchar2(2000 char);
       var_pag_size number;
 
@@ -80,6 +81,7 @@ create or replace package body psa_app.psa_pty_function as
                     and (var_run_flag is null or pty_prd_run_usage = '1')
                     and (var_res_flag is null or pty_prd_res_usage = '1')
                     and (var_cre_flag is null or pty_prd_cre_usage = '1')
+                    and (var_act_flag is null or pty_prd_act_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -96,6 +98,7 @@ create or replace package body psa_app.psa_pty_function as
                     and (var_run_flag is null or pty_prd_run_usage = '1')
                     and (var_res_flag is null or pty_prd_res_usage = '1')
                     and (var_cre_flag is null or pty_prd_cre_usage = '1')
+                    and (var_act_flag is null or pty_prd_act_usage = '1')
                   order by t01.pty_prd_type asc) t01
           where rownum <= var_pag_size;
 
@@ -112,6 +115,7 @@ create or replace package body psa_app.psa_pty_function as
                     and (var_run_flag is null or pty_prd_run_usage = '1')
                     and (var_res_flag is null or pty_prd_res_usage = '1')
                     and (var_cre_flag is null or pty_prd_cre_usage = '1')
+                    and (var_act_flag is null or pty_prd_act_usage = '1')
                   order by t01.pty_prd_type desc) t01
           where rownum <= var_pag_size;
 
@@ -151,6 +155,7 @@ create or replace package body psa_app.psa_pty_function as
       var_run_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNFLG'));
       var_res_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESFLG'));
       var_cre_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CREFLG'));
+      var_act_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ACTFLG'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SELDEF' and var_action != '*PRVDEF' and var_action != '*NXTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -334,7 +339,14 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' LINUSG="'||psa_to_xml(rcd_retrieve.pty_prd_lin_usage)||'"';
          var_output := var_output||' RUNUSG="'||psa_to_xml(rcd_retrieve.pty_prd_run_usage)||'"';
          var_output := var_output||' RESUSG="'||psa_to_xml(rcd_retrieve.pty_prd_res_usage)||'"';
-         var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
+         var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"';
+         var_output := var_output||' ACTUSG="'||psa_to_xml(rcd_retrieve.pty_prd_act_usage)||'"';
+         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_retrieve.pty_prd_lin_wastage)||'"';
+         var_output := var_output||' LINFIL="'||psa_to_xml(rcd_retrieve.pty_prd_lin_filler)||'"';
+         var_output := var_output||' RUNEFF="'||psa_to_xml(rcd_retrieve.pty_prd_run_efficiency)||'"';
+         var_output := var_output||' RUNWAS="'||psa_to_xml(rcd_retrieve.pty_prd_run_wastage)||'"';
+         var_output := var_output||' RUNVAL="'||psa_to_xml(rcd_retrieve.pty_prd_run_value)||'"';
+         var_output := var_output||' ACTVAL="'||psa_to_xml(rcd_retrieve.pty_prd_act_value)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<PTYDFN PRDTYP=""';
@@ -344,7 +356,14 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' LINUSG="'||psa_to_xml(rcd_retrieve.pty_prd_lin_usage)||'"';
          var_output := var_output||' RUNUSG="'||psa_to_xml(rcd_retrieve.pty_prd_run_usage)||'"';
          var_output := var_output||' RESUSG="'||psa_to_xml(rcd_retrieve.pty_prd_res_usage)||'"';
-         var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"/>';
+         var_output := var_output||' CREUSG="'||psa_to_xml(rcd_retrieve.pty_prd_cre_usage)||'"';
+         var_output := var_output||' ACTUSG="'||psa_to_xml(rcd_retrieve.pty_prd_act_usage)||'"';
+         var_output := var_output||' LINWAS="'||psa_to_xml(rcd_retrieve.pty_prd_lin_wastage)||'"';
+         var_output := var_output||' LINFIL="'||psa_to_xml(rcd_retrieve.pty_prd_lin_filler)||'"';
+         var_output := var_output||' RUNEFF="'||psa_to_xml(rcd_retrieve.pty_prd_run_efficiency)||'"';
+         var_output := var_output||' RUNWAS="'||psa_to_xml(rcd_retrieve.pty_prd_run_wastage)||'"';
+         var_output := var_output||' RUNVAL="'||psa_to_xml(rcd_retrieve.pty_prd_run_value)||'"';
+         var_output := var_output||' ACTVAL="'||psa_to_xml(rcd_retrieve.pty_prd_act_value)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<PTYDFN PRDTYP=""';
@@ -354,7 +373,14 @@ create or replace package body psa_app.psa_pty_function as
          var_output := var_output||' LINUSG="0"';
          var_output := var_output||' RUNUSG="0"';
          var_output := var_output||' RESUSG="0"';
-         var_output := var_output||' CREUSG="0"/>';
+         var_output := var_output||' CREUSG="0"';
+         var_output := var_output||' ACTUSG="0"';
+         var_output := var_output||' LINWAS="0"';
+         var_output := var_output||' LINFIL="0"';
+         var_output := var_output||' RUNEFF="0"';
+         var_output := var_output||' RUNWAS="0"';
+         var_output := var_output||' RUNVAL=""';
+         var_output := var_output||' ACTVAL=""/>';
          pipe row(psa_xml_object(var_output));
       end if;
 
@@ -447,6 +473,13 @@ create or replace package body psa_app.psa_pty_function as
       rcd_psa_prd_type.pty_prd_run_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNUSG'));
       rcd_psa_prd_type.pty_prd_res_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESUSG'));
       rcd_psa_prd_type.pty_prd_cre_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CREUSG'));
+      rcd_psa_prd_type.pty_prd_act_usage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ACTUSG'));
+      rcd_psa_prd_type.pty_prd_lin_wastage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINWAS'));
+      rcd_psa_prd_type.pty_prd_lin_filler := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINFIL'));
+      rcd_psa_prd_type.pty_prd_run_efficiency := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNEFF'));
+      rcd_psa_prd_type.pty_prd_run_wastage := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNWAS'));
+      rcd_psa_prd_type.pty_prd_run_value := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RUNVAL'));
+      rcd_psa_prd_type.pty_prd_act_value := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ACTVAL'));
       rcd_psa_prd_type.pty_upd_user := upper(par_user);
       rcd_psa_prd_type.pty_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
@@ -480,8 +513,59 @@ create or replace package body psa_app.psa_pty_function as
       if rcd_psa_prd_type.pty_prd_cre_usage is null or (rcd_psa_prd_type.pty_prd_cre_usage != '0' and rcd_psa_prd_type.pty_prd_cre_usage != '1') then
          psa_gen_function.add_mesg_data('Production type crew model must be (0)no or (1)yes');
       end if;
+      if rcd_psa_prd_type.pty_prd_act_usage is null or (rcd_psa_prd_type.pty_prd_act_usage != '0' and rcd_psa_prd_type.pty_prd_act_usage != '1') then
+         psa_gen_function.add_mesg_data('Production type actuals must be (0)no or (1)yes');
+      end if;
       if rcd_psa_prd_type.pty_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the dependant input
+      /*-*/
+      if rcd_psa_prd_type.pty_prd_lin_usage = '1' then
+         if rcd_psa_prd_type.pty_prd_lin_wastage is null or (rcd_psa_prd_type.pty_prd_lin_wastage != '0' and rcd_psa_prd_type.pty_prd_lin_wastage != '1') then
+            psa_gen_function.add_mesg_data('Production type line wastage must be (0)no or (1)yes');
+         end if;
+         if rcd_psa_prd_type.pty_prd_lin_filler is null or (rcd_psa_prd_type.pty_prd_lin_filler != '0' and rcd_psa_prd_type.pty_prd_lin_filler != '1') then
+            psa_gen_function.add_mesg_data('Production type line filler must be (0)no or (1)yes');
+         end if;
+      else
+         if rcd_psa_prd_type.pty_prd_lin_wastage is null or rcd_psa_prd_type.pty_prd_lin_wastage != '0' then
+            psa_gen_function.add_mesg_data('Production type line wastage must be (0)no');
+         end if;
+         if rcd_psa_prd_type.pty_prd_lin_filler is null or rcd_psa_prd_type.pty_prd_lin_filler != '0' then
+            psa_gen_function.add_mesg_data('Production type line filler must be (0)no');
+         end if;
+      end if;
+      if rcd_psa_prd_type.pty_prd_run_usage = '1' then
+         if rcd_psa_prd_type.pty_prd_run_efficiency is null or (rcd_psa_prd_type.pty_prd_run_efficiency != '0' and rcd_psa_prd_type.pty_prd_run_efficiency != '1') then
+            psa_gen_function.add_mesg_data('Production type run rate efficiency must be (0)no or (1)yes');
+         end if;
+         if rcd_psa_prd_type.pty_prd_run_wastage is null or (rcd_psa_prd_type.pty_prd_run_wastage != '0' and rcd_psa_prd_type.pty_prd_run_wastage != '1') then
+            psa_gen_function.add_mesg_data('Production type run rate wastage must be (0)no or (1)yes');
+         end if;
+         if rcd_psa_prd_type.pty_prd_run_value is null then
+            psa_gen_function.add_mesg_data('Production type run rate value text must be entered');
+         end if;
+      else
+         if rcd_psa_prd_type.pty_prd_run_efficiency is null or rcd_psa_prd_type.pty_prd_run_efficiency != '0' then
+            psa_gen_function.add_mesg_data('Production type run rate efficiency must be (0)no');
+         end if;
+         if rcd_psa_prd_type.pty_prd_run_wastage is null or rcd_psa_prd_type.pty_prd_run_wastage != '0' then
+            psa_gen_function.add_mesg_data('Production type run rate wastage must be (0)no');
+         end if;
+         rcd_psa_prd_type.pty_prd_run_value := '*NONE';
+      end if;
+      if rcd_psa_prd_type.pty_prd_act_usage = '1' then
+         if rcd_psa_prd_type.pty_prd_act_value is null then
+            psa_gen_function.add_mesg_data('Production type actuals value text must be entered');
+         end if;
+      else
+         rcd_psa_prd_type.pty_prd_act_value := '*NONE';
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
@@ -517,6 +601,13 @@ create or replace package body psa_app.psa_pty_function as
                    pty_prd_run_usage = rcd_psa_prd_type.pty_prd_run_usage,
                    pty_prd_res_usage = rcd_psa_prd_type.pty_prd_res_usage,
                    pty_prd_cre_usage = rcd_psa_prd_type.pty_prd_cre_usage,
+                   pty_prd_act_usage = rcd_psa_prd_type.pty_prd_act_usage,
+                   pty_prd_lin_wastage = rcd_psa_prd_type.pty_prd_lin_wastage,
+                   pty_prd_lin_filler = rcd_psa_prd_type.pty_prd_lin_filler,
+                   pty_prd_run_efficiency = rcd_psa_prd_type.pty_prd_run_efficiency,
+                   pty_prd_run_wastage = rcd_psa_prd_type.pty_prd_run_wastage,
+                   pty_prd_run_value = rcd_psa_prd_type.pty_prd_run_value,
+                   pty_prd_act_value = rcd_psa_prd_type.pty_prd_act_value,
                    pty_upd_user = rcd_psa_prd_type.pty_upd_user,
                    pty_upd_date = rcd_psa_prd_type.pty_upd_date
              where pty_prd_type = rcd_psa_prd_type.pty_prd_type;
