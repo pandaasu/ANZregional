@@ -382,6 +382,13 @@ sub PaintFunction()%>
          var strPrdRunu = '0';
          var strPrdResu = '0';
          var strPrdCreu = '0';
+         var strPrdActu = '0';
+         var strPrdLinw = '0';
+         var strPrdLinf = '0';
+         var strPrdRune = '0';
+         var strPrdRunw = '0';
+         document.getElementById('DEF_PrdRunv').value = '';
+         document.getElementById('DEF_PrdActv').value = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                if (cstrDefineMode == '*UPD') {
@@ -396,6 +403,13 @@ sub PaintFunction()%>
                strPrdRunu = objElements[i].getAttribute('RUNUSG');
                strPrdResu = objElements[i].getAttribute('RESUSG');
                strPrdCreu = objElements[i].getAttribute('CREUSG');
+               strPrdActu = objElements[i].getAttribute('ACTUSG');
+               strPrdLinw = objElements[i].getAttribute('LINWAS');
+               strPrdLinf = objElements[i].getAttribute('LINFIL');
+               strPrdRune = objElements[i].getAttribute('RUNEFF');
+               strPrdRunw = objElements[i].getAttribute('RUNWAS');
+               document.getElementById('DEF_PrdRunv').value = objElements[i].getAttribute('RUNVAL');
+               document.getElementById('DEF_PrdActv').value = objElements[i].getAttribute('ACTVAL');
             }
          }
          objPrdStat.selectedIndex = -1;
@@ -410,6 +424,11 @@ sub PaintFunction()%>
          var objPrdRunu = document.getElementsByName('DEF_PrdRunu');
          var objPrdResu = document.getElementsByName('DEF_PrdResu');
          var objPrdCreu = document.getElementsByName('DEF_PrdCreu');
+         var objPrdActu = document.getElementsByName('DEF_PrdActu');
+         var objPrdLinw = document.getElementsByName('DEF_PrdLinw');
+         var objPrdLinf = document.getElementsByName('DEF_PrdLinf');
+         var objPrdRune = document.getElementsByName('DEF_PrdRune');
+         var objPrdRunw = document.getElementsByName('DEF_PrdRunw');
          if (strPrdMatu == '1') {
             objPrdMatu[0].checked = false;
             objPrdMatu[1].checked = true;
@@ -445,6 +464,41 @@ sub PaintFunction()%>
             objPrdCreu[0].checked = true;
             objPrdCreu[1].checked = false;
          }
+         if (strPrdActu == '1') {
+            objPrdActu[0].checked = false;
+            objPrdActu[1].checked = true;
+         } else {
+            objPrdActu[0].checked = true;
+            objPrdActu[1].checked = false;
+         }
+         if (strPrdLinw == '1') {
+            objPrdLinw[0].checked = false;
+            objPrdLinw[1].checked = true;
+         } else {
+            objPrdLinw[0].checked = true;
+            objPrdLinw[1].checked = false;
+         }
+         if (strPrdLinf == '1') {
+            objPrdLinf[0].checked = false;
+            objPrdLinf[1].checked = true;
+         } else {
+            objPrdLinf[0].checked = true;
+            objPrdLinf[1].checked = false;
+         }
+         if (strPrdRune == '1') {
+            objPrdRune[0].checked = false;
+            objPrdRune[1].checked = true;
+         } else {
+            objPrdRune[0].checked = true;
+            objPrdRune[1].checked = false;
+         }
+         if (strPrdRunw == '1') {
+            objPrdRunw[0].checked = false;
+            objPrdRunw[1].checked = true;
+         } else {
+            objPrdRunw[0].checked = true;
+            objPrdRunw[1].checked = false;
+         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_PrdName').focus();
          } else {
@@ -460,11 +514,21 @@ sub PaintFunction()%>
       var objPrdRunu = document.getElementsByName('DEF_PrdRunu');
       var objPrdResu = document.getElementsByName('DEF_PrdResu');
       var objPrdCreu = document.getElementsByName('DEF_PrdCreu');
+      var objPrdACtu = document.getElementsByName('DEF_PrdActu');
+      var objPrdLinw = document.getElementsByName('DEF_PrdLinw');
+      var objPrdLinf = document.getElementsByName('DEF_PrdLinf');
+      var objPrdRune = document.getElementsByName('DEF_PrdRune');
+      var objPrdRunw = document.getElementsByName('DEF_PrdRunw');
       var strPrdMatu = '0';
       var strPrdLinu = '0';
       var strPrdRunu = '0';
       var strPrdResu = '0';
       var strPrdCreu = '0';
+      var strPrdActu = '0';
+      var strPrdLinw = '0';
+      var strPrdLinf = '0';
+      var strPrdRune = '0';
+      var strPrdRunw = '0';
       if (objPrdMatu[1].checked == true) {
          strPrdMatu = '1';
       }
@@ -479,6 +543,21 @@ sub PaintFunction()%>
       }
       if (objPrdCreu[1].checked == true) {
          strPrdCreu = '1';
+      }
+      if (objPrdActu[1].checked == true) {
+         strPrdActu = '1';
+      }
+      if (objPrdLinw[1].checked == true) {
+         strPrdCLinw = '1';
+      }
+      if (objPrdLinf[1].checked == true) {
+         strPrdLinf = '1';
+      }
+      if (objPrdRune[1].checked == true) {
+         strPrdRune = '1';
+      }
+      if (objPrdRunw[1].checked == true) {
+         strPrdRunw = '1';
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
@@ -499,6 +578,13 @@ sub PaintFunction()%>
       strXML = strXML+' RUNUSG="'+fixXML(strPrdRunu)+'"';
       strXML = strXML+' RESUSG="'+fixXML(strPrdResu)+'"';
       strXML = strXML+' CREUSG="'+fixXML(strPrdCreu)+'"';
+      strXML = strXML+' ACTUSG="'+fixXML(strPrdActu)+'"';
+      strXML = strXML+' LINWAS="'+fixXML(strPrdLinw)+'"';
+      strXML = strXML+' LINFIL="'+fixXML(strPrdLinf)+'"';
+      strXML = strXML+' RUNEFF="'+fixXML(strPrdRune)+'"';
+      strXML = strXML+' RUNWAS="'+fixXML(strPrdRunw)+'"';
+      strXML = strXML+' RUNVAL="'+fixXML(document.getElementById('DEF_PrdRunv').value)+'"';
+      strXML = strXML+' ACTVAL="'+fixXML(document.getElementById('DEF_PrdActv').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -669,6 +755,53 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
             <input type="radio" name="DEF_PrdCreu" value="0">No&nbsp;
             <input type="radio" name="DEF_PrdCreu" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Actuals Usage:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
+            <input type="radio" name="DEF_PrdActu" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdActu" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Line Wastage Required:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
+            <input type="radio" name="DEF_PrdLinw" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdLinw" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Line Filler Required:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
+            <input type="radio" name="DEF_PrdLinf" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdLinf" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Run Rate Efficiency Required:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
+            <input type="radio" name="DEF_PrdRune" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdRune" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Run Rate Wastage Required:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align="left" colspan="1" nowrap><nobr>
+            <input type="radio" name="DEF_PrdRunw" value="0">No&nbsp;
+            <input type="radio" name="DEF_PrdRunw" value="1">Yes&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Value Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_PrdRunv" size="30" maxlength="30" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Actuals Value Text:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_PrdActv" size="30" maxlength="30" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
