@@ -537,19 +537,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" RRACDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" PTYCDE="'+cstrTypeCode+'" RRACDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" RRACDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" PTYCDE="'+cstrTypeCode+'" RRACDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" RRACDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" PTYCDE="'+cstrTypeCode+'" RRACDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_rra_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -589,6 +589,7 @@ sub PaintFunction()%>
          document.getElementById('DEF_RraWast').value = '';
          var strRraStat = '';
          var objRraStat = document.getElementById('DEF_RraStat');
+         document.getElementById('DEF_UntText').innerHTML = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'RRADFN') {
                if (cstrDefineMode == '*UPD') {
@@ -601,6 +602,7 @@ sub PaintFunction()%>
                document.getElementById('DEF_RraEffy').value = objElements[i].getAttribute('RRAEFF');
                document.getElementById('DEF_RraWast').value = objElements[i].getAttribute('RRAWAS');
                strRraStat = objElements[i].getAttribute('RRASTS');
+               document.getElementById('DEF_UntText').innerHTML = '&nbsp;<p>'+objElements[i].getAttribute('UNTTXT')+'</p>';
             }
          }
          objRraStat.selectedIndex = -1;
@@ -820,6 +822,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Units:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <font id="DEF_UntText" class="clsLabelBB"></font>
          </nobr></td>
       </tr>
       <tr>
