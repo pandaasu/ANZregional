@@ -258,6 +258,22 @@ create or replace package body psa_app.psa_lin_function as
           where t01.lde_lin_code = var_lin_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_lin_link is
+         select t01.*,
+                t02.*
+           from psa_lin_link t01,
+                psa_sap_line t02
+          where t01.lli_sap_code = t02.sli_sap_code
+            and t01.lli_lin_code = rcd_retrieve.lde_lin_code
+          order by t01.lli_sap_code asc;
+      rcd_lin_link csr_lin_link%rowtype;
+
+      cursor csr_link is
+         select t01.*
+           from psa_sap_line t01
+          order by t01.sli_sap_code asc;
+      rcd_link csr_link%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -340,22 +356,58 @@ create or replace package body psa_app.psa_lin_function as
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
+         var_output := var_output||' LINMAT="'||psa_to_xml(rcd_prdtype.pty_prd_mat_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM="'||psa_to_xml(rcd_retrieve.lde_lin_name)||'"';
          var_output := var_output||' LINWAS="'||to_char(rcd_retrieve.lde_lin_wastage,'fm990.00')||'"';
          var_output := var_output||' LINEVT="'||psa_to_xml(rcd_retrieve.lde_lin_events)||'"';
-         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"/>';
+         var_output := var_output||' LINSTS="'||psa_to_xml(rcd_retrieve.lde_lin_status)||'"';
+         var_output := var_output||' LINMAT="'||psa_to_xml(rcd_prdtype.pty_prd_mat_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<LINDFN LINCDE=""';
          var_output := var_output||' LINNAM=""';
          var_output := var_output||' LINWAS="0.00"';
          var_output := var_output||' LINEVT="0"';
-         var_output := var_output||' LINSTS="1"/>';
+         var_output := var_output||' LINSTS="1"';
+         var_output := var_output||' LINMAT="'||psa_to_xml(rcd_prdtype.pty_prd_mat_usage)||'"/>';
          pipe row(psa_xml_object(var_output));
+      end if;
+
+      /*-*/
+      /* Retrieve the link data when required
+      /*-*/
+      if rcd_prdtype.pty_prd_mat_usage = '1' then
+
+         /*-*/
+         /* Pipe the line link data XML
+         /*-*/
+         open csr_lin_link;
+         loop
+            fetch csr_lin_link into rcd_lin_link;
+            if csr_lin_link%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<LINLNK LNKCDE="'||psa_to_xml(rcd_lin_link.sli_sap_code)||'" LNKNAM="'||psa_to_xml('('||rcd_lin_link.sli_sap_code||') '||rcd_lin_link.sli_sap_name)||'"/>'));
+         end loop;
+         close csr_lin_link;
+
+         /*-*/
+         /* Pipe the link data XML
+         /*-*/
+         open csr_link;
+         loop
+            fetch csr_link into rcd_link;
+            if csr_link%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<LNKDFN LNKCDE="'||psa_to_xml(rcd_link.sli_sap_code)||'" LNKNAM="'||psa_to_xml('('||rcd_link.sli_sap_code||') '||rcd_link.sli_sap_name)||'"/>'));
+         end loop;
+         close csr_link;
+
       end if;
 
       /*-*/
@@ -399,10 +451,14 @@ create or replace package body psa_app.psa_lin_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
+      obj_lnk_list xmlDom.domNodeList;
+      obj_lnk_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
+      var_sap_code varchar2(32);
       rcd_psa_lin_defn psa_lin_defn%rowtype;
+      rcd_psa_lin_link psa_lin_link%rowtype;
 
       /*-*/
       /* Local cursors
@@ -419,6 +475,12 @@ create or replace package body psa_app.psa_lin_function as
            from psa_prd_type t01
           where t01.pty_prd_type = rcd_psa_lin_defn.lde_prd_type;
       rcd_prdtype csr_prdtype%rowtype;
+
+      cursor csr_link is
+         select t01.*
+           from psa_sap_line t01
+          where t01.sli_sap_code = var_sap_code;
+      rcd_link csr_link%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -512,6 +574,26 @@ create or replace package body psa_app.psa_lin_function as
       end if;
 
       /*-*/
+      /* Validate the child relationships
+      /*-*/
+      if rcd_prdtype.pty_prd_mat_usage = '1' then
+         obj_lnk_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LINLNK');
+         for idx in 0..xmlDom.getLength(obj_lnk_list)-1 loop
+            obj_lnk_node := xmlDom.item(obj_lnk_list,idx);
+            var_sap_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@SAPCDE')));
+            open csr_link;
+            fetch csr_link into rcd_link;
+            if csr_link%notfound then
+               psa_gen_function.add_mesg_data('SAP line code ('||var_sap_code||') does not exist');
+            end if;
+            close csr_link;
+         end loop;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Process the line definition
       /*-*/
       if var_action = '*UPDDEF' then
@@ -554,6 +636,19 @@ create or replace package body psa_app.psa_lin_function as
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
          return;
+      end if;
+
+      /*-*/
+      /* Retrieve and insert the line link data when required
+      /*-*/
+      if rcd_prdtype.pty_prd_mat_usage = '1' then
+         rcd_psa_lin_link.lli_lin_code := rcd_psa_lin_defn.lde_lin_code;
+         obj_lnk_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LINLNK');
+         for idx in 0..xmlDom.getLength(obj_lnk_list)-1 loop
+            obj_lnk_node := xmlDom.item(obj_lnk_list,idx);
+            rcd_psa_lin_link.lli_sap_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@SAPCDE')));
+            insert into psa_lin_link values rcd_psa_lin_link;
+         end loop;
       end if;
 
       /*-*/
@@ -649,6 +744,7 @@ create or replace package body psa_app.psa_lin_function as
       delete from psa_lin_filler where lfi_lin_code = var_lin_code;
       delete from psa_lin_rate where lra_lin_code = var_lin_code;
       delete from psa_lin_config where lco_lin_code = var_lin_code;
+      delete from psa_lin_link where lli_lin_code = var_lin_code;
       delete from psa_lin_defn where lde_lin_code = var_lin_code;
 
       /*-*/
