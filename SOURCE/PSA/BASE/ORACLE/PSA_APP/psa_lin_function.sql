@@ -456,7 +456,7 @@ create or replace package body psa_app.psa_lin_function as
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
-      var_sap_code varchar2(32);
+      var_lnk_code varchar2(32);
       rcd_psa_lin_defn psa_lin_defn%rowtype;
       rcd_psa_lin_link psa_lin_link%rowtype;
 
@@ -479,7 +479,7 @@ create or replace package body psa_app.psa_lin_function as
       cursor csr_link is
          select t01.*
            from psa_sap_line t01
-          where t01.sli_sap_code = var_sap_code;
+          where t01.sli_sap_code = var_lnk_code;
       rcd_link csr_link%rowtype;
 
    /*-------------*/
@@ -580,11 +580,11 @@ create or replace package body psa_app.psa_lin_function as
          obj_lnk_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LINLNK');
          for idx in 0..xmlDom.getLength(obj_lnk_list)-1 loop
             obj_lnk_node := xmlDom.item(obj_lnk_list,idx);
-            var_sap_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@SAPCDE')));
+            var_lnk_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@LNKCDE')));
             open csr_link;
             fetch csr_link into rcd_link;
             if csr_link%notfound then
-               psa_gen_function.add_mesg_data('SAP line code ('||var_sap_code||') does not exist');
+               psa_gen_function.add_mesg_data('SAP line code ('||var_lnk_code||') does not exist');
             end if;
             close csr_link;
          end loop;
@@ -646,7 +646,7 @@ create or replace package body psa_app.psa_lin_function as
          obj_lnk_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LINLNK');
          for idx in 0..xmlDom.getLength(obj_lnk_list)-1 loop
             obj_lnk_node := xmlDom.item(obj_lnk_list,idx);
-            rcd_psa_lin_link.lli_sap_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@SAPCDE')));
+            rcd_psa_lin_link.lli_sap_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lnk_node,'@LNKCDE')));
             insert into psa_lin_link values rcd_psa_lin_link;
          end loop;
       end if;
