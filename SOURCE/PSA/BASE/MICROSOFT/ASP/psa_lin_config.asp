@@ -534,6 +534,7 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
+   var cstrDefineLink;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -589,6 +590,11 @@ sub PaintFunction()%>
          var objLinEvnt = document.getElementById('DEF_LinEvnt');
          var strLinStat = '';
          var objLinStat = document.getElementById('DEF_LinStat');
+         var objLnkList = document.getElementById('DEF_LnkList');
+         var objLnkSlct = document.getElementById('DEF_LnkSlct');
+         objLnkList.options.length = 0;
+         objLnkSlct.options.length = 0;
+         cstrDefineLink = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LINDFN') {
                if (cstrDefineMode == '*UPD') {
@@ -600,6 +606,11 @@ sub PaintFunction()%>
                document.getElementById('DEF_LinWast').value = objElements[i].getAttribute('LINWAS');
                strLinEvnt = objElements[i].getAttribute('LINEVT');
                strLinStat = objElements[i].getAttribute('LINSTS');
+               cstrDefineLink = objElements[i].getAttribute('LINMAT');
+            } else if (objElements[i].nodeName == 'LNKDFN') {
+               objLnkList.options[objLnkList.options.length] = new Option(objElements[i].getAttribute('LNKNAM'),objElements[i].getAttribute('LNKCDE'));
+            } else if (objElements[i].nodeName == 'LINLNK') {
+               objLnkSlct.options[objLnkSlct.options.length] = new Option(objElements[i].getAttribute('LNKNAM'),objElements[i].getAttribute('LNKCDE'));
             }
          }
          objLinEvnt.selectedIndex = -1;
@@ -616,6 +627,15 @@ sub PaintFunction()%>
                break;
             }
          }
+         objLnkList.selectedIndex = -1;
+         objLnkSlct.selectedIndex = -1;
+         if (cstrDefineLink == '1') {
+            document.getElementById('lnkWork').style.display = 'block';
+            document.getElementById('lnkDefine').style.display = 'block';
+         } else {
+            document.getElementById('lnkWork').style.display = 'none';
+            document.getElementById('lnkDefine').style.display = 'none';
+         }
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_LinName').focus();
          } else {
@@ -627,6 +647,7 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objLinEvnt = document.getElementById('DEF_LinEvnt');
       var objLinStat = document.getElementById('DEF_LinStat');
+      var objLnkSlct = document.getElementById('DEF_LnkSlct');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
@@ -648,7 +669,13 @@ sub PaintFunction()%>
          strXML = strXML+' LINSTS="'+fixXML(objLinStat.options[objLinStat.selectedIndex].value)+'"';
       }
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
-      strXML = strXML+'/>';
+      strXML = strXML+'>';
+      if (cstrDefineLink == '1') {
+         for (var i=0;i<objLnkSlct.options.length;i++) {
+            strXML = strXML+'<LINLNK LNKCDE="'+fixXML(objLnkSlct[i].value)+'"/>';
+         }
+      }
+      strXML = strXML+'</PSA_REQUEST>'
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
@@ -688,6 +715,62 @@ sub PaintFunction()%>
       if (checkChange() == false) {return;}
       displayScreen('dspSelect');
       document.getElementById('SEL_SelCode').focus();
+   }
+   function doDefineSelectLink(objList, objSlct) {
+      var objList = document.getElementById('DEF_LnkList');
+      var objSlct = document.getElementById('DEF_LnkSlct');
+      var bolFound;
+      for (var i=0;i<objList.options.length;i++) {
+         if (objList.options[i].selected == true) {
+            bolFound = false;
+            for (var j=0;j<objSlct.options.length;j++) {
+               if (objList[i].value == objSlct[j].value) {
+                  bolFound = true;
+                  break;
+               }
+            }
+            if (!bolFound) {
+               objSlct.options[objSlct.options.length] = new Option(objList[i].text,objList[i].value);
+            }
+         }
+      }
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         objYarra[intYindx] = objSlct[i];
+         intYindx++;
+      }
+      objYarra.sort(doDefineSortLink);
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+      objList.selectedIndex = -1;
+   }
+   function doDefineRemoveLink(objSlct) {
+      var objSlct = document.getElementById('DEF_LnkSlct');
+      var objYarra = new Array();
+      var intYindx = 0;
+      for (var i=0;i<objSlct.options.length;i++) {
+         if (objSlct.options[i].selected == false) {
+            objYarra[intYindx] = objSlct[i];
+            intYindx++;
+         }
+      }
+      objSlct.options.length = 0;
+      objSlct.selectedIndex = -1;
+      for (var i=0;i<objYarra.length;i++) {
+         objSlct.options[i] = objYarra[i];
+      }
+   }
+   function doDefineSortLink(obj01, obj02) {
+      if (obj01.value < obj02.value) {
+         return -1;
+      } else if (obj01.value > obj02.value) {
+         return 1;
+      }
+      return 0;
    }
 
 // -->
@@ -852,6 +935,45 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr id="lnkWork" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr id="lnkDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+                        <tr>
+                           <td class="clsLabelHB" align=center colspan=3 nowrap><nobr>&nbsp;Line SAP Links&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Links&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Links&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_LnkList" name="DEF_LnkList" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="doDefineRemoveLink();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="doDefineSelectLink();"></nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="DEF_LnkSlct" name="DEF_LnkSlct" style="width:300px" multiple size=5></select>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
