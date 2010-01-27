@@ -20,14 +20,14 @@
 /**/
 create table psa.psa_sap_line
    (sli_sap_code                    varchar2(32)                  not null,
-    sli_sap_text                    varchar2(128 char)            not null);
+    sli_sap_name                    varchar2(128 char)            not null);
 
 /**/
 /* Comments
 /**/
 comment on table psa.psa_sap_line is 'SAP Line Table';
 comment on column psa.psa_sap_line.sli_sap_code is 'SAP code';
-comment on column psa.psa_sap_line.sli_sap_text is 'SAP text';
+comment on column psa.psa_sap_line.sli_sap_name is 'SAP name';
 
 /**/
 /* Primary Key Constraint
