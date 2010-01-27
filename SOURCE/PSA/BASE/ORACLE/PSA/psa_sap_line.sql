@@ -20,7 +20,9 @@
 /**/
 create table psa.psa_sap_line
    (sli_sap_code                    varchar2(32)                  not null,
-    sli_sap_name                    varchar2(128 char)            not null);
+    sli_sap_name                    varchar2(128 char)            not null,
+    sli_upd_user                    varchar2(30)                  not null,
+    sli_upd_date                    date                          not null);
 
 /**/
 /* Comments
@@ -28,6 +30,8 @@ create table psa.psa_sap_line
 comment on table psa.psa_sap_line is 'SAP Line Table';
 comment on column psa.psa_sap_line.sli_sap_code is 'SAP code';
 comment on column psa.psa_sap_line.sli_sap_name is 'SAP name';
+comment on column psa.psa_sap_line.sli_upd_user is 'Last updated user';
+comment on column psa.psa_sap_line.sli_upd_date is 'Last updated date';
 
 /**/
 /* Primary Key Constraint
