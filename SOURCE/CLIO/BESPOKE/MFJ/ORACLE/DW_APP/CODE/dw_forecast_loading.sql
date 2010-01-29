@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package dw_forecast_loading as
+CREATE OR REPLACE package DW_APP.dw_forecast_loading as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -45,7 +42,8 @@ create or replace package dw_forecast_loading as
  2007/12   Steve Gregan   Enabled BR forecast creation and loading for
                           casting period equal to CLIO previous period
  2008/12   Steve Gregan   Modified to fix XML parsing cdata section bug
-
+ 2010/01   Ben Halicki    Fixed previos mars date calculation issue in accept_period_load
+ 
 *******************************************************************************/
 
    /*-*/
@@ -69,10 +67,8 @@ create or replace package dw_forecast_loading as
 end dw_forecast_loading;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body dw_forecast_loading as
+
+CREATE OR REPLACE package body DW_APP.dw_forecast_loading as
 
    /*-*/
    /* Private exceptions
@@ -114,7 +110,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_load_header is 
+      cursor csr_fcst_load_header is
          select t01.*,
                 nvl(t02.company_desc,'*UNKNOWN') as company_desc,
                 nvl(t03.sales_org_desc,'*UNKNOWN') as sales_org_desc,
@@ -137,13 +133,13 @@ create or replace package body dw_forecast_loading as
             and t01.load_identifier = var_identifier;
       rcd_fcst_load_header csr_fcst_load_header%rowtype;
 
-      cursor csr_fcst_load_count is 
+      cursor csr_fcst_load_count is
          select count(*) as material_count
            from fcst_load_detail t01
           where t01.load_identifier = rcd_fcst_load_header.load_identifier;
       rcd_fcst_load_count csr_fcst_load_count%rowtype;
 
-      cursor csr_fcst_load_detail is 
+      cursor csr_fcst_load_detail is
          select t01.*,
                 nvl(t02.material_desc_en,'*UNKNOWN') as material_desc_en,
                 nvl(t02.material_desc_ja,'*UNKNOWN') as material_desc_ja
@@ -609,7 +605,7 @@ create or replace package body dw_forecast_loading as
       end if;
 
       /*-*/
-      /* Set the data identifier end 
+      /* Set the data identifier end
       /*-*/
       if rcd_fcst_load_header.fcst_source != '*TXV' then
          var_row_count := var_row_count + ((rcd_fcst_load_count.material_count-1)*6) + 1;
@@ -974,7 +970,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_load_header is 
+      cursor csr_fcst_load_header is
          select *
            from fcst_load_header t01
           where t01.load_identifier = var_identifier
@@ -1108,13 +1104,13 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_load_check is 
+      cursor csr_fcst_load_check is
          select *
            from fcst_load_header t01
           where t01.load_identifier = var_identifier;
       rcd_fcst_load_check csr_fcst_load_check%rowtype;
 
-      cursor csr_fcst_split is 
+      cursor csr_fcst_split is
          select t01.sap_sales_org_code,
                 t01.sap_distbn_chnl_code,
                 t01.sap_division_code,
@@ -1129,9 +1125,12 @@ create or replace package body dw_forecast_loading as
       rcd_fcst_split csr_fcst_split%rowtype;
 
       cursor csr_mars_date is
-         select t01.mars_period
-           from mars_date t01
-          where to_char(t01.calendar_date,'yyyymmdd') = to_char(sysdate,'yyyymmdd');
+         select 
+           decode(period_num-1,0,mars_year-1 || 13, mars_year || lpad(period_num-1,2,'0')) prev_period, 
+           t01.*
+         from 
+           mars_date t01
+         where to_char(t01.calendar_date,'yyyymmdd') = to_char(sysdate,'yyyymmdd');
       rcd_mars_date csr_mars_date%rowtype;
 
       cursor csr_fcst_text14_detail is
@@ -1199,9 +1198,9 @@ create or replace package body dw_forecast_loading as
       cursor csr_material_price_list is
          select t04.mars_period as str_yyyynn,
                 nvl(t05.mars_period,999999) as end_yyyynn,
-                ((t02.material_list_price/t02.material_list_price_per_units)*nvl(t03.denominator_x_conv,1))/nvl(t03.numerator_y_conv,1) as material_price 
+                ((t02.material_list_price/t02.material_list_price_per_units)*nvl(t03.denominator_x_conv,1))/nvl(t03.numerator_y_conv,1) as material_price
            from material_dim t01,
-                material_list_price t02, 
+                material_list_price t02,
                 material_uom t03,
                 mars_date t04,
                 mars_date t05
@@ -1220,12 +1219,12 @@ create or replace package body dw_forecast_loading as
                    t05.mars_period asc;
       rcd_material_price_list csr_material_price_list%rowtype;
 
-      cursor csr_material_price_gdsc is 
+      cursor csr_material_price_gdsc is
          select t04.mars_period as str_yyyynn,
                 nvl(t05.mars_period,999999) as end_yyyynn,
-                ((t02.material_list_price/t02.material_list_price_per_units)*nvl(t03.denominator_x_conv,1))/nvl(t03.numerator_y_conv,1) as material_price 
+                ((t02.material_list_price/t02.material_list_price_per_units)*nvl(t03.denominator_x_conv,1))/nvl(t03.numerator_y_conv,1) as material_price
            from material_dim t01,
-                material_list_price t02, 
+                material_list_price t02,
                 material_uom t03,
                 mars_date t04,
                 mars_date t05
@@ -1244,7 +1243,7 @@ create or replace package body dw_forecast_loading as
                    t05.mars_period asc;
       rcd_material_price_gdsc csr_material_price_gdsc%rowtype;
 
-      cursor csr_material_price_vdsc is 
+      cursor csr_material_price_vdsc is
          select nvl(decode(sum(t01.sales_dtl_price_value_12),0,0,
                            decode(sum(t01.sales_dtl_price_value_13),0,0,
                                   round(sum(sales_dtl_price_value_12)/sum(sales_dtl_price_value_13),2)*-1)),0) as material_price
@@ -1361,7 +1360,9 @@ create or replace package body dw_forecast_loading as
          close csr_mars_date;
          if var_type = '*BR1' then
             if var_source != '*PLN' then
-               var_cast_yyyynn := rcd_mars_date.mars_period - 1;
+               -- modified BJH - Correctly calculate previous period
+               --var_cast_yyyynn := rcd_mars_date.mars_period - 1;
+               var_cast_yyyynn := rcd_mars_date.prev_period;
                if substr(to_char(var_cast_yyyynn,'fm000000'),5,2) = '00' then
                   var_cast_yyyynn := var_cast_yyyynn - 87;
                end if;
@@ -1537,7 +1538,7 @@ create or replace package body dw_forecast_loading as
             /*-*/
             for idx in 1..13 loop
                tbl_wrkp(idx) := 0;
-	    end loop;
+        end loop;
             open csr_material_price_list;
             loop
                fetch csr_material_price_list into rcd_material_price_list;
@@ -1558,7 +1559,7 @@ create or replace package body dw_forecast_loading as
             /*-*/
             for idx in 1..13 loop
                tbl_wrkd(idx) := 0;
-	    end loop;
+        end loop;
             open csr_material_price_gdsc;
             loop
                fetch csr_material_price_gdsc into rcd_material_price_gdsc;
@@ -2161,7 +2162,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_load_header is 
+      cursor csr_fcst_load_header is
          select *
            from fcst_load_header t01
           where t01.load_identifier = var_identifier
@@ -2758,12 +2759,15 @@ create or replace package body dw_forecast_loading as
       /* Local cursors
       /*-*/
       cursor csr_mars_date is
-         select *
-           from mars_date t01
-          where to_char(t01.calendar_date,'yyyymmdd') = to_char(sysdate,'yyyymmdd');
+         select
+            decode(period_num-1,0,mars_year-1 || 13, mars_year || lpad(period_num-1,2,'0')) prev_period, 
+            t01.*
+         from 
+            mars_date t01
+         where to_char(t01.calendar_date,'yyyymmdd') = to_char(sysdate,'yyyymmdd');
       rcd_mars_date csr_mars_date%rowtype;
 
-      cursor csr_fcst_load_header is 
+      cursor csr_fcst_load_header is
          select *
            from fcst_load_header t01
           where t01.load_identifier = var_identifier
@@ -2860,8 +2864,10 @@ create or replace package body dw_forecast_loading as
       end if;
       close csr_mars_date;
       if rcd_fcst_load_header.fcst_type = '*BR' then
-         if rcd_fcst_load_header.fcst_cast_yyyynn < (rcd_mars_date.mars_period - 1) then
-            raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') must not be less than CLIO previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
+         -- modified BJH - Correctly calculate mars previous period
+         --if rcd_fcst_load_header.fcst_cast_yyyynn < (rcd_mars_date.mars_period - 1) then         
+         if rcd_fcst_load_header.fcst_cast_yyyynn < (rcd_mars_date.prev_period) then 
+           raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') must not be less than CLIO previous period ('||to_char(rcd_mars_date.prev_period)||')');
          end if;
       end if;
       if rcd_fcst_load_header.fcst_type = '*OP1' then
@@ -3177,7 +3183,7 @@ create or replace package body dw_forecast_loading as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_fcst_load_header is 
+      cursor csr_fcst_load_header is
          select *
            from fcst_load_header t01
           where t01.load_identifier = par_identifier;
@@ -3714,7 +3720,7 @@ create or replace package body dw_forecast_loading as
             rcd_fcst_data.sap_material_code := '*ROW';
             for idx in 1..39 loop
                tbl_wrkw(idx) := 0;
-	    end loop;
+        end loop;
             var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
             if not(var_string is null) then
                var_value := null;
