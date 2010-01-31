@@ -110,6 +110,7 @@ FUNCTION pmx_cust_flattening(
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   04/04/2007 Kris Lee           Created this procedure.
+    2.0   09/12/2009 Steve Gregan       Added additional customer fields.
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -1216,23 +1217,77 @@ FUNCTION pmx_cust_flattening(
         pmx_cust_name,
         cust_code,
         prmtbl_flag,
-        acct_mgr_key
+        acct_mgr_key,
+        major_ref_code,
+        major_ref_desc,
+        mid_ref_code,
+        mid_ref_desc,
+        minor_ref_code,
+        minor_ref_desc,
+        main_code,
+        main_name,
+        cust_level,
+        parent_cust_code,
+        parent_cust_desc,
+        parent_gl_cust_code,
+        parent_gl_cust_desc,
+        gl_code,
+        distbn_chnl_code
       FROM
         pmx_cust_dim
       MINUS
       SELECT
-        company_code,
-        division_code,
-        cust_name as pmx_cust_name,
-        cust_code,
-        prom_flag as prmtbl_flag,
-        acct_mgr_key
+        t01.company_code,
+        t01.division_code,
+        t01.cust_name as pmx_cust_name,
+        t01.cust_code,
+        t01.prom_flag as prmtbl_flag,
+        t01.acct_mgr_key,
+        t01.major_ref_code,
+        t02.cust_name as major_ref_desc,
+        t01.mid_ref_code,
+        t03.cust_name as mid_ref_desc,
+        t01.minor_ref_code,
+        t04.cust_name as minor_ref_desc,
+        t01.main_code,
+        t05.cust_name as main_name,
+        t01.cust_level,
+        t01.parent_cust_code,
+        t06.cust_name as parent_cust_desc,
+        t01.parent_gl_cust_code,
+        t07.cust_name as parent_gl_cust_desc,
+        t01.gl_code,
+        t01.distbn_chnl_code
       FROM
-        pmx_cust;
-
+        pmx_cust t01,
+        pmx_cust t02,
+        pmx_cust t03,
+        pmx_cust t04,
+        pmx_cust t05,
+        pmx_cust t06,
+        pmx_cust t07
+      WHERE t01.company_code = t02.company_code(+)
+        AND t01.division_code = t02.division_code(+)
+        AND t01.major_ref_code = t02.cust_code(+)
+        AND t01.company_code = t03.company_code(+)
+        AND t01.division_code = t03.division_code(+)
+        AND t01.mid_ref_code = t03.cust_code(+)
+        AND t01.company_code = t04.company_code(+)
+        AND t01.division_code = t04.division_code(+)
+        AND t01.minor_ref_code = t04.cust_code(+)
+        AND t01.company_code = t05.company_code(+)
+        AND t01.division_code = t05.division_code(+)
+        AND t01.main_code = t05.cust_code(+)
+        AND t01.company_code = t06.company_code(+)
+        AND t01.division_code = t06.division_code(+)
+        AND t01.parent_cust_code = t06.cust_code(+)
+        AND t01.company_code = t07.company_code(+)
+        AND t01.division_code = t07.division_code(+)
+        AND t01.parent_gl_cust_code = t07.cust_code(+);
     rv_dim_minus_pmx_cust csr_dim_minus_pmx_cust%ROWTYPE;
 
   BEGIN
+
     v_data_type  := ods_constants.data_type_pmx_cust;
     v_sort_field := 'PMX CUST';
     v_log_level  := i_log_level;
@@ -1261,7 +1316,6 @@ FUNCTION pmx_cust_flattening(
 
         v_upd_count := v_upd_count + 1;
     END LOOP;
-
     CLOSE csr_dim_minus_pmx_cust;
 
     v_log_level := v_log_level + 1;
@@ -1273,14 +1327,53 @@ FUNCTION pmx_cust_flattening(
     MERGE INTO
       pmx_cust_dim t1
     USING (SELECT
-             company_code,
-             division_code,
-             cust_name as pmx_cust_name,
-             cust_code,
-             prom_flag as prmtbl_flag,
-             acct_mgr_key
+             t01.company_code,
+             t01.division_code,
+             t01.cust_name as pmx_cust_name,
+             t01.cust_code,
+             t01.prom_flag as prmtbl_flag,
+             t01.acct_mgr_key,
+             t01.major_ref_code,
+             t02.cust_name as major_ref_desc,
+             t01.mid_ref_code,
+             t03.cust_name as mid_ref_desc,
+             t01.minor_ref_code,
+             t04.cust_name as minor_ref_desc,
+             t01.main_code,
+             t05.cust_name as main_name,
+             t01.cust_level,
+             t01.parent_cust_code,
+             t06.cust_name as parent_cust_desc,
+             t01.parent_gl_cust_code,
+             t07.cust_name as parent_gl_cust_desc,
+             t01.gl_code,
+             t01.distbn_chnl_code
            FROM
-             pmx_cust
+             pmx_cust t01,
+             pmx_cust t02,
+             pmx_cust t03,
+             pmx_cust t04,
+             pmx_cust t05,
+             pmx_cust t06,
+             pmx_cust t07
+           WHERE t01.company_code = t02.company_code(+)
+             AND t01.division_code = t02.division_code(+)
+             AND t01.major_ref_code = t02.cust_code(+)
+             AND t01.company_code = t03.company_code(+)
+             AND t01.division_code = t03.division_code(+)
+             AND t01.mid_ref_code = t03.cust_code(+)
+             AND t01.company_code = t04.company_code(+)
+             AND t01.division_code = t04.division_code(+)
+             AND t01.minor_ref_code = t04.cust_code(+)
+             AND t01.company_code = t05.company_code(+)
+             AND t01.division_code = t05.division_code(+)
+             AND t01.main_code = t05.cust_code(+)
+             AND t01.company_code = t06.company_code(+)
+             AND t01.division_code = t06.division_code(+)
+             AND t01.parent_cust_code = t06.cust_code(+)
+             AND t01.company_code = t07.company_code(+)
+             AND t01.division_code = t07.division_code(+)
+             AND t01.parent_gl_cust_code = t07.cust_code(+)
            MINUS
            SELECT
              company_code,
@@ -1288,9 +1381,24 @@ FUNCTION pmx_cust_flattening(
              pmx_cust_name,
              cust_code,
              prmtbl_flag,
-             acct_mgr_key
+             acct_mgr_key,
+             major_ref_code,
+             major_ref_desc,
+             mid_ref_code,
+             mid_ref_desc,
+             minor_ref_code,
+             minor_ref_desc,
+             main_code,
+             main_name,
+             cust_level,
+             parent_cust_code,
+             parent_cust_desc,
+             parent_gl_cust_code,
+             parent_gl_cust_desc,
+             gl_code,
+             distbn_chnl_code
            FROM
-             pmx_cust_dim ) t2
+             pmx_cust_dim) t2
           ON (t1.company_code = t2.company_code
               AND t1.division_code = t2.division_code
               AND t1.cust_code = t2.cust_code)
@@ -1298,7 +1406,22 @@ FUNCTION pmx_cust_flattening(
       UPDATE SET
         t1.pmx_cust_name = t2.pmx_cust_name,
         t1.prmtbl_flag = t2.prmtbl_flag,
-        t1.acct_mgr_key = t2.acct_mgr_key
+        t1.acct_mgr_key = t2.acct_mgr_key,
+        t1.major_ref_code = t2.major_ref_code,
+        t1.major_ref_desc = t2.major_ref_desc,
+        t1.mid_ref_code = t2.mid_ref_code,
+        t1.mid_ref_desc = t2.mid_ref_desc,
+        t1.minor_ref_code = t2.minor_ref_code,
+        t1.minor_ref_desc = t2.minor_ref_desc,
+        t1.main_code = t2.main_code,
+        t1.main_name = t2.main_name,
+        t1.cust_level = t2.cust_level,
+        t1.parent_cust_code = t2.parent_cust_code,
+        t1.parent_cust_desc = t2.parent_cust_desc,
+        t1.parent_gl_cust_code = t2.parent_gl_cust_code,
+        t1.parent_gl_cust_desc = t2.parent_gl_cust_desc,
+        t1.gl_code = t2.gl_code,
+        t1.distbn_chnl_code = t2.distbn_chnl_code
     WHEN NOT MATCHED THEN
       INSERT
         (t1.company_code,
@@ -1306,14 +1429,44 @@ FUNCTION pmx_cust_flattening(
          t1.cust_code,
          t1.pmx_cust_name,
          t1.prmtbl_flag,
-         t1.acct_mgr_key)
+         t1.acct_mgr_key,
+         t1.major_ref_code,
+         t1.major_ref_desc,
+         t1.mid_ref_code,
+         t1.mid_ref_desc,
+         t1.minor_ref_code,
+         t1.minor_ref_desc,
+         t1.main_code,
+         t1.main_name,
+         t1.cust_level,
+         t1.parent_cust_code,
+         t1.parent_cust_desc,
+         t1.parent_gl_cust_code,
+         t1.parent_gl_cust_desc,
+         t1.gl_code,
+         t1.distbn_chnl_code)
       VALUES
         (t2.company_code,
          t2.division_code,
          t2.cust_code,
          t2.pmx_cust_name,
          t2.prmtbl_flag,
-         t2.acct_mgr_key);
+         t2.acct_mgr_key,
+         t2.major_ref_code,
+         t2.major_ref_desc,
+         t2.mid_ref_code,
+         t2.mid_ref_desc,
+         t2.minor_ref_code,
+         t2.minor_ref_desc,
+         t2.main_code,
+         t2.main_name,
+         t2.cust_level,
+         t2.parent_cust_code,
+         t2.parent_cust_desc,
+         t2.parent_gl_cust_code,
+         t2.parent_gl_cust_desc,
+         t2.gl_code,
+         t2.distbn_chnl_code);
 
     v_upd_count := SQL%ROWCOUNT;
 
@@ -1323,7 +1476,6 @@ FUNCTION pmx_cust_flattening(
 
     -- Completed successfully.
     RETURN constants.success;
-
 
   EXCEPTION
     WHEN OTHERS THEN
