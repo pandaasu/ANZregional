@@ -41,14 +41,6 @@ insert into lics_interface values('WGBSBW03','WGB to BW - TP Transactions Data',
 commit;
 
 
-NEED WBG to Atlas reformatter interfaces OR SPLIT INTO CISATL03 commands
-
-
-
-*SPLIT_INTO CISATL03 WHEN_START_WITH H
-
 
 
 update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> apu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXWGB01';
-
-EFXWGB01MARS_GB_06_OTLS
