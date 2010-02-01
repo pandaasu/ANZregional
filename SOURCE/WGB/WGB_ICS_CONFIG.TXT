@@ -1,0 +1,54 @@
+
+--------------------------------
+-- EFEX TEST ICS Configuration -
+--------------------------------
+connect lics_app/licsroof@ap0088t.ap.mars
+
+insert into lics_interface values('EFXWGB01','EFEX to WGB - Customer Data','*OUTBOUND','OB_NORM',1,7,7,'ICS_OUTBOUND','EFXWGB01',15,'TXT',null,'asia.pacific.efex.error.messages@ap.effem.com',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> APQM002T XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+commit;
+
+insert into lics_job values('WGB_CUSTOMER_EXTRACT','WGB Customer Extract (07:00 Weekdays)',null,10,null,'asia.pacific.efex.error.messages@ap.effem.com','*PROCEDURE',null,'iface_app.efxwgb01_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+commit;
+
+--------------------------------
+-- LADS TEST ICS Configuration -
+--------------------------------
+connect lics_app/licscell@ap0112t.ap.mars
+
+insert into lics_interface values('LADWGB01','LADS to WGB - Material Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADWGB01',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('LADWGB02','LADS to WGB - Customer Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADWGB02',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('LADWGB03','LADS to WGB - Standard Hierarchy Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADWGB03',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('LADWGB04','LADS to WGB - Sales Force Hierarchy Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADWGB04',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('LADWGB05','LADS to WGB - Vendor Data','*OUTBOUND','OB_PRC',1,7,7,'ICS_OUTBOUND','LADWGB05',15,'TXT',null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+commit;
+
+insert into lics_job values('WGB_MATERIAL_EXTRACT','WGB Material Extract (07:00 Weekdays)',null,10,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'site_app.ladwgb01_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+insert into lics_job values('WGB_CUSTOMER_EXTRACT','WGB Customer Extract (07:00 Weekdays)',null,10,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'site_app.ladwgb02_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+insert into lics_job values('WGB_STD_HIER_EXTRACT','WGB Standard Hierarchy Extract (07:00 Weekdays)',null,10,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'site_app.ladwgb03_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+insert into lics_job values('WGB_GEO_HIER_EXTRACT','WGB Sales Force Hierarchy Extract (07:00 Weekdays)',null,10,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'site_app.ladwgb04_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+insert into lics_job values('WGB_VENDOR_EXTRACT','WGB Vendor Extract (07:00 Weekdays)',null,10,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'site_app.ladwgb05_extract.execute(7)','lics_time.schedule_next(''*WEEKDAY'',7)','lics_time.schedule_next(''*WEEKDAY'',7)','0');
+commit;
+
+insert into lics_interface values('SBWWGB01','BW to WGB - Period GSV Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('SBWWGB02','BW to WGB - Period NIV Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('SBWWGB03','BW to WGB - Off Invoice TP Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('WGBATL01','WGB to Atlas - Payment Data','*INBOUND','IB_TRN',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'iface_app.wgbatl01_loader','1','0',null,null);
+insert into lics_interface values('WGBATL02','WGB to Atlas - Cancel Data','*INBOUND','IB_TRN',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'iface_app.wgbatl02_loader','1','0',null,null);
+insert into lics_interface values('WGBATL03','WGB to Atlas - Accrual Data','*INBOUND','IB_TRN',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'iface_app.wgbatl03_loader','1','0',null,null);
+insert into lics_interface values('WGBSBW01','WGB to BW - TP Type Master Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('WGBSBW02','WGB to BW - TP Category Master Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+insert into lics_interface values('WGBSBW03','WGB to BW - TP Transactions Data','*PASSTHRU','PT_PRC',1,7,7,'ICS_INBOUND',null,null,null,null,'"ISI ICS Test Group"@smtp.ap.mars',null,'<SCRIPT_PATH>ics_outbound_mqft.sh <PATH> <MESG> WODU03T1 XGLBP01 D:/Mars_TP/Inbound/','1','0',null,null);
+commit;
+
+
+NEED WBG to Atlas reformatter interfaces OR SPLIT INTO CISATL03 commands
+
+
+
+*SPLIT_INTO CISATL03 WHEN_START_WITH H
+
+
+
+update lics_interface set int_procedure = '<SCRIPT_PATH>ics_outbound_ftp.sh <PATH> apu003.ap.mars dwtrnsfr transfer /tmp/ <MESG>' where int_interface = 'EFXWGB01';
+
+EFXWGB01MARS_GB_06_OTLS
