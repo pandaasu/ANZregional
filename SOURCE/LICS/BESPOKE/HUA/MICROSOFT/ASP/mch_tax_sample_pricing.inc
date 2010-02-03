@@ -23,17 +23,23 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Delivery plant value must be entered';
       }
-      if (document.main.INP_PDDate01.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'POD date range from value must be entered';
-      }
-      if (document.main.INP_PDDate02.value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'POD date range to value must be entered';
+      if (document.main.INP_PDDate01.value != '' || document.main.INP_PDDate02.value != '') {
+         if (document.main.INP_PDDate01.value == '' || document.main.INP_PDDate02.value == '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'POD date range to and from values must both be entered';
+         }
       }
       if (document.main.INP_OrderType.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Order type value must be entered';
+      }
+      if (document.main.INP_GIDate01.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Goods issued date range from value must be entered';
+      }
+      if (document.main.INP_GIDate02.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Goods issued date range to value must be entered';
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -42,7 +48,9 @@
       var strFunction = 'dw_tax_reporting.sample_pricing(\'' + document.main.INP_DeliveryPlant.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_PDDate01.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
       strFunction = strFunction + ',\'' + document.main.INP_PDDate02.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
-      strFunction = strFunction + ',\'' + document.main.INP_OrderType.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\')';
+      strFunction = strFunction + ',\'' + document.main.INP_OrderType.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_GIDate01.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\'';
+      strFunction = strFunction + ',\'' + document.main.INP_GIDate02.value.toUpperCase().replace(/\'/g,'').replace(/ /g,'') + '\')';
       doReportOutput(eval('document.body'),'Sample Pricing Tax Report','*SPREADSHEET','select * from table(' + strFunction + ')');
    }
    function processForm() {
@@ -73,7 +81,7 @@
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;POD Date Range (YYYYMMDD):&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;POD Date Range (YYYYMMDD - Optional):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_PDDate01" size="8" maxlength="8" value="" onFocus="setSelect(this);">
             <font class="clsLabelBB">&nbsp;to&nbsp;</font>
@@ -84,6 +92,14 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Order Types:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_OrderType" size="100" maxlength="200" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Goods Issued Date Range (YYYYMMDD):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="INP_GIDate01" size="8" maxlength="8" value="" onFocus="setSelect(this);">
+            <font class="clsLabelBB">&nbsp;to&nbsp;</font>
+            <input class="clsInputNN" type="text" name="INP_GIDate02" size="8" maxlength="8" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
