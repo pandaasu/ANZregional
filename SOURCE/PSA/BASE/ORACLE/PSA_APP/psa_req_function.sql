@@ -324,6 +324,7 @@ create or replace package body psa_app.psa_req_function as
       var_det_indx number;
       var_det_mesg boolean;
       var_det_code varchar2(32);
+      var_det_qtxt varchar2(64);
       var_det_qnty number;
       type typ_detl is table of psa_req_detail%rowtype index by binary_integer;
       tbl_detl typ_detl;
@@ -336,7 +337,7 @@ create or replace package body psa_app.psa_req_function as
       cursor csr_week is
          select t01.mars_week
            from mars_date t01
-          where t01.calendar_date = rcd_psa_req_header.rhe_str_date;
+          where t01.calendar_date = to_date(rcd_psa_req_header.rhe_str_date,'dd/mm/yyyy');
       rcd_week csr_week%rowtype;
 
       cursor csr_material is
@@ -371,7 +372,7 @@ create or replace package body psa_app.psa_req_function as
          return;
       end if;
       rcd_psa_req_header.rhe_req_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@REQNAM'));
-      rcd_psa_req_header.rhe_str_date := psa_to_date(xslProcessor.valueOf(obj_psa_request,'@REQDTE'),'dd/mm/yyyy');
+      rcd_psa_req_header.rhe_str_date := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@REQDTE'));
       rcd_psa_req_header.rhe_upd_user := upper(par_user);
       rcd_psa_req_header.rhe_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
@@ -384,7 +385,7 @@ create or replace package body psa_app.psa_req_function as
       if rcd_psa_req_header.rhe_req_name is null then
          psa_gen_function.add_mesg_data('Requirement name must be supplied');
       end if;
-      if rcd_psa_req_header.rhe_str_date is null then
+      if rcd_psa_req_header.rhe_str_date is null or psa_to_date(rcd_psa_req_header.rhe_str_date,'dd/mm/yyyy') is null then
          psa_gen_function.add_mesg_data('Requirement start date must be supplied in format DD/MM/YYYY');
       end if;
       if rcd_psa_req_header.rhe_upd_user is null then
@@ -393,11 +394,6 @@ create or replace package body psa_app.psa_req_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-
-      /*-*/
-      /* Set the fields
-      /*-*/
-      rcd_psa_req_header.rhe_req_code := rcd_psa_req_header.rhe_str_week||'_'||to_char(sysdate,'yyyymmddhhmiss');
 
       /*-*/
       /* Retrieve the end week
@@ -413,7 +409,12 @@ create or replace package body psa_app.psa_req_function as
          psa_gen_function.add_mesg_data('Requirement start date not found on MARS_DATE table');
          return;
       end if;
-      rcd_psa_req_header.rhe_str_week := rcd_week.mars_week;
+      rcd_psa_req_header.rhe_str_week := to_char(rcd_week.mars_week,'fm0000000');
+
+      /*-*/
+      /* Set the fields
+      /*-*/
+      rcd_psa_req_header.rhe_req_code := rcd_psa_req_header.rhe_str_week||'_'||to_char(sysdate,'yyyymmddhhmiss');
 
       /*-*/
       /* Retrieve the file text stream
@@ -422,50 +423,20 @@ create or replace package body psa_app.psa_req_function as
       obj_det_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/TXTSTREAM/XR');
       for idx in 0..xmlDom.getLength(obj_det_list)-1 loop
          obj_det_node := xmlDom.item(obj_det_list,idx);
-         var_det_data := rtrim(ltrim(xslProcessor.valueOf(obj_det_node,'/text()'),'['),']');
+         var_det_data := rtrim(ltrim(xslProcessor.valueOf(obj_det_node,'text()'),'['),']');
          if not(var_det_data is null) then
             var_det_mesg := false;
             var_det_valu := null;
-            var_det_indx := 0;
-            for idx in 1..length(var_det_data) loop
-               var_det_char := substr(var_det_data,idx,1);
+            var_det_indx := 1;
+            var_det_code := null;
+            var_det_qtxt := null;
+            for idy in 1..length(var_det_data) loop
+               var_det_char := substr(var_det_data,idy,1);
                if var_det_char = chr(9) then
-                  var_det_valu := rtrim(ltrim(var_det_valu,'"'),'"');
                   if var_det_indx = 1 then
-                     var_det_code := var_det_valu;
-                     open csr_material;
-                     fetch csr_material into rcd_material;
-                     if csr_material%notfound then
-                        psa_gen_function.add_mesg_data('SAP material code ('||var_det_code||') - data row '||to_char((idx+1))||' column '||to_char(var_det_indx)||' -  does not exist');
-                        var_det_mesg := true;
-                     else
-                        if rcd_material.mde_mat_status = '*INACTIVE' then
-                           psa_gen_function.add_mesg_data('SAP material code ('||var_det_code||') - data row '||to_char((idx+1))||' column '||to_char(var_det_indx)||' -  is inactive');
-                           var_det_mesg := true;
-                        end if;
-                     end if;
-                     close csr_material;
+                     var_det_code := rtrim(ltrim(var_det_valu,'"'),'"');
                   elsif var_det_indx = 2 then
-                     var_det_qnty := null;
-                     if not(var_det_valu is null) then
-                        begin
-                           if substr(var_det_valu,length(var_det_valu),1) = '-' then
-                              var_det_qnty := to_number('-' || substr(var_det_valu,1,length(var_det_valu) - 1));
-                           else
-                              var_det_qnty := to_number(var_det_valu);
-                           end if;
-                        exception
-                           when others then
-                              null;
-                        end;
-                     end if;
-                     if var_det_qnty is null then
-                        psa_gen_function.add_mesg_data('SAP material quantity - data row '||to_char((idx+1))||' column '||to_char(var_det_indx)||' - invalid number ('||var_det_valu||')');
-                        var_det_mesg := true;
-                     elsif var_det_qnty <= 0 then
-                        psa_gen_function.add_mesg_data('SAP material quantity - data row '||to_char((idx+1))||' column '||to_char(var_det_indx)||' - must be greater than zero');
-                        var_det_mesg := true;
-                     end if;
+                     var_det_qnty := rtrim(ltrim(var_det_valu,'"'),'"');
                   end if;
                   var_det_indx := var_det_indx + 1;
                   var_det_valu := null;
@@ -473,6 +444,42 @@ create or replace package body psa_app.psa_req_function as
                   var_det_valu := var_det_valu||var_det_char;
                end if;
             end loop;
+            if not(var_det_valu is null) then
+               if var_det_indx = 1 then
+                  var_det_code := rtrim(ltrim(var_det_valu,'"'),'"');
+               elsif var_det_indx = 2 then
+                  var_det_qtxt := replace(rtrim(ltrim(var_det_valu,'"'),'"'),',',null);
+               end if;
+            end if;
+          --  open csr_material;
+          --  fetch csr_material into rcd_material;
+          --  if csr_material%notfound then
+          --     psa_gen_function.add_mesg_data('SAP material code ('||var_det_code||') - data row '||to_char((idx+1))||' -  does not exist');
+          --     var_det_mesg := true;
+          --  else
+          --     if rcd_material.mde_mat_status = '*INACTIVE' or rcd_material.mde_mat_status = '*ADD' then
+          --        psa_gen_function.add_mesg_data('SAP material code ('||var_det_code||') - data row '||to_char((idx+1))||' -  is inactive');
+          --        var_det_mesg := true;
+          --     end if;
+          --  end if;
+          --  close csr_material;
+            begin
+               if substr(var_det_qtxt,length(var_det_qtxt),1) = '-' then
+                  var_det_qnty := to_number('-' || substr(var_det_qtxt,1,length(var_det_qtxt) - 1));
+               else
+                  var_det_qnty := to_number(var_det_qtxt);
+               end if;
+            exception
+               when others then
+                  null;
+            end;
+            if var_det_qnty is null then
+               psa_gen_function.add_mesg_data('SAP material quantity - data row '||to_char((idx+1))||' - invalid number ('||var_det_qtxt||')');
+               var_det_mesg := true;
+            elsif var_det_qnty <= 0 then
+               psa_gen_function.add_mesg_data('SAP material quantity - data row '||to_char((idx+1))||' - must be greater than zero');
+               var_det_mesg := true;
+            end if;
             if var_det_mesg = false then
                tbl_detl(tbl_detl.count+1).rde_req_code := rcd_psa_req_header.rhe_req_code;
                tbl_detl(tbl_detl.count).rde_mat_code := var_det_code;
