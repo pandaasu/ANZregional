@@ -430,6 +430,7 @@ create or replace package body psa_app.psa_req_function as
             for idx in 1..length(var_det_data) loop
                var_det_char := substr(var_det_data,idx,1);
                if var_det_char = chr(9) then
+                  var_det_valu := rtrim(ltrim(var_det_valu,'"'),'"');
                   if var_det_indx = 1 then
                      var_det_code := var_det_valu;
                      open csr_material;
