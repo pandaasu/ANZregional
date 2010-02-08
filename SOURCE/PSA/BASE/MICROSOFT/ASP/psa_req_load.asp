@@ -378,10 +378,12 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('DEF_ReqName').value = '';
+         document.getElementById('DEF_ReqSdte').value = '';
          document.getElementById('DEF_ReqFile').value = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'REQDFN') {
                document.getElementById('DEF_ReqName').value = objElements[i].getAttribute('REQNAM');
+               document.getElementById('DEF_ReqSdte').value = objElements[i].getAttribute('REQDTE');
             }
          }
          document.getElementById('DEF_ReqCode').focus();
@@ -397,6 +399,7 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
       strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_ReqName').value)+'"';
+      strXML = strXML+' REQDTE="'+fixXML(document.getElementById('DEF_ReqSdte').value)+'"';
       strXML = strXML+'>';
       strXML = strXML+loadStreamXML(document.getElementById('DEF_ReqFile').value,'*YES');
       strXML = strXML+'</PSA_REQUEST>';
@@ -515,6 +518,12 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requirement Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_ReqName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requirement Schedule Date (DD/MM/YYYY):&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_ReqSdte" size="8" maxlength="8" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
