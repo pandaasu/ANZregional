@@ -293,12 +293,12 @@ sub PaintFunction()%>
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[3].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[3].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -373,9 +373,6 @@ sub PaintFunction()%>
             return;
          }
          cobjScreens[2].hedtxt = 'Create Production Requirement';
-         document.getElementById('addDefine').style.display = 'block';
-         document.getElementById('updDefine').style.display = 'none';
-         }
          displayScreen('dspDefine');
          document.getElementById('DEF_ReqName').value = '';
          document.getElementById('DEF_ReqSdte').value = '';
@@ -386,13 +383,12 @@ sub PaintFunction()%>
                document.getElementById('DEF_ReqSdte').value = objElements[i].getAttribute('REQDTE');
             }
          }
-         document.getElementById('DEF_ReqCode').focus();
+         document.getElementById('DEF_ReqName').focus();
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
       if (document.getElementById('DEF_ReqFile').value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
          alert('Requirement file must be specified');
          return;
       }
@@ -523,7 +519,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requirement Schedule Date (DD/MM/YYYY):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_ReqSdte" size="8" maxlength="8" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_ReqSdte" size="10" maxlength="10" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
