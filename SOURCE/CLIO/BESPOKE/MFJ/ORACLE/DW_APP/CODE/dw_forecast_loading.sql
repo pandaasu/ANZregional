@@ -2748,6 +2748,7 @@ create or replace package body dw_forecast_loading as
       var_fcst_price_type_code rcd_fcst_period.fcst_price_type_code%type;
       var_available boolean;
       var_yyyynn number;
+      var_castnn number;
       type typ_wrkv is table of number index by binary_integer;
       tbl_wrkn typ_wrkv;
       tbl_wrkq typ_wrkv;
@@ -2860,8 +2861,12 @@ create or replace package body dw_forecast_loading as
       end if;
       close csr_mars_date;
       if rcd_fcst_load_header.fcst_type = '*BR' then
-         if rcd_fcst_load_header.fcst_cast_yyyynn < (rcd_mars_date.mars_period - 1) then
-            raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') must not be less than CLIO previous period ('||to_char(rcd_mars_date.mars_period-1)||')');
+         var_castnn := rcd_mars_date.mars_period - 1;
+         if substr(to_char(var_castnn,'fm000000'),5,2) = '00' then
+            var_castnn := var_castnn - 87;
+         end if;
+         if rcd_fcst_load_header.fcst_cast_yyyynn < var_castnn then
+            raise_application_error(-20000, ' Business review casting period ('||to_char(rcd_fcst_load_header.fcst_cast_yyyynn)||') must not be less than CLIO previous period ('||to_char(var_castnn)||')');
          end if;
       end if;
       if rcd_fcst_load_header.fcst_type = '*OP1' then
