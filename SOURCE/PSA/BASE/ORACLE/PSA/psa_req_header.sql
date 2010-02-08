@@ -21,7 +21,7 @@
 create table psa.psa_req_header
    (rhe_req_code                    varchar2(32)                  not null,
     rhe_req_name                    varchar2(120 char)            not null,
-    rhe_str_date                    varchar2(8)                   not null,
+    rhe_str_date                    varchar2(10)                  not null,
     rhe_str_week                    varchar2(7)                   not null,
     rhe_upd_user                    varchar2(30)                  not null,
     rhe_upd_date                    date                          not null);
