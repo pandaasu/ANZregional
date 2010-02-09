@@ -21,6 +21,7 @@
 create table psa.psa_req_header
    (rhe_req_code                    varchar2(32)                  not null,
     rhe_req_name                    varchar2(120 char)            not null,
+    rhe_req_status                  varchar2(10)                  not null,
     rhe_str_date                    varchar2(10)                  not null,
     rhe_str_week                    varchar2(7)                   not null,
     rhe_upd_user                    varchar2(30)                  not null,
@@ -32,6 +33,7 @@ create table psa.psa_req_header
 comment on table psa.psa_req_header is 'Production Requirement Header Table';
 comment on column psa.psa_req_header.rhe_req_code is 'Requirement code - YYYYPPW_YYYYMMDDHHMISS';
 comment on column psa.psa_req_header.rhe_req_name is 'Requirement name';
+comment on column psa.psa_req_header.rhe_req_status is 'Requirement status - *LOADED or *ERROR';
 comment on column psa.psa_req_header.rhe_str_date is 'Requirement start MARS date';
 comment on column psa.psa_req_header.rhe_str_week is 'Requirement start MARS week';
 comment on column psa.psa_req_header.rhe_upd_user is 'Last updated user';
