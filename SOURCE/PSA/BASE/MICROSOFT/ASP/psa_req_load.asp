@@ -565,7 +565,12 @@ sub PaintFunction()%>
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'DETROW') {
+            if (objElements[i].nodeName == 'REQDFN') {
+               document.getElementById('DET_ReqCode').innerHTML = '<p>'+objElements[i].getAttribute('REQCDE')+'</p>';
+               document.getElementById('DET_ReqName').innerHTML = '<p>'+objElements[i].getAttribute('REQNAM')+'</p>';
+               document.getElementById('DET_ReqStat').innerHTML = '<p>'+objElements[i].getAttribute('REQSTS')+'</p>';
+               document.getElementById('DET_ReqWeek').innerHTML = '<p>'+objElements[i].getAttribute('REQWEK')+'</p>';
+            } else if (objElements[i].nodeName == 'DETROW') {
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -748,6 +753,22 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement Code:&nbsp;</nobr></td>
+         <td id="DET_ReqCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement Name:&nbsp;</nobr></td>
+         <td id="DET_ReqName" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement Status:&nbsp;</nobr></td>
+         <td id="DET_ReqStat" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement STart Week:&nbsp;</nobr></td>
+         <td id="DET_ReqWeek" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
