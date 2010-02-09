@@ -592,7 +592,7 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
+               objCell.align = 'right';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DETQTY')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
@@ -623,7 +623,7 @@ sub PaintFunction()%>
          }
       }
    }
-   function doDetailCancel() {
+   function doDetailBack() {
       doSelectRefresh();
    }
 // -->
@@ -752,7 +752,6 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement Code:&nbsp;</nobr></td>
          <td id="DET_ReqCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
@@ -766,24 +765,37 @@ sub PaintFunction()%>
          <td id="DET_ReqStat" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement STart Week:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Requirement Start Week:&nbsp;</nobr></td>
          <td id="DET_ReqWeek" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailBack();">&nbsp;Back&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
       </tr>
       <tr height=100%>
          <td align=center colspan=2 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conHeadDetail">
-                     <table class="clsTableHead" id="tabHeadDetail" align=left cols=1 cellpadding="0" cellspacing="1">
+                     <div class="clsFixed" id="conHeadDetl">
+                     <table class="clsTableHead" id="tabHeadDetl" align=left cols=1 cellpadding="0" cellspacing="1">
                      </table>
                      </div>
                   </nobr></td>
                </tr>
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conBodyDetail">
-                     <table class="clsTableBody" id="tabBodyDetail" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     <div class="clsScroll" id="conBodyDetl">
+                     <table class="clsTableBody" id="tabBodyDetl" align=left cols=1 cellpadding="0" cellspacing="1"></table>
                      </div>
                   </nobr></td>
                </tr>
