@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE pds_controller IS
   NAME:      process_control
   PURPOSE:   The procedure is run as a DAEMON. Only one instance of Process Control
              should be running at any one time.
-          .
+          
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -17,6 +17,10 @@ CREATE OR REPLACE PACKAGE pds_controller IS
   1.4   19/07/2007  Anna Every          Removed Purge of Snack records.
   1.5   29/11/2007 Craig Ford           Snackfood Procedures (02) Code removed.
   2.0   10/06/2009 Steve Gregan         Added create log.
+  2.1   10/12/2009 Steve Ostler         Modified check_prom_divparam_confirm procedure to 
+  				   		 				run only if its the third last day of the period.
+										previously ran on the 26th day of the period but 
+										this did not work for 5 week periods.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -38,7 +42,7 @@ PROCEDURE process_control;
              the EXACCURALS table, then it checks EXACCRUALS to confirm that it is
              empty, if it isnt an alert is raised and the job stops, otherwise, it
              creates a job control record for ACCRLS_FREEZE.
-             .
+             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -61,7 +65,7 @@ PROCEDURE check_accrls_truncate;
              PDS_PMX_JOB_CNTL table to COMPLETED where the job_status was PROCESSED.
              If at least one job_status was PROCESSED, then it creates a Promax
              job control record for ACCRLS_EXPORT.
-             .
+             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -84,7 +88,7 @@ PROCEDURE check_accrls_freeze;
              PDS_PMX_JOB_CNTL table to COMPLETED where the job_status was PROCESSED.
              If at least one job_status was PROCESSED, then it triggers the
              PDS_ACCRUALS_01_PRC and PDS_ACCRUALS_SUMM_REPORT procedures.
-             .
+             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -113,7 +117,7 @@ PROCEDURE check_accrls_export;
 
              NOTE: The CHECK_AR_CLAIMSAPP_LOAD procedure inserts the AP_CLAIMS_EXTRACT
              entry into the PDS_PMX_JOB_CNTL table.
-             .
+             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -552,7 +556,7 @@ CREATE OR REPLACE PACKAGE BODY pds_controller IS
   pv_result_msg     constants.message_string;
   pv_log_level      NUMBER := 0;
 
-  -- PACKAGE CONSTANT DECLARATIONS
+  -- PACKAGE CONSTANT DECLARATIONS.
   pc_job_type_pds_controller    CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('pds_controller','JOB_TYPE');
   pc_data_type_not_applicable   CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_applicable','DATA_TYPE');
   pc_pstbx_prom_divparam_confm  CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('prom_divparam_confm','PSTBX');
@@ -1714,8 +1718,6 @@ PROCEDURE check_prom_divparam_confirm IS
   -- VARIABLE DECLARATIONS
   v_rcd_processed_flag BOOLEAN := FALSE;
 
-  -- EXCEPTION DECLARATIONS
-  e_processing_failure EXCEPTION;
 
   -- CURSOR DECLARATIONS
   -- Retrieve Promax Job Control record.
@@ -1728,10 +1730,21 @@ PROCEDURE check_prom_divparam_confirm IS
     rv_pmx_job_cntl csr_pmx_job_cntl%ROWTYPE;
 
   -- Retrieve Mars Date.
+  -- will only return a value on day 26 of a 4 week period or day 33 of a 5 week period 
   CURSOR csr_mars_date IS
-    SELECT *
+  	SELECT *
     FROM mars_date
-    WHERE TRUNC(calendar_date,'DD') = TRUNC(sysdate,'DD');
+    WHERE TRUNC(calendar_date) = TRUNC(sysdate)
+	and period_day_num = (
+							select max(period_day_num-2) 
+							from mars_date
+							where mars_period=(
+												select mars_period 
+												from mars_date
+												WHERE TRUNC(calendar_date) = TRUNC(sysdate)
+											  )
+					     );
+
     rv_mars_date csr_mars_date%ROWTYPE;
 
 BEGIN
@@ -1771,15 +1784,14 @@ BEGIN
   */
   IF v_rcd_processed_flag = TRUE THEN
 
-    -- Lookup today's date in the Mars Date table. If today is Day 26 of the period
-    -- (i.e. Thursday Week 4), then update the DIVPARAM.SETTING of TRANSFERPERIOD to '2'.
+    -- Lookup today's date in the Mars Date table. If today is Day 26 of a 4 week period
+    -- (i.e. Thursday Week 4), or day 33 of a 5 week period then update the DIVPARAM.SETTING 
+	-- of TRANSFERPERIOD to '2'.
     OPEN csr_mars_date;
     FETCH csr_mars_date INTO rv_mars_date;
-    IF csr_mars_date%NOTFOUND THEN
-      pv_processing_msg := 'Current system date not found in Mars Date table. Promax DIVPARAM setting TRANSFERPERIOD not changed.';
-      RAISE e_processing_failure;
-    ELSIF rv_mars_date.period_day_num = '26' THEN
-      -- Update DIVPARAM table if today is Day 26 of the period (i.e. Thursday Week 4).
+	-- will only return a value on day 26 of a 4 week period or day 33 of a 5 week period 
+    IF csr_mars_date%FOUND THEN 
+      -- Update DIVPARAM table if today is the third last day of the period (i.e. last Thursday of the period).
       write_log(pc_data_type_not_applicable, 'N/A', pv_log_level, 'Promax DIVPARAM setting TRANSFERPERIOD updated to ''2'' in preparation for EOP. This occurs on Thursday, WK4 only.');
       UPDATE divparam
       SET divvalue = pc_divparam_divvalue_begin
@@ -1803,22 +1815,7 @@ BEGIN
   write_log(pc_data_type_not_applicable, 'N/A', pv_log_level, 'check_prom_divparam_confirm - END.');
 
 EXCEPTION
-  -- Send warning message via e-mail and pds_log.
-  WHEN e_processing_failure THEN
-    pv_result_msg :=
-      utils.create_failure_msg('PDS_CONTROLLER.CHECK_PROM_DIVPARAM_CONFIRM:',
-        pv_processing_msg) ||
-      utils.create_params_str('Period Day Number',rv_mars_date.period_day_num);
-    write_log(pc_data_type_not_applicable,'N/A',pv_log_level,pv_result_msg);
-    pds_utils.send_email_to_group(pc_job_type_pds_controller,'MFANZ Promax PDS Controller',
-      pv_result_msg);
-    IF pc_debug != 'TRUE' THEN
-      -- Send alert message via Tivoli if running in production.
-      pds_utils.send_tivoli_alert(pc_alert_level_minor,pv_result_msg,
-        pc_job_type_pds_controller,'N/A');
-    END IF;
-
-  WHEN OTHERS THEN
+    WHEN OTHERS THEN
     pv_result_msg :=
       utils.create_error_msg('PDS_CONTROLLER.CHECK_PROM_DIVPARAM_CONFIRM:',
         'Unexpected Exception - run_example aborted.') ||
