@@ -102,6 +102,8 @@ PROCEDURE validate_pds_ar_claimsapp;
                                         can be removed once live as PET will be converted to GRD Co & Div.
   1.2   17/07/2006 Craig Ford           Remove PET Legacy Company and Division as part of PET conversion to GRD.
   2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
+  2.1   03/02/2010 Paul Berude          Included New Zealand AR Claims to be processed
+                                        via Atlas (instead of via spreadsheet).
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -154,6 +156,8 @@ PROCEDURE interface_ar_claimsapp;
                                         can be removed once live as PET will be converted to GRD Co & Div.
   1.2   17/07/2006 Craig Ford           Remove PET Legacy Company and Division as part of PET conversion to GRD.
   2.0   10/06/2009 Steve Gregan         Modified approval select logic for performance.
+  2.1   03/02/2010 Paul Berude          Included New Zealand AR Claims to be processed
+                                        via Atlas (instead of via spreadsheet).
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -196,7 +200,7 @@ PROCEDURE write_log (
   i_log_level IN pds_log.log_level%TYPE,
   i_log_text IN pds_log.log_text%TYPE);
 
-END pds_ar_claimsapp_01_prc;
+END pds_ar_claimsapp_01_prc; 
 /
 
 
@@ -817,37 +821,32 @@ BEGIN
     END IF;
 
     /*
-    Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via the
-	staging tables pds_ar_claims.
-    To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET and Snack claims
-	must be sent back (to SAP) with the original SAP claim document details (ie accounting
-    document number, line number, fiscal year). These key fields were written to the staging
-    table pds_ar_claims when the claim was originally interfaced to Promax. This process
-    looks up these key fields in the staging table (pds_ar_claims), and stores these values
-    in variables for use in creating the interface data.
-    Note: This needs to be reviewed prior to Snack go-live as it is yet to be determined
-    how they will process the claims.
+    Atlas segments raise claims in SAP and interface to Promax via the staging tables pds_ar_claims.
+    To allow a claim to be automatically cleared in SAP, the approved claims must be sent back
+    (to SAP) with the original SAP claim document details (ie accounting document number,
+    line number, fiscal year). These key fields were written to the staging table pds_ar_claims
+    when the claim was originally interfaced to Promax. This process looks up these key fields
+    in the staging table (pds_ar_claims), and stores these values in variables for use in creating
+    the interface data.
     */
-    IF tbl_work(idx).cmpny_code = pc_pmx_cmpny_code_australia THEN
-      pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
-      IF pv_status <> constants.success THEN
-        v_valdtn_status := pc_valdtn_status_invalid;
+    pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
+    IF pv_status <> constants.success THEN
+      v_valdtn_status := pc_valdtn_status_invalid;
 
-        write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].');
+      write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 3, 'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].');
 
-        -- Add an entry into the validation reason tables.
-        pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
-          'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].',
-          pc_valdtn_severity_critical,
-          tbl_work(idx).intfc_batch_code,
-          tbl_work(idx).cmpny_code,
-          tbl_work(idx).div_code,
-          tbl_work(idx).ar_claims_apprvl_seq,
-          NULL,
-          NULL,
-          pv_log_level + 3);
+      -- Add an entry into the validation reason tables.
+      pds_utils.add_validation_reason(pc_valdtn_type_ar_claimsapp,
+        'ClaimRef ['|| tbl_work(idx).claim_ref || ']: No valid SAP AR Claim for ClaimRef and Cust ['||tbl_work(idx).cust_code||'].',
+        pc_valdtn_severity_critical,
+        tbl_work(idx).intfc_batch_code,
+        tbl_work(idx).cmpny_code,
+        tbl_work(idx).div_code,
+        tbl_work(idx).ar_claims_apprvl_seq,
+        NULL,
+        NULL,
+        pv_log_level + 3);
 
-      END IF;
     END IF;
 
     -- Lookup the Tax Code.
@@ -1187,23 +1186,19 @@ BEGIN
           END IF;
 
           /*
-          Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food, PET & Snack - there
-          is no record for NZ. This is to identify that the original AR Claim has now been approved.
-          Used in AR Claim when validating the status of a claim (ie has it loaded
-          into Promax, has it been approved?).
+          Now update the SAP ARClaims record (in pds_ar_claims). This is to identify that
+          the original AR Claim has now been approved. Used in AR Claim when validating \
+          the status of a claim (ie has it loaded into Promax, has it been approved?).
           CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
-          Note: Requires reviewing when Snack moves to ATLAS.
           */
-          IF s_cmpny_code = pc_pmx_cmpny_code_australia THEN
-            UPDATE pds_ar_claims
-              SET promax_ar_apprvl_date = sysdate
-            WHERE acctg_doc_num = v_acctg_doc_num
-              AND fiscl_year = v_fiscal_year
-              AND line_item_num = v_line_item_num
-              AND valdtn_status = pc_valdtn_status_valid;
-          END IF;
+          UPDATE pds_ar_claims
+            SET promax_ar_apprvl_date = sysdate
+          WHERE acctg_doc_num = v_acctg_doc_num
+            AND fiscl_year = v_fiscal_year
+            AND line_item_num = v_line_item_num
+            AND valdtn_status = pc_valdtn_status_valid;
 
-        end if;
+        END IF;
 
         -- Save the group variables
         write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'Start csr_approval array header.');
@@ -1237,32 +1232,23 @@ BEGIN
         check_result_status;
 
         /*
-        Australia SAP segments (Food, PET & Snack) raise claims in SAP and interface to Promax via
-	    the PDS_AR_CLAIMS staging tables.
-        To allow a claim to be automatically cleared in SAP, the approved AUS Food, PET & Snack claims
-        must be sent back (to SAP) with the original SAP claim document details (ie accounting
-        document number, line number, fiscal year). These key fields were written to the staging
-        table pds_ar_claims when the claim was originally interfaced to Promax. This process
-        looks up these key fields in the staging table (pds_ar_claims), and stores these values
-        in variables for use in creating the interface data.
-        Note: This needs to be reviewed prior to Pet and Snack go-live as it is yet to be determined
-        how they will process the claims.
+        Atlas segments raise claims in SAP and interface to Promax via the PDS_AR_CLAIMS staging tables.
+        To allow a claim to be automatically cleared in SAP, the approved claims must be sent back
+        (to SAP) with the original SAP claim document details (ie accounting  document number,
+        line number, fiscal year). These key fields were written to the staging table pds_ar_claims
+        when the claim was originally interfaced to Promax. This process looks up these key fields
+        in the staging table (pds_ar_claims), and stores these values in variables for use in creating
+        the interface data.
         */
-        IF tbl_work(idx).cmpny_code = pc_pmx_cmpny_code_australia THEN
-          pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
-          check_result_status;
-          -- Build the variable for storing the SAP required accounting document fields.
-          v_alloc_nmbr:= RPAD(LPAD(v_acctg_doc_num,10,'0') || v_fiscal_year || LPAD(v_line_item_num,3,'0'),18);
-          -- Now perform the output Customer Code conversion by using the original customer number.
-          -- Customer codes have leading zeroes if they are numeric, otherwise the field
-          -- is left justified with spaces padding (on the right). The width returned
-          -- is 10 characters, req'd format for SAP (i.e. export).
-          pv_status := pds_common.format_cust_code(v_claim_cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
-        ELSE
-          -- NZ claims are manually created (ie do not exist in SAP) so accounting document details are blank.
-          pv_status := pds_common.format_cust_code(tbl_work(idx).cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
-          v_alloc_nmbr:= RPAD(' ',18,' ');
-        END IF;
+        pv_status := pds_lookup.lookup_orig_claimdoc (v_cmpny_code, v_div_code, v_promax_cust_code, tbl_work(idx).claim_ref, v_acctg_doc_num, v_fiscal_year, v_line_item_num, v_claim_cust_code, pv_log_level + 3, pv_result_msg);
+        check_result_status;
+        -- Build the variable for storing the SAP required accounting document fields.
+        v_alloc_nmbr:= RPAD(LPAD(v_acctg_doc_num,10,'0') || v_fiscal_year || LPAD(v_line_item_num,3,'0'),18);
+        -- Now perform the output Customer Code conversion by using the original customer number.
+        -- Customer codes have leading zeroes if they are numeric, otherwise the field
+        -- is left justified with spaces padding (on the right). The width returned
+        -- is 10 characters, req'd format for SAP (i.e. export).
+        pv_status := pds_common.format_cust_code(v_claim_cust_code, v_sap_cust_code, pv_log_level + 3, pv_result_msg);
 
         -- Build the AR Claims Approval Header output record.
         v_item_count := v_item_count + 1;
@@ -1371,11 +1357,11 @@ BEGIN
         AND ar_claims_apprvl_seq = tbl_work(idx).ar_claims_apprvl_seq;
 
     -- End of AR Claim Approval header cursor array.
-    end loop;
+    END LOOP;
     write_log(pc_data_type_ar_claimsapp,'N/A',pv_log_level + 2,'End of csr_approval cursor array loop.');
 
     -- Finalise the final header when required
-    if not(s_cmpny_code is null) then
+    IF NOT(s_cmpny_code IS NULL) THEN
 
       -- Update the previous header "R" claim amd tax totals
       rcd_approval_detail(s_item_count) := substr(rcd_approval_detail(s_item_count),1,11)||
@@ -1403,23 +1389,19 @@ BEGIN
       END IF;
 
       /*
-      Now update the SAP ARClaims record (in pds_ar_claims). -- only for Australia Food, PET & Snack - there
-      is no record for NZ. This is to identify that the original AR Claim has now been approved.
-      Used in AR Claim when validating the status of a claim (ie has it loaded
-      into Promax, has it been approved?).
+      Now update the SAP ARClaims record (in pds_ar_claims). This is to identify that
+      the original AR Claim has now been approved. Used in AR Claim when validating
+      the status of a claim (ie has it loaded into Promax, has it been approved?).
       CF 01/08/2006 Only update the record which loaded into Promax (ie the VALID Claim).
-      Note: Requires reviewing when Snack moves to ATLAS.
       */
-      IF s_cmpny_code = pc_pmx_cmpny_code_australia THEN
-        UPDATE pds_ar_claims
-          SET promax_ar_apprvl_date = sysdate
-        WHERE acctg_doc_num = v_acctg_doc_num
-          AND fiscl_year = v_fiscal_year
-          AND line_item_num = v_line_item_num
-          AND valdtn_status = pc_valdtn_status_valid;
-      END IF;
+      UPDATE pds_ar_claims
+        SET promax_ar_apprvl_date = sysdate
+      WHERE acctg_doc_num = v_acctg_doc_num
+        AND fiscl_year = v_fiscal_year
+        AND line_item_num = v_line_item_num
+        AND valdtn_status = pc_valdtn_status_valid;
 
-    end if;
+    END IF;
 
     -- Write the number of records processed to the Log.
     IF v_item_count = 0 THEN
@@ -1534,5 +1516,5 @@ EXCEPTION
 
 END write_log;
 
-END pds_ar_claimsapp_01_prc;
+END pds_ar_claimsapp_01_prc; 
 /
