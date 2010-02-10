@@ -244,7 +244,7 @@ create or replace package body psa_app.psa_stk_function as
          select t01.*
            from psa_mat_defn t01
           where t01.mde_mat_usage in ('MPO','PCH','RLS')
-            and t01.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
+            and t01.mde_mat_status in ('*ADD','*CHG','*DEL','*ACTIVE')
           order by t01.mde_mat_code asc;
       rcd_detail csr_detail%rowtype;
 
@@ -287,7 +287,7 @@ create or replace package body psa_app.psa_stk_function as
       /*-*/
       /* Pipe the stocktake XML
       /*-*/
-      var_output := '<STKHDR STKCDE="STOCKTAKE'||psa_to_xml(to_char(sysdate,'yyyymmddhh24miss'))||'" STKNAM="" STKTIM="'||psa_to_xml(to_char(sysdate,'yyyy/mm/dd hh24:mi'))||'"/>';
+      var_output := '<STKHDR STKCDE="STOCKTAKE_'||psa_to_xml(to_char(sysdate,'yyyymmddhh24miss'))||'" STKNAM="" STKTIM="'||psa_to_xml(to_char(sysdate,'yyyy/mm/dd hh24:mi'))||'"/>';
       pipe row(psa_xml_object(var_output));
 
       /*-*/
@@ -299,7 +299,7 @@ create or replace package body psa_app.psa_stk_function as
          if csr_detail%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<STKDET MATCDE="'||psa_to_xml(rcd_detail.mde_mat_code)||'" MATNAM="'||psa_to_xml(rcd_detail.mde_mat_name)||'" MATTYP="'||psa_to_xml(rcd_detail.mde_mat_type)||'" MATUSG="'||psa_to_xml(rcd_detail.mde_mat_usage)||'" MATQTY="0"/>'));
+         pipe row(psa_xml_object('<STKDET MATCDE="'||psa_to_xml(rcd_detail.mde_mat_code)||'" MATNAM="'||psa_to_xml(rcd_detail.mde_mat_name)||'" MATTYP="'||psa_to_xml(rcd_detail.mde_mat_type)||'" MATUSG="'||psa_to_xml(rcd_detail.mde_mat_usage)||'" MATQTY=""/>'));
       end loop;
       close csr_detail;
 
@@ -430,7 +430,7 @@ create or replace package body psa_app.psa_stk_function as
          if csr_material%notfound then
             psa_gen_function.add_mesg_data('Material code ('||var_det_code||') does not exist');
          else
-            if rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_usage != '*DEL' and rcd_material.mde_mat_usage != '*ACTIVE' then
+            if rcd_material.mde_mat_status != '*ADD' and rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_usage != '*DEL' and rcd_material.mde_mat_usage != '*ACTIVE' then
                psa_gen_function.add_mesg_data('Material code ('||var_det_code||') status must be *CHG, *DEL or *ACTIVE');
             end if;
          end if;
