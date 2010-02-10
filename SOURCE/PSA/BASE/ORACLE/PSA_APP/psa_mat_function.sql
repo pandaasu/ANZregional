@@ -25,11 +25,11 @@ create or replace package psa_app.psa_mat_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure update_list;
+   procedure update_master;
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   procedure delete_data;
+   procedure inactivate_data(par_user in varchar2);
 
 end psa_mat_function;
 /
@@ -45,16 +45,25 @@ create or replace package body psa_app.psa_mat_function as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /***************************************************/
-   /* This procedure performs the update list routine */
-   /***************************************************/
-   procedure update_list is
+   /*****************************************************/
+   /* This procedure performs the update master routine */
+   /*****************************************************/
+   procedure update_master is
 
       /*-*/
       /* Local definitions
       /*-*/
+      var_exception varchar2(4000);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
+      var_report_email varchar2(256);
       var_upd_flag boolean;
       rcd_psa_mat_defn psa_mat_defn%rowtype;
+
+      /*-*/
+      /* Local constants
+      /*-*/
+      con_function constant varchar2(128) := 'PSA SAP Material Maintenance';
 
       /*-*/
       /* Local cursors
@@ -121,10 +130,39 @@ create or replace package body psa_app.psa_mat_function as
           order by t01.mde_mat_code asc;
       rcd_psa_verp csr_psa_verp%rowtype;
 
+      cursor csr_material is
+         select t01.*
+           from psa_mat_defn t01
+          where t01.mde_mat_status in ('*ADD','*CHG','*DEL')
+          order by t01.mde_mat_code asc;
+      rcd_material csr_material%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Initialise the log variables
+      /*-*/
+      var_log_prefix := 'PSA - SAP_MATERIAL_MAINTENANCE';
+      var_log_search := 'SAP_MATERIAL_MAINTENANCE';
+      var_report_email := psa_sys_function.retrieve_system_value('MATERIAL_AUDIT_EMAIL');
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - PSA SAP Material Maintenance');
+
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('--> Updating PSA material from the SAP material data');
 
       /*-*/
       /* Process the BDS materials
@@ -357,6 +395,95 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       commit;
 
+      /*-*/
+      /* Log the event
+      /*-*/
+      lics_logging.write_log('--> Sending material audit report');
+
+      /*-*/
+      /* Create the new email and create the email text header part
+      /*-*/
+      lics_mailer.create_email('PSA_'||psa_parameter.system_unit||'_'||psa_parameter.system_environment,
+                               var_report_email,
+                               'PSA SAP Material Maintenance - Material Audit',
+                               null,
+                               null);
+      lics_mailer.create_part(null);
+      lics_mailer.append_data('PSA SAP Material Maintenance - Material Audit');
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+
+      /*-*/
+      /* Create the email file and output the header data
+      /*-*/
+      lics_mailer.create_part('PSA_SAP_Material_Audit.xls');
+      lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
+      lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+      lics_mailer.append_data('<tr>');
+      lics_mailer.append_data('<td align=center colspan=7 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA - SAP Material Audit Report - '||to_char(sysdate,'yyyy/mm/dd hh24:mi')||'</td>');
+      lics_mailer.append_data('</tr>');
+
+      /*-*/
+      /* Output the report header columns
+      /*-*/
+      lics_mailer.append_data('<tr>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Code</td>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Code</td>');
+      lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Name</td>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Type</td>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Usage</td>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Status</td>');
+      lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Status Date/Time</td>');
+      lics_mailer.append_data('</tr>');
+
+      /*-*/
+      /* Generate the material audit report
+      /*-*/
+      open csr_material;
+      loop
+         fetch csr_material into rcd_material;
+         if csr_material%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Output the report data
+         /*-*/
+         lics_mailer.append_data('<tr>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_material.mde_mat_code||'</td>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;mso-number-format:\@;">'||rcd_material.mde_sap_code||'</td>');
+         lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_material.mde_mat_name||'</td>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_material.mde_mat_type||'</td>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_material.mde_mat_usage||'</td>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_material.mde_mat_status||'</td>');
+         lics_mailer.append_data('<td align=center style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||to_char(rcd_material.mde_sys_date,'yyyy/mm/dd hh24:mi:Ss')||'</td>');
+         lics_mailer.append_data('</tr>');
+
+      end loop;
+      close csr_material;
+
+      /*-*/
+      /* Output the email file part trailer data
+      /*-*/
+      lics_mailer.append_data('</table>');
+      lics_mailer.create_part(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data(null);
+      lics_mailer.append_data('** Email End **');
+      lics_mailer.finalise_email('utf-8');
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - PSA SAP Material Maintenance');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -373,14 +500,27 @@ create or replace package body psa_app.psa_mat_function as
          rollback;
 
          /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 2048);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         end if;
+
+         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PSA_MAT_FUNCTION - UPDATE_LIST - ' || substr(SQLERRM, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - PSA_MAT_FUNCTION - UPDATE_MASTER - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end update_list;
+   end update_master;
 
    /***************************************************/
    /* This procedure performs the select list routine */
@@ -406,7 +546,7 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
-                        decode(t01.mde_mat_status,'0','Inactive','1','Active','*UNKNOWN') as mde_mat_status
+                        t01.mde_mat_status
                    from psa_mat_defn t01
                   where (var_str_code is null or t01.mde_mat_code >= var_str_code)
                   order by t01.mde_mat_code asc) t01
@@ -416,7 +556,7 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
-                        decode(t01.mde_mat_status,'0','Inactive','1','Active','*UNKNOWN') as mde_mat_status
+                        t01.mde_mat_status
                    from psa_mat_defn t01
                   where ((var_action = '*NXTDEF' and (var_end_code is null or t01.mde_mat_code > var_end_code)) or
                          (var_action = '*PRVDEF'))
@@ -427,7 +567,7 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
-                        decode(t01.mde_mat_status,'0','Inactive','1','Active','*UNKNOWN') as mde_mat_status
+                        t01.mde_mat_status
                    from psa_mat_defn t01
                   where ((var_action = '*PRVDEF' and (var_str_code is null or t01.mde_mat_code < var_str_code)) or
                          (var_action = '*NXTDEF'))
@@ -581,6 +721,26 @@ create or replace package body psa_app.psa_mat_function as
           where t01.mde_mat_code = var_mat_code;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_type is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_status = '1'
+            and t01.pty_prd_mat_usage = '1'
+          order by t01.pty_prd_type asc;
+      rcd_type csr_type%rowtype;
+
+      cursor csr_line is
+         select t01.*
+           from psa_lin_defn t01
+          where t01.lde_lin_status = '1'
+            and t01.lde_prd_type in (select pty_prd_type
+                                       from psa_prd_type
+                                      where pty_prd_mat_usage = '1'
+                                        and pty_prd_lin_usage = '1'
+                                        and pty_prd_status = '1')
+          order by t01.lde_lin_code asc;
+      rcd_line csr_line%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -606,7 +766,7 @@ create or replace package body psa_app.psa_mat_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_mat_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
+      if var_action != '*UPDDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -614,22 +774,20 @@ create or replace package body psa_app.psa_mat_function as
       end if;
 
       /*-*/
-      /* Retrieve the existing material when required
+      /* Retrieve the existing material
       /*-*/
-      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
-         var_found := false;
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-         if var_found = false then
-            psa_gen_function.add_mesg_data('Material ('||var_mat_code||') does not exist');
-         end if;
-         if psa_gen_function.get_mesg_count != 0 then
-            return;
-         end if;
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Material ('||var_mat_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
       end if;
 
       /*-*/
@@ -640,22 +798,54 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Pipe the material XML
       /*-*/
-      if var_action = '*UPDDEF' then
-         var_output := '<MATDFN MATCDE="'||psa_to_xml(rcd_retrieve.mde_mat_code||' - (Last updated by '||rcd_retrieve.mde_upd_user||' on '||to_char(rcd_retrieve.mde_upd_date,'yyyy/mm/dd')||')')||'"';
-         var_output := var_output||' MATNAM="'||psa_to_xml(rcd_retrieve.mde_mat_name)||'"';
-         var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"/>';
-         pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CPYDEF' then
-         var_output := '<MATDFN MATCDE=""';
-         var_output := var_output||' MATNAM="'||psa_to_xml(rcd_retrieve.mde_mat_name)||'"';
-         var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"/>';
-         pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CRTDEF' then
-         var_output := '<MATDFN MATCDE=""';
-         var_output := var_output||' MATNAM=""';
-         var_output := var_output||' MATSTS="1"/>';
-         pipe row(psa_xml_object(var_output));
-      end if;
+      var_output := '<MATDFN MATCDE="'||psa_to_xml(rcd_retrieve.mde_mat_code||' - (Last updated by '||rcd_retrieve.mde_upd_user||' on '||to_char(rcd_retrieve.mde_upd_date,'yyyy/mm/dd')||')')||'"';
+      var_output := var_output||' MATNAM="'||psa_to_xml(rcd_retrieve.mde_mat_name)||'"';
+      var_output := var_output||' MATTYP="'||psa_to_xml(rcd_retrieve.mde_mat_type)||'"';
+      var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.mde_mat_usage)||'"';
+      var_output := var_output||' MATUOM="'||psa_to_xml(rcd_retrieve.mde_mat_uom)||'"';
+      var_output := var_output||' MATGRW="'||psa_to_xml(to_char(rcd_retrieve.mde_gro_weight))||'"';
+      var_output := var_output||' MATNEW="'||psa_to_xml(to_char(rcd_retrieve.mde_net_weight))||'"';
+      var_output := var_output||' MATUNC="'||psa_to_xml(to_char(rcd_retrieve.mde_unt_case))||'"';
+      var_output := var_output||' MATSLN="'||psa_to_xml(rcd_retrieve.mde_sap_line)||'"';
+      var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"';
+      var_output := var_output||' MATSYS="'||psa_to_xml(rcd_retrieve.mde_sys_user||' on '||to_char(rcd_retrieve.mde_sys_date,'yyyy/mm/dd'))||'"';
+      var_output := var_output||' MATPTY="'||psa_to_xml(rcd_retrieve.mde_prd_type)||'"';
+      var_output := var_output||' MATSPR="'||psa_to_xml(to_char(rcd_retrieve.mde_sch_priority))||'"';
+      var_output := var_output||' MATLIN="'||psa_to_xml(rcd_retrieve.mde_dft_line)||'"';
+      var_output := var_output||' MATCPL="'||psa_to_xml(to_char(rcd_retrieve.mde_cas_pallet))||'"';
+      var_output := var_output||' MATBQY="'||psa_to_xml(to_char(rcd_retrieve.mde_bch_quantity))||'"';
+      var_output := var_output||' MATYPC="'||psa_to_xml(to_char(rcd_retrieve.mde_yld_percent))||'"';
+      var_output := var_output||' MATYVL="'||psa_to_xml(to_char(rcd_retrieve.mde_yld_value))||'"';
+      var_output := var_output||' MATPPC="'||psa_to_xml(to_char(rcd_retrieve.mde_pck_percent))||'"';
+      var_output := var_output||' MATPWE="'||psa_to_xml(to_char(rcd_retrieve.mde_pck_weight))||'"';
+      var_output := var_output||' MATBWE="'||psa_to_xml(to_char(rcd_retrieve.mde_bch_weight))||'"/>';
+      pipe row(psa_xml_object(var_output));
+
+      /*-*/
+      /* Pipe the type data XML
+      /*-*/
+      open csr_type;
+      loop
+         fetch csr_type into rcd_type;
+         if csr_type%notfound then
+            exit;
+         end if;
+         pipe row(psa_xml_object('<TYPDFN TYPCDE="'||psa_to_xml(rcd_type.pty_prd_type)||'" TYPNAM="'||psa_to_xml('('||rcd_type.pty_prd_type||') '||rcd_type.pty_prd_name)||'"/>'));
+      end loop;
+      close csr_type;
+
+      /*-*/
+      /* Pipe the line data XML
+      /*-*/
+      open csr_line;
+      loop
+         fetch csr_line into rcd_line;
+         if csr_line%notfound then
+            exit;
+         end if;
+         pipe row(psa_xml_object('<LINDFN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'"/>'));
+      end loop;
+      close csr_line;
 
       /*-*/
       /* Pipe the XML end
@@ -713,6 +903,18 @@ create or replace package body psa_app.psa_mat_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_type is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_type = rcd_psa_mat_defn.mde_prd_type;
+      rcd_type csr_type%rowtype;
+
+      cursor csr_line is
+         select t01.*
+           from psa_lin_defn t01
+          where t01.lde_lin_code = rcd_psa_mat_defn.mde_dft_line;
+      rcd_line csr_line%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -738,7 +940,7 @@ create or replace package body psa_app.psa_mat_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      rcd_psa_mat_defn.mde_mat_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE')));
+      rcd_psa_mat_defn.mde_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
       rcd_psa_mat_defn.mde_mat_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATNAM'));
       rcd_psa_mat_defn.mde_mat_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATSTS'));
       rcd_psa_mat_defn.mde_upd_user := upper(par_user);
@@ -750,9 +952,6 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Validate the input
       /*-*/
-      if rcd_psa_mat_defn.mde_mat_code is null then
-         psa_gen_function.add_mesg_data('Material code must be supplied');
-      end if;
       if rcd_psa_mat_defn.mde_mat_name is null then
          psa_gen_function.add_mesg_data('Material name must be supplied');
       end if;
@@ -767,44 +966,65 @@ create or replace package body psa_app.psa_mat_function as
       end if;
 
       /*-*/
+      /* Validate the parent relationships
+      /*-*/
+      open csr_type;
+      fetch csr_type into rcd_type;
+      if csr_type%notfound then
+         psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') does not exist');
+      else
+         if rcd_type.pty_prd_status != '1' then
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') status must be active');
+         end if;
+         if rcd_type.pty_prd_mat_usage != '1' then
+            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') must be flagged for material usage');
+         end if;
+      end if;
+      close csr_type;
+
+      open csr_line;
+      fetch csr_line into rcd_line;
+      if csr_line%notfound then
+         psa_gen_function.add_mesg_data('Line code ('||rcd_psa_mat_defn.mde_dft_line||') does not exist');
+      else
+         if rcd_line.lde_lin_status != '1' then
+            psa_gen_function.add_mesg_data('Line code ('||rcd_psa_mat_defn.mde_dft_line||') status must be active');
+         end if;
+      end if;
+      close csr_line;
+
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
       /* Process the material
       /*-*/
-      if var_action = '*UPDDEF' then
-         var_confirm := 'updated';
-         var_found := false;
-         begin
-            open csr_retrieve;
-            fetch csr_retrieve into rcd_retrieve;
-            if csr_retrieve%found then
-               var_found := true;
-            end if;
-            close csr_retrieve;
-         exception
-            when others then
-               var_found := true;
-               psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is currently locked');
-         end;
-         if var_found = false then
-            psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') does not exist');
+      var_confirm := 'updated';
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
          end if;
-         if psa_gen_function.get_mesg_count = 0 then
-            update psa_mat_defn
-               set mde_mat_name = rcd_psa_mat_defn.mde_mat_name,
-                   mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
-                   mde_upd_user = rcd_psa_mat_defn.mde_upd_user,
-                   mde_upd_date = rcd_psa_mat_defn.mde_upd_date
-             where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
-         end if;
-      elsif var_action = '*CRTDEF' then
-         var_confirm := 'created';
-         begin
-            insert into psa_mat_defn values rcd_psa_mat_defn;
-         exception
-            when dup_val_on_index then
-               psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') already exists - unable to create');
-         end;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is currently locked');
+      end;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') does not exist');
       end if;
-      if psa_gen_function.get_mesg_count != 0 then
+      if psa_gen_function.get_mesg_count = 0 then
+         update psa_mat_defn
+            set mde_mat_name = rcd_psa_mat_defn.mde_mat_name,
+                mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
+                mde_upd_user = rcd_psa_mat_defn.mde_upd_user,
+                mde_upd_date = rcd_psa_mat_defn.mde_upd_date
+          where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
+      else
          rollback;
          return;
       end if;
@@ -849,10 +1069,10 @@ create or replace package body psa_app.psa_mat_function as
    /*-------------*/
    end update_data;
 
-   /***************************************************/
-   /* This procedure performs the delete data routine */
-   /***************************************************/
-   procedure delete_data is
+   /*******************************************************/
+   /* This procedure performs the inactivate data routine */
+   /*******************************************************/
+   procedure inactivate_data(par_user in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -863,8 +1083,18 @@ create or replace package body psa_app.psa_mat_function as
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
-      var_lin_code varchar2(32);
-      var_mat_code varchar2(32);
+      rcd_psa_mat_defn psa_mat_defn%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_mat_defn t01
+          where t01.mde_mat_code = rcd_psa_mat_defn.mde_mat_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
 
    /*-------------*/
    /* Begin block */
@@ -891,8 +1121,20 @@ create or replace package body psa_app.psa_mat_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
-      var_mat_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE')));
+      rcd_psa_mat_defn.mde_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
+      rcd_psa_mat_defn.mde_mat_status := '*INACTIVE';
+      rcd_psa_mat_defn.mde_upd_user := upper(par_user);
+      rcd_psa_mat_defn.mde_upd_date := sysdate;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the input
+      /*-*/
+      if rcd_psa_mat_defn.mde_upd_user is null then
+         psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -900,8 +1142,33 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Process the material
       /*-*/
-      var_confirm := 'deleted';
-      delete from psa_mat_defn where mde_mat_code = var_mat_code;
+      var_confirm := 'inactivated';
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is currently locked');
+      end;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count = 0 then
+         update psa_mat_defn
+            set mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
+                mde_upd_user = rcd_psa_mat_defn.mde_mat_status,
+                mde_upd_date = rcd_psa_mat_defn.mde_upd_date
+          where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
+      else
+         rollback;
+         return;
+      end if;
 
       /*-*/
       /* Free the XML document
@@ -916,7 +1183,7 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Send the confirm message
       /*-*/
-      psa_gen_function.set_cfrm_data('Material ('||var_mat_code||') successfully '||var_confirm);
+      psa_gen_function.set_cfrm_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
@@ -936,12 +1203,12 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - INACTIVATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end delete_data;
+   end inactivate_data;
 
 end psa_mat_function;
 /
