@@ -168,7 +168,7 @@ create or replace package body psa_app.psa_sys_function as
       /*-*/
       /* Clear the message data
       /*-*/
-      psa_sys_function.clear_mesg_data;
+      psa_gen_function.clear_mesg_data;
 
       /*-*/
       /* Parse the XML input
