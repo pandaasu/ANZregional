@@ -494,16 +494,16 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.className = 'clsLabelBN';
+               objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objInput = document.createElement('input');
                objInput.type = 'text';
                objInput.value = objElements[i].getAttribute('MATQTY');
-               objInput.id = 'objElements[i].getAttribute('MATCDE')+'_QTY';
+               objInput.id = objElements[i].getAttribute('MATCDE')+'_QTY';
                objInput.size = 9;
                objInput.maxLength = 9;
                objInput.align = 'left';
-               objInput.className = 'clsInputNN';
+               objInput.className = 'clsInputBN';
                objInput.onfocus = function() {setSelect(this);};
                objInput.onblur = function() {validateNumber(this,0,false);};
                objCell.appendChild(objInput);
@@ -542,7 +542,7 @@ sub PaintFunction()%>
       for (var i=0;i<objTable.rows.length;i++) {
          objRow = objTable.rows[i];
          if (document.getElementById(objRow.getAttribute('matcde')+'_QTY').value != '' && document.getElementById(objRow.getAttribute('matcde')+'_QTY').value != '0') {
-            strXML = strXML+'<STKDET MATCDE="'+fixXML(objRow.getAttribute('matcde'))+'" MATQTY="'+fixXML(document.getElementById(objRow.getAttribute('matcde')+'_QTY').value)+'"/>;
+            strXML = strXML+'<STKDET MATCDE="'+fixXML(objRow.getAttribute('matcde'))+'" MATQTY="'+fixXML(document.getElementById(objRow.getAttribute('matcde')+'_QTY').value)+'"/>';
          }
       }
       strXML = strXML+'</PSA_REQUEST>';
@@ -729,6 +729,7 @@ sub PaintFunction()%>
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
+<!--#include file="ics_std_number.inc"-->
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
@@ -789,7 +790,7 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
+   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% height=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Stocktake Define</nobr></td>
