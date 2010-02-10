@@ -713,7 +713,7 @@ create or replace package body psa_app.psa_stk_function as
          if csr_detail%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<STKDET MATCDE="'||psa_to_xml(rcd_detail.std_mat_code)||'" MATNAM="'||psa_to_xml(rcd_detail.mde_mat_name)||'" MATTYP="'||psa_to_xml(rcd_detail.mde_mat_type)||'" MATUSG="'||psa_to_xml(rcd_detail.mde_mat_usage)||'" MATQTY="||psa_to_xml(to_char(rcd_detail.std_mat_qnty))||"/>'));
+         pipe row(psa_xml_object('<STKDET MATCDE="'||psa_to_xml(rcd_detail.std_mat_code)||'" MATNAM="'||psa_to_xml(rcd_detail.mde_mat_name)||'" MATTYP="'||psa_to_xml(rcd_detail.mde_mat_type)||'" MATUSG="'||psa_to_xml(rcd_detail.mde_mat_usage)||'" MATQTY="'||psa_to_xml(to_char(rcd_detail.std_mat_qnty))||'"/>'));
       end loop;
       close csr_detail;
 
