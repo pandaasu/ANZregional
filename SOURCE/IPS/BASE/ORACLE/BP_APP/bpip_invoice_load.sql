@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package bp_app.bpip_inv_load as
+CREATE OR REPLACE package BP_APP.bpip_invoice_load as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : bpip_inv_load
+    Package : bpip_invoice_load
     Owner   : bp_app
 
     Description
     -----------
-    Integrated Planning Demand Financials - Inventory Load 
+    Integrated Planning Demand Financials - Invoice Load
 
     YYYY/MM   Author             Description
     -------   ------             -----------
@@ -27,13 +27,13 @@ create or replace package bp_app.bpip_inv_load as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end bpip_inv_load;
+end bpip_invoice_load;
 /
 
-/****************/
-/* Package Body */
-/****************/
-CREATE OR REPLACE package body BP_APP.bpip_inv_load as
+/******************/
+/* Package Body   */
+/******************/
+CREATE OR REPLACE package body BP_APP.bpip_invoice_load as
 
    /*-*/
    /* Private exceptions
@@ -46,7 +46,7 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
    /*-*/
    con_delimiter constant varchar2(32)  := ';';
    con_qualifier constant varchar2(10) := '"';
-   con_heading_count constant number := 4;
+   con_heading_count constant number := 5;
 
    /*-*/
    /* Private definitions
@@ -55,7 +55,7 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
    var_trn_error boolean;
    var_trn_count number;
    rcd_load_bpip_batch load_bpip_batch%rowtype;
-   rcd_load_inv_data load_inv_data%rowtype;
+   rcd_load_invc_data load_invc_data%rowtype;
    var_batch_id_01 number;
    var_batch_id_02 number;
    var_batch_id_05 number;
@@ -83,12 +83,26 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('COMPANY',1);
-      lics_inbound_utility.set_csv_definition('PERIOD',2);
+      lics_inbound_utility.set_csv_definition('PERIOD',1);
+      lics_inbound_utility.set_csv_definition('COMPANY',2);      
       lics_inbound_utility.set_csv_definition('PLANT',3);
-      lics_inbound_utility.set_csv_definition('MATERIAL',4);
-      lics_inbound_utility.set_csv_definition('STOCK_TYPE',5);
-      lics_inbound_utility.set_csv_definition('INVENTORY_QTY',6);
+      lics_inbound_utility.set_csv_definition('PROFIT_CTR',4);
+      lics_inbound_utility.set_csv_definition('COST_CTR',5);
+      lics_inbound_utility.set_csv_definition('INT_ORD',6);
+      lics_inbound_utility.set_csv_definition('ACCT',7);
+      lics_inbound_utility.set_csv_definition('POST_DATE',8);
+      lics_inbound_utility.set_csv_definition('PO_TYPE',9);
+      lics_inbound_utility.set_csv_definition('DOC_TYPE',10);
+      lics_inbound_utility.set_csv_definition('ITEM_GL_TYPE',11);
+      lics_inbound_utility.set_csv_definition('ITEM_STAT',12);
+      lics_inbound_utility.set_csv_definition('PURCHASE_GRP',13);
+      lics_inbound_utility.set_csv_definition('VENDOR',14);
+      lics_inbound_utility.set_csv_definition('MATL_GRP',15);
+      lics_inbound_utility.set_csv_definition('MATL',16);
+      lics_inbound_utility.set_csv_definition('DOC_CURR',17);
+      lics_inbound_utility.set_csv_definition('AMNT_DC',18);
+      lics_inbound_utility.set_csv_definition('AMNT_LC',19);
+      lics_inbound_utility.set_csv_definition('INV_QTY',20);
 
    /*-------------------*/
    /* Exception handler */
@@ -151,9 +165,9 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
          /* Set the batch header values
          /*-*/
          rcd_load_bpip_batch.batch_id := null;
-         rcd_load_bpip_batch.batch_type_code := 'INVENTORY';
+         rcd_load_bpip_batch.batch_type_code := 'INVOICES';
          rcd_load_bpip_batch.company := lics_inbound_utility.get_variable('COMPANY');
-         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('PERIOD'),5,4)||substr(lics_inbound_utility.get_variable('PERIOD'),2,2);
+         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('PERIOD'),8,4)||substr(lics_inbound_utility.get_variable('PERIOD'),4,2);
          rcd_load_bpip_batch.dataentity := 'ACTUALS';
          rcd_load_bpip_batch.status := 'LOADED';
          rcd_load_bpip_batch.loaded_by := 259; /* For ID in testing */
@@ -202,17 +216,31 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
       /* Retrieve field values
       /*-*/
       var_line_count := var_line_count + 1;
-      rcd_load_inv_data.batch_id := null;
-      rcd_load_inv_data.line_no := var_line_count;
-      rcd_load_inv_data.company := lics_inbound_utility.get_variable('COMPANY');
-      rcd_load_inv_data.period := lics_inbound_utility.get_variable('PERIOD');
-      rcd_load_inv_data.plant := lics_inbound_utility.get_variable('PLANT');
-      rcd_load_inv_data.material := lics_inbound_utility.get_variable('MATERIAL');
-      rcd_load_inv_data.stock_type := lics_inbound_utility.get_variable('STOCK_TYPE');
-      rcd_load_inv_data.inventory_qty := to_number(translate(upper(lics_inbound_utility.get_variable('INVENTORY_QTY')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.999');
-      rcd_load_inv_data.status := 'LOADED';
-      rcd_load_inv_data.error_msg := null;
-      rcd_load_inv_data.bus_sgmnt := null;
+      rcd_load_invc_data.batch_id := null;
+      rcd_load_invc_data.line_no := var_line_count;
+      rcd_load_invc_data.period             := lics_inbound_utility.get_variable('PERIOD');
+      rcd_load_invc_data.company             := lics_inbound_utility.get_variable('COMPANY');
+      rcd_load_invc_data.plant              := lics_inbound_utility.get_variable('PLANT');
+      rcd_load_invc_data.profit_center      := lics_inbound_utility.get_variable('PROFIT_CTR');
+      rcd_load_invc_data.cost_center        := lics_inbound_utility.get_variable('COST_CTR');
+      rcd_load_invc_data.internal_order     := lics_inbound_utility.get_variable('INT_ORD');
+      rcd_load_invc_data.account            := lics_inbound_utility.get_variable('ACCT');
+      rcd_load_invc_data.posting_date       := lics_inbound_utility.get_variable('POST_DATE');
+      rcd_load_invc_data.po_type            := lics_inbound_utility.get_variable('PO_TYPE');
+      rcd_load_invc_data.document_type      := lics_inbound_utility.get_variable('DOC_TYPE');
+      rcd_load_invc_data.item_gl_type       := lics_inbound_utility.get_variable('ITEM_GL_TYPE');
+      rcd_load_invc_data.item_status        := lics_inbound_utility.get_variable('ITEM_STAT');
+      rcd_load_invc_data.purchasing_group   := lics_inbound_utility.get_variable('PURCHASE_GRP');
+      rcd_load_invc_data.vendor             := lics_inbound_utility.get_variable('VENDOR');
+      rcd_load_invc_data.material_group     := lics_inbound_utility.get_variable('MATL_GRP');
+      rcd_load_invc_data.material           := lics_inbound_utility.get_variable('MATL');
+      rcd_load_invc_data.document_currency  := lics_inbound_utility.get_variable('DOC_CURR');
+      rcd_load_invc_data.amount_dc := to_number(translate(upper(lics_inbound_utility.get_variable('AMNT_DC')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.999');
+      rcd_load_invc_data.amount_lc := to_number(translate(upper(lics_inbound_utility.get_variable('AMNT_LC')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.999');
+      rcd_load_invc_data.invoice_qty := to_number(translate(upper(lics_inbound_utility.get_variable('INVOICE_QTY')),'# ABCDEFGHIJKLMNOPQRSTUVWXYZ','#'),'999,999,999,990.999');            
+      rcd_load_invc_data.status := 'LOADED';
+      rcd_load_invc_data.error_msg := null;
+      rcd_load_invc_data.bus_sgmnt := null;
 
       /*-*/
       /* Retrieve exceptions raised
@@ -236,20 +264,20 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
       /*-*/
       /* Business segment 01
       /*-*/
-      rcd_load_inv_data.batch_id := var_batch_id_01;
-      insert into load_inv_data values rcd_load_inv_data;
+      rcd_load_invc_data.batch_id := var_batch_id_01;
+      insert into load_invc_data values rcd_load_invc_data;
 
       /*-*/
       /* Business segment 02
       /*-*/
-      rcd_load_inv_data.batch_id := var_batch_id_02;
-      insert into load_inv_data values rcd_load_inv_data;
+      rcd_load_invc_data.batch_id := var_batch_id_02;
+      insert into load_invc_data values rcd_load_invc_data;
 
       /*-*/
       /* Business segment 05
       /*-*/
-      rcd_load_inv_data.batch_id := var_batch_id_05;
-      insert into load_inv_data values rcd_load_inv_data;
+      rcd_load_invc_data.batch_id := var_batch_id_05;
+      insert into load_invc_data values rcd_load_invc_data;
 
    /*-------------------*/
    /* Exception handler */
@@ -313,8 +341,8 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
          /*-*/
          /* Analyse the table and related indexes
          /*-*/
-         bp.schema_management.analyze_table('LOAD_INV_DATA');
-         bp.schema_management.analyze_index('LOAD_INV_DATA_PK01');
+         bp.schema_management.analyze_table('LOAD_INVC_DATA');
+         bp.schema_management.analyze_index('LOAD_INVC_DATA_PK01');
 
       end if;
 
@@ -323,12 +351,13 @@ CREATE OR REPLACE package body BP_APP.bpip_inv_load as
    /*-------------*/
    end on_end;
 
-end bpip_inv_load;
+end bpip_invoice_load;
 /
+
 
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym bpip_inv_load for bp_app.bpip_inv_load;
-grant execute on bp_app.bpip_inv_load to lics_app;
+create or replace public synonym bpip_invoice_load for bp_app.bpip_invoice_load;
+grant execute on bp_app.bpip_invoice_load to lics_app;

@@ -1,0 +1,27 @@
+
+/*-*/
+/* Set the echo off
+/*-*/
+set echo off;
+
+/*-*/
+/* Set the define character
+/*-*/
+set define ^;
+
+/*-*/
+/* LICS_APP
+/*-*/
+connect lics_app/xxxxxx@ap0082p.ap.mars
+
+
+insert into lics_interface values('BWBPIP01','BW to BPIP - Invoices','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_invoice_load','1');
+insert into lics_interface values('BWBPIP02','BW to BPIP - Contracts','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_cntct_load','1');
+insert into lics_interface values('BWBPIP03','BW to BPIP - Inventory','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_inv_load','1');
+insert into lics_interface values('BWBPIP04','BW to BPIP - MRP','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_mrp_load','1');
+insert into lics_interface values('BWBPIP05','BW to BPIP - Movements','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_mvmt_load','1');
+insert into lics_interface values('BWBPIP06','BW to BPIP - PPV','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_ppv_load','1');
+insert into lics_interface values('BWBPIP07','BW to BPIP - Received','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_recvd_load','1');
+insert into lics_interface values('BWBPIP08','BW to BPIP - Safety Stock','*INBOUND','IB_NORM',1,7,7,'ICS_INBOUND',null,null,null,null,'"Global ISI ICS-LADS Application Support"@smtp.ap.mars',null,'bp_app.bpip_safty_stk_load','1');
+
+commit;

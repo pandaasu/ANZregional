@@ -33,23 +33,23 @@ end bpip_mrp_load;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body bp_app.bpip_mrp_load as
+CREATE OR REPLACE package body BP_APP.bpip_mrp_load as
 
    /*-*/
-   /* Private exceptions 
+   /* Private exceptions
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
    /*-*/
-   /* Private constants 
+   /* Private constants
    /*-*/
    con_delimiter constant varchar2(32)  := ';';
    con_qualifier constant varchar2(10) := '"';
-   con_heading_count constant number := 2;
+   con_heading_count constant number := 6;
 
    /*-*/
-   /* Private definitions 
+   /* Private definitions
    /*-*/
    var_trn_start boolean;
    var_trn_error boolean;
@@ -130,7 +130,7 @@ create or replace package body bp_app.bpip_mrp_load as
    exception
 
       /*-*/
-      /* Exception trap 
+      /* Exception trap
       /*-*/
       when others then
          lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -156,7 +156,7 @@ create or replace package body bp_app.bpip_mrp_load as
    /* Begin block */
    /*-------------*/
    begin
-        
+
       /*--------------------------------------------*/
       /* IGNORE - Ignore the data row when required */
       /*--------------------------------------------*/
@@ -196,7 +196,7 @@ create or replace package body bp_app.bpip_mrp_load as
          rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),5,4)||substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),2,2);
          rcd_load_bpip_batch.dataentity := substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),5,4)||' BR'||substr(lics_inbound_utility.get_variable('CASTING_PERIOD'),2,2);
          rcd_load_bpip_batch.status := 'LOADED';
-         rcd_load_bpip_batch.loaded_by := 370;
+         rcd_load_bpip_batch.loaded_by := 259;
          rcd_load_bpip_batch.load_start_time := sysdate;
          rcd_load_bpip_batch.load_end_time := null;
          rcd_load_bpip_batch.validate_start_time := null;
@@ -207,7 +207,8 @@ create or replace package body bp_app.bpip_mrp_load as
 
          /*-*/
          /* Replace any batch headers with the same key values
-         /*-*/
+         /*-*/
+
          update load_bpip_batch
             set status = 'REPLACED'
           where batch_type_code = rcd_load_bpip_batch.batch_type_code
@@ -250,7 +251,7 @@ create or replace package body bp_app.bpip_mrp_load as
 
 
       end if;
-     
+
       /*-*/
       /* Retrieve field values
       /*-*/
@@ -341,7 +342,7 @@ create or replace package body bp_app.bpip_mrp_load as
          insert into load_mrp_data values rcd_load_mrp_data;
 
       end loop;
-      
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -378,7 +379,7 @@ create or replace package body bp_app.bpip_mrp_load as
       end if;
 
       /*-*/
-      /* Commit/rollback the transaction as required 
+      /* Commit/rollback the transaction as required
       /*-*/
       if var_trn_error = true then
 
@@ -413,9 +414,10 @@ create or replace package body bp_app.bpip_mrp_load as
    /* End routine */
    /*-------------*/
    end on_end;
-    
+
 end bpip_mrp_load;
-/  
+/
+
 
 /**************************/
 /* Package Synonym/Grants */
