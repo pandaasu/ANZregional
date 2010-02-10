@@ -1,0 +1,26 @@
+
+/*-*/
+/* Set the echo off
+/*-*/
+set echo off;
+
+/*-*/
+/* Set the define character
+/*-*/
+set define ^;
+
+/*-*/
+/* DF_APP
+/*-*/
+
+connect bp_app/bpprodpw@ap0082p.ap.mars
+
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_cntct_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_inv_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_invoice_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_mrp_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_mvmt_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_ppv_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_recvd_load.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\IPS\BASE\ORACLE\BP_APP\bpip_safty_stk_load.sql;
+
