@@ -204,6 +204,15 @@ create or replace package body psa_app.psa_mat_function as
             rcd_psa_mat_defn.mde_pck_percent := 0;
             rcd_psa_mat_defn.mde_pck_weight := rcd_psa_mat_defn.mde_net_weight * rcd_psa_mat_defn.mde_unt_case;
             rcd_psa_mat_defn.mde_bch_weight := 0;
+            if rcd_psa_mat_defn.mde_mat_type = 'TDU' then
+               rcd_psa_mat_defn.mde_prd_type := '*FILL';
+            elsif rcd_psa_mat_defn.mde_mat_type = 'MPO' then
+               rcd_psa_mat_defn.mde_prd_type := '*FILL';
+            elsif rcd_psa_mat_defn.mde_mat_type = 'PCH' then
+               rcd_psa_mat_defn.mde_prd_type := '*FORM';
+            elsif rcd_psa_mat_defn.mde_mat_type = 'RLS' then
+               rcd_psa_mat_defn.mde_prd_type := '*NONE';
+            end if;
             insert into psa_mat_defn values rcd_psa_mat_defn;
 
          /*-*/
