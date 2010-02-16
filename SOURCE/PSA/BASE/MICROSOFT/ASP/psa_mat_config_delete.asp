@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the material delete
    '//
-   call objProcedure.Execute("psa_app.psa_mat_function.delete_data")
+   call objProcedure.Execute("psa_app.psa_mat_function.delete_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

@@ -821,19 +821,19 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Units:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);"><font id="DEF_UntText" class="clsLabelBB"></font>
+            <input class="clsInputNN" type="text" name="DEF_RraUnit" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"><font id="DEF_UntText" class="clsLabelBB"></font>
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Efficiency %:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RraEffy" size="6" maxlength="6" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,2,false);">
+            <input class="clsInputNN" type="text" name="DEF_RraEffy" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,2,false);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Run Rate Wastage %:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RraWast" size="6" maxlength="6" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,2,false);">
+            <input class="clsInputNN" type="text" name="DEF_RraWast" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,2,false);">
          </nobr></td>
       </tr>
       <tr>
