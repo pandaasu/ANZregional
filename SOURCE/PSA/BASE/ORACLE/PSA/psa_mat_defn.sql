@@ -33,17 +33,7 @@ create table psa.psa_mat_defn
     mde_sys_user                    varchar2(30)                  not null,
     mde_sys_date                    date                          not null,
     mde_upd_user                    varchar2(30)                  null,
-    mde_upd_date                    date                          null,
-    mde_prd_type                    varchar2(32)                  null,
-    mde_sch_priority                number                        null,
-    mde_dft_line                    varchar2(32)                  null,
-    mde_cas_pallet                  number                        null,
-    mde_bch_quantity                number                        null,
-    mde_yld_percent                 number                        null,
-    mde_yld_value                   number                        null,
-    mde_pck_percent                 number                        null,
-    mde_pck_weight                  number                        null,
-    mde_bch_weight                  number                        null);
+    mde_upd_date                    date                          null);
 
 /**/
 /* Comments
@@ -64,16 +54,6 @@ comment on column psa.psa_mat_defn.mde_sys_user is 'Material system updated user
 comment on column psa.psa_mat_defn.mde_sys_date is 'Material system updated date';
 comment on column psa.psa_mat_defn.mde_upd_user is 'Material last updated user';
 comment on column psa.psa_mat_defn.mde_upd_date is 'Material last updated date';
-comment on column psa.psa_mat_defn.mde_prd_type is 'Production type code';
-comment on column psa.psa_mat_defn.mde_sch_priority is 'Production schedule priority';
-comment on column psa.psa_mat_defn.mde_dft_line is 'Default production line';
-comment on column psa.psa_mat_defn.mde_cas_pallet is 'Cases per pallet';
-comment on column psa.psa_mat_defn.mde_bch_quantity is 'Batch/lot quantity';
-comment on column psa.psa_mat_defn.mde_yld_percent is 'Yieald percentage';
-comment on column psa.psa_mat_defn.mde_yld_value is 'Yield value';
-comment on column psa.psa_mat_defn.mde_pck_percent is 'Pack weight percentage';
-comment on column psa.psa_mat_defn.mde_pck_weight is 'Pack weight';
-comment on column psa.psa_mat_defn.mde_bch_weight is 'Batch weight';
 
 /**/
 /* Primary Key Constraint
