@@ -473,11 +473,11 @@ create or replace package body psa_app.psa_rra_function as
       if rcd_psa_rra_defn.rrd_rra_units is null or rcd_psa_rra_defn.rrd_rra_units <= 0 then
          psa_gen_function.add_mesg_data('Run rate units must be greater than zero');
       end if;
-      if rcd_psa_rra_defn.rrd_rra_efficiency is null or (rcd_psa_rra_defn.rrd_rra_efficiency < 1 or rcd_psa_rra_defn.rrd_rra_efficiency > 100) then
-         psa_gen_function.add_mesg_data('Run rate efficiency must be in range 1 to 100');
+      if rcd_psa_rra_defn.rrd_rra_efficiency is null or (rcd_psa_rra_defn.rrd_rra_efficiency < 0 or rcd_psa_rra_defn.rrd_rra_efficiency > 100) then
+         psa_gen_function.add_mesg_data('Run rate efficiency must be in range 0 to 100');
       end if;
-      if rcd_psa_rra_defn.rrd_rra_wastage is null or (rcd_psa_rra_defn.rrd_rra_wastage < 1 or rcd_psa_rra_defn.rrd_rra_wastage > 100) then
-         psa_gen_function.add_mesg_data('Run rate wastage must be in range 1 to 100');
+      if rcd_psa_rra_defn.rrd_rra_wastage is null or (rcd_psa_rra_defn.rrd_rra_wastage < 0 or rcd_psa_rra_defn.rrd_rra_wastage > 100) then
+         psa_gen_function.add_mesg_data('Run rate wastage must be in range 0 to 100');
       end if;
       if rcd_psa_rra_defn.rrd_rra_status is null or (rcd_psa_rra_defn.rrd_rra_status != '0' and rcd_psa_rra_defn.rrd_rra_status != '1') then
          psa_gen_function.add_mesg_data('Run rate status must be (0)inactive or (1)active');
