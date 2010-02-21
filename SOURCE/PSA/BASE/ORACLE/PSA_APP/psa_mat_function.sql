@@ -29,7 +29,7 @@ create or replace package psa_app.psa_mat_function as
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
-   procedure inactivate_data(par_user in varchar2);
+   procedure delete_data(par_user in varchar2);
 
 end psa_mat_function;
 /
@@ -555,9 +555,12 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
+                        t01.mde_mat_type,
+                        t01.mde_mat_usage,
                         t01.mde_mat_status
                    from psa_mat_defn t01
-                  where (var_str_code is null or t01.mde_mat_code >= var_str_code)
+                  where t01.mde_mat_status != '*INACTIVE'
+                    and (var_str_code is null or t01.mde_mat_code >= var_str_code)
                   order by t01.mde_mat_code asc) t01
           where rownum <= var_pag_size;
 
@@ -565,9 +568,12 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
+                        t01.mde_mat_type,
+                        t01.mde_mat_usage,
                         t01.mde_mat_status
                    from psa_mat_defn t01
-                  where ((var_action = '*NXTDEF' and (var_end_code is null or t01.mde_mat_code > var_end_code)) or
+                  where t01.mde_mat_status != '*INACTIVE'
+                    and ((var_action = '*NXTDEF' and (var_end_code is null or t01.mde_mat_code > var_end_code)) or
                          (var_action = '*PRVDEF'))
                   order by t01.mde_mat_code asc) t01
           where rownum <= var_pag_size;
@@ -576,9 +582,12 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from (select t01.mde_mat_code,
                         t01.mde_mat_name,
+                        t01.mde_mat_type,
+                        t01.mde_mat_usage,
                         t01.mde_mat_status
                    from psa_mat_defn t01
-                  where ((var_action = '*PRVDEF' and (var_str_code is null or t01.mde_mat_code < var_str_code)) or
+                  where t01.mde_mat_status != '*INACTIVE'
+                    and ((var_action = '*PRVDEF' and (var_str_code is null or t01.mde_mat_code < var_str_code)) or
                          (var_action = '*NXTDEF'))
                   order by t01.mde_mat_code desc) t01
           where rownum <= var_pag_size;
@@ -637,7 +646,7 @@ create or replace package body psa_app.psa_mat_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATTYP="'||psa_to_xml(tbl_list(idx).mde_mat_type)||'" MATUSG="'||psa_to_xml(tbl_list(idx).mde_mat_usage)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -646,14 +655,14 @@ create or replace package body psa_app.psa_mat_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATTYP="'||psa_to_xml(tbl_list(idx).mde_mat_type)||'" MATUSG="'||psa_to_xml(tbl_list(idx).mde_mat_usage)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATTYP="'||psa_to_xml(tbl_list(idx).mde_mat_type)||'" MATUSG="'||psa_to_xml(tbl_list(idx).mde_mat_usage)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -663,14 +672,14 @@ create or replace package body psa_app.psa_mat_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATTYP="'||psa_to_xml(tbl_list(idx).mde_mat_type)||'" MATUSG="'||psa_to_xml(tbl_list(idx).mde_mat_usage)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW MATCDE="'||to_char(tbl_list(idx).mde_mat_code)||'" MATNAM="'||psa_to_xml(tbl_list(idx).mde_mat_name)||'" MATTYP="'||psa_to_xml(tbl_list(idx).mde_mat_type)||'" MATUSG="'||psa_to_xml(tbl_list(idx).mde_mat_usage)||'" MATSTS="'||psa_to_xml(tbl_list(idx).mde_mat_status)||'"/>'));
             end loop;
          end if;
       end if;
@@ -725,30 +734,87 @@ create or replace package body psa_app.psa_mat_function as
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
-         select t01.*
+         select t01.*,
+                decode(t01.mde_upd_user,null,'ADDED',t01.mde_upd_user||' on '||to_char(t01.mde_upd_date,'yyyy/mm/dd hh24:mi:ss')) as upd_date
            from psa_mat_defn t01
           where t01.mde_mat_code = var_mat_code;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_type is
-         select t01.*
-           from psa_prd_type t01
-          where t01.pty_prd_status = '1'
-            and t01.pty_prd_mat_usage = '1'
+      cursor csr_prod is
+         select t01.pty_prd_type,
+                t01.pty_prd_name,
+                nvl(t02.mpr_mat_code,'*NONE') as mpr_mat_code,
+                nvl(t02.mpr_sch_priority,1) as mpr_sch_priority,
+                nvl(t02.mpr_dft_line,'*NONE') as mpr_dft_line,
+                nvl(t02.mpr_cas_pallet,0) as mpr_cas_pallet,
+                nvl(t02.mpr_bch_quantity,0) as mpr_bch_quantity,
+                nvl(t02.mpr_yld_percent,0) as mpr_yld_percent,
+                nvl(t02.mpr_yld_value,0) as mpr_yld_value,
+                nvl(t02.mpr_pck_percent,0) as mpr_pck_percent,
+                nvl(t02.mpr_pck_weight,0) as mpr_pck_weight,
+                nvl(t02.mpr_bch_weight,0) as mpr_bch_weight
+           from psa_prd_type t01,
+                psa_mat_prod t02
+          where t01.pty_prd_type = t02.mpr_prd_type(+)
+            and rcd_retrieve.mde_mat_code = t02.mpr_mat_code(+)
+            and ((rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'TDU' and t01.pty_prd_type in ('*FILL','*PACK')) or
+                 (rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'MPO' and t01.pty_prd_type in ('*FILL')) or
+                 (rcd_retrieve.mde_mat_type = 'VERP' and rcd_retrieve.mde_mat_usage = 'PCH' and t01.pty_prd_type in ('*FORM')))
           order by t01.pty_prd_type asc;
-      rcd_type csr_type%rowtype;
+      rcd_prod csr_prod%rowtype;
 
       cursor csr_line is
-         select t01.*
-           from psa_lin_defn t01
-          where t01.lde_lin_status = '1'
-            and t01.lde_prd_type in (select pty_prd_type
-                                       from psa_prd_type
-                                      where pty_prd_mat_usage = '1'
-                                        and pty_prd_lin_usage = '1'
-                                        and pty_prd_status = '1')
-          order by t01.lde_lin_code asc;
+         select t01.lde_prd_type,
+                t01.lde_lin_code,
+                t01.lde_lin_name,
+                t02.lco_con_code,
+                t02.lco_con_name,
+                nvl(t03.mli_rra_code,'*NONE') as mli_rra_code,
+                nvl(t03.mli_rra_efficiency,0) as mli_rra_efficiency,
+                nvl(t03.mli_rra_wastage,0) as mli_rra_wastage
+           from psa_lin_defn t01,
+                psa_lin_config t02,
+                psa_mat_line t03
+          where t01.lde_lin_code = t02.lco_lin_code
+            and t02.lco_lin_code = t03.mli_lin_code(+)
+            and t02.lco_con_code = t03.mli_con_code(+)
+            and rcd_retrieve.mde_mat_code = t03.mli_mat_code(+)
+            and rcd_prod.pty_prd_type = t03.mli_prd_type(+)
+            and t01.lde_prd_type = rcd_prod.pty_prd_type
+            and t01.lde_lin_status = '1'
+            and t02.lco_con_status = '1'
+          order by t01.lde_lin_code asc,
+                   t02.lco_con_code asc;
       rcd_line csr_line%rowtype;
+
+      cursor csr_rate is
+         select t02.rrd_rra_code,
+                t02.rrd_rra_name,
+                t02.rrd_rra_efficiency,
+                t02.rrd_rra_wastage
+           from psa_lin_rate t01,
+                psa_rra_defn t02
+          where t01.lra_rra_code = t02.rrd_rra_code
+            and t01.lra_lin_code = rcd_line.lde_lin_code
+            and t01.lra_con_code = rcd_line.lco_con_code
+          order by t01.lra_rra_code asc;
+      rcd_rate csr_rate%rowtype;
+
+      cursor csr_comp is
+         select t02.mde_mat_code,
+                t02.mde_mat_name,
+                t01.mco_com_quantity
+           from psa_mat_comp t01,
+                psa_mat_defn t02
+          where t01.mco_com_code = t02.mde_mat_code
+            and t01.mco_mat_code = rcd_retrieve.mde_mat_code
+            and t01.mco_prd_type = rcd_prod.pty_prd_type
+            and t02.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
+            and ((rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'TDU' and t02.mde_mat_type in ('*FERT') and t02.mde_mat_usage in ('*MPO')) or
+                 (rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'MPO' and t02.mde_mat_type in ('*FERT') and t02.mde_mat_usage in ('*MPO')) or
+                 (rcd_retrieve.mde_mat_type = 'VERP' and rcd_retrieve.mde_mat_usage = 'PCH' and t02.mde_mat_type in ('*VERP') and t02.mde_mat_usage in ('*RLS')))
+          order by t02.mde_mat_code asc;
+      rcd_comp csr_comp%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -807,54 +873,93 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Pipe the material XML
       /*-*/
-      var_output := '<MATDFN MATCDE="'||psa_to_xml(rcd_retrieve.mde_mat_code||' - (Last updated by '||rcd_retrieve.mde_upd_user||' on '||to_char(rcd_retrieve.mde_upd_date,'yyyy/mm/dd')||')')||'"';
+      var_output := '<MATDFN MATCDE="'||psa_to_xml(rcd_retrieve.mde_mat_code)||'"';
       var_output := var_output||' MATNAM="'||psa_to_xml(rcd_retrieve.mde_mat_name)||'"';
       var_output := var_output||' MATTYP="'||psa_to_xml(rcd_retrieve.mde_mat_type)||'"';
       var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.mde_mat_usage)||'"';
+      var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"';
       var_output := var_output||' MATUOM="'||psa_to_xml(rcd_retrieve.mde_mat_uom)||'"';
       var_output := var_output||' MATGRW="'||psa_to_xml(to_char(rcd_retrieve.mde_gro_weight))||'"';
       var_output := var_output||' MATNEW="'||psa_to_xml(to_char(rcd_retrieve.mde_net_weight))||'"';
       var_output := var_output||' MATUNC="'||psa_to_xml(to_char(rcd_retrieve.mde_unt_case))||'"';
-      var_output := var_output||' MATSLN="'||psa_to_xml(rcd_retrieve.mde_sap_line)||'"';
-      var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"';
-      var_output := var_output||' MATSYS="'||psa_to_xml(rcd_retrieve.mde_sys_user||' on '||to_char(rcd_retrieve.mde_sys_date,'yyyy/mm/dd'))||'"';
-      var_output := var_output||' MATPTY="'||psa_to_xml(rcd_retrieve.mde_prd_type)||'"';
-      var_output := var_output||' MATSPR="'||psa_to_xml(to_char(rcd_retrieve.mde_sch_priority))||'"';
-      var_output := var_output||' MATLIN="'||psa_to_xml(rcd_retrieve.mde_dft_line)||'"';
-      var_output := var_output||' MATCPL="'||psa_to_xml(to_char(rcd_retrieve.mde_cas_pallet))||'"';
-      var_output := var_output||' MATBQY="'||psa_to_xml(to_char(rcd_retrieve.mde_bch_quantity))||'"';
-      var_output := var_output||' MATYPC="'||psa_to_xml(to_char(rcd_retrieve.mde_yld_percent))||'"';
-      var_output := var_output||' MATYVL="'||psa_to_xml(to_char(rcd_retrieve.mde_yld_value))||'"';
-      var_output := var_output||' MATPPC="'||psa_to_xml(to_char(rcd_retrieve.mde_pck_percent))||'"';
-      var_output := var_output||' MATPWE="'||psa_to_xml(to_char(rcd_retrieve.mde_pck_weight))||'"';
-      var_output := var_output||' MATBWE="'||psa_to_xml(to_char(rcd_retrieve.mde_bch_weight))||'"/>';
+      var_output := var_output||' SAPCDE="'||psa_to_xml(rcd_retrieve.mde_sap_code)||'"';
+      var_output := var_output||' SAPLIN="'||psa_to_xml(rcd_retrieve.mde_sap_line)||'"';
+      var_output := var_output||' SYSDTE="'||psa_to_xml(rcd_retrieve.mde_sys_user||' on '||to_char(rcd_retrieve.mde_sys_date,'yyyy/mm/dd hh24:mi:ss'))||'"';
+      var_output := var_output||' UPDDTE="'||psa_to_xml(rcd_retrieve.upd_date)||'"/>';
       pipe row(psa_xml_object(var_output));
 
       /*-*/
-      /* Pipe the type data XML
+      /* Retrieve the production type data XML
       /*-*/
-      open csr_type;
+      open csr_prod;
       loop
-         fetch csr_type into rcd_type;
-         if csr_type%notfound then
+         fetch csr_prod into rcd_prod;
+         if csr_prod%notfound then
             exit;
          end if;
-         pipe row(psa_xml_object('<TYPDFN TYPCDE="'||psa_to_xml(rcd_type.pty_prd_type)||'" TYPNAM="'||psa_to_xml('('||rcd_type.pty_prd_type||') '||rcd_type.pty_prd_name)||'"/>'));
-      end loop;
-      close csr_type;
 
-      /*-*/
-      /* Pipe the line data XML
-      /*-*/
-      open csr_line;
-      loop
-         fetch csr_line into rcd_line;
-         if csr_line%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<LINDFN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'"/>'));
+         /*-*/
+         /* Pipe the production type XML
+         /*-*/
+         var_output := '<MATPTY PTYCDE="'||psa_to_xml(rcd_prod.pty_prd_type)||'"';
+         var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"';
+         var_output := var_output||' MPRSCH="'||psa_to_xml(to_char(rcd_prod.mpr_sch_priority))||'"';
+         var_output := var_output||' MPRLIN="'||psa_to_xml(rcd_prod.mpr_dft_line)||'"';
+         var_output := var_output||' MPRCPL="'||psa_to_xml(to_char(rcd_prod.mpr_cas_pallet))||'"';
+         var_output := var_output||' MPRBQY="'||psa_to_xml(to_char(rcd_prod.mpr_bch_quantity))||'"';
+         var_output := var_output||' MPRYPC="'||psa_to_xml(to_char(rcd_prod.mpr_yld_percent))||'"';
+         var_output := var_output||' MPRYVL="'||psa_to_xml(to_char(rcd_prod.mpr_yld_value))||'"';
+         var_output := var_output||' MPRPPC="'||psa_to_xml(to_char(rcd_prod.mpr_pck_percent))||'"';
+         var_output := var_output||' MPRPWE="'||psa_to_xml(to_char(rcd_prod.mpr_pck_weight))||'"';
+         var_output := var_output||' MPRBWE="'||psa_to_xml(to_char(rcd_prod.mpr_bch_weight))||'"/>';
+         pipe row(psa_xml_object(var_output));
+
+         /*-*/
+         /* Retrieve the line data XML
+         /*-*/
+         open csr_line;
+         loop
+            fetch csr_line into rcd_line;
+            if csr_line%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Pipe the line data XML
+            /*-*/
+            pipe row(psa_xml_object('<MATLIN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'" LCOCDE="'||psa_to_xml(rcd_line.lco_con_code)||'" LCONAM="'||psa_to_xml('('||rcd_line.lco_con_code||') '||rcd_line.lco_con_name)||'" LCORRA="'||psa_to_xml(rcd_line.mli_rra_code)||'" LCOEFF="'||psa_to_xml(to_char(rcd_line.mli_rra_efficiency,'fm990.00'))||'" LCOWAS="'||psa_to_xml(to_char(rcd_line.mli_rra_wastage,'fm990.00'))||'"/>'));
+
+            /*-*/
+            /* Retrieve and pipe the line rate data XML
+            /*-*/
+            open csr_rate;
+            loop
+               fetch csr_rate into rcd_rate;
+               if csr_rate%notfound then
+                  exit;
+               end if;
+               pipe row(psa_xml_object('<MATRRA RRACDE="'||psa_to_xml(rcd_rate.rrd_rra_code)||'" RRANAM="'||psa_to_xml('('||rcd_rate.rrd_rra_code||') '||rcd_rate.rrd_rra_name)||'" RRAEFF="'||psa_to_xml(to_char(rcd_rate.rrd_rra_efficiency,'fm990.00'))||'" RRAWAS="'||psa_to_xml(to_char(rcd_rate.rrd_rra_wastage,'fm990.00'))||'"/>'));
+            end loop;
+            close csr_rate;
+
+         end loop;
+         close csr_line;
+
+         /*-*/
+         /* Retrieve and pipe the component data XML
+         /*-*/
+         open csr_comp;
+         loop
+            fetch csr_comp into rcd_comp;
+            if csr_comp%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<MATCOM COMCDE="'||psa_to_xml(rcd_comp.mde_mat_code)||'" COMNAM="'||psa_to_xml('('||rcd_comp.mde_mat_code||') '||rcd_comp.mde_mat_name)||'" COMQTY="'||psa_to_xml(to_char(rcd_comp.mco_com_quantity))||'"/>'));
+         end loop;
+         close csr_comp;
+
       end loop;
-      close csr_line;
+      close csr_prod;
 
       /*-*/
       /* Pipe the XML end
@@ -951,7 +1056,7 @@ create or replace package body psa_app.psa_mat_function as
       end if;
       rcd_psa_mat_defn.mde_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
       rcd_psa_mat_defn.mde_mat_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATNAM'));
-      rcd_psa_mat_defn.mde_mat_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATSTS'));
+      rcd_psa_mat_defn.mde_mat_status := '*ACTIVE';
       rcd_psa_mat_defn.mde_upd_user := upper(par_user);
       rcd_psa_mat_defn.mde_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
@@ -1078,10 +1183,10 @@ create or replace package body psa_app.psa_mat_function as
    /*-------------*/
    end update_data;
 
-   /*******************************************************/
-   /* This procedure performs the inactivate data routine */
-   /*******************************************************/
-   procedure inactivate_data(par_user in varchar2) is
+   /***************************************************/
+   /* This procedure performs the delete data routine */
+   /***************************************************/
+   procedure delete_data(par_user in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -1103,7 +1208,6 @@ create or replace package body psa_app.psa_mat_function as
           where t01.mde_mat_code = rcd_psa_mat_defn.mde_mat_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
-
 
    /*-------------*/
    /* Begin block */
@@ -1139,19 +1243,8 @@ create or replace package body psa_app.psa_mat_function as
       end if;
 
       /*-*/
-      /* Validate the input
+      /* Retrieve the material
       /*-*/
-      if rcd_psa_mat_defn.mde_upd_user is null then
-         psa_gen_function.add_mesg_data('Update user must be supplied');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Process the material
-      /*-*/
-      var_confirm := 'inactivated';
       var_found := false;
       begin
          open csr_retrieve;
@@ -1167,17 +1260,36 @@ create or replace package body psa_app.psa_mat_function as
       end;
       if var_found = false then
          psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') does not exist');
-      end if;
-      if psa_gen_function.get_mesg_count = 0 then
-         update psa_mat_defn
-            set mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
-                mde_upd_user = rcd_psa_mat_defn.mde_mat_status,
-                mde_upd_date = rcd_psa_mat_defn.mde_upd_date
-          where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
       else
+         if rcd_retrieve.mde_mat_status != '*DEL' then
+            psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') must be status *DEL for inactivation');
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
          rollback;
          return;
       end if;
+
+      /*-*/
+      /* Validate the input
+      /*-*/
+      if rcd_psa_mat_defn.mde_upd_user is null then
+         psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Process the material
+      /*-*/
+      var_confirm := 'inactivated';
+      update psa_mat_defn
+         set mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
+             mde_upd_user = rcd_psa_mat_defn.mde_mat_status,
+             mde_upd_date = rcd_psa_mat_defn.mde_upd_date
+       where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
 
       /*-*/
       /* Free the XML document
@@ -1212,12 +1324,12 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - INACTIVATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end inactivate_data;
+   end delete_data;
 
 end psa_mat_function;
 /
