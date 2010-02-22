@@ -396,6 +396,8 @@ sub PaintFunction()%>
    var cstrDefineUsag;
    var cstrTduFill;
    var cstrTduPack;
+   var cintLineCount;
+   var cintCompCount;
    function requestDefineUpdate(strCode) {
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" MATCDE="'+fixXML(strCode)+'"/>';
@@ -432,7 +434,9 @@ sub PaintFunction()%>
          cstrTduFill = '0';
          cstrTduPack = '0';
          var strPrdType = '';
-         var intLineCount = 0;
+         var strLinCode = '';
+         cintLineCount = 0;
+         cintCompCount = 0;
          var objFillLinList = document.getElementById('FILL_LinList');
          for (var i=objFillLinList.rows.length-1;i>1;i--) {
             objFillLinList.deleteRow(i);
@@ -444,6 +448,18 @@ sub PaintFunction()%>
          var objFormLinList = document.getElementById('FORM_LinList');
          for (var i=objFormLinList.rows.length-1;i>1;i--) {
             objFormLinList.deleteRow(i);
+         }
+         var objFillComList = document.getElementById('FILL_ComList');
+         for (var i=objFillComList.rows.length-1;i>2;i--) {
+            objFillComList.deleteRow(i);
+         }
+         var objPackComList = document.getElementById('PACK_ComList');
+         for (var i=objPackComList.rows.length-1;i>2;i--) {
+            objPackComList.deleteRow(i);
+         }
+         var objFormComList = document.getElementById('FORM_ComList');
+         for (var i=objFormComList.rows.length-1;i>2;i--) {
+            objFormComList.deleteRow(i);
          }
          var objRow;
          var objCell;
@@ -471,6 +487,7 @@ sub PaintFunction()%>
                }
             } else if (objElements[i].nodeName == 'MATPTY') {
                strPrdType = objElements[i].getAttribute('PTYCDE');
+               strLinCode = '';
                if (objElements[i].getAttribute('PTYCDE') == '*FILL') {
                   document.getElementById('FILL_Data').style.display = 'block';
                   if (cstrDefineUsag == 'TDU') {
@@ -481,46 +498,73 @@ sub PaintFunction()%>
                   document.getElementById('FILL_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FILL_YldPcnt').value = objElements[i].getAttribute('MPRYPC');
                   document.getElementById('FILL_PckPcnt').value = objElements[i].getAttribute('MPRYVL');
+                  document.getElementById('FILL_ComMatl').value = '';
+                  document.getElementById('FILL_ComQnty').value = '';
                } else if (objElements[i].getAttribute('PTYCDE') == '*PACK') {
                   document.getElementById('PACK_Data').style.display = 'block';
                   if (cstrDefineUsag == 'TDU') {
                      cstrTduPack = '1';
                      document.getElementById('DEF_TduPack').checked = true;
                   }
+                  document.getElementById('PACK_ComMatl').value = '';
+                  document.getElementById('PACK_ComQnty').value = '';
                } else if (objElements[i].getAttribute('PTYCDE') == '*FORM') {
                   document.getElementById('FORM_Data').style.display = 'block';
-                  document.getElementById('DEF_MatCode').innerHTML = '<p>'+objElements[i].getAttribute('MATCDE')+'</p>';
+                  document.getElementById('FORM_ComMatl').value = '';
+                  document.getElementById('FORM_ComQnty').value = '';
                }
             } else if (objElements[i].nodeName == 'MATLIN') {
                if (strPrdType == '*FILL') {
+                  if (strLinCode != objElements[i].getAttribute('LINCDE')) {
+                     if (strLinCode != '') {
+                        objRow = objFillLinList.insertRow(-1);
+                        objRow.setAttribute('lincde','*NONE');
+                        objCell = objRow.insertCell(-1);
+                        objCell.colSpan = 7;
+                        objCell.align = 'center';
+                        objCell.vAlign = 'center';
+                        objCell.className = 'clsLabelHB';
+                        objCell.style.whiteSpace = 'nowrap';
+                     }
+                     strLinCode = objElements[i].getAttribute('LINCDE');
+                  }
                   objRow = objFillLinList.insertRow(-1);
                } else if (strPrdType == '*PACK') {
+                  if (strLinCode != objElements[i].getAttribute('LINCDE')) {
+                     if (strLinCode != '') {
+                        objRow = objPackLinList.insertRow(-1);
+                        objRow.setAttribute('lincde','*NONE');
+                        objCell = objRow.insertCell(-1);
+                        objCell.colSpan = 7;
+                        objCell.align = 'center';
+                        objCell.vAlign = 'center';
+                        objCell.className = 'clsLabelHB';
+                        objCell.style.whiteSpace = 'nowrap';
+                     }
+                     strLinCode = objElements[i].getAttribute('LINCDE');
+                  }
                   objRow = objPackLinList.insertRow(-1);
                } else if (strPrdType == '*FORM') {
+                  if (strLinCode != objElements[i].getAttribute('LINCDE')) {
+                     if (strLinCode != '') {
+                        objRow = objFormLinList.insertRow(-1);
+                        objRow.setAttribute('lincde','*NONE');
+                        objCell = objRow.insertCell(-1);
+                        objCell.colSpan = 7;
+                        objCell.align = 'center';
+                        objCell.vAlign = 'center';
+                        objCell.className = 'clsLabelHB';
+                        objCell.style.whiteSpace = 'nowrap';
+                     }
+                     strLinCode = objElements[i].getAttribute('LINCDE');
+                  }
                   objRow = objFormLinList.insertRow(-1);
                }
-               intLineCount++;
+               cintLineCount++;
                objRow.setAttribute('lincde',objElements[i].getAttribute('LINCDE'));
                objRow.setAttribute('lcocde',objElements[i].getAttribute('LCOCDE'));
-               objRow.setAttribute('lincnt',intLineCount);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
-               try {
-                  objInput = document.createElement('<input type="radio" name="FILL_Dflt"/>');
-               } catch (objException) {
-                  objInput = document.createElement('input');
-                  objInput.type = 'radio';
-                  objInput.name = 'FILL_Dflt';
-               }
-               objInput.onfocus = function() {setSelect(this);};
-               objInput.onclick = function() {doDefaultClick(this);};
-               objInput.checked = false;
-               objInput.setAttribute('lincnt',intLineCount);
-               objCell.appendChild(objInput);
+               objRow.setAttribute('lcorra',objElements[i].getAttribute('LCORRA'));
+               objRow.setAttribute('lincnt',cintLineCount);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
@@ -530,11 +574,11 @@ sub PaintFunction()%>
                objInput = document.createElement('input');
                objInput.type = 'checkbox';
                objInput.value = '';
-               objInput.id = 'LCOCHK_'+intLineCount;
+               objInput.id = 'LCOCHK_'+cintLineCount;
                objInput.onfocus = function() {setSelect(this);};
                objInput.onclick = function() {doLineClick(this);};
                objInput.checked = false;
-               objInput.setAttribute('lincnt',intLineCount);
+               objInput.setAttribute('lincnt',cintLineCount);
                if (objElements[i].getAttribute('LCORRA') != '*NONE') {
                   objInput.checked = true;
                }
@@ -542,15 +586,41 @@ sub PaintFunction()%>
                objCell.appendChild(document.createTextNode(objElements[i].getAttribute('LINNAM')+' - '+objElements[i].getAttribute('LCONAM')));
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.className = 'clsLabelBN';
+               objCell.style.whiteSpace = 'nowrap';
+               objInput = document.createElement('input');
+               objInput.type = 'checkbox';
+               objInput.value = '';
+               objInput.id = 'LCODFT_'+cintLineCount;
+               objInput.onfocus = function() {setSelect(this);};
+               objInput.onclick = function() {doDefaultClick(this);};
+               objInput.checked = false;
+               objInput.setAttribute('lincde',objElements[i].getAttribute('LINCDE'));
+               objInput.setAttribute('lincnt',cintLineCount);
+               objInput.disabled = true;
+               if (objElements[i].getAttribute('LCORRA') != '*NONE') {
+                  objInput.disabled = false;
+               }
+               objCell.appendChild(objInput);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.vAlign = 'center';
                objCell.className = 'clsLabelBN';
                objCell.style.whiteSpace = 'nowrap';
                objSelect = document.createElement('select');
-               objSelect.id = 'LCORRA_'+intLineCount;
+               objSelect.id = 'LCORRA_'+cintLineCount;
                objSelect.className = 'clsInputNN';
                objSelect.onchange = function() {doRateChange(this);};
-               objSelect.setAttribute('lincnt',intLineCount);
+               objSelect.setAttribute('lintyp',strPrdType);
+               objSelect.setAttribute('lincnt',cintLineCount);
+               objSelect.selectedIndex = -1;
+               objSelect.options[0] = new Option('** Select Run Rate **','*NONE');
+               objSelect.options[0].setAttribute('rraeff','');
+               objSelect.options[0].setAttribute('rrawas','');
+               objSelect.options[0].selected = true;
                objSelect.disabled = true;
                if (objElements[i].getAttribute('LCORRA') != '*NONE') {
                   objSelect.disabled = false;
@@ -558,17 +628,17 @@ sub PaintFunction()%>
                objCell.appendChild(objSelect);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
+               objCell.align = 'center';
                objCell.vAlign = 'center';
-               objCell.id = 'RRAEFF_'+intLineCount;
+               objCell.id = 'RRAEFF_'+cintLineCount;
                objCell.className = 'clsLabelBN';
                objCell.innerHTML = '';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
-               objCell.align = 'left';
+               objCell.align = 'center';
                objCell.vAlign = 'center';
-               objCell.id = 'RRAWAS_'+intLineCount;
+               objCell.id = 'RRAWAS_'+cintLineCount;
                objCell.className = 'clsLabelBN';
                objCell.innerHTML = '';
                objCell.style.whiteSpace = 'nowrap';
@@ -580,8 +650,11 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objInput = document.createElement('input');
                objInput.type = 'text';
-               objInput.value = objElements[i].getAttribute('LCOEFF');
-               objInput.id = 'LCOEFF_'+intLineCount;
+               objInput.value = '';
+               if (objElements[i].getAttribute('LCORRA') != '*NONE') {
+                  objInput.value = objElements[i].getAttribute('LCOEFF');
+               }
+               objInput.id = 'LCOEFF_'+cintLineCount;
                objInput.size = 9;
                objInput.maxLength = 9;
                objInput.align = 'left';
@@ -601,8 +674,11 @@ sub PaintFunction()%>
                objCell.style.whiteSpace = 'nowrap';
                objInput = document.createElement('input');
                objInput.type = 'text';
-               objInput.value = objElements[i].getAttribute('LCOWAS');
-               objInput.id = 'LCOWAS_'+intLineCount;
+               objInput.value = '';
+               if (objElements[i].getAttribute('LCORRA') != '*NONE') {
+                  objInput.value = objElements[i].getAttribute('LCOWAS');
+               }
+               objInput.id = 'LCOWAS_'+cintLineCount;
                objInput.size = 9;
                objInput.maxLength = 9;
                objInput.align = 'left';
@@ -619,26 +695,104 @@ sub PaintFunction()%>
                   objSelect.options[objSelect.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rraeff',objElements[i].getAttribute('RRAEFF'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rrawas',objElements[i].getAttribute('RRAWAS'));
-                  document.getElementById('RRAEFF_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
-                  document.getElementById('RRAWAS_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  if (objRow.getAttribute('lcorra') == objElements[i].getAttribute('RRACDE')) {
+                     objSelect.options[objSelect.options.length-1].selected = true;
+                     document.getElementById('RRAEFF_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
+                     document.getElementById('RRAWAS_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  }
                } else if (strPrdType == '*PACK') {
                   objSelect.options[objSelect.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rraeff',objElements[i].getAttribute('RRAEFF'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rrawas',objElements[i].getAttribute('RRAWAS'));
-                  document.getElementById('RRAEFF_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
-                  document.getElementById('RRAWAS_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  if (objRow.getAttribute('lcorra') == objElements[i].getAttribute('RRACDE')) {
+                     objSelect.options[objSelect.options.length-1].selected = true;
+                     document.getElementById('RRAEFF_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
+                     document.getElementById('RRAWAS_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  }
                } else if (strPrdType == '*FORM') {
                   objSelect.options[objSelect.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rraeff',objElements[i].getAttribute('RRAEFF'));
                   objSelect.options[objSelect.options.length-1].setAttribute('rrawas',objElements[i].getAttribute('RRAWAS'));
-                  document.getElementById('RRAEFF_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
-                  document.getElementById('RRAWAS_'+intLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  if (objRow.getAttribute('lcorra') == objElements[i].getAttribute('RRACDE')) {
+                     objSelect.options[objSelect.options.length-1].selected = true;
+                     document.getElementById('RRAEFF_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAEFF');
+                     document.getElementById('RRAWAS_'+cintLineCount).innerHTML = objElements[i].getAttribute('RRAWAS');
+                  }
                }
             } else if (objElements[i].nodeName == 'MATCOM') {
                if (strPrdType == '*FILL') {
+                  objRow = objFillComList.insertRow(-1);
                } else if (strPrdType == '*PACK') {
+                  objRow = objPackComList.insertRow(-1);
                } else if (strPrdType == '*FORM') {
+                  objRow = objFormComList.insertRow(-1);
                }
+               cintCompCount++;
+               objRow.setAttribute('comflg','1');
+               objRow.setAttribute('comcde',objElements[i].getAttribute('COMCDE'));
+               objRow.setAttribute('comcnt',cintCompCount);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.className = 'clsLabelBN';
+               objCell.style.whiteSpace = 'nowrap';
+               objInput = document.createElement('A');
+               objInput.className = 'clsSelect';
+               objInput.onclick = function() {doCompDelete(this);};
+               objInput.appendChild(document.createTextNode('Delete'));
+               objCell.appendChild(objInput);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.className = 'clsLabelBN';
+               objCell.innerHTML = '<p>('+objElements[i].getAttribute('COMCDE')+') '+objElements[i].getAttribute('COMNAM')+'</p>';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'center';
+               objCell.className = 'clsLabelBN';
+               objCell.style.whiteSpace = 'nowrap';
+               objInput = document.createElement('input');
+               objInput.type = 'text';
+               objInput.value = objElements[i].getAttribute('COMQTY');
+               objInput.id = 'COMQTY_'+cintCompCount;
+               objInput.size = 9;
+               objInput.maxLength = 9;
+               objInput.align = 'left';
+               objInput.className = 'clsInputNN';
+               objInput.onfocus = function() {setSelect(this);};
+               objInput.onblur = function() {validateNumber(this,0,false);};
+               objCell.appendChild(objInput);
+            }
+         }
+         var intFillWidth = 0;
+         var intPackWidth = 0;
+         var intFormWidth = 0;
+         for (var i=1;i<=cintLineCount;i++) {
+            if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*FILL') {
+               if (document.getElementById('LCORRA_'+i).offsetWidth > intFillWidth) {
+                  intFillWidth = document.getElementById('LCORRA_'+i).offsetWidth;
+               }
+            } else if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*PACK') {
+               if (document.getElementById('LCORRA_'+i).offsetWidth > intPackWidth) {
+                  intPackWidth = document.getElementById('LCORRA_'+i).offsetWidth;
+               }
+            } else if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*FORM') {
+               if (document.getElementById('LCORRA_'+i).offsetWidth > intFormWidth) {
+                  intFormWidth = document.getElementById('LCORRA_'+i).offsetWidth;
+               }
+            }
+         }
+         for (var i=1;i<=cintLineCount;i++) {
+            if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*FILL') {
+               document.getElementById('LCORRA_'+i).style.width = intFillWidth;
+            } else if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*PACK') {
+               document.getElementById('LCORRA_'+i).style.width = intPackWidth;
+            } else if (document.getElementById('LCORRA_'+i).getAttribute('lintyp') == '*FORM') {
+               document.getElementById('LCORRA_'+i).style.width = intFormWidth;
             }
          }
        //  document.getElementById('DEF_MatName').focus();
@@ -733,29 +887,217 @@ sub PaintFunction()%>
          document.getElementById('PACK_Data').style.display = 'block';
       }
    }
-   function doDefaultClick(objRadio) {
-      if (objRadio.checked == true) {
-         document.getElementById('LCOCHK_'+objRadio.getAttribute('lincnt')).checked = true;
-         document.getElementById('LCORRA_'+objRadio.getAttribute('lincnt')).disabled = false;
-         document.getElementById('LCOEFF_'+objRadio.getAttribute('lincnt')).disabled = false;
-         document.getElementById('LCOWAS_'+objRadio.getAttribute('lincnt')).disabled = false;
+   function doDefaultClick(objCheck) {
+      if (objCheck.checked == true) {
+         for (var i=1;i<=cintLineCount;i++) {
+            if (document.getElementById('LCODFT_'+i).getAttribute('lincde') == objCheck.getAttribute('lincde') && document.getElementById('LCODFT_'+i).id != objCheck.id) {
+               document.getElementById('LCODFT_'+i).checked = false;
+            }
+         }
       }
    }
    function doLineClick(objCheck) {
       if (objCheck.checked == false) {
+         document.getElementById('LCODFT_'+objCheck.getAttribute('lincnt')).disabled = true;
          document.getElementById('LCORRA_'+objCheck.getAttribute('lincnt')).disabled = true;
+         document.getElementById('RRAEFF_'+objCheck.getAttribute('lincnt')).disabled = true;
+         document.getElementById('RRAWAS_'+objCheck.getAttribute('lincnt')).disabled = true;
          document.getElementById('LCOEFF_'+objCheck.getAttribute('lincnt')).disabled = true;
          document.getElementById('LCOWAS_'+objCheck.getAttribute('lincnt')).disabled = true;
+         document.getElementById('LCODFT_'+objCheck.getAttribute('lincnt')).checked = false;
+         document.getElementById('LCORRA_'+objCheck.getAttribute('lincnt')).selectedIndex = 0;
+         doRateChange(document.getElementById('LCORRA_'+objCheck.getAttribute('lincnt')));
       } else {
+         document.getElementById('LCODFT_'+objCheck.getAttribute('lincnt')).disabled = false;
          document.getElementById('LCORRA_'+objCheck.getAttribute('lincnt')).disabled = false;
+         document.getElementById('RRAEFF_'+objCheck.getAttribute('lincnt')).disabled = false;
+         document.getElementById('RRAWAS_'+objCheck.getAttribute('lincnt')).disabled = false;
          document.getElementById('LCOEFF_'+objCheck.getAttribute('lincnt')).disabled = false;
          document.getElementById('LCOWAS_'+objCheck.getAttribute('lincnt')).disabled = false;
+         doRateChange(document.getElementById('LCORRA_'+objCheck.getAttribute('lincnt')));
       }
    }
    function doRateChange(objSelect) {
       document.getElementById('RRAEFF_'+objSelect.getAttribute('lincnt')).innerHTML = objSelect.options[objSelect.selectedIndex].getAttribute('rraeff');
       document.getElementById('RRAWAS_'+objSelect.getAttribute('lincnt')).innerHTML = objSelect.options[objSelect.selectedIndex].getAttribute('rrawas');
+      document.getElementById('LCOEFF_'+objSelect.getAttribute('lincnt')).value = objSelect.options[objSelect.selectedIndex].getAttribute('rraeff');
+      document.getElementById('LCOWAS_'+objSelect.getAttribute('lincnt')).value = objSelect.options[objSelect.selectedIndex].getAttribute('rrawas');
    }
+   function doCompAdd(strType) {
+      if (!processForm()) {return;}
+      var objTable;
+      var objRow;
+      var objCell;
+      var objInput;
+      var bolFound = false;
+      var strComCode = '';
+      var strComQnty = '';
+      if (strType == '*FILL') {
+         if (document.getElementById('FILL_ComMatl').value == '') {
+            alert('Filling component must be entered');
+            return;
+         }
+         if (document.getElementById('FILL_ComQnty').value == '') {
+            alert('Filling component quantity must be entered');
+            return;
+         }
+         strComCode = document.getElementById('FILL_ComMatl').value;
+         strComQnty = document.getElementById('FILL_ComQnty').value;
+         objTable = document.getElementById('FILL_ComList');
+      } else if (strType == '*PACK') {
+         if (document.getElementById('PACK_ComMatl').value == '') {
+            alert('Packing component must be entered');
+            return;
+         }
+         if (document.getElementById('PACK_ComQnty').value == '') {
+            alert('Packing component quantity must be entered');
+            return;
+         }
+         strComCode = document.getElementById('PACK_ComMatl').value;
+         strComQnty = document.getElementById('PACK_ComQnty').value;
+         objTable = document.getElementById('PACK_ComList');
+      } else if (strType == '*FORM') {
+         if (document.getElementById('FORM_ComMatl').value == '') {
+            alert('Forming component must be entered');
+            return;
+         }
+         if (document.getElementById('FORM_ComQnty').value == '') {
+            alert('Forming component quantity must be entered');
+            return;
+         }
+         strComCode = document.getElementById('FORM_ComMatl').value;
+         strComQnty = document.getElementById('FORM_ComQnty').value;
+         objTable = document.getElementById('FORM_ComList');
+      }
+      bolFound = false;
+      for (var i=2;i<objTable.rows.length;i++) {
+         objRow = objTable.rows[i];
+         if (objRow.getAttribute('comcde') == strComCode) {
+            if (objRow.getAttribute('comflg') == '1') {
+               alert('Component already specified');
+               return;
+            }
+            bolFound = true;
+            break;
+         }
+      }
+      if (!bolFound) {
+         var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+         strXML = strXML+'<PSA_REQUEST ACTION="*CHKCOM"';
+         strXML = strXML+' PTYCDE="'+fixXML(strType)+'"';
+         strXML = strXML+' COMCDE="'+fixXML(strComCode)+'"';
+         strXML = strXML+' COMQTY="'+fixXML(strComQnty)+'"';
+         strXML = strXML+'/>';
+         doActivityStart(document.body);
+         window.setTimeout('requestCompAccept(\''+strXML+'\');',10);
+      } else {
+         objRow.setAttribute('comflg','1');
+         objRow.style.display = 'block';
+         document.getElementById('COMQTY_'+objRow.getAttribute('comcnt')).value = strComQnty;
+      }
+   }
+   function doCompDelete(objInput) {
+      var objRow = objInput.parentNode.parentNode;
+      objRow.setAttribute('comflg','0');
+      objRow.style.display = 'none';
+      document.getElementById('COMQTY_'+objRow.getAttribute('comcnt')).value = '0';
+   }
+   function requestCompAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_mat_config_check.asp',function(strResponse) {checkCompAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkCompAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         var strType = '';
+         var strComCode = '';
+         var strComText = '';
+         var strComQnty = '';
+         var objTable;
+         var objRow;
+         var objCell;
+         var objInput;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'COMDFN') {
+               strType = objElements[i].getAttribute('PTYCDE');
+               strComCode = objElements[i].getAttribute('COMCDE');
+               strComText = objElements[i].getAttribute('COMTXT');
+               strComQnty = objElements[i].getAttribute('COMQTY');
+            }
+         }
+         if (strType == '*FILL') {
+            objTable = document.getElementById('FILL_ComList');
+            document.getElementById('FILL_ComMatl').value = '';
+            document.getElementById('FILL_ComQnty').value = '';
+         } else if (strType == '*PACK') {
+            objTable = document.getElementById('PACK_ComList');
+            document.getElementById('PACK_ComMatl').value = '';
+            document.getElementById('PACK_ComQnty').value = '';
+         } else if (strType == '*FORM') {
+            objTable = document.getElementById('FORM_ComList');
+            document.getElementById('FORM_ComMatl').value = '';
+            document.getElementById('FORM_ComQnty').value = '';
+         }
+         objRow = objTable.insertRow(-1);
+         cintCompCount++;
+         objRow.setAttribute('comflg','1');
+         objRow.setAttribute('comcde',strComCode);
+         objRow.setAttribute('comcnt',cintCompCount);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('A');
+         objInput.className = 'clsSelect';
+         objInput.onclick = function() {doCompDelete(this);};
+         objInput.setAttribute('comcnt',cintCompCount);
+         objInput.appendChild(document.createTextNode('Delete'));
+         objCell.appendChild(objInput);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.innerHTML = strMatText;
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'text';
+         objInput.value = strComQnty;
+         objInput.id = 'COMQTY_'+cintCompCount;
+         objInput.size = 9;
+         objInput.maxLength = 9;
+         objInput.align = 'left';
+         objInput.className = 'clsInputNN';
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.onblur = function() {validateNumber(this,0,false);};
+         objCell.appendChild(objInput);
+      }
+   }
+
+
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -937,31 +1279,6 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=1>
-                        <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Filling Components</nobr></td>
-                           <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-                              <table class="clsTable01" align=left cols=5 cellpadding="0" cellspacing="0">
-                                 <tr>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillCompAdd();">&nbsp;Add&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillCompUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillCompDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                                 </tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                        <tr>
-                           <td class="clsLabelBN" align=left colspan=2 nowrap><nobr>
-                              <select class="clsInputBN" id="FILL_ComList" name="FILL_ComList" style="width:400px" multiple size=3></select>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
                      <table id="FILL_LinList" class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Filling Line Configurations</nobr></td>
@@ -969,13 +1286,32 @@ sub PaintFunction()%>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Override</nobr></td>
                         </tr>
                         <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Line Configuration</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Run Rate</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+                     <table id="FILL_ComList" class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Filling Components</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Action</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Material</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Quantity</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doCompAdd('*FILL');"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_ComMatl" size="18" maxlength="18" value="" onFocus="setSelect(this);"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><nobr><input class="clsInputNN" type="text" name="FILL_ComQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>
@@ -1016,31 +1352,6 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=1>
-                        <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Packing Components</nobr></td>
-                           <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-                              <table class="clsTable01" align=left cols=5 cellpadding="0" cellspacing="0">
-                                 <tr>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackCompAdd();">&nbsp;Add&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackCompUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackCompDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                                 </tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                        <tr>
-                           <td class="clsLabelBN" align=left colspan=2 nowrap><nobr>
-                              <select class="clsInputBN" id="PACK_ComList" name="PACK_ComList" style="width:400px" multiple size=3></select>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
                      <table id="PACK_LinList" class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Packing Line Configurations</nobr></td>
@@ -1048,13 +1359,32 @@ sub PaintFunction()%>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Override</nobr></td>
                         </tr>
                         <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Line Configuration</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Run Rate</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+                     <table id="PACK_ComList" class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Packing Components</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Action</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Material</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Quantity</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doCompAdd('*PACK');"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="PACK_ComMatl" size="18" maxlength="18" value="" onFocus="setSelect(this);"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><nobr><input class="clsInputNN" type="text" name="PACK_ComQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>
@@ -1096,31 +1426,6 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=1>
-                        <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Forming Components</nobr></td>
-                           <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-                              <table class="clsTable01" align=left cols=5 cellpadding="0" cellspacing="0">
-                                 <tr>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormCompAdd();">&nbsp;Add&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormCompUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                                    <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormCompDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                                 </tr>
-                              </table>
-                           </nobr></td>
-                        </tr>
-                        <tr>
-                           <td class="clsLabelBN" align=left colspan=2 nowrap><nobr>
-                              <select class="clsInputBN" id="FORM_ComList" name="FORM_ComList" style="width:400px" multiple size=3></select>
-                           </nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
                      <table id="FORM_LinList" class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Forming Line Configurations</nobr></td>
@@ -1128,13 +1433,32 @@ sub PaintFunction()%>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Override</nobr></td>
                         </tr>
                         <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Line Configuration</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Run Rate</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+                     <table id="FORM_ComList" class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Forming Components</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Action</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Material</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Quantity</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doCompAdd('*FORM');"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FORM_ComMatl" size="18" maxlength="18" value="" onFocus="setSelect(this);"></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><nobr><input class="clsInputNN" type="text" name="FORM_ComQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>

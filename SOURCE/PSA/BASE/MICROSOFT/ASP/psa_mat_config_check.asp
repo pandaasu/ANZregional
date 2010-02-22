@@ -78,18 +78,19 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the material check
-   '//
-   call objProcedure.Execute("psa_app.psa_mat_function.check_data('" & GetUser() & "')")
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-
-   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the component check
+   '//
+   strStatement = "select xml_text from table(psa_app.psa_mat_function.check_data)"
+   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
 
    '//
    '// Retrieve any messages
@@ -111,6 +112,11 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
+      if objSelection.ListCount("MESSAGE") = 0 then
+         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
+            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+         next
+      end if
    end if
 
 end sub%>
