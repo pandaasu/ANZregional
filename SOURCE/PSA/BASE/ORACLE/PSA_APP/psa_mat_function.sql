@@ -30,6 +30,7 @@ create or replace package psa_app.psa_mat_function as
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    procedure delete_data(par_user in varchar2);
+   function check_data return psa_xml_type pipelined;
 
 end psa_mat_function;
 /
@@ -1330,6 +1331,133 @@ create or replace package body psa_app.psa_mat_function as
    /* End routine */
    /*-------------*/
    end delete_data;
+
+   /**************************************************/
+   /* This procedure performs the check data routine */
+   /**************************************************/
+   function check_data return psa_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_output varchar2(2000 char);
+      var_found boolean;
+      var_pty_code varchar2(32);
+      var_com_code varchar2(32);
+      var_com_qnty varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_mat_defn t01
+          where t01.mde_mat_code = var_com_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      if var_action != '*CHKCOM' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_pty_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      var_com_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMCDE'));
+      var_com_qnty := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMQTY'));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the component material
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Material ('||var_com_code||') does not exist');
+      else
+         if rcd_retrieve.mde_mat_status != '*CHG' and rcd_retrieve.mde_mat_status != '*DEL' and rcd_retrieve.mde_mat_status != '*ACTIVE' then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be status *CHG, *DEL or *ACTIVE');
+         end if;
+         if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != '*FERT' or rcd_retrieve.mde_mat_usage != '*MPO') then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *FERT / *MPO for filling component');
+         end if;
+         if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != '*FERT' or rcd_retrieve.mde_mat_usage != '*TDU') then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *FERT / *TDU for packing component');
+         end if;
+         if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != '*VERP' or rcd_retrieve.mde_mat_usage != '*RLS') then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *VERP / *RLS for forming component');
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the component XML
+      /*-*/
+      var_output := '<COMDFN PTYCDE="'||psa_to_xml(var_pty_code)||'"';
+      var_output := var_output||' COMCDE="'||psa_to_xml(var_com_code)||'"';
+      var_output := var_output||' COMTXT="'||psa_to_xml('('||var_com_code||') '||rcd_retrieve.mde_mat_name)||'"';
+      var_output := var_output||' COMQTY="'||psa_to_xml(var_com_qnty)||'"/>';
+      pipe row(psa_xml_object(var_output));
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - CHECK_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end check_data;
 
 end psa_mat_function;
 /
