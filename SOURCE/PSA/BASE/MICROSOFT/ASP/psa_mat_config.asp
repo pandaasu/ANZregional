@@ -188,6 +188,13 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestMaster();',10);
    }
+   function doSelectReport() {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the material report\r\npress OK continue (the material report will be generated)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doReportOutput(eval('document.body'),'Material Master Report','*SPREADSHEET','select * from table(psa_app.psa_mat_function.report_master)');
+   }
    function doSelectRefresh() {
       if (!processForm()) {return;}
       cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
@@ -1784,6 +1791,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
@@ -1807,13 +1815,14 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectMaster();">&nbsp;SAP Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectReport();">&nbsp;Material Report&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
