@@ -1113,7 +1113,7 @@ sub PaintFunction()%>
          }
       }
       if (bolPack == true) {
-         if (cbolFillPack == true) {
+         if (cbolPackDflt == true) {
             bolLinFound = false;
             for (var i=0;i<objPackLinList.rows.length;i++) {
                objRow = objPackLinList.rows[i];
