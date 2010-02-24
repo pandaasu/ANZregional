@@ -921,7 +921,6 @@ create or replace package body psa_app.psa_mat_function as
           where t01.mco_com_code = t02.mde_mat_code
             and t01.mco_mat_code = rcd_retrieve.mde_mat_code
             and t01.mco_prd_type = rcd_prod.pty_prd_type
-            and t02.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
           order by t02.mde_mat_code asc;
       rcd_comp csr_comp%rowtype;
 
