@@ -57,6 +57,8 @@ create or replace package body psa_app.psa_mat_function as
       var_exception varchar2(4000);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
+      var_loc_string varchar2(128);
+      var_locked boolean;
       var_report_email varchar2(256);
       var_upd_flag boolean;
       rcd_psa_mat_defn psa_mat_defn%rowtype;
@@ -159,7 +161,9 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       var_log_prefix := 'PSA - SAP_MATERIAL_MAINTENANCE';
       var_log_search := 'SAP_MATERIAL_MAINTENANCE';
+      var_loc_string := 'PSA_SAP_MATERIAL_MAINTENANCE';
       var_report_email := psa_sys_function.retrieve_system_value('MATERIAL_AUDIT_EMAIL');
+      var_locked := false;
 
       /*-*/
       /* Log start
@@ -172,6 +176,22 @@ create or replace package body psa_app.psa_mat_function as
       lics_logging.write_log('Begin - PSA SAP Material Maintenance');
 
       /*-*/
+      /* Request the lock on the event
+      /*-*/
+      begin
+         lics_locking.request(var_loc_string);
+         var_locked := true;
+      exception
+         when others then
+            lics_logging.write_log(substr(SQLERRM, 1, 3000));
+      end;
+
+      /*-*/
+      /* Execute the requested procedure
+      /*-*/
+      if var_locked = true then
+
+         /*-*/
       /* Log the event
       /*-*/
       lics_logging.write_log('--> Updating PSA material from the SAP material data');
@@ -559,6 +579,14 @@ create or replace package body psa_app.psa_mat_function as
       lics_mailer.append_data('** Email End **');
       lics_mailer.finalise_email('utf-8');
 
+         /*-*/
+         /* Release the lock on the event
+         /*-*/
+         lics_locking.release(var_loc_string);
+
+      end if;
+      var_locked := false;
+
       /*-*/
       /* End procedure
       /*-*/
@@ -595,6 +623,13 @@ create or replace package body psa_app.psa_mat_function as
          if lics_logging.is_created = true then
             lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
             lics_logging.end_log;
+         end if;
+
+         /*-*/
+         /* Release the lock when required
+         /*-*/
+         if var_locked = true then
+            lics_locking.release(var_loc_string);
          end if;
 
          /*-*/
@@ -978,6 +1013,7 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          var_output := '<MATPTY PTYCDE="'||psa_to_xml(rcd_prod.pty_prd_type)||'"';
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"';
+         var_output := var_output||' MPRMAT="'||psa_to_xml(rcd_prod.mpr_mat_code)||'"';
          var_output := var_output||' MPRSCH="'||psa_to_xml(to_char(rcd_prod.mpr_sch_priority))||'"';
          var_output := var_output||' MPRLIN="'||psa_to_xml(rcd_prod.mpr_dft_line)||'"';
          var_output := var_output||' MPRCPL="'||psa_to_xml(to_char(rcd_prod.mpr_cas_pallet))||'"';
@@ -1246,8 +1282,8 @@ create or replace package body psa_app.psa_mat_function as
                obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
                for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
                   obj_lin_node := xmlDom.item(obj_lin_list,idy);
-                  var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
-                  var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
+                  var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LINCDE')));
+                  var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCOCDE')));
                   open csr_line;
                   fetch csr_line into rcd_line;
                   if csr_line%notfound then
@@ -1266,7 +1302,7 @@ create or replace package body psa_app.psa_mat_function as
                for idy in 0..xmlDom.getLength(obj_com_list)-1 loop
                   var_bolComp := true;
                   obj_com_node := xmlDom.item(obj_com_list,idy);
-                  var_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'COMCDE')));
+                  var_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_com_node,'@COMCDE')));
                   open csr_comp;
                   fetch csr_comp into rcd_comp;
                   if csr_comp%notfound then
@@ -1367,29 +1403,29 @@ create or replace package body psa_app.psa_mat_function as
             obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
             for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
                obj_lin_node := xmlDom.item(obj_lin_list,idy);
-               var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
-               var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
                rcd_psa_mat_line.mli_mat_code := rcd_psa_mat_prod.mpr_mat_code;
                rcd_psa_mat_line.mli_prd_type := rcd_psa_mat_prod.mpr_prd_type;
-               rcd_psa_mat_line.mli_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
-               rcd_psa_mat_line.mli_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
-               rcd_psa_mat_line.mli_dft_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCODFT')));
-               rcd_psa_mat_line.mli_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCORRA')));
+               rcd_psa_mat_line.mli_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LINCDE')));
+               rcd_psa_mat_line.mli_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCOCDE')));
+               rcd_psa_mat_line.mli_dft_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCODFT')));
+               rcd_psa_mat_line.mli_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCORRA')));
                if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
-                  rcd_psa_mat_line.mli_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_lin_node,'LCOEFF'));
-                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'LCOWAS'));
+                  rcd_psa_mat_line.mli_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOEFF'));
+                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOWAS'));
                else
                   rcd_psa_mat_line.mli_rra_efficiency := 100;
                   rcd_psa_mat_line.mli_rra_wastage := 0;
                end if;
+               insert into psa_mat_line values rcd_psa_mat_line;
             end loop;
             obj_com_list := xslProcessor.selectNodes(obj_pty_node,'MATCOM');
             for idy in 0..xmlDom.getLength(obj_com_list)-1 loop
                obj_com_node := xmlDom.item(obj_com_list,idy);
                rcd_psa_mat_comp.mco_mat_code := rcd_psa_mat_prod.mpr_mat_code;
                rcd_psa_mat_comp.mco_prd_type := rcd_psa_mat_prod.mpr_prd_type;
-               rcd_psa_mat_comp.mco_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'COMCDE')));
-               rcd_psa_mat_comp.mco_com_quantity := psa_to_number(xslProcessor.valueOf(obj_lin_node,'COMQTY'));
+               rcd_psa_mat_comp.mco_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_com_node,'@COMCDE')));
+               rcd_psa_mat_comp.mco_com_quantity := psa_to_number(xslProcessor.valueOf(obj_com_node,'@COMQTY'));
+               insert into psa_mat_comp values rcd_psa_mat_comp;
             end loop;
          end loop;
       end if;
