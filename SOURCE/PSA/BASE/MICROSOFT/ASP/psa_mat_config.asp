@@ -180,6 +180,14 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDelete(\''+strCode+'\');',10);
    }
+   function doSelectMaster() {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the SAP update\r\npress OK continue (the PSA materials will be updated from the SAP data)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestMaster();',10);
+   }
    function doSelectRefresh() {
       if (!processForm()) {return;}
       cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
@@ -346,6 +354,43 @@ sub PaintFunction()%>
          }
          objSelCode.value = cstrSelectStrCode;
          objSelCode.focus();
+      }
+   }
+
+   //////////////////////
+   // Master Functions //
+   //////////////////////
+   function requestMaster() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST/>';
+      doPostRequest('<%=strBase%>psa_mat_config_master.asp',function(strResponse) {checkMaster(strResponse);},false,streamXML(strXML));
+   }
+   function checkMaster(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doSelectRefresh();
       }
    }
 
@@ -1768,7 +1813,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectUpdate();">&nbsp;SAP Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectMaster();">&nbsp;SAP Update&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
