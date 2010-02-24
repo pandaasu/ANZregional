@@ -394,6 +394,7 @@ sub PaintFunction()%>
    var cstrDefineCode;
    var cstrDefineType;
    var cstrDefineUsag;
+   var cstrDefineLine;
    var cstrTduFill;
    var cstrTduPack;
    var cintLineCount;
@@ -401,6 +402,9 @@ sub PaintFunction()%>
    var cstrFillLinCode;
    var cstrPackLinCode;
    var cstrFormLinCode;
+   var cbolFillDflt;
+   var cbolPackDflt;
+   var cbolFormDflt;
    var cintUntCase;
    var cintNetWght;
    function requestDefineUpdate(strCode) {
@@ -436,6 +440,7 @@ sub PaintFunction()%>
          document.getElementById('DEF_TduPack').checked = false;
          cstrDefineType = '';
          cstrDefineUsag = '';
+         cstrDefineLine = '';
          cstrTduFill = '0';
          cstrTduPack = '0';
          var strPrdType = '';
@@ -443,6 +448,9 @@ sub PaintFunction()%>
          cstrFillLinCode = '';
          cstrPackLinCode = '';
          cstrFormLinCode = '';
+         cbolFillDflt = false;
+         cbolPackDflt = false;
+         cbolFormDflt = false;
          cintLineCount = 0;
          cintCompCount = 0;
          cintUntCase = 0;
@@ -453,9 +461,9 @@ sub PaintFunction()%>
          objFillPrdLine.options.length = 0;
          objPackPrdLine.options.length = 0;
          objFormPrdLine.options.length = 0;
-         objFillPrdLine.options[0] = new Option('** Select Filling Line **','**NONE');
-         objPackPrdLine.options[0] = new Option('** Select Packing Line **','**NONE');
-         objFormPrdLine.options[0] = new Option('** Select Forming Line **','**NONE');
+         objFillPrdLine.options[0] = new Option('** Select Filling Line **','*NONE');
+         objPackPrdLine.options[0] = new Option('** Select Packing Line **','*NONE');
+         objFormPrdLine.options[0] = new Option('** Select Forming Line **','*NONE');
          objFillPrdLine.selectedIndex = 0;
          objPackPrdLine.selectedIndex = 0;
          objFormPrdLine.selectedIndex = 0;
@@ -504,6 +512,7 @@ sub PaintFunction()%>
                document.getElementById('DEF_UpdDate').innerHTML = '<p>'+objElements[i].getAttribute('UPDDTE')+'</p>';
                cstrDefineType = objElements[i].getAttribute('MATTYP');
                cstrDefineUsag = objElements[i].getAttribute('MATUSG');
+               cstrDefineLine = objElements[i].getAttribute('PSALIN');
                cintUntCase = objElements[i].getAttribute('MATUNC');
                cintNetWght = objElements[i].getAttribute('MATNEW');
                if (cstrDefineUsag == 'TDU') {
@@ -513,10 +522,14 @@ sub PaintFunction()%>
                strPrdType = objElements[i].getAttribute('PTYCDE');
                strLinCode = '';
                if (objElements[i].getAttribute('PTYCDE') == '*FILL') {
-                  document.getElementById('FILL_Data').style.display = 'block';
                   if (cstrDefineUsag == 'TDU') {
-                     cstrTduFill = '1';
-                     document.getElementById('DEF_TduFill').checked = true;
+                     if (objElements[i].getAttribute('MPRMAT') != '*NONE') {
+                        document.getElementById('FILL_Data').style.display = 'block';
+                        cstrTduFill = '1';
+                        document.getElementById('DEF_TduFill').checked = true;
+                     }
+                  } else {
+                     document.getElementById('FILL_Data').style.display = 'block';
                   }
                   cstrFillLinCode = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('FILL_DftLine').innerHTML = objElements[i].getAttribute('MPRLIN');
@@ -529,17 +542,31 @@ sub PaintFunction()%>
                   document.getElementById('FILL_BchValu').innerHTML = objElements[i].getAttribute('MPRBWE');
                   document.getElementById('FILL_ComMatl').value = '';
                   document.getElementById('FILL_ComQnty').value = '';
+                  objFillPrdLine.style.display = 'block';
+                  if (cstrDefineLine != '*NONE' && cstrFillLinCode == cstrDefineLine) {
+                     cbolFillDflt = true;
+                     objFillPrdLine.style.display = 'none';
+                  }
                } else if (objElements[i].getAttribute('PTYCDE') == '*PACK') {
-                  document.getElementById('PACK_Data').style.display = 'block';
                   if (cstrDefineUsag == 'TDU') {
-                     cstrTduPack = '1';
-                     document.getElementById('DEF_TduPack').checked = true;
+                     if (objElements[i].getAttribute('MPRMAT') != '*NONE') {
+                        document.getElementById('PACK_Data').style.display = 'block';
+                        cstrTduPack = '1';
+                        document.getElementById('DEF_TduPack').checked = true;
+                     }
+                  } else {
+                     document.getElementById('PACK_Data').style.display = 'block';
                   }
                   cstrPackLinCode = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('PACK_DftLine').innerHTML = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('PACK_CasPalt').value = objElements[i].getAttribute('MPRCPL');
                   document.getElementById('PACK_ComMatl').value = '';
                   document.getElementById('PACK_ComQnty').value = '';
+                  objPackPrdLine.style.display = 'block';
+                  if (cstrDefineLine != '*NONE' && cstrPackLinCode == cstrDefineLine) {
+                     cbolPackDflt = true;
+                     objPackPrdLine.style.display = 'none';
+                  }
                } else if (objElements[i].getAttribute('PTYCDE') == '*FORM') {
                   document.getElementById('FORM_Data').style.display = 'block';
                   cstrFormLinCode = objElements[i].getAttribute('MPRLIN');
@@ -547,13 +574,20 @@ sub PaintFunction()%>
                   document.getElementById('FORM_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FORM_ComMatl').value = '';
                   document.getElementById('FORM_ComQnty').value = '';
+                  objFormPrdLine.style.display = 'block';
+                  if (cstrDefineLine != '*NONE' && cstrFormLinCode == cstrDefineLine) {
+                     cbolFormDflt = true;
+                     objFormPrdLine.style.display = 'none';
+                  }
                }
             } else if (objElements[i].nodeName == 'MATLIN') {
                if (strPrdType == '*FILL') {
                   if (strLinCode != objElements[i].getAttribute('LINCDE')) {
-                     objFillPrdLine.options[objFillPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
-                     if (cstrFillLinCode == objElements[i].getAttribute('LINCDE')) {
-                        objFillPrdLine.options[i].selected = true;
+                     if (cbolFillDflt == false) {
+                        objFillPrdLine.options[objFillPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
+                        if (cstrFillLinCode == objElements[i].getAttribute('LINCDE')) {
+                           objFillPrdLine.options[objFillPrdLine.options.length-1].selected = true;
+                        }
                      }
                      if (strLinCode != '') {
                         objRow = objFillLinList.insertRow(-1);
@@ -571,9 +605,11 @@ sub PaintFunction()%>
                   objRow = objFillLinList.insertRow(-1);
                } else if (strPrdType == '*PACK') {
                   if (strLinCode != objElements[i].getAttribute('LINCDE')) {
-                     objPackPrdLine.options[objPackPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
-                     if (cstrPackLinCode == objElements[i].getAttribute('LINCDE')) {
-                        objPackPrdLine.options[i].selected = true;
+                     if (cbolPackDflt == false) {
+                        objPackPrdLine.options[objPackPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
+                        if (cstrPackLinCode == objElements[i].getAttribute('LINCDE')) {
+                           objPackPrdLine.options[objPackPrdLine.options.length-1].selected = true;
+                        }
                      }
                      if (strLinCode != '') {
                         objRow = objPackLinList.insertRow(-1);
@@ -591,9 +627,11 @@ sub PaintFunction()%>
                   objRow = objPackLinList.insertRow(-1);
                } else if (strPrdType == '*FORM') {
                   if (strLinCode != objElements[i].getAttribute('LINCDE')) {
-                     objFormPrdLine.options[objFormPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
-                     if (cstrFormLinCode == objElements[i].getAttribute('LINCDE')) {
-                        objFormPrdLine.options[i].selected = true;
+                     if (cbolFormDflt == false) {
+                        objFormPrdLine.options[objFormPrdLine.options.length] = new Option(objElements[i].getAttribute('LINNAM'),objElements[i].getAttribute('LINCDE'));
+                        if (cstrFormLinCode == objElements[i].getAttribute('LINCDE')) {
+                           objFormPrdLine.options[objFormPrdLine.options.length-1].selected = true;
+                        }
                      }
                      if (strLinCode != '') {
                         objRow = objFormLinList.insertRow(-1);
@@ -631,12 +669,11 @@ sub PaintFunction()%>
                objInput.onfocus = function() {setSelect(this);};
                objInput.onclick = function() {doLineClick(this);};
                objInput.checked = false;
-               objInput.setAttribute('lincnt',cintLineCount);
+               objCell.appendChild(objInput);
+               objCell.appendChild(document.createTextNode(objElements[i].getAttribute('LINNAM')+' - '+objElements[i].getAttribute('LCONAM')));
                if (objElements[i].getAttribute('LCORRA') != '*NONE') {
                   objInput.checked = true;
                }
-               objCell.appendChild(objInput);
-               objCell.appendChild(document.createTextNode(objElements[i].getAttribute('LINNAM')+' - '+objElements[i].getAttribute('LCONAM')));
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
@@ -655,6 +692,9 @@ sub PaintFunction()%>
                   objInput.disabled = false;
                }
                objCell.appendChild(objInput);
+               if (objElements[i].getAttribute('LCODFT') == '1') {
+                  objInput.checked = true;
+               }
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
@@ -870,6 +910,7 @@ sub PaintFunction()%>
       var bolComp = false;
       var bolLinFound = false;
       var bolDftFound = false;
+      var intDftCount;
       var objSelect;
       var objRow;
       var intRowCnt;
@@ -896,16 +937,13 @@ sub PaintFunction()%>
          bolComp = true;
       }
       if (bolFill == true) {
-         if (objFillPrdLine.selectedIndex == -1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Default filling line must be selected';
-         } else {
+         if (cbolFillDflt == true) {
             bolLinFound = false;
             for (var i=0;i<objFillLinList.rows.length;i++) {
                objRow = objFillLinList.rows[i];
                if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (objRow.getAttribute('lincde') == objFillPrdLine.options[objFillPrdLine.selectedIndex].value) {
+                  if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                         bolLinFound = true;
                         break;
@@ -916,6 +954,29 @@ sub PaintFunction()%>
             if (bolLinFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Default filling line must be a selected filling line configuration';
+            }
+         } else {
+            if (objFillPrdLine.selectedIndex == -1 || objFillPrdLine.options[objFillPrdLine.selectedIndex].value == '*NONE') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Default filling line must be selected';
+            } else {
+               bolLinFound = false;
+               for (var i=0;i<objFillLinList.rows.length;i++) {
+                  objRow = objFillLinList.rows[i];
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                     intRowCnt = objRow.getAttribute('lincnt');
+                     if (objRow.getAttribute('lincde') == objFillPrdLine.options[objFillPrdLine.selectedIndex].value) {
+                        if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
+                           bolLinFound = true;
+                           break;
+                        }
+                     }
+                  }
+               }
+               if (bolLinFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Default filling line must be a selected filling line configuration';
+               }
             }
          }
          if (document.getElementById('FILL_SchPrty').value == '' || document.getElementById('FILL_SchPrty').value < 1 || document.getElementById('FILL_SchPrty').value > 100) {
@@ -969,19 +1030,23 @@ sub PaintFunction()%>
          }
          for (i=0;i<objLines.length;i++) {
             bolDftFound = false;
+            intDftCount = 0;
             for (var j=0;j<objFillLinList.rows.length;j++) {
                objRow = objFillLinList.rows[j];
                if (objRow.getAttribute('lincde') == objLines[i]) {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (document.getElementById('LCOCHK_'+intRowCnt).checked == true && document.getElementById('LCODFT_'+intRowCnt).checked == true) {
+                  if (document.getElementById('LCODFT_'+intRowCnt).checked == true) {
                      bolDftFound = true;
-                     break;
+                     intDftCount++;
                   }
                }
             }
             if (bolDftFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Filling line ('+objLines[i]+') must have a default configuration selected';
+            } else if (intDftCount > 1) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Filling line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
          for (var i=0;i<objFillComList.rows.length;i++) {
@@ -996,16 +1061,13 @@ sub PaintFunction()%>
          }
       }
       if (bolPack == true) {
-         if (objPackPrdLine.selectedIndex == -1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Default packing line must be selected';
-         } else {
+         if (cbolFillPack == true) {
             bolLinFound = false;
             for (var i=0;i<objPackLinList.rows.length;i++) {
                objRow = objPackLinList.rows[i];
                if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (objRow.getAttribute('lincde') == objPackPrdLine.options[objPackPrdLine.selectedIndex].value) {
+                  if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                         bolLinFound = true;
                         break;
@@ -1016,6 +1078,29 @@ sub PaintFunction()%>
             if (bolLinFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Default packing line must be a selected packing line configuration';
+            }
+         } else {
+            if (objPackPrdLine.selectedIndex == -1 || objPackPrdLine.options[objPackPrdLine.selectedIndex].value == '*NONE') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Default packing line must be selected';
+            } else {
+               bolLinFound = false;
+               for (var i=0;i<objPackLinList.rows.length;i++) {
+                  objRow = objPackLinList.rows[i];
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                     intRowCnt = objRow.getAttribute('lincnt');
+                     if (objRow.getAttribute('lincde') == objPackPrdLine.options[objPackPrdLine.selectedIndex].value) {
+                        if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
+                           bolLinFound = true;
+                           break;
+                        }
+                     }
+                  }
+               }
+               if (bolLinFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Default packing line must be a selected packing line configuration';
+               }
             }
          }
          if (document.getElementById('PACK_SchPrty').value == '' || document.getElementById('PACK_SchPrty').value < 1 || document.getElementById('PACK_SchPrty').value > 100) {
@@ -1052,19 +1137,23 @@ sub PaintFunction()%>
          }
          for (i=0;i<objLines.length;i++) {
             bolDftFound = false;
+            intDftCount = 0;
             for (var j=0;j<objPackLinList.rows.length;j++) {
                objRow = objPackLinList.rows[j];
                if (objRow.getAttribute('lincde') == objLines[i]) {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (document.getElementById('LCOCHK_'+intRowCnt).checked == true && document.getElementById('LCODFT_'+intRowCnt).checked == true) {
+                  if (document.getElementById('LCODFT_'+intRowCnt).checked == true) {
                      bolDftFound = true;
-                     break;
+                     intDftCount++;
                   }
                }
             }
             if (bolDftFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Packing line ('+objLines[i]+') must have a default configuration selected';
+            } else if (intDftCount > 1) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Packing line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
          for (var i=0;i<objPackComList.rows.length;i++) {
@@ -1079,16 +1168,13 @@ sub PaintFunction()%>
          }
       }
       if (bolForm == true) {
-         if (objFormPrdLine.selectedIndex == -1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Default forming line must be selected';
-         } else {
+         if (cbolFormDflt == true) {
             bolLinFound = false;
             for (var i=0;i<objFormLinList.rows.length;i++) {
                objRow = objFormLinList.rows[i];
                if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (objRow.getAttribute('lincde') == objFormPrdLine.options[objFormPrdLine.selectedIndex].value) {
+                  if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                         bolLinFound = true;
                         break;
@@ -1099,6 +1185,29 @@ sub PaintFunction()%>
             if (bolLinFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Default forming line must be a selected forming line configuration';
+            }
+         } else {
+            if (objFormPrdLine.selectedIndex == -1 || objFormPrdLine.options[objFormPrdLine.selectedIndex].value == '*NONE') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                strMessage = strMessage + 'Default forming line must be selected';
+            } else {
+               bolLinFound = false;
+               for (var i=0;i<objFormLinList.rows.length;i++) {
+                  objRow = objFormLinList.rows[i];
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                     intRowCnt = objRow.getAttribute('lincnt');
+                     if (objRow.getAttribute('lincde') == objFormPrdLine.options[objFormPrdLine.selectedIndex].value) {
+                        if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
+                           bolLinFound = true;
+                           break;
+                        }
+                     }
+                  }
+               }
+               if (bolLinFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Default forming line must be a selected forming line configuration';
+               }
             }
          }
          if (document.getElementById('FORM_SchPrty').value == '' || document.getElementById('FORM_SchPrty').value < 1 || document.getElementById('FORM_SchPrty').value > 100) {
@@ -1135,19 +1244,23 @@ sub PaintFunction()%>
          }
          for (i=0;i<objLines.length;i++) {
             bolDftFound = false;
+            intDftCount = 0;
             for (var j=0;j<objFormLinList.rows.length;j++) {
                objRow = objFormLinList.rows[j];
                if (objRow.getAttribute('lincde') == objLines[i]) {
                   intRowCnt = objRow.getAttribute('lincnt');
-                  if (document.getElementById('LCOCHK_'+intRowCnt).checked == true && document.getElementById('LCODFT_'+intRowCnt).checked == true) {
+                  if (document.getElementById('LCODFT_'+intRowCnt).checked == true) {
                      bolDftFound = true;
-                     break;
+                     intDftCount++;
                   }
                }
             }
             if (bolDftFound == false) {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
                strMessage = strMessage + 'Forming line ('+objLines[i]+') must have a default configuration selected';
+            } else if (intDftCount > 1) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'Forming line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
          for (var i=0;i<objFormComList.rows.length;i++) {
@@ -1170,10 +1283,14 @@ sub PaintFunction()%>
       if (bolFill == true) {
          strXML = strXML+'<MATPTY';
          strXML = strXML+' PTYCDE="*FILL"';
-         strXML = strXML+' MPRLIN="'+fixXML(objFillPrdLine.options[objFillPrdLine.selectedIndex].value)+'"';
+         if (cstrDefineLine != '*NONE' && cstrFillLinCode == cstrDefineLine) {
+            strXML = strXML+' MPRLIN="'+fixXML(cstrDefineLine)+'"';
+         } else {
+            strXML = strXML+' MPRLIN="'+fixXML(objFillPrdLine.options[objFillPrdLine.selectedIndex].value)+'"';
+         }
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FILL_SchPrty').value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FILL_BchQnty').value)+'"';
-         strXML = strXML+' MPRYPC="'+fixXML(ocument.getElementById('FILL_YldPcnt').value)+'"';
+         strXML = strXML+' MPRYPC="'+fixXML(document.getElementById('FILL_YldPcnt').value)+'"';
          strXML = strXML+' MPRRPC="'+fixXML(document.getElementById('FILL_PckPcnt').value)+'">';
          for (var i=0;i<objFillLinList.rows.length;i++) {
             objRow = objFillLinList.rows[i];
@@ -1187,12 +1304,12 @@ sub PaintFunction()%>
                   if (document.getElementById('LCODFT_'+intRowCnt).checked == true) {
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   } else {
-                     strXML = strXML+' LCODFT="'+fixXML('1')+'"';
+                     strXML = strXML+' LCODFT="'+fixXML('0')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
                   strXML = strXML+' LCOEFF="'+fixXML(document.getElementById('LCOEFF_'+intRowCnt).value)+'"';
                   strXML = strXML+' LCOWAS="'+fixXML(document.getElementById('LCOWAS_'+intRowCnt).value)+'"';
-                  strXML = strXML+'>';
+                  strXML = strXML+'/>';
                }
             }
          }
@@ -1203,7 +1320,7 @@ sub PaintFunction()%>
                strXML = strXML+'<MATCOM';
                strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
                strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'>';
+               strXML = strXML+'/>';
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1211,7 +1328,11 @@ sub PaintFunction()%>
       if (bolPack == true) {
          strXML = strXML+'<MATPTY';
          strXML = strXML+' PTYCDE="*PACK"';
-         strXML = strXML+' MPRLIN="'+fixXML(objPackPrdLine.options[objPackPrdLine.selectedIndex].value)+'"';
+         if (cstrDefineLine != '*NONE' && cstrPackLinCode == cstrDefineLine) {
+            strXML = strXML+' MPRLIN="'+fixXML(cstrDefineLine)+'"';
+         } else {
+            strXML = strXML+' MPRLIN="'+fixXML(objPackPrdLine.options[objPackPrdLine.selectedIndex].value)+'"';
+         }
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('PACK_SchPrty').value)+'"';
          strXML = strXML+' MPRCPL="'+fixXML(document.getElementById('PACK_CasPalt').value)+'">';
          for (var i=0;i<objPackLinList.rows.length;i++) {
@@ -1229,7 +1350,7 @@ sub PaintFunction()%>
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
-                  strXML = strXML+'>';
+                  strXML = strXML+'/>';
                }
             }
          }
@@ -1240,7 +1361,7 @@ sub PaintFunction()%>
                strXML = strXML+'<MATCOM';
                strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
                strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'>';
+               strXML = strXML+'/>';
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1248,7 +1369,11 @@ sub PaintFunction()%>
       if (bolForm == true) {
          strXML = strXML+'<MATPTY';
          strXML = strXML+' PTYCDE="*FORM"';
-         strXML = strXML+' MPRLIN="'+fixXML(objFormPrdLine.options[objFormPrdLine.selectedIndex].value)+'"';
+         if (cstrDefineLine != '*NONE' && cstrFormLinCode == cstrDefineLine) {
+            strXML = strXML+' MPRLIN="'+fixXML(cstrDefineLine)+'"';
+         } else {
+            strXML = strXML+' MPRLIN="'+fixXML(objFormPrdLine.options[objFormPrdLine.selectedIndex].value)+'"';
+         }
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FORM_SchPrty').value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FORM_BchQnty').value)+'">';
          for (var i=0;i<objFormLinList.rows.length;i++) {
@@ -1266,7 +1391,7 @@ sub PaintFunction()%>
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
-                  strXML = strXML+'>';
+                  strXML = strXML+'/>';
                }
             }
          }
@@ -1277,7 +1402,7 @@ sub PaintFunction()%>
                strXML = strXML+'<MATCOM';
                strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
                strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'>';
+               strXML = strXML+'/>';
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1637,12 +1762,13 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectUpdate();">&nbsp;SAP Update&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
