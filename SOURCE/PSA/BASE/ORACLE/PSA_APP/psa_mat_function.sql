@@ -60,6 +60,7 @@ create or replace package body psa_app.psa_mat_function as
       var_report_email varchar2(256);
       var_upd_flag boolean;
       rcd_psa_mat_defn psa_mat_defn%rowtype;
+      rcd_psa_mat_prod psa_mat_prod%rowtype;
 
       /*-*/
       /* Local constants
@@ -81,7 +82,8 @@ create or replace package body psa_app.psa_mat_function as
                 decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO','TDU'),'VERP',substr(t01.bds_material_desc_en,1,3),'*NONE') material_usage,
                 t02.sap_prodctn_line_code,
                 t03.*,
-                t04.lli_lin_code
+                t04.lli_lin_code,
+                t05.lde_prd_type
            from bds.bds_material_plant_mfanz t01,
                 bds.bds_material_classfctn t02,
                 psa_mat_defn t03,
@@ -91,15 +93,24 @@ create or replace package body psa_app.psa_mat_function as
                         psa_lin_defn t02
                   where t01.lli_lin_code = t02.lde_lin_code
                     and t02.lde_lin_status = '1'
-                  group by t01.lli_sap_code) t04
+                  group by t01.lli_sap_code) t04,
+                psa_lin_defn t05
           where t01.sap_material_code = t02.sap_material_code(+)
             and t01.sap_material_code = t03.mde_sap_code(+)
             and t02.sap_prodctn_line_code = t04.lli_sap_code(+)
+            and t04.lli_lin_code = t05.lde_lin_code(+)
             and t01.plant_code = 'NZ01'
             and ((t01.material_type = 'FERT' and t01.plant_specific_status = '20' and (t01.mars_traded_unit_flag = 'X' or t01.mars_intrmdt_prdct_compnt_flag = 'X')) or
                  (t01.material_type = 'VERP' and t01.plant_specific_status = '20' and (substr(t01.bds_material_desc_en,1,3)) in ('PCH','RLS')))
           order by t01.sap_material_code asc;
       rcd_bds_data csr_bds_data%rowtype;
+
+      cursor csr_psa_prod is
+         select t01.*
+           from psa_mat_prod t01
+          where t01.mpr_mat_code = rcd_bds_data.mde_mat_code
+          order by t01.mpr_prd_type asc;
+      rcd_psa_prod csr_psa_prod%rowtype;
 
       cursor csr_psa_fert is
          select t01.*
@@ -190,31 +201,78 @@ create or replace package body psa_app.psa_mat_function as
             rcd_psa_mat_defn.mde_net_weight := rcd_bds_data.net_weight;
             rcd_psa_mat_defn.mde_unt_case := rcd_bds_data.bds_pce_factor_from_base_uom;
             rcd_psa_mat_defn.mde_sap_line := rcd_bds_data.sap_prodctn_line_code;
+            rcd_psa_mat_defn.mde_psa_line := rcd_bds_data.lli_lin_code;
             rcd_psa_mat_defn.mde_mat_status := '*ADD';
             rcd_psa_mat_defn.mde_sys_user := user;
             rcd_psa_mat_defn.mde_sys_date := sysdate;
             rcd_psa_mat_defn.mde_upd_user := null;
             rcd_psa_mat_defn.mde_upd_date := null;
-            rcd_psa_mat_defn.mde_prd_type := null;
-            rcd_psa_mat_defn.mde_sch_priority := 0;
-            rcd_psa_mat_defn.mde_dft_line := rcd_bds_data.lli_lin_code;
-            rcd_psa_mat_defn.mde_cas_pallet := 0;
-            rcd_psa_mat_defn.mde_bch_quantity := 0;
-            rcd_psa_mat_defn.mde_yld_percent := 0;
-            rcd_psa_mat_defn.mde_yld_value := 0;
-            rcd_psa_mat_defn.mde_pck_percent := 0;
-            rcd_psa_mat_defn.mde_pck_weight := rcd_psa_mat_defn.mde_net_weight * rcd_psa_mat_defn.mde_unt_case;
-            rcd_psa_mat_defn.mde_bch_weight := 0;
-            if rcd_psa_mat_defn.mde_mat_type = 'TDU' then
-               rcd_psa_mat_defn.mde_prd_type := '*FILL';
-            elsif rcd_psa_mat_defn.mde_mat_type = 'MPO' then
-               rcd_psa_mat_defn.mde_prd_type := '*FILL';
-            elsif rcd_psa_mat_defn.mde_mat_type = 'PCH' then
-               rcd_psa_mat_defn.mde_prd_type := '*FORM';
-            elsif rcd_psa_mat_defn.mde_mat_type = 'RLS' then
-               rcd_psa_mat_defn.mde_prd_type := '*NONE';
-            end if;
             insert into psa_mat_defn values rcd_psa_mat_defn;
+
+            if rcd_psa_mat_defn.mde_mat_usage = 'TDU' then
+               if rcd_bds_data.lde_prd_type is null or rcd_bds_data.lde_prd_type = '*FILL' then
+                  rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+                  rcd_psa_mat_prod.mpr_prd_type := '*FILL';
+                  rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+                  rcd_psa_mat_prod.mpr_cas_pallet := 0;
+                  rcd_psa_mat_prod.mpr_bch_quantity := 0;
+                  rcd_psa_mat_prod.mpr_yld_percent := 100;
+                  rcd_psa_mat_prod.mpr_yld_value := 0;
+                  rcd_psa_mat_prod.mpr_pck_percent := 100;
+                  rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+                  rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  insert into psa_mat_prod values rcd_psa_mat_prod;
+               else
+                  rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+                  rcd_psa_mat_prod.mpr_prd_type := '*PACK';
+                  rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_dft_line := null;
+                  if rcd_bds_data.lde_prd_type = '*PACK' then
+                     rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+                  end if;
+                  rcd_psa_mat_prod.mpr_cas_pallet := 0;
+                  rcd_psa_mat_prod.mpr_bch_quantity := 0;
+                  rcd_psa_mat_prod.mpr_yld_percent := 0;
+                  rcd_psa_mat_prod.mpr_yld_value := 1;
+                  rcd_psa_mat_prod.mpr_pck_percent := 0;
+                  rcd_psa_mat_prod.mpr_pck_weight := 0;
+                  rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  insert into psa_mat_prod values rcd_psa_mat_prod;
+               end if;
+            elsif rcd_psa_mat_defn.mde_mat_usage = 'MPO' then
+               rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+               rcd_psa_mat_prod.mpr_prd_type := '*FILL';
+               rcd_psa_mat_prod.mpr_sch_priority := 1;
+               rcd_psa_mat_prod.mpr_dft_line := null;
+               if rcd_bds_data.lde_prd_type = '*FILL' then
+                  rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+               end if;
+               rcd_psa_mat_prod.mpr_cas_pallet := 0;
+               rcd_psa_mat_prod.mpr_bch_quantity := 0;
+               rcd_psa_mat_prod.mpr_yld_percent := 100;
+               rcd_psa_mat_prod.mpr_yld_value := 0;
+               rcd_psa_mat_prod.mpr_pck_percent := 100;
+               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+               rcd_psa_mat_prod.mpr_bch_weight := 0;
+               insert into psa_mat_prod values rcd_psa_mat_prod;
+            elsif rcd_psa_mat_defn.mde_mat_usage = 'PCH' then
+               rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+               rcd_psa_mat_prod.mpr_prd_type := '*FORM';
+               rcd_psa_mat_prod.mpr_sch_priority := 1;
+               rcd_psa_mat_prod.mpr_dft_line := null;
+               if rcd_bds_data.lde_prd_type = '*FORM' then
+                  rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+               end if;
+               rcd_psa_mat_prod.mpr_cas_pallet := 0;
+               rcd_psa_mat_prod.mpr_bch_quantity := 0;
+               rcd_psa_mat_prod.mpr_yld_percent := 0;
+               rcd_psa_mat_prod.mpr_yld_value := 0;
+               rcd_psa_mat_prod.mpr_pck_percent := 0;
+               rcd_psa_mat_prod.mpr_pck_weight := 0;
+               rcd_psa_mat_prod.mpr_bch_weight := 0;
+               insert into psa_mat_prod values rcd_psa_mat_prod;
+            end if;
 
          /*-*/
          /* Update existing materials
@@ -270,31 +328,9 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_defn.mde_net_weight := rcd_bds_data.net_weight;
                rcd_psa_mat_defn.mde_unt_case := rcd_bds_data.bds_pce_factor_from_base_uom;
                rcd_psa_mat_defn.mde_sap_line := rcd_bds_data.sap_prodctn_line_code;
+               rcd_psa_mat_defn.mde_psa_line := rcd_bds_data.lli_lin_code;
                rcd_psa_mat_defn.mde_sys_user := user;
                rcd_psa_mat_defn.mde_sys_date := sysdate;
-               rcd_psa_mat_defn.mde_prd_type := rcd_bds_data.mde_prd_type;
-               rcd_psa_mat_defn.mde_sch_priority := rcd_bds_data.mde_sch_priority;
-               rcd_psa_mat_defn.mde_dft_line := rcd_bds_data.lli_lin_code;
-               rcd_psa_mat_defn.mde_cas_pallet := rcd_bds_data.mde_cas_pallet;
-               rcd_psa_mat_defn.mde_bch_quantity := rcd_bds_data.mde_bch_quantity;
-               rcd_psa_mat_defn.mde_yld_percent := rcd_bds_data.mde_yld_percent;
-               rcd_psa_mat_defn.mde_yld_value := rcd_bds_data.mde_yld_value;
-               rcd_psa_mat_defn.mde_pck_percent := rcd_bds_data.mde_pck_percent;
-               rcd_psa_mat_defn.mde_pck_weight := rcd_psa_mat_defn.mde_net_weight * rcd_psa_mat_defn.mde_unt_case;
-               rcd_psa_mat_defn.mde_bch_weight := rcd_bds_data.mde_bch_weight;
-               if rcd_psa_mat_defn.mde_prd_type = '*PACK' then
-                  rcd_psa_mat_defn.mde_yld_value := 1;
-               elsif rcd_psa_mat_defn.mde_prd_type = '*FILL' then
-                  rcd_psa_mat_defn.mde_yld_value := (rcd_psa_mat_defn.mde_unt_case * rcd_psa_mat_defn.mde_bch_quantity * rcd_psa_mat_defn.mde_yld_percent);
-               elsif rcd_psa_mat_defn.mde_prd_type = '*FORM' then
-                  rcd_psa_mat_defn.mde_yld_value := rcd_psa_mat_defn.mde_bch_quantity;
-               end if;
-               if rcd_psa_mat_defn.mde_prd_type = '*FILL' then
-                  rcd_psa_mat_defn.mde_pck_weight := (rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case);
-               end if;
-               if rcd_psa_mat_defn.mde_prd_type = '*FILL' then
-                  rcd_psa_mat_defn.mde_bch_weight := (rcd_psa_mat_defn.mde_yld_value * rcd_psa_mat_defn.mde_pck_weight * round((rcd_psa_mat_defn.mde_pck_percent / 100),2));
-               end if;
                update psa_mat_defn
                   set mde_mat_name = rcd_psa_mat_defn.mde_mat_name,
                       mde_mat_type = rcd_psa_mat_defn.mde_mat_type,
@@ -304,20 +340,59 @@ create or replace package body psa_app.psa_mat_function as
                       mde_net_weight = rcd_psa_mat_defn.mde_net_weight,
                       mde_unt_case = rcd_psa_mat_defn.mde_unt_case,
                       mde_sap_line = rcd_psa_mat_defn.mde_sap_line,
+                      mde_psa_line = rcd_psa_mat_defn.mde_psa_line,
                       mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
                       mde_sys_user = rcd_psa_mat_defn.mde_sys_user,
-                      mde_sys_date = rcd_psa_mat_defn.mde_sys_date,
-                      mde_prd_type = rcd_psa_mat_defn.mde_prd_type,
-                      mde_sch_priority = rcd_psa_mat_defn.mde_sch_priority,
-                      mde_dft_line = rcd_psa_mat_defn.mde_dft_line,
-                      mde_cas_pallet = rcd_psa_mat_defn.mde_cas_pallet,
-                      mde_bch_quantity = rcd_psa_mat_defn.mde_bch_quantity,
-                      mde_yld_percent = rcd_psa_mat_defn.mde_yld_percent,
-                      mde_yld_value = rcd_psa_mat_defn.mde_yld_value,
-                      mde_pck_percent = rcd_psa_mat_defn.mde_pck_percent,
-                      mde_pck_weight = rcd_psa_mat_defn.mde_pck_weight,
-                      mde_bch_weight = rcd_psa_mat_defn.mde_bch_weight
+                      mde_sys_date = rcd_psa_mat_defn.mde_sys_date
                 where mde_mat_code = rcd_bds_data.mde_mat_code;
+
+               /*-*/
+               /* Update the material production types
+               /*-*/
+               open csr_psa_prod;
+               loop
+                  fetch csr_psa_prod into rcd_psa_prod;
+                  if csr_psa_prod%notfound then
+                     exit;
+                  end if;
+
+                  rcd_psa_mat_prod.mpr_sch_priority := rcd_psa_prod.mpr_sch_priority;
+                  rcd_psa_mat_prod.mpr_dft_line := rcd_psa_prod.mpr_dft_line;
+                  if rcd_psa_prod.mpr_prd_type = rcd_bds_data.lde_prd_type and rcd_bds_data.lli_lin_code is not null then
+                     rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+                  end if;
+                  rcd_psa_mat_prod.mpr_cas_pallet := rcd_psa_prod.mpr_cas_pallet;
+                  rcd_psa_mat_prod.mpr_bch_quantity := rcd_psa_prod.mpr_bch_quantity;
+                  rcd_psa_mat_prod.mpr_yld_percent := rcd_psa_prod.mpr_yld_percent;
+                  rcd_psa_mat_prod.mpr_yld_value := rcd_psa_prod.mpr_yld_value;
+                  rcd_psa_mat_prod.mpr_pck_percent := rcd_psa_prod.mpr_pck_percent;
+                  rcd_psa_mat_prod.mpr_pck_weight := rcd_psa_prod.mpr_pck_weight;
+                  rcd_psa_mat_prod.mpr_bch_weight := rcd_psa_prod.mpr_bch_weight;
+                  if rcd_psa_prod.mpr_prd_type = '*FILL' then
+                     rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_psa_mat_defn.mde_unt_case * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
+                     rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+                     rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
+                  elsif rcd_psa_prod.mpr_prd_type = '*PACK' then
+                     rcd_psa_mat_prod.mpr_yld_value := 1;
+                  elsif rcd_psa_prod.mpr_prd_type = '*FORM' then
+                     rcd_psa_mat_prod.mpr_yld_value := rcd_psa_prod.mpr_bch_quantity;
+                  end if;
+
+                  update psa_mat_prod
+                     set mpr_sch_priority = rcd_psa_mat_prod.mpr_sch_priority,
+                         mpr_dft_line = rcd_psa_mat_prod.mpr_dft_line,
+                         mpr_cas_pallet = rcd_psa_mat_prod.mpr_cas_pallet,
+                         mpr_bch_quantity = rcd_psa_mat_prod.mpr_bch_quantity,
+                         mpr_yld_percent = rcd_psa_mat_prod.mpr_yld_percent,
+                         mpr_yld_value = rcd_psa_mat_prod.mpr_yld_value,
+                         mpr_pck_percent = rcd_psa_mat_prod.mpr_pck_percent,
+                         mpr_pck_weight = rcd_psa_mat_prod.mpr_pck_weight,
+                         mpr_bch_weight = rcd_psa_mat_prod.mpr_bch_weight
+                   where mpr_mat_code = rcd_psa_prod.mpr_mat_code
+                     and mpr_prd_type = rcd_psa_prod.mpr_prd_type;
+
+               end loop;
+               close csr_psa_prod;
 
             end if;
 
@@ -749,9 +824,9 @@ create or replace package body psa_app.psa_mat_function as
                 nvl(t02.mpr_dft_line,'*NONE') as mpr_dft_line,
                 nvl(t02.mpr_cas_pallet,0) as mpr_cas_pallet,
                 nvl(t02.mpr_bch_quantity,0) as mpr_bch_quantity,
-                nvl(t02.mpr_yld_percent,0) as mpr_yld_percent,
+                nvl(t02.mpr_yld_percent,100) as mpr_yld_percent,
                 nvl(t02.mpr_yld_value,0) as mpr_yld_value,
-                nvl(t02.mpr_pck_percent,0) as mpr_pck_percent,
+                nvl(t02.mpr_pck_percent,100) as mpr_pck_percent,
                 nvl(t02.mpr_pck_weight,0) as mpr_pck_weight,
                 nvl(t02.mpr_bch_weight,0) as mpr_bch_weight
            from psa_prd_type t01,
@@ -770,6 +845,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.lde_lin_name,
                 t02.lco_con_code,
                 t02.lco_con_name,
+                nvl(t03.mli_dft_flag,'0') as mli_dft_flag,
                 nvl(t03.mli_rra_code,'*NONE') as mli_rra_code,
                 nvl(t03.mli_rra_efficiency,0) as mli_rra_efficiency,
                 nvl(t03.mli_rra_wastage,0) as mli_rra_wastage
@@ -811,9 +887,6 @@ create or replace package body psa_app.psa_mat_function as
             and t01.mco_mat_code = rcd_retrieve.mde_mat_code
             and t01.mco_prd_type = rcd_prod.pty_prd_type
             and t02.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
-            and ((rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'TDU' and t02.mde_mat_type in ('*FERT') and t02.mde_mat_usage in ('*MPO')) or
-                 (rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'MPO' and t02.mde_mat_type in ('*FERT') and t02.mde_mat_usage in ('*MPO')) or
-                 (rcd_retrieve.mde_mat_type = 'VERP' and rcd_retrieve.mde_mat_usage = 'PCH' and t02.mde_mat_type in ('*VERP') and t02.mde_mat_usage in ('*RLS')))
           order by t02.mde_mat_code asc;
       rcd_comp csr_comp%rowtype;
 
@@ -884,7 +957,8 @@ create or replace package body psa_app.psa_mat_function as
       var_output := var_output||' MATNEW="'||psa_to_xml(to_char(rcd_retrieve.mde_net_weight))||'"';
       var_output := var_output||' MATUNC="'||psa_to_xml(to_char(rcd_retrieve.mde_unt_case))||'"';
       var_output := var_output||' SAPCDE="'||psa_to_xml(rcd_retrieve.mde_sap_code)||'"';
-      var_output := var_output||' SAPLIN="'||psa_to_xml(rcd_retrieve.mde_sap_line)||'"';
+      var_output := var_output||' SAPLIN="'||psa_to_xml(nvl(rcd_retrieve.mde_sap_line,'*NONE'))||'"';
+      var_output := var_output||' PSALIN="'||psa_to_xml(nvl(rcd_retrieve.mde_psa_line,'*NONE'))||'"';
       var_output := var_output||' SYSDTE="'||psa_to_xml(rcd_retrieve.mde_sys_user||' on '||to_char(rcd_retrieve.mde_sys_date,'yyyy/mm/dd hh24:mi:ss'))||'"';
       var_output := var_output||' UPDDTE="'||psa_to_xml(rcd_retrieve.upd_date)||'"/>';
       pipe row(psa_xml_object(var_output));
@@ -928,7 +1002,7 @@ create or replace package body psa_app.psa_mat_function as
             /*-*/
             /* Pipe the line data XML
             /*-*/
-            pipe row(psa_xml_object('<MATLIN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'" LCOCDE="'||psa_to_xml(rcd_line.lco_con_code)||'" LCONAM="'||psa_to_xml('('||rcd_line.lco_con_code||') '||rcd_line.lco_con_name)||'" LCORRA="'||psa_to_xml(rcd_line.mli_rra_code)||'" LCOEFF="'||psa_to_xml(to_char(rcd_line.mli_rra_efficiency,'fm990.00'))||'" LCOWAS="'||psa_to_xml(to_char(rcd_line.mli_rra_wastage,'fm990.00'))||'"/>'));
+            pipe row(psa_xml_object('<MATLIN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'" LCOCDE="'||psa_to_xml(rcd_line.lco_con_code)||'" LCONAM="'||psa_to_xml('('||rcd_line.lco_con_code||') '||rcd_line.lco_con_name)||'" LCODFT="'||psa_to_xml(rcd_line.mli_dft_flag)||'" LCORRA="'||psa_to_xml(rcd_line.mli_rra_code)||'" LCOEFF="'||psa_to_xml(to_char(rcd_line.mli_rra_efficiency,'fm990.00'))||'" LCOWAS="'||psa_to_xml(to_char(rcd_line.mli_rra_wastage,'fm990.00'))||'"/>'));
 
             /*-*/
             /* Retrieve and pipe the line rate data XML
@@ -1003,10 +1077,28 @@ create or replace package body psa_app.psa_mat_function as
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
       obj_psa_request xmlDom.domNode;
+      obj_pty_list xmlDom.domNodeList;
+      obj_pty_node xmlDom.domNode;
+      obj_lin_list xmlDom.domNodeList;
+      obj_lin_node xmlDom.domNode;
+      obj_com_list xmlDom.domNodeList;
+      obj_com_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
+      var_bolFill boolean;
+      var_bolPack boolean;
+      var_bolForm boolean;
+      var_bolComp boolean;
+      var_pty_code varchar2(32);
+      var_pty_flag varchar2(1);
+      var_lin_code varchar2(32);
+      var_con_code varchar2(32);
+      var_com_code varchar2(32);
       rcd_psa_mat_defn psa_mat_defn%rowtype;
+      rcd_psa_mat_prod psa_mat_prod%rowtype;
+      rcd_psa_mat_line psa_mat_line%rowtype;
+      rcd_psa_mat_comp psa_mat_comp%rowtype;
 
       /*-*/
       /* Local cursors
@@ -1021,14 +1113,24 @@ create or replace package body psa_app.psa_mat_function as
       cursor csr_type is
          select t01.*
            from psa_prd_type t01
-          where t01.pty_prd_type = rcd_psa_mat_defn.mde_prd_type;
+          where t01.pty_prd_type = var_pty_code;
       rcd_type csr_type%rowtype;
 
       cursor csr_line is
-         select t01.*
-           from psa_lin_defn t01
-          where t01.lde_lin_code = rcd_psa_mat_defn.mde_dft_line;
+         select t01.lco_con_status,
+                t02.lde_lin_status
+           from psa_lin_config t01,
+                psa_lin_defn t02
+          where t01.lco_lin_code = t02.lde_lin_code
+            and t01.lco_lin_code = var_lin_code
+            and t01.lco_con_code = var_con_code;
       rcd_line csr_line%rowtype;
+
+      cursor csr_comp is
+         select t01.*
+           from psa_mat_defn t01
+          where t01.mde_mat_code = var_com_code;
+      rcd_comp csr_comp%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1049,14 +1151,13 @@ create or replace package body psa_app.psa_mat_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
+      if var_action != '*UPDDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
       rcd_psa_mat_defn.mde_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
-      rcd_psa_mat_defn.mde_mat_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATNAM'));
       rcd_psa_mat_defn.mde_mat_status := '*ACTIVE';
       rcd_psa_mat_defn.mde_upd_user := upper(par_user);
       rcd_psa_mat_defn.mde_upd_date := sysdate;
@@ -1065,57 +1166,8 @@ create or replace package body psa_app.psa_mat_function as
       end if;
 
       /*-*/
-      /* Validate the input
+      /* Retrieve the material
       /*-*/
-      if rcd_psa_mat_defn.mde_mat_name is null then
-         psa_gen_function.add_mesg_data('Material name must be supplied');
-      end if;
-      if rcd_psa_mat_defn.mde_mat_status is null or (rcd_psa_mat_defn.mde_mat_status != '0' and rcd_psa_mat_defn.mde_mat_status != '1') then
-         psa_gen_function.add_mesg_data('Material status must be (0)inactive or (1)active');
-      end if;
-      if rcd_psa_mat_defn.mde_upd_user is null then
-         psa_gen_function.add_mesg_data('Update user must be supplied');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Validate the parent relationships
-      /*-*/
-      open csr_type;
-      fetch csr_type into rcd_type;
-      if csr_type%notfound then
-         psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') does not exist');
-      else
-         if rcd_type.pty_prd_status != '1' then
-            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') status must be active');
-         end if;
-         if rcd_type.pty_prd_mat_usage != '1' then
-            psa_gen_function.add_mesg_data('Production type code ('||rcd_psa_mat_defn.mde_prd_type||') must be flagged for material usage');
-         end if;
-      end if;
-      close csr_type;
-
-      open csr_line;
-      fetch csr_line into rcd_line;
-      if csr_line%notfound then
-         psa_gen_function.add_mesg_data('Line code ('||rcd_psa_mat_defn.mde_dft_line||') does not exist');
-      else
-         if rcd_line.lde_lin_status != '1' then
-            psa_gen_function.add_mesg_data('Line code ('||rcd_psa_mat_defn.mde_dft_line||') status must be active');
-         end if;
-      end if;
-      close csr_line;
-
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Process the material
-      /*-*/
-      var_confirm := 'updated';
       var_found := false;
       begin
          open csr_retrieve;
@@ -1131,17 +1183,215 @@ create or replace package body psa_app.psa_mat_function as
       end;
       if var_found = false then
          psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') does not exist');
-      end if;
-      if psa_gen_function.get_mesg_count = 0 then
-         update psa_mat_defn
-            set mde_mat_name = rcd_psa_mat_defn.mde_mat_name,
-                mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
-                mde_upd_user = rcd_psa_mat_defn.mde_upd_user,
-                mde_upd_date = rcd_psa_mat_defn.mde_upd_date
-          where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
       else
+         if rcd_retrieve.mde_mat_status = '*INACTIVE' or rcd_retrieve.mde_mat_status = '*DEL' then
+            psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') status is *INACTIVE or *DEL - unable to update');
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
          rollback;
          return;
+      end if;
+
+      /*-*/
+      /* Validate the input
+      /*-*/
+      if rcd_psa_mat_defn.mde_upd_user is null then
+         psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the child relationships when required
+      /*-*/
+      var_bolFill := false;
+      var_bolPack := false;
+      var_bolForm := false;
+      var_bolComp := false;
+      if (rcd_retrieve.mde_mat_usage = 'TDU' or
+          rcd_retrieve.mde_mat_usage = 'MPO' or
+          rcd_retrieve.mde_mat_usage = 'PCH') then
+         obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/MATPTY');
+         for idx in 0..xmlDom.getLength(obj_pty_list)-1 loop
+            obj_pty_node := xmlDom.item(obj_pty_list,idx);
+            var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
+            if var_pty_code = '*FILL' then
+               var_bolFill := true;
+            elsif var_pty_code = '*PACK' then
+               var_bolPack := true;
+            elsif var_pty_code = '*FORM' then
+               var_bolForm := true;
+            end if;
+            var_pty_flag := '1';
+            open csr_type;
+            fetch csr_type into rcd_type;
+            if csr_type%notfound then
+               var_pty_flag := '0';
+               psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') does not exist');
+            else
+               if rcd_type.pty_prd_status != '1' then
+                  var_pty_flag := '0';
+                  psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') status must be active');
+               end if;
+               if rcd_type.pty_prd_mat_usage != '1' then
+                  var_pty_flag := '0';
+                  psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') must be flagged for material usage');
+               end if;
+            end if;
+            close csr_type;
+            if var_pty_flag = '1' then
+               obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
+               for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
+                  obj_lin_node := xmlDom.item(obj_lin_list,idy);
+                  var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
+                  var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
+                  open csr_line;
+                  fetch csr_line into rcd_line;
+                  if csr_line%notfound then
+                     psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') does not exist');
+                  else
+                     if rcd_line.lco_con_status != '1' then
+                        psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') status must be (1)active');
+                     end if;
+                     if rcd_line.lde_lin_status != '1' then
+                        psa_gen_function.add_mesg_data('Line ('||var_lin_code||') status must be (1)active');
+                     end if;
+                  end if;
+                  close csr_line;
+               end loop;
+               obj_com_list := xslProcessor.selectNodes(obj_pty_node,'MATCOM');
+               for idy in 0..xmlDom.getLength(obj_com_list)-1 loop
+                  var_bolComp := true;
+                  obj_com_node := xmlDom.item(obj_com_list,idy);
+                  var_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'COMCDE')));
+                  open csr_comp;
+                  fetch csr_comp into rcd_comp;
+                  if csr_comp%notfound then
+                     psa_gen_function.add_mesg_data('Component ('||var_com_code||') does not exist');
+                  else
+                     if rcd_comp.mde_mat_status = '*INACTIVE' then
+                        psa_gen_function.add_mesg_data('Component ('||var_com_code||') status is *INACTIVE');
+                     end if;
+                  end if;
+                  close csr_comp;
+               end loop;
+            end if;
+         end loop;
+         if rcd_retrieve.mde_mat_usage = 'TDU' then
+            if var_bolFill = false and var_bolPack = false then
+               psa_gen_function.add_mesg_data('TDU material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling and/or Packing data');
+            end if;
+            if var_bolForm = true then
+               psa_gen_function.add_mesg_data('TDU material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Forming data');
+            end if;
+         elsif rcd_retrieve.mde_mat_usage = 'MPO' then
+            if var_bolFill = false then
+               psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling data');
+            end if;
+            if var_bolPack = true or var_bolForm = true then
+               psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Packing or Forming data');
+            end if;
+         elsif rcd_retrieve.mde_mat_usage = 'PCH' then
+            if var_bolForm = false then
+               psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must have Forming data');
+            end if;
+            if var_bolFill = true or var_bolPack = true then
+               psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Filling or Packing data');
+            end if;
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Update the material
+      /*-*/
+      var_confirm := 'updated';
+      update psa_mat_defn
+         set mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
+             mde_upd_user = rcd_psa_mat_defn.mde_upd_user,
+             mde_upd_date = rcd_psa_mat_defn.mde_upd_date
+       where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
+      delete from psa_mat_prod where mpr_mat_code = rcd_psa_mat_defn.mde_mat_code;
+      delete from psa_mat_line where mli_mat_code = rcd_psa_mat_defn.mde_mat_code;
+      delete from psa_mat_comp where mco_mat_code = rcd_psa_mat_defn.mde_mat_code;
+
+      /*-*/
+      /* Retrieve and insert the material child data when required
+      /*-*/
+      if (rcd_retrieve.mde_mat_usage = 'TDU' or
+          rcd_retrieve.mde_mat_usage = 'MPO' or
+          rcd_retrieve.mde_mat_usage = 'PCH') then
+         obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/MATPTY');
+         for idx in 0..xmlDom.getLength(obj_pty_list)-1 loop
+            obj_pty_node := xmlDom.item(obj_pty_list,idx);
+            rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+            rcd_psa_mat_prod.mpr_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
+            if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
+               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
+               rcd_psa_mat_prod.mpr_cas_pallet := 0;
+               rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
+               rcd_psa_mat_prod.mpr_yld_percent := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRYPC'));
+               rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_retrieve.mde_unt_case * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
+               rcd_psa_mat_prod.mpr_pck_percent := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRRPC'));
+               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_retrieve.mde_net_weight / rcd_retrieve.mde_unt_case, 3);
+               rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
+            elsif rcd_psa_mat_prod.mpr_prd_type = '*PACK' then
+               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
+               rcd_psa_mat_prod.mpr_cas_pallet := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRCPL'));
+               rcd_psa_mat_prod.mpr_bch_quantity := 0;
+               rcd_psa_mat_prod.mpr_yld_percent := 0;
+               rcd_psa_mat_prod.mpr_yld_value := 1;
+               rcd_psa_mat_prod.mpr_pck_percent := 0;
+               rcd_psa_mat_prod.mpr_pck_weight := 0;
+               rcd_psa_mat_prod.mpr_bch_weight := 0;
+            elsif rcd_psa_mat_prod.mpr_prd_type = '*FORM' then
+               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
+               rcd_psa_mat_prod.mpr_cas_pallet := 0;
+               rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
+               rcd_psa_mat_prod.mpr_yld_percent := 0;
+               rcd_psa_mat_prod.mpr_yld_value := rcd_psa_mat_prod.mpr_bch_quantity;
+               rcd_psa_mat_prod.mpr_pck_percent := 0;
+               rcd_psa_mat_prod.mpr_pck_weight := 0;
+               rcd_psa_mat_prod.mpr_bch_weight := 0;
+            end if;
+            insert into psa_mat_prod values rcd_psa_mat_prod;
+            obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
+            for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
+               obj_lin_node := xmlDom.item(obj_lin_list,idy);
+               var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
+               var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
+               rcd_psa_mat_line.mli_mat_code := rcd_psa_mat_prod.mpr_mat_code;
+               rcd_psa_mat_line.mli_prd_type := rcd_psa_mat_prod.mpr_prd_type;
+               rcd_psa_mat_line.mli_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LINCDE')));
+               rcd_psa_mat_line.mli_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCOCDE')));
+               rcd_psa_mat_line.mli_dft_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCODFT')));
+               rcd_psa_mat_line.mli_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'LCORRA')));
+               if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
+                  rcd_psa_mat_line.mli_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_lin_node,'LCOEFF'));
+                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'LCOWAS'));
+               else
+                  rcd_psa_mat_line.mli_rra_efficiency := 100;
+                  rcd_psa_mat_line.mli_rra_wastage := 0;
+               end if;
+            end loop;
+            obj_com_list := xslProcessor.selectNodes(obj_pty_node,'MATCOM');
+            for idy in 0..xmlDom.getLength(obj_com_list)-1 loop
+               obj_com_node := xmlDom.item(obj_com_list,idy);
+               rcd_psa_mat_comp.mco_mat_code := rcd_psa_mat_prod.mpr_mat_code;
+               rcd_psa_mat_comp.mco_prd_type := rcd_psa_mat_prod.mpr_prd_type;
+               rcd_psa_mat_comp.mco_com_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'COMCDE')));
+               rcd_psa_mat_comp.mco_com_quantity := psa_to_number(xslProcessor.valueOf(obj_lin_node,'COMQTY'));
+            end loop;
+         end loop;
       end if;
 
       /*-*/
@@ -1210,6 +1460,12 @@ create or replace package body psa_app.psa_mat_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_component is
+         select count(*) as com_count
+           from psa_mat_comp t01
+          where t01.mco_com_code = rcd_psa_mat_defn.mde_mat_code;
+      rcd_component csr_component%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1276,6 +1532,23 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       if rcd_psa_mat_defn.mde_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the parent relationships
+      /*-*/
+      open csr_component;
+      fetch csr_component into rcd_component;
+      if csr_component%notfound then
+         rcd_component.com_count := 0;
+      end if;
+      close csr_component;
+      if rcd_component.com_count != 0 then
+         psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is attached as a component to '||to_char(rcd_component.com_count)||' materials - unable to inactivate');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
@@ -1382,15 +1655,13 @@ create or replace package body psa_app.psa_mat_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*CHKCOM' then
-         psa_gen_function.add_mesg_data('Invalid request action');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
       var_pty_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
       var_com_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMCDE'));
       var_com_qnty := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMQTY'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*CHKCOM' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -1408,22 +1679,28 @@ create or replace package body psa_app.psa_mat_function as
       if var_found = false then
          psa_gen_function.add_mesg_data('Material ('||var_com_code||') does not exist');
       else
-         if rcd_retrieve.mde_mat_status != '*CHG' and rcd_retrieve.mde_mat_status != '*DEL' and rcd_retrieve.mde_mat_status != '*ACTIVE' then
-            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be status *CHG, *DEL or *ACTIVE');
-         end if;
-         if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != '*FERT' or rcd_retrieve.mde_mat_usage != '*MPO') then
-            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *FERT / *MPO for filling component');
-         end if;
-         if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != '*FERT' or rcd_retrieve.mde_mat_usage != '*TDU') then
-            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *FERT / *TDU for packing component');
-         end if;
-         if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != '*VERP' or rcd_retrieve.mde_mat_usage != '*RLS') then
-            psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be *VERP / *RLS for forming component');
+         if rcd_retrieve.mde_mat_status = '*INACTIVE' then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') is *INACTIVE');
+         else
+            if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'MPO') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO for filling component');
+            end if;
+            if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'TDU') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / TDU for packing component');
+            end if;
+            if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or rcd_retrieve.mde_mat_usage != 'RLS') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS for forming component');
+            end if;
          end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
 
       /*-*/
       /* Pipe the component XML
@@ -1435,9 +1712,14 @@ create or replace package body psa_app.psa_mat_function as
       pipe row(psa_xml_object(var_output));
 
       /*-*/
-      /* Free the XML document
+      /* Pipe the XML end
       /*-*/
-      xmlDom.freeDocument(obj_xml_document);
+      pipe row(psa_xml_object('</PSA_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
 
    /*-------------------*/
    /* Exception handler */
