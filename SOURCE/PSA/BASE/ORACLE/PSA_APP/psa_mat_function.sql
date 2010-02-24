@@ -25,7 +25,8 @@ create or replace package psa_app.psa_mat_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure update_master;
+   procedure update_master_batch;
+   procedure update_master(par_user in varchar2);
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
@@ -46,14 +47,35 @@ create or replace package body psa_app.psa_mat_function as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /***********************************************************/
+   /* This procedure performs the update master batch routine */
+   /***********************************************************/
+   procedure update_master_batch is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Execute the update master in batch mode
+      /*-*/
+      update_master('*BATCH');
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_master_batch;
+
    /*****************************************************/
    /* This procedure performs the update master routine */
    /*****************************************************/
-   procedure update_master is
+   procedure update_master(par_user in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
+      var_user varchar2(32);
       var_exception varchar2(4000);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
@@ -159,6 +181,10 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       /* Initialise the log variables
       /*-*/
+      var_user := upper(par_user);
+      if var_user is null then 
+         var_user := '*BATCH';
+      end if;
       var_log_prefix := 'PSA - SAP_MATERIAL_MAINTENANCE';
       var_log_search := 'SAP_MATERIAL_MAINTENANCE';
       var_loc_string := 'PSA_SAP_MATERIAL_MAINTENANCE';
@@ -185,13 +211,15 @@ create or replace package body psa_app.psa_mat_function as
          when others then
             lics_logging.write_log(substr(SQLERRM, 1, 3000));
       end;
+      if var_locked = false then
+         lics_logging.write_log('End - PSA SAP Material Maintenance');
+         lics_logging.end_log;
+         if var_user != '*BATCH' then
+            psa_gen_function.add_mesg_data('PSA SAP Material Maintenance was unable to lock the function - update not processed');
+         end if;
+      end if;
 
       /*-*/
-      /* Execute the requested procedure
-      /*-*/
-      if var_locked = true then
-
-         /*-*/
       /* Log the event
       /*-*/
       lics_logging.write_log('--> Updating PSA material from the SAP material data');
@@ -579,14 +607,6 @@ create or replace package body psa_app.psa_mat_function as
       lics_mailer.append_data('** Email End **');
       lics_mailer.finalise_email('utf-8');
 
-         /*-*/
-         /* Release the lock on the event
-         /*-*/
-         lics_locking.release(var_loc_string);
-
-      end if;
-      var_locked := false;
-
       /*-*/
       /* End procedure
       /*-*/
@@ -596,6 +616,13 @@ create or replace package body psa_app.psa_mat_function as
       /* Log end
       /*-*/
       lics_logging.end_log;
+
+      /*-*/
+      /* Send the confirm message when required
+      /*-*/
+      if var_user != '*BATCH' then
+         psa_gen_function.set_cfrm_data('PSA SAP Material Maintenance completed successfully - exception report emailed');
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -635,7 +662,11 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - PSA_MAT_FUNCTION - UPDATE_MASTER - ' || substr(SQLERRM, 1, 1536));
+         if var_user = '*BATCH' then
+            raise_application_error(-20000, 'FATAL ERROR - PSA_MAT_FUNCTION - UPDATE_MASTER - ' || substr(var_exception, 1, 1536));
+         else
+            psa_gen_function.add_mesg_data('FATAL ERROR - PSA_MAT_FUNCTION - UPDATE_MASTER - ' || substr(var_exception, 1, 1536));
+         end if;
 
    /*-------------*/
    /* End routine */
