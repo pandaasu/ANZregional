@@ -27,6 +27,7 @@ create or replace package psa_app.psa_mat_function as
    /*-*/
    procedure update_master_batch;
    procedure update_master(par_user in varchar2);
+   function report_master return psa_xls_type pipelined;
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
@@ -182,7 +183,7 @@ create or replace package body psa_app.psa_mat_function as
       /* Initialise the log variables
       /*-*/
       var_user := upper(par_user);
-      if var_user is null then 
+      if var_user is null then
          var_user := '*BATCH';
       end if;
       var_log_prefix := 'PSA - SAP_MATERIAL_MAINTENANCE';
@@ -673,6 +674,294 @@ create or replace package body psa_app.psa_mat_function as
    /*-------------*/
    end update_master;
 
+   /*****************************************************/
+   /* This procedure performs the report master routine */
+   /*****************************************************/
+   function report_master return psa_xls_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_output varchar2(2000);
+      var_work varchar2(2000);
+      var_prd_flag boolean;
+      var_lin_flag boolean;
+      var_com_flag boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_defn is
+         select t01.mde_mat_code,
+                t01.mde_mat_name,
+                t01.mde_mat_type,
+                t01.mde_mat_usage,
+                t01.mde_mat_status,
+                t01.mde_mat_uom,
+                to_char(t01.mde_gro_weight,'fm999999990.000') as mde_gro_weight,
+                to_char(t01.mde_net_weight,'fm999999990.000') as mde_net_weight,
+                to_char(t01.mde_unt_case) as mde_unt_case,
+                t01.mde_sap_code,
+                nvl(t01.mde_sap_line,'*NONE') as mde_sap_line,
+                nvl(t01.mde_psa_line,'*NONE') as mde_psa_line,
+                t01.mde_sys_user||' on '||to_char(t01.mde_sys_date,'yyyy/mm/dd hh24:mi:ss') as mde_sys_user,
+                decode(t01.mde_upd_user,null,'ADDED',t01.mde_upd_user||' on '||to_char(t01.mde_upd_date,'yyyy/mm/dd hh24:mi:ss')) as mde_upd_user
+           from psa_mat_defn t01
+          where t01.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
+          order by t01.mde_mat_type asc,
+                   decode(t01.mde_mat_usage,'TDU','1','MPO','2',t01.mde_mat_usage) asc,
+                   t01.mde_mat_code asc;
+      rcd_defn csr_defn%rowtype;
+
+      cursor csr_prod is
+         select t01.mpr_prd_type,
+                '('||t01.mpr_prd_type||') '||nvl(t02.pty_prd_name,'*UNKNOWN') as pty_prd_name,
+                to_char(nvl(t01.mpr_sch_priority,1)) as mpr_sch_priority,
+                nvl(t01.mpr_dft_line,'*NONE') as mpr_dft_line,
+                to_char(nvl(t01.mpr_cas_pallet,0)) as mpr_cas_pallet,
+                to_char(nvl(t01.mpr_bch_quantity,0)) as mpr_bch_quantity,
+                to_char(nvl(t01.mpr_yld_percent,100),'fm990.00') as mpr_yld_percent,
+                to_char(nvl(t01.mpr_yld_value,0)) as mpr_yld_value,
+                to_char(nvl(t01.mpr_pck_percent,100),'fm990.00') as mpr_pck_percent,
+                to_char(nvl(t01.mpr_pck_weight,0),'fm999999990.000') as mpr_pck_weight,
+                to_char(nvl(t01.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight
+           from psa_mat_prod t01,
+                psa_prd_type t02
+          where t01.mpr_prd_type = t02.pty_prd_type(+)
+            and t01.mpr_mat_code = rcd_defn.mde_mat_code
+          order by t01.mpr_prd_type asc;
+      rcd_prod csr_prod%rowtype;
+
+      cursor csr_line is
+         select '('||t01.mli_lin_code||') '||nvl(t03.lde_lin_name,'*UNKNOWN') as mli_lin_code,
+                '('||t01.mli_con_code||') '||nvl(t02.lco_con_name,'*UNKNOWN') as mli_con_code,
+                decode(t01.mli_dft_flag,'1','Yes','No') as mli_dft_flag,
+                '('||t01.mli_rra_code||') '||nvl(t04.rrd_rra_name,'*UNKNOWN') as mli_rra_code,
+                to_char(nvl(t04.rrd_rra_efficiency,0),'fm990.00') as rrd_rra_efficiency,
+                to_char(nvl(t04.rrd_rra_wastage,0),'fm990.00') as rrd_rra_wastage,
+                to_char(t01.mli_rra_efficiency,'fm990.00') as mli_rra_efficiency,
+                to_char(t01.mli_rra_wastage,'fm990.00') as mli_rra_wastage
+           from psa_mat_line t01,
+                psa_lin_config t02,
+                psa_lin_defn t03,
+                psa_rra_defn t04
+          where t01.mli_lin_code = t02.lco_lin_code(+)
+            and t01.mli_con_code = t02.lco_con_code(+)
+            and t02.lco_lin_code = t03.lde_lin_code(+)
+            and t01.mli_rra_code = t04.rrd_rra_code(+)
+            and t01.mli_mat_code = rcd_defn.mde_mat_code
+            and t01.mli_prd_type = rcd_prod.mpr_prd_type
+          order by t01.mli_lin_code asc,
+                   t01.mli_con_code asc;
+      rcd_line csr_line%rowtype;
+
+      cursor csr_comp is
+         select '('||t01.mco_com_code||') '||nvl(t02.mde_mat_name,'*UNKNOWN') as mco_com_code,
+                to_char(t01.mco_com_quantity) as mco_com_quantity
+           from psa_mat_comp t01,
+                psa_mat_defn t02
+          where t01.mco_com_code = t02.mde_mat_code(+)
+            and t01.mco_mat_code = rcd_defn.mde_mat_code
+            and t01.mco_prd_type = rcd_prod.mpr_prd_type
+          order by t02.mde_mat_code asc;
+      rcd_comp csr_comp%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Start the report
+      /*-*/
+      pipe row('<table border=1>');
+      pipe row('<tr><td align=center colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Master Report</td></tr>');
+      pipe row('<tr>');
+      pipe row('<tr><td align=center colspan=14></td></tr>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Usage</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Status</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">UOM</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Gross Weight</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Net Weight</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Units/Case</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Code</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Line</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Line</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Updated</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Updated</td>');
+      pipe row('</tr>');
+      pipe row('<tr><td align=center colspan=14></td></tr>');
+
+      /*-*/
+      /* Retrieve the materials
+      /*-*/
+      open csr_defn;
+      loop
+         fetch csr_defn into rcd_defn;
+         if csr_defn%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Output the definition data
+         /*-*/
+         var_output := '<tr>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>';
+         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_name||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_type||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_usage||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_status||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_uom||'</td>';
+         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_gro_weight||'</td>';
+         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_net_weight||'</td>';
+         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_unt_case||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_code||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_line||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_line||'</td>';
+         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sys_user||'</td>';
+         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_upd_user||'</td>';
+         var_output := var_output||'</tr>';
+         pipe row(var_output);
+
+         /*-*/
+         /* Retrieve the production type data
+         /*-*/
+         open csr_prod;
+         loop
+            fetch csr_prod into rcd_prod;
+            if csr_prod%notfound then
+               exit;
+            end if;
+
+            if rcd_prod.mpr_prd_type = '*FILL' then
+               pipe row('<tr><td align=center colspan=14></td></tr>');
+               var_work := rcd_prod.pty_prd_name;
+               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' Batch Case Quantity: '||rcd_prod.mpr_bch_quantity;
+               var_work := var_work||' Yield %: '||rcd_prod. mpr_yld_percent;
+               var_work := var_work||' Yield: '||rcd_prod.mpr_yld_value;
+               var_work := var_work||' Pack Weight %: '||rcd_prod.mpr_pck_percent;
+               var_work := var_work||' Pack Weight: '||rcd_prod.mpr_pck_weight;
+               var_work := var_work||' Batch Weight: '||rcd_prod.mpr_bch_weight;
+               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+            elsif rcd_prod.mpr_prd_type = '*PACK' then
+               pipe row('<tr><td align=center colspan=14></td></tr>');
+               var_work := rcd_prod.pty_prd_name;
+               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' Cases/Pallet: '||rcd_prod.mpr_cas_pallet;
+               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+            elsif rcd_prod.mpr_prd_type = '*FORM' then
+               pipe row('<tr><td align=center colspan=14></td></tr>');
+               var_work := rcd_prod.pty_prd_name;
+               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' Batch Lot Quantity: '||rcd_prod.mpr_bch_quantity;
+               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+            end if;
+
+            /*-*/
+            /* Retrieve the line data
+            /*-*/
+            pipe row('<tr><td align=center colspan=14></td></tr>');
+            pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>LINES</td></tr>');
+            open csr_line;
+            loop
+               fetch csr_line into rcd_line;
+               if csr_line%notfound then
+                  exit;
+               end if;
+
+               if rcd_prod.mpr_prd_type = '*FILL' then
+                  var_work := rcd_line.mli_lin_code;
+                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
+                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
+                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
+                  var_work := var_work||' Override Efficiency %: '||rcd_line.mli_rra_efficiency;
+                  var_work := var_work||' Override Wastage %: '||rcd_line.mli_rra_wastage;
+                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               elsif rcd_prod.mpr_prd_type = '*PACK' then
+                  var_work := rcd_line.mli_lin_code;
+                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
+                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
+                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
+                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               elsif rcd_prod.mpr_prd_type = '*FORM' then
+                  var_work := rcd_line.mli_lin_code;
+                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
+                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
+                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
+                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               end if;
+
+            end loop;
+            close csr_line;
+
+            /*-*/
+            /* Retrieve the component data
+            /*-*/
+            pipe row('<tr><td align=center colspan=14></td></tr>');
+            pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>COMPONENTS</td></tr>');
+            open csr_comp;
+            loop
+               fetch csr_comp into rcd_comp;
+               if csr_comp%notfound then
+                  exit;
+               end if;
+
+               var_work := rcd_comp.mco_com_code;
+               var_work := var_work||' Quantity: '||rcd_comp.mco_com_quantity;
+               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+
+            end loop;
+            close csr_comp;
+
+         end loop;
+         close csr_prod;
+
+      end loop;
+      close csr_defn;
+
+      /*-*/
+      /* End the report
+      /*-*/
+      pipe row('</table>');
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PSA_MAT_FUNCTION - REPORT_MASTER - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end report_master;
+
    /***************************************************/
    /* This procedure performs the select list routine */
    /***************************************************/
@@ -886,15 +1175,15 @@ create or replace package body psa_app.psa_mat_function as
          select t01.pty_prd_type,
                 t01.pty_prd_name,
                 nvl(t02.mpr_mat_code,'*NONE') as mpr_mat_code,
-                nvl(t02.mpr_sch_priority,1) as mpr_sch_priority,
+                to_char(nvl(t02.mpr_sch_priority,1)) as mpr_sch_priority,
                 nvl(t02.mpr_dft_line,'*NONE') as mpr_dft_line,
-                nvl(t02.mpr_cas_pallet,0) as mpr_cas_pallet,
-                nvl(t02.mpr_bch_quantity,0) as mpr_bch_quantity,
-                nvl(t02.mpr_yld_percent,100) as mpr_yld_percent,
-                nvl(t02.mpr_yld_value,0) as mpr_yld_value,
-                nvl(t02.mpr_pck_percent,100) as mpr_pck_percent,
-                nvl(t02.mpr_pck_weight,0) as mpr_pck_weight,
-                nvl(t02.mpr_bch_weight,0) as mpr_bch_weight
+                to_char(nvl(t02.mpr_cas_pallet,0)) as mpr_cas_pallet,
+                to_char(nvl(t02.mpr_bch_quantity,0)) as mpr_bch_quantity,
+                to_char(nvl(t02.mpr_yld_percent,100),'fm990.00') as mpr_yld_percent,
+                to_char(nvl(t02.mpr_yld_value,0)) as mpr_yld_value,
+                to_char(nvl(t02.mpr_pck_percent,100),'fm990.00') as mpr_pck_percent,
+                to_char(nvl(t02.mpr_pck_weight,0),'fm999999990.000') as mpr_pck_weight,
+                to_char(nvl(t02.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight
            from psa_prd_type t01,
                 psa_mat_prod t02
           where t01.pty_prd_type = t02.mpr_prd_type(+)
@@ -913,8 +1202,8 @@ create or replace package body psa_app.psa_mat_function as
                 t02.lco_con_name,
                 nvl(t03.mli_dft_flag,'0') as mli_dft_flag,
                 nvl(t03.mli_rra_code,'*NONE') as mli_rra_code,
-                nvl(t03.mli_rra_efficiency,0) as mli_rra_efficiency,
-                nvl(t03.mli_rra_wastage,0) as mli_rra_wastage
+                to_char(nvl(t03.mli_rra_efficiency,0),'fm990.00') as mli_rra_efficiency,
+                to_char(nvl(t03.mli_rra_wastage,0),'fm990.00') as mli_rra_wastage
            from psa_lin_defn t01,
                 psa_lin_config t02,
                 psa_mat_line t03
@@ -933,8 +1222,8 @@ create or replace package body psa_app.psa_mat_function as
       cursor csr_rate is
          select t02.rrd_rra_code,
                 t02.rrd_rra_name,
-                t02.rrd_rra_efficiency,
-                t02.rrd_rra_wastage
+                to_char(t02.rrd_rra_efficiency,'fm990.00') as rrd_rra_efficiency,
+                to_char(t02.rrd_rra_wastage,'fm990.00') as rrd_rra_wastage
            from psa_lin_rate t01,
                 psa_rra_defn t02
           where t01.lra_rra_code = t02.rrd_rra_code
@@ -946,7 +1235,7 @@ create or replace package body psa_app.psa_mat_function as
       cursor csr_comp is
          select t02.mde_mat_code,
                 t02.mde_mat_name,
-                t01.mco_com_quantity
+                to_char(t01.mco_com_quantity) as mco_com_quantity
            from psa_mat_comp t01,
                 psa_mat_defn t02
           where t01.mco_com_code = t02.mde_mat_code
@@ -1018,8 +1307,8 @@ create or replace package body psa_app.psa_mat_function as
       var_output := var_output||' MATUSG="'||psa_to_xml(rcd_retrieve.mde_mat_usage)||'"';
       var_output := var_output||' MATSTS="'||psa_to_xml(rcd_retrieve.mde_mat_status)||'"';
       var_output := var_output||' MATUOM="'||psa_to_xml(rcd_retrieve.mde_mat_uom)||'"';
-      var_output := var_output||' MATGRW="'||psa_to_xml(to_char(rcd_retrieve.mde_gro_weight))||'"';
-      var_output := var_output||' MATNEW="'||psa_to_xml(to_char(rcd_retrieve.mde_net_weight))||'"';
+      var_output := var_output||' MATGRW="'||psa_to_xml(to_char(rcd_retrieve.mde_gro_weight,'fm999999990.000'))||'"';
+      var_output := var_output||' MATNEW="'||psa_to_xml(to_char(rcd_retrieve.mde_net_weight,'fm999999990.000'))||'"';
       var_output := var_output||' MATUNC="'||psa_to_xml(to_char(rcd_retrieve.mde_unt_case))||'"';
       var_output := var_output||' SAPCDE="'||psa_to_xml(rcd_retrieve.mde_sap_code)||'"';
       var_output := var_output||' SAPLIN="'||psa_to_xml(nvl(rcd_retrieve.mde_sap_line,'*NONE'))||'"';
@@ -1044,15 +1333,15 @@ create or replace package body psa_app.psa_mat_function as
          var_output := '<MATPTY PTYCDE="'||psa_to_xml(rcd_prod.pty_prd_type)||'"';
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"';
          var_output := var_output||' MPRMAT="'||psa_to_xml(rcd_prod.mpr_mat_code)||'"';
-         var_output := var_output||' MPRSCH="'||psa_to_xml(to_char(rcd_prod.mpr_sch_priority))||'"';
+         var_output := var_output||' MPRSCH="'||psa_to_xml(rcd_prod.mpr_sch_priority)||'"';
          var_output := var_output||' MPRLIN="'||psa_to_xml(rcd_prod.mpr_dft_line)||'"';
-         var_output := var_output||' MPRCPL="'||psa_to_xml(to_char(rcd_prod.mpr_cas_pallet))||'"';
-         var_output := var_output||' MPRBQY="'||psa_to_xml(to_char(rcd_prod.mpr_bch_quantity))||'"';
-         var_output := var_output||' MPRYPC="'||psa_to_xml(to_char(rcd_prod.mpr_yld_percent))||'"';
-         var_output := var_output||' MPRYVL="'||psa_to_xml(to_char(rcd_prod.mpr_yld_value))||'"';
-         var_output := var_output||' MPRPPC="'||psa_to_xml(to_char(rcd_prod.mpr_pck_percent))||'"';
-         var_output := var_output||' MPRPWE="'||psa_to_xml(to_char(rcd_prod.mpr_pck_weight))||'"';
-         var_output := var_output||' MPRBWE="'||psa_to_xml(to_char(rcd_prod.mpr_bch_weight))||'"/>';
+         var_output := var_output||' MPRCPL="'||psa_to_xml(rcd_prod.mpr_cas_pallet)||'"';
+         var_output := var_output||' MPRBQY="'||psa_to_xml(rcd_prod.mpr_bch_quantity)||'"';
+         var_output := var_output||' MPRYPC="'||psa_to_xml(rcd_prod.mpr_yld_percent)||'"';
+         var_output := var_output||' MPRYVL="'||psa_to_xml(rcd_prod.mpr_yld_value)||'"';
+         var_output := var_output||' MPRPPC="'||psa_to_xml(rcd_prod.mpr_pck_percent)||'"';
+         var_output := var_output||' MPRPWE="'||psa_to_xml(rcd_prod.mpr_pck_weight)||'"';
+         var_output := var_output||' MPRBWE="'||psa_to_xml(rcd_prod.mpr_bch_weight)||'"/>';
          pipe row(psa_xml_object(var_output));
 
          /*-*/
@@ -1068,7 +1357,7 @@ create or replace package body psa_app.psa_mat_function as
             /*-*/
             /* Pipe the line data XML
             /*-*/
-            pipe row(psa_xml_object('<MATLIN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'" LCOCDE="'||psa_to_xml(rcd_line.lco_con_code)||'" LCONAM="'||psa_to_xml('('||rcd_line.lco_con_code||') '||rcd_line.lco_con_name)||'" LCODFT="'||psa_to_xml(rcd_line.mli_dft_flag)||'" LCORRA="'||psa_to_xml(rcd_line.mli_rra_code)||'" LCOEFF="'||psa_to_xml(to_char(rcd_line.mli_rra_efficiency,'fm990.00'))||'" LCOWAS="'||psa_to_xml(to_char(rcd_line.mli_rra_wastage,'fm990.00'))||'"/>'));
+            pipe row(psa_xml_object('<MATLIN LINCDE="'||psa_to_xml(rcd_line.lde_lin_code)||'" LINNAM="'||psa_to_xml('('||rcd_line.lde_lin_code||') '||rcd_line.lde_lin_name)||'" LCOCDE="'||psa_to_xml(rcd_line.lco_con_code)||'" LCONAM="'||psa_to_xml('('||rcd_line.lco_con_code||') '||rcd_line.lco_con_name)||'" LCODFT="'||psa_to_xml(rcd_line.mli_dft_flag)||'" LCORRA="'||psa_to_xml(rcd_line.mli_rra_code)||'" LCOEFF="'||psa_to_xml(rcd_line.mli_rra_efficiency)||'" LCOWAS="'||psa_to_xml(rcd_line.mli_rra_wastage)||'"/>'));
 
             /*-*/
             /* Retrieve and pipe the line rate data XML
@@ -1079,7 +1368,7 @@ create or replace package body psa_app.psa_mat_function as
                if csr_rate%notfound then
                   exit;
                end if;
-               pipe row(psa_xml_object('<MATRRA RRACDE="'||psa_to_xml(rcd_rate.rrd_rra_code)||'" RRANAM="'||psa_to_xml('('||rcd_rate.rrd_rra_code||') '||rcd_rate.rrd_rra_name)||'" RRAEFF="'||psa_to_xml(to_char(rcd_rate.rrd_rra_efficiency,'fm990.00'))||'" RRAWAS="'||psa_to_xml(to_char(rcd_rate.rrd_rra_wastage,'fm990.00'))||'"/>'));
+               pipe row(psa_xml_object('<MATRRA RRACDE="'||psa_to_xml(rcd_rate.rrd_rra_code)||'" RRANAM="'||psa_to_xml('('||rcd_rate.rrd_rra_code||') '||rcd_rate.rrd_rra_name)||'" RRAEFF="'||psa_to_xml(rcd_rate.rrd_rra_efficiency)||'" RRAWAS="'||psa_to_xml(rcd_rate.rrd_rra_wastage)||'"/>'));
             end loop;
             close csr_rate;
 
@@ -1095,7 +1384,7 @@ create or replace package body psa_app.psa_mat_function as
             if csr_comp%notfound then
                exit;
             end if;
-            pipe row(psa_xml_object('<MATCOM COMCDE="'||psa_to_xml(rcd_comp.mde_mat_code)||'" COMNAM="'||psa_to_xml('('||rcd_comp.mde_mat_code||') '||rcd_comp.mde_mat_name)||'" COMQTY="'||psa_to_xml(to_char(rcd_comp.mco_com_quantity))||'"/>'));
+            pipe row(psa_xml_object('<MATCOM COMCDE="'||psa_to_xml(rcd_comp.mde_mat_code)||'" COMNAM="'||psa_to_xml('('||rcd_comp.mde_mat_code||') '||rcd_comp.mde_mat_name)||'" COMQTY="'||psa_to_xml(rcd_comp.mco_com_quantity)||'"/>'));
          end loop;
          close csr_comp;
 
@@ -1339,7 +1628,9 @@ create or replace package body psa_app.psa_mat_function as
                      psa_gen_function.add_mesg_data('Component ('||var_com_code||') does not exist');
                   else
                      if rcd_comp.mde_mat_status = '*INACTIVE' then
-                        psa_gen_function.add_mesg_data('Component ('||var_com_code||') status is *INACTIVE');
+                        psa_gen_function.add_mesg_data('Component ('||var_com_code||') status is *INACTIVE - unable to attach as a component');
+                     elsif rcd_comp.mde_mat_status = '*ADD' then
+                        psa_gen_function.add_mesg_data('Component ('||var_com_code||') status is *ADD - unable to attach as a component');
                      end if;
                   end if;
                   close csr_comp;
@@ -1746,7 +2037,9 @@ create or replace package body psa_app.psa_mat_function as
          psa_gen_function.add_mesg_data('Material ('||var_com_code||') does not exist');
       else
          if rcd_retrieve.mde_mat_status = '*INACTIVE' then
-            psa_gen_function.add_mesg_data('Material ('||var_com_code||') is *INACTIVE');
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') is status *INACTIVE - unable to attach as a component');
+         elsif rcd_retrieve.mde_mat_status = '*ADD' then
+            psa_gen_function.add_mesg_data('Material ('||var_com_code||') is status *ADD - unable to attach as a component');
          else
             if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'MPO') then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO for filling component');
