@@ -684,7 +684,6 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       var_output varchar2(2000);
       var_work varchar2(2000);
-      var_prd_flag boolean;
       var_lin_flag boolean;
       var_com_flag boolean;
 
@@ -715,7 +714,7 @@ create or replace package body psa_app.psa_mat_function as
 
       cursor csr_prod is
          select t01.mpr_prd_type,
-                '('||t01.mpr_prd_type||') '||nvl(t02.pty_prd_name,'*UNKNOWN') as pty_prd_name,
+                nvl(upper(t02.pty_prd_name),'*UNKNOWN') as pty_prd_name,
                 to_char(nvl(t01.mpr_sch_priority,1)) as mpr_sch_priority,
                 nvl(t01.mpr_dft_line,'*NONE') as mpr_dft_line,
                 to_char(nvl(t01.mpr_cas_pallet,0)) as mpr_cas_pallet,
@@ -777,7 +776,6 @@ create or replace package body psa_app.psa_mat_function as
       pipe row('<table border=1>');
       pipe row('<tr><td align=center colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Master Report</td></tr>');
       pipe row('<tr>');
-      pipe row('<tr><td align=center colspan=14></td></tr>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Type</td>');
@@ -793,7 +791,6 @@ create or replace package body psa_app.psa_mat_function as
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Updated</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Updated</td>');
       pipe row('</tr>');
-      pipe row('<tr><td align=center colspan=14></td></tr>');
 
       /*-*/
       /* Retrieve the materials
@@ -808,8 +805,9 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          /* Output the definition data
          /*-*/
+         pipe row('<tr><td align=center colspan=14></td></tr>');
          var_output := '<tr>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFC0;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>';
          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_name||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_type||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_usage||'</td>';
@@ -818,7 +816,7 @@ create or replace package body psa_app.psa_mat_function as
          var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_gro_weight||'</td>';
          var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_net_weight||'</td>';
          var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_unt_case||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_code||'</td>';
+         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;mso-number-format:\@;" nowrap>'||rcd_defn.mde_sap_code||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_line||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_line||'</td>';
          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sys_user||'</td>';
@@ -838,37 +836,33 @@ create or replace package body psa_app.psa_mat_function as
 
             if rcd_prod.mpr_prd_type = '*FILL' then
                pipe row('<tr><td align=center colspan=14></td></tr>');
-               var_work := rcd_prod.pty_prd_name;
-               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
-               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
-               var_work := var_work||' Batch Case Quantity: '||rcd_prod.mpr_bch_quantity;
-               var_work := var_work||' Yield %: '||rcd_prod. mpr_yld_percent;
-               var_work := var_work||' Yield: '||rcd_prod.mpr_yld_value;
-               var_work := var_work||' Pack Weight %: '||rcd_prod.mpr_pck_percent;
-               var_work := var_work||' Pack Weight: '||rcd_prod.mpr_pck_weight;
-               var_work := var_work||' Batch Weight: '||rcd_prod.mpr_bch_weight;
-               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Case Quantity:</font> '||rcd_prod.mpr_bch_quantity;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Yield %:</font> '||rcd_prod. mpr_yld_percent;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Yield:</font> '||rcd_prod.mpr_yld_value;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight %:</font> '||rcd_prod.mpr_pck_percent;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight:</font> '||rcd_prod.mpr_pck_weight;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Weight:</font> '||rcd_prod.mpr_bch_weight;
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             elsif rcd_prod.mpr_prd_type = '*PACK' then
                pipe row('<tr><td align=center colspan=14></td></tr>');
-               var_work := rcd_prod.pty_prd_name;
-               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
-               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
-               var_work := var_work||' Cases/Pallet: '||rcd_prod.mpr_cas_pallet;
-               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Cases/Pallet:</font> '||rcd_prod.mpr_cas_pallet;
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             elsif rcd_prod.mpr_prd_type = '*FORM' then
                pipe row('<tr><td align=center colspan=14></td></tr>');
-               var_work := rcd_prod.pty_prd_name;
-               var_work := var_work||' Default Line: '||rcd_prod.mpr_dft_line;
-               var_work := var_work||' Scheduling Priority: '||rcd_prod.mpr_sch_priority;
-               var_work := var_work||' Batch Lot Quantity: '||rcd_prod.mpr_bch_quantity;
-               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Lot Quantity:</font> '||rcd_prod.mpr_bch_quantity;
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             end if;
 
             /*-*/
             /* Retrieve the line data
             /*-*/
-            pipe row('<tr><td align=center colspan=14></td></tr>');
-            pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>LINES</td></tr>');
+            var_lin_flag := false;
             open csr_line;
             loop
                fetch csr_line into rcd_line;
@@ -877,32 +871,42 @@ create or replace package body psa_app.psa_mat_function as
                end if;
 
                if rcd_prod.mpr_prd_type = '*FILL' then
-                  var_work := rcd_line.mli_lin_code;
-                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
-                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
-                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
-                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
-                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
-                  var_work := var_work||' Override Efficiency %: '||rcd_line.mli_rra_efficiency;
-                  var_work := var_work||' Override Wastage %: '||rcd_line.mli_rra_wastage;
-                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  var_work := rcd_line.mli_lin_code||' / '||rcd_line.mli_con_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default:</font> '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate:</font> '||rcd_line.mli_rra_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Efficiency %:</font> '||rcd_line.mli_rra_efficiency;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Wastage %:</font> '||rcd_line.mli_rra_wastage;
+                  if var_lin_flag = false then
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  else
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  end if;
                elsif rcd_prod.mpr_prd_type = '*PACK' then
-                  var_work := rcd_line.mli_lin_code;
-                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
-                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
-                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
-                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
-                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
-                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  var_work := rcd_line.mli_lin_code||' / '||rcd_line.mli_con_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default:</font> '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate:</font> '||rcd_line.mli_rra_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
+                  if var_lin_flag = false then
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  else
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  end if;
                elsif rcd_prod.mpr_prd_type = '*FORM' then
-                  var_work := rcd_line.mli_lin_code;
-                  var_work := var_work||' Configuration: '||rcd_line.mli_con_code;
-                  var_work := var_work||' Default: '||rcd_line.mli_dft_flag;
-                  var_work := var_work||' Run Rate: '||rcd_line.mli_rra_code;
-                  var_work := var_work||' Run Rate Efficiency %: '||rcd_line.rrd_rra_efficiency;
-                  var_work := var_work||' Run Rate Wastage %: '||rcd_line.rrd_rra_wastage;
-                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  var_work := rcd_line.mli_lin_code||' / '||rcd_line.mli_con_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default:</font> '||rcd_line.mli_dft_flag;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate:</font> '||rcd_line.mli_rra_code;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
+                  if var_lin_flag = false then
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  else
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  end if;
                end if;
+               var_lin_flag := true;
 
             end loop;
             close csr_line;
@@ -910,8 +914,7 @@ create or replace package body psa_app.psa_mat_function as
             /*-*/
             /* Retrieve the component data
             /*-*/
-            pipe row('<tr><td align=center colspan=14></td></tr>');
-            pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>COMPONENTS</td></tr>');
+            var_com_flag := false;
             open csr_comp;
             loop
                fetch csr_comp into rcd_comp;
@@ -919,9 +922,13 @@ create or replace package body psa_app.psa_mat_function as
                   exit;
                end if;
 
-               var_work := rcd_comp.mco_com_code;
-               var_work := var_work||' Quantity: '||rcd_comp.mco_com_quantity;
-               pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               var_work := rcd_comp.mco_com_code||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Quantity:</font> '||rcd_comp.mco_com_quantity;
+               if var_com_flag = false then
+                  pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Components</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               else
+                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               end if;
+               var_com_flag := true;
 
             end loop;
             close csr_comp;
