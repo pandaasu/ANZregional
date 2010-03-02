@@ -609,7 +609,7 @@ sub PaintFunction()%>
             } else if (objElements[i].nodeName == 'RRADFN') {
                objRraList.options[objRraList.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
             } else if (objElements[i].nodeName == 'LCORRA') {
-               objRraSlct.options[objRraList.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
+               objRraSlct.options[objRraSlct.options.length] = new Option(objElements[i].getAttribute('RRANAM'),objElements[i].getAttribute('RRACDE'));
             } else if (objElements[i].nodeName == 'FILDFN') {
                objFilList.options[objFilList.options.length] = new Option(objElements[i].getAttribute('FILNAM'),objElements[i].getAttribute('FILCDE'));
             } else if (objElements[i].nodeName == 'LCOFIL') {
