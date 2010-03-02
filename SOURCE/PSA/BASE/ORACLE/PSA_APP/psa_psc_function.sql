@@ -27,8 +27,6 @@ create or replace package psa_app.psa_psc_function as
    /*-*/
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
-   procedure update_data(par_user in varchar2);
-   procedure delete_data;
 
 end psa_psc_function;
 /
@@ -68,8 +66,8 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*
            from (select t01.psh_psc_code,
                         t01.psh_psc_name,
-                        decode(t01.psh_psc_status,'0','Inactive','1','Active','*UNKNOWN') as psh_psc_status
-                   from psa_psc_hder t01
+                        t01.psh_psc_status
+                   from psa_psc_hedr t01
                   where (var_str_code is null or t01.psh_psc_code >= var_str_code)
                   order by t01.psh_psc_code asc) t01
           where rownum <= var_pag_size;
@@ -78,8 +76,8 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*
            from (select t01.psh_psc_code,
                         t01.psh_psc_name,
-                        decode(t01.psh_psc_status,'0','Inactive','1','Active','*UNKNOWN') as psh_psc_status
-                   from psa_psc_hder t01
+                        t01.psh_psc_status
+                   from psa_psc_hedr t01
                   where (var_action = '*NXTDEF' and (var_end_code is null or t01.psh_psc_code > var_end_code)) or
                         (var_action = '*PRVDEF')
                   order by t01.psh_psc_code asc) t01
@@ -89,8 +87,8 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*
            from (select t01.psh_psc_code,
                         t01.psh_psc_name,
-                        decode(t01.psh_psc_status,'0','Inactive','1','Active','*UNKNOWN') as psh_psc_status
-                   from psa_psc_hder t01
+                        t01.psh_psc_status
+                   from psa_psc_hedr t01
                   where (var_action = '*PRVDEF' and (var_str_code is null or t01.psh_psc_code < var_str_code)) or
                         (var_action = '*NXTDEF')
                   order by t01.psh_psc_code desc) t01
@@ -233,15 +231,110 @@ create or replace package body psa_app.psa_psc_function as
       var_found boolean;
       var_psc_code varchar2(32);
       var_output varchar2(2000 char);
+      var_wek_code varchar2(32);
+      var_smo_code varchar2(32);
+      var_fil_name varchar2(400);
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_retrieve is
          select t01.*
-           from psa_psc_hder t01
+           from psa_psc_hedr t01
           where t01.psh_psc_code = var_psc_code;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_week is
+         select to_char(t01.mars_week,'fm0000000') as wek_code,
+                'Y'||substr(to_char(t01.mars_week,'fm0000000'),1,4)||' P'||substr(to_char(t01.mars_week,'fm0000000'),5,2)||' W'||substr(to_char(t01.mars_week,'fm0000000'),7,1) as wek_name,
+                to_char(t01.calendar_date,'yyyy/mm/dd') as day_code,
+                to_char(t01.calendar_date,'dy') as day_name 
+           from mars_date t01
+          where t01.mars_week in (select distinct(mars_week)
+                                    from mars_date
+                                    where calendar_date >= trunc(sysdate-14)
+                                      and calendar_date <= trunc(sysdate+28))
+          order by t01.mars_week asc,
+                   t01.calendar_date asc;
+      rcd_week csr_week%rowtype;
+
+      cursor csr_preq is
+         select t01.rhe_req_code,
+                t01.rhe_req_name,
+                to_char(t01.rhe_str_week,'fm0000000') as rhe_str_week
+           from psa_req_header t01
+          where t01.rhe_req_status = '*LOADED'
+            and t01.rhe_str_week in (select distinct(mars_week)
+                                       from mars_date
+                                      where calendar_date >= trunc(sysdate-14)
+                                        and calendar_date <= trunc(sysdate+28))
+          order by t01.rhe_req_code asc;
+      rcd_preq csr_preq%rowtype;
+
+      cursor csr_smod is
+         select t01.smd_smo_code,
+                t01.smd_smo_name,
+                t03.sde_shf_code,
+                t03.sde_shf_name,
+                to_char(t03.sde_shf_start,'fm9990') as sde_shf_start,
+                to_char(t03.sde_shf_duration) as sde_shf_duration
+           from psa_smo_defn t01,
+                psa_smo_shift t02,
+                psa_shf_defn t03
+          where t01.smd_smo_code = t02.sms_smo_code
+            and t02.sms_shf_code = t03.sde_shf_code
+            and t01.smd_smo_status = '1'
+          order by t01.smd_smo_code asc,
+                   t02.sms_smo_seqn asc;
+      rcd_smod csr_smod%rowtype;
+
+      cursor csr_ptyp is
+         select t01.pty_prd_type,
+                t01.pty_prd_name
+           from psa_prd_type t01
+          where t01.pty_prd_status = '1'
+            and t01.pty_prd_type in ('*FILL','*PACK','*FORM')
+          order by decode(t01.pty_prd_type,'*FILL',1,'*PACK',2,'*FORM',3) asc;
+      rcd_ptyp csr_ptyp%rowtype;
+
+      cursor csr_cmod is
+         select t01.cmd_cmo_code,
+                t01.cmd_cmo_name
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_status = '1'
+            and t01.cmd_prd_type = rcd_ptyp.pty_prd_type
+          order by t01.cmd_cmo_code asc;
+      rcd_cmod csr_cmod%rowtype;
+
+      cursor csr_lcon is
+         select t01.lde_lin_code,
+                t01.lde_lin_name,
+                to_char(t01.lde_lin_wastage,'fm990.00') as lde_lin_wastage,
+                t01.lde_lin_events,
+                t02.lco_con_code,
+                t02.lco_con_name
+           from psa_lin_defn t01,
+                psa_lin_config t02
+          where t01.lde_lin_code = t02.lco_lin_code
+            and t01.lde_lin_status = '1'
+            and t01.lde_prd_type = rcd_ptyp.pty_prd_type
+            and t02.lco_con_status = '1'
+          order by t01.lde_lin_code asc,
+                   t02.lco_con_code asc;
+      rcd_lcon csr_lcon%rowtype;
+
+      cursor csr_fill is
+         select t01.lfi_fil_code
+           from psa_lin_filler t01
+          where t01.lfi_lin_code = rcd_lcon.lde_lin_code
+            and t01.lfi_con_code = rcd_lcon.lco_con_code
+          order by t01.lfi_fil_code asc;
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_fill is table of csr_fill%rowtype index by binary_integer;
+      tbl_fill typ_fill;
 
    /*-------------*/
    /* Begin block */
@@ -303,7 +396,7 @@ create or replace package body psa_app.psa_psc_function as
       /* Pipe the production schedule XML
       /*-*/
       if var_action = '*UPDDEF' then
-         var_output := '<PSCDFN PSCCDE="'||psa_to_xml(rcd_retrieve.psh_psc_code||' - (Last updated by '||rcd_retrieve.fde_upd_user||' on '||to_char(rcd_retrieve.fde_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := '<PSCDFN PSCCDE="'||psa_to_xml(rcd_retrieve.psh_psc_code||' - (Last updated by '||rcd_retrieve.psh_upd_user||' on '||to_char(rcd_retrieve.psh_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' PSCNAM="'||psa_to_xml(rcd_retrieve.psh_psc_name)||'"';
          var_output := var_output||' PSCSTS="'||psa_to_xml(rcd_retrieve.psh_psc_status)||'"/>';
          pipe row(psa_xml_object(var_output));
@@ -315,9 +408,143 @@ create or replace package body psa_app.psa_psc_function as
       elsif var_action = '*CRTDEF' then
          var_output := '<PSCDFN PSCCDE=""';
          var_output := var_output||' PSCNAM=""';
-         var_output := var_output||' PSCSTS="1"/>';
+         var_output := var_output||' PSCSTS="*WORK"/>';
          pipe row(psa_xml_object(var_output));
       end if;
+
+      /*-*/
+      /* Pipe the week data XML
+      /*-*/
+      var_wek_code := '*NULL';
+      open csr_week;
+      loop
+         fetch csr_week into rcd_week;
+         if csr_week%notfound then
+            exit;
+         end if;
+         if rcd_week.wek_code != var_wek_code then
+            var_wek_code := rcd_week.wek_code;
+            pipe row(psa_xml_object('<WEKDFN WEKCDE="'||psa_to_xml(rcd_week.wek_code)||'"'||
+                                           ' WEKNAM="'||psa_to_xml(rcd_week.wek_name)||'"/>'));
+         end if;
+         pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_week.day_code)||'"'||
+                                        ' DAYNAM="'||psa_to_xml(rcd_week.day_name)||'"/>'));
+      end loop;
+      close csr_week;
+
+      /*-*/
+      /* Pipe the production requirements data XML
+      /*-*/
+      open csr_preq;
+      loop
+         fetch csr_preq into rcd_preq;
+         if csr_preq%notfound then
+            exit;
+         end if;
+         pipe row(psa_xml_object('<REQDFN REQCDE="'||psa_to_xml(rcd_preq.rhe_req_code)||'"'||
+                                        ' REQNAM="'||psa_to_xml(rcd_preq.rhe_req_name)||'"'||
+                                        ' REQWEK="'||psa_to_xml(rcd_preq.rhe_str_week)||'"/>'));
+      end loop;
+      close csr_preq;
+
+      /*-*/
+      /* Pipe the shift model data XML
+      /*-*/
+      var_smo_code := '*NULL';
+      open csr_smod;
+      loop
+         fetch csr_smod into rcd_smod;
+         if csr_smod%notfound then
+            exit;
+         end if;
+         if rcd_smod.smd_smo_code != var_smo_code then
+            var_smo_code := rcd_smod.smd_smo_code;
+            pipe row(psa_xml_object('<SMODFN SMOCDE="'||psa_to_xml(rcd_smod.smd_smo_code)||'"'||
+                                           ' SMONAM="'||psa_to_xml(rcd_smod.smd_smo_name)||'"/>'));
+         end if;
+         pipe row(psa_xml_object('<SHFDFN SHFCDE="'||psa_to_xml(rcd_smod.sde_shf_code)||'"'||
+                                        ' SHFNAM="'||psa_to_xml(rcd_smod.sde_shf_name)||'"'||
+                                        ' SHFSTR="'||psa_to_xml(rcd_smod.sde_shf_start)||'"'||
+                                        ' SHFDUR="'||psa_to_xml(rcd_smod.sde_shf_duration)||'"/>'));
+      end loop;
+      close csr_smod;
+
+      /*-*/
+      /* Pipe the production type data XML
+      /*-*/
+      open csr_ptyp;
+      loop
+         fetch csr_ptyp into rcd_ptyp;
+         if csr_ptyp%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Pipe the production type data XML
+         /*-*/
+         pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_ptyp.pty_prd_type)||'"'||
+                                        ' PTYNAM="'||psa_to_xml(rcd_ptyp.pty_prd_name)||'"/>'));
+
+         /*-*/
+         /* Pipe the crew model data XML
+         /*-*/
+         open csr_cmod;
+         loop
+            fetch csr_cmod into rcd_cmod;
+            if csr_cmod%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<CMODFN CMOCDE="'||psa_to_xml(rcd_cmod.cmd_cmo_code)||'"'||
+                                           ' CMONAM="'||psa_to_xml(rcd_cmod.cmd_cmo_name)||'"/>'));
+         end loop;
+         close csr_cmod;
+
+         /*-*/
+         /* Pipe the line configuration data XML
+         /*-*/
+         open csr_lcon;
+         loop
+            fetch csr_lcon into rcd_lcon;
+            if csr_lcon%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Retrieve the line configuration filler name
+            /*-*/
+            var_fil_name := null;
+            tbl_fill.delete;
+            open csr_fill;
+            fetch csr_fill bulk collect into tbl_fill;
+            close csr_fill;
+            for idx in 1..tbl_fill.count loop
+               if var_fil_name is null then
+                  var_fil_name := '(';
+               else
+                  var_fil_name := var_fil_name||',';
+               end if;
+               var_fil_name := var_fil_name||tbl_fill(idx).lfi_fil_code;
+            end loop;
+            if not(var_fil_name is null) then
+               var_fil_name := var_fil_name||')';
+            end if;
+
+            /*-*/
+            /* Pipe the line configuration data XML
+            /*-*/
+            pipe row(psa_xml_object('<LCODFN LINCDE="'||psa_to_xml(rcd_lcon.lde_lin_code)||'"'||
+                                           ' LINNAM="'||psa_to_xml(rcd_lcon.lde_lin_name)||'"'||
+                                           ' LINWAS="'||psa_to_xml(rcd_lcon.lde_lin_wastage)||'"'||
+                                           ' LINEVT="'||psa_to_xml(rcd_lcon.lde_lin_events)||'"'||
+                                           ' LCOCDE="'||psa_to_xml(rcd_lcon.lco_con_code)||'"'||
+                                           ' LCONAM="'||psa_to_xml(rcd_lcon.lco_con_name)||'"'||
+                                           ' FILNAM="'||psa_to_xml(var_fil_name)||'"/>'));
+
+         end loop;
+         close csr_lcon;
+
+      end loop;
+      close csr_ptyp;
 
       /*-*/
       /* Pipe the XML end
@@ -348,260 +575,6 @@ create or replace package body psa_app.psa_psc_function as
    /* End routine */
    /*-------------*/
    end retrieve_data;
-
-   /***************************************************/
-   /* This procedure performs the update data routine */
-   /***************************************************/
-   procedure update_data(par_user in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_psa_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_confirm varchar2(32);
-      var_found boolean;
-      rcd_psa_psc_hder psa_psc_hder%rowtype;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_retrieve is
-         select t01.*
-           from psa_psc_hder t01
-          where t01.psh_psc_code = rcd_psa_psc_hder.psh_psc_code
-            for update nowait;
-      rcd_retrieve csr_retrieve%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      psa_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
-         psa_gen_function.add_mesg_data('Invalid request action');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      rcd_psa_psc_hder.psh_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
-      rcd_psa_psc_hder.psh_psc_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCNAM'));
-      rcd_psa_psc_hder.psh_psc_status := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCSTS'));
-      rcd_psa_psc_hder.fde_upd_user := upper(par_user);
-      rcd_psa_psc_hder.fde_upd_date := sysdate;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Validate the input
-      /*-*/
-      if rcd_psa_psc_hder.psh_psc_code is null then
-         psa_gen_function.add_mesg_data('Production Schedule code must be supplied');
-      end if;
-      if rcd_psa_psc_hder.psh_psc_name is null then
-         psa_gen_function.add_mesg_data('Production Schedule name must be supplied');
-      end if;
-      if rcd_psa_psc_hder.psh_psc_status is null or (rcd_psa_psc_hder.psh_psc_status != '0' and rcd_psa_psc_hder.psh_psc_status != '1') then
-         psa_gen_function.add_mesg_data('Production Schedule status must be (0)inactive or (1)active');
-      end if;
-      if rcd_psa_psc_hder.fde_upd_user is null then
-         psa_gen_function.add_mesg_data('Update user must be supplied');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Process the production schedule definition
-      /*-*/
-      if var_action = '*UPDDEF' then
-         var_confirm := 'updated';
-         var_found := false;
-         begin
-            open csr_retrieve;
-            fetch csr_retrieve into rcd_retrieve;
-            if csr_retrieve%found then
-               var_found := true;
-            end if;
-            close csr_retrieve;
-         exception
-            when others then
-               var_found := true;
-               psa_gen_function.add_mesg_data('Production Schedule code ('||rcd_psa_psc_hder.psh_psc_code||') is currently locked');
-         end;
-         if var_found = false then
-            psa_gen_function.add_mesg_data('Production Schedule code ('||rcd_psa_psc_hder.psh_psc_code||') does not exist');
-         end if;
-         if psa_gen_function.get_mesg_count = 0 then
-            update psa_psc_hder
-               set psh_psc_name = rcd_psa_psc_hder.psh_psc_name,
-                   psh_psc_status = rcd_psa_psc_hder.psh_psc_status,
-                   fde_upd_user = rcd_psa_psc_hder.fde_upd_user,
-                   fde_upd_date = rcd_psa_psc_hder.fde_upd_date
-             where psh_psc_code = rcd_psa_psc_hder.psh_psc_code;
-         end if;
-      elsif var_action = '*CRTDEF' then
-         var_confirm := 'created';
-         begin
-            insert into psa_psc_hder values rcd_psa_psc_hder;
-         exception
-            when dup_val_on_index then
-               psa_gen_function.add_mesg_data('Production Schedule code ('||rcd_psa_psc_hder.psh_psc_code||') already exists - unable to create');
-         end;
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         rollback;
-         return;
-      end if;
-
-      /*-*/
-      /* Free the XML document
-      /*-*/
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Send the confirm message
-      /*-*/
-      psa_gen_function.set_cfrm_data('Production Schedule ('||to_char(rcd_psa_psc_hder.psh_psc_code)||') successfully '||var_confirm);
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end update_data;
-
-   /***************************************************/
-   /* This procedure performs the delete data routine */
-   /***************************************************/
-   procedure delete_data is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_parser xmlParser.parser;
-      obj_xml_document xmlDom.domDocument;
-      obj_psa_request xmlDom.domNode;
-      var_action varchar2(32);
-      var_confirm varchar2(32);
-      var_found boolean;
-      var_psc_code varchar2(32);
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the message data
-      /*-*/
-      psa_gen_function.clear_mesg_data;
-
-      /*-*/
-      /* Parse the XML input
-      /*-*/
-      obj_xml_parser := xmlParser.newParser();
-      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
-      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
-      xmlParser.freeParser(obj_xml_parser);
-      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*DLTDEF' then
-         psa_gen_function.add_mesg_data('Invalid request action');
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
-      end if;
-
-      /*-*/
-      /* Process the production schedule definition
-      /*-*/
-      var_confirm := 'deleted';
-      delete from psa_psc_hder where psh_psc_code = var_psc_code;
-
-      /*-*/
-      /* Free the XML document
-      /*-*/
-      xmlDom.freeDocument(obj_xml_document);
-
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
-      /*-*/
-      /* Send the confirm message
-      /*-*/
-      psa_gen_function.set_cfrm_data('Production Schedule ('||var_psc_code||') successfully '||var_confirm);
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end delete_data;
 
 end psa_psc_function;
 /
