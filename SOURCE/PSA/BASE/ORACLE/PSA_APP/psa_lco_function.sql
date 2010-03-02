@@ -629,6 +629,9 @@ create or replace package body psa_app.psa_lco_function as
          end if;
          close csr_rate;
       end loop;
+      if xmlDom.getLength(obj_rra_list) < 1 then
+         psa_gen_function.add_mesg_data('At least one run rate must be selected');
+      end if;
       if rcd_line.pty_prd_lin_filler = '1' then
          obj_fil_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/LCOFIL');
          for idx in 0..xmlDom.getLength(obj_fil_list)-1 loop
@@ -645,6 +648,9 @@ create or replace package body psa_app.psa_lco_function as
             end if;
             close csr_filler;
          end loop;
+         if xmlDom.getLength(obj_fil_list) < 1 then
+            psa_gen_function.add_mesg_data('At least one filler must be selected');
+         end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
