@@ -28,6 +28,8 @@ create or replace package site_app.ladwgb01_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2010/02   Steve Gregan   Added new interface fields
+    2010/02   Steve Gregan   Changed list price calculation
 
    *******************************************************************************/
 
@@ -75,40 +77,22 @@ create or replace package body site_app.ladwgb01_extract as
                 decode(trim(t01.bds_material_desc_zh),null,';','"'||replace(trim(t01.bds_material_desc_zh),'"','""')||'";') as bds_material_desc_zh,
                 decode(trim(t01.bds_material_desc_en),null,';','"'||replace(trim(t01.bds_material_desc_en),'"','""')||'";') as bds_material_desc_en,
                 decode(trim(t03.dstrbtn_chain_status),null,';','"'||replace(trim(t03.dstrbtn_chain_status),'"','""')||'";') as dstrbtn_chain_status,
-                decode(trim(t04.kbetr),null,';','"'||replace(trim(t04.kbetr),'"','""')||'"') as kebtr
+                decode(trim(t04.vakey),null,';','"'||to_char(t04.kbetr,'fm00000.00000')||'"') as list_price
            from bds_material_hdr t01,
                 bds_material_classfctn_en t02,
                 bds_material_dstrbtn_chain t03,
                (select t01.matnr as matnr,
                        t01.kbetr as kbetr
-                  from (select t01.*
-                          from (select t01.vakey,
-                                       t01.kotabnr,
-                                       t01.kschl,
-                                       t01.vkorg,
-                                       t01.vtweg,
-                                       t01.spart,
-                                       t01.datab,
-                                       t01.datbi,
-                                       t01.matnr,
-                                       t02.kbetr,
-                                       t02.konwa,
-                                       t02.kpein,
-                                       t02.kmein,
-                                       rank() over (partition by t01.matnr order by t01.datab desc, t01.datbi asc) as rnkseq
-                                  from lads_prc_lst_hdr t01,
-                                       lads_prc_lst_det t02
-                                 where t01.vakey = t02.vakey
-                                   and t01.kschl = t02.kschl
-                                   and t01.datab = t02.datab
-                                   and t01.knumh = t02.knumh
-                                   and t01.kschl = 'PR00'
-                                   and t01.vkorg = '135'
-                                   and (t01.vtweg is null or t01.vtweg = '10')
-                                   and decode(t01.datab,null,'19000101','00000000','19000101',t01.datab) <= to_char(sysdate,'yyyymmdd')
-                                   and decode(t01.datbi,null,'19000101','00000000','19000101',t01.datbi) >= to_char(sysdate,'yyyymmdd')
-                                   and t02.kmein = 'CS') t01
-                         where t01.rnkseq = 1) t01) t04
+                  from lads_prc_lst_hdr t01,
+                       lads_prc_lst_det t02
+                 where t01.vakey = t02.vakey
+                   and t01.kschl = t02.kschl
+                   and t01.datab = t02.datab
+                   and t01.knumh = t02.knumh
+                   and t01.kschl = 'PR00'
+                   and t01.vkorg = '135'
+                   and decode(t01.datab,null,'19000101','00000000','19000101',t01.datab) <= to_char(sysdate,'yyyymmdd')
+                   and decode(t01.datbi,null,'19000101','00000000','19000101',t01.datbi) >= to_char(sysdate,'yyyymmdd')) t04
           where t01.sap_material_code = t02.sap_material_code
             and t01.sap_material_code = t03.sap_material_code
             and t01.sap_material_code = t04.matnr(+)
@@ -171,7 +155,7 @@ create or replace package body site_app.ladwgb01_extract as
                                           rcd_extract.bds_material_desc_zh ||
                                           rcd_extract.bds_material_desc_en ||
                                           rcd_extract.dstrbtn_chain_status ||
-                                          rcd_extract.kebtr);
+                                          rcd_extract.list_price);
 
       end loop;
       close csr_extract;
