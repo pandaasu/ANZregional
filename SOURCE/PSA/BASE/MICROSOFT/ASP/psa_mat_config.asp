@@ -485,6 +485,7 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('FILL_Data').style.display = 'none';
+         document.getElementById('FILL_ComData').style.display = 'none';
          document.getElementById('PACK_Data').style.display = 'none';
          document.getElementById('FORM_Data').style.display = 'none';
          document.getElementById('TDU_Data').style.display = 'none';
@@ -568,6 +569,7 @@ sub PaintFunction()%>
                cintUntCase = objElements[i].getAttribute('MATUNC');
                cintNetWght = objElements[i].getAttribute('MATNEW');
                if (cstrDefineUsag == 'TDU') {
+                  document.getElementById('FILL_ComData').style.display = 'block';
                   document.getElementById('TDU_Data').style.display = 'block';
                }
             } else if (objElements[i].nodeName == 'MATPTY') {
@@ -961,12 +963,14 @@ sub PaintFunction()%>
       var bolForm = false;
       var bolComp = false;
       var bolLinFound = false;
+      var bolComFound = false;
       var bolDftFound = false;
       var intDftCount;
       var objSelect;
       var objRow;
       var intRowCnt;
       var objLines = new Array();
+      var objComps = new Array();
       var strLinCde = '';
       var strMessage = '';
       if (cstrDefineUsag == 'TDU') {
@@ -983,7 +987,7 @@ sub PaintFunction()%>
          bolComp = true;
       } else if (cstrDefineUsag == 'MPO') {
          bolFill = true;
-         bolComp = true;
+         bolComp = false;
       } else if (cstrDefineUsag == 'PCH') {
          bolForm = true;
          bolComp = true;
@@ -1101,13 +1105,29 @@ sub PaintFunction()%>
                strMessage = strMessage + 'Filling line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
-         for (var i=0;i<objFillComList.rows.length;i++) {
-            objRow = objFillComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'Filling component quantity must be greater than zero';
+         if (bolComp == true) {
+            objComps.length = 0;
+            for (var i=0;i<objFillComList.rows.length;i++) {
+               objRow = objFillComList.rows[i];
+               if (objRow.getAttribute('comflg') == '1') {
+                  bolComFound = false;
+                  for (var j=0;j<objComps.length;j++) {
+                     if (objComps[j] == objRow.getAttribute('comcde')) {
+                        bolComFound = true;
+                        break;
+                     }
+                  }
+                  if (!bolComFound) {
+                     objComps[objComps.length] = objRow.getAttribute('comcde');
+                  } else {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'Filling component ('+objRow.getAttribute('comcde')+') already specified';
+                  }
+                  intRowCnt = objRow.getAttribute('comcnt');
+                  if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'Filling component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero';
+                  }
                }
             }
          }
@@ -1208,13 +1228,64 @@ sub PaintFunction()%>
                strMessage = strMessage + 'Packing line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
-         for (var i=0;i<objPackComList.rows.length;i++) {
-            objRow = objPackComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'Packing component quantity must be greater than zero';
+         if (bolComp == true) {
+            if (bolFill == true) {
+               objComps.length = 0;
+               for (var i=0;i<objPackComList.rows.length;i++) {
+                  objRow = objPackComList.rows[i];
+                  if (objRow.getAttribute('comflg') == '1') {
+                     bolComFound = false;
+                     for (var j=0;j<objComps.length;j++) {
+                        if (objComps[j] == objRow.getAttribute('comcde')) {
+                           bolComFound = true;
+                           break;
+                        }
+                     }
+                     if (!bolComFound) {
+                        objComps[objComps.length] = objRow.getAttribute('comcde');
+                     } else {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU filling and packing';
+                     }
+                     if (objRow.getAttribute('comcde') != cstrDefineCode) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must be the same as the material for TDU filling and packing';
+                     }
+                     intRowCnt = objRow.getAttribute('comcnt');
+                     if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value != 1) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be 1 for TDU filling and packing';
+                     }
+                  }
+               }
+            } else {
+               objComps.length = 0;
+               for (var i=0;i<objPackComList.rows.length;i++) {
+                  objRow = objPackComList.rows[i];
+                  if (objRow.getAttribute('comflg') == '1') {
+                     bolComFound = false;
+                     for (var j=0;j<objComps.length;j++) {
+                        if (objComps[j] == objRow.getAttribute('comcde')) {
+                           bolComFound = true;
+                           break;
+                        }
+                     }
+                     if (!bolComFound) {
+                        objComps[objComps.length] = objRow.getAttribute('comcde');
+                     } else {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU packing only';
+                     }
+                     if (objRow.getAttribute('comcde') == cstrDefineCode) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must not be the same as the material for TDU packing only';
+                     }
+                     intRowCnt = objRow.getAttribute('comcnt');
+                     if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero for TDU packing only';
+                     }
+                  }
                }
             }
          }
@@ -1315,13 +1386,29 @@ sub PaintFunction()%>
                strMessage = strMessage + 'Forming line ('+objLines[i]+') must only have one default configuration selected';
             }
          }
-         for (var i=0;i<objFormComList.rows.length;i++) {
-            objRow = objFormComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'Forming component quantity must be greater than zero';
+         if (bolComp == true) {
+            objComps.length = 0;
+            for (var i=0;i<objFormComList.rows.length;i++) {
+               objRow = objFormComList.rows[i];
+               if (objRow.getAttribute('comflg') == '1') {
+                  bolComFound = false;
+                  for (var j=0;j<objComps.length;j++) {
+                     if (objComps[j] == objRow.getAttribute('comcde')) {
+                        bolComFound = true;
+                        break;
+                     }
+                  }
+                  if (!bolComFound) {
+                     objComps[objComps.length] = objRow.getAttribute('comcde');
+                  } else {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'Forming component ('+objRow.getAttribute('comcde')+') already specified';
+                  }
+                  intRowCnt = objRow.getAttribute('comcnt');
+                  if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'Forming component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero';
+                  }
                }
             }
          }
@@ -1365,14 +1452,16 @@ sub PaintFunction()%>
                }
             }
          }
-         for (var i=0;i<objFillComList.rows.length;i++) {
-            objRow = objFillComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               strXML = strXML+'<MATCOM';
-               strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
-               strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'/>';
+         if (bolComp == true) {
+            for (var i=0;i<objFillComList.rows.length;i++) {
+               objRow = objFillComList.rows[i];
+               if (objRow.getAttribute('comflg') == '1') {
+                  intRowCnt = objRow.getAttribute('comcnt');
+                  strXML = strXML+'<MATCOM';
+                  strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
+                  strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
+                  strXML = strXML+'/>';
+               }
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1406,14 +1495,16 @@ sub PaintFunction()%>
                }
             }
          }
-         for (var i=0;i<objPackComList.rows.length;i++) {
-            objRow = objPackComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               strXML = strXML+'<MATCOM';
-               strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
-               strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'/>';
+         if (bolComp == true) {
+            for (var i=0;i<objPackComList.rows.length;i++) {
+               objRow = objPackComList.rows[i];
+               if (objRow.getAttribute('comflg') == '1') {
+                  intRowCnt = objRow.getAttribute('comcnt');
+                  strXML = strXML+'<MATCOM';
+                  strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
+                  strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
+                  strXML = strXML+'/>';
+               }
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1447,14 +1538,16 @@ sub PaintFunction()%>
                }
             }
          }
-         for (var i=0;i<objFormComList.rows.length;i++) {
-            objRow = objFormComList.rows[i];
-            if (objRow.getAttribute('comflg') == '1') {
-               intRowCnt = objRow.getAttribute('comcnt');
-               strXML = strXML+'<MATCOM';
-               strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
-               strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
-               strXML = strXML+'/>';
+         if (bolComp == true) {
+            for (var i=0;i<objFormComList.rows.length;i++) {
+               objRow = objFormComList.rows[i];
+               if (objRow.getAttribute('comflg') == '1') {
+                  intRowCnt = objRow.getAttribute('comcnt');
+                  strXML = strXML+'<MATCOM';
+                  strXML = strXML+' COMCDE="'+fixXML(objRow.getAttribute('comcde'))+'"';
+                  strXML = strXML+' COMQTY="'+fixXML(document.getElementById('COMQTY_'+intRowCnt).value)+'"';
+                  strXML = strXML+'/>';
+               }
             }
          }
          strXML = strXML+'</MATPTY>';
@@ -1988,7 +2081,7 @@ sub PaintFunction()%>
                      </table>
                   </nobr></td>
                </tr>
-               <tr>
+               <tr id="FILL_ComData" style="display:none;visibility:visible">
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
                      <table id="FILL_ComList" class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
                         <tr>
