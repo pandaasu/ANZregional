@@ -1,9 +1,9 @@
-CREATE VIEW LADS.TEST_PROMAX_CUST_HIER_VIEW AS SELECT
+CREATE OR REPLACE VIEW LADS.PROMAX_CUST_HIER_VIEW AS SELECT
 /*+ORDERED*/
 --*******************************************************************************
---  NAME:      lads.test_promax_cust_hier_view
+--  NAME:      lads.promax_cust_hier_view
 --  PURPOSE:   This view is used by the Customer interfaces within Promax.
---             .
+--             
 --  REVISIONS:
 --  Ver   Date       Author               Description
 --  ----- ---------- -------------------- ----------------------------------------
@@ -14,6 +14,9 @@ CREATE VIEW LADS.TEST_PROMAX_CUST_HIER_VIEW AS SELECT
 --  4.0   03/03/2006 Craig Ford           Filter on effective dates (datab and datbi)
 --                                         to return current hierarchy rows only.
 --  5.0   05/08/2009 Steve Gregan         Added chncode and divcode
+--  6.0   10/12/2009 Rob Bishop           Change financial flag criteria so they are
+--                                          ORs rather than ANDs, to include more customers.
+--  6.1   04/03/2010 Rob Bishop           Removed redundant ORDER BY clause in view.
 --
 --  NOTES:
 --********************************************************************************
@@ -43,9 +46,10 @@ AND    c.obj_id   (+) = b.KUNNR
 AND     KLART = '011'
 AND    d.obtab = 'KNA1'
 AND    d.atnam = 'CLFFERT41'
-AND    e.AUFSD IS NULL -- Any value in AUFSD means this customer can no longer order.
-AND    e.FAKSD IS NULL -- Any value in FAKSD means we can't bill this customer at all.
-AND    e.LIFSD IS NULL -- Any value LIFSD means we can't deliver to this customer any more.
-AND    e.SPERR IS NULL -- Any value in SPERR means we can't post any financial transactions against this customer
-AND    a.hdrdat = (SELECT MAX(hdrdat) FROM LADS_HIE_CUS_HDR)
-ORDER BY a.datab DESC, a.hdrdat, a.hdrseq, b.hielv;
+AND (
+         e.AUFSD IS NULL -- Any value in AUFSD means this customer can no longer order.
+      OR e.FAKSD IS NULL -- Any value in FAKSD means we can't bill this customer at all.
+      OR e.LIFSD IS NULL -- Any value LIFSD means we can't deliver to this customer any more.
+      OR e.SPERR IS NULL -- Any value in SPERR means we can't post any financial transactions against this customer
+    )
+AND    a.hdrdat = (SELECT MAX(hdrdat) FROM LADS_HIE_CUS_HDR);
